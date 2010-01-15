@@ -1,0 +1,6 @@
+*.pyc
+.svn
+*.bak
+*~
+._*
+.DS_Store
