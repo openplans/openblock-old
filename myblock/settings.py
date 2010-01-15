@@ -1,5 +1,7 @@
 import os.path
 
+EVERYBLOCK_LIBRARY = '/home/everyblock/everyblock'
+
 ########################
 # CORE DJANGO SETTINGS #
 ########################
@@ -13,6 +15,7 @@ DEBUG = True
 
 TEMPLATE_DIRS = (
     os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
+    EVERYBLOCK_LIBRARY + '/ebpub/ebpub/templates',
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
