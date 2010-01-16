@@ -9,6 +9,7 @@ EVERYBLOCK_LIBRARY = '/home/everyblock/everyblock'
 DATABASE_ENGINE = 'postgresql_psycopg2' # ebpub only supports postgresql_psycopg2.
 DATABASE_USER = 'everyblock'
 DATABASE_NAME = 'everyblock'
+DATABASE_PASSWORD = 'everyblock'
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = ''
 DEBUG = True
