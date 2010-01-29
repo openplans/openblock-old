@@ -45,7 +45,7 @@ Arguments:
     try:
         sw = args[6].split(",")
         ne = args[7].split(",")
-        box = (float(sw[0]), float(sw[1]), float(ne[0]), float(ne[1]))
+        box = (float(sw[1]), float(sw[0]), float(ne[1]), float(ne[0]))
         poly = Polygon.from_bbox(box)
     except ValueError:
         return parser.error('error parsing sw and ne coordinates')
