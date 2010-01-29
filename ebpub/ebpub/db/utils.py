@@ -79,6 +79,9 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     att_dict = dict([(i['news_item'], i) for i in Attribute.objects.filter(news_item__id__in=[ni.id for ni in preloaded_nis]).values(*list(attribute_columns_to_select))])
 
+    if not fmap: 
+        return
+        
     # Determine which Lookup objects need to be retrieved.
     lookup_ids = set()
     for ni in preloaded_nis:
@@ -95,7 +98,7 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
         lookup_objs = Lookup.objects.in_bulk(lookup_ids)
     else:
         lookup_objs = {}
-
+        
     # Set 'attribute_values' for each NewsItem in preloaded_nis.
     for ni in preloaded_nis:
         att = att_dict[ni.id]
