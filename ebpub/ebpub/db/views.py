@@ -1166,13 +1166,14 @@ def place_detail(request, *args, **kwargs):
             select={'pub_date_date': 'date(db_newsitem.pub_date)'},
             order_by=('-pub_date_date', '-schema__importance', 'schema')
         )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
-        ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
+        #ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
         schemas_used = list(set([ni.schema for ni in ni_list]))
         s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
         populate_attributes_if_needed(ni_list, schemas_used)
         bunches = cluster_newsitems(ni_list, 26)
         if ni_list:
-            next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
+            next_day = ni_list[len(ni_list)-1:][0].pub_date - datetime.timedelta(days=1)
+            #next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
         else:
             next_day = None
 
