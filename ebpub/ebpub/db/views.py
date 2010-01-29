@@ -952,7 +952,8 @@ def schema_filter(request, slug, urlbits):
             location_type_slug = urlbits.pop()
             if urlbits:
                 loc = url_to_location(location_type_slug, urlbits.pop())
-                qs = qs.filter(newsitemlocation__location__id=loc.id)
+                #qs = qs.filter(newsitemlocation__location__id=loc.id)
+                qs = qs.filter(location__bboverlaps=loc.location.envelope)
                 filters['location'] = {
                     'name': 'location',
                     'label': loc.location_type.name,
