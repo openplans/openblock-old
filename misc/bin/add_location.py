@@ -32,7 +32,8 @@ Arguments:
         loctype = LocationType.objects.get(slug=args[3])
     except LocationType.DoesNotExist:
         print "LocationType (%s): DoesNotExist" % args[3]
-    
+        sys.exit(0)
+        
     l = Location()
     l.name = args[0]
     l.normalized_name = args[1]
