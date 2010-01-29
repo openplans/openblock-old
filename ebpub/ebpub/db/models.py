@@ -448,6 +448,10 @@ class NewsItem(models.Model):
         """
         fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
         field_infos = dict([(obj.schema_field_id, obj.help_text) for obj in SchemaFieldInfo.objects.filter(schema__id=self.schema_id)])
+        
+        if not fields:
+            return []
+            
         try:
             attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
         except KeyError:
