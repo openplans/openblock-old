@@ -26,25 +26,20 @@ def main(argv=None):
             item = NewsItem.objects.get(title=e.title, description=e.description)
         except NewsItem.DoesNotExist:
             item = NewsItem()
+        
+        try:
             item.schema = schema
             item.title = e.title
             item.description = e.description
             item.url = e.link
-            item.location_name = e['x-calconnect-street']
-            item.item_date = datetime.datetime.strptime(e.dtstart, 
-                "%Y-%m-%d %H:%M:%S +0000")
+            item.item_date = datetime.datetime(*e.updated_parsed[:6])
             item.pub_date = datetime.datetime(*e.updated_parsed[:6])
-        
-            try:
-                add = geocoder.geocode(item.location_name)
-                item.location = add['point']
-                item.block = add['block']
-            except:
-                pass
-                
+            item.location = Point((float(e['geo_long']), float(e['geo_lat'])))
             item.save()
-        
             print "Added: %s" % item.title
+        except e:
+            pass
+        
     
 if __name__ == '__main__':
     sys.exit(main())
