@@ -10,7 +10,7 @@ from ebpub.geocoder import SmartGeocoder
 
 def main(argv=None):
     url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
-    schema = 'news'
+    schema = 'local-news'
     
     try:
         schema = Schema.objects.get(slug=schema)
