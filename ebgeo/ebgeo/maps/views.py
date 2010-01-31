@@ -21,7 +21,7 @@ class TileResponse(object):
 def get_tile(request, version, layername, z, x, y, extension='png'):
     'Returns a map tile in the requested format'
     z, x, y = int(z), int(x), int(y)
-    response = TileResponse(render_tile(layername, z, x, y, extension=extension))
+    response = TileResponse(render_tile(layername, z, x, y, extension='png'))
     return response(extension)
 
 def locator_map(request, version, city, extension='png'):
