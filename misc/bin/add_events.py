@@ -23,9 +23,12 @@ def main(argv=None):
     
     for e in f.entries:
         try:
-            item = NewsItem.objects.get(title=e.title, description=e.description)
+            item = NewsItem.objects.get(title=e.title, 
+                description=e.description)
+            status = "Updated"
         except NewsItem.DoesNotExist:
             item = NewsItem()
+            status = "Added"
         
         try:
             item.schema = schema
@@ -34,9 +37,10 @@ def main(argv=None):
             item.url = e.link
             item.item_date = datetime.datetime(*e.updated_parsed[:6])
             item.pub_date = datetime.datetime(*e.updated_parsed[:6])
-            item.location = Point((float(e['geo_long']), float(e['geo_lat'])))
+            item.location = Point((float(e['geo_long']), 
+                float(e['geo_lat'])))
             item.save()
-            print "Added: %s" % item.title
+            print "%s: %s" % (status, item.title)
         except e:
             pass
         

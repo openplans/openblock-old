@@ -23,25 +23,31 @@ def main(argv=None):
     
     for e in f.entries:
         try:
-            item = NewsItem.objects.get(title=e.title, description=e.description)
+            item = NewsItem.objects.get(title=e.title, 
+                description=e.description)
+            status = "Updated"
         except NewsItem.DoesNotExist:
             item = NewsItem()
-            item.schema = schema
-            item.title = e.title
-            item.description = e.description
-            item.url = e.link
-            #item.location_name = e['x-calconnect-street']
-            item.item_date = datetime.datetime(*e.updated_parsed[:6])
-            item.pub_date = datetime.datetime(*e.updated_parsed[:6])
+            status = "Added"
+
+        item.schema = schema
+        item.title = e.title
+        item.description = e.description
+        item.url = e.link
+        item.item_date = datetime.datetime(*e.updated_parsed[:6])
+        item.pub_date = datetime.datetime(*e.updated_parsed[:6])
         
-            try:
+        try:
+            if 'point' in e:
                 x,y = e.point.split(' ')
-                item.location = Point((float(y), float(x)))
-                item.save()
-            except:
-                pass
+            else:
+                x,y = e.georss_point.split(' ')
+            item.location = Point((float(y), float(x)))
+            item.save()
+        except:
+            pass
         
-            print "Added: %s" % item.title
+        print "%s: %s" % (status, item.title)
     
 if __name__ == '__main__':
     sys.exit(main())
