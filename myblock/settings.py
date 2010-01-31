@@ -134,16 +134,16 @@ EB_MEDIA_URL = '' # leave at '' for development
 EB_TODAY_OVERRIDE = None
 
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
-SHAPEFILE_ROOT = ''
+SHAPEFILE_ROOT = '/home/everyblock/osm_data/world_boundaries'
 
 # For the 'autoversion' template tag.
 AUTOVERSION_STATIC_MEDIA = False
 
 # Connection info for mapserver.
 MAPS_POSTGIS_HOST = '127.0.0.1'
-MAPS_POSTGIS_USER = ''
-MAPS_POSTGIS_PASS = ''
-MAPS_POSTGIS_DB = ''
+MAPS_POSTGIS_USER = 'everyblock'
+MAPS_POSTGIS_PASS = 'everyblock'
+MAPS_POSTGIS_DB = 'everyblock'
 
 # This is used as a "From:" in e-mails sent to users.
 GENERIC_EMAIL_SENDER = 'example@example.com'
