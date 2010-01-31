@@ -11,6 +11,12 @@ from ebpub.geocoder import SmartGeocoder
 def main(argv=None):
     url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
     schema = 'local-news'
+
+    parser = OptionParser()
+    parser.add_option('-q', '--quiet', action="store_true", dest="quiet", 
+        default=False, help="no output")
+        
+    (options, args) = parser.parse_args()
     
     try:
         schema = Schema.objects.get(slug=schema)
@@ -47,7 +53,8 @@ def main(argv=None):
         except:
             pass
         
-        print "%s: %s" % (status, item.title)
+        if not options.quiet:
+            print "%s: %s" % (status, item.title)
     
 if __name__ == '__main__':
     sys.exit(main())

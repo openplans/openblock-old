@@ -12,6 +12,12 @@ def main(argv=None):
     url = 'http://calendar.boston.com/search?acat=&cat=&commit=Search&new=n&rss=1&search=true&sort=0&srad=20&srss=50&ssrss=5&st=event&st_select=any&svt=text&swhat=&swhen=today&swhere=&trim=1'
     schema = 'events'
     
+    parser = OptionParser()
+    parser.add_option('-q', '--quiet', action="store_true", dest="quiet", 
+        default=False, help="no output")
+        
+    (options, args) = parser.parse_args()
+    
     try:
         schema = Schema.objects.get(slug=schema)
     except Schema.DoesNotExist:
@@ -40,7 +46,8 @@ def main(argv=None):
             item.location = Point((float(e['geo_long']), 
                 float(e['geo_lat'])))
             item.save()
-            print "%s: %s" % (status, item.title)
+            if not options.quiet:
+                print "%s: %s" % (status, item.title)
         except e:
             pass
         
