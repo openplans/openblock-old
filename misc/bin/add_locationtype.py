@@ -1,12 +1,24 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#pylint: disable-msg=E1101
+#pylint: disable-msg=W0142
+
+"""
+add_locationtype.py
+
+Created by Don Kukral <don_at_kukral_dot_org>
+
+Adds a LocationType to the datbase
+
+"""
+
 import sys
 from optparse import OptionParser
-
 from ebpub.db.models import LocationType
 
-
-def main(argv=None):
+def main():
+    """ add a type of location to database """
+    
     parser = OptionParser(usage="""
 %prog name plural_name scope slug
     

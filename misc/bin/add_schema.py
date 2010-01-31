@@ -1,12 +1,22 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#pylint: disable-msg=W0612
+"""
+add_schema.py
+
+Created by Don Kukral <don_at_kukral_dot_org>
+
+Adds a schema to the database
+"""
+
 import datetime, sys
 from optparse import OptionParser
 
 from ebpub.db.models import Schema, SchemaInfo
 
 
-def main(argv=None):
+def main():
+    """ add a schema to the database """
     parser = OptionParser(usage="""
 %prog name plural_name slug description summary source
     
@@ -30,8 +40,8 @@ Arguments:
     
     #  need to allow this as an input later
     schema.indefinite_article = 'a' 
-    schema.min_date = datetime.date(2009,1,1)
-    schema.last_updated = datetime.date(2009,1,1) 
+    schema.min_date = datetime.date(2009, 1, 1)
+    schema.last_updated = datetime.date(2009, 1, 1) 
     schema.date_name = "Date"
     schema.date_name_plural = "Dates"
     schema.importance = 100
