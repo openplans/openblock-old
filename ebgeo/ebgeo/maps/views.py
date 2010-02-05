@@ -4,9 +4,11 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 import mapnik
 from ebgeo.maps.mapserver import get_mapserver
-from ebgeo.maps.shortcuts import render_tile, render_locator_map
+from ebgeo.maps.shortcuts import render_tile, render_locator_map, render_location_tile
 from ebgeo.maps.markers import make_marker
 from ebgeo.maps.cached_image import CachedImageResponse
+
+from ebpub.db.views import url_to_place
 
 class TileResponse(object):
     def __init__(self, tile_bytes):
@@ -56,3 +58,14 @@ def get_marker(request, radius):
         return img_sio.getvalue()
 
     return CachedImageResponse(cache_key, get_marker_bytes)
+
+def get_place_tile(request, *args, **kwargs):
+    zoom = int(request.GET.get('zoom', settings.TILECACHE_ZOOM))
+    layer = request.GET.get('layer', settings.TILECACHE_LAYER)
+    version = request.GET.get('version', settings.TILECACHE_VERSION)
+    extension = request.GET.get('extension', settings.TILECACHE_EXTENSION)
+
+    place = url_to_place(*args, **kwargs)
+    tile = render_location_tile(place, zoom=zoom, version=version, 
+        layer=layer, extension=extension)
+    return HttpResponse(tile[1], mimetype=(tile[0]))
