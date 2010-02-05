@@ -155,6 +155,10 @@ MAP_UNITS = 'm' # see ebgeo.maps.utils for allowed unit types
 
 # Filesystem location of tilecache config (e.g., '/etc/tilecache/tilecache.cfg').
 TILECACHE_CONFIG = '/etc/tilecache.cfg'
+TILECACHE_ZOOM = 17
+TILECACHE_LAYER = 'osm'
+TILECACHE_VERSION = '1.0.0'
+TILECACHE_EXTENSION = 'png'
 
 # Filesystem location of scraper log.
 SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
@@ -167,3 +171,4 @@ MAIL_STORAGE_PATH = '/home/mail'
 # staff privileges (including the ability to view non-public schemas).
 STAFF_COOKIE_NAME = ''
 STAFF_COOKIE_VALUE = ''
+
