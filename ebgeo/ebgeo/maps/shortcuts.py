@@ -1,5 +1,7 @@
+import math
 from django.conf import settings
 from TileCache.Service import Service
+from TileCache.Services.TMS import TMS
 from TileCache.Layer import Tile
 from ebgeo.maps.extent import transform_extent, buffer_extent
 from ebgeo.maps.tile import get_tile_coords
@@ -79,4 +81,22 @@ def extent_in_map_srs(extent):
 
 def city_extent_in_map_srs(city_slug):
     return extent_in_map_srs(get_metro(city_slug)['extent'])
+
+def deg2num(lat_deg, lon_deg, zoom):
+    lat_rad = math.radians(lat_deg)
+    n = 2.0 ** zoom
+    xtile = int((lon_deg + 180.0) / 360.0 * n)
+    ytile = int((1.0 - math.log(math.tan(lat_rad) + 
+        (1 / math.cos(lat_rad))) / math.pi) / 2.0 * n)
+    return(xtile, ytile)
+
+def render_location_tile(location, layer='osm', version='1.0.0', zoom=17, 
+extension='png', host='http://localhost'):
+    latitude = location.geom.centroid.y
+    longitude = location.geom.centroid.x
+    service = Service.load(settings.TILECACHE_CONFIG)
+    (xtile,ytile) = deg2num(latitude, longitude, zoom) #settings.TILE_ZOOM)
+    path_info = '/%s/%s/%d/%d/%d.%s' % (version, layer, zoom, xtile, ytile, extension)
+    tile = TMS(service).parse({}, path_info, host)
+    return service.renderTile(tile)
 
