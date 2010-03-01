@@ -1277,7 +1277,7 @@ def geo_example(request):
         if point and point is not -1:
             entry['point'] = point
             geo_entries.append(entry)
-    print len(geo_entries)
+
     return render_to_response('db/geo_example.html', {'entries': geo_entries })
 
 def geo_map_example(request):
