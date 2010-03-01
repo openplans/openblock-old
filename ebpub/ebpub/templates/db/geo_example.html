@@ -12,7 +12,7 @@
         <link href="{{ e.link }}"/>
         <id>{{ e.id }}</id>
         <updated>{{ e.updated }}</updated>
-        <content>{{ e.summary }}</content>
+        <content>{{ e.summary|truncatewords:50 }}</content>
         <georss:where>
             <gml:Point>
                 <gml:pos>{{ e.point.y }} {{ e.point.x }}</gml:pos>
