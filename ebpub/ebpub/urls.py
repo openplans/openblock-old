@@ -15,6 +15,8 @@ else:
 
 urlpatterns += patterns('',
     (r'^$', views.homepage),
+    (r'^geoexample/$', views.geo_example),
+    (r'^geomapexample/$', views.geo_map_example),
     (r'^search/$', views.search),
     (r'^news/$', views.schema_list),
     (r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),

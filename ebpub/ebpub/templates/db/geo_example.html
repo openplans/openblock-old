@@ -1,0 +1,23 @@
+<feed xmlns="http://www.w3.org/2005/Atom"
+    xmlns:georss="http://www.georss.org/georss"
+    xmlns:gml="http://www.opengis.net/gml">
+    <title>BPDNews.com</title>
+    <subtitle>The Boston Police Department Blog</subtitle>
+    <link href="http://www.bpdnews.com/"/>
+    <updated></updated>
+    
+    {% for e in entries %}
+    <entry>
+        <title>{{ e.title }}</title>
+        <link href="{{ e.link }}"/>
+        <id>{{ e.id }}</id>
+        <updated>{{ e.updated }}</updated>
+        <content>{{ e.summary }}</content>
+        <georss:where>
+            <gml:Point>
+                <gml:pos>{{ e.point.y }} {{ e.point.x }}</gml:pos>
+            </gml:Point>
+        </georss:where>
+    </entry>
+    {% endfor %}
+</feed>
