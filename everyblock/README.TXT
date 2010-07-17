@@ -53,4 +53,3 @@ Quickstart
 5. Run "django-admin.py runserver" and go to http://127.0.0.1:8000/ in your
    Web browser to see the site in action.
 
-
