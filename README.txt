@@ -14,6 +14,10 @@ project at http://openblockproject.org.
 Funding for the creation of Everyblock and the ongoing development of
 OpenBlock is provided by the Knight Foundation.
 
+==============
+For Developers
+==============
+
 This is a Django application, so it's highly recommended that you have
 familiarity with the Django Web framework. The best places to learn
 are the official documentation (http://docs.djangoproject.com/) and
@@ -21,9 +25,6 @@ the free Django Book (http://www.djangobook.com/). Note that OpenBlock
 requires Django 1.1 and as of this writing does not yet work with
 Django 1.2 or later.
 
-==============
-For Developers
-==============
 
 Before you dive in, it's *highly* recommend you spend a little bit of time
 browsing around EveryBlock.com to get a feel for what this software does.
@@ -32,10 +33,15 @@ Also, for a light conceptual background on some of this, particularly the
 data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
 here: http://blip.tv/file/1957362
 
+
+=============
+Contents
+=============
+
 This distribution contains a number of packages, summarized below:
 
 
-=====
+
 demo
 =====
 
@@ -46,7 +52,6 @@ based on OpenBlock, and is a great place to start.
 For more information, see demo/README.txt
 
 
-======
 ebblog
 ======
 
@@ -58,7 +63,6 @@ OpenBlock site; you can probably ignore this.
 For more information, see ebblog/README.TXT
 
 
-======
 ebdata
 ======
 
@@ -70,7 +74,7 @@ useful; that is how you feed local news into the system.
 For more information, see ebdata/README.TXT
 
 
-=====
+
 ebgeo
 =====
 
@@ -82,7 +86,7 @@ need to have it installed even if you don't use Mapnik.
 
 For more information, see ebgeo/README.TXT
 
-==========
+
 ebinternal
 ==========
 
@@ -97,7 +101,7 @@ feedback forms at the bottom of almost every page on EveryBlock.com.
 
 For more information, see ebinternal/README.TXT
 
-=====
+
 ebpub
 =====
 
@@ -109,7 +113,7 @@ that users see as well as the underlying data models. You need this.
 For more information, see ebpub/README.TXT
 
 
-======
+
 ebwiki
 ======
 
