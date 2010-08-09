@@ -1,0 +1,57 @@
+"""
+Copy this to real_settings.py, uncomment the various settings, and
+edit them as desired.
+"""
+
+########################
+# CORE DJANGO SETTINGS #
+########################
+
+#DATABASE_NAME = ''
+#DATABASE_USER = ''
+#DATABASE_PASSWORD = ''
+#DATABASE_HOST = ''
+#DATABASE_PORT = ''
+#DEBUG = True
+
+
+#########################
+# CUSTOM EBPUB SETTINGS #
+#########################
+
+# The domain for your site.
+#EB_DOMAIN = 'example.com'
+
+# This is the short name for your city, e.g. "chicago".
+#SHORT_NAME = 'boston'
+
+# Set both of these to distinct, secret strings that include two instances
+# of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
+# secret.
+#PASSWORD_CREATE_SALT = ''
+#PASSWORD_RESET_SALT = ''
+
+#EB_MEDIA_ROOT = '' # necessary for static media versioning
+#EB_MEDIA_URL = '' # leave at '' for development
+
+# Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
+# Used only by ebgeo/maps/tess.py
+#SHAPEFILE_ROOT = ''
+
+# Connection info for mapserver.
+#MAPS_POSTGIS_HOST = '127.0.0.1'
+#MAPS_POSTGIS_USER = ''
+#MAPS_POSTGIS_PASS = ''
+#MAPS_POSTGIS_DB = ''
+
+# This is used as a "From:" in e-mails sent to users.
+#GENERIC_EMAIL_SENDER = 'example@example.com'
+
+# Filesystem location of scraper log.
+#SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
+
+# If this cookie is set with the given value, then the site will give the user
+# staff privileges (including the ability to view non-public schemas).
+#STAFF_COOKIE_NAME = ''
+#STAFF_COOKIE_VALUE = ''
+
