@@ -1,22 +1,30 @@
-import os.path
+"""
+All deployment-specific config should be put in a module named
+'real_settings.py'
 
-EVERYBLOCK_LIBRARY = '/home/everyblock/everyblock'
+If you get import errors, look up the
+
+"""
+import os
+import imp
+
 
 ########################
 # CORE DJANGO SETTINGS #
 ########################
 
 DATABASE_ENGINE = 'postgresql_psycopg2' # ebpub only supports postgresql_psycopg2.
-DATABASE_USER = 'everyblock'
-DATABASE_NAME = 'everyblock'
-DATABASE_PASSWORD = 'everyblock'
-DATABASE_HOST = 'localhost'
-DATABASE_PORT = ''
-DEBUG = True
+
+from .real_settings import DATABASE_NAME
+from .real_settings import DATABASE_USER, DATABASE_PASSWORD
+from .real_settings import DATABASE_HOST, DATABASE_PORT
+from .real_settings import DEBUG
+
+EBPUB_DIR = imp.find_module('ebpub')[1]
 
 TEMPLATE_DIRS = (
     os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
-    EVERYBLOCK_LIBRARY + '/ebpub/ebpub/templates',
+    EBPUB_DIR + '/templates',
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -50,16 +58,15 @@ MIDDLEWARE_CLASSES = (
 #########################
 
 # The domain for your site.
-EB_DOMAIN = 'example.com'
+from .real_settings import EB_DOMAIN
 
 # This is the short name for your city, e.g. "chicago".
-SHORT_NAME = 'boston'
+from .real_settings import SHORT_NAME
 
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
 # secret.
-PASSWORD_CREATE_SALT = '@##%$'
-PASSWORD_RESET_SALT = 'fdg!!'
+from .real_settings import PASSWORD_CREATE_SALT, PASSWORD_RESET_SALT
 
 # Here, we define the different databases we use, giving each one a label
 # (like 'users') so we can refer to a particular database via multidb
@@ -127,26 +134,28 @@ METRO_LIST = (
     },
 )
 
-EB_MEDIA_ROOT = '' # necessary for static media versioning
-EB_MEDIA_URL = '' # leave at '' for development
+# necessary for static media versioning:
+from .real_settings import EB_MEDIA_ROOT
+# leave at '' for development:
+from .real_settings import EB_MEDIA_URL
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
 
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
-SHAPEFILE_ROOT = '/home/everyblock/osm_data/world_boundaries'
+# Used only by ebgeo/maps/tess.py
+from .real_settings import SHAPEFILE_ROOT
 
 # For the 'autoversion' template tag.
 AUTOVERSION_STATIC_MEDIA = False
 
 # Connection info for mapserver.
-MAPS_POSTGIS_HOST = '127.0.0.1'
-MAPS_POSTGIS_USER = 'everyblock'
-MAPS_POSTGIS_PASS = 'everyblock'
-MAPS_POSTGIS_DB = 'everyblock'
+from .real_settings import MAPS_POSTGIS_HOST
+from .real_settings import MAPS_POSTGIS_USER, MAPS_POSTGIS_PASS
+from .real_settings import MAPS_POSTGIS_DB
 
 # This is used as a "From:" in e-mails sent to users.
-GENERIC_EMAIL_SENDER = 'example@example.com'
+from .real_settings import GENERIC_EMAIL_SENDER
 
 # Map stuff.
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
@@ -161,14 +170,16 @@ TILECACHE_VERSION = '1.0.0'
 TILECACHE_EXTENSION = 'png'
 
 # Filesystem location of scraper log.
-SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
+from .real_settings import SCRAPER_LOGFILE_NAME
 
-DATA_HARVESTER_CONFIG = {}
+# XXX Unused?
+#DATA_HARVESTER_CONFIG = {}
 
-MAIL_STORAGE_PATH = '/home/mail'
+# XXX Unused?
+#MAIL_STORAGE_PATH = '/home/mail'
 
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
-STAFF_COOKIE_NAME = ''
-STAFF_COOKIE_VALUE = ''
+from .real_settings import STAFF_COOKIE_NAME
+from .real_settings import STAFF_COOKIE_VALUE
 
