@@ -4,9 +4,9 @@ from django.conf.urls.defaults import *
 # from django.contrib import admin
 # admin.autodiscover()
 
-urlpatterns = patterns('',
-    # Example:
-    # (r'^myblock/', include('myblock.foo.urls')),
+urlpatterns = patterns(
+    '',
+    (r'^', include('ebpub.urls')),
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
     # to INSTALLED_APPS to enable admin documentation:

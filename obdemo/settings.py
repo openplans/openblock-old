@@ -31,6 +31,7 @@ TEMPLATE_LOADERS = (
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
+    #'django.core.context_processors.debug',
 )
 
 INSTALLED_APPS = (
@@ -46,7 +47,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
 )
 
-ROOT_URLCONF = 'ebpub.urls'
+ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -140,10 +141,11 @@ try:
 except ImportError:
     pass
 
-# necessary for static media versioning:
-from obdemo.real_settings import EB_MEDIA_ROOT
-# leave at '' for development:
-from obdemo.real_settings import EB_MEDIA_URL
+import os
+OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
+EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
+EB_MEDIA_URL = '' # leave at '' for development
+
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
