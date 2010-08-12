@@ -35,6 +35,7 @@ def plot_bunches(bunches, buffer):
     points = []
     for b in bunches:
         points.extend(b.points)
+        # or maybe: points.append(b.center)
     pylab.plot([p[0] for p in points], [p[1] for p in points], 'r+')
     subplot = pylab.figure(1).axes[0]
     # Plot clusters
@@ -66,8 +67,15 @@ def main():
     display(bunches, buffer=buffer, f=print_bunches)
 
 if __name__ == "__main__":
+    print "main:"
     main()
-    #for bunch in cluster_by_scale(sample.sample_pts, 51, 19200):
-        #print "%3d: (%.4f, %.4f)" % (len(bunch.objects), bunch.x, bunch.y)
-    #from django.utils.simplejson import dumps
-    #print dumps(cluster_scales(sample.sample_pts, 26), cls=json.ClusterJSON)
+    print "cluster_by_scale:"
+    for bunch in cluster_by_scale(sample.sample_pts, 51, 19200):
+        print "%3d objects: center (%.4f, %.4f)" % (len(bunch.objects), bunch.x, bunch.y)
+    print "cluster_scales:"
+    clusters_by_scale = cluster_scales(sample.sample_pts, 26)
+    from django.utils.simplejson import dumps
+    print dumps(clusters_by_scale, cls=json.ClusterJSON,
+                sort_keys=True, indent=2)
+    #import pprint
+    #pprint.pprint(clusters_by_scale)

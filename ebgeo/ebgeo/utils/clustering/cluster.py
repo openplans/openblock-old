@@ -48,12 +48,10 @@ def buffer_cluster(objects, radius, dist_fn=euclidean_distance):
     bunches = []
     buffer = radius
     for key, point in objects.iteritems():
-        bunched = False
         for bunch in bunches:
             if dist_fn(point, bunch.center) <= buffer:
                 bunch.add_obj(key, point)
-                bunched = True
                 break
-        if not bunched:
+        if not bunches:
             bunches.append(Bunch(key, point))
     return bunches
