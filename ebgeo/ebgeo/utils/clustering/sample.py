@@ -1,3 +1,6 @@
+"""
+Example points for testing clustering.
+"""
 sample_pts = {
     "547223": (-87.649755, 41.952132),
     "535915": (-87.654234, 41.943924),

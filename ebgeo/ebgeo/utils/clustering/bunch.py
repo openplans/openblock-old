@@ -15,9 +15,9 @@ class Bunch(object):
     def add_obj(self, obj, point):
         self.objects.append(obj)
         self.points.append(point)
-        self.update_center(point)
+        self.update_center()
 
-    def update_center(self, point):
+    def update_center(self):
         xs = [p[0] for p in self.points]
         ys = [p[1] for p in self.points]
         self.center = (sum(xs) * 1.0 / len(self.objects), sum(ys) * 1.0 / len(self.objects))

@@ -18,6 +18,9 @@ def gen_test_points(n=50, extent=(0,0,100,100), rand_seed=None):
             for i in xrange(n)]
 
 def gen_test_objs(n=50, extent=(0,0,100,100), rand_seed=None):
+    """
+    Returns a mapping of id -> (x, y), where id is an int.
+    """
     points = gen_test_points(n=n, extent=extent, rand_seed=rand_seed)
     return dict(zip(xrange(len(points)), points))
 
@@ -29,6 +32,9 @@ def plot_bunches(bunches, buffer):
     import pylab
     from matplotlib.patches import Circle
     # Plot points
+    points = []
+    for b in bunches:
+        points.extend(b.points)
     pylab.plot([p[0] for p in points], [p[1] for p in points], 'r+')
     subplot = pylab.figure(1).axes[0]
     # Plot clusters
@@ -60,8 +66,8 @@ def main():
     display(bunches, buffer=buffer, f=print_bunches)
 
 if __name__ == "__main__":
-    #main()
+    main()
     #for bunch in cluster_by_scale(sample.sample_pts, 51, 19200):
         #print "%3d: (%.4f, %.4f)" % (len(bunch.objects), bunch.x, bunch.y)
-    from django.utils.simplejson import dumps
-    print dumps(cluster_scales(sample.sample_pts, 26), cls=json.ClusterJSON)
+    #from django.utils.simplejson import dumps
+    #print dumps(cluster_scales(sample.sample_pts, 26), cls=json.ClusterJSON)
