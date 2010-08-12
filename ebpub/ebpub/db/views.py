@@ -1,6 +1,5 @@
 from django import template
 from django.conf import settings
-from django.core.cache import cache
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
@@ -12,7 +11,7 @@ from ebgeo.utils.clustering.json import ClusterJSON
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaInfo, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
-from ebpub.db.utils import smart_bunches, populate_attributes_if_needed, populate_schema, today
+from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
@@ -21,7 +20,7 @@ from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.view_utils import eb_render
-from ebpub.metros.allmetros import METRO_DICT, get_metro
+from ebpub.metros.allmetros import get_metro
 import datetime
 import random
 import re
@@ -141,7 +140,7 @@ def parse_pid(pid):
     xy_radius are None for Locations.
 
     PID examples:
-        'b:12;1' (block ID 12, 1-block radius)
+        'b:12.1' (block ID 12, 1-block radius)
         'l:32' (location ID 32)
     """
     try:
@@ -281,13 +280,22 @@ def ajax_map_popups(request):
 
 def ajax_place_newsitems(request):
     """
-    JSON -- expects request.GET['pid'] and request.GET['s'] (a schema ID).
+    JSON -- expects request.GET['pid'] (a location ID) and
+    request.GET['s'] (a schema ID).
+
+    Returns a JSON mapping containing {'bunches': {scale: [list of clusters]},
+                                       'ids': [list of newsitem ids]}
+    where clusters are represented as [[list of newsitem IDs], [center x, y]]
+
+    NB: the list of all newsitem IDs should be the union of all IDs in
+    all the clusters.
     """
     try:
         s = Schema.public_objects.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
+    pid = request.GET.get('pid', '')
+    place, block_radius, xy_radius = parse_pid(pid)
     if isinstance(place, Block):
         search_buffer = make_search_buffer(place.location.centroid, block_radius)
         newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
@@ -300,6 +308,7 @@ def ajax_place_newsitems(request):
     bunches = simplejson.dumps(cluster_newsitems(ni_list, 26), cls=ClusterJSON)
     id_list = simplejson.dumps([ni.id for ni in ni_list])
     return HttpResponse('{"bunches": %s, "ids": %s}' % (bunches, id_list), mimetype="application/javascript")
+
 
 def ajax_place_lookup_chart(request):
     """
@@ -1281,5 +1290,5 @@ def geo_example(request):
     return render_to_response('db/geo_example.html', {'entries': geo_entries })
 
 def geo_map_example(request):
-    return render_to_response('db/geo_map_example.html')        
-    
+    return render_to_response('db/geo_map_example.html')
+
