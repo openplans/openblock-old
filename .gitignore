@@ -6,3 +6,4 @@
 .DS_Store
 obdemo/real_settings.py
 obdemo/tiger_data
+*pip-log.txt
