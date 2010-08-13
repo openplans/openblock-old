@@ -30,7 +30,7 @@ STREET_NAME = r"""
                 [Ee][Aa][Ss][Tt] |
                 [Ww][Ee][Ss][Tt] |
                 [Nn][Oo][Rr][Tt][Hh][Ee][Aa][Ss][Tt] |
-                [Ee][Aa][Ss][Tt][Ww][Ee][Ss][Tt] |
+                [Nn][Oo][Rr][Tt][Hh][Ww][Ee][Ss][Tt] |
                 [Ss][Oo][Uu][Tt][Hh][Ee][Aa][Ss][Tt] |
                 [Ss][Oo][Uu][Tt][Hh][Ww][Ee][Ss][Tt]
             )

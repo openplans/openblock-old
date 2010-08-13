@@ -84,6 +84,7 @@ class MixedCaseAddressParsing(AddressParsing):
         self.assertParses('123 Northeast Main St.', [('123 Northeast Main St.', '')])
 
     def test_address_dir_northwest(self):
+        # There was a typo in the regex for this, but mysteriously it still worked
         self.assertParses('123 Northwest Main St.', [('123 Northwest Main St.', '')])
 
     def test_address_dir_southeast(self):
@@ -446,6 +447,7 @@ class FalsePositives(AddressParsing):
         self.assertParses('She attends University of Texas at Austin.', [])
 
     def test_university_of_texas2(self):
+        # FIXME: this fails, although it looks like it should work.
         self.assertParses('She attends University Of Texas at Austin.', [])
 
     def test_university_of_texas3(self):
