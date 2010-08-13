@@ -42,7 +42,7 @@
 					</li>
 					{% endfor %}
 				</ul>
-				<p><strong>{{ featured_neighborhood_article_count|intcomma }}</strong> <a href="/news-articles{{ featured_neighborhood.url }}">more article{{ featured_neighborhood_article_count|pluralize }} in {{ featured_neighborhood.name }}</a> in the last 30 days.</p>
+				<p><strong>{{ featured_neighborhood_article_count|intcomma }}</strong> <a href="/news-articles{{ featured_neighborhood.url }}">more article{{ featured_neighborhood_article_count|pluralize }} in {{ featured_neighborhood.name }}</a> in the last {{ num_days }} days.</p>
 			{% else %} 
 				<p><a href="/news-articles{{ featured_neighborhood.url }}">View articles in {{ featured_neighborhood.name }}…</a></p> 
 			{% endif %}
@@ -50,7 +50,7 @@
 		<div id="fn-publicrecords">
 		  <h4>Public records in {{ featured_neighborhood.name }}</h4>
 			{% if fn_non_empty_date_charts %}
-			<p>New in the last 30 days</p>
+			<p>New in the last {{ num_days }} days</p>
 			{% for chart_bunch in fn_non_empty_date_charts|bunchlong:"2" %}
 			<ul>
 				{% for chart in chart_bunch %}
@@ -69,7 +69,7 @@
 	{% endif %}
 	<div id="public-records">
 		<h2>Public records</h2>
-		<p>New in the last 30 days</p>
+		<p>New in the last {{ num_days }} days</p>
 		{% if non_empty_date_charts %}
 		<ul>
 			{% for chart in non_empty_date_charts %}

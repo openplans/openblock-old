@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from django.conf import settings
 from django.db import connection, transaction
 from ebpub.db import constants
 from ebpub.db.models import Schema, SchemaField, NewsItem, AggregateAll, AggregateDay, AggregateLocationDay, AggregateLocation, AggregateFieldLookup
@@ -95,7 +96,7 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
     except TypeError: # if cursor.fetchone() is None, there are no records.
         pass
     else:
-        start_date = end_date - datetime.timedelta(days=30)
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
         cursor.execute("""
             SELECT location_id, location_type_id, SUM(total)
             FROM %s

@@ -31,8 +31,8 @@ BLOCK_RADIUS_CHOICES = {'1': .0015, '3': .0035, '8': .007} # number of blocks ->
 BLOCK_RADIUS_DEFAULT = '8'
 HIDE_ADS_COOKIE_NAME = 'h'
 HIDE_SCHEMA_INTRO_COOKIE_NAME = 'schemaintro'
-DEFAULT_LOCTYPE_SLUG = 'neighborhoods'
 POPULATION_SCALE = 1000 # newsitems per POPULATION_SCALE people
+
 
 ################################
 # HELPER FUNCTIONS (NOT VIEWS) #
@@ -355,9 +355,9 @@ def ajax_place_date_chart(request):
         qs = qs.filter(newsitemlocation__location__id=place.id)
     # TODO: Ignore future dates
     end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
-    start_date = end_date - datetime.timedelta(days=30)
+    start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     counts = qs.filter(schema__id=s.id, item_date__gte=start_date, item_date__lte=end_date).date_counts()
-    date_chart = get_date_chart([s], end_date - datetime.timedelta(days=30), end_date, {s.id: counts})[0]
+    date_chart = get_date_chart([s], end_date - datetime.timedelta(days=settings.DEFAULT_DAYS), end_date, {s.id: counts})[0]
     return render_to_response('db/snippets/date_chart.html', {
         'schema': s,
         'date_chart': date_chart,
@@ -396,7 +396,7 @@ def ajax_location(request, loc_id):
 
 def homepage(request):
     end_date = today()
-    start_date = end_date - datetime.timedelta(days=30)
+    start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
 
     sparkline_schemas = list(Schema.public_objects.filter(allow_charting=True, is_special_report=False))
 
@@ -417,7 +417,10 @@ def homepage(request):
     empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
 
     # Get the news articles.
-    ni_list = NewsItem.objects.select_related().filter(schema__slug='news-articles', item_date__gt=start_date).order_by('-item_date')[:100]
+    ni_list = NewsItem.objects.select_related().filter(
+        schema__slug__in=settings.HOMEPAGE_DEFAULT_NEWSTYPES,
+        item_date__gt=start_date,
+        ).order_by('-item_date')[:100]
     if ni_list:
         populate_schema(ni_list, ni_list[0].schema)
         populate_attributes_if_needed(ni_list, [ni_list[0].schema])
@@ -431,7 +434,8 @@ def homepage(request):
     # Get the featured neighborhood.
     # This automatically chooses a neighborhood with at least 2 recent news articles.
     neighborhoods_with_articles = AggregateLocationDay.objects.filter(
-        schema__slug='news-articles', location_type__slug='neighborhoods', total__gte=2,
+        schema__slug__in=['news-articles' 'local-news'],
+        location_type__slug='neighborhoods', total__gte=2,
         date_part__gte=end_date - datetime.timedelta(days=7),
         date_part__lt=end_date + datetime.timedelta(days=1))
 
@@ -499,6 +503,7 @@ def homepage(request):
         'empty_date_charts': empty_date_charts,
         'fn_non_empty_date_charts': fn_non_empty_date_charts,
         'fn_empty_date_charts': fn_empty_date_charts,
+        'num_days': settings.DEFAULT_DAYS,
     })
 
 def search(request, schema_slug=''):
@@ -618,7 +623,6 @@ def schema_list(request):
     schemainfo_list = SchemaInfo.objects.select_related().filter(schema__is_public=True, schema__is_special_report=False).order_by('schema__plural_name')
     schemafield_list = list(SchemaField.objects.filter(is_filter=True).order_by('display_order'))
     browsable_locationtype_list = LocationType.objects.filter(is_significant=True)
-
     # Populate s_list, which contains a schema and schemafield list for each schema.
     s_list = []
     for s in schemainfo_list:
