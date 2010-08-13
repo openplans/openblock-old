@@ -2,9 +2,12 @@
 All deployment-specific config should be put in a module named
 'real_settings.py'
 
-If you get import errors, look up the
+This file should rarely need editing; if it does, you might want to
+move the setting in question into real_settings.py
 
+Known required settings are: %r
 """
+
 import os
 import imp
 
@@ -15,10 +18,13 @@ import imp
 
 DATABASE_ENGINE = 'postgresql_psycopg2' # ebpub only supports postgresql_psycopg2.
 
-from obdemo.real_settings import DATABASE_NAME
-from obdemo.real_settings import DATABASE_USER, DATABASE_PASSWORD
-from obdemo.real_settings import DATABASE_HOST, DATABASE_PORT
-from obdemo.real_settings import DEBUG
+
+_required_settings=[
+    'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD',
+    'DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_ENGINE',
+    'DEBUG',
+]    
+
 
 EBPUB_DIR = imp.find_module('ebpub')[1]
 
@@ -58,16 +64,22 @@ MIDDLEWARE_CLASSES = (
 # CUSTOM EBPUB SETTINGS #
 #########################
 
+# We've moved many settings to another (not-version-controlled) file.
+# You'll get alerted by an error if anything required is not in that file.
+# We import those settings twice: once up here to allow other settings
+# to derive from them, and once at the end to override any defaults.
+from real_settings import *
+
 # The domain for your site.
-from obdemo.real_settings import EB_DOMAIN
+_required_settings.append('EB_DOMAIN')
 
 # This is the short name for your city, e.g. "chicago".
-from obdemo.real_settings import SHORT_NAME
+_required_settings.append('SHORT_NAME')
 
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
 # secret.
-from obdemo.real_settings import PASSWORD_CREATE_SALT, PASSWORD_RESET_SALT
+_required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
 # Here, we define the different databases we use, giving each one a label
 # (like 'users') so we can refer to a particular database via multidb
@@ -80,6 +92,8 @@ from obdemo.real_settings import PASSWORD_CREATE_SALT, PASSWORD_RESET_SALT
 #
 # THE UPSHOT: If you're only using one database, the only thing you'll need
 # to set here is TIME_ZONE.
+_required_settings.append('DATABASES')
+
 DATABASES = {
     'users': {
         'DATABASE_HOST': DATABASE_HOST,
@@ -103,6 +117,7 @@ DATABASES = {
 
 # The list of all metros this installation covers. This is a tuple of
 # dictionaries.
+_required_settings.append('METRO_LIST')
 METRO_LIST = (
     # Example dictionary:
     {
@@ -135,37 +150,36 @@ METRO_LIST = (
     },
 )
 
-# Allow real_settings to override the metro_list
-try:
-    from obdemo.real_settings import METRO_LIST
-except ImportError:
-    pass
-
 import os
 OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
 EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development
-
+_required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
 
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
 # Used only by ebgeo/maps/tess.py
-from obdemo.real_settings import SHAPEFILE_ROOT
+_required_settings.append('SHAPEFILE_ROOT')
 
 # For the 'autoversion' template tag.
+_required_settings.append('AUTOVERSION_STATIC_MEDIA')
 AUTOVERSION_STATIC_MEDIA = False
 
 # Connection info for mapserver.
-from obdemo.real_settings import MAPS_POSTGIS_HOST
-from obdemo.real_settings import MAPS_POSTGIS_USER, MAPS_POSTGIS_PASS
-from obdemo.real_settings import MAPS_POSTGIS_DB
+_required_settings.extend([
+        'MAPS_POSTGIS_HOST', 'MAPS_POSTGIS_USER', 'MAPS_POSTGIS_PASS',
+        'MAPS_POSTGIS_DB',
+])
+
+
 
 # This is used as a "From:" in e-mails sent to users.
-from obdemo.real_settings import GENERIC_EMAIL_SENDER
+_required_settings.append('GENERIC_EMAIL_SENDER')
 
 # Map stuff.
+_required_settings.extend(['MAP_SCALES', 'SPATIAL_REF_SYS', 'MAP_UNITS'])
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 SPATIAL_REF_SYS = '900913' # Spherical Mercator
 MAP_UNITS = 'm' # see ebgeo.maps.utils for allowed unit types
@@ -178,7 +192,7 @@ TILECACHE_VERSION = '1.0.0'
 TILECACHE_EXTENSION = 'png'
 
 # Filesystem location of scraper log.
-from obdemo.real_settings import SCRAPER_LOGFILE_NAME
+_required_settings.append('SCRAPER_LOGFILE_NAME')
 
 # XXX Unused?
 #DATA_HARVESTER_CONFIG = {}
@@ -188,6 +202,13 @@ from obdemo.real_settings import SCRAPER_LOGFILE_NAME
 
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
-from obdemo.real_settings import STAFF_COOKIE_NAME
-from obdemo.real_settings import STAFF_COOKIE_VALUE
+_required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
+
+# Re-import from real_settings to override any defaults in this file.
+from real_settings import *
+for name in _required_settings:
+    if not name in globals():
+        raise NameError("Required setting %r was not defined in real_settings.py or settings.py" % name)
+
+__doc__ = __doc__ % _required_settings
