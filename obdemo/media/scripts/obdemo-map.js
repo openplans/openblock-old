@@ -1,3 +1,14 @@
+/* Re-usable map for (hopefully) all pages needing a map on
+ * demo.openblockproject.org.
+ *
+ * This takes a similar approach to the maps on everyblock.com: since
+ * the bounds of the area we care about are fixed at page load time,
+ * we can avoid the overhead of XHR requests by embedding the feature
+ * clusters for all zoom levels as (generated) javascript on each page
+ * that uses this map.
+ *
+ */
+
 var map, layer, select, select_vector, newsitems, bounds, selectControl, style;
 if (jQuery.browser.msie) {
     jQuery(window).load(function() {
@@ -13,26 +24,18 @@ function _onload() {
 }
 var options = {
     projection: new OpenLayers.Projection("EPSG:900913"), // meters
-    displayProjection: new OpenLayers.Projection("EPSG:4326"), // lat/lon
+    displayProjection: new OpenLayers.Projection("EPSG:4326"), // lon/lat
     units: "m",
+    // TODO: actually use the zoom levels specified in all_bunches
     numZoomLevels: 19,
+    // Max boundaries = whole world.
     maxResolution: 156543.03390625,
-    // Bounds of whole world.
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
-function loadNewsItems(params) {
-    if (!params) {
-        params = {};
-    }
+
+function loadNewsItems() {
     newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
-        strategies: [
-            new OpenLayers.Strategy.Fixed(), new OpenLayers.Strategy.Cluster()],
-        protocol: new OpenLayers.Protocol.HTTP({
-            url: "http://fixcity.org/newsitems/search.kml",
-            params: params,
-            format: new OpenLayers.Format.KML()
-        }),
         styleMap: new OpenLayers.StyleMap({
             "default": style,
             "select": {
@@ -41,8 +44,21 @@ function loadNewsItems(params) {
             }
         })
     });
+    var scale = "614400"; // TODO: get scale from current zoom level
+    var my_bunches = all_bunches[scale];
+    var features = [];
+    for (i = 0; i < my_bunches.length ; i++) {
+        var bunch_center = my_bunches[i][1];
+        var geom = new OpenLayers.Geometry.Point(
+            bunch_center[0], bunch_center[1]);
+        geom.transform(map.displayProjection, map.projection);
+        var f = new OpenLayers.Feature.Vector(geom);
+        features.push(f);
+    }
+    newsitems.addFeatures(features);
     return newsitems;
 };
+
 function loadMap() {
     map = new OpenLayers.Map('detailmap', options);
     var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
@@ -53,8 +69,8 @@ function loadMap() {
         wrapDateLine: true
     });
     style = new OpenLayers.Style({
-        pointRadius: "${radius}",
-        externalGraphic: "${url}"
+        //pointRadius: "${radius}",
+        //externalGraphic: "${url}"
     }, {
         context: {
             url: "/images/news-cluster-icon.png",
@@ -66,56 +82,10 @@ function loadMap() {
     // NYC:
     //var bounds = new OpenLayers.Bounds(-74.047185, 40.679648, -73.907005, 40.882078);
     // Boston... need better coords, got this empirically.
-    var bounds = new OpenLayers.Bounds(-71.16, 42.30, -71.02, 42.41);
-    bounds.transform(map.displayProjection, map.projection);
-    newsitems = loadNewsItems();
+    var newsitems = loadNewsItems();
     map.addLayers([osm, newsitems]);
-    map.zoomToExtent(bounds);
+    var center = new OpenLayers.LonLat(-71.061667, 42.357778);
+    center.transform(map.displayProjection, map.projection);
+    map.setCenter(center, 12);
+    //map.setCenter(newsitems.features[0].geometry.getBounds().getCenterLonLat(), 18);
 }
-var createOutlinedLayer = function(url) {
-    var style = new OpenLayers.Style({
-        fillOpacity: 0,
-        strokeWidth: 1,
-        strokeColor: "#f35824"
-    });
-    var outlineLayer = new OpenLayers.Layer.Vector("Outline", {
-        projection: map.displayProjection,
-        strategies: [
-            new OpenLayers.Strategy.Fixed()
-            ],
-        protocol: new OpenLayers.Protocol.HTTP({
-            url: url,
-            params: {},
-            format: new OpenLayers.Format.KML()
-        }),
-        styleMap: new OpenLayers.StyleMap({
-            "default": style
-        })
-    });
-    outlineLayer.events.on({
-        loadend: function(evt) {
-            var layer = evt.object;
-            var bounds = layer.getDataExtent();
-            map.zoomToExtent(bounds);
-        }
-    });
-    return outlineLayer;
-};
-var updateMapFn = function() {
-    var params = {};
-    // remove all non base layers
-    for (var i = map.layers.length - 1; i >= 1; i--) {
-        map.removeLayer(map.layers[i]);
-    }
-    // and an additional layer for the outline of the boro/cb
-    var url;
-    if (params.cb == "0") {
-        // borough query
-        url = '/borough/' + params.boro + '.kml';
-    } else {
-        url = '/communityboard/' + params.cb + '.kml';
-    }
-    map.addLayer(createOutlinedLayer(url));
-    // the layer for all newsitems
-    map.addLayer(loadNewsItems(params));
-};
