@@ -34,28 +34,20 @@ var options = {
 };
 
 function loadNewsItems() {
-    newsitems = new OpenLayers.Layer.Vector("NewsItems", {
-        projection: map.displayProjection,
-        styleMap: new OpenLayers.StyleMap({
-            "default": style,
-            "select": {
-                fillColor: "#ff9e73",
-                strokeColor: "#80503b"
-            }
-        })
+    newsitems = new OpenLayers.Layer.Markers("NewsItems", {
+        projection: map.displayProjection
     });
     var scale = "614400"; // TODO: get scale from current zoom level
     var my_bunches = all_bunches[scale];
-    var features = [];
+    var icon = new OpenLayers.Icon("/images/news-cluster-icon.png");
+
     for (i = 0; i < my_bunches.length ; i++) {
         var bunch_center = my_bunches[i][1];
-        var geom = new OpenLayers.Geometry.Point(
-            bunch_center[0], bunch_center[1]);
-        geom.transform(map.displayProjection, map.projection);
-        var f = new OpenLayers.Feature.Vector(geom);
-        features.push(f);
+        var xy = new OpenLayers.LonLat(bunch_center[0], bunch_center[1]);
+        xy.transform(map.displayProjection, map.projection);
+        var marker = new OpenLayers.Marker(xy, icon.clone());
+        newsitems.addMarker(marker);
     }
-    newsitems.addFeatures(features);
     return newsitems;
 };
 
@@ -84,6 +76,8 @@ function loadMap() {
     // Boston... need better coords, got this empirically.
     var newsitems = loadNewsItems();
     map.addLayers([osm, newsitems]);
+    newsitems.setVisibility(true);
+//    newsitems.refresh();
     var center = new OpenLayers.LonLat(-71.061667, 42.357778);
     center.transform(map.displayProjection, map.projection);
     map.setCenter(center, 12);
