@@ -120,3 +120,15 @@ I'm not even sure if this is used on everyblock.com anymore.
 Probably not useful to most OpenBlock users.
 
 For more information, see ebwiki/README.TXT
+
+
+==============
+Requirements
+==============
+
+python 2.6
+postgresql
+postgis
+GDAL
+libxml2
+libxslt

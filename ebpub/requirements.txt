@@ -1,0 +1,4 @@
+django
+GDAL<1.7.0
+pyyaml
+psycopg2

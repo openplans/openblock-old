@@ -1,0 +1,18 @@
+import os, subprocess
+
+def after_install(options, home_dir):
+    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'virtualenv'])
+    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'pip'])
+    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'paver'])
+    subprocess.call([join(home_dir, 'bin', 'paver'), 'post_bootstrap'])
+
+def adjust_options(options, args):
+    args[:] = ['./']
+
+def extend_parser(optparse_parser):
+    # flip-flop the default on whether to utilize site packages
+    optparse_parser.remove_option('--no-site-packages')
+    optparse_parser.add_option('--use-site-packages',
+                               dest='no_site_packages',
+                               action='store_false',
+                               default=True)
