@@ -61,7 +61,11 @@ def main():
             item.item_date = datetime.datetime(*entry.updated_parsed[:6])
             item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
             item.location = Point((float(entry['geo_long']), 
-                float(entry['geo_lat'])))
+                                   float(entry['geo_lat'])))
+            if (item.location.x, item.location.y) == (0.0, 0.0):
+                print "Skipping %r, bad location 0,0" % item.title
+                continue
+
             item.save()
             if not options.quiet:
                 print "%s: %s" % (status, item.title)

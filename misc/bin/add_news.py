@@ -24,6 +24,7 @@ def main(argv=None):
     for e in f.entries:
         try:
             item = NewsItem.objects.get(title=e.title, description=e.description)
+            print "Already have %r (id %d)" % (item.title, item.id)
         except NewsItem.DoesNotExist:
             item = NewsItem()
             item.schema = schema
@@ -40,11 +41,22 @@ def main(argv=None):
                 else:
                     x,y = e.georss_point.split(' ')
                 item.location = Point((float(y), float(x)))
-                item.save()
+                if item.location.x == 0.0 and item.location.y == 0.0:
+                    # There's a lot of these. Maybe attempt to
+                    # re-parse the article using ebdata.nlp.addresses
+                    # and re-geocode using ebpub.geocoder?
+                    print "Skipping %r as it has bad location 0,0" % item.title
+                else:
+                    item.save()
+                    print "Added: %s" % item.title
             except:
-                pass
+                print "Warning: couldn't save. Traceback:"
+                import cStringIO, traceback
+                f = cStringIO.StringIO()
+                traceback.print_exc(file=f)
+                msg = f.getvalue()
+                print msg
         
-            print "Added: %s" % item.title
     
 if __name__ == '__main__':
     sys.exit(main())
