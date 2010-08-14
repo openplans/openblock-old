@@ -84,7 +84,8 @@ class MixedCaseAddressParsing(AddressParsing):
         self.assertParses('123 Northeast Main St.', [('123 Northeast Main St.', '')])
 
     def test_address_dir_northwest(self):
-        # There was a typo in the regex for this, but mysteriously it still worked
+        # There was a typo in the regex for this, but mysteriously it
+        # still worked. "fixed" in commit f1457ee5546acce5cbb84b362b70c93cf2101b3a
         self.assertParses('123 Northwest Main St.', [('123 Northwest Main St.', '')])
 
     def test_address_dir_southeast(self):
