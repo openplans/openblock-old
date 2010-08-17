@@ -27,10 +27,12 @@ _required_settings=[
 
 
 EBPUB_DIR = imp.find_module('ebpub')[1]
+EB_DIR = imp.find_module('everyblock')[1]
 
 TEMPLATE_DIRS = (
     os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
     EBPUB_DIR + '/templates',
+    EB_DIR + '/templates',
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -41,6 +43,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 INSTALLED_APPS = (
+    'ebdata.blobs',
     'ebpub.accounts',
     'ebpub.alerts',
     'ebpub.db',
@@ -51,6 +54,14 @@ INSTALLED_APPS = (
     'ebpub.streets',
     'django.contrib.humanize',
     'django.contrib.sessions',
+
+    # Only need these 2 for some admin tasks, eg. configuration for
+    # some scraper-related stuff for the everyblock package.  But I
+    # haven't tried to figure out yet which scrapers this might be
+    # useful for.
+    'everyblock.admin',
+    'everyblock.staticmedia',
+
 )
 
 ROOT_URLCONF = 'obdemo.urls'

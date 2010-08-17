@@ -67,5 +67,5 @@ http://wiki.github.com/dkukral/everyblock/install-everyblock
 For testing random data you might also want to try
 "obdemo/bin/random_news.py 100"
 ... where 100 is the number of random articles to generate.  You must
-first have some locations in the database; it will assign random news
-articles to random locations.
+first have some locations in the database; it will assign randomly
+generated "news" articles to randomly chosen locations.

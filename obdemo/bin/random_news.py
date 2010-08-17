@@ -38,10 +38,12 @@ def main(count):
         item.location_name = location.name
         # It would be cool to pick a random location within the bounds,
         # but that would take thought... use the center.
-        item.location = location.location.centroid
-
+        try:
+            item.location = location.location.centroid
+        except AttributeError:
+            print "whoops"
+            continue
         print "Added: %s at %s (%s)" % (item.title, location.name, item.location.wkt)
-
         item.save()
 
 

@@ -1,14 +1,10 @@
 /* Re-usable map for (hopefully) all pages needing a map on
  * demo.openblockproject.org.
  *
- * This takes a similar approach to the maps on everyblock.com: since
- * the bounds of the area we care about are fixed at page load time,
- * we can avoid the overhead of XHR requests by embedding the feature
- * clusters for all zoom levels as (generated) javascript on each page
- * that uses this map.
- *
+ * Rewritten to use a more conventional OpenLayers clustering approach:
+ * we use OL's native clustering support, and add a view on the server
+ * that serves un-clustered news items via AJAX.
  */
-
 var map, layer, select, select_vector, newsitems, bounds, selectControl, style;
 if (jQuery.browser.msie) {
     jQuery(window).load(function() {
@@ -19,6 +15,7 @@ if (jQuery.browser.msie) {
         _onload();
     });
 }
+
 function _onload() {
     loadMap();
 }
@@ -32,25 +29,32 @@ var options = {
     maxResolution: 156543.03390625,
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
-
 function loadNewsItems() {
-    newsitems = new OpenLayers.Layer.Markers("NewsItems", {
-        projection: map.displayProjection
+    newsitems = new OpenLayers.Layer.Vector("NewsItems", {
+        projection: map.displayProjection,
+        strategies: [
+            new OpenLayers.Strategy.Fixed()
+            //new OpenLayers.Strategy.Cluster()
+        ],
+        protocol: new OpenLayers.Protocol.HTTP({
+            url: "/api/newsitems.geojson/",
+            /* WILL CHANGE */
+            params: {},
+            format: new OpenLayers.Format.GeoJSON()
+        })
     });
     var scale = "614400"; // TODO: get scale from current zoom level
-    var my_bunches = all_bunches[scale];
-    var icon = new OpenLayers.Icon("/images/news-cluster-icon.png");
-
-    for (i = 0; i < my_bunches.length ; i++) {
-        var bunch_center = my_bunches[i][1];
-        var xy = new OpenLayers.LonLat(bunch_center[0], bunch_center[1]);
-        xy.transform(map.displayProjection, map.projection);
-        var marker = new OpenLayers.Marker(xy, icon.clone());
-        newsitems.addMarker(marker);
-    }
+    // var my_bunches = all_bunches[scale];
+    // var icon = new OpenLayers.Icon("/images/news-cluster-icon.png");
+    // for (i = 0; i < my_bunches.length ; i++) {
+    //     var bunch_center = my_bunches[i][1];
+    //     var xy = new OpenLayers.LonLat(bunch_center[0], bunch_center[1]);
+    //     xy.transform(map.displayProjection, map.projection);
+    //     var marker = new OpenLayers.Marker(xy, icon.clone());
+    //     newsitems.addMarker(marker);
+    // }
     return newsitems;
 };
-
 function loadMap() {
     map = new OpenLayers.Map('detailmap', options);
     var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
@@ -71,13 +75,10 @@ function loadMap() {
             }
         }
     });
-    // NYC:
-    //var bounds = new OpenLayers.Bounds(-74.047185, 40.679648, -73.907005, 40.882078);
-    // Boston... need better coords, got this empirically.
     var newsitems = loadNewsItems();
     map.addLayers([osm, newsitems]);
     newsitems.setVisibility(true);
-//    newsitems.refresh();
+    //newsitems.refresh();
     var center = new OpenLayers.LonLat(-71.061667, 42.357778);
     center.transform(map.displayProjection, map.projection);
     map.setCenter(center, 12);
