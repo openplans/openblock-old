@@ -7,12 +7,12 @@ edit them as desired.
 # CORE DJANGO SETTINGS #
 ########################
 
-#DATABASE_NAME = ''
-#DATABASE_USER = ''
-#DATABASE_PASSWORD = ''
-#DATABASE_HOST = ''
-#DATABASE_PORT = ''
-#DEBUG = True
+DATABASE_NAME = 'openblock'
+DATABASE_USER = 'openblock'
+DATABASE_PASSWORD = 'openblock' 
+DATABASE_HOST = ''
+DATABASE_PORT = ''
+DEBUG = True
 
 
 #########################
@@ -20,43 +20,43 @@ edit them as desired.
 #########################
 
 # The domain for your site.
-#EB_DOMAIN = 'example.com'
+EB_DOMAIN = 'localhost'
 
 # This is the short name for your city, e.g. "chicago".
-#SHORT_NAME = 'boston'
+SHORT_NAME = 'boston'
 
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
 # secret.
-#PASSWORD_CREATE_SALT = ''
-#PASSWORD_RESET_SALT = ''
+PASSWORD_CREATE_SALT = 'openblock'
+PASSWORD_RESET_SALT = 'openblock'
 
-#EB_MEDIA_ROOT = '' # necessary for static media versioning
-#EB_MEDIA_URL = '' # leave at '' for development
+EB_MEDIA_ROOT = '' # necessary for static media versioning
+EB_MEDIA_URL = '' # leave at '' for development
 
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
 # Used only by ebgeo/maps/tess.py
-#SHAPEFILE_ROOT = ''
+SHAPEFILE_ROOT = ''
 
 # Connection info for mapserver.
-#MAPS_POSTGIS_HOST = '127.0.0.1'
-#MAPS_POSTGIS_USER = ''
-#MAPS_POSTGIS_PASS = ''
-#MAPS_POSTGIS_DB = ''
+MAPS_POSTGIS_HOST = '127.0.0.1'
+MAPS_POSTGIS_USER = ''
+MAPS_POSTGIS_PASS = ''
+MAPS_POSTGIS_DB = ''
 
 # This is used as a "From:" in e-mails sent to users.
-#GENERIC_EMAIL_SENDER = 'example@example.com'
+GENERIC_EMAIL_SENDER = 'openblock@localhost'
 
 # Filesystem location of scraper log.
-#SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
+SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
 
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
-#STAFF_COOKIE_NAME = ''
-#STAFF_COOKIE_VALUE = ''
+STAFF_COOKIE_NAME = 'obstaff'
+STAFF_COOKIE_VALUE = 'obstaff'
 
 # What kinds of news to show on the homepage.
-#DEFAULT_HOMEPAGE_NEWSTYPES = [u'news-articles']
+HOMEPAGE_DEFAULT_NEWSTYPES = [u'news-articles']
 
 # How many days of news to show on the homepage & elsewhere.
-#DEFAULT_DAYS = 30
+DEFAULT_DAYS = 30
