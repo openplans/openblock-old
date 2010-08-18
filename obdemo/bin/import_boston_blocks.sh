@@ -3,7 +3,7 @@
 # Based on http://wiki.github.com/dkukral/everyblock/install-everyblock
 
 SOURCE_ROOT=`dirname $0`
-SOURCE_ROOT=`cd $SOURCE_ROOT/.. && pwd`
+SOURCE_ROOT=`cd $SOURCE_ROOT/../.. && pwd`
 echo $SOURCE_ROOT
 
 export DJANGO_SETTINGS_MODULE=obdemo.settings
