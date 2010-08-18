@@ -34,6 +34,16 @@ here: http://blip.tv/file/1957362
 
 
 =============
+Quickstart
+=============
+
+$ python bootstrap.py
+$ source bin/activate
+$ sudo -u postgres paver create_demo_database
+$ obdemo/manage.py syncdb
+$ obdemo/manage.py runserver
+
+=============
 Contents
 =============
 
@@ -120,3 +130,15 @@ I'm not even sure if this is used on everyblock.com anymore.
 Probably not useful to most OpenBlock users.
 
 For more information, see ebwiki/README.TXT
+
+
+==============
+Requirements
+==============
+
+python 2.6
+postgresql
+postgis
+GDAL
+libxml2
+libxslt
