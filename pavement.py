@@ -22,7 +22,8 @@ options(
     openblock_packages=[
         'ebgeo',
         'ebpub',
-        'ebdata'
+        'ebdata',
+        'everyblock'
     ],
     source_dir = '.',
 
@@ -113,16 +114,25 @@ def post_bootstrap(options):
 
 
 @task
-def create_demo_database(options):
+def install_demo(options):
+    """
+    sets up the obdemo package.
+    """
+    sh('bin/pip install -e obdemo -E.')
+
     # create openblock settings if none have been created
-    real_settings = os.path.join('obdemo', 'real_settings.py')
-    default_settings = os.path.join('obdemo', 'real_settings.py.in')
+    real_settings = os.path.join('obdemo', 'obdemo', 'real_settings.py')
+    default_settings = os.path.join('obdemo', 'obdemo', 'real_settings.py.in')
     
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
         sh('cp %s %s' % (default_settings, real_settings))
-    
-    sys.path.append('.')    
+
+    print "\nThe obdemo package is now installed."
+    print "Please review the settings in %s." % real_settings
+
+@task
+def create_demo_db(options):
     import obdemo.settings
     create_databases(options, obdemo.settings)
 

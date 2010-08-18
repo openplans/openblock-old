@@ -14,6 +14,39 @@ project at http://openblockproject.org.
 Funding for the creation of Everyblock and the ongoing development of
 OpenBlock is provided by the Knight Foundation.
 
+====================
+System Requirements
+====================
+
+python 2.6
+postgresql
+postgis
+GDAL
+libxml2
+libxslt
+
+=============
+Quickstart
+=============
+
+For detailed instructions and further steps, see obdemo/README.txt::
+
+$ python bootstrap.py
+$ source bin/activate 
+
+$ paver install_demo
+$ sudo -u postgres paver create_demo_db
+$ django-admin.py syncdb --settings=obdemo.settings
+$ django-admin.py runserver --settings=obdemo.settings
+
+
+If all goes well, you should be able to visit the site at:
+http://localhost:8000 
+
+If you encounter problems, double check that you have the basic system
+requirements installed and then have a look at the step-by-step instructions.
+
+
 ==============
 For Developers
 ==============
@@ -33,15 +66,6 @@ data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
 here: http://blip.tv/file/1957362
 
 
-=============
-Quickstart
-=============
-
-$ python bootstrap.py
-$ source bin/activate
-$ sudo -u postgres paver create_demo_database
-$ obdemo/manage.py syncdb
-$ obdemo/manage.py runserver
 
 =============
 Contents
@@ -132,13 +156,3 @@ Probably not useful to most OpenBlock users.
 For more information, see ebwiki/README.TXT
 
 
-==============
-Requirements
-==============
-
-python 2.6
-postgresql
-postgis
-GDAL
-libxml2
-libxslt
