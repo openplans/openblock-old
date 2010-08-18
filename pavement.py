@@ -259,6 +259,15 @@ def create_databases(options, settings):
     for filename in postgis_files: 
         sh("psql -d %s -f %s" % (dbname, filename))
 
+    # make the postgis tables accessable to openblock user
+    print "granting rights on postgis tables to %s" % dbuser
+    conn = psycopg2.connect(database=dbname, **dbcfg)
+    cur = conn.cursor()
+    cur.execute("GRANT ALL ON TABLE geometry_columns TO %s;" % dbuser)
+    cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO %s;" % dbuser)
+    conn.commit()
+    conn.close()
+
     print "Success. database %s created." % dbname
 
 
