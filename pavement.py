@@ -26,10 +26,23 @@ options(
     ],
     source_dir = '.',
 
-    # paths that will be searched for suitable postgis
+    # paths that will be searched for suitable postgis 
+    # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
-                     '/usr/share/postgresql-8.3-postgis']
+                     '/usr/share/postgresql-8.3-postgis',
+                     '/usr/local/pgsql/share/contrib/postgis-1.5',
+                     '/opt/local/share/postgresql84/contrib/postgis-1.5'
+    ]
 )
+
+@task
+def install_aggdraw(options):
+    """
+    workaround for broken aggdraw on certain
+    platforms, may require additional fixes for
+    64 bit plaforms, unclear.
+    """
+    sh('env CFLAGS=-fpermissive bin/pip install aggdraw -E .')
 
 @task
 def install_gdal(options):
@@ -72,7 +85,7 @@ def install_gdal(options):
     sh(build, cwd='build/GDAL')
 
 @task
-@needs('install_gdal')
+@needs('install_gdal', 'install_aggdraw')
 def install_requirements(options):
     """
     install dependancies listed in the
@@ -91,7 +104,7 @@ def install_requirements(options):
 def install_ob_packages(options):
     for package_name in options.openblock_packages:
         package_dir = os.path.join(options.source_dir, package_name)
-        sh('bin/pip install -e %s' % package_dir)
+        sh('bin/pip install -e %s -E.' % package_dir)
 
 @task
 @needs('install_ob_packages')
