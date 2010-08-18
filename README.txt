@@ -37,7 +37,7 @@ here: http://blip.tv/file/1957362
 Quickstart
 =============
 
-$ python boostrap.py
+$ python bootstrap.py
 $ source bin/activate
 $ sudo -u postgres paver create_demo_database
 $ obdemo/manage.py syncdb
