@@ -27,13 +27,16 @@ options(
     ],
     source_dir = '.',
 
+    app='obdemo',
+
     # paths that will be searched for suitable postgis 
     # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
                      '/usr/share/postgresql-8.3-postgis',
                      '/usr/local/pgsql/share/contrib/postgis-1.5',
                      '/opt/local/share/postgresql84/contrib/postgis-1.5'
-    ]
+    ],
+    default_postgis_template='template_postgis'
 )
 
 @task
@@ -114,27 +117,22 @@ def post_bootstrap(options):
 
 
 @task
-def install_demo(options):
+def install_app(options):
     """
-    sets up the obdemo package.
+    sets up django app options.app
     """
-    sh('bin/pip install -e obdemo -E.')
+    sh('bin/pip install -e %s -E.' % options.app)
 
     # create openblock settings if none have been created
-    real_settings = os.path.join('obdemo', 'obdemo', 'real_settings.py')
-    default_settings = os.path.join('obdemo', 'obdemo', 'real_settings.py.in')
+    real_settings = os.path.join(options.app, options.app, 'real_settings.py')
+    default_settings = os.path.join(options.app, options.app, 'real_settings.py.in')
     
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
         sh('cp %s %s' % (default_settings, real_settings))
 
-    print "\nThe obdemo package is now installed."
+    print "\nThe %s package is now installed." % options.app
     print "Please review the settings in %s." % real_settings
-
-@task
-def create_demo_db(options):
-    import obdemo.settings
-    create_databases(options, obdemo.settings)
 
 def find_postgis(options): 
     file_sets = (
@@ -153,63 +151,50 @@ def find_postgis(options):
                 return [os.path.join(path, filename) for filename in files]
     return None
 
-def create_databases(options, settings):
-    """
-    create databases referenced in django settings.
-    """
 
-    # find postgis before we get into messing around with 
-    # other stuff too deeply.
-    postgis_files = find_postgis(options)
-    if not postgis_files: 
-        print "Cannot locate postgis sql!"
-        sys.exit(1)
+def get_app_settings(options):
+    settings_module = '%s.settings' % options.app
+    __import__(settings_module)
+    return sys.modules[settings_module] 
 
-    import psycopg2
-
-    # just supports 'the one' database for now
-     
+def get_db_cfg(settings):
     dbhost = settings.DATABASE_HOST
     dbport = settings.DATABASE_PORT
-    dbname = settings.DATABASE_NAME
-    dbuser = settings.DATABASE_USER
-    dbpass = settings.DATABASE_PASSWORD
 
     dbcfg = {}
     if dbhost:
         dbcfg['host'] = dbhost
     if dbport:
         dbcfg['port'] = dbport
+    return dbcfg
 
-    #####################################
-    #
-    # check connection
-    #
-    #####################################
+@task
+@needs('create_postgis_template')
+def setup_db(options):
+    """
+    create application database.
+    """
+    import psycopg2
 
-    # try to connect to the postgres database
-    try:
-        conn = psycopg2.connect(database="postgres", **dbcfg)
-        print "Connected to postgres"
-    except psycopg2.OperationalError:
-        # settings or current user are wrong ?
-        traceback.print_exc()
-        print "Couldn't connect to postgres."
-        sys.exit(1)
+    settings = get_app_settings(options)
+    dbcfg = get_db_cfg(settings)
+    conn = psycopg2.connect(database="postgres", **dbcfg)
 
     ################################
     #
-    # create user
+    # create app user
     #
     ################################
+    dbuser = settings.DATABASE_USER
+    dbpass = settings.DATABASE_PASSWORD
 
-    # test if the user exists
     cur = conn.cursor()
+    # test if the user exists
     cur.execute("SELECT COUNT(*) FROM pg_roles WHERE rolname='%s';" % dbuser)
     if cur.fetchone()[0] == 0:
         try:
             print "Creating user '%s'..." % dbuser
-            cur.execute("CREATE ROLE %s PASSWORD '%s' NOSUPERUSER NOCREATEDB NOCREATEROLE LOGIN;" % 
+            cur.execute("CREATE ROLE %s PASSWORD '%s' NOSUPERUSER CREATEDB NOCREATEROLE LOGIN;" % 
                         (dbuser, dbpass))
             conn.commit()
         except:
@@ -219,45 +204,88 @@ def create_databases(options, settings):
     else:
         print "User '%s' already exists, leaving it alone..." % dbuser
 
-    ##################################
-    #
-    # create database
-    #
-    ##################################
 
+    ################################
+    #
+    # create app database
+    #
+    ################################
+    dbname = settings.DATABASE_NAME
+    template = settings.POSTGIS_TEMPLATE
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    # check if the openblock database already exists
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 dbname)
     if cur.fetchone()[0] != 0:
-        print "Database %s already exists, leaving it alone..." % dbname
+        print "Database '%s' already exists, leaving it alone..." % dbname
         return
 
     print "Creating database %s'" % dbname
     try:
-        cur.execute("CREATE DATABASE %s OWNER %s;" % (dbname, dbuser))
+        cur.execute("CREATE DATABASE %s OWNER %s TEMPLATE %s;" % (dbname, dbuser, template))
     except:
         traceback.print_exc()
-        print "Failed to create database."
+        print "Failed to create database %s" % dbname
+        sys.exit(1)
+    
+    print "Success. created database %s owned by %s" % (dbname, dbuser)
+    
+@task
+def create_postgis_template(options):
+
+    import psycopg2
+
+    settings = get_app_settings(options)
+    dbcfg = get_db_cfg(settings)
+    conn = psycopg2.connect(database="postgres", **dbcfg)
+
+    ##################################
+    #
+    # create template
+    #
+    ##################################
+
+    template = settings.POSTGIS_TEMPLATE
+
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+    # check if the openblock database already exists
+    cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
+                template)
+    if cur.fetchone()[0] != 0:
+        print "Database '%s' already exists, leaving it alone..." % template
+        return
+
+    postgis_files = find_postgis(options)
+    if not postgis_files: 
+        print "Cannot locate postgis sql.  Please verify that PostGIS is installed."
+        sys.exit(1)
+
+    print "Creating template %s'" % template
+    try:
+        cur.execute("CREATE DATABASE %s ENCODING 'UTF8';" % template)
+        cur.execute("UPDATE pg_database set datistemplate = true where datname='%s';" % template)
+    except:
+        traceback.print_exc()
+        print "Failed to create template %s" % template
         sys.exit(1)
 
     # cool, reconnect to our new database.
-    print "reconnecting to database %s" % dbname 
-    conn = psycopg2.connect(database=dbname, **dbcfg)
+    print "reconnecting to database %s" % template 
+    conn = psycopg2.connect(database=template, **dbcfg)
     cur = conn.cursor()
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 
     #################################
     #
     # create plpgsql language
     #
     #################################
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur.execute("SELECT COUNT(*) from pg_language where lanname='plpgsql';")
     if cur.fetchone()[0] == 0:
         print "creating language plpgsql..."
         cur.execute("CREATE LANGUAGE plpgsql;")
     else:
-        print "language plpgsql already exists, moving on..."
+        print "Language 'plpgsql' already exists.  moving on..."
     conn.close()
 
     ###################################
@@ -267,17 +295,16 @@ def create_databases(options, settings):
     ###################################
     print "Loading postgis from %s" % ', '.join(postgis_files)
     for filename in postgis_files: 
-        sh("psql -d %s -f %s" % (dbname, filename))
+        sh("psql -d %s -f %s" % (template, filename))
 
-    # make the postgis tables accessable to openblock user
-    print "granting rights on postgis tables to %s" % dbuser
-    conn = psycopg2.connect(database=dbname, **dbcfg)
+    # make the postgis tables accessable to public
+    print "granting rights on postgis tables to public";
+    
+    conn = psycopg2.connect(database=template, **dbcfg)
     cur = conn.cursor()
-    cur.execute("GRANT ALL ON TABLE geometry_columns TO %s;" % dbuser)
-    cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO %s;" % dbuser)
+    cur.execute("GRANT ALL ON TABLE geometry_columns TO PUBLIC;")
+    cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO PUBLIC;")
     conn.commit()
-    conn.close()
 
-    print "Success. database %s created." % dbname
-
-
+    print "created postgis template %s." % template
+    

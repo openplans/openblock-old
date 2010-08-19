@@ -25,6 +25,7 @@ _required_settings=[
     'DEBUG',
 ]    
 
+POSTGIS_TEMPLATE = 'template_postgis'
 
 EBPUB_DIR = imp.find_module('ebpub')[1]
 EB_DIR = imp.find_module('everyblock')[1]
@@ -63,6 +64,7 @@ INSTALLED_APPS = (
     'everyblock.staticmedia',
 
 )
+TEST_RUNNER='django.contrib.gis.tests.run_tests'
 
 ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (

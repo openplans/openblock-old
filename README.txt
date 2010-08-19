@@ -29,13 +29,13 @@ libxslt
 Quickstart
 =============
 
-For detailed instructions and further steps, see obdemo/README.txt::
+For detailed instructions and further steps, see obdemo/README.txt
 
 $ python bootstrap.py
 $ source bin/activate 
 
-$ paver install_demo
-$ sudo -u postgres paver create_demo_db
+$ paver install_app
+$ sudo -u postgres paver create_db
 $ django-admin.py syncdb --settings=obdemo.settings
 $ django-admin.py runserver --settings=obdemo.settings
 
@@ -45,7 +45,6 @@ http://localhost:8000
 
 If you encounter problems, double check that you have the basic system
 requirements installed and then have a look at the step-by-step instructions.
-
 
 ==============
 For Developers
