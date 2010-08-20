@@ -21,7 +21,7 @@ System Requirements
 python 2.6
 postgresql
 postgis
-GDAL
+libgdal
 libxml2
 libxslt
 
@@ -30,6 +30,9 @@ Quickstart
 =============
 
 For detailed instructions and further steps, see obdemo/README.txt
+
+$ git checkout git://github.com/openplans/openblock.git
+$ cd openblock
 
 $ python bootstrap.py
 $ source bin/activate 
