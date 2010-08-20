@@ -38,7 +38,7 @@ $ python bootstrap.py
 $ source bin/activate 
 
 $ paver install_app
-$ sudo -u postgres paver create_db
+$ sudo -u postgres bin/paver setup_db
 $ django-admin.py syncdb --settings=obdemo.settings
 $ django-admin.py runserver --settings=obdemo.settings
 
