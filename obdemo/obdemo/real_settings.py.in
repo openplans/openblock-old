@@ -31,7 +31,10 @@ SHORT_NAME = 'boston'
 PASSWORD_CREATE_SALT = 'openblock'
 PASSWORD_RESET_SALT = 'openblock'
 
-EB_MEDIA_ROOT = '' # necessary for static media versioning
+# You probably don't need to override this, the setting in settings.py
+# should work out of the box.
+#EB_MEDIA_ROOT = '' # necessary for static media versioning.
+
 EB_MEDIA_URL = '' # leave at '' for development
 
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
