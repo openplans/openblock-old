@@ -6,9 +6,8 @@ test basic system expectations (libs etc)
 not even pretending unix isn't required
 verbosity is rather extreme
 network requirement is ugly, cache
-
-demo: 
-generate unique values for certain configuration params
+generate unique values for certain configuration params (cookies etc)
+bad existing postgis_template can interfere with install, test
 """
 
 import os
@@ -20,12 +19,15 @@ options(
     # packages to activate 
     # order matters! dependants first
     openblock_packages=[
+        'obutil',
         'ebgeo',
         'ebpub',
         'ebdata',
         'everyblock'
     ],
-    source_dir = '.',
+
+    # assumes pavement.py is in source_dir/obutil/obutil/pavement.py
+    source_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
 
     app='obdemo',
 
@@ -40,13 +42,25 @@ options(
 )
 
 @task
+def auto(options):
+    # determine the root of the virutal env
+    options.env_root = os.path.abspath(os.environ.get('VIRTUAL_ENV', '.'))
+    # XXX better test.
+    if not os.path.exists(os.path.join(options.env_root, 'bin', 'paver')): 
+        print "It does not appear that your virutal environment is activated or that you are in its root."
+        print "please activate your environment and try again."
+        sys.exit(0)
+    print "Using virtual env %s" % options.env_root
+
+@task
 def install_aggdraw(options):
     """
     workaround for broken aggdraw on certain
     platforms, may require additional fixes for
     64 bit plaforms, unclear.
     """
-    sh('env CFLAGS=-fpermissive bin/pip install aggdraw -E .')
+    os.chdir(options.env_root)
+    sh('env CFLAGS=-fpermissive %s/bin/pip install aggdraw' % options.env_root)
 
 @task
 def install_gdal(options):
@@ -55,13 +69,20 @@ def install_gdal(options):
     package.
     """
 
-    sh('bin/pip install GDAL\<1.7 --no-install')
-    if not os.path.exists('build/GDAL'):
+    libgdal_version = sh('gdal-config --version', capture=True)
+    gdal_req = libgdal_version.split('.')
+    gdal_req = '.'.join([gdal_req[0], str(int(gdal_req[1]) + 1)])
+
+    print "Looks like you have libgdal version %s" % libgdal_version
+    print "trying to get python package version <%s" % gdal_req
+
+    sh('%s/bin/pip install GDAL\<%s --no-install' % (options.env_root, gdal_req))
+    if not os.path.exists('%s/build/GDAL' % options.env_root):
         return
 
     # has bad settings for gdal-config that 
     # confuse setup.py
-    sh('rm build/GDAL/setup.cfg',
+    sh('rm %s/build/GDAL/setup.cfg' % options.env_root,
        ignore_error=True)
 
     # also, library and include dirs are just
@@ -79,14 +100,14 @@ def install_gdal(options):
             lib_config.split() 
             if x.startswith('-l')] 
     
-    build = '../../bin/python setup.py build_ext'
+    build = '%s/bin/python setup.py build_ext' % options.env_root
     build += ' --gdal-config=gdal-config'
     build += ' --library-dirs=%s' % ':'.join(lib_dirs)
     build += ' --libraries=%s' % ':'.join(libs)
     build += ' --include-dirs=%s' % ':'.join(includes)
     build += ' install'
 
-    sh(build, cwd='build/GDAL')
+    sh(build, cwd='%s/build/GDAL' % options.env_root)
 
 @task
 @needs('install_gdal', 'install_aggdraw')
@@ -101,31 +122,31 @@ def install_requirements(options):
                                 package_name, 
                                 'requirements.txt')
         if os.path.exists(req_file):
-            sh('bin/pip install -r %s' % req_file)
+            sh('%s/bin/pip install -r %s' % (options.env_root, req_file))
 
 @task
 @needs('install_requirements')
 def install_ob_packages(options):
     for package_name in options.openblock_packages:
         package_dir = os.path.join(options.source_dir, package_name)
-        sh('bin/pip install -e %s -E.' % package_dir)
+        sh('%s/bin/pip install -e %s' % (options.env_root, package_dir))
 
 @task
 @needs('install_ob_packages')
 def post_bootstrap(options):
     print "Success! OpenBlock packages installed."
 
-
 @task
 def install_app(options):
     """
     sets up django app options.app
     """
-    sh('bin/pip install -e %s -E.' % options.app)
+    app_dir = os.path.join(options.source_dir, options.app)
+    sh('%s/bin/pip install -e %s' % (options.env_root, app_dir))
 
     # create openblock settings if none have been created
-    real_settings = os.path.join(options.app, options.app, 'real_settings.py')
-    default_settings = os.path.join(options.app, options.app, 'real_settings.py.in')
+    real_settings = os.path.join(options.source_dir, options.app, options.app, 'real_settings.py')
+    default_settings = os.path.join(options.source_dir, options.app, options.app, 'real_settings.py.in')
     
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
@@ -307,4 +328,14 @@ def create_postgis_template(options):
     conn.commit()
 
     print "created postgis template %s." % template
-    
+
+def main():
+    import os
+    import sys
+    from paver.tasks import main as paver_main
+    args = ['-f',  os.path.join(os.path.dirname(__file__), 'pavement.py')]
+    args = args + sys.argv[1:]
+    paver_main(args)
+
+if __name__ == '__main__':
+    main()

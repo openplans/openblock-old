@@ -31,14 +31,14 @@ Quickstart
 
 For detailed instructions and further steps, see obdemo/README.txt
 
-$ git checkout git://github.com/openplans/openblock.git
-$ cd openblock
+$ mkdir openblock && mkdir openblock/src && cd openblock
+$ git checkout git://github.com/openplans/openblock.git src/openblock
 
-$ python bootstrap.py
-$ source bin/activate 
+$ python src/openblock/bootstrap.py
+$ source bin/activate
 
-$ paver install_app
-$ sudo -u postgres bin/paver setup_db
+$ obenv install_app
+$ sudo -u postgres bin/obenv setup_db
 $ django-admin.py syncdb --settings=obdemo.settings
 $ django-admin.py runserver --settings=obdemo.settings
 
@@ -157,4 +157,7 @@ Probably not useful to most OpenBlock users.
 
 For more information, see ebwiki/README.TXT
 
+obutil
+======
 
+installation and utilities package for openblock virtual envs
