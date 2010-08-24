@@ -28,7 +28,7 @@ options(
     source_dir = '.',
 
     app='obdemo',
-
+    user_settings='real_settings',
     # paths that will be searched for suitable postgis 
     # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
@@ -124,8 +124,9 @@ def install_app(options):
     sh('bin/pip install -e %s -E.' % options.app)
 
     # create openblock settings if none have been created
-    real_settings = os.path.join(options.app, options.app, 'real_settings.py')
-    default_settings = os.path.join(options.app, options.app, 'real_settings.py.in')
+    real_settings = os.path.join(options.app, options.app,
+                                 options.user_settings + '.py')
+    default_settings = real_settings + '.in'
     
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
@@ -154,7 +155,12 @@ def find_postgis(options):
 
 def get_app_settings(options):
     settings_module = '%s.settings' % options.app
-    __import__(settings_module)
+    user_settings_module = '%s.%s' % (options.app, options.user_settings)
+    try:
+        __import__(settings_module)
+    except:
+        exit_with_traceback("Problem with %s or %s, see above"
+                            % (settings_module, user_settings_module))
     return sys.modules[settings_module] 
 
 def get_db_cfg(settings):
@@ -198,12 +204,10 @@ def setup_db(options):
                         (dbuser, dbpass))
             conn.commit()
         except:
-            traceback.print_exc()
-            print "Failed to create user."
-            sys.exit(1)
+            exit_with_traceback("Failed to create user.")
+
     else:
         print "User '%s' already exists, leaving it alone..." % dbuser
-
 
     ################################
     #
@@ -223,9 +227,7 @@ def setup_db(options):
     try:
         cur.execute("CREATE DATABASE %s OWNER %s TEMPLATE %s;" % (dbname, dbuser, template))
     except:
-        traceback.print_exc()
-        print "Failed to create database %s" % dbname
-        sys.exit(1)
+        exit_with_traceback("Failed to create database %r" % dbname)
     
     print "Success. created database %s owned by %s" % (dbname, dbuser)
     
@@ -265,9 +267,7 @@ def create_postgis_template(options):
         cur.execute("CREATE DATABASE %s ENCODING 'UTF8';" % template)
         cur.execute("UPDATE pg_database set datistemplate = true where datname='%s';" % template)
     except:
-        traceback.print_exc()
-        print "Failed to create template %s" % template
-        sys.exit(1)
+        exit_with_traceback("Failed to create template %r" % template)
 
     # cool, reconnect to our new database.
     print "reconnecting to database %s" % template 
@@ -308,3 +308,9 @@ def create_postgis_template(options):
 
     print "created postgis template %s." % template
     
+
+def exit_with_traceback(extra_msg):
+    traceback.print_exc()
+    print "=============================================="
+    print extra_msg
+    sys.exit(1)
