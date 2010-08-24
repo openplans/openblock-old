@@ -118,10 +118,10 @@ def install_manage_script(options):
     creates a manage.py script in $VIRTUALENV so you don't have to
     specify a settings module.
     """
-    import paver.easy
     source = os.path.join(options.app, options.app, 'manage.sh')
     dest = os.path.join(options.source_dir, 'manage.py')
-    paver.easy.path(source).symlink(dest)
+    if not os.path.exists(dest):
+        os.symlink(source, dest)
 
 
 @task
