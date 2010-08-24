@@ -14,3 +14,4 @@ obdemo/tiger_data
 /lib
 /include
 /TileCache
+/manage.py

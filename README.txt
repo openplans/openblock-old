@@ -17,13 +17,16 @@ OpenBlock is provided by the Knight Foundation.
 ====================
 System Requirements
 ====================
+	
+Linux or some other Unix flavor; Mac OSX might work.
 
-python 2.6
+python 2.6  (2.7 might work)
 postgresql
 postgis
 libgdal
 libxml2
 libxslt
+
 
 =============
 Quickstart
@@ -35,12 +38,14 @@ $ git checkout git://github.com/openplans/openblock.git
 $ cd openblock
 
 $ python bootstrap.py
-$ source bin/activate 
 
-$ paver install_app
+Optionally edit obdemo/obdemo/real_settings.py at this stage.
+Now you can set up the database and start the server:
+
+$ source bin/activate 
 $ sudo -u postgres bin/paver setup_db
-$ django-admin.py syncdb --settings=obdemo.settings
-$ django-admin.py runserver --settings=obdemo.settings
+$ ./manage.py syncdb
+$ ./manage.py runserver
 
 
 If all goes well, you should be able to visit the site at:

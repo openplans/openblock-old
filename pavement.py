@@ -109,15 +109,23 @@ def install_ob_packages(options):
     for package_name in options.openblock_packages:
         package_dir = os.path.join(options.source_dir, package_name)
         sh('bin/pip install -e %s -E.' % package_dir)
+    print "Success! OpenBlock packages installed."
 
 @task
 @needs('install_ob_packages')
-def post_bootstrap(options):
-    # we expect this is run automatically by our bootstrap.py script.
-    print "Success! OpenBlock packages installed."
+def install_manage_script(options):
+    """
+    creates a manage.py script in $VIRTUALENV so you don't have to
+    specify a settings module.
+    """
+    import paver.easy
+    source = os.path.join(options.app, options.app, 'manage.sh')
+    dest = os.path.join(options.source_dir, 'manage.py')
+    paver.easy.path(source).symlink(dest)
 
 
 @task
+@needs('install_ob_packages', 'install_manage_script')
 def install_app(options):
     """
     sets up django app options.app
@@ -135,6 +143,14 @@ def install_app(options):
 
     print "\nThe %s package is now installed." % options.app
     print "Please review the settings in %s." % real_settings
+
+
+
+@task
+@needs('install_app')
+def post_bootstrap(options):
+    # we expect this is run automatically by our bootstrap.py script.
+    pass
 
 def find_postgis(options): 
     file_sets = (

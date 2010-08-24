@@ -14,10 +14,8 @@ for the maps.  You can change that by tweaking real_settings.py.
 Quickstart
 ==========
 
-TODO: document how best to get the dependencies, how to use
-virtualenv, how to set up under mod_wsgi, etc.
 
-0. Install PostgreSQL (8.3 or 8.4), PostGIS, Django (version 1.1.1),
+0. Install PostgreSQL (8.3 or 8.4), PostGIS, Django (version 1.1),
 psycopg2, and feedparser.
 
 1. Create a PostGIS database, substituting the db name and user name
@@ -54,6 +52,10 @@ Or for postgresql 8.4, do this::
 6. Run "obdemo/manage.py runserver" and go to http://127.0.0.1:8000/ in your
    Web browser to see the site in action.
 
+
+TODO: document how to set up a virtualenv
+
+TODO: document how to set up under mod_wsgi
 
 Loading Data
 =============
