@@ -48,7 +48,7 @@ $ ./manage.py syncdb
 $ ./manage.py runserver
 
 
-If all goes well, you should be able to visit the site at:
+If all goes well, you should be able to visit the demo site at:
 http://localhost:8000 
 
 If you encounter problems, double check that you have the basic system

@@ -12,7 +12,9 @@ generate unique values for certain configuration params
 """
 
 import os
+import psycopg2
 import traceback
+
 from paver.easy import *
 from paver.setuputils import setup
 
@@ -150,7 +152,7 @@ def install_app(options):
 @needs('install_app')
 def post_bootstrap(options):
     # we expect this is run automatically by our bootstrap.py script.
-    pass
+    print "Once you like your settings, run 'sudo -u postgres bin/paver setup_db'"
 
 def find_postgis(options): 
     file_sets = (
@@ -197,8 +199,10 @@ def setup_db(options):
     """
     create application database.
     """
-    import psycopg2
+    _setup_db(options)
+    print "Success! Now run './manage.py syncdb'"
 
+def _setup_db(options):
     settings = get_app_settings(options)
     dbcfg = get_db_cfg(settings)
     conn = psycopg2.connect(database="postgres", **dbcfg)
@@ -237,7 +241,8 @@ def setup_db(options):
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 dbname)
     if cur.fetchone()[0] != 0:
-        print "Database '%s' already exists, leaving it alone..." % dbname
+        print "Database '%s' already exists, fixing permissions ..." % dbname
+        grant_rights_on_spatial_tables(dbname, **dbcfg)
         return
 
     print "Creating database %s'" % dbname
@@ -245,13 +250,12 @@ def setup_db(options):
         cur.execute("CREATE DATABASE %s OWNER %s TEMPLATE %s;" % (dbname, dbuser, template))
     except:
         exit_with_traceback("Failed to create database %r" % dbname)
-    
+
+    grant_rights_on_spatial_tables(dbname, **dbcfg)
     print "Success. created database %s owned by %s" % (dbname, dbuser)
     
 @task
 def create_postgis_template(options):
-
-    import psycopg2
 
     settings = get_app_settings(options)
     dbcfg = get_db_cfg(settings)
@@ -267,7 +271,7 @@ def create_postgis_template(options):
 
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
-    # check if the openblock database already exists
+    # check if the database already exists
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 template)
     if cur.fetchone()[0] != 0:
@@ -314,16 +318,18 @@ def create_postgis_template(options):
     for filename in postgis_files: 
         sh("psql -d %s -f %s" % (template, filename))
 
-    # make the postgis tables accessable to public
-    print "granting rights on postgis tables to public";
-    
-    conn = psycopg2.connect(database=template, **dbcfg)
+    conn.commit()
+    grant_rights_on_spatial_tables(template, **dbcfg)
+    print "created postgis template %s." % template
+
+
+def grant_rights_on_spatial_tables(database, **dbcfg):    
+    conn = psycopg2.connect(database=database, **dbcfg)
     cur = conn.cursor()
     cur.execute("GRANT ALL ON TABLE geometry_columns TO PUBLIC;")
     cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO PUBLIC;")
     conn.commit()
-
-    print "created postgis template %s." % template
+    print "granting rights on postgis tables to public"
     
 
 def exit_with_traceback(extra_msg):
