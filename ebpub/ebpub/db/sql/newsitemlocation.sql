@@ -7,17 +7,15 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
     DECLARE
         loc_id integer; --
     BEGIN
-        -- The following IF statement is overly verbose because of NULL
-        -- equality. We simply want to do 'NEW.location != OLD.location', but
-        -- that always returns NULL instead of True/False. So we have to spell
-        -- out every possibility.
         IF (TG_OP = 'UPDATE') THEN
             -- In a sane programming language, the following IF statement could
             -- have been combined into the previous one. But we can't do that,
             -- because short-circuit evaluation of boolean expressions is not
             -- guaranteed. See here:
             -- http://archive.netbsd.se/?ml=pgsql-sql&a=2005-09&t=1337824
-            IF ((NEW.location IS NOT NULL AND OLD.location IS NOT NULL AND NEW.location != OLD.location) OR (NEW.location IS NULL AND OLD.location IS NOT NULL) OR (NEW.location IS NOT NULL AND OLD.location IS NULL)) THEN
+
+            IF NEW.location IS DISTINCT FROM OLD.location THEN 
+	    -- ...or maybe we want (NOT ST_Equals(NEW.location, OLD.Location))?
                 IF (OLD.location IS NOT NULL) THEN
                     DELETE FROM db_newsitemlocation WHERE news_item_id = OLD.id; --
                 END IF; --
@@ -42,7 +40,9 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
             SELECT NEW.id AS news_item_id, (SELECT id FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown') AS location_id
             FROM db_locationtype
             WHERE NOT EXISTS (SELECT 1 FROM db_newsitemlocation WHERE news_item_id=NEW.id)
-            AND db_locationtype.is_significant = true; --
+            AND db_locationtype.is_significant = true
+	    AND EXISTS (SELECT 1 FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown')
+	    ; --
         ELSIF (TG_OP = 'INSERT') THEN
             -- See the above comment for why this statement isn't combined into
             -- the previous one.
@@ -66,7 +66,9 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
             SELECT NEW.id AS news_item_id, (SELECT id FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown') AS location_id
             FROM db_locationtype
             WHERE NOT EXISTS (SELECT 1 FROM db_newsitemlocation WHERE news_item_id=NEW.id)
-            AND db_locationtype.is_significant = true; --
+            AND db_locationtype.is_significant = true
+	    AND EXISTS (SELECT 1 FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown')
+	    ; --
         ELSIF (TG_OP = 'DELETE') THEN
             DELETE FROM db_newsitemlocation WHERE news_item_id = OLD.id; --
             RETURN OLD; --
