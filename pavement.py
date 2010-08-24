@@ -55,7 +55,7 @@ def install_gdal(options):
     package.
     """
 
-    sh('bin/pip install GDAL\<1.7 --no-install')
+    sh('bin/pip install GDAL\<1.6a --no-install')
     if not os.path.exists('build/GDAL'):
         return
 
