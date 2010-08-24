@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+
+import virtualenv, os.path
+HERE=os.path.abspath(os.path.dirname(__file__))
+extra_text = open(os.path.join(HERE, 'bootstrap.in')).read()
+output = virtualenv.create_bootstrap_script(extra_text)
+outfile = open(os.path.normpath(os.path.join(HERE, '..', 'bootstrap.py')), 'w')
+outfile.write(output)

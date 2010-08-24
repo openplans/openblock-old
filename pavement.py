@@ -113,6 +113,7 @@ def install_ob_packages(options):
 @task
 @needs('install_ob_packages')
 def post_bootstrap(options):
+    # we expect this is run automatically by our bootstrap.py script.
     print "Success! OpenBlock packages installed."
 
 

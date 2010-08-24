@@ -1,7 +1,7 @@
 import os, subprocess
 
 def after_install(options, home_dir):
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'virtualenv'])
+    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.4.9'])
     subprocess.call([join(home_dir, 'bin', 'easy_install'), 'pip'])
     subprocess.call([join(home_dir, 'bin', 'easy_install'), 'paver'])
     subprocess.call([join(home_dir, 'bin', 'paver'), 'post_bootstrap'])
@@ -16,3 +16,6 @@ def extend_parser(optparse_parser):
                                dest='no_site_packages',
                                action='store_false',
                                default=True)
+    # Use distribute by default.
+    optparse_parser.set_defaults(use_distribute=True)
+
