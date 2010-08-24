@@ -14,6 +14,7 @@ for the maps.  You can change that by tweaking real_settings.py.
 Quickstart
 ==========
 
+To get this demo up and running:
 
 0. Install PostgreSQL (8.3 or 8.4), PostGIS, Django (version 1.1),
 psycopg2, and feedparser.
@@ -57,6 +58,7 @@ TODO: document how to set up a virtualenv
 
 TODO: document how to set up under mod_wsgi
 
+
 Loading Data
 =============
 
@@ -71,3 +73,21 @@ For testing random data you might also want to try
 ... where 100 is the number of random articles to generate.  You must
 first have some locations in the database; it will assign randomly
 generated "news" articles to randomly chosen locations.
+
+
+How The Demo Works
+==================
+
+obdemo uses the following parts of the OpenBlock codebase:
+
+* ebpub does the heavy lifting.
+
+* ebdata is used to feed news data into the system.
+
+* everyblock is used for templates, although we override some of them.
+
+For the maps, we use a free base layer based on Open Street Map and
+hosted by OpenGeo.  Consequently, we don't use ebgeo much, if at all;
+and we don't need Mapnik at all.
+
+We don't currently use ebblog, ebwiki, or ebinternal.

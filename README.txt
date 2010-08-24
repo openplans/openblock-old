@@ -28,9 +28,9 @@ libxml2
 libxslt
 
 
-=============
-Quickstart
-=============
+=====================
+Quickstart: Demo Site
+=====================
 
 For detailed instructions and further steps, see obdemo/README.txt
 
@@ -73,6 +73,13 @@ data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
 here: http://blip.tv/file/1957362
 
 
+==========================================
+Creating a Custom Site Based on OpenBlock
+==========================================
+
+This is documented in the "Quickstart" section of ebpub/README.txt.
+For an example, have a look in obdemo/ which was set up in that
+fashion.
 
 =============
 Contents
@@ -84,12 +91,12 @@ This distribution contains a number of packages, summarized below:
 obdemo
 ======
 
-The configuration used by http://demo.openblockproject.org.
-This is useful as an example of how to set up your own site
-based on OpenBlock, and is a great place to start.
-It primarily uses the ebpub package.
+The code and configuration used by http://demo.openblockproject.org.
+This is useful as an example of how to set up your own site based on
+OpenBlock, and is a great place to start.  It primarily uses the ebpub
+package.
 
-For more information, see demo/README.txt
+For more information, see obdemo/README.txt
 
 
 ebblog
@@ -101,7 +108,6 @@ Only of interest if you want to bundle a simple blog with your
 OpenBlock site; you can probably ignore this.
 
 For more information, see ebblog/README.TXT
-
 
 ebdata
 ======
@@ -120,8 +126,9 @@ ebgeo
 The eb map system. This is mostly used for rendering and serving map
 tiles with Mapnik.
 
-It also contains some clustering display logic used by ebpub, so you
-need to have it installed even if you don't use Mapnik.
+ebgeo also contains some clustering display logic used by ebpub, so
+you need to have it installed even if you don't use Mapnik.
+(TODO: we should break that dependency)
 
 For more information, see ebgeo/README.TXT
 
@@ -132,6 +139,7 @@ ebinternal
 Internal applications for the EveryBlock team.
 
 Most OpenBlock users probably won't need this.
+Not used by obdemo.
 
 ebinternal consists of two apps, citypoll and feedback.  citypoll
 powers EveryBlock's city voting system, both on EveryBlock.com and on
@@ -163,3 +171,12 @@ Probably not useful to most OpenBlock users.
 For more information, see ebwiki/README.TXT
 
 
+everyblock
+===========
+
+This package contains code/templates that are specific to
+EveryBlock.com. They were released to fulfill the terms of the grant
+that funded EveryBlock's development and are likely not of general
+use.
+
+For more information, see everyblock/README.TXT
