@@ -12,7 +12,6 @@ generate unique values for certain configuration params
 """
 
 import os
-import psycopg2
 import traceback
 
 from paver.easy import *
@@ -205,6 +204,7 @@ def setup_db(options):
 def _setup_db(options):
     settings = get_app_settings(options)
     dbcfg = get_db_cfg(settings)
+    import psycopg2
     conn = psycopg2.connect(database="postgres", **dbcfg)
 
     ################################
@@ -237,6 +237,7 @@ def _setup_db(options):
     ################################
     dbname = settings.DATABASE_NAME
     template = settings.POSTGIS_TEMPLATE
+    import psycopg2
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 dbname)
@@ -259,6 +260,7 @@ def create_postgis_template(options):
 
     settings = get_app_settings(options)
     dbcfg = get_db_cfg(settings)
+    import psycopg2
     conn = psycopg2.connect(database="postgres", **dbcfg)
 
     ##################################
@@ -324,6 +326,7 @@ def create_postgis_template(options):
 
 
 def grant_rights_on_spatial_tables(database, **dbcfg):    
+    import psycopg2
     conn = psycopg2.connect(database=database, **dbcfg)
     cur = conn.cursor()
     cur.execute("GRANT ALL ON TABLE geometry_columns TO PUBLIC;")
