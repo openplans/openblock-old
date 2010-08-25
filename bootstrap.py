@@ -1125,10 +1125,15 @@ def create_bootstrap_script(extra_text, python_version=''):
 import os, subprocess
 
 def after_install(options, home_dir):
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.4.9'])
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'pip'])
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'paver'])
-    subprocess.call([join(home_dir, 'bin', 'paver'), 'post_bootstrap'])
+    def call(*args):
+        retcode = subprocess.call(*args)
+        if retcode:
+            raise RuntimeError("Exit status %d from command args %s" %
+                               (retcode, args))
+    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.4.9'])
+    call([join(home_dir, 'bin', 'easy_install'), 'pip'])
+    call([join(home_dir, 'bin', 'easy_install'), 'paver'])
+    call([join(home_dir, 'bin', 'paver'), 'post_bootstrap'])
 
 def adjust_options(options, args):
     args[:] = ['./']
