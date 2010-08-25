@@ -4,7 +4,7 @@ HERE=`dirname $0`
 cd $HERE/../..
 
 echo Getting permission to run as postgres ...
-sudo -u postgres test || exit 1
+sudo -u postgres echo ok || exit 1
 
 echo Dropping openblock DB...
 dropdb openblock
