@@ -38,7 +38,7 @@ echo Shapefiles unzipped in $PWD/tiger_data
 # Now we load them into our blocks table.
 
 
-IMPORTER=`find $SOURCE_ROOT -name import_blocks.py`
+IMPORTER=`find -H $SOURCE_ROOT -name import_blocks.py`
 if [ ! -f "$IMPORTER" ]; then die "Could not find import_blocks.py" ; fi
 
 echo Importing blocks, this may take several minutes ...
