@@ -46,7 +46,7 @@ function loadNewsItems() {
             "default": style
         })
     });
-    var scale = "614400"; // TODO: get scale from current zoom level
+    // var scale = "614400"; // TODO: get scale from current zoom level
     // var my_bunches = all_bunches[scale];
     // var icon = new OpenLayers.Icon("/images/news-cluster-icon.png");
     // for (i = 0; i < my_bunches.length ; i++) {
@@ -56,8 +56,69 @@ function loadNewsItems() {
     //     var marker = new OpenLayers.Marker(xy, icon.clone());
     //     newsitems.addMarker(marker);
     // }
+
+    // ---------------- Popups ------------------------------//
+    var featureSelected = function (feature) {
+        var cluster = feature.cluster;
+        var firstFeature = cluster[0];
+        var featureHtml = ('<div>' + firstFeature.attributes.title +  '</div>');
+        var popup = new OpenLayers.Popup.FramedCloud(
+            null, feature.geometry.getBounds().getCenterLonLat(),
+            null, featureHtml, {
+                size: new OpenLayers.Size(1, 1),
+                offset: new OpenLayers.Pixel(0, 0)
+            },
+            true, function () {
+                selectControl.unselect(feature);
+            });
+        feature.popup = popup;
+        map.addPopup(popup);
+        if (cluster.length > 1) {
+            // Add next/previous nav links to the popup.
+            var navHtml = '<div><a class="popupnav prev" href="#">prev</a>&nbsp;<a class="popupnav next" href="#">next</a></div>';
+            var clusterIdx = 0;
+            var content = popup.contentDiv;
+            var foo = $(content);
+            $(content).append($navHtml); // works in fixcity code but not here??
+            var prev = $(content).find('a.popupnav.prev');
+            var next = $(content).find('a.popupnav.next');
+
+            // Clicking next or previous replaces the nav links html.
+            var replaceHtml = function (f) {
+                $(content).find('a:first').attr('href', '/XXX/' + f.fid);
+                //var thumb = (f.attributes.thumbnail != null) ? f.attributes.thumbnail.value : '/site_media/img/default-rack.jpg';
+                //$(content).find('img').attr('src', thumb);
+            };
+            prev.click(function (e) {
+                e.preventDefault();
+                clusterIdx = (clusterIdx == 0) ? cluster.length - 1 : clusterIdx - 1;
+                replaceHtml(cluster[clusterIdx]);
+                // popup.draw();
+            });
+            next.click(function (e) {
+                e.preventDefault();
+                clusterIdx = (clusterIdx == cluster.length - 1) ? 0 : clusterIdx + 1;
+                replaceHtml(cluster[clusterIdx]);
+               // popup.draw();
+            });
+        }
+    };
+    var featureUnselected = function (feature) {
+        map.removePopup(feature.popup);
+        feature.popup.destroy();
+        feature.popup = null;
+    };
+    var selectControl = new OpenLayers.Control.SelectFeature(newsitems, {
+        onSelect: featureSelected,
+        onUnselect: featureUnselected
+    });
+    map.addControl(selectControl);
+    selectControl.activate();
+    // ---------------- End of Popups code -------------------------//
+
     return newsitems;
 };
+
 function loadMap() {
     map = new OpenLayers.Map('detailmap', options);
     var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
