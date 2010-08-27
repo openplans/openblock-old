@@ -5,7 +5,8 @@
  * we use OL's native clustering support, and add a view on the server
  * that serves un-clustered news items via AJAX.
  */
-var map, layer, select, select_vector, newsitems, bounds, selectControl, style;
+var map, newsitems, style;
+
 if (jQuery.browser.msie) {
     jQuery(window).load(function() {
         _onload();
@@ -33,14 +34,16 @@ function loadNewsItems() {
     newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
         strategies: [
-            new OpenLayers.Strategy.Fixed()
-            //new OpenLayers.Strategy.Cluster()
+            new OpenLayers.Strategy.Fixed(),
+            new OpenLayers.Strategy.Cluster()
         ],
         protocol: new OpenLayers.Protocol.HTTP({
-            url: "/api/newsitems.geojson/",
-            /* WILL CHANGE */
+            url: "/api/newsitems.geojson/", /* WILL CHANGE */
             params: {},
             format: new OpenLayers.Format.GeoJSON()
+        }),
+        styleMap: new OpenLayers.StyleMap({
+            "default": style
         })
     });
     var scale = "614400"; // TODO: get scale from current zoom level
@@ -65,13 +68,22 @@ function loadMap() {
         wrapDateLine: true
     });
     style = new OpenLayers.Style({
-        //pointRadius: "${radius}",
-        //externalGraphic: "${url}"
-    }, {
+        pointRadius: "${radius}",
+        fillColor: "#edbc22",
+        fillOpacity: 0.7,
+        strokeColor: "#cc6633",
+        strokeWidth: 2,
+        strokeOpacity: 0.8,
+        label: "${getlabel}",
+        fontColor: "#ffffff",
+        fontSize: 14
+        }, {
         context: {
-            url: "/images/news-cluster-icon.png",
             radius: function(feature) {
-                return Math.min(feature.attributes.count * 2, 8) + 5;
+                return 8 + Math.min(feature.attributes.count * 1.8, 20);
+            },
+            getlabel: function(feature) {
+                return feature.attributes.count;
             }
         }
     });

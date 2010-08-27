@@ -5,7 +5,14 @@
 
 {% block content %}
 <div id="content">
+  <style type="text/css">
+    #frontpage-text { float: left }
+    #mapwrapper { float: right; }
+    #detailmap { width: 500px; height: 300px }
+  </style>
+  <div id="frontpage-text">
 	<div id="intro">
+
 		<div id="intro-search">
 			<h2>Search for news</h2>
 			{% with "Address, ZIP or neighborhood" as placeholder %}
@@ -14,6 +21,7 @@
 			</form>
 			{% endwith %}
 		</div>
+
 		<div id="intro-explore">
 			<h2>Locations</h2>
 			<ul>
@@ -24,8 +32,6 @@
 			</ul>
 		</div><!--/ #intro-explore-->
 	</div><!--/ #intro -->
-
-	{% include "map.html" %}
 
 	{% if featured_neighborhood %}
 	<div id="featured-neighborhood">
@@ -93,6 +99,12 @@
 			<li><a href="{{ schema.url }}">{{ schema.plural_name|capfirst }}</a></li>
 		{% endfor %}
 		</ul>
-  </div><!--/ #more -->
+    </div><!--/ #more -->
+  </div><!-- / #front-content -->
+
+  <div id="mapwrapper">
+  {% include "map.html" %}
+  </div>
+
 </div><!--/ #content -->
 {% endblock %}
