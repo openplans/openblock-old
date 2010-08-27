@@ -7,10 +7,10 @@ into ebpub.
 
 from django.http import HttpResponse
 from django.utils import simplejson
-from django.db.models import Q
 
-from ebpub.db.views import parse_pid
 from ebpub.db.views import make_search_buffer
+from ebpub.db.views import map_popups
+from ebpub.db.views import parse_pid
 from ebpub.streets.models import Block
 from ebpub.db.models import NewsItem
 
@@ -31,9 +31,12 @@ def newsitems_geojson(request):
         newsitem_qs = NewsItem.objects.filter(
             newsitemlocation__location__id=place.id)
 
-
+    # Ordering by schema__id is an optimization for map_popups()
+    newsitem_list = list(newsitem_qs.select_related().order_by('schema__id'))
+    popup_list = map_popups(newsitem_list)
+    
     features = {'type': 'FeatureCollection', 'features': []}
-    for newsitem in newsitem_qs:
+    for newsitem, popup_info in zip(newsitem_list, popup_list):
         features['features'].append(
             {'type': 'Feature',
              'geometry': {'type': 'Point',
@@ -42,6 +45,9 @@ def newsitems_geojson(request):
                           },
              'properties': {
                     'title': newsitem.title,
+                    'id': popup_info[0],
+                    'popup_html': popup_info[1],
+                    'schema': popup_info[2],
                     }
              })
     output = simplejson.dumps(features, indent=2)
