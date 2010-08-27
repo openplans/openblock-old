@@ -79,7 +79,7 @@ function loadNewsItems() {
             var clusterIdx = 0;
             var content = popup.contentDiv;
             var foo = $(content);
-            $(content).append($navHtml); // works in fixcity code but not here??
+            $(content).append($(navHtml)); // works in fixcity code but not here??
             var prev = $(content).find('a.popupnav.prev');
             var next = $(content).find('a.popupnav.next');
 
