@@ -18,7 +18,6 @@ import imp
 
 DATABASE_ENGINE = 'postgresql_psycopg2' # ebpub only supports postgresql_psycopg2.
 
-
 _required_settings=[
     'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD',
     'DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_ENGINE',
@@ -174,18 +173,26 @@ EB_TODAY_OVERRIDE = None
 
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
 # Used only by ebgeo/maps/tess.py
+SHAPEFILE_ROOT = ''
 _required_settings.append('SHAPEFILE_ROOT')
 
 # For the 'autoversion' template tag.
 _required_settings.append('AUTOVERSION_STATIC_MEDIA')
 AUTOVERSION_STATIC_MEDIA = False
 
+
 # Connection info for mapserver.
+# Leave these alone if you're not using one;
+# by default obdemo doesn't need it.
+MAPS_POSTGIS_HOST = '127.0.0.1'
+MAPS_POSTGIS_USER = ''
+MAPS_POSTGIS_PASS = ''
+MAPS_POSTGIS_DB = ''
+
 _required_settings.extend([
         'MAPS_POSTGIS_HOST', 'MAPS_POSTGIS_USER', 'MAPS_POSTGIS_PASS',
         'MAPS_POSTGIS_DB',
 ])
-
 
 
 # This is used as a "From:" in e-mails sent to users.
@@ -198,6 +205,7 @@ SPATIAL_REF_SYS = '900913' # Spherical Mercator
 MAP_UNITS = 'm' # see ebgeo.maps.utils for allowed unit types
 
 # Filesystem location of tilecache config (e.g., '/etc/tilecache/tilecache.cfg').
+# obdemo doesn't use a tilecache out of the box.
 TILECACHE_CONFIG = '/etc/tilecache.cfg'
 TILECACHE_ZOOM = 17
 TILECACHE_LAYER = 'osm'
@@ -220,6 +228,7 @@ _required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
 # Re-import from real_settings to override any defaults in this file.
 from real_settings import *
+
 for name in _required_settings:
     if not name in globals():
         raise NameError("Required setting %r was not defined in real_settings.py or settings.py" % name)

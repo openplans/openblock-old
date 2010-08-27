@@ -37,15 +37,6 @@ PASSWORD_RESET_SALT = 'openblock'
 
 EB_MEDIA_URL = '' # leave at '' for development
 
-# Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
-# Used only by ebgeo/maps/tess.py
-SHAPEFILE_ROOT = ''
-
-# Connection info for mapserver.
-MAPS_POSTGIS_HOST = '127.0.0.1'
-MAPS_POSTGIS_USER = ''
-MAPS_POSTGIS_PASS = ''
-MAPS_POSTGIS_DB = ''
 
 # This is used as a "From:" in e-mails sent to users.
 GENERIC_EMAIL_SENDER = 'openblock@localhost'
