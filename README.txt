@@ -11,8 +11,9 @@ Everyblock.com in June 2009.  Originally created by Adrian Holovaty
 and the Everyblock team, it is now developed as an open-source (GPL)
 project at http://openblockproject.org.
 
-Funding for the creation of Everyblock and the ongoing development of
-OpenBlock is provided by the Knight Foundation.
+Funding for the initial creation of Everyblock and the ongoing
+development of OpenBlock is provided by the Knight Foundation
+(http://www.knightfoundation.org/).
 
 ====================
 System Requirements
@@ -26,33 +27,44 @@ postgis
 libgdal
 libxml2
 libxslt
+git
 
+=========================================
+Quickstart: Install and Set Up Demo Site
+=========================================
 
-=====================
-Quickstart: Demo Site
-=====================
+For detailed instructions and further steps, see obdemo/README.txt ::
 
-For detailed instructions and further steps, see obdemo/README.txt
+ $ git checkout git://github.com/openplans/openblock.git
+ $ cd openblock
+ $ python bootstrap.py
 
-$ git checkout git://github.com/openplans/openblock.git
-$ cd openblock
+That will install the software in an isolated python environment
+(using virtualenv: http://pypi.python.org/pypi/virtualenv).
 
-$ python bootstrap.py
+Optionally you can edit obdemo/obdemo/real_settings.py at this stage.
+It's a good idea to look at it, at least to get an idea of what can be
+configured.
 
-Optionally edit obdemo/obdemo/real_settings.py at this stage.
-Now you can set up the database and start the server:
+Now you can set up the database and start the server::
 
-$ source bin/activate 
-$ sudo -u postgres bin/paver setup_db
-$ ./manage.py syncdb
-$ ./manage.py runserver
+ $ source bin/activate 
+ $ sudo -u postgres bin/paver setup_db
+ $ ./manage.py syncdb
+ $ ./manage.py runserver
 
 
 If all goes well, you should be able to visit the demo site at:
 http://localhost:8000 
 
 If you encounter problems, double check that you have the basic system
-requirements installed and then have a look at the step-by-step instructions.
+requirements installed and then have a look at the step-by-step
+instructions in obdemo/README.txt.
+
+For more help, you can try the ebcode group:
+http://groups.google.com/group/ebcode
+or look for us in the #openblock IRC channel on irc.freenode.net.
+
 
 ==============
 For Developers
@@ -65,8 +77,9 @@ the free Django Book (http://www.djangobook.com/). Note that OpenBlock
 requires Django 1.1 and as of this writing does not yet work with
 Django 1.2 or later.
 
-Before you dive in, it's *highly* recommend you spend a little bit of time
-browsing around EveryBlock.com to get a feel for what this software does.
+Before you dive in, it's *highly* recommend you spend a little bit of
+time browsing around http://demo.openblockproject.org and/or
+http://EveryBlock.com to get a feel for what this software does.
 
 Also, for a light conceptual background on some of this, particularly the
 data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
@@ -81,6 +94,11 @@ This is documented in the "Quickstart" section of ebpub/README.txt.
 For an example, have a look in obdemo/ which was set up in that
 fashion.
 
+For installation in this case, you can just use the bootstrap.py
+script and do the rest of the setup by hand.  You can look at
+pavement.py to get an idea of what needs doing, and/or modify it for
+your own use.
+
 =============
 Contents
 =============
@@ -94,7 +112,7 @@ obdemo
 The code and configuration used by http://demo.openblockproject.org.
 This is useful as an example of how to set up your own site based on
 OpenBlock, and is a great place to start.  It primarily uses the ebpub
-package.
+package, and is set up with Boston, MA as the area of interest.
 
 For more information, see obdemo/README.txt
 

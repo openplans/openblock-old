@@ -150,7 +150,7 @@ def install_app(options):
 @task
 @needs('install_app')
 def post_bootstrap(options):
-    # we expect this is run automatically by our bootstrap.py script.
+    # we expect this task is run automatically by our bootstrap.py script.
     print "Once you like your settings, run 'sudo -u postgres bin/paver setup_db'"
 
 def find_postgis(options): 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Quick experimental single-command script that does all the stuff 
+# in ../../README.txt.
+
 HERE=`dirname $0`
 cd $HERE/../..
 
