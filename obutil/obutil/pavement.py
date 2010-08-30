@@ -140,8 +140,8 @@ def install_manage_script(options):
     creates a manage.py script in $VIRTUALENV so you don't have to
     specify a settings module.
     """
-    source = os.path.join(options.app, options.app, 'manage.sh')
-    dest = os.path.join(options.source_dir, 'manage.py')
+    source = os.path.join(options.source_dir, options.app, options.app, 'manage.sh')
+    dest = os.path.join(options.env_root, 'manage.py')
     if not os.path.exists(dest):
         os.symlink(source, dest)
 
@@ -172,7 +172,7 @@ def install_app(options):
 @needs('install_app')
 def post_bootstrap(options):
     # we expect this task is run automatically by our bootstrap.py script.
-    print "Once you like your settings, run 'sudo -u postgres bin/paver setup_db'"
+    print "Once you like your settings, run 'sudo -u postgres bin/oblock setup_db'"
 
 def find_postgis(options): 
     file_sets = (
@@ -277,6 +277,32 @@ def _setup_db(options):
     print "Success. created database %s owned by %s" % (dbname, dbuser)
     
 @task
+def drop_postgis_template(options):
+    settings = get_app_settings(options)
+    dbcfg = get_db_cfg(settings)
+    import psycopg2
+    conn = psycopg2.connect(database="postgres", **dbcfg)
+    template = settings.POSTGIS_TEMPLATE
+
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
+                template)
+    if cur.fetchone()[0] == 0:
+        print "template %s does not exist." % template
+        return
+
+    # set it to a non-template so it can be dropped
+    cur.execute("UPDATE pg_database SET datistemplate = FALSE where datname='%s';" %
+                template)
+    # drop it
+    cur.execute("DROP DATABASE %s;" % template)
+    
+    print "Dropped database %s" % template 
+
+
+@task
 def create_postgis_template(options):
 
     settings = get_app_settings(options)
@@ -341,7 +367,6 @@ def create_postgis_template(options):
     for filename in postgis_files: 
         sh("psql -d %s -f %s" % (template, filename))
 
-    conn.commit()
     grant_rights_on_spatial_tables(template, **dbcfg)
     print "created postgis template %s." % template
 
@@ -354,7 +379,7 @@ def grant_rights_on_spatial_tables(database, **dbcfg):
     cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO PUBLIC;")
     conn.commit()
     print "granting rights on postgis tables to public"
-    
+
 
 def exit_with_traceback(extra_msg):
     traceback.print_exc()
