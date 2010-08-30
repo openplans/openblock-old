@@ -3,6 +3,8 @@
 *.bak
 *~
 ._*
+*#
+.#*
 .DS_Store
 /obdemo/obdemo/real_settings.py
 obdemo/tiger_data
@@ -11,3 +13,6 @@ obdemo/tiger_data
 /bin
 /lib
 /include
+/TileCache
+/manage.py
+/tiger_data

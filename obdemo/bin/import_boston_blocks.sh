@@ -4,49 +4,55 @@
 
 SOURCE_ROOT=`dirname $0`
 SOURCE_ROOT=`cd $SOURCE_ROOT/../.. && pwd`
-echo $SOURCE_ROOT
+echo Source root is $SOURCE_ROOT
 
 export DJANGO_SETTINGS_MODULE=obdemo.settings
 
+
+function die {
+    echo $@ >&2
+    echo Exiting.
+    exit 1
+}
+
+
+rm -rf tiger_data
 mkdir -p tiger_data
-cd tiger_data
+cd tiger_data || die "couldn't cd to $PWD/tiger_data"
 
 # First we download a bunch of zipfiles of TIGER data.
 
 BASEURL=http://www2.census.gov/geo/tiger/TIGER2009/25_MASSACHUSETTS
 ZIPS="tl_2009_25_place.zip 25025_Suffolk_County/tl_2009_25025_edges.zip 25025_Suffolk_County/tl_2009_25025_faces.zip 25025_Suffolk_County/tl_2009_25025_featnames.zip"
 
-# for fname in $ZIPS; do
-#     wget $BASEURL/$fname
-#     if [ $? -ne 0 ]; then
-# 	echo Could not download $BASEURL/$fname
-# 	exit 1
-#     fi
-# done
+for fname in $ZIPS; do
+    wget $BASEURL/$fname
+    if [ $? -ne 0 ]; then
+        die "Could not download $BASEURL/$fname"
+    fi
+done
 
-#for fname in *zip; do unzip $fname; done
+for fname in *zip; do unzip $fname; done
 echo Shapefiles unzipped in $PWD/tiger_data
 
 # Now we load them into our blocks table.
 
 
-IMPORTER=`find $SOURCE_ROOT -name import_blocks.py`
-if [ ! -f "$IMPORTER" ]; then echo Could not find import_blocks.py; exit 1; fi
+IMPORTER=`find -H $SOURCE_ROOT -name import_blocks.py`
+if [ ! -f "$IMPORTER" ]; then die "Could not find import_blocks.py" ; fi
 
-echo Importing blocks...
+echo Importing blocks, this may take several minutes ...
 
-
-#$IMPORTER tl_2009_25025_edges.shp tl_2009_25025_featnames.dbf tl_2009_25025_faces.dbf tl_2009_25_place.shp || exit 1
+$IMPORTER tl_2009_25025_edges.shp tl_2009_25025_featnames.dbf tl_2009_25025_faces.dbf tl_2009_25_place.shp || die
 
 echo Creating a "'neighborhood'" location type...
-cd $SOURCE_ROOT/misc/bin || exit 1
+cd $SOURCE_ROOT/misc/bin || die
 
-./add_locationtype.py Neighborhood Neighborhoods neighborhoods neighborhoods
+./add_locationtype.py Neighborhood Neighborhoods neighborhoods neighborhoods || die
 
+echo Importing neighborhoods, this may take a minute ...
 
-echo Importing neighborhoods...
-
-cd $SOURCE_ROOT/misc/bin || exit 1
+cd $SOURCE_ROOT/misc/bin || die
 
 ./add_location.py "Beacon Hill" "Beacon Hill" beacon-hill neighborhoods Boston http://bostonneighborhoodmap.com/ "42.355282, -71.073530" "42.361259, -71.059794"
 
@@ -78,7 +84,7 @@ cd $SOURCE_ROOT/misc/bin || exit 1
 
 ./add_location.py "Jamaica Plain" "Jamaica Plain" jamaica-plain neighborhoods Boston http://bostonneighborhoodmap.com/ "42.296080, -71.131307" "42.326367, -71.099157"
 
-./add_location.py Roxbury Roxbury roxbury neighborhoods Boston http://bostonneighborhoodmap.com/ "42.282421, -71107001" "42.337916, -71.062619"
+./add_location.py Roxbury Roxbury roxbury neighborhoods Boston http://bostonneighborhoodmap.com/ "42.282421, -71.107001" "42.337916, -71.062619"
 
 ./add_location.py Mattapan Mattapan mattapan neighborhoods Boston http://bostonneighborhoodmap.com/ "42.260214, -71.115589" "42.292218, -71.067432"
 
@@ -96,26 +102,26 @@ cd $SOURCE_ROOT/misc/bin || exit 1
 
 echo Populating streets and fixing addresses...
 
-cd $SOURCE_ROOT/ebpub/ebpub || exit 1
+cd $SOURCE_ROOT/ebpub/ebpub || die
 
-./streets/fix_block_numbers.py
-./streets/update_block_pretty_names.py
-./streets/populate_streets.py streets
-./streets/populate_streets.py block_intersections
-./streets/populate_streets.py intersections
+./streets/fix_block_numbers.py || die
+./streets/update_block_pretty_names.py || die
+./streets/populate_streets.py streets || die
+./streets/populate_streets.py block_intersections || die
+./streets/populate_streets.py intersections || die
 
 
 echo Set up event and news schemas...
 
-cd $SOURCE_ROOT/misc/bin || exit 1
-./add_schema.py Event Events events "List of events in Boston" "Boston Events" "http://calendar.boston.com/"
-./add_schema.py News News local-news "List of news in Boston" "Boston News" "http://boston.com/"
+cd $SOURCE_ROOT/misc/bin || die
+./add_schema.py Event Events events "List of events in Boston" "Boston Events" "http://calendar.boston.com/" || die
+./add_schema.py News News local-news "List of news in Boston" "Boston News" "http://boston.com/" || die
 
 
 echo Adding latest events and news...
-cd $SOURCE_ROOT
-./misc/bin/add_events.py
-./misc/bin/add_news.py
+cd $SOURCE_ROOT/
+./obdemo/bin/add_events.py || die
+./obdemo/bin/add_news.py || die
 
 
 echo Done.

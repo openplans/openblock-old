@@ -262,7 +262,17 @@ def ajax_map_popups(request):
         raise Http404('Invalid query')
     if len(newsitem_ids) >= 400:
         raise Http404('Too many points') # Security measure.
+    # Ordering by schema__id is an optimization for _map_popups().
     ni_list = list(NewsItem.objects.filter(id__in=newsitem_ids).select_related().order_by('schema__id'))
+    result = map_popups(ni_list)
+    return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
+
+
+def map_popups(ni_list):
+    """
+    Given a list of newsitems, return a list of lists
+    of the form [newsitem_id, popup_html, schema_name]
+    """
     populate_attributes_if_needed(ni_list, list(set([ni.schema for ni in ni_list])))
     result = []
     current_schema = current_template = None
@@ -275,8 +285,8 @@ def ajax_map_popups(request):
             current_template = select_template(template_list)
             current_schema = schema
         html = current_template.render(template.Context({'schema': schema, 'newsitem_list': [ni], 'num_newsitems': 1}))
-        result.append([ni.id, html, schema.name[0].upper() + schema.name[1:]])
-    return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
+        result.append([ni.id, html, schema.name.title()])
+    return result
 
 def ajax_place_newsitems(request):
     """

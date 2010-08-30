@@ -7,10 +7,10 @@ into ebpub.
 
 from django.http import HttpResponse
 from django.utils import simplejson
-from django.db.models import Q
 
-from ebpub.db.views import parse_pid
 from ebpub.db.views import make_search_buffer
+from ebpub.db.views import map_popups
+from ebpub.db.views import parse_pid
 from ebpub.streets.models import Block
 from ebpub.db.models import NewsItem
 
@@ -27,34 +27,16 @@ def newsitems_geojson(request):
         search_buffer = make_search_buffer(place.location.centroid, block_radius)
         newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
     else:
-        # I'm puzzled about when/how NewsItemLocations get created,
-        # they're clearly just a simple join table but
-        # I can't find anything that would populate when news items
-        # are created,
-        # except maybe a trigger function in ebpub/ebpub/db/sql/newsitemlocation_functions.sql
-        # which AFAICT is not referred to by anything, so I'm not sure if I'm
-        # supposed to have installed that function or what.
-        # 
-        # I *do* see code in ebpub/db/bin/*py to populate that table
-        # from existing newsitems when locations are added, but not
-        # when newsitems are added AFAICT.
-        #
-        # So I'm hacking around it by ORing the query together with a
-        # test for news items that are directly associated with that
-        # Location. Why existing ebpub code doesn't do that, I do not
-        # know.
-        # newsitem_qs = NewsItem.objects.filter(
-        #     Q(newsitemlocation__location__id=place.id) |
-        #     Q(location_object__id=place.id))
-
-        # ... scratch all that, the trigger in 
-        # newsitemlocation_functions.sql appears to be what we want.
+        # This depends on the trigger in newsitemlocation.sql
         newsitem_qs = NewsItem.objects.filter(
             newsitemlocation__location__id=place.id)
 
-
+    # Ordering by schema__id is an optimization for map_popups()
+    newsitem_list = list(newsitem_qs.select_related().order_by('schema__id'))
+    popup_list = map_popups(newsitem_list)
+    
     features = {'type': 'FeatureCollection', 'features': []}
-    for newsitem in newsitem_qs:
+    for newsitem, popup_info in zip(newsitem_list, popup_list):
         features['features'].append(
             {'type': 'Feature',
              'geometry': {'type': 'Point',
@@ -63,6 +45,9 @@ def newsitems_geojson(request):
                           },
              'properties': {
                     'title': newsitem.title,
+                    'id': popup_info[0],
+                    'popup_html': popup_info[1],
+                    'schema': popup_info[2],
                     }
              })
     output = simplejson.dumps(features, indent=2)

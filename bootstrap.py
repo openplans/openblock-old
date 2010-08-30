@@ -1119,12 +1119,19 @@ def create_bootstrap_script(extra_text, python_version=''):
 import os, subprocess
 
 def after_install(options, home_dir):
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'virtualenv'])
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'pip'])
-    subprocess.call([join(home_dir, 'bin', 'easy_install'), 'paver'])
+    def call(*args):
+        retcode = subprocess.call(*args)
+        if retcode:
+            sys.stderr.write("Exit status %d from command args %s\n" % (retcode, args))
+    	    sys.exit(retcode)
+
+    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.4.9'])
+    call([join(home_dir, 'bin', 'easy_install'), 'pip'])
+    call([join(home_dir, 'bin', 'easy_install'), 'paver'])
+
     source_root = os.path.dirname(__file__)
     pavement_file = join(source_root, 'obutil', 'obutil', 'pavement.py')
-    subprocess.call([join(home_dir, 'bin', 'paver'), '-f', pavement_file,  'post_bootstrap'])
+    call([join(home_dir, 'bin', 'paver'), '-f', pavement_file,  'post_bootstrap'])
 
     # link source code
     if not os.path.abspath(source_root).startswith(os.path.abspath(home_dir)):
@@ -1132,8 +1139,11 @@ def after_install(options, home_dir):
         print "symlinking openblock source in %s to %s" % (source_root, source_link)
         copyfile(source_root, source_link, symlink=True)
 
+
 def adjust_options(options, args):
-    args[:] = ['./']
+    # assume build in place unless otherwise specified
+    if len(args) == 0:
+        args[:] = ['./']
 
 def extend_parser(optparse_parser):
     # flip-flop the default on whether to utilize site packages
@@ -1142,6 +1152,9 @@ def extend_parser(optparse_parser):
                                dest='no_site_packages',
                                action='store_false',
                                default=True)
+    # Use distribute by default.
+    optparse_parser.set_defaults(use_distribute=True)
+
 
 
 ##file site.py

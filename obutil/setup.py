@@ -19,6 +19,6 @@ setup(
     zip_safe=False,
     entry_points="""
     [console_scripts]
-    obenv = obutil.pavement:main
+    oblock = obutil.pavement:main
     """,
 )

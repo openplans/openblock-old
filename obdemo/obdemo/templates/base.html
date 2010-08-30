@@ -8,10 +8,13 @@
 <meta name="robots" content="noarchive">
 <link rel="home" title="Home" href="/">
 <!-- Some Javascript within requires jQuery. Linking to Google-hosted version here. You can download it from jquery.com -->
-<script src="http://jqueryjs.googlecode.com/files/jquery-1.3.2.js" type="text/javascript" charset="utf-8"></script>
-<script type="text/javascript">
-var $j = jQuery.noConflict();
-</script>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+
+{% comment %}
+<!-- Not using jquery.noConflict() because ironically it causes a conflict
+with OpenLayers and we end up with the $ function from OpenLayers. -->
+{% endcomment %}
+
 <link rel="stylesheet" type="text/css" href="/styles/style.css" />
 
 {% block extrahead %}{% endblock %}

@@ -6,7 +6,10 @@ import random
 import sys
 import uuid
 
-from django.contrib.gis.geos import Point
+import os
+if not os.environ.get('DJANGO_SETTINGS_MODULE'):
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'obdemo.settings'
+
 from ebpub.db.models import NewsItem, Schema
 from ebpub.db.models import Location
 
@@ -49,4 +52,10 @@ def main(count):
 
     
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1]))
+    try:
+        count = sys.argv[1]
+    except IndexError:
+        sys.stderr.write("Usage: %s N\n" % sys.argv[0])
+        sys.stderr.write("Generates N randomly-placed articles.\n")
+        sys.exit(1)
+    sys.exit(main(count))

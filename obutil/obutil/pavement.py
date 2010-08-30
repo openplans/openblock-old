@@ -12,6 +12,7 @@ bad existing postgis_template can interfere with install, test
 
 import os
 import traceback
+
 from paver.easy import *
 from paver.setuputils import setup
 
@@ -30,7 +31,7 @@ options(
     source_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
 
     app='obdemo',
-
+    user_settings='real_settings',
     # paths that will be searched for suitable postgis 
     # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
@@ -130,13 +131,22 @@ def install_ob_packages(options):
     for package_name in options.openblock_packages:
         package_dir = os.path.join(options.source_dir, package_name)
         sh('%s/bin/pip install -e %s' % (options.env_root, package_dir))
-
-@task
-@needs('install_ob_packages')
-def post_bootstrap(options):
     print "Success! OpenBlock packages installed."
 
 @task
+@needs('install_ob_packages')
+def install_manage_script(options):
+    """
+    creates a manage.py script in $VIRTUALENV so you don't have to
+    specify a settings module.
+    """
+    source = os.path.join(options.app, options.app, 'manage.sh')
+    dest = os.path.join(options.source_dir, 'manage.py')
+    if not os.path.exists(dest):
+        os.symlink(source, dest)
+
+@task
+@needs('install_ob_packages', 'install_manage_script')
 def install_app(options):
     """
     sets up django app options.app
@@ -145,8 +155,9 @@ def install_app(options):
     sh('%s/bin/pip install -e %s' % (options.env_root, app_dir))
 
     # create openblock settings if none have been created
-    real_settings = os.path.join(options.source_dir, options.app, options.app, 'real_settings.py')
-    default_settings = os.path.join(options.source_dir, options.app, options.app, 'real_settings.py.in')
+    real_settings = os.path.join(options.source_dir, options.app, options.app,
+                                 options.user_settings + '.py')
+    default_settings = real_settings + '.in'
     
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
@@ -154,6 +165,14 @@ def install_app(options):
 
     print "\nThe %s package is now installed." % options.app
     print "Please review the settings in %s." % real_settings
+
+
+
+@task
+@needs('install_app')
+def post_bootstrap(options):
+    # we expect this task is run automatically by our bootstrap.py script.
+    print "Once you like your settings, run 'sudo -u postgres bin/paver setup_db'"
 
 def find_postgis(options): 
     file_sets = (
@@ -175,7 +194,12 @@ def find_postgis(options):
 
 def get_app_settings(options):
     settings_module = '%s.settings' % options.app
-    __import__(settings_module)
+    user_settings_module = '%s.%s' % (options.app, options.user_settings)
+    try:
+        __import__(settings_module)
+    except:
+        exit_with_traceback("Problem with %s or %s, see above"
+                            % (settings_module, user_settings_module))
     return sys.modules[settings_module] 
 
 def get_db_cfg(settings):
@@ -195,10 +219,13 @@ def setup_db(options):
     """
     create application database.
     """
-    import psycopg2
+    _setup_db(options)
+    print "Success! Now run './manage.py syncdb'"
 
+def _setup_db(options):
     settings = get_app_settings(options)
     dbcfg = get_db_cfg(settings)
+    import psycopg2
     conn = psycopg2.connect(database="postgres", **dbcfg)
 
     ################################
@@ -219,12 +246,10 @@ def setup_db(options):
                         (dbuser, dbpass))
             conn.commit()
         except:
-            traceback.print_exc()
-            print "Failed to create user."
-            sys.exit(1)
+            exit_with_traceback("Failed to create user.")
+
     else:
         print "User '%s' already exists, leaving it alone..." % dbuser
-
 
     ################################
     #
@@ -233,30 +258,30 @@ def setup_db(options):
     ################################
     dbname = settings.DATABASE_NAME
     template = settings.POSTGIS_TEMPLATE
+    import psycopg2
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 dbname)
     if cur.fetchone()[0] != 0:
-        print "Database '%s' already exists, leaving it alone..." % dbname
+        print "Database '%s' already exists, fixing permissions ..." % dbname
+        grant_rights_on_spatial_tables(dbname, **dbcfg)
         return
 
     print "Creating database %s'" % dbname
     try:
         cur.execute("CREATE DATABASE %s OWNER %s TEMPLATE %s;" % (dbname, dbuser, template))
     except:
-        traceback.print_exc()
-        print "Failed to create database %s" % dbname
-        sys.exit(1)
-    
+        exit_with_traceback("Failed to create database %r" % dbname)
+
+    grant_rights_on_spatial_tables(dbname, **dbcfg)
     print "Success. created database %s owned by %s" % (dbname, dbuser)
     
 @task
 def create_postgis_template(options):
 
-    import psycopg2
-
     settings = get_app_settings(options)
     dbcfg = get_db_cfg(settings)
+    import psycopg2
     conn = psycopg2.connect(database="postgres", **dbcfg)
 
     ##################################
@@ -269,7 +294,7 @@ def create_postgis_template(options):
 
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
-    # check if the openblock database already exists
+    # check if the database already exists
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 template)
     if cur.fetchone()[0] != 0:
@@ -286,9 +311,7 @@ def create_postgis_template(options):
         cur.execute("CREATE DATABASE %s ENCODING 'UTF8';" % template)
         cur.execute("UPDATE pg_database set datistemplate = true where datname='%s';" % template)
     except:
-        traceback.print_exc()
-        print "Failed to create template %s" % template
-        sys.exit(1)
+        exit_with_traceback("Failed to create template %r" % template)
 
     # cool, reconnect to our new database.
     print "reconnecting to database %s" % template 
@@ -318,16 +341,27 @@ def create_postgis_template(options):
     for filename in postgis_files: 
         sh("psql -d %s -f %s" % (template, filename))
 
-    # make the postgis tables accessable to public
-    print "granting rights on postgis tables to public";
-    
-    conn = psycopg2.connect(database=template, **dbcfg)
+    conn.commit()
+    grant_rights_on_spatial_tables(template, **dbcfg)
+    print "created postgis template %s." % template
+
+
+def grant_rights_on_spatial_tables(database, **dbcfg):    
+    import psycopg2
+    conn = psycopg2.connect(database=database, **dbcfg)
     cur = conn.cursor()
     cur.execute("GRANT ALL ON TABLE geometry_columns TO PUBLIC;")
     cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO PUBLIC;")
     conn.commit()
+    print "granting rights on postgis tables to public"
+    
 
-    print "created postgis template %s." % template
+def exit_with_traceback(extra_msg):
+    traceback.print_exc()
+    print "=============================================="
+    print extra_msg
+    sys.exit(1)
+
 
 def main():
     import os
@@ -339,3 +373,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+

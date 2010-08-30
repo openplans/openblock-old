@@ -215,4 +215,9 @@ def main(argv=None):
     valid_actions[args[0]](**opts.__dict__)
 
 if __name__ == '__main__':
+    try:
+        import fabulous.logs
+        fabulous.logs.basicConfig(level='WARNING')
+    except ImportError:
+        pass
     sys.exit(main())
