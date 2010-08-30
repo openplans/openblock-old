@@ -7,6 +7,17 @@
 cd `dirname $0`
 . bin/activate
 echo Setting up VIRTUAL_ENV $VIRTUAL_ENV
-echo Running obdemo/obdemo/manage.py $@
-obdemo/obdemo/manage.py $@
+
+# locate the real location of this script
+ORIG_LINK="$0"
+TMP="$(readlink "$ORIG_LINK")"
+while test -n "$TMP"; do
+    ORIG_LINK="$TMP"
+    TMP="$(readlink "$ORIG_LINK")"
+done
+MANAGE_PY=`dirname $ORIG_LINK`
+MANAGE_PY="$MANAGE_PY/manage.py"
+
+echo Running $MANAGE_PY $@
+$MANAGE_PY $@
 
