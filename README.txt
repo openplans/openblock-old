@@ -37,7 +37,7 @@ These instructions will install the software in an isolated
 python environment using virtualenv ( http://pypi.python.org/pypi/virtualenv )
 For detailed instructions and further steps, see obdemo/README.txt::
 
- $ git checkout git://github.com/openplans/openblock.git openblock
+ $ git clone git://github.com/openplans/openblock.git openblock
  $ cd openblock
  $ python bootstrap.py
 
