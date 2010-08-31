@@ -29,7 +29,7 @@ register.simple_tag(STATE_ABBREV)
 
 def EB_SUBDOMAIN():
     # misnamed, it's actually the full domain.
-    return settings.EB_FULL_DOMAIN
+    return settings.EB_DOMAIN
 register.simple_tag(EB_SUBDOMAIN)
 
 def isdigit(value):
