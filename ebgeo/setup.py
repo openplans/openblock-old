@@ -13,7 +13,7 @@ setup(
     install_requires=[
     "TileCache==2.10",
     "processing==0.52",
-    "aggdraw"
+    "aggdraw",
     ],
     dependency_links=[
     ],

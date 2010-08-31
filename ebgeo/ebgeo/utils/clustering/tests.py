@@ -1,3 +1,5 @@
+# TODO: turn these into proper unit tests.
+
 """
 Tests for developing map marker clustering module
 """

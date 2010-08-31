@@ -55,23 +55,29 @@ INSTALLED_APPS = (
     'ebpub.streets',
     'django.contrib.humanize',
     'django.contrib.sessions',
-
-    # Don't need these installed at runtime, but I've put them here so
-    # manage.py test can automatically find their tests.
-    'ebdata.nlp',
-    'ebdata.templatemaker',
-    'ebdata.textmining',
-    'ebgeo.maps',
-    'ebgeo.utils',
-
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
     # useful for.
     'everyblock.admin',
     'everyblock.staticmedia',
-
 )
+
+APPS_FOR_TESTING = (
+    # Don't need these installed at runtime, but I've put them here so
+    # manage.py test can automatically find their tests.
+    'ebdata.nlp',
+    'ebdata.templatemaker',
+    'ebdata.textmining',
+    'ebgeo.maps',
+    'ebgeo.utils.clustering',
+    'ebpub.metros',
+)
+
+INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
+
+#TEST_RUNNER = 'django_nose.run_tests'
+
 TEST_RUNNER='django.contrib.gis.tests.run_tests'
 
 ROOT_URLCONF = 'obdemo.urls'
