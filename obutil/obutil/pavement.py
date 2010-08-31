@@ -1,5 +1,5 @@
 """
-QnD OpenBlock Installer
+Quick and Dirty OpenBlock Installer
 
 TODO:
 test basic system expectations (libs etc)
@@ -317,6 +317,7 @@ def create_postgis_template(options):
     ##################################
 
     template = settings.POSTGIS_TEMPLATE
+    make_template_sql = "UPDATE pg_database set datistemplate = true where datname='%s';" % template
 
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
@@ -324,7 +325,9 @@ def create_postgis_template(options):
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 template)
     if cur.fetchone()[0] != 0:
-        print "Database '%s' already exists, leaving it alone..." % template
+        print "Database '%s' already exists, fixing permissions..." % template
+        grant_rights_on_spatial_tables(template, **dbcfg)
+        cur.execute(make_template_sql)
         return
 
     postgis_files = find_postgis(options)
@@ -335,7 +338,7 @@ def create_postgis_template(options):
     print "Creating template %s'" % template
     try:
         cur.execute("CREATE DATABASE %s ENCODING 'UTF8';" % template)
-        cur.execute("UPDATE pg_database set datistemplate = true where datname='%s';" % template)
+        cur.execute(make_template_sql)
     except:
         exit_with_traceback("Failed to create template %r" % template)
 
@@ -367,7 +370,6 @@ def create_postgis_template(options):
     for filename in postgis_files: 
         sh("psql -d %s -f %s" % (template, filename))
 
-    grant_rights_on_spatial_tables(template, **dbcfg)
     print "created postgis template %s." % template
 
 
