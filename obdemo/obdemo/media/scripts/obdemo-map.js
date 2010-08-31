@@ -69,7 +69,7 @@ function loadNewsItems() {
             // Clicking next or previous replaces the nav links html.
             var replaceHtml = function(f) {
                 // Fixme: this comes up empty. replaceWith() isn't right?
-                $(content).replaceWith(f.attributes.popup_html);
+                $(content).find('.newsitem').replaceWith(f.attributes.popup_html);
                 // todo: re-insert the nav
                 //$(content).find('a:first').attr('href', '/XXX/' + f.fid);
             };
@@ -123,7 +123,7 @@ function loadMap() {
     }, {
         context: {
             radius: function(feature) {
-                return 8 + Math.min(feature.attributes.count * 1.8, 20);
+                return 8 + Math.min(feature.attributes.count * 1.2, 14);
             },
             getlabel: function(feature) {
                 return feature.attributes.count;
