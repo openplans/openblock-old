@@ -45,11 +45,12 @@ MIDDLEWARE_CLASSES = (
 # CUSTOM EBPUB SETTINGS #
 #########################
 
-# The domain for your site.
-EB_DOMAIN = 'example.com'
-
 # This is the short name for your city, e.g. "chicago".
 SHORT_NAME = ''
+
+# The domain for your site.
+EB_DOMAIN = 'example.com'
+EB_FULL_DOMAIN = '%s.%s' % (SHORT_NAME, EB_DOMAIN)  # eg. boston.example.com
 
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not

@@ -431,7 +431,7 @@ class NewsItem(models.Model):
 
     def item_url_with_domain(self):
         from django.conf import settings
-        return 'http://%s.%s%s' % (settings.SHORT_NAME, settings.EB_DOMAIN, self.item_url())
+        return 'http://%s%s' % (settings.EB_FULL_DOMAIN, self.item_url())
 
     def item_date_url(self):
         return '/%s/by-date/%s/%s/%s/' % (self.schema.slug, self.item_date.year, self.item_date.month, self.item_date.day)

@@ -36,7 +36,7 @@ def verification_url(email, task):
     return '/accounts/%s/?%s' % (url, urllib.urlencode(params))
 
 def send_verification_email(email, task):
-    domain = get_metro()['short_name'] + '.' + settings.EB_DOMAIN
+    domain = settings.EB_FULL_DOMAIN
     url = 'http://%s%s' % (domain, verification_url(email, task))
     template_name = {CREATE_TASK: 'register', RESET_TASK: 'password_reset'}[task]
     text_content = render_to_string('accounts/%s_email.txt' % template_name, {'url': url, 'email': email})

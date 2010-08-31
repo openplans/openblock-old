@@ -88,6 +88,11 @@ _required_settings.append('EB_DOMAIN')
 # This is the short name for your city, e.g. "chicago".
 _required_settings.append('SHORT_NAME')
 
+# By default, the full domain is the short name combined with the domain.
+# eg. boston.everyblock.com.
+# But you can override it in real_settings.py.
+EB_FULL_DOMAIN = '%s.%s' % (SHORT_NAME, EB_DOMAIN)
+
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
 # secret.

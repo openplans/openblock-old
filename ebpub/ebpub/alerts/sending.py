@@ -16,7 +16,7 @@ def email_text_for_place(alert, place, place_name, place_url, newsitem_list, dat
     Returns a tuple of (text, html) for the given args. `text` is the text-only
     e-mail, and `html` is the HTML version.
     """
-    domain = '%s.%s' % (settings.SHORT_NAME, settings.EB_DOMAIN)
+    domain = settings.EB_FULL_DOMAIN
     context = {
         'place': place,
         'is_block': isinstance(place, Block),
