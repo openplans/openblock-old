@@ -19,6 +19,11 @@ from django.contrib.gis.geos import Point
 
 from ebpub.db.models import NewsItem, Schema
 
+# Note there's an undocumented assumption in ebdata that we want to
+# put unescape html before putting it in the db.  Maybe wouldn't have
+# to do this if we used the scraper framework in ebdata?
+from ebdata.retrieval.utils import convert_entities
+
 def main():
     """ Download Calendar RSS feed and update database """
 
@@ -55,8 +60,8 @@ def main():
         
         try:
             item.schema = schema
-            item.title = entry.title
-            item.description = entry.description
+            item.title = convert_entities(entry.title)
+            item.description = convert_entities(entry.description)
             item.url = entry.link
             item.item_date = datetime.datetime(*entry.updated_parsed[:6])
             item.pub_date = datetime.datetime(*entry.updated_parsed[:6])

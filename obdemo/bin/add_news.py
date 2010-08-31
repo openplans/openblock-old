@@ -8,6 +8,11 @@ from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
 from ebpub.geocoder import SmartGeocoder
 
+# Note there's an undocumented assumption in ebdata that we want to
+# put unescape html before putting it in the db.  Maybe wouldn't have
+# to do this if we used the scraper framework in ebdata?
+from ebdata.retrieval.utils import convert_entities
+
 def main(argv=None):
     url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
     schema = 'local-news'
@@ -28,8 +33,8 @@ def main(argv=None):
         except NewsItem.DoesNotExist:
             item = NewsItem()
             item.schema = schema
-            item.title = e.title
-            item.description = e.description
+            item.title = convert_entities(e.title)
+            item.description = convert_entities(e.description)
             item.url = e.link
             #item.location_name = e['x-calconnect-street']
             item.item_date = datetime.datetime(*e.updated_parsed[:6])
