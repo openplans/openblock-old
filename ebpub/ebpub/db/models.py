@@ -312,6 +312,7 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Lookup object, and the Lookup's ID will be retrieved for use in the
         query.
         """
+
         clone = self.prepare_attribute_qs()
         real_name = str(schema_field.real_name)
         if not isinstance(att_value, (list, tuple)):

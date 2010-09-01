@@ -110,18 +110,4 @@ cd $SOURCE_ROOT/ebpub/ebpub || die
 ./streets/populate_streets.py block_intersections || die
 ./streets/populate_streets.py intersections || die
 
-
-echo Set up event and news schemas...
-
-cd $SOURCE_ROOT/misc/bin || die
-./add_schema.py Event Events events "List of events in Boston" "Boston Events" "http://calendar.boston.com/" || die
-./add_schema.py News News local-news "List of news in Boston" "Boston News" "http://boston.com/" || die
-
-
-echo Adding latest events and news...
-cd $SOURCE_ROOT/
-./obdemo/bin/add_events.py || die
-./obdemo/bin/add_news.py || die
-
-
 echo Done.

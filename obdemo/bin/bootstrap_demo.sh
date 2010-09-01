@@ -22,3 +22,5 @@ sudo -u postgres bin/oblock setup_db  || exit 1
 
 echo Importing Boston blocks...
 $HERE/import_boston_blocks.sh || exit 1
+$HERE/add_boston_news_schemas.sh || exit 1
+$HERE/import_boston_news.sh || exit 1

@@ -12,7 +12,7 @@ Adds a schema to the database
 import datetime, sys
 from optparse import OptionParser
 
-from ebpub.db.models import Schema, SchemaInfo
+from ebpub.db.models import Schema, SchemaInfo, SchemaField
 
 
 def main():
@@ -27,16 +27,24 @@ Arguments:
   description          e.g., "List of crimes provided by the local Police Dept"
   summary              e.g., "List of crimes"
   source               e.g., "http://google.com/query=crimes"
+  [fieldname real_name pretty_name pretty_name_plural display is_lookup is_filter is_searchable ...]    optional SchemaFields, see ebpub/README.txt
   """)
 
+    parser.add_option("-f", "--force", dest="force", action="store_true",
+                      help="force deletion of existing schema")
+
     (options, args) = parser.parse_args()
-    if len(args) != 6: 
+    if len(args) < 6: 
         return parser.error('must provide 6 arguments, see usage')
     
+    slug = args[2]
+    if options.force:
+        Schema.objects.filter(slug=slug).delete()
+
     schema = Schema()
     schema.name = args[0]
     schema.plural_name = args[1]
-    schema.slug = args[2]
+    schema.slug = slug
     
     #  need to allow this as an input later
     schema.indefinite_article = 'a' 
@@ -66,6 +74,26 @@ Arguments:
     
     schemainfo.save()
 
+    if len(args) > 6:
+        # TODO: allow more than one SchemaField.
+        # TODO: this is a horrible UI, move to separate script?
+        field = SchemaField()
+        field.schema = schema
+        field.name = args[6]
+        field.real_name = args[7] # The column to use in the
+        # db_attribute model. Choices are: int01-07, text01,
+        # bool01-05, datetime01-04, date01-05, time01-02,
+        # varchar01-05. This value must be unique with respect to the
+        # schema_id.
+        field.pretty_name = args[8]
+        field.pretty_name_plural = args[9]
+        field.display = bool(int(args[10]))
+        field.is_lookup = bool(int(args[11]))
+        field.is_filter = bool(int(args[12]))
+        field.is_charted = bool(int(args[13]))
+        field.display_order = bool(int(args[14]))
+        field.is_searchable = bool(int(args[15]))
+        field.save()
 
 if __name__ == '__main__':
     sys.exit(main())
