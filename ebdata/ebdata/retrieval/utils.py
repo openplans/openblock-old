@@ -74,6 +74,10 @@ def convert_entities(text):
     """
     Converts HTML entities in the given string (e.g., '&#28;' or '&nbsp;') to
     their corresponding characters.
+
+    Note this does NOT do the same thing as xml.sax.saxutils.unescape();
+    for that you'd have to pass in an exhaustive dictionary of
+    entity -> replacement pairs.
     """
     NAMED_ENTITY_SPECIAL_CASES = {
         'apos': u"'",
