@@ -33,6 +33,7 @@
 		</div><!--/ #intro-explore-->
 	</div><!--/ #intro -->
 
+    {% comment %}
 	{% if featured_neighborhood %}
 	<div id="featured-neighborhood">
 		<h2>Featured neighborhood</h2>
@@ -75,11 +76,12 @@
 		</div><!--/ #fn-publicrecords -->
 	</div><!--/ #featured-neighborhood -->
 	{% endif %}
+    {% endcomment %}
 
 	<div id="public-records">
-		<h2>Public records</h2>
-		<p>New in the last {{ num_days }} days</p>
 		{% if non_empty_date_charts %}
+		<h2>Public Records</h2>
+		<p>New in the last {{ num_days }} days</p>
 		<ul>
 			{% for chart in non_empty_date_charts %}
 			<li>
@@ -93,12 +95,14 @@
 		{% endif %}
 	</div><!--/ #public-records -->
 	<div id="more">
+    {% if more_schemas %}
 		<h2>More news</h2>
 		<ul>
 		{% for schema in more_schemas %}
 			<li><a href="{{ schema.url }}">{{ schema.plural_name|capfirst }}</a></li>
 		{% endfor %}
 		</ul>
+    {% endif %}
     </div><!--/ #more -->
   </div><!-- / #front-content -->
 
