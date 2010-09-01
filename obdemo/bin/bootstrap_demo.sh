@@ -17,7 +17,7 @@ python bootstrap.py || exit 1
 source bin/activate || exit 1
 
 echo DB setup...
-sudo -u postgres bin/paver setup_db  || exit 1
+sudo -u postgres bin/oblock setup_db  || exit 1
 ./manage.py syncdb || exit 1
 
 echo Importing Boston blocks...
