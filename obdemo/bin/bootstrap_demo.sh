@@ -13,7 +13,9 @@ echo Dropping openblock DB...
 sudo -u postgres dropdb openblock
 
 echo Bootstrapping...
-python bootstrap.py || exit 1
+# We want global packages because there's no easy way
+# to get Mapnik installed locally.
+python bootstrap.py --use-site-packages=1 || exit 1
 source bin/activate || exit 1
 
 echo DB setup...
