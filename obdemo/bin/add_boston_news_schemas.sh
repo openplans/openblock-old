@@ -20,7 +20,7 @@ echo events schema
 ./add_schema.py -f Event Events events "List of events in Boston" "Boston Events" "http://calendar.boston.com/" || die
 
 echo news schema
-./add_schema.py -f News News local-news "List of news in Boston" "Boston News" "http://www.cityofboston.gov/isd/building/asofright/default.asp" || die
+./add_schema.py -f News News local-news "List of news in Boston" "Boston News" "http://www.boston.com" || die
 
 echo Building Permits schema and SchemaField
 ./add_schema.py -f "Building Permit" "Building Permits" building-permits \
@@ -28,7 +28,6 @@ echo Building Permits schema and SchemaField
     "http://www.cityofboston.gov/isd/building/asofright/default.asp" \
     raw_address varchar01 "Raw Address" "Raw Addresses" 1 0 0 0 1 1 \
     || die
-
 # TODO: how to add multiple SchemaFields?
 #echo Businesses schema and SchemaField
 #./add_schema.py -f "Business License" "Business Licenses" business-licenses \

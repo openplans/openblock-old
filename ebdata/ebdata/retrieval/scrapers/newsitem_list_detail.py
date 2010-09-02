@@ -160,7 +160,8 @@ class NewsItemListDetailScraper(ListDetailScraper):
             location_object=kwargs.get('location_object', None),
             block=kwargs.get('block', block),
         )
-        ni.attributes = attributes
+        if attributes is not None:
+            ni.attributes = attributes
         self.num_added += 1
         self.logger.info(u'Created NewsItem %s (total created in this scrape: %s)', ni.id, self.num_added)
         return ni

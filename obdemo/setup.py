@@ -13,7 +13,8 @@ setup(
     install_requires=[
     "ebgeo",
     "ebpub",
-    "ebdata"
+    "ebdata",
+    "geopy", # Maybe. Alternative to ebpub's geocoder.
     ],
     dependency_links=[
     ],

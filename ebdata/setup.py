@@ -17,7 +17,7 @@ setup(
     "lxml",
     "chardet==1.0.1",
     "feedparser==4.1",
-    "httplib2==0.4.0",
+    "httplib2==0.6.0",
     "python-dateutil==1.4.1",
     "xlrd==0.7.1"    
     ],

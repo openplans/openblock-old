@@ -17,6 +17,12 @@ cd $SOURCE_ROOT/
 ./obdemo/bin/add_events.py || die
 ./obdemo/bin/add_news.py || die
 
+python obdemo/bin/bpdnews_retrieval.py || die
+
+# more feeds from Joel. Local blog news:
+./obdemo/bin/add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=400&subject=local&format=atom"
+
+
 echo Adding building permits...
 python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || die
 
@@ -27,3 +33,6 @@ python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || di
 # TODO: add attributes per retrieval.py.
 #echo Adding restaurant inspections...
 #python ./everyblock/everyblock/cities/boston/restaurants/retrieval.py || die
+
+# TODO: separate schema for this
+python obdemo/bin/seeclickfix_retrieval.py || die

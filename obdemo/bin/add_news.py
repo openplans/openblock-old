@@ -6,7 +6,6 @@ from optparse import OptionParser
 from django.contrib.gis.geos import Point
 
 from ebpub.db.models import NewsItem, Schema
-from ebpub.geocoder import SmartGeocoder
 
 # Note there's an undocumented assumption in ebdata that we want to
 # put unescape html before putting it in the db.  Maybe wouldn't have
@@ -14,7 +13,10 @@ from ebpub.geocoder import SmartGeocoder
 from ebdata.retrieval.utils import convert_entities
 
 def main(argv=None):
-    url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
+    if argv:
+        url = argv[0]
+    else:
+        url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
     schema = 'local-news'
     
     try:
@@ -24,7 +26,6 @@ def main(argv=None):
         sys.exit(0)
         
     f = feedparser.parse(url)
-    geocoder = SmartGeocoder()
     
     for e in f.entries:
         try:
@@ -43,13 +44,19 @@ def main(argv=None):
             try:
                 if 'point' in e:
                     x,y = e.point.split(' ')
-                else:
+                elif 'georss_point' in e:
                     x,y = e.georss_point.split(' ')
+                else:
+                    text = item.title + ' ' + item.description
+                    from geocoder_hack import quick_dirty_fallback_geocode
+                    x, y = quick_dirty_fallback_geocode(text, parse=True)
+                    if None in (x, y):
+                        print " no addr found in %r" % item.title
+                        continue
                 item.location = Point((float(y), float(x)))
                 if item.location.x == 0.0 and item.location.y == 0.0:
                     # There's a lot of these. Maybe attempt to
-                    # re-parse the article using ebdata.nlp.addresses
-                    # and re-geocode using ebpub.geocoder?
+                    # parse and geocode if we haven't already?
                     print "Skipping %r as it has bad location 0,0" % item.title
                 else:
                     item.save()
@@ -62,6 +69,7 @@ def main(argv=None):
                 msg = f.getvalue()
                 print msg
         
-    
+
+
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(main(sys.argv[1:]))
