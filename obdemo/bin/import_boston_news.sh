@@ -20,3 +20,10 @@ cd $SOURCE_ROOT/
 echo Adding building permits...
 python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || die
 
+# TODO: fix traceback:  ebdata.blobs.scrapers.NoSeedYet: You need to add a Seed with the URL 'http://www.cityofboston.gov/news/
+#echo Adding press releases...
+#python everyblock/everyblock/cities/boston/city_press_releases/retrieval.py || die
+
+# TODO: add attributes per retrieval.py.
+#echo Adding restaurant inspections...
+#python ./everyblock/everyblock/cities/boston/restaurants/retrieval.py || die

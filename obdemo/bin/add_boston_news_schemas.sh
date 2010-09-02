@@ -28,3 +28,24 @@ echo Building Permits schema and SchemaField
     "http://www.cityofboston.gov/isd/building/asofright/default.asp" \
     raw_address varchar01 "Raw Address" "Raw Addresses" 1 0 0 0 1 1 \
     || die
+
+# TODO: how to add multiple SchemaFields?
+#echo Businesses schema and SchemaField
+#./add_schema.py -f "Business License" "Business Licenses" business-licenses \
+#    "List of Boston Business Licenses" "Boston Business Licenses" \
+#    "http://www.cityofboston.gov/cityclerk/search_reply.asp" \
+#    ...
+#    || die
+
+#echo Boston city press releases
+#./add_schema.py -f "Boston Press Release" "Boston Press Releases" city-press-releases \
+#    "List of Boston City Press Releases" "Boston Press Releases" \
+#    'http://www.cityofboston.gov/news/'
+# TODO: schema fields
+
+#echo Boston restaurant inspections
+#./add_schema.py -f "Restaurant Inspection" "Restaurant Inspections" \
+#    restaurant-inspections \
+#    "List of Boston Restaurant Inspections" "Boston Restaurant Inspections" \
+#    'http://www.cityofboston.gov/isd/health/mfc/search.asp'
+# TODO: schema fields
