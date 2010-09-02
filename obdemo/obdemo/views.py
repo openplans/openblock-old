@@ -30,7 +30,7 @@ def newsitems_geojson(request):
         # This depends on the trigger in newsitemlocation.sql
         newsitem_qs = NewsItem.objects.filter(
             newsitemlocation__location__id=place.id)
-
+    
     # Ordering by schema__id is an optimization for map_popups()
     newsitem_list = list(newsitem_qs.select_related().order_by('schema__id'))
     popup_list = map_popups(newsitem_list)

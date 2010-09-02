@@ -10,10 +10,14 @@
 <!-- Some Javascript within requires jQuery. Linking to Google-hosted version here. You can download it from jquery.com -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
 
-{% comment %}
-<!-- Not using jquery.noConflict() because ironically it causes a conflict
-with OpenLayers and we end up with the $ function from OpenLayers. -->
-{% endcomment %}
+<script type="text/javascript">
+// Not using jquery.noConflict() because ironically it causes a conflict
+// with OpenLayers and we end up with the $ function from OpenLayers. 
+// But a lot of existing everyblock code expects $j instead of $
+var $j = $;
+</script>
+
+<script charset="utf-8" type="text/javascript" src="/scripts/openlayers-2.9.1/OpenLayers.js"></script>
 
 <link rel="stylesheet" type="text/css" href="/styles/style.css" />
 

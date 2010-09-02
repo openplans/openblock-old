@@ -28,6 +28,9 @@ var options = {
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 
+// Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
+var newsitem_params = {};
+
 function loadNewsItems() {
     newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
@@ -37,7 +40,7 @@ function loadNewsItems() {
             ],
         protocol: new OpenLayers.Protocol.HTTP({
             url: "/api/newsitems.geojson/", /* WILL CHANGE */
-            params: {},
+            params: newsitem_params,
             format: new OpenLayers.Format.GeoJSON()
         }),
         styleMap: new OpenLayers.StyleMap({
@@ -134,8 +137,19 @@ function loadMap() {
     map.addLayers([osm, newsitems]);
     newsitems.setVisibility(true);
     //newsitems.refresh();
-    var center = new OpenLayers.LonLat(-71.061667, 42.357778);
-    center.transform(map.displayProjection, map.projection);
-    map.setCenter(center, 12);
 
+    // map_center is expected to be set in the enclosing template,
+    // like so:
+    //var map_center = new OpenLayers.LonLat(-71.061667, 42.357778);
+    // var map_zoom = 12;
+
+    if (typeof(map_center) != "undefined") {
+        map_center.transform(map.displayProjection, map.projection);
+        map.setCenter(map_center, map_zoom);
+    };
+    // Or you can set map_bounds.
+    if (typeof(map_bounds) != "undefined") {
+        map_bounds.transform(map.displayProjection, map.projection);
+        map.zoomToExtent(map_bounds);
+    };
 }

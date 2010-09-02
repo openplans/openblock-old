@@ -90,6 +90,12 @@ window.onload = function() {
 	{% endif %}
 }
 </script>
+
+<style type="text/css">
+  #mapwrapper { }
+  #detailmap { width: 500px; height: 300px }
+</style>
+
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -104,14 +110,27 @@ window.onload = function() {
 {% endblock %}
 
 {% block header %}
+
+  <!-- Fixme: better place for this -->
+  <div id="mapwrapper">
+    <script type="text/javascript">
+    //var map_center = new OpenLayers.LonLat(-71.061667, 42.357778);
+    //var map_zoom = 5;
+    var map_bounds = new OpenLayers.Bounds{{ bbox }};
+    </script>
+    {% include "map.html" %}
+  </div>
+
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
     <br/>
     <img src="/maps/tile/{{ place.street_slug }}/{{ place.from_num }}-{{ place.to_num }}/"/>
 	{% else %}{{ place.name }}
 	{% endif %}
+
 {% endblock %}
 
 {% block place_content %}
+
 {% ifnotequal place.slug "unknown" %}
 	<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
 	<ul>
@@ -140,6 +159,8 @@ window.onload = function() {
 {% endifnotequal %}
 
 <div id="content">
+
+  <div id="place-detail-content">
 	{% if newsitem_list %}
 		{% regroup newsitem_list by pub_date|friendlydate as newsitem_list_byday %}
 		{% for daygroup in newsitem_list_byday %}
@@ -176,5 +197,8 @@ window.onload = function() {
 			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
 		</ul>
 	{% endifnotequal %}
+  </div><!--/ #place-detail-content -->
+
+
 </div><!--/ #content -->
 {% endblock %}
