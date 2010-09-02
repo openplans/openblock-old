@@ -5,6 +5,7 @@ from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
 import datetime
 
+
 def field_mapping(schema_id_list):
     """
     Given a list of schema IDs, returns a dictionary of dictionaries, mapping
@@ -295,8 +296,11 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
     def prepare_attribute_qs(self):
         clone = self._clone()
         if 'db_attribute' not in clone.query.extra_tables:
-            clone.query.extra_tables += ('db_attribute',)
-        clone.query.extra_where += ('db_newsitem.id = db_attribute.news_item_id',)
+            clone = clone.extra(tables=('db_attribute',))
+        # extra_where went away in Django 1.1.
+        # This seems to be the correct replacement as per
+        # http://docs.djangoproject.com/en/dev/ref/models/querysets/
+        clone = clone.extra(where=('db_newsitem.id = db_attribute.news_item_id',))
         return clone
 
     def by_attribute(self, schema_field, att_value, is_lookup=False):
@@ -324,7 +328,7 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
                 # NewsItems with this attribute value. Note that we aren't
                 # using QuerySet.none() here, because we want the result to
                 # be a NewsItemQuerySet, and none() returns a normal QuerySet.
-                clone.query.extra_where += ('1=0',)
+                clone = clone.extra(where=('1=0',))
                 return clone
             att_value = [val.id for val in att_value]
         if schema_field.is_many_to_many_lookup():
@@ -334,14 +338,14 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
             for value in att_value:
                 if not str(value).isdigit():
                     raise ValueError('Only integer strings allowed for att_value in many-to-many SchemaFields')
-            clone.query.extra_where += ("db_attribute.%s ~ '[[:<:]]%s[[:>:]]'" % (real_name, '|'.join([str(val) for val in att_value])),)
+            clone = clone.extra(where=("db_attribute.%s ~ '[[:<:]]%s[[:>:]]'" % (real_name, '|'.join([str(val) for val in att_value])),))
         elif None in att_value:
             if att_value != [None]:
                 raise ValueError('by_attribute() att_value list cannot have more than one element if it includes None')
-            clone.query.extra_where += ("db_attribute.%s IS NULL" % real_name,)
+            clone = clone.extra(where=("db_attribute.%s IS NULL" % real_name,))
         else:
-            clone.query.extra_where += ("db_attribute.%s IN (%s)" % (real_name, ','.join(['%s' for val in att_value])),)
-            clone.query.extra_params += tuple(att_value)
+            clone = clone.extra(where=("db_attribute.%s IN (%s)" % (real_name, ','.join(['%s' for val in att_value])),),
+                                params=tuple(att_value))
         return clone
 
     def date_counts(self):
@@ -390,8 +394,9 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         """
         clone = self.prepare_attribute_qs()
         query = query.lower()
-        clone.query.extra_where += ("db_attribute." + str(schema_field.real_name) + " ILIKE %s",)
-        clone.query.extra_params += ("%%%s%%" % query,)
+
+        clone = clone.extra(where=("db_attribute." + str(schema_field.real_name) + " ILIKE %s",),
+                            params=("%%%s%%" % query,))
         return clone
 
 class NewsItemManager(models.GeoManager):

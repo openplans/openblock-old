@@ -61,7 +61,6 @@ class PermitScraper(NewsItemListDetailScraper):
     def existing_record(self, record):
         try:
             qs = NewsItem.objects.filter(schema__id=self.schema.id, item_date=record['permit_date'])
-            import pdb; pdb.set_trace()
             qs = qs.by_attribute(self.schema_fields['raw_address'], record['address'])
             return qs[0]
         except IndexError:
