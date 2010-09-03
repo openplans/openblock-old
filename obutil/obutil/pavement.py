@@ -161,7 +161,13 @@ def install_app(options):
     
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
-        sh('cp %s %s' % (default_settings, real_settings))
+        s = open(default_settings).read()
+        # Replace default salts with random strings.
+        need_replacing = '<REPLACE_ME>'
+        while s.count(need_replacing):
+            s = s.replace(need_replacing, _random_string(), 1)
+        open(real_settings, 'w').write(s)
+
 
     print "\nThe %s package is now installed." % options.app
     print "Please review the settings in %s." % real_settings
@@ -389,6 +395,13 @@ def exit_with_traceback(extra_msg):
     print extra_msg
     sys.exit(1)
 
+def _random_string(length=12):
+    import random
+    import string
+    result = ''
+    for i in range(length):
+        result += random.choice(string.letters + string.digits)
+    return result
 
 def main():
     import os
@@ -400,5 +413,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
