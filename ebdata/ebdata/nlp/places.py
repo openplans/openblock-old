@@ -12,6 +12,7 @@ def phrase_tagger(phrases, pre='<span>', post='</span>'):
     decorated.reverse()
     phrases = [i[1] for i in decorated]
     # use a closure here to cache the value for phrases
+    # TODO: cache the compiled regex, and the usage of _re_handle_match?
     def tag_phrases(text):
         """
         Returns text with any matches from phrases wrapped with pre and post.
