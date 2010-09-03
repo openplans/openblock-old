@@ -90,7 +90,7 @@ here: http://blip.tv/file/1957362
 Creating a Custom Site Based on OpenBlock
 ==========================================
 
-This is documented in the "Quickstart" section of ebpub/README.txt.
+This is documented in the "Quickstart" section of ebpub/README.TXT.
 For an example, have a look in obdemo/ which was set up in that
 fashion.
 
@@ -99,8 +99,39 @@ script and do the rest of the setup by hand.  You can look at
 pavement.py to get an idea of what needs doing, and/or modify it for
 your own use.
 
+Things You Will Need
+====================
+
+Details are in ebpub/README.TXT, but briefly to get anything useful
+out of your site, at mininum you will need to do the following:
+
+  1. A database of streets in your city; for example
+     TIGER/Line files from http://www.census.gov/geo/www/tiger/
+     See ebpub/README.TXT
+
+  2. Decide what locations are interesting in your area - for example,
+     neighborhoods, zip codes.  Obtain shapefiles of the boundaries of
+     those locations, and feed them in. See ebpub/README.TXT
+
+  3. Decide what news sources you want to feed in.
+
+     a. Configure the system with schemas for them. See
+     ebpub/README.TXT
+
+     b. Write scraper scripts to retrieve your news sources and feed
+     it in. See ebdata/README.TXT
+
+
+This is currently a *lot* of work. We're planning to simplify this
+process as much as we can :)
+
+The obdemo/bin/bootstrap_demo.sh script does all this for the demo
+site.  You can dive into the other scripts that it calls to get more
+details on how it all works.
+
+
 =============
-Contents
+Code Contents
 =============
 
 This distribution contains a number of packages, summarized below:
