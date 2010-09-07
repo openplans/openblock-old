@@ -98,13 +98,13 @@ class SchemaField(models.Model):
     def __unicode__(self):
         return u'%s - %s' % (self.schema, self.name)
 
-    def _get_slug(self):
+    @property
+    def slug(self):
         return self.name.replace('_', '-')
-    slug = property(_get_slug)
 
-    def _datatype(self):
+    @property
+    def datatype(self):
         return self.real_name[:-2]
-    datatype = property(_datatype)
 
     def is_type(self, *data_types):
         """
@@ -112,10 +112,7 @@ class SchemaField(models.Model):
 
         Allowed values are 'varchar', 'date', 'time', 'datetime', 'bool', 'int'.
         """
-        for t in data_types:
-            if t == self.real_name[:-2]:
-                return True
-        return False
+        return self.datatype in data_types
 
     def is_many_to_many_lookup(self):
         """
@@ -204,13 +201,14 @@ class Location(models.Model):
 
     # Give Location objects a "pretty_name" attribute for interoperability with
     # Block objects. (Parts of our app accept either a Block or Location.)
-    def _get_name(self):
+    @property
+    def pretty_name(self):
         return self.name
-    pretty_name = property(_get_name)
 
-    def _is_custom(self):
+    @property
+    def is_custom(self):
         return self.location_type.slug == 'custom'
-    is_custom = property(_is_custom)
+
 
 class AttributesDescriptor(object):
     """
