@@ -191,10 +191,17 @@ The NewsItem model in itself is generic -- a lowest-common denominator of each
 NewsItem on the site. If you'd like to extend your NewsItems to include
 Schema-specific attributes, you can use SchemaFields and Attributes.
 
-The "db_attribute" table stores arbitrary attributes for each NewsItem, and
-the "db_schemafield" table is the key for those attributes. A SchemaField says,
-for example, that the "int01" column in the db_attribute table for the "real
-estate sales" Schema corresponds to the "sale price".
+A single NewsItem is described by one NewsItem instance, one
+corresponding Attribute instance containing metadata, and one Schema
+that identifies the "type" of NewsItem. The Schema in turn is
+described by a number of SchemaFields which describe the meaning of
+the fields of Attribute instances for this type of NewsItem.
+
+Or, from a database perspective: The "db_attribute" table stores
+arbitrary attributes for each NewsItem, and the "db_schemafield" table
+is the key for those attributes. A SchemaField says, for example, that
+the "int01" column in the db_attribute table for the "real estate
+sales" Schema corresponds to the "sale price".
 
 This can be confusing, so here's an example. Say you have a "real estate sales"
 Schema, with an id of 5. Say, for each sale, you have the following

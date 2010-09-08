@@ -71,6 +71,8 @@ class BlockManager(models.GeoManager):
         is within a number range, we don't enforce the parity
         matching. This is friendlier to the user. For example, 3181
         would match the block 3180-3188.
+
+        XXX strict_number is unused???
         """
         filters = {'street': street.upper()}
         sided_filters = []

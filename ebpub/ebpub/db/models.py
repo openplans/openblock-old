@@ -27,6 +27,10 @@ class SchemaManager(models.Manager):
         return super(SchemaManager, self).get_query_set().filter(is_public=True)
 
 class Schema(models.Model):
+    """
+    Describes a type of NewsItem.  A NewsItem has exactly one Schema,
+    which describes its attributes, via associated SchemaFields.
+    """
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
     indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
@@ -69,6 +73,8 @@ class Schema(models.Model):
         return self.slug
 
 class SchemaInfo(models.Model):
+    """Metadata about a Schema.
+    """
     schema = models.ForeignKey(Schema)
     short_description = models.TextField()
     summary = models.TextField()
@@ -83,9 +89,12 @@ class SchemaInfo(models.Model):
         return unicode(self.schema)
 
 class SchemaField(models.Model):
+    """
+    Describes the meaning of one Attribute field for one Schema type.
+    """
     schema = models.ForeignKey(Schema)
     name = models.CharField(max_length=32)
-    real_name = models.CharField(max_length=10) # 'varchar01', 'varchar02', etc.
+    real_name = models.CharField(max_length=10) # Column name in the Attribute model. 'varchar01', 'varchar02', etc.
     pretty_name = models.CharField(max_length=32) # human-readable name, for presentation
     pretty_name_plural = models.CharField(max_length=32) # plural human-readable name
     display = models.BooleanField() # whether to display value on the public site
@@ -273,6 +282,7 @@ class AttributeDict(dict):
         return dict.__getitem__(self, name)
 
     def __setitem__(self, name, value):
+        # TODO: refactor, code overlaps largely with AttributeDescriptor.__set__
         cursor = connection.cursor()
         real_name = self.mapping[name]
         cursor.execute("""
@@ -414,6 +424,42 @@ class NewsItemManager(models.GeoManager):
         return self.get_query_set().top_lookups(*args, **kwargs)
 
 class NewsItem(models.Model):
+    """
+    Lowest common denominator metadata for News-like things.
+
+    self.schema and self.attributes are used for extended metadata;
+    If all you want is to examine the attributes, self.attributes
+    can be treated like a dict.
+    (Internally it's a bit complicated. See the Schema, SchemaField, and
+    Attribute models, plus AttributeDescriptor, for how it all works.)
+
+    NewsItems have several distinct notions of location:
+
+    * The NewsItemLocation model is for fast lookups of NewsItems to
+      all Locations where the .location fields overlap.  This is set
+      by a sql trigger whenever self.location changes; not set by any
+      python code. Used in various views for filtering.
+
+    * self.location is typically a point, and is used in views for
+      filtering newsitems. Theoretically (untested!!) could also be a
+      GeometryCollection, for news items that mention multiple
+      places. This is typically set during scraping, by geocoding if
+      not provided in the source data.
+
+    * self.location_object is a Location and a) is usually Null in
+      practice, and b) is only needed by self.location_url(), so we
+      can link back to a location view from a newsitem view.  It would
+      be set during scraping.  (Example use case: NYC crime
+      aggregates, where there's no location or address data for the
+      "news item" other than which precinct it occurs in.
+      eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
+
+    * self.block is optionally one Block. Also set during
+      scraping/geocoding.  So far can't find anything that actually
+      uses these.
+
+    """
+
     schema = models.ForeignKey(Schema)
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -425,7 +471,7 @@ class NewsItem(models.Model):
     location_object = models.ForeignKey(Location, blank=True, null=True)
     block = models.ForeignKey(Block, blank=True, null=True)
     objects = NewsItemManager()
-    attributes = AttributesDescriptor()
+    attributes = AttributesDescriptor()  # Treat it like a dict.
 
     def __unicode__(self):
         return self.title
@@ -521,6 +567,15 @@ class AttributeForTemplate(object):
         return [{'value': value, 'url': url, 'description': description} for value, url, description in zip(values, urls, descriptions)]
 
 class Attribute(models.Model):
+    """
+    Extended metadata for NewsItems.
+
+    Each row contains all the extra metadata for one NewsItem
+    instance.  The field names are generic, so in order to know what
+    they mean, you must look at the SchemaFields for the Schema for
+    that NewsItem.  eg. newsitem.
+
+    """
     news_item = models.ForeignKey(NewsItem, primary_key=True, unique=True)
     schema = models.ForeignKey(Schema)
     # All data-type field names must end in two digits, because the code assumes this.
