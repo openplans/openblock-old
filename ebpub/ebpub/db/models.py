@@ -30,6 +30,10 @@ class Schema(models.Model):
     """
     Describes a type of NewsItem.  A NewsItem has exactly one Schema,
     which describes its attributes, via associated SchemaFields.
+
+    nb. to get all NewsItem instances for a Schema, you can do the usual as per
+    http://docs.djangoproject.com/en/dev/topics/db/queries/#backwards-related-objects:
+    schema.newsitem_set.all()
     """
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
