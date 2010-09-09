@@ -16,11 +16,7 @@ import imp
 # CORE DJANGO SETTINGS #
 ########################
 
-DATABASE_ENGINE = 'postgresql_psycopg2' # ebpub only supports postgresql_psycopg2.
-
 _required_settings=[
-    'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD',
-    'DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_ENGINE',
     'DEBUG',
 ]    
 
@@ -108,39 +104,8 @@ _required_settings.append('SHORT_NAME')
 # secret.
 _required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
-# Here, we define the different databases we use, giving each one a label
-# (like 'users') so we can refer to a particular database via multidb
-# managers.
-#
-# Note that we only need to define databases that are used by multidb
-# managers -- not our default database for this settings file. Any Django
-# model code that doesn't use the multidb manager will use the standard
-# DATABASE_NAME/DATABASE_USER/etc. settings.
-#
-# THE UPSHOT: If you're only using one database, the only thing you'll need
-# to set here is TIME_ZONE.
 _required_settings.append('DATABASES')
 
-DATABASES = {
-    'users': {
-        'DATABASE_HOST': DATABASE_HOST,
-        'DATABASE_NAME': DATABASE_NAME,
-        'DATABASE_OPTIONS': {},
-        'DATABASE_PASSWORD': '',
-        'DATABASE_PORT': DATABASE_PORT,
-        'DATABASE_USER': DATABASE_USER,
-        'TIME_ZONE': '', # Same format as Django's TIME_ZONE setting.
-    },
-    'metros': {
-        'DATABASE_HOST': DATABASE_HOST,
-        'DATABASE_NAME': DATABASE_NAME,
-        'DATABASE_OPTIONS': {},
-        'DATABASE_PASSWORD': '',
-        'DATABASE_PORT': DATABASE_PORT,
-        'DATABASE_USER': DATABASE_USER, 
-        'TIME_ZONE': '', # Same format as Django's TIME_ZONE setting.
-    },
-}
 
 # The list of all metros this installation covers. This is a tuple of
 # dictionaries.
