@@ -208,39 +208,107 @@ def get_app_settings(options):
                             % (settings_module, user_settings_module))
     return sys.modules[settings_module] 
 
-def get_db_cfg(settings):
-    dbhost = settings.DATABASE_HOST
-    dbport = settings.DATABASE_PORT
+def get_conn_params(dbinfo):
+    dbhost = dbinfo.get('HOST', None)
+    dbport = dbinfo.get('PORT', None)
 
-    dbcfg = {}
+    params = {}
     if dbhost:
-        dbcfg['host'] = dbhost
+        params['host'] = dbhost
     if dbport:
-        dbcfg['port'] = dbport
-    return dbcfg
+        params['port'] = dbport
+    return params
+    
+def _distinct_servers(settings):
+    dbs = {}
+    for dbname, dbinfo in settings.DATABASES.items():
+        dbid = (dbinfo.get('HOST'), dbinfo.get('PORT'))
+        dbs[dbid] = dbinfo
+    return dbs.values()
+    
+def _distinct_dbs(settings):
+    dbs = {}
+    for dbname, dbinfo in settings.DATABASES.items():
+        dbid = (dbinfo.get('HOST'), dbinfo.get('PORT'), dbinfo.get('NAME'))
+        dbs[dbid] = dbinfo
+    return dbs.values()
+    
+def _distinct_users(settings):
+    dbs = {}
+    for dbname, dbinfo in settings.DATABASES.items():
+        dbid = (dbinfo.get('HOST'), dbinfo.get('PORT'), dbinfo.get('USERNAME'))
+        dbs[dbid] = dbinfo
+    return dbs.values()
 
 @task
-@needs('create_postgis_template')
-def setup_db(options):
+def sync_all(options):
+    manage = os.path.join(options.env_root, 'manage.py')
+    settings = get_app_settings(options)
+    for dbname in settings.DATABASES.keys():
+        sh("%s syncdb --database=%s" % (manage, dbname))
+
+        
+@task
+@needs('create_database_users')
+@needs('create_postgis_templates')
+def setup_dbs(options):
     """
     create application database.
     """
-    _setup_db(options)
-    print "Success! Now run './manage.py syncdb'"
-
-def _setup_db(options):
     settings = get_app_settings(options)
-    dbcfg = get_db_cfg(settings)
+    for dbinfo in _distinct_dbs(settings):
+        _setup_db(options, settings, dbinfo)
+    print "Success! Now run 'oblock sync_all'"
+
+def _setup_db(options, settings, dbinfo):
+    conn_params = get_conn_params(dbinfo)
+
     import psycopg2
-    conn = psycopg2.connect(database="postgres", **dbcfg)
+    conn = psycopg2.connect(database="postgres", **conn_params)
+
+    dbuser = dbinfo.get('USER')
+    dbpass = dbinfo.get('PASSWORD')
+
+    cur = conn.cursor()
+    dbname = dbinfo.get('NAME')
+    template = settings.POSTGIS_TEMPLATE
+    import psycopg2
+    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
+                dbname)
+    if cur.fetchone()[0] != 0:
+        print "Database '%s' already exists, fixing permissions ..." % dbname
+        grant_rights_on_spatial_tables(dbname, **conn_params)
+        return
+
+    print "Creating database %s'" % dbname
+    try:
+        cur.execute("CREATE DATABASE %s OWNER %s TEMPLATE %s;" % (dbname, dbuser, template))
+    except:
+        exit_with_traceback("Failed to create database %r" % dbname)
+
+    grant_rights_on_spatial_tables(dbname, **conn_params)
+    print "Success. created database %s owned by %s" % (dbname, dbuser)
+
+@task
+def create_database_users(options):
+    settings = get_app_settings(options)
+    for dbinfo in _distinct_users(settings):
+        _create_database_user(options, settings, dbinfo)
+
+def _create_database_user(options, settings, dbinfo):
+    conn_params = get_conn_params(dbinfo)
+
+    import psycopg2
+    conn = psycopg2.connect(database="postgres", **conn_params)
 
     ################################
     #
-    # create app user
+    # create user
     #
     ################################
-    dbuser = settings.DATABASE_USER
-    dbpass = settings.DATABASE_PASSWORD
+    dbuser = dbinfo.get('USER')
+    dbpass = dbinfo.get('PASSWORD')
 
     cur = conn.cursor()
     # test if the user exists
@@ -257,37 +325,18 @@ def _setup_db(options):
     else:
         print "User '%s' already exists, leaving it alone..." % dbuser
 
-    ################################
-    #
-    # create app database
-    #
-    ################################
-    dbname = settings.DATABASE_NAME
-    template = settings.POSTGIS_TEMPLATE
-    import psycopg2
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
-                dbname)
-    if cur.fetchone()[0] != 0:
-        print "Database '%s' already exists, fixing permissions ..." % dbname
-        grant_rights_on_spatial_tables(dbname, **dbcfg)
-        return
 
-    print "Creating database %s'" % dbname
-    try:
-        cur.execute("CREATE DATABASE %s OWNER %s TEMPLATE %s;" % (dbname, dbuser, template))
-    except:
-        exit_with_traceback("Failed to create database %r" % dbname)
-
-    grant_rights_on_spatial_tables(dbname, **dbcfg)
-    print "Success. created database %s owned by %s" % (dbname, dbuser)
-    
 @task
-def drop_postgis_template(options):
+def drop_postgis_templates(options):
     settings = get_app_settings(options)
-    dbcfg = get_db_cfg(settings)
+    for dbinfo in _distinct_servers(settings):    
+        _drop_postgis_template(options, settings, dbinfo)
+    
+def _drop_postgis_template(options, settings, dbinfo):
+
+    conn_params = get_conn_params(dbinfo)
     import psycopg2
-    conn = psycopg2.connect(database="postgres", **dbcfg)
+    conn = psycopg2.connect(database="postgres", **conn_params)
     template = settings.POSTGIS_TEMPLATE
 
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
@@ -309,12 +358,15 @@ def drop_postgis_template(options):
 
 
 @task
-def create_postgis_template(options):
-
+def create_postgis_templates(options):
     settings = get_app_settings(options)
-    dbcfg = get_db_cfg(settings)
+    for dbinfo in _distinct_servers(settings):
+        _create_postgis_template(options, settings, dbinfo)    
+
+def _create_postgis_template(options, settings, dbinfo):
+    conn_params = get_conn_params(dbinfo)
     import psycopg2
-    conn = psycopg2.connect(database="postgres", **dbcfg)
+    conn = psycopg2.connect(database="postgres", **conn_params)
 
     ##################################
     #
@@ -332,7 +384,7 @@ def create_postgis_template(options):
                 template)
     if cur.fetchone()[0] != 0:
         print "Database '%s' already exists, fixing permissions..." % template
-        grant_rights_on_spatial_tables(template, **dbcfg)
+        grant_rights_on_spatial_tables(template, **conn_params)
         cur.execute(make_template_sql)
         return
 
@@ -350,7 +402,7 @@ def create_postgis_template(options):
 
     # cool, reconnect to our new database.
     print "reconnecting to database %s" % template 
-    conn = psycopg2.connect(database=template, **dbcfg)
+    conn = psycopg2.connect(database=template, **conn_params)
     cur = conn.cursor()
 
     #################################
@@ -379,9 +431,9 @@ def create_postgis_template(options):
     print "created postgis template %s." % template
 
 
-def grant_rights_on_spatial_tables(database, **dbcfg):    
+def grant_rights_on_spatial_tables(database, **conn_params):    
     import psycopg2
-    conn = psycopg2.connect(database=database, **dbcfg)
+    conn = psycopg2.connect(database=database, **conn_params)
     cur = conn.cursor()
     cur.execute("GRANT ALL ON TABLE geometry_columns TO PUBLIC;")
     cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO PUBLIC;")

@@ -36,6 +36,12 @@ DATABASES = {
         'PORT': ''
     },
 }
+DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
+DATABASE_ROUTES = {
+    'users':  [('accounts', 'User'), ],
+    'metros': [('metros', 'Metro'), ],
+}
+
 DEBUG = True
 
 
