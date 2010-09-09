@@ -1,8 +1,7 @@
 from django.conf import settings
 from django.contrib.gis.db import models
-from ebpub.utils import multidb
 
-class MetroManager(multidb.GeoManager):
+class MetroManager(models.Manager):
     def get_current(self):
         return self.get(short_name=settings.SHORT_NAME)
 
@@ -42,7 +41,7 @@ class Metro(models.Model):
     state = models.CharField(max_length=2)
     state_name = models.CharField(max_length=64)
     location = models.MultiPolygonField()
-    objects = MetroManager('metros')
+    objects = MetroManager()
 
     def __unicode__(self):
         return self.name

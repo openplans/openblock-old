@@ -1,40 +1,7 @@
 from django.db import models
-from ebpub.utils import multidb
 import utils # relative import
 
-class UserManager(multidb.Manager):
-    # This method is necessary because ebpub.utils.multidb doesn't support
-    # inserts or updates -- only reads.
-    # TODO: Remove this once multidb gets that feature.
-    def create_user(self, **kwargs):
-        from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper
-        connection = DatabaseWrapper(self.database_settings)
-        cursor = connection.cursor()
-        opts = self.model._meta
-        fields = [f for f in opts.fields if f.name != 'id']
-        try:
-            kwargs['password'] = utils.make_password_hash(kwargs['password'])
-            values = [kwargs[f.name] for f in fields]
-        except KeyError, e:
-            raise ValueError('Missing field: %s' % e)
-        cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % \
-            (opts.db_table, ','.join([f.column for f in fields]), ','.join(['%s' for i in xrange(len(fields))])),
-            values)
-        cursor.execute("SELECT CURRVAL('\"%s_id_seq\"')" % opts.db_table)
-        user_id = cursor.fetchone()[0]
-        connection._commit()
-        connection.close()
-        return User.objects.get(id=user_id)
-
-    def set_password(self, user_id, raw_password):
-        from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper
-        connection = DatabaseWrapper(self.database_settings)
-        cursor = connection.cursor()
-        password = utils.make_password_hash(raw_password)
-        cursor.execute("UPDATE %s SET password=%%s WHERE id=%%s" % self.model._meta.db_table,
-            (password, user_id))
-        connection._commit()
-        connection.close()
+class UserManager(models.Manager):
 
     def user_by_password(self, email, raw_password):
         """
@@ -61,7 +28,7 @@ class User(models.Model):
     creation_date = models.DateTimeField()
     is_active = models.BooleanField()
 
-    objects = UserManager('users')
+    objects = UserManager()
 
     def __unicode__(self):
         return self.email

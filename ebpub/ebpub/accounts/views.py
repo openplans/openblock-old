@@ -171,13 +171,14 @@ def confirm_email(request):
     if request.method == 'POST':
         form = forms.PasswordRegistrationForm(request.POST)
         if form.is_valid():
-            u = User.objects.create_user(
+            u = User(
                 email=form.cleaned_data['e'],
                 password=form.cleaned_data['password1'],
                 main_metro=get_metro()['short_name'],
                 creation_date=datetime.datetime.now(),
                 is_active=True,
             )
+            u.save()
             utils.login(request, u)
 
             # Look for any PendingUserActions for this e-mail address and
@@ -220,7 +221,9 @@ def password_reset(request):
                 # If we reach this point, then somebody managed to submit a
                 # hash for a user that's not registered yet.
                 raise http.Http404()
-            User.objects.set_password(user.id, form.cleaned_data['password1'])
+        
+            user.set_password(form.cleaned_data['password1'])
+            user.save()
             request.session['login_message'] = 'Your password was changed successfully. Give it a shot by logging in below:'
             return http.HttpResponseRedirect('/accounts/login/')
     else:
