@@ -51,7 +51,7 @@ def main(argv=None):
                     from geocoder_hack import quick_dirty_fallback_geocode
                     x, y = quick_dirty_fallback_geocode(text, parse=True)
                     if None in (x, y):
-                        print " no addr found in %r" % item.title
+                        print " couldn't geocode '%s...'" % item.title[:30]
                         continue
                 item.location = Point((float(y), float(x)))
                 if item.location.x == 0.0 and item.location.y == 0.0:
