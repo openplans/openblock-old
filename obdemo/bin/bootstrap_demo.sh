@@ -19,8 +19,8 @@ python bootstrap.py --use-site-packages=1 || exit 1
 source bin/activate || exit 1
 
 echo DB setup...
-sudo -u postgres bin/oblock setup_db  || exit 1
-./manage.py syncdb || exit 1
+sudo -u postgres bin/oblock setup_dbs  || exit 1
+bin/oblock sync_all || exit 1
 
 echo Importing Boston blocks...
 $HERE/import_boston_blocks.sh || exit 1

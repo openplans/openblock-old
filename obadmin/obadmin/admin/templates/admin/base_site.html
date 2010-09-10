@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {% trans 'Openblock site admin' %}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">{% trans 'Openblock administration' %}</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
+
+{% block footer %}<div id="footer"><a href="/admin/old">&raquo; Old Admin</div>{% endblock %}

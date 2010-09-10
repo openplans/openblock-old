@@ -24,6 +24,7 @@ options(
         'ebgeo',
         'ebpub',
         'ebdata',
+        'obadmin',
         'everyblock'
     ],
 

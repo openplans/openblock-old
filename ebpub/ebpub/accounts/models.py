@@ -1,6 +1,6 @@
 import datetime
 from django.db import models
-from django.contrib.auth.models import User as DjangoUser, UserManager as DjangoUserManager
+from django.contrib.auth.models import User as DjangoUser, UserManager as DjangoUserManager, AnonymousUser
 from django.contrib.auth.backends import ModelBackend
 from django.utils.hashcompat import md5_constructor
 
@@ -18,16 +18,21 @@ class UserManager(DjangoUserManager):
         try:
             email_name, domain_part = email.strip().split('@', 1)
         except ValueError:
-            pass
+            first_name = email[0:30]
         else:
             email = '@'.join([email_name, domain_part.lower()])
+            first_name = email_name
 
         # something of a hack...
         # the username is used to enforce uniqueness and is computed
         # as a (truncated) hash of the email address given.
-        username = md5_constructor(email).hexdigest()[0:30]
+        if len(email) <= 30:
+            username = email
+        else:
+            username = md5_constructor(email).hexdigest()[0:30]
         
         user_args = dict(
+            first_name=first_name,
             is_staff=False,
             is_active=True, 
             is_superuser=False,
@@ -69,11 +74,10 @@ class User(DjangoUser):
     def __unicode__(self):
         return self.email
 
-
 class AuthBackend(ModelBackend):
 
     def authenticate(self, username=None, password=None):
-        return User.objects.user_by_password(username, raw_password)
+        return User.objects.user_by_password(username, password)
 
     def get_user(self, user_id):
         try:

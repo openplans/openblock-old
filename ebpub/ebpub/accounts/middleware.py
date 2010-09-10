@@ -31,7 +31,8 @@ class LazyUserDescriptor(object):
             try:
                 user_id = request.session[constants.USER_SESSION_KEY]
             except KeyError:
-                user = None
+                from ebpub.accounts.models import AnonymousUser
+                user = AnonymousUser()
             else:
                 user = LazyUser(user_id)
             request._cached_user = user

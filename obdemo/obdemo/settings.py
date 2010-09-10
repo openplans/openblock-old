@@ -23,18 +23,18 @@ _required_settings=[
 POSTGIS_TEMPLATE = 'template_postgis'
 
 EBPUB_DIR = imp.find_module('ebpub')[1]
-EB_DIR = imp.find_module('everyblock')[1]
 
 TEMPLATE_DIRS = (
     os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
     EBPUB_DIR + '/templates',
-    EB_DIR + '/templates',
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.app_directories.Loader'
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
+    'django.contrib.auth.context_processors.auth'
     #'django.core.context_processors.debug',
 )
 
@@ -58,10 +58,12 @@ INSTALLED_APPS = (
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
     # useful for.
-    'everyblock.admin',
-    'everyblock.staticmedia',
+#    'everyblock.admin',
+#    'everyblock.staticmedia',
+    'obadmin.admin',
     'django.contrib.auth',
-    'django.contrib.contenttypes'
+    'django.contrib.contenttypes',
+    'django.contrib.admin',
 )
 
 APPS_FOR_TESTING = (

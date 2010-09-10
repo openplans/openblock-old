@@ -6,7 +6,7 @@ except ImportError:
     from setuptools import setup, find_packages
 
 setup(
-    name='obdemo',
+    name='obadmin',
     version="0.1",
     description="",
     license="GPLv3",
@@ -14,8 +14,6 @@ setup(
     "ebgeo",
     "ebpub",
     "ebdata",
-    "obadmin",
-    "geopy", # Maybe. Alternative to ebpub's geocoder.
     ],
     dependency_links=[
     ],

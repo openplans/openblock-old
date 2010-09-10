@@ -87,7 +87,7 @@ def login_required(view_func):
     accessed.
     """
     def inner_view(request, *args, **kwargs):
-        if request.user is not None:
+        if not request.user.is_anonymous():
             return view_func(request, *args, **kwargs)
         request.session['next_url'] = request.path
         return http.HttpResponseRedirect('/accounts/login/')

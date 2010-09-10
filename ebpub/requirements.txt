@@ -1,4 +1,4 @@
-django<1.2
+django>=1.2
 GDAL<1.7.0
 pyyaml
 psycopg2

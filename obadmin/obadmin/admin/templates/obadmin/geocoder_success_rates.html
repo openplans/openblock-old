@@ -1,0 +1,36 @@
+{% extends "obadmin/old_base.html" %}
+
+{% load eb %}
+
+{% block title %}Geocoder success rates{% endblock %}
+
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="../../">Home</a>
+&rsaquo;
+<a href="../">Old</a>
+&rsaquo;
+Geocoder
+</div>
+{% endblock %}
+
+
+{% block content %}
+<div id="content">
+
+	<h1>Geocoder success rates</h1>
+
+	<table>
+		<tr><th>Schema</th><th>Success rate</th><th>Geocoded</th><th>Total</th></tr>
+		{% for schema in schema_list %}
+			<tr>
+				<td>{{ schema.name|capfirst }}</td>
+				<td>{{ schema.ratio|floatformat:3 }}</td>
+				<td>{{ schema.geocoded }}</td>
+				<td>{{ schema.total }}</td>
+			</tr>
+		{% endfor %}
+	</table>
+</div><!--/content-->
+{% endblock %}

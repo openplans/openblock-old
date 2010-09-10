@@ -66,7 +66,7 @@ def signup(request, *args, **kwargs):
         FormClass, type_code = BlockAlertForm, 'b'
     else:
         FormClass, type_code = LocationAlertForm, 'l'
-    email_required = request.user is None
+    email_required = request.user.is_anonymous()
     if request.method == 'POST':
         form = FormClass(request.POST, email_required=email_required)
         if form.is_valid():
@@ -103,7 +103,7 @@ def finish_signup(request, place, data):
         data['location_id'] = place.id
         data['radius'] = None
 
-    if request.user:
+    if not request.user.is_anonymous():
         email = request.user.email
     else:
         email = data['email']

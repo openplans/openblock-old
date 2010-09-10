@@ -1164,7 +1164,7 @@ def place_detail(request, *args, **kwargs):
 
     # Determine whether this is a saved place.
     is_saved = False
-    if request.user:
+    if not request.user.is_anonymous():
         saved_place_lookup['user_id'] = request.user.id # TODO: request.user.id should not do a DB lookup
         is_saved = SavedPlace.objects.filter(**saved_place_lookup).count()
 
@@ -1202,7 +1202,7 @@ def place_detail(request, *args, **kwargs):
             next_day = None
 
         hidden_schema_list = []
-        if request.user is not None:
+        if not request.user.is_anonymous():
             hidden_schema_list = [o.schema for o in HiddenSchema.objects.filter(user_id=request.user.id)]
 
         context = {
