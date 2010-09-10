@@ -178,7 +178,7 @@ def install_app(options):
 @needs('install_app')
 def post_bootstrap(options):
     # we expect this task is run automatically by our bootstrap.py script.
-    print "Once you like your settings, run 'sudo -u postgres bin/oblock setup_db'"
+    print "Once you like your settings, run 'sudo -u postgres bin/oblock setup_dbs'"
 
 def find_postgis(options): 
     file_sets = (
