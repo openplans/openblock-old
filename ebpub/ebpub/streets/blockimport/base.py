@@ -12,7 +12,14 @@ class BlockImporter(object):
         for feature in self.layer:
             parent_id = None
             if not self.skip_feature(feature):
+                XXXblocks_per_feature = 0
                 for block_fields in self.gen_blocks(feature):
+                    # Usually (at least in Boston data) there is only
+                    # 1 block per feature.  But sometimes there are
+                    # multiple names for one street, eg.
+                    # "N. Commercial Wharf" and "Commercial Wharf N."; 
+                    # in that case those would be yielded by gen_blocks() as
+                    # two separate blocks. Is that intentional, or a bug?
                     block = Block(**block_fields)
                     block.geom = feature.geom.geos
                     street_name, block_name = make_pretty_name(
@@ -36,7 +43,7 @@ class BlockImporter(object):
                         block.save()
                     num_created += 1
                     if verbose:
-                        print 'Created block %s' % block
+                        print '%d\tCreated block %s for feature %d' % (num_created, block, feature.get('TLID'))
         return num_created
 
     def skip_feature(self, feature):

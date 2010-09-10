@@ -34,6 +34,6 @@ eb_root_logger = logging.getLogger('eb.retrieval')
 eb_root_logger.addHandler(logfile)
 eb_root_logger.addHandler(emailer)
 
-# Set the logger's threshold to INFO. By default, it seems to ignore everything
+# Set the logger's threshold. By default, it seems to ignore everything
 # under the level WARNING.
-eb_root_logger.setLevel(logging.DEBUG)
+eb_root_logger.setLevel(logging.INFO)

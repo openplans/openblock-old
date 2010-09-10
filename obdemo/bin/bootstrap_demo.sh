@@ -3,19 +3,27 @@
 # Quick experimental single-command script that does all the stuff 
 # in ../../README.txt.
 
+if [ "$1" == '-r' ]; then
+    HARD_RESET=1
+fi
+
 HERE=`dirname $0`
 cd $HERE/../..
 
 echo Getting permission to run as postgres ...
 sudo -u postgres echo ok || exit 1
 
-echo Dropping openblock DB...
-sudo -u postgres dropdb openblock
+if [ $HARD_RESET = 1 ]; then
+    echo Dropping openblock DB...
+    sudo -u postgres dropdb openblock
+    echo Removing python binary...
+    rm -f bin/python
+fi
 
 echo Bootstrapping...
 # We want global packages because there's no easy way
 # to get Mapnik installed locally.
-python bootstrap.py --use-site-packages=1 || exit 1
+python bootstrap.py --use-site-packages || exit 1
 source bin/activate || exit 1
 
 echo DB setup...
