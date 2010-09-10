@@ -43,6 +43,10 @@ AUTHENTICATION_BACKENDS = (
 )
 
 INSTALLED_APPS = (
+    'obadmin.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.admin',
     'ebdata.blobs',
     'ebpub.accounts',
     'ebpub.alerts',
@@ -60,10 +64,6 @@ INSTALLED_APPS = (
     # useful for.
 #    'everyblock.admin',
 #    'everyblock.staticmedia',
-    'obadmin.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.admin',
 )
 
 APPS_FOR_TESTING = (

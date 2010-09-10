@@ -49,6 +49,11 @@ class UserManager(DjangoUserManager):
         user.save(using=self._db)
         return user
 
+    def create_superuser(self, email, password=None, **kw):
+        user_args = dict(kw)
+        user_args['is_superuser'] = True
+        user_args['is_staff'] = True
+        return self.create_user(email, password=password, **user_args)
 
     def user_by_password(self, email, raw_password):
         """
