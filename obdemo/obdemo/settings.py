@@ -38,6 +38,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     #'django.core.context_processors.debug',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'ebpub.accounts.models.AuthBackend',
+)
 
 INSTALLED_APPS = (
     'ebdata.blobs',
@@ -57,6 +60,8 @@ INSTALLED_APPS = (
     # useful for.
     'everyblock.admin',
     'everyblock.staticmedia',
+    'django.contrib.auth',
+    'django.contrib.contenttypes'
 )
 
 APPS_FOR_TESTING = (

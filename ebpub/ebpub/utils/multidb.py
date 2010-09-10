@@ -1,4 +1,5 @@
 from django.conf import settings
+import re
 
 class PerModelDBRouter:
     """
@@ -6,26 +7,30 @@ class PerModelDBRouter:
     django multi-database documentation: 
     http://docs.djangoproject.com/en/dev/topics/db/multi-db/
     
-    The PerModelDBRouter allows you to assign the exact list of 
-    Model types assigned to a particular configured databases.  
+    The PerModelDBRouter allows you to assign Model types to a 
+    particular configured database. 
+    
     The django setting DATABASE_ROUTES controls the particulars.
     
     DATABASE_ROUTES is expected to be a dictionary with keys 
     referencing database names in the DATABASES settings and 
     values lists of references to model types of the form 
-    (app_label, ModelClass).
+    <app_label>.<ModelClass> or regular expressions that match
+    values of the form.
     
     eg:
 
     DATABASE_ROUTES = {
-        'users': [('accounts', 'User')],
-        'barn': [('animals', 'Goat'), 
-                 ('animals', 'Pig')]
+        'users': ['accounts.User'],
+        'barn': ['animals.Goat', 
+                 'animals.Pig'],
+        'junkyard': ['garbage.*', 'scrap.*']
     }
     
     This configuration would put accounts.models.User objects into the 
-    database 'users' and animals.models.Goat and animals.models.Pig into
-    the database 'barn'
+    database 'users', animals.models.Goat and animals.models.Pig into
+    the database 'barn' and any model in the garbage or scrap app into 
+    the datatbase 'junkyard'
     
     A subclass may optionally provide a specific configuration value to 
     the attribute _routes (of the same form) to override the use of
@@ -41,10 +46,11 @@ class PerModelDBRouter:
 
     def _find_db(self, model):
         for db, routes in self.routes.items():
-            for app_label, name in routes: 
-                if (model._meta.app_label == app_label and
-                    model.__name__ == name):
+            for pat in routes: 
+                mid = '%s.%s' % (model._meta.app_label, model.__name__)
+                if re.match(pat, mid):
                     return db
+
         return None
 
     def db_for_read(self, model, **hints):
@@ -59,8 +65,11 @@ class PerModelDBRouter:
         
     def allow_syncdb(self, db, model):
         rdb = self._find_db(model)
+        
+        # if there is an assigned db, only allow
+        # it to be synced to the specific one.
         if rdb is None:
-            if db in self.routes:
+            if db in self.routes: 
                 return False
             else:
                 return None

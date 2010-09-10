@@ -1,7 +1,49 @@
+import datetime
 from django.db import models
-import utils # relative import
+from django.contrib.auth.models import User as DjangoUser, UserManager as DjangoUserManager
+from django.contrib.auth.backends import ModelBackend
+from django.utils.hashcompat import md5_constructor
 
-class UserManager(models.Manager):
+class UserManager(DjangoUserManager):
+
+    def create_user(self, email, password=None, **kw):
+        """
+        Creates and saves a User with the given e-mail and password.
+        """
+
+        now = datetime.datetime.now()
+        
+        # Normalize the address by lowercasing the domain part of the email
+        # address.
+        try:
+            email_name, domain_part = email.strip().split('@', 1)
+        except ValueError:
+            pass
+        else:
+            email = '@'.join([email_name, domain_part.lower()])
+
+        # something of a hack...
+        # the username is used to enforce uniqueness and is computed
+        # as a (truncated) hash of the email address given.
+        username = md5_constructor(email).hexdigest()[0:30]
+        
+        user_args = dict(
+            is_staff=False,
+            is_active=True, 
+            is_superuser=False,
+            last_login=now,
+            date_joined=now
+        )
+        user_args.update(kw)
+        user = User(username=username, email=email, **user_args)
+        
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save(using=self._db)
+        return user
+
 
     def user_by_password(self, email, raw_password):
         """
@@ -16,29 +58,28 @@ class UserManager(models.Manager):
             return user
         return None
 
-class User(models.Model):
-    email = models.EmailField(unique=True) # Stored in all-lowercase.
+class User(DjangoUser):
 
-    # Password uses '[algo]$[salt]$[hexdigest]', just like Django's auth.User.
-    password = models.CharField(max_length=128)
 
     # The SHORT_NAME for the user's metro when they created the account.
     main_metro = models.CharField(max_length=32)
-
-    creation_date = models.DateTimeField()
-    is_active = models.BooleanField()
 
     objects = UserManager()
 
     def __unicode__(self):
         return self.email
 
-    def set_password(self, new_password):
-        self.password = utils.make_password_hash(new_password)
 
-    def check_password(self, raw_password):
-        "Returns True if the given raw password is correct for this user."
-        return utils.check_password_hash(raw_password, self.password)
+class AuthBackend(ModelBackend):
+
+    def authenticate(self, username=None, password=None):
+        return User.objects.user_by_password(username, raw_password)
+
+    def get_user(self, user_id):
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
 
 # Note that this class does *not* use the multidb Manager.
 # It's city-specific because pending user actions are city-specific.
@@ -51,3 +92,4 @@ class PendingUserAction(models.Model):
 
     def __unicode__(self):
         return u'%s for %s' % (self.callback, self.email)
+

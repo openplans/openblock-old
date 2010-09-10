@@ -244,8 +244,12 @@ def _distinct_users(settings):
 def sync_all(options):
     manage = os.path.join(options.env_root, 'manage.py')
     settings = get_app_settings(options)
+    for dbname in settings.DATABASE_SYNC_ORDER:
+        sh("%s syncdb --database=%s --noinput" % (manage, dbname))    
+    
     for dbname in settings.DATABASES.keys():
-        sh("%s syncdb --database=%s" % (manage, dbname))
+        if dbname not in settings.DATABASE_SYNC_ORDER:
+            sh("%s syncdb --database=%s --noinput" % (manage, dbname))
 
         
 @task

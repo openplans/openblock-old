@@ -8,15 +8,6 @@ edit them as desired.
 ########################
 
 DATABASES = {
-    'default': {
-        'NAME': 'openblock',
-        'USER': 'openblock',
-        'PASSWORD': 'openblock',
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'OPTIONS': {},
-        'HOST': '',
-        'PORT': ''
-    },
     'users': {
         'NAME': 'openblock',
         'USER': 'openblock',
@@ -24,7 +15,7 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'OPTIONS': {},
         'HOST': '',
-        'PORT': ''
+        'PORT': '',
     },
     'metros': {
         'NAME': 'openblock',
@@ -33,13 +24,22 @@ DATABASES = {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'OPTIONS': {},
         'HOST': '',
-        'PORT': ''
+        'PORT': '',
+    },
+    'default': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
     },
 }
 DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
 DATABASE_ROUTES = {
-    'users':  [('accounts', 'User'), ],
-    'metros': [('metros', 'Metro'), ],
+    'users': ['accounts.User', 'auth.*', 'conttenttypes.*'],
+    'metros': ['metros.*']
 }
 
 DEBUG = True

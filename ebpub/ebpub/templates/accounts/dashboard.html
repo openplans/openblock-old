@@ -67,7 +67,7 @@ $j(function() {
 	<form action="/accounts/logout/" method="post">
 		<p><button type="submit">Log out</button></p>
 	</form>
-	<p>You've had an account since {{ user.creation_date|date:"F j, Y" }}.</p>
+	<p>You've had an account since {{ user.date_joined|date:"F j, Y" }}.</p>
 	<p>Logged in as <strong>{{ user.email }}</strong>.</p>
 	
 	{% if custom_message %}

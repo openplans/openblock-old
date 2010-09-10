@@ -171,12 +171,10 @@ def confirm_email(request):
     if request.method == 'POST':
         form = forms.PasswordRegistrationForm(request.POST)
         if form.is_valid():
-            u = User(
+            u = User.objects.create_user(
                 email=form.cleaned_data['e'],
                 password=form.cleaned_data['password1'],
                 main_metro=get_metro()['short_name'],
-                creation_date=datetime.datetime.now(),
-                is_active=True,
             )
             u.save()
             utils.login(request, u)
