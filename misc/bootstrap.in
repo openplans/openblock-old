@@ -12,7 +12,7 @@ def after_install(options, home_dir):
     call([join(home_dir, 'bin', 'easy_install'), 'paver'])
 
     source_root = os.path.dirname(__file__)
-    pavement_file = join(source_root, 'obutil', 'obutil', 'pavement.py')
+    pavement_file = join(source_root, 'obadmin', 'obadmin', 'pavement.py')
     call([join(home_dir, 'bin', 'paver'), '-f', pavement_file,  'post_bootstrap'])
 
     # link source code

@@ -20,7 +20,6 @@ options(
     # packages to activate 
     # order matters! dependants first
     openblock_packages=[
-        'obutil',
         'ebgeo',
         'ebpub',
         'ebdata',
@@ -28,7 +27,7 @@ options(
         'everyblock'
     ],
 
-    # assumes pavement.py is in source_dir/obutil/obutil/pavement.py
+    # assumes pavement.py is in source_dir/obadmin/obadmin/pavement.py
     source_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
 
     app='obdemo',
