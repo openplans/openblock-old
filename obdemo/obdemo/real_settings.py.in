@@ -38,10 +38,10 @@ DATABASES = {
 }
 DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
 DATABASE_ROUTES = {
-    'users': ['accounts.User', 'auth.*', 'conttenttypes.*'],
+    'users': ['accounts.User', 'auth.*', 'contenttypes.*'],
     'metros': ['metros.*']
 }
-
+DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
 DEBUG = True
 
 
