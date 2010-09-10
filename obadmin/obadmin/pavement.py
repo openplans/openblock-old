@@ -24,6 +24,7 @@ options(
         'ebpub',
         'ebdata',
         'obadmin',
+        'everyblock',
     ],
 
     # assumes pavement.py is in source_dir/obadmin/obadmin/pavement.py
