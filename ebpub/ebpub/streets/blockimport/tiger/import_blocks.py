@@ -94,12 +94,13 @@ class TigerImporter(BlockImporter):
         self.layer = DataSource(edges_shp)[0]
         self.featnames_db = featnames_db = {}
         for tlid, row in self._load_rel_db(featnames_dbf, 'TLID').iteritems():
-            # tlid is Tiger/Line ID, unique per edge.  We use TLID
-            # instead of LINEARID as the key because LINEARID is only
-            # unique per 'linear feature', which is an implicit union
-            # of some edges. So if we used LINEARID, we'd clobber a
-            # lot of rows in the call to _load_rel_db().
-            # Fixes #14
+            # TLID is Tiger/Line ID, unique per edge.
+            # We use TLID instead of LINEARID as the key because
+            # LINEARID is only unique per 'linear feature', which is
+            # an implicit union of some edges. So if we used LINEARID,
+            # we'd clobber a lot of keys in the call to
+            # _load_rel_db().
+            # Fixes #14 ("missing blocks").
             if row['MTFCC'] not in VALID_MTFCC:
                 continue
             if not row.get('FULLNAME'):
