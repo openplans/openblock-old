@@ -67,9 +67,17 @@ STATE_FIPS = {
 # secondary road, and city street
 VALID_MTFCC = set(['S1100', 'S1200', 'S1400'])
 
+# There's a few of these that have FULLNAME and may even have addresses.
+VALID_MTFCC.add('S1730') # alley, often unnamed.
+VALID_MTFCC.add('S1640') # service roads, may have buildings.
+VALID_MTFCC.add('S1740') # private roads, often unnamed.
+
 class TigerImporter(BlockImporter):
     """
     Imports blocks using TIGER/Line data from the US Census.
+
+    `edges_shp` contains all the feature edges (i.e. street segment
+    geometries); `featnames_dbf` contains metadata
 
     Note this importer requires a lot of memory, because it loads the
     necessary .DBF files into memory for various lookups.
@@ -80,15 +88,28 @@ class TigerImporter(BlockImporter):
 
     http://www.census.gov/geo/www/tiger/tgrshp2008/rel_file_desc_2008.txt
     """
-    def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp, filter_city=None):
+    def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp, filter_city=None, verbose=False):
+        self.verbose = verbose
+        # First load all edges from ...edges.shp
         self.layer = DataSource(edges_shp)[0]
         self.featnames_db = featnames_db = {}
-        for row in self._load_rel_db(featnames_dbf, 'LINEARID').itervalues():
+        for tlid, row in self._load_rel_db(featnames_dbf, 'TLID').iteritems():
+            # tlid is Tiger/Line ID, unique per edge.  We use TLID
+            # instead of LINEARID as the key because LINEARID is only
+            # unique per 'linear feature', which is an implicit union
+            # of some edges. So if we used LINEARID, we'd clobber a
+            # lot of rows in the call to _load_rel_db().
+            # Fixes #14
             if row['MTFCC'] not in VALID_MTFCC:
                 continue
-            tlid = row['TLID']
+            if not row.get('FULLNAME'):
+                if verbose:
+                    print "skipping tlid %r, no fullname" % tlid
+                continue
+
             featnames_db.setdefault(tlid, [])
             featnames_db[tlid].append(row)
+
         self.faces_db = self._load_rel_db(faces_dbf, 'TFID')
         # Load places keyed by FIPS code
         places_layer = DataSource(place_shp)[0]
@@ -100,14 +121,27 @@ class TigerImporter(BlockImporter):
             places[fips] = values
         self.filter_city = filter_city and filter_city.upper() or None
 
+        self.tlids_with_blocks = set()
+
     def _load_rel_db(self, dbf_file, rel_key):
+        """
+        Reads rows as dicts from a .dbf file.
+        Returns a mapping of rel_key -> row dict.
+        """
         f = open(dbf_file, 'rb')
         db = {}
+        rowcount = 0
         try:
             for row in dbf.dict_reader(f, strip_values=True):
                 db[row[rel_key]] = row
+                rowcount += 1
+                if self.verbose:
+                    print " GOT DBF ROW %s for %s" % (row[rel_key], row.get('FULLNAME', 'unknown'))
         finally:
             f.close()
+        if self.verbose:
+            print "Rows in %s: %d" % (dbf_file, rowcount)
+            print "Unique keys for %r: %d" % (rel_key, len(db))
         return db
 
     def _get_city(self, feature, side):
@@ -144,28 +178,36 @@ class TigerImporter(BlockImporter):
     def gen_blocks(self, feature):
         block_fields = {}
         tlid = feature.get('TLID')
-        for side in ('right', 'left'):
-            for end in ('from', 'to'):
-                field_key = '%s_%s_num' % (side, end)
-                sl = side[0].upper() # side letter
-                try:
-                    block_fields[field_key] = int(feature.get('%s%sADD' % (sl, end.upper())))
-                except ValueError:
-                    block_fields[field_key] = None
+        for field_key, feature_key in (('right_from_num', 'RFROMADD'),
+                                       ('left_from_num', 'LFROMADD'),
+                                       ('right_to_num', 'RTOADD'),
+                                       ('left_to_num', 'LTOADD')):
+            try:
+                block_fields[field_key] = int(feature.get(feature_key))
+            except ValueError:
+                block_fields[field_key] = None
+
         block_fields['right_zip'] = feature.get('ZIPR')
         block_fields['left_zip'] = feature.get('ZIPL')
         for side in ('right', 'left'):
             block_fields[side + '_city'] = self._get_city(feature, side[0].upper()).upper()
             block_fields[side + '_state'] = self._get_state(feature, side[0].upper()).upper()
+
         if tlid in self.featnames_db:
             for featname in self.featnames_db[tlid]:
-                name_fields = {}
-                name_fields['street'] = featname['NAME'].upper()
-                name_fields['predir'] = featname['PREDIRABRV'].upper()
-                name_fields['suffix'] = featname['SUFTYPABRV'].upper()
-                name_fields['postdir'] = featname['SUFDIRABRV'].upper()
-                block_fields.update(name_fields)
+                block_fields['street'] = featname['NAME'].upper()
+                block_fields['predir'] = featname['PREDIRABRV'].upper()
+                block_fields['suffix'] = featname['SUFTYPABRV'].upper()
+                block_fields['postdir'] = featname['SUFDIRABRV'].upper()
+                # It's ok to yield the same dict multiple times
+                # because we don't save it, we use it as params to
+                # creating a Block.  block_fields.update(name_fields)
                 yield block_fields
+
+                self.tlids_with_blocks.add(tlid)
+        elif feature.get('FULLNAME') == 'Massachusetts Ave':
+            print "MISSING featname stuff for mass ave tlid %d" % tlid
+
 
 def main(argv=None):
     if argv is None:
@@ -177,8 +219,30 @@ def main(argv=None):
     if len(args) != 4:
         return parser.error('must provide 4 arguments, see usage')
     args.append(options.city)
+    args.append(options.verbose)
     tiger = TigerImporter(*args)
-    tiger.save(options.verbose)
+    num_created = tiger.save(options.verbose)
+    if options.verbose:
+        print "Created %d blocks" % num_created
+        print "... from %d feature names" % len(tiger.featnames_db)
+        print "feature tlids with blocks: %d" % len(tiger.tlids_with_blocks)
+        print
+        import pprint
+        tlids_wo_blocks = set(tiger.featnames_db.keys()).difference(tiger.tlids_with_blocks)
+        print "feature tlids WITHOUT blocks: %d" % len(tlids_wo_blocks)
+        all_rows = []
+        for t in tlids_wo_blocks:
+            all_rows.extend(tiger.featnames_db[t])
+        print "Rows: %d" % len(all_rows)
+        names = [(r['FULLNAME'], r['TLID']) for r in all_rows]
+        names.sort()
+        print "================="
+        for n, t in names:
+            print n, t
+        for tlid in sorted(tlids_wo_blocks)[:10]:
+            feat = tiger.featnames_db[tlid]
+            pprint.pprint(feat)
+
 
 if __name__ == '__main__':
     sys.exit(main())

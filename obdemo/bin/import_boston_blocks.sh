@@ -16,30 +16,29 @@ function die {
 }
 
 
-rm -rf tiger_data
-mkdir -p tiger_data
-cd tiger_data || die "couldn't cd to $PWD/tiger_data"
-
 # First we download a bunch of zipfiles of TIGER data.
 
 BASEURL=http://www2.census.gov/geo/tiger/TIGER2009/25_MASSACHUSETTS
 ZIPS="tl_2009_25_place.zip 25025_Suffolk_County/tl_2009_25025_edges.zip 25025_Suffolk_County/tl_2009_25025_faces.zip 25025_Suffolk_County/tl_2009_25025_featnames.zip"
 
+mkdir -p tiger_data
+cd tiger_data || die "couldn't cd to $PWD/tiger_data"
+
 for fname in $ZIPS; do
-    wget $BASEURL/$fname
+    wget -N $BASEURL/$fname
     if [ $? -ne 0 ]; then
         die "Could not download $BASEURL/$fname"
     fi
 done
 
-for fname in *zip; do unzip $fname; done
+for fname in *zip; do unzip -o $fname; done
 echo Shapefiles unzipped in $PWD/tiger_data
 
 # Now we load them into our blocks table.
 
 
-IMPORTER=`find -H $SOURCE_ROOT -name import_blocks.py`
-if [ ! -f "$IMPORTER" ]; then die "Could not find import_blocks.py" ; fi
+IMPORTER=$SOURCE_ROOT/ebpub/ebpub/streets/blockimport/tiger/import_blocks.py
+if [ ! -f "$IMPORTER" ]; then die "Could not find import_blocks.py at $IMPORTER" ; fi
 
 echo Importing blocks, this may take several minutes ...
 
@@ -104,8 +103,14 @@ echo Populating streets and fixing addresses...
 
 cd $SOURCE_ROOT/ebpub/ebpub || die
 
+# TODO: refactor this into fixing numbers, which should be done in the importer,
+# and deleting blocks not in the city, which seems worth leaving separate.
 ./streets/fix_block_numbers.py || die
+
+# TODO: is this necessary? the original block import script has
+# already done it?
 ./streets/update_block_pretty_names.py || die
+
 ./streets/populate_streets.py streets || die
 ./streets/populate_streets.py block_intersections || die
 ./streets/populate_streets.py intersections || die

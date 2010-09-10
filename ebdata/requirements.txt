@@ -2,7 +2,7 @@ django
 lxml
 chardet==1.0.1
 feedparser==4.1
-http://httplib2.googlecode.com/files/httplib2-0.4.0.tar.gz
+httplib2==0.6.0
 python-dateutil==1.4.1
 xlrd==0.7.1
 
