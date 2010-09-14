@@ -433,6 +433,7 @@ def _create_postgis_template(options, settings, dbinfo):
         sh("psql -d %s -f %s" % (template, filename))
 
     print "created postgis template %s." % template
+    grant_rights_on_spatial_tables(template, **conn_params)
 
 
 def grant_rights_on_spatial_tables(database, **conn_params):    
