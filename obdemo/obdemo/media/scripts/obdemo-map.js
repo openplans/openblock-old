@@ -28,8 +28,8 @@ var options = {
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 
-// Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
-var newsitem_params = {};
+// TODO: Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
+var newsitem_params = {pid: pid}; // expect pid to be set prior to this script
 
 function loadNewsItems() {
     newsitems = new OpenLayers.Layer.Vector("NewsItems", {

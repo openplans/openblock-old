@@ -25,6 +25,7 @@ INSTALLED_APPS = (
     'ebpub.accounts',
     'ebpub.alerts',
     'ebpub.db',
+    'ebpub.utils',
     'ebpub.geocoder',
     'ebpub.petitions',
     'ebpub.preferences',

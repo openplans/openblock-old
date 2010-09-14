@@ -71,6 +71,7 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     # fmap = {schema_id: {'fields': [(name, real_name)], 'lookups': [real_name1, real_name2]}}
     fmap = {}
     attribute_columns_to_select = set(['news_item'])
+
     for sf in SchemaField.objects.filter(schema__id__in=[s.id for s in schema_list]).values('schema', 'name', 'real_name', 'is_lookup'):
         fmap.setdefault(sf['schema'], {'fields': [], 'lookups': []})['fields'].append((sf['name'], sf['real_name']))
         if sf['is_lookup']:
@@ -81,10 +82,13 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     if not fmap: 
         return
-        
+
     # Determine which Lookup objects need to be retrieved.
     lookup_ids = set()
     for ni in preloaded_nis:
+        # Fix for #38: not all Schemas have SchemaFields, can be 100% vanilla.
+        if not ni.schema_id in fmap:
+            continue
         for real_name in fmap[ni.schema_id]['lookups']:
             value = att_dict[ni.id][real_name]
             if ',' in str(value):
@@ -101,6 +105,10 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
         
     # Set 'attribute_values' for each NewsItem in preloaded_nis.
     for ni in preloaded_nis:
+        if not ni.id in att_dict:
+            # Fix for #38: Schemas may not have any SchemaFields, and
+            # thus the ni will have no attributes, and that's OK.
+            continue
         att = att_dict[ni.id]
         att_values = {}
         for field_name, real_name in fmap[ni.schema_id]['fields']:

@@ -13,12 +13,9 @@ cd $HERE/../..
 echo Getting permission to run as postgres ...
 sudo -u postgres echo ok || exit 1
 
-if [ $HARD_RESET = 1 ]; then
-    echo Dropping openblock DB...
-    sudo -u postgres dropdb openblock
-    echo Removing python binary...
-    rm -f bin/python
-fi
+# Need this to be able to re-build the virtualenv
+echo Removing old python binary...
+rm -f bin/python
 
 echo Bootstrapping...
 # We want global packages because there's no easy way
@@ -26,8 +23,14 @@ echo Bootstrapping...
 python bootstrap.py --use-site-packages || exit 1
 source bin/activate || exit 1
 
-echo DB setup...
-sudo -u postgres bin/oblock setup_dbs  || exit 1
+if [ $HARD_RESET = 1 ]; then
+    echo "Dropping openblock database(s)..."
+    sudo -u postgres bin/oblock drop_dbs || exit 1
+    echo "Recreating database(s)..."
+    sudo -u postgres bin/oblock setup_dbs  || exit 1
+fi
+
+
 bin/oblock sync_all || exit 1
 
 echo Importing Boston blocks...
