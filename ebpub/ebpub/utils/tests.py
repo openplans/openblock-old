@@ -71,7 +71,7 @@ class PidTests(TestCase):
 
     def test_make_pid__block__not_enough_args(self):
         b = self._makeBlock()
-        self.assertRaises(AssertionError, make_pid, b)
+        self.assertRaises(TypeError, make_pid, b)
 
     def test_make_pid__location(self):
         loc = self._makeLocation()
