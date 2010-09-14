@@ -80,9 +80,8 @@ APPS_FOR_TESTING = (
 
 INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 
-#TEST_RUNNER = 'django_nose.run_tests'
-
-TEST_RUNNER='django.contrib.gis.tests.run_tests'
+TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
+#TEST_RUNNER='django.contrib.gis.tests.run_tests'
 
 ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (

@@ -16,6 +16,7 @@ DATABASES = {
         'OPTIONS': {},
         'HOST': '',
         'PORT': '',
+        'TEST_NAME': 'test_openblock_users'
     },
     'metros': {
         'NAME': 'openblock',
@@ -25,6 +26,7 @@ DATABASES = {
         'OPTIONS': {},
         'HOST': '',
         'PORT': '',
+        'TEST_NAME': 'test_openblock_metros'
     },
     'default': {
         'NAME': 'openblock',
@@ -34,6 +36,7 @@ DATABASES = {
         'OPTIONS': {},
         'HOST': '',
         'PORT': '',
+        'TEST_NAME': 'test_openblock'
     },
 }
 DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
