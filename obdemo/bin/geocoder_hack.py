@@ -24,6 +24,12 @@ def quick_dirty_fallback_geocode(addr, parse=True):
                 x,y = None, None
                 sys.stderr.write("BOO internal geocoder failed on %r:\n" % addr)
                 log_exception()
+                # XXX Don't bother, external geocoding rarely gives us
+                # anything inside Boston now that we have decent
+                # blocks data.  But I want to preserve this script for
+                # now till we figure out what to do with geocoding
+                # more generally
+                continue
             if None in (x, y):
                 # XXX log something
                 # Other geocoders need to know the city
