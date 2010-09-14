@@ -32,9 +32,9 @@ class PerModelDBRouter:
     the database 'barn' and any model in the garbage or scrap app into 
     the datatbase 'junkyard'
     
-    A subclass may optionally provide a specific configuration value to 
-    the attribute _routes (of the same form) to override the use of
-    detailed settings.
+    A subclass may optionally provide its own configuration instead of
+    using settings.DATABASE_ROUTES, by setting the attribute _routes
+    to a dictionary of the same form.
     """
     
     @property
