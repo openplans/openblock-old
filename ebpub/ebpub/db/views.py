@@ -19,19 +19,17 @@ from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
-from ebpub.utils.view_utils import eb_render
 from ebpub.metros.allmetros import get_metro
+from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
+from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
+from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
+
+from ebpub.utils.view_utils import eb_render
+from ebpub.utils.view_utils import parse_pid, make_pid
 import datetime
 import random
 import re
 import urllib
-
-BLOCK_RADIUS_COOKIE_NAME = 'radius'
-BLOCK_RADIUS_CHOICES = {'1': .0015, '3': .0035, '8': .007} # number of blocks -> number of geographic degrees
-BLOCK_RADIUS_DEFAULT = '8'
-HIDE_ADS_COOKIE_NAME = 'h'
-HIDE_SCHEMA_INTRO_COOKIE_NAME = 'schemaintro'
-POPULATION_SCALE = 1000 # newsitems per POPULATION_SCALE people
 
 
 ################################
@@ -134,32 +132,6 @@ def url_to_block(city_slug, street_slug, from_num, to_num, predir, postdir):
 def url_to_location(type_slug, slug):
     return get_object_or_404(Location.objects.select_related(), location_type__slug=type_slug, slug=slug)
 
-def parse_pid(pid):
-    """
-    Returns a tuple of (place, block_radius, xy_radius), where block_radius and
-    xy_radius are None for Locations.
-
-    PID examples:
-        'b:12.1' (block ID 12, 1-block radius)
-        'l:32' (location ID 32)
-    """
-    try:
-        place_type, place_id = pid.split(':')
-        if place_type == 'b':
-            place_id, block_radius = place_id.split('.')
-        place_id = int(place_id)
-    except (KeyError, ValueError):
-        raise Http404('Invalid place')
-    if place_type == 'b':
-        try:
-            xy_radius = BLOCK_RADIUS_CHOICES[block_radius]
-        except KeyError:
-            raise Http404('Invalid radius')
-        return (get_object_or_404(Block, id=place_id), block_radius, xy_radius)
-    elif place_type == 'l':
-        return (get_object_or_404(Location, id=place_id), None, None)
-    else:
-        raise Http404
 
 def has_clusters(cluster_dict):
     """
@@ -1136,7 +1108,15 @@ def generic_place_page(request, template_name, place, extra_context=None):
     else:
         is_block = False
         place_wkt = place.location.simplify(tolerance=0.001, preserve_topology=True)
-    return eb_render(request, template_name, dict(place=place, is_block=is_block, place_wkt=place_wkt, **extra_context))
+
+    if is_block:
+        pid = make_pid(place, extra_context.get('block_radius'))
+    else:
+        pid = make_pid(place)
+
+    context = dict(place=place, is_block=is_block, place_wkt=place_wkt, pid=pid,
+                   **extra_context)
+    return eb_render(request, template_name, context)
 
 def place_detail(request, *args, **kwargs):
     schema_manager = get_schema_manager(request)

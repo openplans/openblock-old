@@ -4,6 +4,7 @@ from tess import tessellate, cover_region, cover_city
 from shortcuts import get_all_tile_coords, extent_in_map_srs, city_extent_in_map_srs, get_locator_scale
 
 class ExtentTestCase(unittest.TestCase):
+
     def test_transform_extent(self):
         extent = (-87.9, 41.9, -87.8, 42.0)
         expected = (-9784983.241, 5146011.679, -9773851.292, 5160979.444)

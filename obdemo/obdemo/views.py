@@ -19,17 +19,20 @@ def newsitems_geojson(request):
     # Seems like there are a number of similar code blocks in
     # ebpub.db.views?
 
-    #pid = request.GET.get('pid', '')
-    pid = 'l:7'  # East Boston got a bunch from my random script.
-    place, block_radius, xy_radius = parse_pid(pid)
+    pid = request.GET.get('pid', '')
 
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
+    if pid:
+        place, block_radius, xy_radius = parse_pid(pid)
+        if isinstance(place, Block):
+            search_buffer = make_search_buffer(place.location.centroid, block_radius)
+            newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
+        else:
+            # This depends on the trigger in newsitemlocation.sql
+            newsitem_qs = NewsItem.objects.filter(
+                newsitemlocation__location__id=place.id)
     else:
-        # This depends on the trigger in newsitemlocation.sql
-        newsitem_qs = NewsItem.objects.filter(
-            newsitemlocation__location__id=place.id)
+        # Whole city!
+        newsitem_qs = NewsItem.objects.all()
     
     # Ordering by schema__id is an optimization for map_popups()
     newsitem_list = list(newsitem_qs.select_related().order_by('schema__id'))
