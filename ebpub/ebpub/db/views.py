@@ -273,7 +273,8 @@ def map_popups(ni_list):
     Given a list of newsitems, return a list of lists
     of the form [newsitem_id, popup_html, schema_name]
     """
-    populate_attributes_if_needed(ni_list, list(set([ni.schema for ni in ni_list])))
+    schemas = list(set([ni.schema for ni in ni_list]))
+    populate_attributes_if_needed(ni_list, schemas)
     result = []
     current_schema = current_template = None
     for ni in ni_list:
