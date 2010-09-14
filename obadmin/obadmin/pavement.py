@@ -366,7 +366,7 @@ def drop_postgis_templates(options):
 
 def _drop_postgis_template(settings, dbinfo):
     name = settings.POSTGIS_TEMPLATE
-    return _drop_postgis_db(name, settings, dbinfo, template=True)
+    return _drop_postgis_db(name, settings, dbinfo, is_template=True)
 
 
 @task
