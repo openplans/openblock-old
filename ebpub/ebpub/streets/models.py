@@ -259,6 +259,7 @@ class Block(models.Model):
         return self.left_zip
     zip = property(_get_zip)
 
+
 class Street(models.Model):
     street = models.CharField(max_length=255, db_index=True) # Always uppercase
     pretty_name = models.CharField(max_length=255)

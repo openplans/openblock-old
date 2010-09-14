@@ -75,6 +75,7 @@ APPS_FOR_TESTING = (
     'ebgeo.maps',
     'ebgeo.utils.clustering',
     'ebpub.metros',
+    'ebpub.utils',
 )
 
 INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
