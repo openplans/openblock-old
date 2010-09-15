@@ -10,7 +10,7 @@ def ajax_save_hidden_schema(request):
         raise http.Http404()
     if 'schema' not in request.POST:
         raise http.Http404('Missing schema')
-    if not request.user:
+    if request.user.is_anonymous():
         raise http.Http404('Not logged in')
 
     # Validate that the HiddenSchema hasn't already been created for this user,
@@ -36,7 +36,7 @@ def ajax_remove_hidden_schema(request):
         raise http.Http404()
     if 'schema' not in request.POST:
         raise http.Http404('Missing schema')
-    if not request.user:
+    if request.user.is_anonymous():
         raise http.Http404('Not logged in')
 
     try:

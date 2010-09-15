@@ -14,6 +14,7 @@ setup(
     "ebgeo",
     "ebpub",
     "ebdata",
+    "obadmin",
     "geopy", # Maybe. Alternative to ebpub's geocoder.
     ],
     dependency_links=[

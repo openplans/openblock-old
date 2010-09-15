@@ -53,20 +53,6 @@ def send_verification_email(email, task):
         message.attach_alternative(html_content, 'text/html')
         message.send()
 
-#############
-# PASSWORDS #
-#############
-
-def make_password_hash(raw_password):
-    salt = sha_constructor(str(random.random())).hexdigest()[:5]
-    hsh = sha_constructor(salt + raw_password).hexdigest()
-    return 'sha1$%s$%s' % (salt, hsh)
-
-def check_password_hash(raw_password, password_hash):
-    "Returns True if the raw_password matches password_hash."
-    algo, salt, hsh = password_hash.split('$')
-    correct_hash = sha_constructor(salt + raw_password).hexdigest()
-    return hsh == correct_hash
 
 ##############
 # LOGGING IN #
@@ -101,7 +87,7 @@ def login_required(view_func):
     accessed.
     """
     def inner_view(request, *args, **kwargs):
-        if request.user is not None:
+        if not request.user.is_anonymous():
             return view_func(request, *args, **kwargs)
         request.session['next_url'] = request.path
         return http.HttpResponseRedirect('/accounts/login/')

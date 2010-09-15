@@ -6,19 +6,21 @@ except ImportError:
     from setuptools import setup, find_packages
 
 setup(
-    name='obutil',
+    name='obadmin',
     version="0.1",
     description="",
     license="GPLv3",
     install_requires=[
+    "ebgeo",
+    "ebpub",
+    "ebdata",
     ],
     dependency_links=[
     ],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
-    zip_safe=False,
     entry_points="""
     [console_scripts]
-    oblock = obutil.pavement:main
+    oblock = obadmin.pavement:main
     """,
 )

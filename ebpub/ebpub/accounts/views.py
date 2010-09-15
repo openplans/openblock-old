@@ -2,7 +2,7 @@ from django import http
 from django.conf import settings
 from django.template.loader import render_to_string
 from ebpub.accounts import callbacks
-from ebpub.accounts.models import User, PendingUserAction
+from ebpub.accounts.models import User, AnonymousUser, PendingUserAction
 from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import Schema
 from ebpub.metros.allmetros import get_metro
@@ -22,7 +22,7 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
     # form (regardless of whether it's a POST request).
 
     # If the user is already logged in, redirect to the dashboard.
-    if request.user:
+    if not request.user.is_anonymous():
         return http.HttpResponseRedirect('/accounts/dashboard/')
 
     if request.method == 'POST' and not force_form:
@@ -63,7 +63,7 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
 def logout(request):
     if request.method == 'POST':
         request.session.flush()
-        request.user = None
+        request.user = AnonymousUser()
 
         # The `next_url` can be specified either as POST data or in the
         # session. If it's in the session, it can be trusted. If it's in
@@ -152,7 +152,7 @@ def confirm_request_hash(request, task):
 
 def register(request):
     # If the user is already logged in, redirect to the dashboard.
-    if request.user:
+    if not request.user.is_anonymous():
         return http.HttpResponseRedirect('/accounts/dashboard/')
 
     if request.method == 'POST':
@@ -175,9 +175,8 @@ def confirm_email(request):
                 email=form.cleaned_data['e'],
                 password=form.cleaned_data['password1'],
                 main_metro=get_metro()['short_name'],
-                creation_date=datetime.datetime.now(),
-                is_active=True,
             )
+            u.save()
             utils.login(request, u)
 
             # Look for any PendingUserActions for this e-mail address and
@@ -220,7 +219,9 @@ def password_reset(request):
                 # If we reach this point, then somebody managed to submit a
                 # hash for a user that's not registered yet.
                 raise http.Http404()
-            User.objects.set_password(user.id, form.cleaned_data['password1'])
+        
+            user.set_password(form.cleaned_data['password1'])
+            user.save()
             request.session['login_message'] = 'Your password was changed successfully. Give it a shot by logging in below:'
             return http.HttpResponseRedirect('/accounts/login/')
     else:

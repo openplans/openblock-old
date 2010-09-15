@@ -7,12 +7,49 @@ edit them as desired.
 # CORE DJANGO SETTINGS #
 ########################
 
-DATABASE_NAME = 'openblock'
-DATABASE_USER = 'openblock'
-DATABASE_PASSWORD = 'openblock' 
-DATABASE_HOST = ''
-DATABASE_PORT = ''
 DEBUG = True
+
+# Multi-database configuration as per
+# http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
+
+DATABASES = {
+    'users': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
+        'TEST_NAME': 'test_openblock_users'
+    },
+    'metros': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
+        'TEST_NAME': 'test_openblock_metros'
+    },
+    'default': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
+        'TEST_NAME': 'test_openblock'
+    },
+}
+DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
+DATABASE_ROUTES = {
+    'users': ['accounts.User', 'auth.*', 'contenttypes.*'],
+    'metros': ['metros.*']
+}
+DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
 
 
 #########################

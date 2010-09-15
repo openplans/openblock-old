@@ -1,61 +1,76 @@
-from django.db import models
-from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper
 from django.conf import settings
-from django.contrib.gis.db.models import GeoManager as BaseGeoManager
-from django.core import signals
+import re
 
-# Global that keeps the currently open connections, keyed by connection_name.
-connections = {}
-
-# Close all the connections after every request.
-def close_connections(**kwargs):
-    for conn in connections.values():
-        conn.close()
-signals.request_finished.connect(close_connections)
-
-# Based loosely on http://www.eflorenzano.com/blog/post/easy-multi-database-support-django/
-class Manager(models.Manager):
+class PerModelDBRouter:
     """
-    This Manager lets you set database connections on a per-model basis.
+    PerModelDBRouteer is a database router as described in the 
+    django multi-database documentation: 
+    http://docs.djangoproject.com/en/dev/topics/db/multi-db/
+    
+    The PerModelDBRouter allows you to assign Model types to a 
+    particular configured database. 
+    
+    The django setting DATABASE_ROUTES controls the particulars.
+    
+    DATABASE_ROUTES is expected to be a dictionary with keys 
+    referencing database names in the DATABASES settings and 
+    values lists of references to model types of the form 
+    <app_label>.<ModelClass> or regular expressions that match
+    values of the form.
+    
+    eg:
+
+    DATABASE_ROUTES = {
+        'users': ['accounts.User'],
+        'barn': ['animals.Goat', 
+                 'animals.Pig'],
+        'junkyard': ['garbage.*', 'scrap.*']
+    }
+    
+    This configuration would put accounts.models.User objects into the 
+    database 'users', animals.models.Goat and animals.models.Pig into
+    the database 'barn' and any model in the garbage or scrap app into 
+    the datatbase 'junkyard'
+    
+    A subclass may optionally provide its own configuration instead of
+    using settings.DATABASE_ROUTES, by setting the attribute _routes
+    to a dictionary of the same form.
     """
-    def __init__(self, connection_name, *args, **kwargs):
-        # connection_name should correspond to a key in the DATABASES setting.
-        models.Manager.__init__(self, *args, **kwargs)
-        self.connection_name = connection_name
-        self.database_settings = settings.DATABASES[connection_name] # Let KeyError propogate.
+    
+    @property
+    def routes(self):
+        if hasattr(self, '_routes'):
+            return self._routes
+        else:
+            return settings.DATABASE_ROUTES
 
-    def get_query_set(self):
-        qs = models.Manager.get_query_set(self)
-        try:
-            # First, check the global connection dictionary, because this
-            # connection might have already been created.
-            conn = connections[self.connection_name]
-        except KeyError:
-            conn = DatabaseWrapper(self.database_settings)
-            connections[self.connection_name] = conn
-        qs.query.connection = conn
-        return qs
+    def _find_db(self, model):
+        for db, routes in self.routes.items():
+            for pat in routes: 
+                mid = '%s.%s' % (model._meta.app_label, model.__name__)
+                if re.match(pat, mid):
+                    return db
 
-    # TODO: Override _insert() to get inserts/updates/deletions working.
+        return None
 
-class GeoManager(BaseGeoManager):
-    """
-    Subclass of django.contrib.gis's GeoManager that lets you set database
-    connections on a per-model basis.
-    """
-    def __init__(self, connection_name, *args, **kwargs):
-        BaseGeoManager.__init__(self, *args, **kwargs)
-        self.connection_name = connection_name
-        self.database_settings = settings.DATABASES[connection_name]
+    def db_for_read(self, model, **hints):
+        return self._find_db(model)
 
-    def get_query_set(self):
-        qs = BaseGeoManager.get_query_set(self)
-        try:
-            # First, check the global connection dictionary, because this
-            # connection might have already been created.
-            conn = connections[self.connection_name]
-        except KeyError:
-            conn = DatabaseWrapper(self.database_settings)
-            connections[self.connection_name] = conn
-        qs.query.connection = conn
-        return qs
+    def db_for_write(self, model, **hints):
+        return self._find_db(model)
+        
+    def allow_relation(self, obj1, obj2, **hints):
+        # XXX should validate.
+        return None
+        
+    def allow_syncdb(self, db, model):
+        rdb = self._find_db(model)
+        
+        # if there is an assigned db, only allow
+        # it to be synced to the specific one.
+        if rdb is None:
+            if db in self.routes: 
+                return False
+            else:
+                return None
+        return rdb == db

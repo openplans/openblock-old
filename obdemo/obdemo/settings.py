@@ -16,34 +16,37 @@ import imp
 # CORE DJANGO SETTINGS #
 ########################
 
-DATABASE_ENGINE = 'postgresql_psycopg2' # ebpub only supports postgresql_psycopg2.
-
 _required_settings=[
-    'DATABASE_NAME', 'DATABASE_USER', 'DATABASE_PASSWORD',
-    'DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_ENGINE',
     'DEBUG',
 ]    
 
 POSTGIS_TEMPLATE = 'template_postgis'
 
 EBPUB_DIR = imp.find_module('ebpub')[1]
-EB_DIR = imp.find_module('everyblock')[1]
 
 TEMPLATE_DIRS = (
     os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
     EBPUB_DIR + '/templates',
-    EB_DIR + '/templates',
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.app_directories.Loader'
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
+    'django.contrib.auth.context_processors.auth'
     #'django.core.context_processors.debug',
 )
 
+AUTHENTICATION_BACKENDS = (
+    'ebpub.accounts.models.AuthBackend',
+)
 
 INSTALLED_APPS = (
+    'obadmin.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.admin',
     'ebdata.blobs',
     'ebpub.accounts',
     'ebpub.alerts',
@@ -59,8 +62,8 @@ INSTALLED_APPS = (
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
     # useful for.
-    'everyblock.admin',
-    'everyblock.staticmedia',
+#    'everyblock.admin',
+#    'everyblock.staticmedia',
 )
 
 APPS_FOR_TESTING = (
@@ -77,9 +80,8 @@ APPS_FOR_TESTING = (
 
 INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 
-#TEST_RUNNER = 'django_nose.run_tests'
-
-TEST_RUNNER='django.contrib.gis.tests.run_tests'
+TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
+#TEST_RUNNER='django.contrib.gis.tests.run_tests'
 
 ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (
@@ -109,39 +111,8 @@ _required_settings.append('SHORT_NAME')
 # secret.
 _required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
-# Here, we define the different databases we use, giving each one a label
-# (like 'users') so we can refer to a particular database via multidb
-# managers.
-#
-# Note that we only need to define databases that are used by multidb
-# managers -- not our default database for this settings file. Any Django
-# model code that doesn't use the multidb manager will use the standard
-# DATABASE_NAME/DATABASE_USER/etc. settings.
-#
-# THE UPSHOT: If you're only using one database, the only thing you'll need
-# to set here is TIME_ZONE.
 _required_settings.append('DATABASES')
 
-DATABASES = {
-    'users': {
-        'DATABASE_HOST': DATABASE_HOST,
-        'DATABASE_NAME': DATABASE_NAME,
-        'DATABASE_OPTIONS': {},
-        'DATABASE_PASSWORD': '',
-        'DATABASE_PORT': DATABASE_PORT,
-        'DATABASE_USER': DATABASE_USER,
-        'TIME_ZONE': '', # Same format as Django's TIME_ZONE setting.
-    },
-    'metros': {
-        'DATABASE_HOST': DATABASE_HOST,
-        'DATABASE_NAME': DATABASE_NAME,
-        'DATABASE_OPTIONS': {},
-        'DATABASE_PASSWORD': '',
-        'DATABASE_PORT': DATABASE_PORT,
-        'DATABASE_USER': DATABASE_USER, 
-        'TIME_ZONE': '', # Same format as Django's TIME_ZONE setting.
-    },
-}
 
 # The list of all metros this installation covers. This is a tuple of
 # dictionaries.

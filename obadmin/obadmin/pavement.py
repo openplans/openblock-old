@@ -17,22 +17,22 @@ from paver.easy import *
 from paver.setuputils import setup
 
 options(
-    # packages to activate 
+    # packages to activate
     # order matters! dependants first
     openblock_packages=[
-        'obutil',
         'ebgeo',
         'ebpub',
         'ebdata',
-        'everyblock'
+        'obadmin',
+        'everyblock',
     ],
 
-    # assumes pavement.py is in source_dir/obutil/obutil/pavement.py
+    # assumes pavement.py is in source_dir/obadmin/obadmin/pavement.py
     source_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
 
     app='obdemo',
     user_settings='real_settings',
-    # paths that will be searched for suitable postgis 
+    # paths that will be searched for suitable postgis
     # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
                      '/usr/share/postgresql-8.3-postgis',
@@ -47,7 +47,7 @@ def auto(options):
     # determine the root of the virutal env
     options.env_root = os.path.abspath(os.environ.get('VIRTUAL_ENV', '.'))
     # XXX better test.
-    if not os.path.exists(os.path.join(options.env_root, 'bin', 'paver')): 
+    if not os.path.exists(os.path.join(options.env_root, 'bin', 'paver')):
         print "It does not appear that your virutal environment is activated or that you are in its root."
         print "please activate your environment and try again."
         sys.exit(0)
@@ -81,26 +81,26 @@ def install_gdal(options):
     if not os.path.exists('%s/build/GDAL' % options.env_root):
         return
 
-    # has bad settings for gdal-config that 
+    # has bad settings for gdal-config that
     # confuse setup.py
     sh('rm %s/build/GDAL/setup.cfg' % options.env_root,
        ignore_error=True)
 
     # also, library and include dirs are just
-    # guesses from the prefix setting 
+    # guesses from the prefix setting
     # so we dig them out of the config.
-    
+
     includes = [x[2:] for x in
-                sh('gdal-config --cflags', capture=True).split() 
+                sh('gdal-config --cflags', capture=True).split()
                 if x.startswith('-I')]
-    lib_config = sh('gdal-config --libs', capture=True) 
-    lib_dirs = [x[2:] for x in 
-            lib_config.split() 
-            if x.startswith('-L')] 
-    libs = [x[2:] for x in 
-            lib_config.split() 
-            if x.startswith('-l')] 
-    
+    lib_config = sh('gdal-config --libs', capture=True)
+    lib_dirs = [x[2:] for x in
+            lib_config.split()
+            if x.startswith('-L')]
+    libs = [x[2:] for x in
+            lib_config.split()
+            if x.startswith('-l')]
+
     build = '%s/bin/python setup.py build_ext' % options.env_root
     build += ' --gdal-config=gdal-config'
     build += ' --library-dirs=%s' % ':'.join(lib_dirs)
@@ -119,8 +119,8 @@ def install_requirements(options):
     """
     for package_name in options.openblock_packages:
         print "gathing dependancies for %s" % package_name
-        req_file = os.path.join(options.source_dir, 
-                                package_name, 
+        req_file = os.path.join(options.source_dir,
+                                package_name,
                                 'requirements.txt')
         if os.path.exists(req_file):
             sh('%s/bin/pip install -r %s' % (options.env_root, req_file))
@@ -158,7 +158,7 @@ def install_app(options):
     real_settings = os.path.join(options.source_dir, options.app, options.app,
                                  options.user_settings + '.py')
     default_settings = real_settings + '.in'
-    
+
     if not os.path.exists(real_settings):
         print "Setting up with default settings => %s" % real_settings
         s = open(default_settings).read()
@@ -178,9 +178,9 @@ def install_app(options):
 @needs('install_app')
 def post_bootstrap(options):
     # we expect this task is run automatically by our bootstrap.py script.
-    print "Once you like your settings, run 'sudo -u postgres bin/oblock setup_db'"
+    print "Once you like your settings, run 'sudo -u postgres bin/oblock setup_dbs'"
 
-def find_postgis(options): 
+def find_postgis(options):
     file_sets = (
         ('postgis.sql', 'spatial_ref_sys.sql'),
         ('lwpostgis.sql', 'spatial_ref_sys.sql')
@@ -189,11 +189,11 @@ def find_postgis(options):
         for files in file_sets:
             found = True
             for filename in files:
-                check_file = os.path.join(path, filename) 
+                check_file = os.path.join(path, filename)
                 if not os.path.exists(check_file):
                     found = False
                     break
-            if found == True: 
+            if found == True:
                 return [os.path.join(path, filename) for filename in files]
     return None
 
@@ -206,71 +206,81 @@ def get_app_settings(options):
     except:
         exit_with_traceback("Problem with %s or %s, see above"
                             % (settings_module, user_settings_module))
-    return sys.modules[settings_module] 
+    return sys.modules[settings_module]
 
-def get_db_cfg(settings):
-    dbhost = settings.DATABASE_HOST
-    dbport = settings.DATABASE_PORT
+def get_conn_params(dbinfo):
+    dbhost = dbinfo.get('HOST', None)
+    dbport = dbinfo.get('PORT', None)
 
-    dbcfg = {}
+    params = {}
     if dbhost:
-        dbcfg['host'] = dbhost
+        params['host'] = dbhost
     if dbport:
-        dbcfg['port'] = dbport
-    return dbcfg
+        params['port'] = dbport
+    return params
+
+def _distinct_servers(settings):
+    dbs = {}
+    for dbname, dbinfo in settings.DATABASES.items():
+        dbid = (dbinfo.get('HOST'), dbinfo.get('PORT'))
+        dbs[dbid] = dbinfo
+    return dbs.values()
+
+def _distinct_dbs(settings):
+    dbs = {}
+    for dbname, dbinfo in settings.DATABASES.items():
+        dbid = (dbinfo.get('HOST'), dbinfo.get('PORT'), dbinfo.get('NAME'))
+        dbs[dbid] = dbinfo
+    return dbs.values()
+
+def _distinct_users(settings):
+    dbs = {}
+    for dbname, dbinfo in settings.DATABASES.items():
+        dbid = (dbinfo.get('HOST'), dbinfo.get('PORT'), dbinfo.get('USERNAME'))
+        dbs[dbid] = dbinfo
+    return dbs.values()
 
 @task
-@needs('create_postgis_template')
-def setup_db(options):
-    """
-    create application database.
-    """
-    _setup_db(options)
-    print "Success! Now run './manage.py syncdb'"
-
-def _setup_db(options):
+def sync_all(options):
+    manage = os.path.join(options.env_root, 'manage.py')
     settings = get_app_settings(options)
-    dbcfg = get_db_cfg(settings)
-    import psycopg2
-    conn = psycopg2.connect(database="postgres", **dbcfg)
+    for dbname in settings.DATABASE_SYNC_ORDER:
+        sh("%s syncdb --database=%s --noinput" % (manage, dbname))
 
-    ################################
-    #
-    # create app user
-    #
-    ################################
-    dbuser = settings.DATABASE_USER
-    dbpass = settings.DATABASE_PASSWORD
+    for dbname in settings.DATABASES.keys():
+        if dbname not in settings.DATABASE_SYNC_ORDER:
+            sh("%s syncdb --database=%s --noinput" % (manage, dbname))
+
+@task
+@needs('create_database_users')
+@needs('create_postgis_templates')
+def setup_dbs(options):
+    """
+    create application database(s).
+    """
+    settings = get_app_settings(options)
+    for dbinfo in _distinct_dbs(settings):
+        _setup_db(options, settings, dbinfo)
+    print "Success! Now run 'oblock sync_all'"
+
+def _setup_db(options, settings, dbinfo):
+    conn_params = get_conn_params(dbinfo)
+
+    import psycopg2
+    conn = psycopg2.connect(database="postgres", **conn_params)
+
+    dbuser = dbinfo.get('USER')
+    dbpass = dbinfo.get('PASSWORD')
 
     cur = conn.cursor()
-    # test if the user exists
-    cur.execute("SELECT COUNT(*) FROM pg_roles WHERE rolname='%s';" % dbuser)
-    if cur.fetchone()[0] == 0:
-        try:
-            print "Creating user '%s'..." % dbuser
-            cur.execute("CREATE ROLE %s PASSWORD '%s' NOSUPERUSER CREATEDB NOCREATEROLE LOGIN;" % 
-                        (dbuser, dbpass))
-            conn.commit()
-        except:
-            exit_with_traceback("Failed to create user.")
-
-    else:
-        print "User '%s' already exists, leaving it alone..." % dbuser
-
-    ################################
-    #
-    # create app database
-    #
-    ################################
-    dbname = settings.DATABASE_NAME
+    dbname = dbinfo.get('NAME')
     template = settings.POSTGIS_TEMPLATE
-    import psycopg2
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
                 dbname)
     if cur.fetchone()[0] != 0:
         print "Database '%s' already exists, fixing permissions ..." % dbname
-        grant_rights_on_spatial_tables(dbname, **dbcfg)
+        grant_rights_on_spatial_tables(dbname, **conn_params)
         return
 
     print "Creating database %s'" % dbname
@@ -279,42 +289,96 @@ def _setup_db(options):
     except:
         exit_with_traceback("Failed to create database %r" % dbname)
 
-    grant_rights_on_spatial_tables(dbname, **dbcfg)
+    grant_rights_on_spatial_tables(dbname, **conn_params)
     print "Success. created database %s owned by %s" % (dbname, dbuser)
-    
-@task
-def drop_postgis_template(options):
-    settings = get_app_settings(options)
-    dbcfg = get_db_cfg(settings)
-    import psycopg2
-    conn = psycopg2.connect(database="postgres", **dbcfg)
-    template = settings.POSTGIS_TEMPLATE
 
+@task
+def create_database_users(options):
+    settings = get_app_settings(options)
+    for dbinfo in _distinct_users(settings):
+        _create_database_user(options, settings, dbinfo)
+
+def _create_database_user(options, settings, dbinfo):
+    conn_params = get_conn_params(dbinfo)
+
+    import psycopg2
+    conn = psycopg2.connect(database="postgres", **conn_params)
+
+    ################################
+    #
+    # create user
+    #
+    ################################
+    dbuser = dbinfo.get('USER')
+    dbpass = dbinfo.get('PASSWORD')
+
+    cur = conn.cursor()
+    # test if the user exists
+    cur.execute("SELECT COUNT(*) FROM pg_roles WHERE rolname='%s';" % dbuser)
+    if cur.fetchone()[0] == 0:
+        try:
+            print "Creating user '%s'..." % dbuser
+            cur.execute("CREATE ROLE %s PASSWORD '%s' NOSUPERUSER CREATEDB NOCREATEROLE LOGIN;" %
+                        (dbuser, dbpass))
+            conn.commit()
+        except:
+            exit_with_traceback("Failed to create user.")
+    else:
+        print "User '%s' already exists, leaving it alone..." % dbuser
+
+@task
+def drop_dbs(options):
+    """
+    drop application database(s).
+    """
+    settings = get_app_settings(options)
+    for dbinfo in _distinct_dbs(settings):
+        dbname = dbinfo.get('NAME')
+        _drop_postgis_db(dbname, settings, dbinfo)
+
+def _drop_postgis_db(dbname, settings, dbinfo, is_template=False):
+    conn_params = get_conn_params(dbinfo)
+    import psycopg2
+    conn = psycopg2.connect(database="postgres", **conn_params)
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
     cur.execute("SELECT COUNT(*) from pg_database where datname='%s';" %
-                template)
+                dbname)
     if cur.fetchone()[0] == 0:
-        print "template %s does not exist." % template
+        print "database %s does not exist." % dbname
         return
 
-    # set it to a non-template so it can be dropped
-    cur.execute("UPDATE pg_database SET datistemplate = FALSE where datname='%s';" %
-                template)
+    if is_template:
+        # set it to a non-template so it can be dropped
+        cur.execute("UPDATE pg_database SET datistemplate = FALSE "
+                    "where datname='%s';" % dbname)
     # drop it
-    cur.execute("DROP DATABASE %s;" % template)
-    
-    print "Dropped database %s" % template 
+    cur.execute("DROP DATABASE %s;" % dbname)
+    print "Dropped database %s" % dbname
+
+@task
+def drop_postgis_templates(options):
+    settings = get_app_settings(options)
+    for dbinfo in _distinct_servers(settings):
+        _drop_postgis_template(settings, dbinfo)
+
+
+def _drop_postgis_template(settings, dbinfo):
+    name = settings.POSTGIS_TEMPLATE
+    return _drop_postgis_db(name, settings, dbinfo, is_template=True)
 
 
 @task
-def create_postgis_template(options):
-
+def create_postgis_templates(options):
     settings = get_app_settings(options)
-    dbcfg = get_db_cfg(settings)
+    for dbinfo in _distinct_servers(settings):
+        _create_postgis_template(options, settings, dbinfo)
+
+def _create_postgis_template(options, settings, dbinfo):
+    conn_params = get_conn_params(dbinfo)
     import psycopg2
-    conn = psycopg2.connect(database="postgres", **dbcfg)
+    conn = psycopg2.connect(database="postgres", **conn_params)
 
     ##################################
     #
@@ -332,12 +396,12 @@ def create_postgis_template(options):
                 template)
     if cur.fetchone()[0] != 0:
         print "Database '%s' already exists, fixing permissions..." % template
-        grant_rights_on_spatial_tables(template, **dbcfg)
+        grant_rights_on_spatial_tables(template, **conn_params)
         cur.execute(make_template_sql)
         return
 
     postgis_files = find_postgis(options)
-    if not postgis_files: 
+    if not postgis_files:
         print "Cannot locate postgis sql.  Please verify that PostGIS is installed."
         sys.exit(1)
 
@@ -349,8 +413,8 @@ def create_postgis_template(options):
         exit_with_traceback("Failed to create template %r" % template)
 
     # cool, reconnect to our new database.
-    print "reconnecting to database %s" % template 
-    conn = psycopg2.connect(database=template, **dbcfg)
+    print "reconnecting to database %s" % template
+    conn = psycopg2.connect(database=template, **conn_params)
     cur = conn.cursor()
 
     #################################
@@ -368,20 +432,21 @@ def create_postgis_template(options):
     conn.close()
 
     ###################################
-    # 
+    #
     # load postgis sql
     #
     ###################################
     print "Loading postgis from %s" % ', '.join(postgis_files)
-    for filename in postgis_files: 
+    for filename in postgis_files:
         sh("psql -d %s -f %s" % (template, filename))
 
     print "created postgis template %s." % template
+    grant_rights_on_spatial_tables(template, **conn_params)
 
 
-def grant_rights_on_spatial_tables(database, **dbcfg):    
+def grant_rights_on_spatial_tables(database, **conn_params):
     import psycopg2
-    conn = psycopg2.connect(database=database, **dbcfg)
+    conn = psycopg2.connect(database=database, **conn_params)
     cur = conn.cursor()
     cur.execute("GRANT ALL ON TABLE geometry_columns TO PUBLIC;")
     cur.execute("GRANT ALL ON TABLE spatial_ref_sys TO PUBLIC;")

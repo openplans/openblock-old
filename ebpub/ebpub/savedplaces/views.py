@@ -12,7 +12,7 @@ def ajax_save_place(request):
         raise http.Http404()
     if 'pid' not in request.POST:
         raise http.Http404('Missing pid')
-    if not request.user:
+    if request.user.is_anonymous():
         raise http.Http404('Not logged in')
 
     place, block_radius, xy_radius = parse_pid(request.POST['pid'])
@@ -49,7 +49,7 @@ def ajax_remove_place(request):
         raise http.Http404()
     if 'pid' not in request.POST:
         raise http.Http404('Missing pid')
-    if not request.user:
+    if request.user.is_anonymous():
         raise http.Http404('Not logged in')
 
     place, block_radius, xy_radius = parse_pid(request.POST['pid'])
@@ -69,7 +69,7 @@ def json_saved_places(request):
     Returns JSON of SavedPlaces for request.user, or an empty list
     if the user isn't logged in.
     """
-    if not request.user:
+    if request.user.is_anonymous():
         result = []
     else:
         result = [{'name': sp.place.pretty_name, 'url': sp.place.url()} for sp in SavedPlace.objects.filter(user_id=request.user.id)]

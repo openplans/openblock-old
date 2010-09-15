@@ -16,7 +16,7 @@ Quickstart
 
 To get this demo up and running:
 
-0. Install PostgreSQL (8.3 or 8.4), PostGIS, Django (version 1.1),
+0. Install PostgreSQL (8.3 or 8.4), PostGIS, Django (version 1.2),
 psycopg2, and feedparser.
 
 1. Create a PostGIS database, substituting the db name and user name
