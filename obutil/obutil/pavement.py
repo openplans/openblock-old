@@ -118,7 +118,7 @@ def install_requirements(options):
     requirements.txt files in each package.
     """
     for package_name in options.openblock_packages:
-        print "gathing dependancies for %s" % package_name
+        print "gathering dependencies for %s" % package_name
         req_file = os.path.join(options.source_dir, 
                                 package_name, 
                                 'requirements.txt')
