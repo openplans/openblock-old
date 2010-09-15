@@ -40,6 +40,9 @@ def newsitems_geojson(request):
     
     features = {'type': 'FeatureCollection', 'features': []}
     for newsitem, popup_info in zip(newsitem_list, popup_list):
+        if newsitem.location is None:
+            continue
+        
         features['features'].append(
             {'type': 'Feature',
              'geometry': {'type': 'Point',
