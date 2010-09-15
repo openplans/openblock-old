@@ -351,3 +351,12 @@ body {
     color: #666;
 }
 
+
+/* Home page */
+#homepage-about {
+    background-color: #F0F5FF;
+    margin-top: 20px;
+    padding: 10px;
+    clear: both;
+    border: 1px solid #666;
+}

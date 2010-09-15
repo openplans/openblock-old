@@ -7,7 +7,7 @@
 <div id="content">
   <style type="text/css">
     #frontpage-text { float: left }
-    #mapwrapper { float: right; }
+    #mapwrapper { float: right; padding-bottom: 10px;}
     #detailmap { width: 500px; height: 300px }
   </style>
   <div id="frontpage-text">
@@ -115,5 +115,22 @@
     {% include "map.html" %}
   </div>
 
+  <div id="homepage-about">
+   <h2> About this site</h2>
+
+   <p>This is a public demo
+   of <a href="http://demo.openblockproject.org">OpenBlock</a>. It's
+   still in the early stages, so expect to find bugs and see many
+   under-designed pages.</p>
+
+   <p>Feel free to kick the tires,
+   and <a href="/accounts/register">register</a> if you feel like
+   it. But be warned that we may reset the database at any time.</p>
+   <p>We're <a href="http://blog.openblockproject.org">blogging about
+   our progress</a>.  For an idea of recent changes,
+   see <a href="http://developer.openblockproject.org/query?status=closed&component=obdemo&col=id&col=summary&col=status&col=type&col=milestone&col=component&col=changetime&report=11&desc=1&order=changetime">this report of recent demo fixes in our issue tracker</a>.
+   </p>
+
+  </div>
 </div><!--/ #content -->
 {% endblock %}
