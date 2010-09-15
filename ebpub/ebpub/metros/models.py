@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.gis.db import models
 
-class MetroManager(models.Manager):
+class MetroManager(models.GeoManager):
     def get_current(self):
         return self.get(short_name=settings.SHORT_NAME)
 
