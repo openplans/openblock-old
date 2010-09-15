@@ -19,7 +19,7 @@ development of OpenBlock is provided by the Knight Foundation
 System Requirements
 ====================
 	
-Linux or some other Unix flavor; Mac OSX might work.
+Linux, OSX, or some other Unix flavor.
 
 python 2.6  (2.7 might work)
 postgresql
