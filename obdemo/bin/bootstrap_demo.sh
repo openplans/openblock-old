@@ -3,6 +3,7 @@
 # Quick experimental single-command script that does all the stuff 
 # in ../../README.txt.
 
+HARD_RESET=0
 if [ "$1" == '-r' ]; then
     HARD_RESET=1
 fi
@@ -27,8 +28,10 @@ if [ $HARD_RESET = 1 ]; then
     echo "Dropping openblock database(s)..."
     sudo -u postgres bin/oblock drop_dbs || exit 1
     echo "Recreating database(s)..."
-    sudo -u postgres bin/oblock setup_dbs  || exit 1
+else
+    echo "Creating database(s)..."
 fi
+sudo -u postgres bin/oblock setup_dbs  || exit 1
 
 
 bin/oblock sync_all || exit 1
