@@ -7,6 +7,11 @@ edit them as desired.
 # CORE DJANGO SETTINGS #
 ########################
 
+DEBUG = True
+
+# Multi-database configuration as per
+# http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
+
 DATABASES = {
     'users': {
         'NAME': 'openblock',
@@ -45,7 +50,6 @@ DATABASE_ROUTES = {
     'metros': ['metros.*']
 }
 DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
-DEBUG = True
 
 
 #########################
