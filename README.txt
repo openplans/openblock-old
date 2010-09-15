@@ -130,9 +130,9 @@ site.  You can dive into the other scripts that it calls to get more
 details on how it all works.
 
 
-=============
-Code Contents
-=============
+====================
+Main Code Packages
+====================
 
 This distribution contains a number of packages, summarized below:
 
@@ -147,6 +147,34 @@ package, and is set up with Boston, MA as the area of interest.
 
 For more information, see obdemo/README.txt
 
+ebpub
+=====
+
+Publishing system for block-specific news, as used by EveryBlock.com.
+
+This is the core of an OpenBlock site, providing the web interface
+that users see as well as the underlying data models. You need this.
+
+For more information, see ebpub/README.TXT
+
+ebdata
+======
+
+Code to help write scripts that import/crawl/parse data into ebpub.
+
+You *will* need to write such scripts to get OpenBlock to do anything
+useful; that is how you feed local news into the system.
+
+For more information, see ebdata/README.TXT
+
+obadmin
+=======
+
+Administrative UI, installation and utilities package for OpenBlock
+
+==================
+Other Packages
+==================
 
 ebblog
 ======
@@ -158,15 +186,6 @@ OpenBlock site; you can probably ignore this.
 
 For more information, see ebblog/README.TXT
 
-ebdata
-======
-
-Code to help write scripts that import/crawl/parse data into ebpub.
-
-You *will* need to write such scripts to get OpenBlock to do anything
-useful; that is how you feed local news into the system.
-
-For more information, see ebdata/README.TXT
 
 
 ebgeo
@@ -194,16 +213,6 @@ feedback forms at the bottom of almost every page on EveryBlock.com.
 For more information, see ebinternal/README.TXT
 
 
-ebpub
-=====
-
-Publishing system for block-specific news, as used by EveryBlock.com.
-
-This is the core of an OpenBlock site, providing the web interface
-that users see as well as the underlying data models. You need this.
-
-For more information, see ebpub/README.TXT
-
 
 ebwiki
 ======
@@ -226,7 +235,3 @@ use.
 
 For more information, see everyblock/README.TXT
 
-obutil
-======
-
-installation and utilities package for openblock virtual envs
