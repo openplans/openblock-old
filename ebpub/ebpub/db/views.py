@@ -6,12 +6,12 @@ from django.template.loader import select_template
 from django.utils import dateformat, simplejson
 from django.utils.datastructures import SortedDict
 from django.db.models import Q
-from ebgeo.utils.clustering.shortcuts import cluster_newsitems
-from ebgeo.utils.clustering.json import ClusterJSON
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaInfo, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
+from ebpub.utils.clustering.shortcuts import cluster_newsitems
+from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
 from ebpub.geocoder.parser.parsing import normalize, ParsingError

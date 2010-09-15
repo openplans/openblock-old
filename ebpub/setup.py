@@ -12,7 +12,6 @@ setup(
     license="GPLv3",
     install_requires=[
     "django",
-    "ebgeo",
     "GDAL<1.7.0",
     "pyyaml",
     "psycopg2"

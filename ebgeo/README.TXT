@@ -2,13 +2,8 @@
 ebgeo
 =====
 
-The eb map system. The ebgeo package provides for two main bits of
-functionality:
-
- 1. A `maps' subpackage for rendering map tiles with Mapnik, and
-
- 2. A `utils' subpackage which is a collection of useful modules when
-    working with geospatial data, including clustering.
+The eb map system. The ebgeo package provides a `maps' 
+subpackage for rendering and serving map tiles with Mapnik.
 
 Requirements
 ============

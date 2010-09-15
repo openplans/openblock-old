@@ -72,8 +72,6 @@ APPS_FOR_TESTING = (
     'ebdata.nlp',
     'ebdata.templatemaker',
     'ebdata.textmining',
-    'ebgeo.maps',
-    'ebgeo.utils.clustering',
     'ebpub.metros',
     'ebpub.utils',
 )
@@ -189,7 +187,7 @@ _required_settings.append('GENERIC_EMAIL_SENDER')
 _required_settings.extend(['MAP_SCALES', 'SPATIAL_REF_SYS', 'MAP_UNITS'])
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 SPATIAL_REF_SYS = '900913' # Spherical Mercator
-MAP_UNITS = 'm' # see ebgeo.maps.utils for allowed unit types
+MAP_UNITS = 'm' # see ebpub.utils.mapmath for allowed unit types
 
 # Filesystem location of tilecache config (e.g., '/etc/tilecache/tilecache.cfg').
 # obdemo doesn't use a tilecache out of the box.

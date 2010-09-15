@@ -12,7 +12,6 @@ setup(
     license="GPLv3",
     install_requires=[
     "django",
-    "ebgeo",
     "ebpub",
     "lxml",
     "chardet==1.0.1",

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.contrib.gis.gdal import OGRGeometry, Envelope
-from ebgeo.maps.utils import get_resolution, px_from_lnglat, lnglat_from_px
+from ebpub.utils.mapmath import get_resolution, px_from_lnglat, lnglat_from_px
 from ebpub.metros.allmetros import METRO_LIST
 
 def transform_extent(extent, dest_srs, src_srs=4326):

@@ -33,7 +33,7 @@ Utilities useful for scraping.
 
 import re
 import htmlentitydefs
-from ebgeo.utils.geodjango import smart_transform
+from ebpub.utils.geodjango import smart_transform
 from django.contrib.gis.geos import GEOSGeometry
 
 multispace_re = re.compile(r'\s\s+')

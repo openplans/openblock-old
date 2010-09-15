@@ -173,11 +173,7 @@ ebgeo
 =====
 
 The eb map system. This is mostly used for rendering and serving map
-tiles with Mapnik.
-
-ebgeo also contains some clustering display logic used by ebpub, so
-you need to have it installed even if you don't use Mapnik.
-(TODO: we should break that dependency)
+tiles with Mapnik. This package is optional and not installed by default.
 
 For more information, see ebgeo/README.TXT
 

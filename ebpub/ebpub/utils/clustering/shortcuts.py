@@ -1,4 +1,4 @@
-from ebgeo.utils import clustering
+from ebpub.utils import clustering
 
 def cluster_newsitems(qs, radius=26):
     """
