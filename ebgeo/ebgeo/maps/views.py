@@ -2,7 +2,7 @@ from cStringIO import StringIO
 from django.conf import settings
 from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
-import mapnik
+#import mapnik
 from ebgeo.maps.mapserver import get_mapserver
 from ebgeo.maps.shortcuts import render_tile, render_locator_map, render_location_tile
 from ebgeo.maps.markers import make_marker

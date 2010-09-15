@@ -49,8 +49,8 @@ configured.
 Now you can set up the database and start the server::
 
  $ source bin/activate 
- $ sudo -u postgres oblock setup_db
- $ ./manage.py syncdb
+ $ sudo -u postgres oblock setup_dbs
+ $ oblock sync_all
  $ ./manage.py runserver
 
 

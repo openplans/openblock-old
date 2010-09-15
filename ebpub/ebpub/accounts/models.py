@@ -1,40 +1,59 @@
+import datetime
 from django.db import models
-from ebpub.utils import multidb
-import utils # relative import
+from django.contrib.auth.models import User as DjangoUser, UserManager as DjangoUserManager, AnonymousUser
+from django.contrib.auth.backends import ModelBackend
+from django.utils.hashcompat import md5_constructor
 
-class UserManager(multidb.Manager):
-    # This method is necessary because ebpub.utils.multidb doesn't support
-    # inserts or updates -- only reads.
-    # TODO: Remove this once multidb gets that feature.
-    def create_user(self, **kwargs):
-        from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper
-        connection = DatabaseWrapper(self.database_settings)
-        cursor = connection.cursor()
-        opts = self.model._meta
-        fields = [f for f in opts.fields if f.name != 'id']
+class UserManager(DjangoUserManager):
+
+    def create_user(self, email, password=None, **kw):
+        """
+        Creates and saves a User with the given e-mail and password.
+        """
+
+        now = datetime.datetime.now()
+        
+        # Normalize the address by lowercasing the domain part of the email
+        # address.
         try:
-            kwargs['password'] = utils.make_password_hash(kwargs['password'])
-            values = [kwargs[f.name] for f in fields]
-        except KeyError, e:
-            raise ValueError('Missing field: %s' % e)
-        cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % \
-            (opts.db_table, ','.join([f.column for f in fields]), ','.join(['%s' for i in xrange(len(fields))])),
-            values)
-        cursor.execute("SELECT CURRVAL('\"%s_id_seq\"')" % opts.db_table)
-        user_id = cursor.fetchone()[0]
-        connection._commit()
-        connection.close()
-        return User.objects.get(id=user_id)
+            email_name, domain_part = email.strip().split('@', 1)
+        except ValueError:
+            first_name = email[0:30]
+        else:
+            email = '@'.join([email_name, domain_part.lower()])
+            first_name = email_name
 
-    def set_password(self, user_id, raw_password):
-        from django.db.backends.postgresql_psycopg2.base import DatabaseWrapper
-        connection = DatabaseWrapper(self.database_settings)
-        cursor = connection.cursor()
-        password = utils.make_password_hash(raw_password)
-        cursor.execute("UPDATE %s SET password=%%s WHERE id=%%s" % self.model._meta.db_table,
-            (password, user_id))
-        connection._commit()
-        connection.close()
+        # something of a hack...
+        # the username is used to enforce uniqueness and is computed
+        # as a (truncated) hash of the email address given.
+        if len(email) <= 30:
+            username = email
+        else:
+            username = md5_constructor(email).hexdigest()[0:30]
+        
+        user_args = dict(
+            first_name=first_name,
+            is_staff=False,
+            is_active=True, 
+            is_superuser=False,
+            last_login=now,
+            date_joined=now
+        )
+        user_args.update(kw)
+        user = User(username=username, email=email, **user_args)
+        
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, email, password=None, **kw):
+        user_args = dict(kw)
+        user_args['is_superuser'] = True
+        user_args['is_staff'] = True
+        return self.create_user(email, password=password, **user_args)
 
     def user_by_password(self, email, raw_password):
         """
@@ -49,29 +68,27 @@ class UserManager(multidb.Manager):
             return user
         return None
 
-class User(models.Model):
-    email = models.EmailField(unique=True) # Stored in all-lowercase.
+class User(DjangoUser):
 
-    # Password uses '[algo]$[salt]$[hexdigest]', just like Django's auth.User.
-    password = models.CharField(max_length=128)
 
     # The SHORT_NAME for the user's metro when they created the account.
     main_metro = models.CharField(max_length=32)
 
-    creation_date = models.DateTimeField()
-    is_active = models.BooleanField()
-
-    objects = UserManager('users')
+    objects = UserManager()
 
     def __unicode__(self):
         return self.email
 
-    def set_password(self, new_password):
-        self.password = utils.make_password_hash(new_password)
+class AuthBackend(ModelBackend):
 
-    def check_password(self, raw_password):
-        "Returns True if the given raw password is correct for this user."
-        return utils.check_password_hash(raw_password, self.password)
+    def authenticate(self, username=None, password=None):
+        return User.objects.user_by_password(username, password)
+
+    def get_user(self, user_id):
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
 
 # Note that this class does *not* use the multidb Manager.
 # It's city-specific because pending user actions are city-specific.
@@ -84,3 +101,4 @@ class PendingUserAction(models.Model):
 
     def __unicode__(self):
         return u'%s for %s' % (self.callback, self.email)
+
