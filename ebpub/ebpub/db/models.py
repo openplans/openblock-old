@@ -545,10 +545,12 @@ class AttributeForTemplate(object):
 
     def value_list(self):
         """
-        Returns a list of {value, url} dictionaries representing each value for
-        this attribute.
+        Returns a list of {value, url, description} dictionaries
+        representing each value for this attribute.
         """
         from django.utils.dateformat import format, time_format
+        # Setting these to [None] ensures that zip() returns a list
+        # of at least length one.
         urls = [None]
         descriptions = [None]
         if self.is_filter:
