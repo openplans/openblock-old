@@ -40,6 +40,12 @@ def newsitems_geojson(request):
     
     features = {'type': 'FeatureCollection', 'features': []}
     for newsitem, popup_info in zip(newsitem_list, popup_list):
+        if newsitem.location is None:
+            # Can happen, see NewsItem docstring.
+            # TODO: We should probably allow for newsitems that have a
+            # location_object too?
+            continue
+
         features['features'].append(
             {'type': 'Feature',
              'geometry': {'type': 'Point',

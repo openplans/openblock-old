@@ -16,19 +16,32 @@ echo Set up news type schemas ...
 
 cd $SOURCE_ROOT/misc/bin || die
 
-echo events schema
-./add_schema.py -f Event Events events "List of events in Boston" "Boston Events" "http://calendar.boston.com/" || die
+echo Adding events schema
+./add_schema.py -f -n Event --description="List of events in Boston" \
+  --summary="Boston Events" --source="http://calendar.boston.com/" || die
 
 echo news schema
-./add_schema.py -f News News local-news "List of news in Boston" "Boston News" "http://www.boston.com" || die
+./add_schema.py -f -n News -s local-news \
+  --description="List of news in Boston" \
+  --summary="Boston News" --source="http://www.boston.com" || die
 
 echo Building Permits schema and SchemaField
-./add_schema.py -f "Building Permit" "Building Permits" building-permits \
-    "List of Boston Building Permits" "Boston Building Permits" \
-    "http://www.cityofboston.gov/isd/building/asofright/default.asp" \
-    raw_address varchar01 "Raw Address" "Raw Addresses" 1 0 0 0 1 1 \
-    || die
-# TODO: how to add multiple SchemaFields?
+./add_schema.py -f -n "Building Permit" \
+    --description="List of Boston Building Permits" \
+    --summary="Boston Building Permits" \
+    --source="http://www.cityofboston.gov/isd/building/asofright/default.asp" || die
+./add_schemafield.py  -f -n raw_address -s building-permits -r varchar01 --pretty-name="Raw Address" --pretty-name-plural="Raw Addresses" --is-searchable
+
+echo Adding SeeClickFix schema and schemafields
+./add_schema.py -f -n "SeeClickFix Issue" -s issues \
+    --description="List of Issues from SeeClickFix" \
+    --summary="SeeClickFix Issues" --source="http://seeclickfix.com" || die
+
+./add_schemafield.py  -f -n rating -s issues -r int01 \
+    --pretty-name="Rating" --pretty-name-plural="Ratings" \
+    --display || die
+
+
 #echo Businesses schema and SchemaField
 #./add_schema.py -f "Business License" "Business Licenses" business-licenses \
 #    "List of Boston Business Licenses" "Boston Business Licenses" \

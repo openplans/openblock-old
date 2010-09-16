@@ -96,6 +96,9 @@ class SchemaField(models.Model):
     """
     Describes the meaning of one Attribute field for one Schema type.
     """
+    # TODO: README.TXT says that the combination of (schema,
+    # real_name) must be unique. Enforce that.
+
     schema = models.ForeignKey(Schema)
     name = models.CharField(max_length=32)
     real_name = models.CharField(max_length=10) # Column name in the Attribute model. 'varchar01', 'varchar02', etc.
@@ -273,8 +276,12 @@ class AttributeDict(dict):
 
     def __do_query(self):
         if not self.cached:
-            atts = Attribute.objects.filter(news_item__id=self.news_item_id).extra(select=self.mapping).values(*self.mapping.keys())[0]
-            self.update(atts)
+            attr_values = Attribute.objects.filter(news_item__id=self.news_item_id).extra(select=self.mapping).values(*self.mapping.keys())
+            # Rarely, we might have added the first SchemaField for this
+            # Schema *after* the NewsItem was scraped.  In that case
+            # attr_values will be empty list.
+            if attr_values:
+                self.update(attr_values[0])
             self.cached = True
 
     def get(self, *args, **kwargs):

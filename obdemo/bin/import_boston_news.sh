@@ -17,10 +17,13 @@ cd $SOURCE_ROOT/
 ./obdemo/bin/add_events.py || die
 ./obdemo/bin/add_news.py || die
 
-python obdemo/bin/bpdnews_retrieval.py || die
+# TODO: give these a new schema, avoid duplicates, etc.
+# not very useful till i do all that.
+#echo Adding police reports...
+#python obdemo/bin/bpdnews_retrieval.py || die
 
 # more feeds from Joel. Local blog news:
-./obdemo/bin/add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=400&subject=local&format=atom"
+./obdemo/bin/add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=400&subject=massachusetts&format=atom"
 
 
 echo Adding building permits...

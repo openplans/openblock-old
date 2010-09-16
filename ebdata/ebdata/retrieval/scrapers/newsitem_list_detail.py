@@ -184,10 +184,16 @@ class NewsItemListDetailScraper(ListDetailScraper):
             newsitem.save()
         # Next, check the NewsItem's attributes.
         for k, v in new_attributes.items():
-            if newsitem.attributes[k] != v:
-                self.logger.info('ID %s %s changed from %r to %r' % (newsitem.id, k, newsitem.attributes[k], v))
-                newsitem.attributes[k] = v
-                newsitem_updated = True
+            if newsitem.attributes.get(k) == v:
+                continue
+            elif k not in newsitem.attributes:
+                self.logger.info('ID %s %s was missing, setting to %r' %
+                                 (newsitem.id, k, v))
+            elif newsitem.attributes.get(k) != v:
+                self.logger.info('ID %s %s changed from %r to %r' %
+                                 (newsitem.id, k, newsitem.attributes[k], v))
+            newsitem.attributes[k] = v
+            newsitem_updated = True
         if newsitem_updated:
             self.num_changed += 1
             self.logger.debug('Total changed in this scrape: %s', self.num_changed)

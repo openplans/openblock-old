@@ -27,14 +27,23 @@ def make_tree(html):
 
     return document_fromstring(html)
 
-def make_tree_and_preprocess(html):
+def make_tree_and_preprocess(html, *args, **kw):
     """
     Returns an lxml tree for the given HTML string (either Unicode or
     bytestring). Also preprocesses the HTML to remove data that isn't relevant
     to text mining (see the docstring for preprocess()).
+
+    Extra args are passed to preprocess().
     """
     tree = make_tree(html)
-    return preprocess(tree)
+    return preprocess(tree, *args, **kw)
+
+def preprocess_to_string(*args, **kw):
+    """
+    like make_tree_and_preprocess() but returns a string.
+    """
+    tree = make_tree_and_preprocess(*args, **kw)
+    return tree.body.text.strip()
 
 def preprocess(tree, drop_tags=(), drop_trees=(), drop_attrs=()):
     """

@@ -16,6 +16,9 @@ import lxml
 
 
 class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
+
+    # TODO: these should have a different schema, like 'police-reports'
+
     schema_slugs = ('local-news',)
     has_detail = False
 
@@ -55,6 +58,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
                 print "ugh, %r" % addr
                 location = None
                 # XXX log something
+                return
 
         self.create_newsitem(
             attributes=None,
