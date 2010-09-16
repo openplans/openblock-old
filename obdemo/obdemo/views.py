@@ -5,14 +5,15 @@ If these turn out to be really useful they could be merged upstream
 into ebpub.
 """
 
+from django.contrib.gis.shortcuts import render_to_kml
 from django.http import HttpResponse
 from django.utils import simplejson
-
+from ebpub.db.models import Location
+from ebpub.db.models import NewsItem
 from ebpub.db.views import make_search_buffer
 from ebpub.db.views import map_popups
 from ebpub.db.views import parse_pid
 from ebpub.streets.models import Block
-from ebpub.db.models import NewsItem
 
 def newsitems_geojson(request):
     # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
@@ -33,11 +34,11 @@ def newsitems_geojson(request):
     else:
         # Whole city!
         newsitem_qs = NewsItem.objects.all()
-    
+
     # Ordering by schema__id is an optimization for map_popups()
     newsitem_list = list(newsitem_qs.select_related().order_by('schema__id'))
     popup_list = map_popups(newsitem_list)
-    
+
     features = {'type': 'FeatureCollection', 'features': []}
     for newsitem, popup_info in zip(newsitem_list, popup_list):
         if newsitem.location is None:
@@ -61,3 +62,10 @@ def newsitems_geojson(request):
              })
     output = simplejson.dumps(features, indent=2)
     return HttpResponse(output, mimetype="application/javascript")
+
+
+from ebpub.db.views import url_to_place
+
+def place_kml(request, *args, **kwargs):
+    place = url_to_place(*args, **kwargs)
+    return render_to_kml('place.kml', {'place': place})

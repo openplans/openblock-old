@@ -46,9 +46,13 @@ DATABASES = {
 }
 DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
 DATABASE_ROUTES = {
+    # contenttypes and auth.* have to go in the same db as accounts.User.
+    # django ticket #12767
     'users': ['accounts.User', 'auth.*', 'contenttypes.*'],
     'metros': ['metros.*']
 }
+
+# Hack to ensure that `oblock sync_all` sets up databases in the right order.
 DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
 
 

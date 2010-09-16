@@ -5,7 +5,7 @@
  * we use OL's native clustering support, and add a view on the server
  * that serves un-clustered news items via AJAX.
  */
-var map, newsitems, style;
+var map, newsitems, style, borderstyle;
 if (jQuery.browser.msie) {
     jQuery(window).load(function() {
         _onload();
@@ -104,6 +104,36 @@ function loadNewsItems() {
     // ---------------- End of Popups code -------------------------//
     return newsitems;
 };
+
+function loadLocationBorder(place_type, place_slug) {
+    borderstyle = new OpenLayers.Style({
+        fillColor: "#cc0022",
+        fillOpacity: 0.05,
+        strokeColor: "#bb0000",
+        strokeWidth: 2,
+        strokeOpacity: 0.6,
+        label: ""
+    }, {
+        context: {
+        }
+    });
+    var location = new OpenLayers.Layer.Vector("NewsItems", {
+        projection: map.displayProjection,
+        strategies: [
+            new OpenLayers.Strategy.Fixed()
+            ],
+        protocol: new OpenLayers.Protocol.HTTP({
+            url: "/locations/" + place_type + "/" + place_slug + "/place.kml",
+            params: {},
+            format: new OpenLayers.Format.KML()
+        }),
+        styleMap: new OpenLayers.StyleMap({
+            "default": borderstyle
+        })
+    });
+    return location;
+};
+
 function loadMap() {
     map = new OpenLayers.Map('detailmap', options);
     var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
@@ -134,7 +164,13 @@ function loadMap() {
         }
     });
     var newsitems = loadNewsItems();
-    map.addLayers([osm, newsitems]);
+    map.addLayers([osm]);
+    if (typeof(place_type != "undefined")) {
+        var locationborder = loadLocationBorder(place_type, place_slug);
+        map.addLayers([locationborder]);
+        locationborder.setVisibility(true);
+    };
+    map.addLayers([newsitems]);
     newsitems.setVisibility(true);
     //newsitems.refresh();
 

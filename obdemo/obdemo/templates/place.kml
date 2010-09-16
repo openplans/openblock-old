@@ -1,0 +1,10 @@
+{% extends "base.kml" %}
+{% block placemarks %}
+<Placemark>
+  <name>{{place.slug}}</name>
+  <description>{{place.location_type.name}}: {{place.name}}</description>
+  {% autoescape off %}
+  {{place.location.kml}}
+  {% endautoescape %}
+</Placemark>
+{% endblock %}

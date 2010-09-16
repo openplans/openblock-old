@@ -10,6 +10,7 @@
 {{ block.super }}
 <script type="text/javascript" charset="utf-8">
 var pid = '{{ pid }}';
+
 window.onload = function() {
 	$j('#sectionfilterbutton').click(function() {
 		var url = $j('#sectionfilter').val();
@@ -115,8 +116,8 @@ window.onload = function() {
   <!-- Fixme: better place for this -->
   <div id="mapwrapper">
     <script type="text/javascript">
-    //var map_center = new OpenLayers.LonLat(-71.061667, 42.357778);
-    //var map_zoom = 5;
+    var place_type = '{{ place.location_type.slug }}';
+    var place_slug = '{{ place.slug }}';
     var map_bounds = new OpenLayers.Bounds{{ bbox }};
     </script>
     {% include "map.html" %}

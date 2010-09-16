@@ -1137,7 +1137,13 @@ def place_detail(request, *args, **kwargs):
         saved_place_lookup = {'block__id': place.id}
     else:
         newsitem_qs = NewsItem.objects.filter(newsitemlocation__location__id=place.id)
+        # If the location is a point, or very small, we want to expand
+        # the area we care about via make_search_buffer().  But if
+        # it's not, we probably want the extent of its geometry.
+        # Let's just take the union to cover both cases.
         search_buf = make_search_buffer(place.location.centroid, 3)
+        search_buf = search_buf.union(place.location)
+
         nearby_locations = Location.objects.filter(location_type__is_significant=True).select_related().exclude(id=place.id).order_by('location_type__id').filter(location__bboverlaps=search_buf)
         bbox = search_buf.extent
         block_radius = None

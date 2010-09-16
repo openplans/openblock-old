@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/{% block kml_version %}2.1{%endblock %}" 
+     xmlns:atom="http://www.w3.org/2005/Atom"
+>
+<Document>{% block name %}{% endblock %}
+{% block placemarks %}{% endblock %}
+</Document>
+</kml>
