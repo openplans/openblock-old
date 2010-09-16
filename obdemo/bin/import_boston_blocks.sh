@@ -65,7 +65,7 @@ cd $SOURCE_ROOT/misc/bin || die
 
 ./add_location.py Charlestown Charlestown charleston neighborhoods Boston http://bostonneighborhoodmap.com/ "42.369953, -71.076024" "42.386476, -71.047983"
 
-./add_location.py "East Boston" "East Boston" east-boston neighborhoods Boston http://bostonneighborhoodmap.com/ "42.349879, -71.043662" "42.397207, -71.985636"
+./add_location.py "East Boston" "East Boston" east-boston neighborhoods Boston http://bostonneighborhoodmap.com/ "42.3472, -71.0443" "42.3952, -70.9853"
 
 ./add_location.py "South Boston" "South Boston" south-boston neighborhoods Boston http://bostonneighborhoodmap.com/ "42.322102, -71.058578" "42.344339, -71.009413"
 
