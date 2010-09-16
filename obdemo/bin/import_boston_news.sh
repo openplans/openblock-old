@@ -37,5 +37,4 @@ python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || di
 #echo Adding restaurant inspections...
 #python ./everyblock/everyblock/cities/boston/restaurants/retrieval.py || die
 
-# TODO: separate schema for this
 python obdemo/bin/seeclickfix_retrieval.py || die
