@@ -5,10 +5,10 @@ Tests for developing map marker clustering module
 """
 
 import random
-from ebgeo.utils.clustering import cluster_by_scale, cluster_scales
-from ebgeo.utils.clustering import cluster
-from ebgeo.utils.clustering import sample
-from ebgeo.utils.clustering import json
+from ebpub.utils.clustering import cluster_by_scale, cluster_scales
+from ebpub.utils.clustering import cluster
+from ebpub.utils.clustering import sample
+from ebpub.utils.clustering import json
 
 def gen_test_points(n=50, extent=(0,0,100,100), rand_seed=None):
     """

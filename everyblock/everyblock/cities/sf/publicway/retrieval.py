@@ -7,7 +7,7 @@ The data is on an FTP site and is updated daily.
 """
 
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
-from ebgeo.utils.geodjango import make_geomcoll, line_merge
+from ebpub.utils.geodjango import make_geomcoll, line_merge
 from ebpub.db.models import NewsItem
 from ebpub.utils.dates import parse_date
 from ebpub.utils.text import smart_title

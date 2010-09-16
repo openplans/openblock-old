@@ -1,5 +1,6 @@
 from django.utils.simplejson import JSONEncoder
-from bunch import Bunch # relative import
+# not to be confused with ebpub.utils.bunch of course...
+from ebpub.utils.clustering.bunch import Bunch 
 
 class ClusterJSON(JSONEncoder):
     """Format Bunches as [[list of object IDs], [center x, center y]]

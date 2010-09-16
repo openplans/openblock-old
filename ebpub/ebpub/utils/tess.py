@@ -4,8 +4,8 @@ import os.path
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from django.contrib.gis.gdal import DataSource
-from ebgeo.maps.extent import transform_extent
-from ebgeo.utils.geodjango import reduce_layer_geom
+from ebpub.utils.extent import transform_extent
+from ebpub.utils.geodjango import reduce_layer_geom
 from ebpub.metros.allmetros import get_metro
 
 def tessellate(extent, radius):

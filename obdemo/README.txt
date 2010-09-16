@@ -38,7 +38,7 @@ Or for postgresql 8.4, do this::
 
 
 2. Install the obdemo package by putting it on your Python path. Also
-   install the ebpub, ebdata, and ebgeo packages.
+   install the ebpub, ebdata, and obadmin packages.
 
    We recommend installing in a virtualenv.
    TODO: virtualenv documentation, links
@@ -91,8 +91,7 @@ obdemo uses the following parts of the OpenBlock codebase:
 * everyblock is used for templates, although we override some of them.
 
 For the maps, we use a free base layer based on Open Street Map and
-hosted by OpenGeo.  Consequently, we don't use ebgeo much, if at all;
-and we don't need Mapnik at all.
+hosted by OpenGeo.  Consequently, we don't use ebgeo or Mapnik.
 
 We don't currently use ebblog, ebwiki, or ebinternal.
 

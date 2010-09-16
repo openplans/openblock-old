@@ -8,7 +8,7 @@ from TileCache.Layer import Tile
 from processing import Process, Queue, RLock
 #from ebgeo.maps.tilecache_service import EBService as Service
 #from ebgeo.maps.shortcuts import get_all_tile_coords
-from ebgeo.utils.progressbar import TimedProgressBar
+from ebpub.utils.progressbar import TimedProgressBar
 
 counter_lock = RLock()
 

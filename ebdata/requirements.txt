@@ -1,4 +1,4 @@
-django
+django>=1.2
 lxml
 chardet==1.0.1
 feedparser==4.1

@@ -20,7 +20,6 @@ options(
     # packages to activate
     # order matters! dependants first
     openblock_packages=[
-        'ebgeo',
         'ebpub',
         'ebdata',
         'obadmin',
@@ -62,6 +61,15 @@ def install_aggdraw(options):
     """
     os.chdir(options.env_root)
     sh('env CFLAGS=-fpermissive %s/bin/pip install aggdraw' % options.env_root)
+    
+
+@task
+@needs('install_aggdraw')
+def install_ebgeo(options):
+    # XXX TODO install mapnik
+    package_dir = os.path.join(options.source_dir, 'ebgeo')
+    sh('%s/bin/pip install -e %s' % (options.env_root, package_dir))
+    print "Installed ebgeo.  Adjust your django settings to include this app."
 
 @task
 def install_gdal(options):
@@ -111,7 +119,7 @@ def install_gdal(options):
     sh(build, cwd='%s/build/GDAL' % options.env_root)
 
 @task
-@needs('install_gdal', 'install_aggdraw')
+@needs('install_gdal')
 def install_requirements(options):
     """
     install dependancies listed in the

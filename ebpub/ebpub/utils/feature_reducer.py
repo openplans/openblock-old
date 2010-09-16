@@ -1,4 +1,4 @@
-from ebgeo.utils.geodjango import iterfeatures, getfield, itergeoms, linemerge
+from ebpub.utils.geodjango import iterfeatures, getfield, itergeoms, linemerge
 from collections import defaultdict
 import ogr
 

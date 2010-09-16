@@ -11,7 +11,6 @@ setup(
     description="",
     license="GPLv3",
     install_requires=[
-    "ebgeo",
     "ebdata",
     "ebpub"
     ],

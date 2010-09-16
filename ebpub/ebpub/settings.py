@@ -148,7 +148,7 @@ GENERIC_EMAIL_SENDER = 'example@example.com'
 # Map stuff.
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 SPATIAL_REF_SYS = '900913' # Spherical Mercator
-MAP_UNITS = 'm' # see ebgeo.maps.utils for allowed unit types
+MAP_UNITS = 'm' # see ebpub.utils.mapmath for allowed unit types
 
 # Filesystem location of tilecache config (e.g., '/etc/tilecache/tilecache.cfg').
 TILECACHE_CONFIG = ''

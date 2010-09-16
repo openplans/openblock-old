@@ -1,5 +1,5 @@
-from ebgeo.maps.utils import get_resolution, lnglat_from_px, px_from_lnglat
-from ebgeo.utils.clustering import cluster
+from ebpub.utils.mapmath import get_resolution, lnglat_from_px, px_from_lnglat
+from ebpub.utils.clustering import cluster
 from django.conf import settings
 
 def cluster_by_scale(objs, radius, scale, extent=(-180, -90, 180, 90),

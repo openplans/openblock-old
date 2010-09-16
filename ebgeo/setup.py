@@ -11,9 +11,11 @@ setup(
     description="",
     license="GPLv3",
     install_requires=[
+    "ebpub",
     "TileCache==2.10",
     "processing==0.52",
     "aggdraw",
+    "mapnik"
     ],
     dependency_links=[
     ],
