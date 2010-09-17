@@ -45,7 +45,7 @@ def main():
         schema = Schema.objects.get(slug=schema)
     except Schema.DoesNotExist:
         print "Schema (%s): DoesNotExist" % schema
-        sys.exit(0)
+        sys.exit(1)
         
     feed = feedparser.parse(url)
     
