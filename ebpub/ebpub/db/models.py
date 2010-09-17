@@ -495,7 +495,11 @@ class NewsItem(models.Model):
         return 'http://%s%s' % (settings.EB_DOMAIN, self.item_url())
 
     def item_date_url(self):
-        return '/%s/by-date/%s/%s/%s/' % (self.schema.slug, self.item_date.year, self.item_date.month, self.item_date.day)
+        year = self.item_date.year
+        month = self.item_date.month
+        day = self.item_date.day
+        slug = self.schema.slug
+        return '/%(slug)s/by-date/%(year)s-%(month)s-%(day)s,%(year)s-%(month)s-%(day)s/' % locals()
 
     def location_url(self):
         if self.location_object_id is not None:
