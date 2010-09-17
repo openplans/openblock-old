@@ -78,6 +78,7 @@
 	{% endif %}
     {% endcomment %}
 
+
 	<div id="public-records">
 		{% if non_empty_date_charts %}
 		<h2>Public Records</h2>
@@ -91,11 +92,14 @@
 		</ul>
 		{% endif %}
 		{% if empty_date_charts %}
-		<p>More: {% for chart in empty_date_charts %}<a href="{{ chart.schema.url }}">{{ chart.schema.plural_name|capfirst }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+		<ul>More: {% for chart in empty_date_charts %}
+            <li><a href="{{ chart.schema.url }}">{{ chart.schema.plural_name|capfirst }}</a>
+            </li>{% endfor %}
+        </ul>
 		{% endif %}
 	</div><!--/ #public-records -->
 	<div id="more">
-    {% if more_schemas %}
+    {% if more_schemas %}asdfasdf
 		<h2>More news</h2>
 		<ul>
 		{% for schema in more_schemas %}

@@ -4,7 +4,7 @@ import sys
 
 def quick_dirty_fallback_geocode(addr, parse=True):
     """
-    Try to get SOME lat,lon even with bad blocks data,
+    Try to get SOME x,y even with bad blocks data,
     by falling back to external geocoders.
     """
     from ebdata.nlp.addresses import parse_addresses

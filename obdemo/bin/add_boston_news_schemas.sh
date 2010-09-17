@@ -42,6 +42,12 @@ echo Adding SeeClickFix schema and schemafields
     --display || die
 
 
+echo Boston Police Department news
+./add_schema.py -f -n "Boston Police Department report" -s police-reports \
+    --description="List of Boston Police Department reports" \
+    --summary="Boston Police Department reports" \
+    --source="http://www.bpdnews.com/feed/"
+
 #echo Businesses schema and SchemaField
 #./add_schema.py -f "Business License" "Business Licenses" business-licenses \
 #    "List of Boston Business Licenses" "Boston Business Licenses" \

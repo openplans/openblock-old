@@ -165,7 +165,7 @@ function loadMap() {
     });
     var newsitems = loadNewsItems();
     map.addLayers([osm]);
-    if (typeof(place_type != "undefined")) {
+    if (typeof(place_type) != "undefined") {
         var locationborder = loadLocationBorder(place_type, place_slug);
         map.addLayers([locationborder]);
         locationborder.setVisibility(true);
