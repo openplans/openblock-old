@@ -234,4 +234,3 @@ that funded EveryBlock's development and are likely not of general
 use.
 
 For more information, see everyblock/README.TXT
-
