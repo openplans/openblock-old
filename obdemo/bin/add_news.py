@@ -19,15 +19,15 @@ def main(argv=None):
     else:
         url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
     schema = 'local-news'
-    
+
     try:
         schema = Schema.objects.get(slug=schema)
     except Schema.DoesNotExist:
         print "Schema (%s): DoesNotExist" % schema
         sys.exit(1)
-        
+
     f = feedparser.parse(url)
-    
+
     for e in f.entries:
         try:
             item = NewsItem.objects.get(title=e.title, description=e.description)
@@ -68,8 +68,6 @@ def main(argv=None):
             traceback.print_exc(file=f)
             msg = f.getvalue()
             print msg
-        
-
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
