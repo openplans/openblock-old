@@ -43,7 +43,10 @@ def preprocess_to_string(*args, **kw):
     like make_tree_and_preprocess() but returns a string.
     """
     tree = make_tree_and_preprocess(*args, **kw)
-    return tree.body.text.strip()
+    if tree.body.text:
+        return tree.body.text.strip()
+    else:
+        return u''
 
 def preprocess(tree, drop_tags=(), drop_trees=(), drop_attrs=()):
     """
