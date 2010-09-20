@@ -1,4 +1,8 @@
+import imp
 import os.path
+
+EBPUB_DIR = imp.find_module('ebpub')[1]
+DJANGO_DIR = imp.find_module('django')[1]
 
 ########################
 # CORE DJANGO SETTINGS #
@@ -11,8 +15,10 @@ DATABASE_HOST = ''
 DATABASE_PORT = ''
 DEBUG = True
 
+
 TEMPLATE_DIRS = (
-    os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
+    os.path.join(EBPUB_DIR, 'templates'),
+    os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -20,6 +26,8 @@ TEMPLATE_LOADERS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
 )
+
+
 
 INSTALLED_APPS = (
     'ebpub.accounts',
@@ -33,6 +41,7 @@ INSTALLED_APPS = (
     'ebpub.streets',
     'django.contrib.humanize',
     'django.contrib.sessions',
+    'django.contrib.gis',
 )
 
 ROOT_URLCONF = 'ebpub.urls'

@@ -11,6 +11,10 @@ Known required settings are: %r
 import os
 import imp
 
+OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
+EBPUB_DIR = imp.find_module('ebpub')[1]
+DJANGO_DIR = imp.find_module('django')[1]
+
 
 ########################
 # CORE DJANGO SETTINGS #
@@ -18,15 +22,12 @@ import imp
 
 _required_settings=[
     'DEBUG',
-]    
-
-POSTGIS_TEMPLATE = 'template_postgis'
-
-EBPUB_DIR = imp.find_module('ebpub')[1]
+]
 
 TEMPLATE_DIRS = (
-    os.path.normpath(os.path.join(os.path.dirname(__file__), 'templates')),
-    EBPUB_DIR + '/templates',
+    os.path.join(OBDEMO_DIR, 'templates'),
+    os.path.join(EBPUB_DIR, 'templates'),
+    os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -88,14 +89,18 @@ MIDDLEWARE_CLASSES = (
     'ebpub.accounts.middleware.UserMiddleware',
 )
 
-#########################
-# CUSTOM EBPUB SETTINGS #
-#########################
+##################################
+# CUSTOM EBPUB & OBDEMO SETTINGS #
+##################################
+
+
+POSTGIS_TEMPLATE = 'template_postgis'
 
 # We've moved many settings to another (not-version-controlled) file.
 # You'll get alerted by an error if anything required is not in that file.
 # We import those settings twice: once up here to allow other settings
 # to derive from them, and once at the end to override any defaults.
+
 from real_settings import *
 
 # The domain for your site.
@@ -147,8 +152,6 @@ METRO_LIST = (
     },
 )
 
-import os
-OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
 EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development
 _required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
