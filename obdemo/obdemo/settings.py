@@ -35,7 +35,8 @@ TEMPLATE_LOADERS = (
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
-    'django.contrib.auth.context_processors.auth'
+    'django.contrib.auth.context_processors.auth',
+    'obdemo.context_processors.urls',
     #'django.core.context_processors.debug',
 )
 
@@ -213,6 +214,10 @@ _required_settings.append('SCRAPER_LOGFILE_NAME')
 # staff privileges (including the ability to view non-public schemas).
 _required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
+# TODO: instead of bundling a rather bulky openlayers, our installer
+# should maybe download and build both an optimized profile,
+# and an un-minified version, and toggle them here based on DEBUG.
+OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 
 # Re-import from real_settings to override any defaults in this file.
 from real_settings import *
