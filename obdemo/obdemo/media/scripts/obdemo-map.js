@@ -54,39 +54,39 @@ function loadNewsItems() {
         var firstFeature = cluster[0];
         var featureHtml = firstFeature.attributes.popup_html;
         var popup = new OpenLayers.Popup.FramedCloud(
-        null, feature.geometry.getBounds().getCenterLonLat(), null, featureHtml, {
-            size: new OpenLayers.Size(1, 1),
-            offset: new OpenLayers.Pixel(0, 0)
-        }, true, function() {
-            selectControl.unselect(feature);
-        });
+            null, feature.geometry.getBounds().getCenterLonLat(), null, featureHtml,
+            {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(0, 0)},
+            true, // closeBox.
+            function() {
+                // Callback for closing box.
+                selectControl.unselect(feature);
+            }
+        );
         feature.popup = popup;
         map.addPopup(popup);
         if (cluster.length > 1) {
             // Add next/previous nav links to the popup.
-            var navHtml = '<div><a class="popupnav prev" href="#">prev</a>&nbsp;<a class="popupnav next" href="#">next</a></div>';
+            var navHtml = '<span class="popupnav"><a class="popupnav prev" href="#">&larr;prev</a>&nbsp;&nbsp;<a class="popupnav next" href="#">next&rarr;</a></span>';
             var content = popup.contentDiv;
+            // I like nav links at top and bottom for convenience.
+            $(content).prepend(navHtml);
             $(content).append(navHtml);
+            popup.updateSize();
             var prev = $(content).find('a.popupnav.prev');
             var next = $(content).find('a.popupnav.next');
             // Clicking next or previous replaces the nav links html.
             var replaceHtml = function(f) {
-                // Fixme: this comes up empty. replaceWith() isn't right?
                 $(content).find('.newsitem').replaceWith(f.attributes.popup_html);
-                // todo: re-insert the nav
-                //$(content).find('a:first').attr('href', '/XXX/' + f.fid);
             };
             prev.click(function(e) {
                 e.preventDefault();
                 clusterIdx = (clusterIdx == 0) ? cluster.length - 1 : clusterIdx - 1;
                 replaceHtml(cluster[clusterIdx]);
-                // popup.draw();
             });
             next.click(function(e) {
                 e.preventDefault();
                 clusterIdx = (clusterIdx == cluster.length - 1) ? 0 : clusterIdx + 1;
                 replaceHtml(cluster[clusterIdx]);
-                // popup.draw();
             });
         }
     };

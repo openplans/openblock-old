@@ -360,3 +360,22 @@ body {
     clear: both;
     border: 1px solid #666;
 }
+
+
+/* Map Popups */
+.olFramedCloudPopupContent, .olPopupContent {
+    font-size: 10pt;
+}
+
+div li span.location {
+    display: block;
+}
+
+div li span.popupnav {
+    display: block;
+}
+
+div.popupnav {
+    clear: both;
+}
+
