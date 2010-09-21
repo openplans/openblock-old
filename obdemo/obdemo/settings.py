@@ -115,43 +115,18 @@ _required_settings.append('SHORT_NAME')
 # secret.
 _required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
+# Database configuration as per
+# http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
 _required_settings.append('DATABASES')
 
-
 # The list of all metros this installation covers. This is a tuple of
-# dictionaries.
+# dictionaries, as per ebpub.settings.
 _required_settings.append('METRO_LIST')
-METRO_LIST = (
-    # Example dictionary:
-    {
-    #     # Extent of the metro, as a longitude/latitude bounding box.
-        'extent': (-71.191153, 42.227865, -70.986487, 42.396978),
-    #
-    #     # Whether this should be displayed to the public.
-        'is_public': True,
-    #
-    #     # Set this to True if the metro has multiple cities.
-        'multiple_cities': False,
-    #
-    #     # The major city in the metro.
-        'city_name': 'Boston',
-    #
-    #     # The SHORT_NAME in the settings file (also the subdomain).
-        'short_name': 'boston',
-    #
-    #     # The name of the metro, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
-        'metro_name': 'Boston',
-    #
-    #     # USPS abbreviation for the state.
-        'state': 'MA',
-    #
-    #     # Full name of state.
-        'state_name': 'Massachusetts',
-    #
-    #     # Time zone, as required by Django's TIME_ZONE setting.
-        'time_zone': 'America/New_York',
-    },
-)
+
+# Where to center citywide maps by default.
+_required_settings.append('DEFAULT_MAP_CENTER_LON')
+_required_settings.append('DEFAULT_MAP_CENTER_LAT')
+_required_settings.append('DEFAULT_MAP_ZOOM')
 
 EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development

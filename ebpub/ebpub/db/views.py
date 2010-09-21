@@ -487,6 +487,9 @@ def homepage(request):
         'fn_non_empty_date_charts': fn_non_empty_date_charts,
         'fn_empty_date_charts': fn_empty_date_charts,
         'num_days': settings.DEFAULT_DAYS,
+        'default_lon': settings.DEFAULT_MAP_CENTER_LON,
+        'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
+        'default_zoom': settings.DEFAULT_MAP_ZOOM,
     })
 
 def search(request, schema_slug=''):

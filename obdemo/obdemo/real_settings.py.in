@@ -96,3 +96,40 @@ HOMEPAGE_DEFAULT_NEWSTYPES = [u'news-articles']
 
 # How many days of news to show on the homepage & elsewhere.
 DEFAULT_DAYS = 30
+
+# Where to center citywide  maps, eg. on homepage.
+DEFAULT_MAP_CENTER_LON = -71.061667
+DEFAULT_MAP_CENTER_LAT = 42.357778
+DEFAULT_MAP_ZOOM = 12
+
+# Metros.
+METRO_LIST = (
+    {
+        # Extent of the metro, as a longitude/latitude bounding box.
+        'extent': (-71.191153, 42.227865, -70.986487, 42.396978),
+
+        # Whether this should be displayed to the public.
+        'is_public': True,
+
+        # Set this to True if the metro has multiple cities.
+        'multiple_cities': False,
+
+        # The major city in the metro.
+        'city_name': 'Boston',
+
+        # The SHORT_NAME in the settings file (also the subdomain).
+        'short_name': 'boston',
+
+        # The name of the metro, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
+        'metro_name': 'Boston',
+
+        # USPS abbreviation for the state.
+        'state': 'MA',
+
+        # Full name of state.
+        'state_name': 'Massachusetts',
+
+        # Time zone, as required by Django's TIME_ZONE setting.
+        'time_zone': 'America/New_York',
+    },
+)

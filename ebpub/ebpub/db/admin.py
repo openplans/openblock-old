@@ -6,7 +6,6 @@ from ebpub.db.models import NewsItem
 from ebpub.db.models import Schema
 from ebpub.db.models import SchemaField
 from ebpub.db.models import SchemaInfo
-from ebpub.metros.allmetros import get_metro
 
 """
 See http://docs.djangoproject.com/en/dev/ref/contrib/gis/admin/
@@ -30,21 +29,11 @@ class OSMModelAdmin(admin.GeoModelAdmin):
 
     @property
     def default_lat(self):
-        return self._get_city_center_lonlat()[1]
+        return settings.DEFAULT_MAP_CENTER_LAT
 
     @property
     def default_lon(self):
-        return self._get_city_center_lonlat()[0]
-
-    @staticmethod
-    def _get_city_center_lonlat():
-        # Get the center lon,lat of the extent configured in
-        # settings.METRO_LIST for the city settings.SHORT_NAME.
-        metro = get_metro()
-        extent = metro['extent']
-        lon = (extent[0] + extent[2]) / 2.0
-        lat = (extent[1] + extent[3]) / 2.0
-        return lon, lat
+        return settings.DEFAULT_MAP_CENTER_LON
 
 
 class NewsItemAdmin(OSMModelAdmin):

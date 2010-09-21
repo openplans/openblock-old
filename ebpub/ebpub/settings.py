@@ -133,6 +133,11 @@ METRO_LIST = (
     # },
 )
 
+# Where to center citywide maps, by default.
+DEFAULT_MAP_CENTER_LON = 0.0
+DEFAULT_MAP_CENTER_LAT = 0.0
+DEFAULT_MAP_ZOOM = 10
+
 EB_MEDIA_ROOT = '' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development
 

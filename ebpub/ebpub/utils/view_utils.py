@@ -1,11 +1,10 @@
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
-from ebpub.streets.models import Block
-from ebpub.db.models import Location
-from django.http import Http404
 from ebpub.constants import BLOCK_RADIUS_CHOICES
-
+from ebpub.db.models import Location
+from ebpub.streets.models import Block
 
 
 def eb_render(request, *args, **kwargs):
@@ -58,8 +57,3 @@ def make_pid(place, block_radius=None):
         return 'l:%d' % place.id
     else:
         raise ValueError("Wrong place type %s, expected Location or Block" % place)
-
-    
-    
-        
-        
