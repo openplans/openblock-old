@@ -10,7 +10,15 @@ class ReverseGeocodeError(Exception):
 def reverse_geocode(point):
     """
     Looks up the nearest block to the point.
+
+    Argument can be either a Point instance, or an (x, y) tuple, or a
+    WKT string.
     """
+    if isinstance(point, basestring):
+        from django.contrib.gis.geos import fromstr
+        point = fromstr(point, srid=4326)
+    elif isinstance(point, tuple) or isinstance(point, list):
+        point = Point(tuple(point))
     # In degrees for now because transforming to a projected space is
     # too slow for this purpose. TODO: store projected versions of the
     # locations alongside the canonical lng/lat versions.
@@ -21,7 +29,7 @@ def reverse_geocode(point):
     # this to GeoDjango syntax. Should be possible but there are some
     # subtleties / performance issues with the DB API.
     cursor = connection.cursor()
-    cursor.execute("""
+    sql = """
         SELECT %(field_list)s, ST_Distance(ST_GeomFromWKB(E%(pt_wkb)s, 4326), %(geom_fieldname)s) AS "dist"
         FROM %(tablename)s
         WHERE id IN
@@ -32,9 +40,10 @@ def reverse_geocode(point):
         LIMIT 1;
     """ % {'field_list': ', '.join([f.column for f in Block._meta.fields]),
            'pt_wkb': Binary(point.wkb),
-           'geom_fieldname': 'location',
+           'geom_fieldname': 'geom',
            'tablename': Block._meta.db_table,
-           'min_distance': min_distance})
+           'min_distance': min_distance}
+    cursor.execute(sql)
     num_fields = len(Block._meta.fields)
     try:
         block, distance = [(Block(*row[:num_fields]), row[-1]) for row in cursor.fetchall()][0]
