@@ -69,9 +69,9 @@ class PidTests(TestCase):
         b = self._makeBlock()
         self.assertEqual(make_pid(b, 1), 'b:%d.1' % b.id)
 
-    def test_make_pid__block__not_enough_args(self):
+    def test_make_pid__block__default_radius(self):
         b = self._makeBlock()
-        self.assertRaises(TypeError, make_pid, b)
+        self.assertEqual(make_pid(b), 'b:%d.8' % b.id)
 
     def test_make_pid__location(self):
         loc = self._makeLocation()
