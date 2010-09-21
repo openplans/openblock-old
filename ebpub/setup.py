@@ -12,7 +12,7 @@ setup(
     license="GPLv3",
     install_requires=[
     "django",
-    "GDAL<1.7.0",
+    "GDAL",
     "pyyaml",
     "psycopg2"
     ],
