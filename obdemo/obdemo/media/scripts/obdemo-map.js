@@ -117,7 +117,7 @@ function loadLocationBorder(place_type, place_slug) {
         context: {
         }
     });
-    var location = new OpenLayers.Layer.Vector("NewsItems", {
+    var location = new OpenLayers.Layer.Vector("LocationBorder", {
         projection: map.displayProjection,
         strategies: [
             new OpenLayers.Strategy.Fixed()
@@ -165,7 +165,7 @@ function loadMap() {
     });
     var newsitems = loadNewsItems();
     map.addLayers([osm]);
-    if (typeof(place_type) != "undefined") {
+    if (typeof(place_type) != "undefined" && Boolean(place_type)) {
         var locationborder = loadLocationBorder(place_type, place_slug);
         map.addLayers([locationborder]);
         locationborder.setVisibility(true);
