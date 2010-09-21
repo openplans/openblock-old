@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from ebpub.constants import BLOCK_RADIUS_CHOICES
+from ebpub.constants import BLOCK_RADIUS_DEFAULT
 from ebpub.db.models import Location
 from ebpub.streets.models import Block
 
@@ -50,6 +51,8 @@ def make_pid(place, block_radius=None):
     parseable by parse_pid.
     """
     if isinstance(place, Block):
+        if block_radius is None:
+            block_radius = BLOCK_RADIUS_DEFAULT
         block_radius = int(block_radius)
         return 'b:%d.%d' % (place.id, block_radius)
     elif isinstance(place, Location):

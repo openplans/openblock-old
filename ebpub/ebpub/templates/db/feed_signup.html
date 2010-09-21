@@ -31,7 +31,7 @@ function make_feed_url() {
 		qs += (qs ? '&' : '?') + 'radius=' + radius;
 	}
 
-	$j('#customlink').attr('href', 'http://{% EB_SUBDOMAIN %}{{ place.rss_url }}' + qs);
+	$j('#customlink').attr('href', '{{ place.rss_url }}' + qs);
 }
 window.onload = function() {
 	$j('.updateonclick').click(make_feed_url);
@@ -60,6 +60,6 @@ window.onload = function() {
 	</ul>
 	<p><label><input type="checkbox" class="updateonclick" checked="checked" id="includenew"> When new data types are added, include them in the feed automatically</label></p>
 	{% if is_block %}<p id="radius-radio">Radius: <label><input type="radio" class="updateonclick" name="radius" value="1"> 1 block</label> <label><input type="radio" class="updateonclick" name="radius" value="3"> 3 blocks</label> <label><input type="radio" class="updateonclick" name="radius" value="8" checked> 8 blocks</label></p>{% endif %}
-  <p><a id="customlink" href="http://{% EB_SUBDOMAIN %}{{ place.rss_url }}">Custom feed for {{ place.pretty_name }}</a></p>
+  <p><a id="customlink" href="{{ place.rss_url }}">Custom feed for {{ place.pretty_name }}</a></p>
 </div>
 {% endblock %}
