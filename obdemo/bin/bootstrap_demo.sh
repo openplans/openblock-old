@@ -8,7 +8,12 @@ if [ "$1" == '-r' ]; then
     HARD_RESET=1
 fi
 
-HERE=`dirname $0`
+# Reliably and portably find the directory containing this script.
+# Based roughly on stuff from:
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-in
+HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
+
+# Assume the virtualenv is going to be two directories up. TODO: configurable?
 cd $HERE/../..
 
 echo Getting permission to run as postgres ...
