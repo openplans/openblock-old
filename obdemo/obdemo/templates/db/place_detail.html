@@ -124,8 +124,6 @@ window.onload = function() {
   </div>
 
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
-    <br/>
-    <img src="/maps/tile/{{ place.street_slug }}/{{ place.from_num }}-{{ place.to_num }}/"/>
 	{% else %}{{ place.name }}
 	{% endif %}
 
