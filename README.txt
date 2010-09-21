@@ -18,7 +18,7 @@ development of OpenBlock is provided by the Knight Foundation
 ====================
 System Requirements
 ====================
-	
+
 Linux, OSX, or some other Unix flavor.
 
 python 2.6  (2.7 might work)
@@ -119,11 +119,12 @@ out of your site, at mininum you will need to do the following:
      ebpub/README.TXT
 
      b. Write scraper scripts to retrieve your news sources and feed
-     it in. See ebdata/README.TXT
+     it in. See ebdata/README.TXT and http://developer.openblockproject.org/wiki/ScraperScripts
 
 
-This is currently a *lot* of work. We're planning to simplify this
-process as much as we can :)
+Yes, this is a lot of work.  For more documentation (in progress), see also:
+http://developer.openblockproject.org/wiki/Data
+http://developer.openblockproject.org/wiki/Ideal%20Feed%20Formats
 
 The obdemo/bin/bootstrap_demo.sh script does all this for the demo
 site.  You can dive into the other scripts that it calls to get more
