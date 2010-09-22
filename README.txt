@@ -22,12 +22,17 @@ System Requirements
 Linux, OSX, or some other Unix flavor.
 
 python 2.6  (2.7 might work)
+python-dev  (python development libraries, whatever that's called on your system)
 postgresql
 postgis
 libgdal
 libxml2
 libxslt
 git
+
+For system-specific lists of packages to install, see
+http://developer.openblockproject.org/wiki/InstallationRequirements
+and let us know if your system isn't listed there!
 
 =========================================
 Quickstart: Install and Set Up Demo Site
