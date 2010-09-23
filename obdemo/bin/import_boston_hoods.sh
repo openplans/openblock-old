@@ -17,7 +17,9 @@ HOOD_URL="$HOOD_SERVER/$HOOD_FILE"
 HOOD_FOLDER="$PWD/neighborhood_data"
 HOOD_IMPORTER=$SOURCE_ROOT/ebpub/ebpub/db/bin/import_hoods.py
 
-if [ ! -f "$HOOD_IMPORTER" ]; then die "Could not find import_hoods.py at $HOOD_IMPORTER" ; fi
+if [ ! -f "$HOOD_IMPORTER" ]; then
+    die "Could not find import_hoods.py at $HOOD_IMPORTER"
+fi
 
 
 echo Downloading neighborhood data...

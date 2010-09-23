@@ -199,6 +199,14 @@ window.onload = function() {
 	{% endifnotequal %}
   </div><!--/ #place-detail-content -->
 
+  {% ifequal place.location_type.slug "neighborhood" %}
+  <div id="disclaimer"> Disclaimer: All reference to Planning Districts
+  on any maps or digital data produced by the Office of Digital
+  Cartography and GIS, Planning Department, BRA are for planning
+  purposes only and should NOT be interpreted as official neighborhood
+  boundaries for the City of Boston. Thank you.
+  </div>
+  {% endifequal %}
 
 </div><!--/ #content -->
 {% endblock %}
