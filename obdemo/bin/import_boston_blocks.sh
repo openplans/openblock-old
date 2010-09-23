@@ -2,8 +2,8 @@
 
 # Based on http://wiki.github.com/dkukral/everyblock/install-everyblock
 
-SOURCE_ROOT=`dirname $0`
-SOURCE_ROOT=`cd $SOURCE_ROOT/../.. && pwd`
+HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
+SOURCE_ROOT=`cd $HERE/../.. && pwd`
 echo Source root is $SOURCE_ROOT
 
 export DJANGO_SETTINGS_MODULE=obdemo.settings

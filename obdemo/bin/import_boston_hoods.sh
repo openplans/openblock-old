@@ -1,5 +1,5 @@
-SOURCE_ROOT=`dirname $0`
-SOURCE_ROOT=`cd $SOURCE_ROOT/../.. && pwd`
+HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
+SOURCE_ROOT=`cd $HERE/../.. && pwd`
 echo Source root is $SOURCE_ROOT
 
 export DJANGO_SETTINGS_MODULE=obdemo.settings
@@ -22,7 +22,6 @@ if [ ! -f "$HOOD_IMPORTER" ]; then die "Could not find import_hoods.py at $HOOD_
 
 echo Downloading neighborhood data...
 
-cd $PWD
 mkdir -p $HOOD_FOLDER
 cd $HOOD_FOLDER || die "couldn't cd to $HOOD_FOLDER"
 
