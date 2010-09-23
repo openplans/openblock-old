@@ -8,6 +8,8 @@
 .DS_Store
 /obdemo/obdemo/real_settings.py
 obdemo/tiger_data
+obdemo/neighborhood_data
+obdemo/zip_data
 *pip-log.txt
 *.egg-info
 /bin
