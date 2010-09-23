@@ -237,6 +237,8 @@ everyblock
 This package contains code/templates that are specific to
 EveryBlock.com. They were released to fulfill the terms of the grant
 that funded EveryBlock's development and are likely not of general
-use.
+use, with the possible exception of scraper scripts in
+everyblock/cities/ which may at least be useful as examples of how to
+write scrapers.
 
 For more information, see everyblock/README.TXT
