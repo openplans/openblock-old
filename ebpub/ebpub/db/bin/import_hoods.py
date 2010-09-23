@@ -11,6 +11,10 @@ from ebpub.utils.text import slugify
 from ebpub.metros.allmetros import get_metro
 
 def populate_ni_loc(location):
+    """
+    Add NewsItemLocations for all NewsItems that overlap with the new
+    Location.
+    """
     ni_count = NewsItem.objects.count()
     cursor = connection.cursor()
     i = 0

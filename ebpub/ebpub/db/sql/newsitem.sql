@@ -1,6 +1,3 @@
--- Add geometric index, which can't be expressed in Django model syntax.
-CREATE INDEX db_newsitem_location ON db_newsitem USING GIST (location GIST_GEOMETRY_OPS);
-
 -- Add partial indexes for the value columns. We only want to index values that are not NULL.
 CREATE INDEX db_attribute_varchar01 ON db_attribute (varchar01) WHERE varchar01 IS NOT NULL;
 CREATE INDEX db_attribute_varchar02 ON db_attribute (varchar02) WHERE varchar02 IS NOT NULL;

@@ -477,7 +477,7 @@ class NewsItem(models.Model):
     url = models.TextField(blank=True)
     pub_date = models.DateTimeField(db_index=True)
     item_date = models.DateField(db_index=True)
-    location = models.GeometryField(blank=True, null=True)
+    location = models.GeometryField(blank=True, null=True, spatial_index=True)
     location_name = models.CharField(max_length=255)
     location_object = models.ForeignKey(Location, blank=True, null=True)
     block = models.ForeignKey(Block, blank=True, null=True)
