@@ -12,7 +12,6 @@
 		<p>{{ schemabunch.schemainfo.short_description }} <a href="{{ schemabunch.schema.url }}about/">More info&hellip;</a></p>
 		<h3>Browse:</h3>
 		<ul>
-			{% if schemabunch.schema.allow_charting %}<li><a href="{{ schemabunch.schema.url }}by-date/">By {{ schemabunch.schema.date_name }}</a></li>{% endif %}
 			{% if schemabunch.schema.allow_charting %}{% for schemafield in schemabunch.schemafield_list %}
 			  <li><a href="{{ schemabunch.schema.url }}by-{{ schemafield.slug }}/">By {{ schemafield.browse_by_title }}</a></li>
 			{% endfor %}{% endif %}
