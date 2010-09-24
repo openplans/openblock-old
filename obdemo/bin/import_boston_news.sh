@@ -38,3 +38,6 @@ python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || di
 #python ./everyblock/everyblock/cities/boston/restaurants/retrieval.py || die
 
 python obdemo/bin/seeclickfix_retrieval.py || die
+
+# Aggregates, see ebpub/README.txt
+python ebpub/ebpub/db/bin/update_aggregates.py
