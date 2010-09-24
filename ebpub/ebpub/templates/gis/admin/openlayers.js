@@ -1,4 +1,4 @@
-// Overrides for Openblock: support multipolygon.
+// Overrides for Openblock: support multipolygon and multipoint.
 // TODO: submit upstream patch at http://code.djangoproject.com/ticket/9806
 {# Author: Justin Bronn, Travis Pinney & Dane Springmeyer #}
 {% block vars %}var {{ module }} = {};
@@ -9,22 +9,21 @@
 {{ module }}.collection_type = '{{ collection_type }}';
 {{ module }}.is_linestring = {{ is_linestring|yesno:"true,false" }};
 {{ module }}.is_polygon = {{ is_polygon|yesno:"true,false" }};
-{{ module }}.is_multi = {{ is_multi|yesno:"true,false" }};
 {{ module }}.is_point = {{ is_point|yesno:"true,false" }};
 {% endblock %}
-{{ module }}.get_ewkt = function(feat){return 'SRID={{ srid }};' + {{ module }}.wkt_f.write(feat);}
+{{ module }}.get_ewkt = function(feat){return 'SRID={{ srid }};' + {{ module }}.wkt_f.write(feat);};
 {{ module }}.read_wkt = function(wkt){
   // OpenLayers cannot handle EWKT -- we make sure to strip it out.
   // EWKT is only exposed to OL if there's a validation error in the admin.
   var match = {{ module }}.re.exec(wkt);
   if (match){wkt = match[1];}
   return {{ module }}.wkt_f.read(wkt);
-}
+};
 {{ module }}.write_wkt = function(feat){
   if ({{ module }}.is_collection){ {{ module }}.num_geom = feat.geometry.components.length;}
   else { {{ module }}.num_geom = 1;}
   document.getElementById('{{ id }}').value = {{ module }}.get_ewkt(feat);
-}
+};
 {{ module }}.add_wkt = function(event){
   // This function will sync the contents of the `vector` layer with the
   // WKT in the text field.
@@ -43,7 +42,7 @@
     }
     {{ module }}.write_wkt(event.feature);
   }
-}
+};
 {{ module }}.modify_wkt = function(event){
   if ({{ module }}.is_collection){
     if ({{ module }}.is_point){
@@ -61,7 +60,7 @@
   } else {
     {{ module }}.write_wkt(event.feature);
   }
-}
+};
 // Function to clear vector features and purge wkt from div
 {{ module }}.deleteFeatures = function(){
   {{ module }}.layers.vector.removeFeatures({{ module }}.layers.vector.features);
@@ -71,15 +70,15 @@
   {{ module }}.deleteFeatures();
   document.getElementById('{{ id }}').value = '';
   {{ module }}.map.setCenter(new OpenLayers.LonLat({{ default_lon }}, {{ default_lat }}), {{ default_zoom }});
-}
+};
 // Add Select control
 {{ module }}.addSelectControl = function(){
   var select = new OpenLayers.Control.SelectFeature({{ module }}.layers.vector, {'toggle' : true, 'clickout' : true});
   {{ module }}.map.addControl(select);
   select.activate();
-}
-{{ module }}.enableDrawing = function(){ {{ module }}.map.getControlsByClass('OpenLayers.Control.DrawFeature')[0].activate();}
-{{ module }}.enableEditing = function(){ {{ module }}.map.getControlsByClass('OpenLayers.Control.ModifyFeature')[0].activate();}
+};
+{{ module }}.enableDrawing = function(){ {{ module }}.map.getControlsByClass('OpenLayers.Control.DrawFeature')[0].activate();};
+{{ module }}.enableEditing = function(){ {{ module }}.map.getControlsByClass('OpenLayers.Control.ModifyFeature')[0].activate();};
 // Create an array of controls based on geometry type
 {{ module }}.getControls = function(lyr){
   {{ module }}.panel = new OpenLayers.Control.Panel({'displayClass': 'olControlEditingToolbar'});
@@ -89,23 +88,26 @@
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Path, {'displayClass': 'olControlDrawFeaturePath'});
   } else if ({{ module }}.is_polygon){
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
-    if ({{module}}.is_multi) {
-      draw_ctl.multi = true;
-    };
   } else if ({{ module }}.is_point){
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
-  }
-  if ({{ module }}.modifiable){
-    var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
-    {{ module }}.controls = [nav, draw_ctl, mod];
-  } else {
-    if(!lyr.features.length){
-      {{ module }}.controls = [nav, draw_ctl];
+  };
+  // TODO: draw_ctl is undefined if is_collection==true and collection_type=='Any'. Don't know what handler to use then.
+  if (draw_ctl != undefined) {
+    if ({{module}}.is_collection )  {
+      draw_ctl.multi = true;
+    };
+    if ({{ module }}.modifiable){
+      var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
+      {{ module }}.controls = [nav, draw_ctl, mod];
     } else {
-      {{ module }}.controls = [nav];
+      if(!lyr.features.length){
+        {{ module }}.controls = [nav, draw_ctl];
+      } else {
+        {{ module }}.controls = [nav];
+      }
     }
   }
-}
+};
 {{ module }}.init = function(){
     {% block map_options %}// The options hash, w/ zoom, resolution, and projection settings.
     var options = {
@@ -170,4 +172,4 @@
     } else {
       {{ module }}.enableDrawing();
     }
-}
+};

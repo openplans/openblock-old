@@ -76,36 +76,27 @@ class OBOpenLayersWidget(OpenLayersWidget):
             self.params['wkt'] = wkt
 
             # Check if the field is generic so the proper values are overriden
-            self.params['is_multi'] = False
-            geom_type = value.geom_type.upper()
             if self.params['is_unknown']:
-                 self.params['geom_type'] = OGRGeomType(value.geom_type)
-                 if geom_type == 'LINESTRING':
-                     self.params['is_linestring'] = True
-                 elif geom_type ==  'POLYGON':
-                     self.params['is_polygon'] = True
-                 elif geom_type == 'MULTIPOLYGON':
-                     self.params['is_polygon'] = True
-                     self.params['is_multi'] = False
-                 elif geom_type == 'POINT':
-                     self.params['is_point'] = True
-                 elif geom_type in ('MULTIPOINT', 'MULTILINESTRING', 'GEOMETRYCOLLECTION'):
-                     # TODO: the MULTIPOLYGON changes here and in openlayers.js
-                     # might also work for MULTILINESTRING and MULTIPOINT?
-                     self.params['is_collection']=True
-                     if value.geom_type.upper() == 'GEOMETRYCOLLECTION':
-                         self.params['collection_type'] = 'Any'
-                     else:
-                         self.params['collection_type'] = OGRGeomType(value.geom_type.upper().replace('MULTI', ''))
+                self.params['geom_type'] = OGRGeomType(value.geom_type)
+                if value.geom_type.upper() in ('LINESTRING', 'MULTILINESTRING'):
+                    self.params['is_linestring'] = True
+                elif value.geom_type.upper() in ('POLYGON', 'MULTIPOLYGON'):
+                    self.params['is_polygon'] = True
+                elif value.geom_type.upper() in ('POINT', 'MULTIPOINT'):
+                    self.params['is_point'] = True
+                if value.geom_type.upper() in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION'):
+                    self.params['is_collection']=True
+                    if value.geom_type.upper() == 'GEOMETRYCOLLECTION':
+                        self.params['collection_type'] = 'Any'
+                    else:
+                        self.params['collection_type'] = OGRGeomType(value.geom_type.upper().replace('MULTI', ''))
 
         else:
-             if self.params['is_unknown']:
-                 # If the geometry is unknown and the value is not set, make it as flexible as possible.
-                 # TODO: we don't have JS to handle these in openlayers.js.
-                 self.params['geom_type'] = OGRGeomType('GEOMETRYCOLLECTION')
-                 self.params['is_collection']=True
-                 self.params['collection_type'] = 'Any'
-
+            if self.params['is_unknown']:
+                # If the geometry is unknown and the value is not set, make it as flexible as possible.
+                self.params['geom_type'] = OGRGeomType('GEOMETRYCOLLECTION')
+                self.params['is_collection']=True
+                self.params['collection_type'] = 'Any'
 
         return loader.render_to_string(self.template, self.params,
                                        context_instance=geo_context)
@@ -114,7 +105,6 @@ class OBOpenLayersWidget(OpenLayersWidget):
 class OSMModelAdmin(admin.GeoModelAdmin):
     # Use GeoModelAdmin to get editable geometries.
     # But we'll override a few defaults.
-
     default_zoom = 11
     openlayers_url = getattr(settings, 'OPENLAYERS_URL', admin.GeoModelAdmin.openlayers_url)
     point_zoom = 14
