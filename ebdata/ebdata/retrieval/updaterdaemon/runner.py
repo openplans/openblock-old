@@ -72,7 +72,7 @@ class UpdaterDaemon(EveryMinuteDaemon):
                         os._exit(1)
                     if pid2 == 0: # child
                         os.environ.update(env)
-                        from django.conf import settings
+                        #from django.conf import settings
 
                         # Log the function call and PID.
                         sys.stdout.write('%s\t%s\t%r\t%s\n' % (datetime.datetime.now(), func.func_name, kwargs, os.getpid()))
