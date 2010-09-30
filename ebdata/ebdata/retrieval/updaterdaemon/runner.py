@@ -44,9 +44,27 @@ class EveryTwoSecondsDaemon(Daemon):
         pass
 
 class UpdaterDaemon(EveryMinuteDaemon):
-    def __init__(self, config, *args, **kwargs):
+
+    def __init__(self, *args, **kwargs):
         super(UpdaterDaemon, self).__init__(*args, **kwargs)
-        self.config = config
+        self.parser.add_option("-c", "--config",
+                               help="path to configuration file (python).",
+                               action="store", default=None)
+
+
+    def parse_args(self, argv):
+        """Given sys.argv, parses the command-line arguments.
+        """
+        super(UpdaterDaemon, self).parse_args(argv)
+        config = self.options.config
+        if config is None:
+            config = os.path.join(os.path.dirname(__file__), 'config.py')
+        config = os.path.normpath(os.path.abspath(config))
+        configdir, configfile = os.path.split(config)
+        configfile, ext = os.path.splitext(configfile)
+        if configdir not in sys.path:
+            sys.path.insert(0, configdir)
+        self.config = __import__(configfile)
 
     def handle_time(self, timestamp):
         # Get the tasks for the given timestamp, and run any that need to be
@@ -75,6 +93,7 @@ class UpdaterDaemon(EveryMinuteDaemon):
                         #from django.conf import settings
 
                         # Log the function call and PID.
+                        # TODO: use logging module.
                         sys.stdout.write('%s\t%s\t%r\t%s\n' % (datetime.datetime.now(), func.func_name, kwargs, os.getpid()))
                         sys.stdout.flush()
 
@@ -101,8 +120,8 @@ class UpdaterDaemon(EveryMinuteDaemon):
                     os.waitpid(pid, 0)
 
 if __name__ == "__main__":
-    from ebdata.retrieval.updaterdaemon import config
-    daemon = UpdaterDaemon(config, '/tmp/updaterdaemon.pid',
-        stdout='/tmp/updaterdaemon.log',
-        stderr='/tmp/updaterdaemon.err')
+    # TODO: configurable log and pid files
+    daemon = UpdaterDaemon('/tmp/updaterdaemon.pid',
+                           stdout='/tmp/updaterdaemon.log',
+                           stderr='/tmp/updaterdaemon.err')
     daemon.run_from_command_line(sys.argv[1:])

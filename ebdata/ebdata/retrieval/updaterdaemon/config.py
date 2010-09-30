@@ -1,36 +1,51 @@
 """
 Sample config file for the updaterdaemon.
 
-
+Also contains useful callback generators that check whether to handle
+a particular datetime.
 """
 
 
 def hourly(*minutes):
+    """
+    Returns a checker that matches datetimes every hour, at the given
+    minute(s).
+    """
     def handle(dt):
         return dt.minute in minutes
     return handle
 
-def multiple_hourly(*hour_minutes):
-    # hour_minutes is a list of tuples in the format (hour, minute)
+def multiple_daily(*hour_minutes):
+    """
+    Returns a checker that matches multiple times every day, at the
+    given (hour, minute) time(s).
+    """
     hour_minutes = set(hour_minutes)
     def handle(dt):
         return (dt.hour, dt.minute) in hour_minutes
     return handle
 
 def daily(hour, minute):
+    """
+    Returns a checker that matches once a day at the given hour & minute.
+    """
     def handle(dt):
         return dt.hour == hour and dt.minute == minute
     return handle
 
 def weekly(weekday, hour, minute):
-    # weekday -- 0=Monday, 6=Sunday
+    """
+    Returns a checker that matches datetimes once a week, at the given
+    weekday (0=sunday), hour, and minute.
+    """
     def handle(dt):
         return dt.weekday() == weekday and dt.hour == hour and dt.minute == minute
     return handle
 
 def once(*args):
-    """useful for testing; this one handles the first minute it's passed,
-    and returns false for all future minutes.
+    """Useful for testing: returns a checker that matches the first
+    datetime that's passed to it, and then returns False forever
+    after.
     """
     class OneShotHandler:
         has_run = False
@@ -42,14 +57,6 @@ def once(*args):
     return OneShotHandler().handle
 
 
-def do_seeclickfix(**kwargs):
-    from obdemo.scrapers.seeclickfix_retrieval import SeeClickFixNewsFeedScraper
-    return SeeClickFixNewsFeedScraper().update()
-
-def do_aggregates(**kwargs):
-    from ebpub.db.bin import update_aggregates
-    return update_aggregates.update_all_aggregates(**kwargs)
-
 TASKS = (
     # Tuples like (time_callback, function_to_run, {keyword args}, {environ})
     #
@@ -60,8 +67,5 @@ TASKS = (
     #
     # Example:
     # (daily(12, 0), run_some_function, {'arg': 'foo'}, {'DJANGO_SETTINGS_MODULE': 'foo.settings'})
-    (once(), do_seeclickfix, {}, {'DJANGO_SETTINGS_MODULE': 'obdemo.settings'}),
-
-    (once(), do_aggregates, {'verbose': True}, {'DJANGO_SETTINGS_MODULE': 'obdemo.settings'}),
 )
 
