@@ -19,9 +19,9 @@
 			{% with newsitem.location_url as location_url %}
 			<!-- XXX TODO: put a map on this page -->
 				<td>
-					{% if location_url %}<a href="{{ location_url }}">{{newsitem.location_name}}</a>
-                                        {% else %} {{newsitem.location_name}}
-                                        {% endif %}
+					{% if location_url %}<a href="{{ location_url }}">{% endif %}
+                                         {{newsitem.location_name|default:"unknown"}}
+                                        {% if location_url %}</a>{% endif %}
 					{% if not newsitem.location %}<p>This location couldn't be mapped.</p>{% endif %}
 				</td>
 			{% endwith %}
@@ -36,7 +36,9 @@
 			<tr>
 				<th>Description</th>
 				<td>{{ newsitem.description|truncatewords_html:20}}
-				  <br /><a href="{{newsitem.url}}">Read more at {{newsitem.url}}</a>.
+				  {% if newsitem.url %}
+				    <br /><a href="{{newsitem.url}}">Read more at {{newsitem.url}}</a>
+				  {% endif %}
 				</td>
 			</tr>
 		{% endblock %}
