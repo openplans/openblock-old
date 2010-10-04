@@ -39,7 +39,7 @@ def main(argv=None):
             item.title = convert_entities(e.title)
             item.description = convert_entities(e.description)
             item.url = e.link
-            #item.location_name = e['x-calconnect-street']
+            item.location_name = e.get('x-calconnect-street') or u''
             item.item_date = datetime.datetime(*e.updated_parsed[:6])
             item.pub_date = datetime.datetime(*e.updated_parsed[:6])
             if 'point' in e:
@@ -58,11 +58,21 @@ def main(argv=None):
                 # There's a lot of these. Maybe attempt to
                 # parse and geocode if we haven't already?
                 print "Skipping %r as it has bad location 0,0" % item.title
-            else:
-                item.save()
-                print "Added: %s" % item.title
+                continue
+            if not item.location_name:
+                # Fall back to reverse-geocoding.
+                from ebpub.geocoder import reverse
+                try:
+                    block, distance = reverse.reverse_geocode(item.location)
+                    print " Reverse-geocoded point to %r" % block.pretty_name
+                    item.location_name = block.pretty_name
+                except reverse.ReverseGeocodeError:
+                    print " Failed to reverse geocode %s for %r" % (item.location.wkt, item.title)
+                    item.location_name = u''
+            item.save()
+            print "Added: %s" % item.title
         except:
-            print "Warning: couldn't save. Traceback:"
+            print "Warning: couldn't save %r. Traceback:" % item.title
             import cStringIO, traceback
             f = cStringIO.StringIO()
             traceback.print_exc(file=f)
