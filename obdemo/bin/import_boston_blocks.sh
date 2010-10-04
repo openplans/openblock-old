@@ -54,9 +54,8 @@ cd $SOURCE_ROOT/ebpub/ebpub || die
 # and deleting blocks not in the city, which seems worth leaving separate.
 ./streets/fix_block_numbers.py || die
 
-# TODO: is this necessary? the original block import script has
-# already done it?
-./streets/update_block_pretty_names.py || die
+# This isn't needed; the original block import script has already done it.
+#./streets/update_block_pretty_names.py || die
 
 ./streets/populate_streets.py streets || die
 ./streets/populate_streets.py block_intersections || die

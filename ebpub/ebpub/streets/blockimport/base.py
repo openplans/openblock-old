@@ -12,7 +12,6 @@ class BlockImporter(object):
         for feature in self.layer:
             parent_id = None
             if not self.skip_feature(feature):
-                XXXblocks_per_feature = 0
                 for block_fields in self.gen_blocks(feature):
                     # Usually (at least in Boston data) there is only
                     # 1 block per feature.  But sometimes there are
@@ -22,6 +21,7 @@ class BlockImporter(object):
                     # two separate blocks. Is that intentional, or a bug?
                     block = Block(**block_fields)
                     block.geom = feature.geom.geos
+                    # TODO: use make_block_numbers() here.
                     street_name, block_name = make_pretty_name(
                         block_fields['left_from_num'],
                         block_fields['left_to_num'],
