@@ -5,6 +5,29 @@
  * we use OL's native clustering support, and add a view on the server
  * that serves un-clustered news items via AJAX.
  */
+
+/*
+ * This map expects the following variables to be set:
+ *
+ * pid (OPTIONAL) - a place ID like 'b:12.1' (see
+ * ebpub.utils.view_utils for more info).
+ *
+ * place_type (OPTIONAL) - a type like 'neighborhood' or 'zip'.  If
+ * provided, place_slug must also be provided, and we will will draw
+ * boundaries around the given place.
+ *
+ * place_slug (required iff place_type is set) - name of the place,
+ * eg. 'downtown', used for constructing a place URL.
+ *
+ * newsitems_ajax_url (OPTIONAL) - url to use for requesting features.
+ *
+ * map_bounds - an OpenLayers.Bounds() defining the default boundaries.
+ * If set, you don't need map_center or map_zoom.
+ *
+ * map_center - an OpenLayers.LonLat(). If set, you also need map_zoom.
+ *
+ * map_zoom - zoom level. Required if you set map_center.
+ */
 var map, newsitems, style, borderstyle;
 if (jQuery.browser.msie) {
     jQuery(window).load(function() {
@@ -28,10 +51,16 @@ var options = {
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 
-// TODO: Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
-var newsitem_params = {pid: pid}; // expect pid to be set prior to this script
-
 function loadNewsItems() {
+    if (typeof(newsitems_ajax_url == "undefined")) {
+        var newsitems_ajax_url = "/api/newsitems.geojson/"; /* WILL CHANGE */
+    };
+    if (typeof(pid) == 'undefined') {
+        var pid = '';
+    };
+    // TODO: Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
+    var newsitem_params = {pid: pid}; // expect pid to be set prior to this script
+
     newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
         strategies: [
@@ -39,7 +68,7 @@ function loadNewsItems() {
             new OpenLayers.Strategy.Cluster()
             ],
         protocol: new OpenLayers.Protocol.HTTP({
-            url: "/api/newsitems.geojson/", /* WILL CHANGE */
+            url: newsitems_ajax_url,
             params: newsitem_params,
             format: new OpenLayers.Format.GeoJSON()
         }),
@@ -163,7 +192,7 @@ function loadMap() {
             }
         }
     });
-    var newsitems = loadNewsItems();
+    newsitems = loadNewsItems();
     map.addLayers([osm]);
     if (typeof(place_type) != "undefined" && Boolean(place_type)) {
         var locationborder = loadLocationBorder(place_type, place_slug);
@@ -174,16 +203,10 @@ function loadMap() {
     newsitems.setVisibility(true);
     //newsitems.refresh();
 
-    // map_center is expected to be set in the enclosing template,
-    // like so:
-    //var map_center = new OpenLayers.LonLat(-71.061667, 42.357778);
-    // var map_zoom = 12;
-
     if (typeof(map_center) != "undefined") {
         map_center.transform(map.displayProjection, map.projection);
         map.setCenter(map_center, map_zoom);
     };
-    // Or you can set map_bounds.
     if (typeof(map_bounds) != "undefined") {
         map_bounds.transform(map.displayProjection, map.projection);
         map.zoomToExtent(map_bounds);
