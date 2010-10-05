@@ -52,13 +52,13 @@ cd $SOURCE_ROOT/ebpub/ebpub || die
 
 # TODO: refactor this into fixing numbers, which should be done in the importer,
 # and deleting blocks not in the city, which seems worth leaving separate.
-./streets/fix_block_numbers.py || die
+./streets/bin/fix_block_numbers.py || die
 
 # This isn't needed; the original block import script has already done it.
 #./streets/update_block_pretty_names.py || die
 
-./streets/populate_streets.py streets || die
-./streets/populate_streets.py block_intersections || die
-./streets/populate_streets.py intersections || die
+./streets/bin/populate_streets.py streets || die
+./streets/bin/populate_streets.py block_intersections || die
+./streets/bin/populate_streets.py intersections || die
 
 echo Done.
