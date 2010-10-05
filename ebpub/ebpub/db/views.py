@@ -14,6 +14,7 @@ from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
+from ebpub.geocoder import reverse
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
 from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
@@ -26,11 +27,14 @@ from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import parse_pid, make_pid
+
 import datetime
 import random
 import re
 import urllib
+import logging
 
+logger = logging.getLogger('ebpub.db.views')
 
 ################################
 # HELPER FUNCTIONS (NOT VIEWS) #
@@ -587,6 +591,7 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     has_location = ni.location is not None
 
     if has_location:
+        # TODO: couldn't this be done faster by a NewsItemLocation query?
         locations_within = Location.objects.select_related().filter(location__intersects=ni.location)
     else:
         locations_within = ()
@@ -596,12 +601,40 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     templates_to_try = ('db/newsitem_detail/%s.html' % ni.schema.slug, 'db/newsitem_detail.html')
     if 'new' in request.GET: # TODO: Remove this after feature is implemented.
         templates_to_try = ('db/newsitem_detail_new.html',) + templates_to_try
+
+    # Try to find a usable URL to link to from the location name.
+    location_url = ni.location_url()
+    if not location_url:
+        # There might be any number of intersecting locations_within,
+        # and we don't have any criteria for deciding which if any
+        # best corresponds to ni.location_name; but we can try
+        # a few other fallbacks.
+        if ni.block:
+            location_url = ni.block.url()
+        elif ni.location:
+            # Try reverse-geocoding and see if we get a block.
+            try:
+                block, distance = reverse.reverse_geocode(ni.location)
+                # TODO: if this happens, we should really update
+                # ni.block, but this seems like a terrible place to do
+                # that.
+                logger.warn(
+                    "%r (id %d) can be reverse-geocoded to %r (id %d) but"
+                    " self.block isn't set" % (ni, ni.id, block, block.id))
+                location_url = block.url()
+            except reverse.ReverseGeocodeError:
+                logger.error(
+                    "%r (id %d) has neither a location_url, nor a block,"
+                    " nor a reverse-geocodable location" % (ni, ni.id))
+                pass
+
     return eb_render(request, templates_to_try, {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
         'attribute_dict': dict((att.sf.name, att) for att in atts),
         'has_location': has_location,
         'locations_within': locations_within,
+        'location_url': location_url,
         'hide_ads': hide_ads,
     })
 
