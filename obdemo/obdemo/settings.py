@@ -201,4 +201,18 @@ for name in _required_settings:
     if not name in globals():
         raise NameError("Required setting %r was not defined in real_settings.py or settings.py" % name)
 
+
+# Logging setup. There's a bit of hackery to make sure we don't set up
+# handlers more than once; see
+# http://stackoverflow.com/questions/342434/python-logging-in-django
+import logging, threading
+_lock = threading.Lock()
+with _lock:
+    if getattr(logging, '_is_set_up', None) is None:
+        logging._is_set_up = True
+        if not logging.getLogger().handlers:
+            # TODO: configurable file handlers, level...
+            logging.basicConfig(level=logging.INFO,
+                                format="%(asctime)-15s %(levelname)-8s %(message)s")
+
 __doc__ = __doc__ % _required_settings

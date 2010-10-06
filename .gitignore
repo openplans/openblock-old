@@ -18,6 +18,8 @@ obdemo/zip_data
 /TileCache
 /manage.py
 /tiger_data
+/zip_data
+/neighborhood_data
 /src
 /man
 /build

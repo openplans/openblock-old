@@ -31,7 +31,7 @@ wget -N $HOOD_URL
 if [ $? -ne 0 ]; then
     die "Could not download $HOOD_URL"
 fi
-unzip "$HOOD_FOLDER/$HOOD_FILE"
+unzip -o "$HOOD_FOLDER/$HOOD_FILE"
 
 echo Importing neighborhoods...
 $HOOD_IMPORTER -n PD $HOOD_FOLDER || die

@@ -12,8 +12,8 @@ def make_street_pretty_name(street, suffix):
     return street_name
 
 def make_block_number(left_from_num, left_to_num, right_from_num, right_to_num):
-    lo_num = min([x for x in (left_from_num, left_to_num, right_from_num, right_to_num) if x])
-    hi_num = max([x for x in (left_from_num, left_to_num, right_from_num, right_to_num) if x])
+    lo_num, hi_num = make_block_numbers(left_from_num, left_to_num,
+                                        right_from_num, right_to_num)
     if lo_num == hi_num:
         number = unicode(lo_num)
     elif lo_num and not hi_num:
@@ -25,8 +25,14 @@ def make_block_number(left_from_num, left_to_num, right_from_num, right_to_num):
     return number
 
 def make_block_numbers(left_from_num, left_to_num, right_from_num, right_to_num):
-    lo_num = min([x for x in (left_from_num, left_to_num, right_from_num, right_to_num) if x])
-    hi_num = max([x for x in (left_from_num, left_to_num, right_from_num, right_to_num) if x])
+    nums = [x for x in (left_from_num, left_to_num, right_from_num, right_to_num) if x is not None]
+    if not nums:
+        # This used to raise ValueError, maybe accidentally, because
+        # min([]) does so. Preserving that for backward compatibility,
+        # not sure if it matters.
+        raise ValueError("No non-None addresses provided")
+    lo_num = min(nums)
+    hi_num = max(nums)
     return (lo_num, hi_num)
 
 def make_pretty_directional(directional):
