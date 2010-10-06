@@ -210,7 +210,9 @@ _lock = threading.Lock()
 with _lock:
     if getattr(logging, '_is_set_up', None) is None:
         logging._is_set_up = True
-        # TODO: format, file handlers, level...
-        logging.basicConfig()
+        if not logging.getLogger().handlers:
+            # TODO: configurable file handlers, level...
+            logging.basicConfig(level=logging.INFO,
+                                format="%(asctime)-15s %(levelname)-8s %(message)s")
 
 __doc__ = __doc__ % _required_settings
