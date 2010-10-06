@@ -41,8 +41,10 @@ from django.contrib.gis.geos import fromstr
 from django.db import connection, transaction
 from ebpub.db.models import Location
 from ebpub.metros.allmetros import get_metro
-from ebpub.streets.models import Block, Street, BlockIntersection, Intersection
+from ebpub.streets.models import Block, BlockIntersection, Intersection
 from ebpub.streets.name_utils import make_dir_street_name, pretty_name_from_blocks, slug_from_blocks
+
+logger = logging.getLogger()
 
 def intersecting_blocks(block):
     """
@@ -111,15 +113,15 @@ def populate_streets(*args, **kwargs):
     """)
     connection._commit()
 
-    print "Deleting extraneous cities..."
-    metro = get_metro()
+    #logger.info("Deleting extraneous cities...")
+    #metro = get_metro()
     #cities = [l.name.upper() for l in Location.objects.filter(location_type__slug=metro['city_location_type']).exclude(location_type__name__startswith='Unknown')]
     #Street.objects.exclude(city__in=cities).delete()
 
 @transaction.commit_on_success
 def populate_block_intersections(*args, **kwargs):
     for block in Block.objects.all():
-        logging.info('Calculating the blocks that intersect %s' % block)
+        logger.debug('Calculating the blocks that intersect %s' % block)
         for iblock, intersection_pt in intersecting_blocks(block):
             BlockIntersection.objects.create(
                 block=block,
@@ -132,7 +134,7 @@ def populate_intersections(*args, **kwargs):
     # On average, there are 2.3 blocks per intersection. So for
     # example in the case of Chicago, where there are 788,496 blocks,
     # we'd expect to see approximately 340,000 intersections
-    logging.info("Starting to populate intersections")
+    logger.info("Starting to populate intersections")
     metro = get_metro()
     zipcodes = Location.objects.filter(location_type__name__istartswith="zip").exclude(name__startswith='Unknown')
     def lookup_zipcode(pt):
@@ -184,15 +186,15 @@ def populate_intersections(*args, **kwargs):
             if not bi.intersection:
                 bi.intersection_id = intersections_seen[seen_intersection[0]]
                 bi.save()
-            logging.debug("Already seen intersection %s" % " / ".join(seen_intersection))
-    logging.info("Finished populating intersections")
+            logger.debug("Already seen intersection %s" % " / ".join(seen_intersection))
+    logger.info("Finished populating intersections")
 
-LOG_VERBOSITY = {0: logging.NOTSET,
-                 1: logging.CRITICAL,
-                 2: logging.ERROR,
-                 3: logging.WARNING,
-                 4: logging.INFO,
-                 5: logging.DEBUG}
+LOG_VERBOSITY = (logging.CRITICAL,
+                 logging.ERROR,
+                 logging.WARNING,
+                 logging.INFO,
+                 logging.DEBUG,
+                 logging.NOTSET)
 
 def main(argv=None):
     if argv is None:
@@ -209,15 +211,23 @@ def main(argv=None):
     if len(args) != 1 or args[0] not in valid_actions:
         parser.error('must supply an valid action, one of: %r' % \
                      valid_actions.keys())
-    logging.basicConfig(level=LOG_VERBOSITY.get(opts.verbosity, 0),
-                        format="%(asctime)-15s %(levelname)-8s %(message)s")
+
+    if not logger.handlers:
+        verbosity = min(opts.verbosity, len(LOG_VERBOSITY) -1)
+        level = LOG_VERBOSITY[verbosity]
+        format = "%(asctime)-15s %(levelname)-8s %(message)s"
+        basicConfig = logging.basicConfig
+        try:
+            if __name__ == '__main__':
+                import fabulous.logs
+                basicConfig = fabulous.logs.basicConfig
+        except ImportError:
+            pass
+        basicConfig(level=level, format=format)
+
+
     # Call the action
     valid_actions[args[0]](**opts.__dict__)
 
 if __name__ == '__main__':
-    try:
-        import fabulous.logs
-        fabulous.logs.basicConfig(level='WARNING')
-    except ImportError:
-        pass
     sys.exit(main())
