@@ -14,13 +14,27 @@
 
 #LSBNAMES='-l'  # Uncomment for LSB name support in /etc/cron.d/
 
+### CONFIGURABLE STUFF
+# Set this to the user that your openblock deployment runs as.
+# TODO: The daemon itself could use setuid
+SU_USER="pw"
+
+ERRLOGFILE=/tmp/updaterdaemon.err
+LOGFILE=/tmp/updaterdaemon.log
+
+#######################################################
+
+# We assume that you symlink this script from the source checkout into
+# /etc/init.d.
+# Or you could just copy it and set HERE manually.
 # Reliably (hah!) and portably (?) find the directory containing this script.
 # Based roughly on stuff from:
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-in
 HERE=`(cd $(dirname $(readlink -f "${0}")) 2>/dev/null; echo "$PWD"/)`
 
-# What if we're on a non-Linux *nix?
+# This only works on linux, not other unixes.
 . /lib/lsb/init-functions
+
 
 # Find a local python if there is one (eg. in a virtualenv).
 PYTHON=`which python`
@@ -40,19 +54,18 @@ while [ true ]; do
 done
 
 RUNNER="$PYTHON $HERE/runner.py"
-SUUSER="pw"
 
 case "$1" in
 start)	log_begin_msg "Starting updaterdaemon..."
-        sudo -u $SUUSER $RUNNER start
+        sudo -u $SU_USER $RUNNER --log-file=$LOGFILE --config=$HERE/../../../../obdemo/obdemo/sample_scraper_config.py --error-log=$ERRLOGFILE start
         log_end_msg $?
 	;;
 stop)	log_begin_msg "Stopping updaterdaemon..."
-        sudo -u $SUUSER $RUNNER stop
+        sudo -u $SU_USER $RUNNER stop
         log_end_msg $?
         ;;
 restart) log_begin_msg "Restarting updaterdaemon..."
-        sudo -u $SUUSER $RUNNER restart
+        sudo -u $SU_USER $RUNNER restart
         log_end_msg $?
         ;;
 *)	log_success_msg "Usage: /etc/init.d/updaterdaemon start|stop|restart"
