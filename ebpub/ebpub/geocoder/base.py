@@ -43,13 +43,13 @@ class Address(dict):
     @property
     def latitude(self):
         if self["point"]:
-            return self["point"].lat
+            return self["point"].y
     lat = latitude
 
     @property
     def longitude(self):
         if self["point"]:
-            return self["point"].lng
+            return self["point"].x
     lng = longitude
 
     def __unicode__(self):
