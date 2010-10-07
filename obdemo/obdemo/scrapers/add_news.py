@@ -39,7 +39,7 @@ def main(argv=None):
             item.title = convert_entities(e.title)
             item.description = convert_entities(e.description)
             item.url = e.link
-            item.location_name = e.get('x-calconnect-street') or u''
+            item.location_name = e.get('x-calconnect-street') or e.get('georss_featurename')
             item.item_date = datetime.datetime(*e.updated_parsed[:6])
             item.pub_date = datetime.datetime(*e.updated_parsed[:6])
             if 'point' in e:
