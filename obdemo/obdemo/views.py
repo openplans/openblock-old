@@ -9,12 +9,12 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import simplejson
-from ebpub.db.models import Location
 from ebpub.db.models import NewsItem
 from ebpub.db.views import make_search_buffer
 from ebpub.db.views import map_popups
-from ebpub.db.views import parse_pid
+from ebpub.db.views import url_to_place
 from ebpub.streets.models import Block
+from ebpub.utils.view_utils import parse_pid
 
 def newsitems_geojson(request):
     # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
@@ -64,8 +64,6 @@ def newsitems_geojson(request):
     output = simplejson.dumps(features, indent=2)
     return HttpResponse(output, mimetype="application/javascript")
 
-
-from ebpub.db.views import url_to_place
 
 def place_kml(request, *args, **kwargs):
     place = url_to_place(*args, **kwargs)

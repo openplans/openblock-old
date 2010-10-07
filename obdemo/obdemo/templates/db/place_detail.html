@@ -94,8 +94,8 @@ window.onload = function() {
 </script>
 
 <style type="text/css">
-  #mapwrapper { }
-  #detailmap { width: 500px; height: 300px }
+	#mapwrapper { }
+	#detailmap { width: 500px; height: 300px }
 </style>
 
 {% endblock %}
@@ -113,8 +113,8 @@ window.onload = function() {
 
 {% block header %}
 
-  <!-- Fixme: better place for this -->
-  <div id="mapwrapper">
+	<!-- Fixme: better place for this -->
+	<div id="mapwrapper">
     <script type="text/javascript">
     var place_type = '{{ place.location_type.slug }}';
     var place_slug = '{{ place.slug }}';

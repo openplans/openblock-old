@@ -29,24 +29,34 @@ def reverse_geocode(point):
     # this to GeoDjango syntax. Should be possible but there are some
     # subtleties / performance issues with the DB API.
     cursor = connection.cursor()
+    # Switched to WKT rather than WKB, because constructing WKB as a
+    # string leads to psycopg2 getting confused by '%' as per
+    # http://stackoverflow.com/questions/1734814/why-isnt-psycopg2-executing-any-of-my-sql-functions-indexerror-tuple-index-ou
+    # We could probably do something like
+    # str(Binary(point.wkb)).replace('%', '%%') ... but I don't know
+    # if that could have other problems?
+    # Or maybe a Binary() could be passed as a parameter to cursor.execute().
+    # Anyway, WKT is safe.
+    params = {'field_list': ', '.join([f.column for f in Block._meta.fields]),
+              'pt_wkt': point.wkt,
+              'geom_fieldname': 'geom',
+              'tablename': Block._meta.db_table,
+              'min_distance': min_distance
+              }
     sql = """
-        SELECT %(field_list)s, ST_Distance(ST_GeomFromWKB(E%(pt_wkb)s, 4326), %(geom_fieldname)s) AS "dist"
+        SELECT %(field_list)s, ST_Distance(ST_GeomFromText('%(pt_wkt)s', 4326), %(geom_fieldname)s) AS "dist"
         FROM %(tablename)s
         WHERE id IN
             (SELECT id
              FROM %(tablename)s
-             WHERE ST_DWithin(%(geom_fieldname)s, ST_GeomFromWKB(E%(pt_wkb)s, 4326), %(min_distance)s))
+             WHERE ST_DWithin(%(geom_fieldname)s, ST_GeomFromText('%(pt_wkt)s', 4326), %(min_distance)s))
         ORDER BY "dist"
         LIMIT 1;
-    """ % {'field_list': ', '.join([f.column for f in Block._meta.fields]),
-           'pt_wkb': Binary(point.wkb),
-           'geom_fieldname': 'geom',
-           'tablename': Block._meta.db_table,
-           'min_distance': min_distance}
+    """ % params
     cursor.execute(sql)
     num_fields = len(Block._meta.fields)
-    try:
-        block, distance = [(Block(*row[:num_fields]), row[-1]) for row in cursor.fetchall()][0]
-    except IndexError:
-        raise ReverseGeocodeError()
+    rows = cursor.fetchall()
+    if not rows:
+        raise ReverseGeocodeError('No results')
+    block, distance = [(Block(*row[:num_fields]), row[-1]) for row in rows][0]
     return block, distance
