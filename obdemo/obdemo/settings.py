@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.admin',
     'ebdata.blobs',
+    'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
     'ebpub.db',

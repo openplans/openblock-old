@@ -25,7 +25,15 @@ urlpatterns = patterns(
     (r'^disclaimer', 'django.views.generic.simple.direct_to_template',
      {'template': 'disclaimer.html'}),
 
+    (r'^geotagger/$', 'obdemo.views.geotagger_ui'),
+
+    # geotagger api
+    (r'^', include('ebdata.geotagger.urls')),
+
     # ebpub provides all the UI for an openblock site.
     (r'^', include('ebpub.urls')),
+    
+
+    
 
 )
