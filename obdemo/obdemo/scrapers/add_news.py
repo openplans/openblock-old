@@ -17,7 +17,7 @@ def main(argv=None):
     if argv:
         url = argv[0]
     else:
-        url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=boston&scope=bonzai'
+        url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=massachusetts&scope=bonzai'
     schema = 'local-news'
 
     try:

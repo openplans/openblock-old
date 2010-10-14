@@ -24,7 +24,7 @@ python seeclickfix_retrieval.py || die
 #python bpdnews_retrieval.py || die
 
 # more feeds from Joel. Local blog news:
-python add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=400&subject=massachusetts&format=atom"
+python add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"
 
 
 echo Adding building permits...
