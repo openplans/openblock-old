@@ -84,7 +84,7 @@ class SchemaInfo(models.Model):
     summary = models.TextField()
     source = models.TextField()
     grab_bag_headline = models.CharField(max_length=128, blank=True)
-    grab_bag = models.TextField(blank=True)
+    grab_bag = models.TextField(blank=True)  # TODO: what does this field mean?
     short_source = models.CharField(max_length=128)
     update_frequency = models.CharField(max_length=64)
     intro = models.TextField()
@@ -96,9 +96,6 @@ class SchemaField(models.Model):
     """
     Describes the meaning of one Attribute field for one Schema type.
     """
-    # TODO: README.TXT says that the combination of (schema,
-    # real_name) must be unique. Enforce that.
-
     schema = models.ForeignKey(Schema)
     name = models.CharField(max_length=32)
     real_name = models.CharField(max_length=10) # Column name in the Attribute model. 'varchar01', 'varchar02', etc.
@@ -110,6 +107,9 @@ class SchemaField(models.Model):
     is_charted = models.BooleanField() # whether schema_detail displays a chart for this field
     display_order = models.SmallIntegerField()
     is_searchable = models.BooleanField() # whether the value is searchable by content
+
+    class Meta(object):
+        unique_together = (('schema', 'real_name'),)
 
     def __unicode__(self):
         return u'%s - %s' % (self.schema, self.name)
@@ -170,7 +170,7 @@ class LocationType(models.Model):
     scope = models.CharField(max_length=64) # e.g., "Chicago" or "U.S.A."
     slug = models.CharField(max_length=32, unique=True)
     is_browsable = models.BooleanField() # whether this is displayed on location_type_list
-    is_significant = models.BooleanField() # whether this is used to display aggregates, etc.
+    is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
 
     def __unicode__(self):
         return u'%s, %s' % (self.name, self.scope)
