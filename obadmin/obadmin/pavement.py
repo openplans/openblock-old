@@ -61,7 +61,7 @@ def install_aggdraw(options):
     """
     os.chdir(options.env_root)
     sh('env CFLAGS=-fpermissive %s/bin/pip install aggdraw' % options.env_root)
-    
+
 
 @task
 @needs('install_aggdraw')
@@ -135,6 +135,32 @@ def install_requirements(options):
 
 @task
 @needs('install_requirements')
+def apply_patches(options):
+    # For anything installed with pip -e, we can apply patches
+    # by dropping them in the patches/ directory.
+    patch_dir = os.path.join(options.source_dir, 'patches')
+    source_dir = os.path.join(options.env_root, 'src')
+    assert os.path.exists(patch_dir)
+    assert os.path.exists(source_dir)
+    import glob
+    for patchfile in glob.glob(os.path.join(patch_dir, '*patch')):
+        # Force-applying a patch more than once can be dangerous,
+        # so we do a dry run first and check for problems.
+        patchfile = os.path.abspath(patchfile)
+        args = '-f -p1 -i %s' % patchfile
+        try:
+            print "Testing patch %s..." % patchfile
+            output = sh('patch --dry-run %s' % args, cwd=source_dir,
+                        capture=True)
+        except BuildFailure:
+            print "Skipping, see errors above"
+        else:
+            print "OK, applying patch %s" % patchfile
+            sh('patch %s' % args, cwd=source_dir)
+        print "-" * 60
+
+@task
+@needs('apply_patches')
 def install_ob_packages(options):
     for package_name in options.openblock_packages:
         package_dir = os.path.join(options.source_dir, package_name)
