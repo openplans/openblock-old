@@ -9,74 +9,90 @@ They are intended to serve as a useful example of how to set up a site
 based on the OpenBlock code.
 
 By default, the site is set up to use Boston as the default location
-for the maps.  You can change that by tweaking real_settings.py.
+for the maps.  You can change that by tweaking real_settings.py,
+but then you're on your own for finding local data to load.
 
-Quickstart
-==========
+Prerequisites
+=============
+
+For system-specific lists of packages to install, see
+http://developer.openblockproject.org/wiki/InstallationRequirements
+
+Super-Quick Quickstart
+======================
 
 To get this demo up and running:
 
-0. Install PostgreSQL (8.3 or 8.4), PostGIS, Django (version 1.2),
-psycopg2, and feedparser.
+Run the script
+ bin/bootstrap_demo.sh
 
-1. Create a PostGIS database, substituting the db name and user name
-of your choice. For postgresql 8.3, do this::
-
-  sudo -u postgres createuser -P <user name>
-  createdb -T template1 <db name> -O <user name>
-  createlang plpgsql <db name>
-  psql -d <db name> -f /usr/share/postgresql-8.3-postgis/lwpostgis.sql
-  psql -d <db name> -f /usr/share/postgresql-8.3-postgis/spatial_ref_sys.sql
-
-Or for postgresql 8.4, do this::
-
-  sudo -u postgres createuser -P <user name>
-  createdb -T template1 <db name> -O <user name>
-  createlang plpgsql <db name>
-  psql -d <db name> -f /usr/share/postgresql/8.4/contrib/postgis.sql
-  psql -d <db name> -f /usr/share/postgresql/8.4/contrib/spatial_ref_sys.sql
+and wait till it's done. If you get any errors, report them on the
+ebcode google group.
 
 
-2. Install the obdemo package by putting it on your Python path. Also
-   install the ebpub, ebdata, and obadmin packages.
+Slightly Longer Quickstart
+===========================
 
-   We recommend installing in a virtualenv.
-   TODO: virtualenv documentation, links
+0. See the Prerequisites section above and make sure you have
+everything installed.
 
-   Each package has a setup.py script that you can run in the usual
-   way, eg. for obdemo::
+1. You should have a 'bootstrap.py' script in the root of your
+checkout. Run it.  This will install all the python software.
 
-   python obdemo/setup.py develop
+2. In obdemo/obdemo, copy the example config file
+``real_settings.py.in`` to ``real_settings.py``
 
-3. Copy the example config file ``real_settings.py.in`` to ``real_settings.py``
-
-4. In ``real_settings.py``, uncomment and fill in all the settings.
+3. In ``real_settings.py``, uncomment and fill in all the settings.
    The application won't work until you set them.
 
    See the documentation/comments in that file, and/or refer to
    ebpub/settings.py for more info on what the various settings mean.
 
-5. Run "obdemo/manage.py syncdb" to create all of the database tables.
+4. In the root of your checkout, run these commands to initialize
+   your postgis database(s):
 
-6. Run "obdemo/manage.py runserver" and go to http://127.0.0.1:8000/ in your
-   Web browser to see the site in action.
+   bin/oblock setup_dbs
+   bin/oblock sync_all
 
+
+Starting the Test Server
+========================
+
+Run `obdemo/manage.py runserver` and go to http://127.0.0.1:8000/ in
+your Web browser to see the site in action (with no data).
 
 
 Loading Data
 =============
 
-Once you have the software running, it's time to get some data in.
+OpenBlock is pretty boring without data!  You'll want to load some
+geographic data and some local news.
 
-Try the obdemo/bin/import_boston_blocks.sh script, which is based on
-Don Kukral's documentation at
-http://wiki.github.com/dkukral/everyblock/install-everyblock
+If you used the obdemo/bin/bootstrap_demo.sh script, this is already
+done :)
+
+Otherwise, first you'll want to load Boston geographies. This will
+take several minutes:
+
+ obdemo/bin/import_boston_zips.sh
+ obdemo/bin/import_boston_hoods.sh
+ obdemo/bin/import_boston_blocks.sh
+
+Then bootstrap some news item schema definitions:
+
+ obdemo/bin/add_boston_news_schemas.sh
+
+
+Then fetch some news from the web, this will take a few minutes:
+
+ obdemo/bin/import_boston_news.sh
+
 
 For testing random data you might also want to try
-"obdemo/bin/random_news.py 100"
+`obdemo/bin/random_news.py 100`
 ... where 100 is the number of random articles to generate.  You must
 first have some locations in the database; it will assign randomly
-generated "local news" articles to randomly chosen locations.
+generated local news articles to randomly chosen locations.
 
 
 How The Demo Works
@@ -84,14 +100,15 @@ How The Demo Works
 
 obdemo uses the following parts of the OpenBlock codebase:
 
-* ebpub does the heavy lifting.
+* ebpub does the heavy lifting.  We also use the base templates from
+  here, although we override several of them.
 
 * ebdata is used to feed news data into the system.
 
-* everyblock is used for templates, although we override some of them.
+* everyblock provides some scraper scripts (which use ebdata).
 
 For the maps, we use a free base layer based on Open Street Map and
-hosted by OpenGeo.  Consequently, we don't use ebgeo or Mapnik.
+hosted by OpenGeo.  Consequently, we don't need ebgeo or Mapnik.
 
 We don't currently use ebblog, ebwiki, or ebinternal.
 
