@@ -23,8 +23,7 @@ Super-Quick Quickstart
 
 To get this demo up and running:
 
-Run the script
- bin/bootstrap_demo.sh
+Run the script ``bin/bootstrap_demo.sh``
 
 and wait till it's done. If you get any errors, report them on the
 ebcode google group.
@@ -33,14 +32,18 @@ ebcode google group.
 Slightly Longer Quickstart
 ===========================
 
+(This is basically an annotated version of what's in the
+bootstrap_demo.sh script.)
+
 0. See the Prerequisites section above and make sure you have
-everything installed.
+   everything installed.
 
 1. You should have a 'bootstrap.py' script in the root of your
-checkout. Run it.  This will install all the python software.
+   openblock checkout. Run it.  This will install all the python
+   software.
 
 2. In obdemo/obdemo, copy the example config file
-``real_settings.py.in`` to ``real_settings.py``
+   ``real_settings.py.in`` to ``real_settings.py``
 
 3. In ``real_settings.py``, uncomment and fill in all the settings.
    The application won't work until you set them.
@@ -58,7 +61,7 @@ checkout. Run it.  This will install all the python software.
 Starting the Test Server
 ========================
 
-Run `obdemo/manage.py runserver` and go to http://127.0.0.1:8000/ in
+Run ``obdemo/manage.py runserver`` and go to http://127.0.0.1:8000/ in
 your Web browser to see the site in action (with no data).
 
 
@@ -78,18 +81,18 @@ take several minutes:
  obdemo/bin/import_boston_hoods.sh
  obdemo/bin/import_boston_blocks.sh
 
-Then bootstrap some news item schema definitions:
+Then bootstrap some news item schema definitions::
 
  obdemo/bin/add_boston_news_schemas.sh
 
 
-Then fetch some news from the web, this will take a few minutes:
+Then fetch some news from the web, this will take a few minutes::
 
  obdemo/bin/import_boston_news.sh
 
 
 For testing random data you might also want to try
-`obdemo/bin/random_news.py 100`
+``obdemo/bin/random_news.py 100``
 ... where 100 is the number of random articles to generate.  You must
 first have some locations in the database; it will assign randomly
 generated local news articles to randomly chosen locations.
@@ -107,6 +110,9 @@ obdemo uses the following parts of the OpenBlock codebase:
 
 * everyblock provides some scraper scripts (which use ebdata).
 
+* obadmin provides the "oblock" setup command that we use for
+  installation and bootstrapping.
+
 For the maps, we use a free base layer based on Open Street Map and
 hosted by OpenGeo.  Consequently, we don't need ebgeo or Mapnik.
 
@@ -117,14 +123,14 @@ Deployment
 ==========
 
 For production deployment it's not generally recommended to run
-`manage.py runserver`.  Most people use apache and mod_wsgi.
+``manage.py runserver``.  Most people use apache and mod_wsgi.
 
 There's a suitable wsgi script at obdemo/wsgi/obdemo.wsgi.  It
 assumes that you installed openblock in a virtualenv whose root
 directory is the same as the checkout root; that's how the
-bootstrap.py script sets things up.  If that's not true, you can copy
+bootstrap script sets things up.  If that's not true, you can copy
 and modify the script and adjust the env_root variable.  If you used
-the bootstrap.py script, it should just work.
+the bootstrap script, it should just work.
 
 For more information on configuring Apache and running Django apps
 under mod_wsgi, see
