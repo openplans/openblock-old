@@ -111,7 +111,8 @@ obdemo uses the following parts of the OpenBlock codebase:
 * everyblock provides some scraper scripts (which use ebdata).
 
 * obadmin provides the "oblock" setup command that we use for
-  installation and bootstrapping.
+  installation and bootstrapping. It also provides a custom test
+  runner (called as usual by ``manage.py test``).
 
 For the maps, we use a free base layer based on Open Street Map and
 hosted by OpenGeo.  Consequently, we don't need ebgeo or Mapnik.

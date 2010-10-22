@@ -39,23 +39,23 @@ Quickstart: Install and Set Up Demo Site
 =========================================
 
 These instructions will install the software in an isolated 
-python environment using virtualenv ( http://pypi.python.org/pypi/virtualenv )
+python environment using virtualenv ( http://pypi.python.org/pypi/virtualenv ).
 For detailed instructions and further steps, see obdemo/README.txt::
 
  $ git clone git://github.com/openplans/openblock.git openblock
  $ cd openblock
- $ python bootstrap.py
-
+ $ cp obdemo/obdemo/real_settings.py.in obdemo/obdemo/real_settings.py
 
 Optionally you can edit obdemo/obdemo/real_settings.py at this stage.
 It's a good idea to look at it, at least to get an idea of what can be
 configured.
 
-Now you can set up the database and start the server::
+Now install the software and boostrap the Boston data::
 
- $ source bin/activate 
- $ sudo -u postgres oblock setup_dbs
- $ oblock sync_all
+ $ obdemo/bin/boostrap_demo.sh
+
+Wait 10 minutes or so, then when it's finished, start the server::
+
  $ ./manage.py runserver
 
 
@@ -79,8 +79,7 @@ This is a Django application, so it's highly recommended that you have
 familiarity with the Django Web framework. The best places to learn
 are the official documentation (http://docs.djangoproject.com/) and
 the free Django Book (http://www.djangobook.com/). Note that OpenBlock
-requires Django 1.1 and as of this writing does not yet work with
-Django 1.2 or later.
+requires Django 1.2.
 
 Before you dive in, it's *highly* recommend you spend a little bit of
 time browsing around http://demo.openblockproject.org and/or
@@ -101,8 +100,8 @@ fashion.
 
 For installation in this case, you can just use the bootstrap.py
 script and do the rest of the setup by hand.  You can look at
-pavement.py to get an idea of what needs doing, and/or modify it for
-your own use.
+obadmin/obadmin/pavement.py to get an idea of what needs doing, and/or
+modify it for your own use.
 
 Things You Will Need
 ====================
