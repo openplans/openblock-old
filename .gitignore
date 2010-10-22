@@ -23,3 +23,5 @@ obdemo/zip_data
 /src
 /man
 /build
+*scraper_http_cache
+distribute-*gz

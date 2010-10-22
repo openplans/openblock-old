@@ -195,6 +195,9 @@ _required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 # and an un-minified version, and toggle them here based on DEBUG.
 OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 
+# Cache used by httplib2 for scrapers.
+HTTP_CACHE = OBDEMO_DIR + '/scraper_http_cache'
+
 # Re-import from real_settings to override any defaults in this file.
 from real_settings import *
 
