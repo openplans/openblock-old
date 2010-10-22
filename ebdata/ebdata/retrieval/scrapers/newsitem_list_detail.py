@@ -47,39 +47,40 @@ class NewsItemListDetailScraper(ListDetailScraper):
     # so that this scraper can be run (in raw_data(), xml_data() or
     # display_data()) without requiring a valid database to be set up.
 
-    def _get_schemas(self):
+    @property
+    def schemas(self):
         if self._schemas_cache is None:
             self._schemas_cache = dict([(s, Schema.objects.get(slug=s)) for s in self.schema_slugs])
         return self._schemas_cache
-    schemas = property(_get_schemas)
 
-    def _get_schema(self):
+    @property
+    def schema(self):
         if self._schema_cache is None:
             if len(self.schema_slugs) > 1:
                 raise AttributeError('self.schema is only available if len(schema_slugs) == 1')
             self._schema_cache = self.schemas[self.schema_slugs[0]]
         return self._schema_cache
-    schema = property(_get_schema)
 
-    def _get_lookups(self):
+    @property
+    def lookups(self):
         if self._lookups_cache is None:
             lc = dict([(s.slug, dict([(sf.name, sf) for sf in s.schemafield_set.filter(is_lookup=True)])) for s in self.schemas.values()])
             if len(self.schema_slugs) == 1:
                 lc = lc[self.schema_slugs[0]]
             self._lookups_cache = lc
         return self._lookups_cache
-    lookups = property(_get_lookups)
 
-    def _get_schema_fields(self):
+    @property
+    def schema_fields(self):
         if self._schema_fields_cache is None:
             sfs = dict([(s.slug, dict([(sf.name, sf) for sf in s.schemafield_set.all()])) for s in self.schemas.values()])
             if len(self.schema_slugs) == 1:
                 sfs = sfs[self.schema_slugs[0]]
             self._schema_fields_cache = sfs
         return self._schema_fields_cache
-    schema_fields = property(_get_schema_fields)
 
-    def _get_schema_field_mapping(self):
+    @property
+    def schema_field_mapping(self):
         if self._schema_field_mapping_cache is None:
             schema_objs = self.schemas.values()
             mapping = field_mapping([s.id for s in schema_objs])
@@ -88,7 +89,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
                 fm = fm[self.schema_slugs[0]]
             self._schema_field_mapping_cache = fm
         return self._schema_field_mapping_cache
-    schema_field_mapping = property(_get_schema_field_mapping)
+
 
     def get_or_create_lookup(self, schema_field_name, name, code, description='', schema=None, make_text_slug=True):
         """
@@ -215,16 +216,17 @@ class NewsItemListDetailScraper(ListDetailScraper):
             super(NewsItemListDetailScraper, self).update()
             got_error = False
         finally:
-            # Rollback, in case the database is in an aborted transaction. his
-            # avoids the "psycopg2.ProgrammingError: current transaction is aborted,
-            # commands ignored until end of transaction block" error.
+            # Rollback, in case the database is in an aborted
+            # transaction. This avoids the "psycopg2.ProgrammingError:
+            # current transaction is aborted, commands ignored until
+            # end of transaction block" error.
             from django.db import connection
             connection._rollback()
 
             update_finish = datetime.datetime.now()
 
-            # Clear the Schema cache, in case the schemas have been updated in the
-            # database since we started the scrape.
+            # Clear the Schema cache, in case the schemas have been
+            # updated in the database since we started the scrape.
             self._schemas_cache = self._schema_cache = None
 
             for s in self.schemas.values():
