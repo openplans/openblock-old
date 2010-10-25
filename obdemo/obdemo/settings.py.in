@@ -1,7 +1,9 @@
 """
-Copy this to local_settings.py, uncomment the various settings, and
+Copy this to settings.py, uncomment the various settings, and
 edit them as desired.
 """
+
+from .default_settings import *
 
 ########################
 # CORE DJANGO SETTINGS #
@@ -133,3 +135,9 @@ METRO_LIST = (
         'time_zone': 'America/New_York',
     },
 )
+
+
+if DEBUG:
+    for _name in required_settings:
+        if not _name in globals():
+            raise NameError("Required setting %r was not defined in settings.py or default_settings.py" % _name)

@@ -1,9 +1,6 @@
 """
-All deployment-specific config should be put in a module named
-'local_settings.py'
-
 This file should rarely need editing; if it does, you might want to
-move the setting in question into local_settings.py
+move the setting in question into settings.py (and settings.py.in)
 
 Known required settings are: %r
 """
@@ -20,7 +17,7 @@ DJANGO_DIR = imp.find_module('django')[1]
 # CORE DJANGO SETTINGS #
 ########################
 
-_required_settings=[
+required_settings=[
     'DEBUG',
 ]
 
@@ -98,40 +95,33 @@ MIDDLEWARE_CLASSES = (
 
 POSTGIS_TEMPLATE = 'template_postgis'
 
-# We've moved many settings to another (not-version-controlled) file.
-# You'll get alerted by an error if anything required is not in that file.
-# We import those settings twice: once up here to allow other settings
-# to derive from them, and once at the end to override any defaults.
-
-from local_settings import *
-
 # The domain for your site.
-_required_settings.append('EB_DOMAIN')
+required_settings.append('EB_DOMAIN')
 
 # This is the short name for your city, e.g. "chicago".
-_required_settings.append('SHORT_NAME')
+required_settings.append('SHORT_NAME')
 
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
 # secret.
-_required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
+required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
 # Database configuration as per
 # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
-_required_settings.append('DATABASES')
+required_settings.append('DATABASES')
 
 # The list of all metros this installation covers. This is a tuple of
 # dictionaries, as per ebpub.settings.
-_required_settings.append('METRO_LIST')
+required_settings.append('METRO_LIST')
 
 # Where to center citywide maps by default.
-_required_settings.append('DEFAULT_MAP_CENTER_LON')
-_required_settings.append('DEFAULT_MAP_CENTER_LAT')
-_required_settings.append('DEFAULT_MAP_ZOOM')
+required_settings.append('DEFAULT_MAP_CENTER_LON')
+required_settings.append('DEFAULT_MAP_CENTER_LAT')
+required_settings.append('DEFAULT_MAP_ZOOM')
 
 EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development
-_required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
+required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
@@ -139,10 +129,10 @@ EB_TODAY_OVERRIDE = None
 # Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
 # Used only by ebgeo/maps/tess.py
 SHAPEFILE_ROOT = ''
-_required_settings.append('SHAPEFILE_ROOT')
+required_settings.append('SHAPEFILE_ROOT')
 
 # For the 'autoversion' template tag.
-_required_settings.append('AUTOVERSION_STATIC_MEDIA')
+required_settings.append('AUTOVERSION_STATIC_MEDIA')
 AUTOVERSION_STATIC_MEDIA = False
 
 
@@ -154,17 +144,17 @@ MAPS_POSTGIS_USER = ''
 MAPS_POSTGIS_PASS = ''
 MAPS_POSTGIS_DB = ''
 
-_required_settings.extend([
+required_settings.extend([
         'MAPS_POSTGIS_HOST', 'MAPS_POSTGIS_USER', 'MAPS_POSTGIS_PASS',
         'MAPS_POSTGIS_DB',
 ])
 
 
 # This is used as a "From:" in e-mails sent to users.
-_required_settings.append('GENERIC_EMAIL_SENDER')
+required_settings.append('GENERIC_EMAIL_SENDER')
 
 # Map stuff.
-_required_settings.extend(['MAP_SCALES', 'SPATIAL_REF_SYS', 'MAP_UNITS'])
+required_settings.extend(['MAP_SCALES', 'SPATIAL_REF_SYS', 'MAP_UNITS'])
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 SPATIAL_REF_SYS = '900913' # Spherical Mercator
 MAP_UNITS = 'm' # see ebpub.utils.mapmath for allowed unit types
@@ -178,7 +168,7 @@ TILECACHE_VERSION = '1.0.0'
 TILECACHE_EXTENSION = 'png'
 
 # Filesystem location of scraper log.
-_required_settings.append('SCRAPER_LOGFILE_NAME')
+required_settings.append('SCRAPER_LOGFILE_NAME')
 
 # XXX Unused?
 #DATA_HARVESTER_CONFIG = {}
@@ -188,7 +178,7 @@ _required_settings.append('SCRAPER_LOGFILE_NAME')
 
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
-_required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
+required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
 # TODO: instead of bundling a rather bulky openlayers, our installer
 # should maybe download and build both an optimized profile,
@@ -197,13 +187,6 @@ OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 
 # Cache used by httplib2 for scrapers.
 HTTP_CACHE = OBDEMO_DIR + '/scraper_http_cache'
-
-# Re-import from local_settings to override any defaults in this file.
-from local_settings import *
-
-for name in _required_settings:
-    if not name in globals():
-        raise NameError("Required setting %r was not defined in local_settings.py or settings.py" % name)
 
 
 # Logging setup. There's a bit of hackery to make sure we don't set up
@@ -219,4 +202,5 @@ with _lock:
             logging.basicConfig(level=logging.INFO,
                                 format="%(asctime)-15s %(levelname)-8s %(message)s")
 
-__doc__ = __doc__ % _required_settings
+
+__doc__ = __doc__ % required_settings

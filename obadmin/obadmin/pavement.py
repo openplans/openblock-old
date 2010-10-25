@@ -30,7 +30,6 @@ options(
     source_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
 
     app='obdemo',
-    user_settings='local_settings',
     # paths that will be searched for suitable postgis
     # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
@@ -190,12 +189,12 @@ def install_app(options):
 
     # create openblock settings if none have been created
     local_settings = os.path.join(options.source_dir, options.app, options.app,
-                                 options.user_settings + '.py')
-    default_settings = local_settings + '.in'
+                                  'settings.py')
+    settings_skel = local_settings + '.in'
 
     if not os.path.exists(local_settings):
-        print "Setting up with default settings => %s" % local_settings
-        s = open(default_settings).read()
+        print "Creating settings settings file => %s" % local_settings
+        s = open(settings_skel).read()
         # Replace default salts with random strings.
         need_replacing = '<REPLACE_ME>'
         while s.count(need_replacing):
@@ -233,8 +232,8 @@ def find_postgis(options):
 
 
 def get_app_settings(options):
-    settings_module = '%s.settings' % options.app
-    user_settings_module = '%s.%s' % (options.app, options.user_settings)
+    settings_module = '%s.settings_default' % options.app
+    user_settings_module = '%s.settings' % (options.app, options.user_settings)
     try:
         __import__(settings_module)
     except:
