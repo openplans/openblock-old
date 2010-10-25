@@ -1,5 +1,5 @@
 """
-Copy this to real_settings.py, uncomment the various settings, and
+Copy this to local_settings.py, uncomment the various settings, and
 edit them as desired.
 """
 

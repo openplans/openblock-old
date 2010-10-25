@@ -1,9 +1,9 @@
 """
 All deployment-specific config should be put in a module named
-'real_settings.py'
+'local_settings.py'
 
 This file should rarely need editing; if it does, you might want to
-move the setting in question into real_settings.py
+move the setting in question into local_settings.py
 
 Known required settings are: %r
 """
@@ -103,7 +103,7 @@ POSTGIS_TEMPLATE = 'template_postgis'
 # We import those settings twice: once up here to allow other settings
 # to derive from them, and once at the end to override any defaults.
 
-from real_settings import *
+from local_settings import *
 
 # The domain for your site.
 _required_settings.append('EB_DOMAIN')
@@ -198,12 +198,12 @@ OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 # Cache used by httplib2 for scrapers.
 HTTP_CACHE = OBDEMO_DIR + '/scraper_http_cache'
 
-# Re-import from real_settings to override any defaults in this file.
-from real_settings import *
+# Re-import from local_settings to override any defaults in this file.
+from local_settings import *
 
 for name in _required_settings:
     if not name in globals():
-        raise NameError("Required setting %r was not defined in real_settings.py or settings.py" % name)
+        raise NameError("Required setting %r was not defined in local_settings.py or settings.py" % name)
 
 
 # Logging setup. There's a bit of hackery to make sure we don't set up
