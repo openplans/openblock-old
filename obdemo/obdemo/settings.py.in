@@ -3,7 +3,7 @@ Copy this to settings.py, uncomment the various settings, and
 edit them as desired.
 """
 
-from .default_settings import *
+from settings_default import *
 
 ########################
 # CORE DJANGO SETTINGS #
