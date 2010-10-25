@@ -14,36 +14,50 @@ class Daemon(object):
 
     Usage: subclass the Daemon class and override the run() method
     """
+
+    usage = "usage: %prog [options] start|stop|restart"
+
     def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.pidfile = pidfile
+        self.parser = OptionParser(usage=self.usage)
+        self.parser.add_option("-D", "--debug",
+                               help="run in debugging mode (run in the foreground)",
+                               action="store_true", dest="debugging",
+                               default=False)
+
+    def parse_args(self, argv):
+        """Given sys.argv, parses the command-line arguments.
+        """
+        (self.options, self.args) = self.parser.parse_args(argv)
+        self.command = None
+        if len(self.args) == 1:
+            if self.args[0] in ('start', 'stop', 'restart'):
+                self.command = self.args[0]
+            else:
+                self.parser.error("unknown command")
+                sys.exit(2)
+        else:
+            self.parser.error("invalid command")
+            sys.exit(2)
 
     def run_from_command_line(self, argv):
         """
-        Given sys.argv, parses the command-line arguments and calls the
-        appropriate method, failing appropriately in case of problems.
+        Parses arguments from argv and calls the appropriate method,
+        failing appropriately in case of problems.
         """
-        usage = "usage: %prog [options] start|stop|restart"
-        parser = OptionParser(usage=usage)
-        parser.add_option("-D", "--debug", help="run in debugging mode (run in the foreground)",
-                          action="store_true", dest="debugging", default=False)
-        (options, args) = parser.parse_args(argv)
-        if len(args) == 1:
-            if args[0] == 'start':
-                self.start(options.debugging)
-            elif args[0] == 'stop':
-                self.stop()
-            elif args[0] == 'restart':
-                self.restart()
-            else:
-                parser.error("unknown command")
-                sys.exit(2)
-            sys.exit(0)
+        self.parse_args(argv)
+        if self.command == 'start':
+            self.start(self.options.debugging)
+        elif self.command == 'stop':
+            self.stop()
+        elif self.command == 'restart':
+            self.restart()
         else:
-            parser.error("invalid command")
-            sys.exit(2)
+            raise RuntimeError("self.command is %s, shouldn't happen" % self.command)
+        sys.exit(0)
 
     def daemonize(self):
         """

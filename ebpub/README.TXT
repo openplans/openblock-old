@@ -180,7 +180,7 @@ The difference between pub_date and item_date might be confusing. The
 distinction is intended for data sets where there's a lag in publishing or
 where the data is updated infrequently or irregularly. For example, on
 EveryBlock.com, Chicago crime data is published a week after it is reported,
-so a crime's item_date is the day of the crime report where as the pub_date
+so a crime's item_date is the day of the crime report whereas the pub_date
 is the day the data was published to EveryBlock.com (generally seven days after
 the item_date).
 

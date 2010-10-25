@@ -5,6 +5,9 @@ from ebpub.db import constants
 from ebpub.db.models import Schema, SchemaField, NewsItem, AggregateAll, AggregateDay, AggregateLocationDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.utils import today
 import datetime
+import logging
+
+logger = logging.getLogger('ebpub.db.bin.update_aggregates')
 
 def smart_update(cursor, new_values, table_name, field_names, comparable_fields, where, pk_name='id', dry_run=False):
     # new_values is a list of dictionaries, each with a value for each field in field_names.
@@ -146,10 +149,11 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
     transaction.commit_unless_managed()
 
 def update_all_aggregates(verbose=False):
-    for s in Schema.objects.all():
+    for schema in Schema.objects.all():
         if verbose:
-            print '... %s' % s.plural_name
-        update_aggregates(s.id)
+            print '... %s' % schema.plural_name
+        logger.info('Updating %s aggregates' % schema.plural_name)
+        update_aggregates(schema.id)
 
 if __name__ == "__main__":
     import sys

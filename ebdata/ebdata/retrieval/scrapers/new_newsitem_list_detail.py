@@ -81,6 +81,8 @@ class NewsItemListDetailScraper(BaseScraper):
 
         attributes is a dictionary to use to populate this NewsItem's Attribute
         object.
+
+        Also saves list_page and/or detail_page if they are provided.
         """
         block = location = None
         if 'location' not in kwargs:

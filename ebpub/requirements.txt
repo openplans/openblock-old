@@ -1,5 +1,7 @@
-django>=1.2
+# Editable Django checkout, so we can patch it.
+-e svn+http://code.djangoproject.com/svn/django/tags/releases/1.2.3/#egg=django==1.2.3
+
 # Not specifying GDAL version, since it depends on our platform. Rely on obadmin/pavement.py to work around this.
 GDAL
-pyyaml
+pyyaml>=3
 psycopg2>=2.2

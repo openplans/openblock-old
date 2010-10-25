@@ -22,7 +22,14 @@ def field_mapping(schema_id_list):
         result.setdefault(sf['schema'], {})[sf['name']] = sf['real_name']
     return result
 
+
 class SchemaManager(models.Manager):
+
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
+class SchemaPublicManager(SchemaManager):
+
     def get_query_set(self):
         return super(SchemaManager, self).get_query_set().filter(is_public=True)
 
@@ -62,11 +69,14 @@ class Schema(models.Model):
     # number of records to show on place_overview
     number_in_overview = models.SmallIntegerField()
 
-    objects = models.Manager()
-    public_objects = SchemaManager()
+    objects = SchemaManager()
+    public_objects = SchemaPublicManager()
 
     def __unicode__(self):
         return self.name
+
+    def natural_key(self):
+        return (self.slug,)
 
     def url(self):
         return '/%s/' % self.slug
@@ -76,15 +86,24 @@ class Schema(models.Model):
             return 'special-report'
         return self.slug
 
+
+class SchemaInfoManager(models.Manager):
+
+    def get_by_natural_key(self, schema_slug):
+        return self.get(schema__slug=schema_slug)
+
 class SchemaInfo(models.Model):
     """Metadata about a Schema.
     """
+
+    objects = SchemaInfoManager()
+
     schema = models.ForeignKey(Schema)
     short_description = models.TextField()
     summary = models.TextField()
     source = models.TextField()
     grab_bag_headline = models.CharField(max_length=128, blank=True)
-    grab_bag = models.TextField(blank=True)
+    grab_bag = models.TextField(blank=True)  # TODO: what does this field mean?
     short_source = models.CharField(max_length=128)
     update_frequency = models.CharField(max_length=64)
     intro = models.TextField()
@@ -92,12 +111,20 @@ class SchemaInfo(models.Model):
     def __unicode__(self):
         return unicode(self.schema)
 
+    def natural_key(self):
+        return self.schema.slug
+
+
+class SchemaFieldManager(models.Manager):
+
+    def get_by_natural_key(self, schema_slug, real_name):
+        return self.get(schema__slug=schema_slug, real_name=real_name)
+
 class SchemaField(models.Model):
     """
     Describes the meaning of one Attribute field for one Schema type.
     """
-    # TODO: README.TXT says that the combination of (schema,
-    # real_name) must be unique. Enforce that.
+    objects = SchemaFieldManager()
 
     schema = models.ForeignKey(Schema)
     name = models.CharField(max_length=32)
@@ -110,6 +137,12 @@ class SchemaField(models.Model):
     is_charted = models.BooleanField() # whether schema_detail displays a chart for this field
     display_order = models.SmallIntegerField()
     is_searchable = models.BooleanField() # whether the value is searchable by content
+
+    def natural_key(self):
+        return (self.schema.slug, self.real_name)
+
+    class Meta(object):
+        unique_together = (('schema', 'real_name'),)
 
     def __unicode__(self):
         return u'%s - %s' % (self.schema, self.name)
@@ -156,13 +189,26 @@ class SchemaField(models.Model):
             return self.pretty_name_plural
         return self.pretty_name
 
+
+class SchemaFieldInfoManager(models.Manager):
+    def get_by_natural_key(self, slug, real_name):
+        return self.get(schema__slug=slug, schema_field__real_name=real_name)
+
 class SchemaFieldInfo(models.Model):
+    objects = SchemaFieldInfoManager()
     schema = models.ForeignKey(Schema)
     schema_field = models.ForeignKey(SchemaField)
     help_text = models.TextField()
 
+    def natural_key(self):
+        return (self.schema.slug, self.schema_field.real_name)
+
     def __unicode__(self):
         return unicode(self.schema_field)
+
+class LocationTypeManager(models.Manager):
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
 
 class LocationType(models.Model):
     name = models.CharField(max_length=255) # e.g., "Ward" or "Congressional District"
@@ -170,13 +216,23 @@ class LocationType(models.Model):
     scope = models.CharField(max_length=64) # e.g., "Chicago" or "U.S.A."
     slug = models.CharField(max_length=32, unique=True)
     is_browsable = models.BooleanField() # whether this is displayed on location_type_list
-    is_significant = models.BooleanField() # whether this is used to display aggregates, etc.
+    is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
 
     def __unicode__(self):
         return u'%s, %s' % (self.name, self.scope)
 
     def url(self):
         return '/locations/%s/' % self.slug
+
+    def natural_key(self):
+        return (self.slug,)
+
+    objects = LocationTypeManager()
+
+
+class LocationManager(models.GeoManager):
+    def get_by_natural_key(self, slug, location_type_slug):
+        return self.get(slug=slug, location_type__slug=slug)
 
 class Location(models.Model):
     name = models.CharField(max_length=255) # e.g., "35th Ward"
@@ -195,10 +251,13 @@ class Location(models.Model):
     description = models.TextField(blank=True)
     creation_date = models.DateTimeField(blank=True, null=True)
     last_mod_date = models.DateTimeField(blank=True, null=True)
-    objects = models.GeoManager()
+    objects = LocationManager()
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
+
+    def natural_key(self):
+        return (self.slug, self.location_type.slug)
 
     def __unicode__(self):
         return self.name
@@ -471,6 +530,9 @@ class NewsItem(models.Model):
 
     """
 
+    # We don't have a natural_key() method because we don't know for
+    # sure that anything other than ID will be unique.
+
     schema = models.ForeignKey(Schema)
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -630,6 +692,12 @@ class Attribute(models.Model):
         return u'Attributes for news item %s' % self.news_item_id
 
 class LookupManager(models.Manager):
+
+    def get_by_natural_key(self, slug, schema_field__slug,
+                           schema_field__real_name):
+        return self.get(slug=slug, schema_field__slug=schema_field__slug,
+                        schema_field__real_name=schema_field__real_name)
+
     def get_or_create_lookup(self, schema_field, name, code=None, description='', make_text_slug=True, logger=None):
         """
         Returns the Lookup instance matching the given SchemaField, name and
@@ -695,6 +763,10 @@ class Lookup(models.Model):
 
     class Meta:
         unique_together = (('slug', 'schema_field'),)
+
+    def natural_key(self):
+        return (self.slug, self.schema_field.schema.slug,
+                self.schema_field.real_name)
 
     def __unicode__(self):
         return u'%s - %s' % (self.schema_field, self.name)

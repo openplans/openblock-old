@@ -1168,6 +1168,7 @@ def place_detail(request, *args, **kwargs):
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         search_buf = make_search_buffer(place.location.centroid, block_radius)
         newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buf)
+        # TODO: order by location type for consistency?
         nearby_locations = list(Location.objects.filter(location_type__is_significant=True, location__bboverlaps=search_buf).select_related())
         bbox = search_buf.extent
         saved_place_lookup = {'block__id': place.id}

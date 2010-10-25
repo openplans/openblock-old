@@ -94,9 +94,19 @@ class PidTests(TestCase):
         loc = self._makeLocation()
         self.assertEqual(parse_pid(make_pid(loc)),
                          (loc, None, None))
-        
-        
 
+
+def suite():
+    suite = unittest.TestLoader().loadTestsFromTestCase(PidTests)
+    import doctest
+    import ebpub.utils.text
+    suite.addTest(doctest.DocTestSuite(ebpub.utils.text))
+    import ebpub.utils.bunch
+    suite.addTest(doctest.DocTestSuite(ebpub.utils.bunch))
+    import ebpub.utils.stats
+    suite.addTest(doctest.DocTestSuite(ebpub.utils.stats))
+
+    return suite
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Start/stop the updaterdaemon. This is copied largely from the cron init script.
 #
 ### BEGIN INIT INFO
@@ -14,21 +14,58 @@
 
 #LSBNAMES='-l'  # Uncomment for LSB name support in /etc/cron.d/
 
+### CONFIGURABLE STUFF
+# Set this to the user that your openblock deployment runs as.
+# TODO: The daemon itself could use setuid
+SU_USER="pw"
+
+ERRLOGFILE=/tmp/updaterdaemon.err
+LOGFILE=/tmp/updaterdaemon.log
+
+#######################################################
+
+# We assume that you symlink this script from the source checkout into
+# /etc/init.d.
+# Or you could just copy it and set HERE manually.
+# Reliably (hah!) and portably (?) find the directory containing this script.
+# Based roughly on stuff from:
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-in
+HERE=`(cd $(dirname $(readlink -f "${0}")) 2>/dev/null; echo "$PWD"/)`
+
+# This only works on linux, not other unixes.
 . /lib/lsb/init-functions
 
-RUNNER="python /home/code/ebdata/retrieval/updaterdaemon/runner.py"
+
+# Find a local python if there is one (eg. in a virtualenv).
+PYTHON=`which python`
+cd $HERE
+while [ true ]; do
+    if [ $PWD == '/' ]; then
+	break
+    elif [ -x ./bin/python ]; then
+	PYTHON=$PWD/bin/python
+	break
+    elif [ -x python ]; then
+	PYTHON=$PWD/python
+	break
+    else
+	cd ..
+    fi
+done
+
+RUNNER="$PYTHON $HERE/runner.py"
 
 case "$1" in
 start)	log_begin_msg "Starting updaterdaemon..."
-        sudo -u everycron $RUNNER start
+        sudo -u $SU_USER $RUNNER --log-file=$LOGFILE --config=$HERE/../../../../obdemo/obdemo/sample_scraper_config.py --error-log=$ERRLOGFILE start
         log_end_msg $?
 	;;
 stop)	log_begin_msg "Stopping updaterdaemon..."
-        sudo -u everycron $RUNNER stop
+        sudo -u $SU_USER $RUNNER stop
         log_end_msg $?
         ;;
 restart) log_begin_msg "Restarting updaterdaemon..."
-        sudo -u everycron $RUNNER restart
+        sudo -u $SU_USER $RUNNER restart
         log_end_msg $?
         ;;
 *)	log_success_msg "Usage: /etc/init.d/updaterdaemon start|stop|restart"
