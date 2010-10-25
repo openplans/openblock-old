@@ -5,9 +5,8 @@ from ebdata.textmining.treeutils import preprocess_to_string
 from ebpub.db.models import NewsItem
 import re
 
-base_url = 'https://seeclickfix.com/api/'
-
-list_url = base_url + 'issues.rss?at=Boston,+MA'
+BASE_URL = 'https://seeclickfix.com/api/'
+LIST_URL = base_url + 'issues.rss?at=Boston,+MA'
 
 address_re = re.compile(r'Address: (.*?)<br\s+/>')
 rating_re = re.compile(r'\s+Rating:\s+(\d+)\s*')
@@ -18,7 +17,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
     schema_slugs = ('issues',)
     has_detail = False
 
-    url = list_url
+    url = LIST_URL
 
     def list_pages(self):
         yield self.get_html(self.url)

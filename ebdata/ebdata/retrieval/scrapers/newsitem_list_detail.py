@@ -125,7 +125,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
         association.
 
         attributes is a dictionary to use to populate this NewsItem's Attribute
-        object.
+        objects.
         """
         block = location = None
         if 'location' not in kwargs:
@@ -146,8 +146,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
         # Normally we'd just use "schema = kwargs.get('schema', self.schema)",
         # but self.schema will be evaluated even if the key is found in
         # kwargs, which raises an error when using multiple schemas.
-        schema = kwargs.get('schema', None)
-        schema = schema or self.schema
+        schema = kwargs.get('schema', None) or self.schema
 
         ni = NewsItem.objects.create(
             schema=schema,
