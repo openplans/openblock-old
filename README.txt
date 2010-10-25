@@ -135,6 +135,13 @@ site.  You can dive into the other scripts that it calls to get more
 details on how it all works.
 
 
+Customizing Look and Feel
+=========================
+
+You'll want to read the "Site views/templates" section of
+ebpub/README.TXT.
+
+
 ====================
 Main Code Packages
 ====================
