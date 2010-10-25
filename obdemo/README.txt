@@ -9,7 +9,7 @@ They are intended to serve as a useful example of how to set up a site
 based on the OpenBlock code.
 
 By default, the site is set up to use Boston as the default location
-for the maps.  You can change that by tweaking real_settings.py,
+for the maps.  You can change that by tweaking settings.py,
 but then you're on your own for finding local data to load.
 
 Prerequisites
@@ -43,9 +43,9 @@ bootstrap_demo.sh script.)
    software.
 
 2. In obdemo/obdemo, copy the example config file
-   ``real_settings.py.in`` to ``real_settings.py``
+   ``settings.py.in`` to ``settings.py``
 
-3. In ``real_settings.py``, uncomment and fill in all the settings.
+3. In ``settings.py``, uncomment and fill in all the settings.
    The application won't work until you set them.
 
    See the documentation/comments in that file, and/or refer to
