@@ -23,7 +23,7 @@ def geocode(request):
         results = ()
 
     response = {'results': results}
-    return HttpResponse(json.dumps(response), mimetype="application/x-json")
+    return HttpResponse(json.dumps(response), mimetype="application/json")
 
 def geotag(request):
     """
@@ -56,7 +56,7 @@ def geotag(request):
 
     response = {'locations': results, 'searched': all_locations}
     return HttpResponse(json.dumps(response), 
-                        mimetype="applicaiton/x-json")
+                        mimetype="application/json")
 
 
 def _build_geocoder_results(query):
