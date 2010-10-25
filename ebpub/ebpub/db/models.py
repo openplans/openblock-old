@@ -63,7 +63,8 @@ class Schema(models.Model):
     # whether aggregate charts are allowed for this Schema
     allow_charting = models.BooleanField()
 
-    # whether attributes should be preloaded for NewsItems of this Schema, in the list view
+    # whether attributes should be preloaded for NewsItems of this
+    # Schema, in the list view
     uses_attributes_in_list = models.BooleanField()
 
     # number of records to show on place_overview
