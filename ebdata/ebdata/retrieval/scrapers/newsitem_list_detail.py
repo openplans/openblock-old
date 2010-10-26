@@ -13,6 +13,9 @@ class NewsItemListDetailScraper(ListDetailScraper):
 
     Subclasses are required to set the `schema_slugs` attribute.
 
+    Once you've set schema_slugs, there are a number of properties for
+    conveniently accessing the relevant Schemas and SchemaFields:
+
     self.schemas lazily loads the list of Schema objects the first time it's
     accessed. It is a dictionary in the format {slug: Schema}.
 
@@ -20,14 +23,19 @@ class NewsItemListDetailScraper(ListDetailScraper):
     Schema object.
 
     self.lookups lazily loads a dictionary of all SchemaFields with
-    lookup=True. The dictionary is in the format {name: schemafield}. If
-    schema_slug has more than one element, self.lookups is a dictionary in the
-    format {schema_slug: {name: schemafield}}.
+    lookup=True. The dictionary is in the format {name: schemafield}.
+    If schema_slugs has more than one element, self.lookups is a
+    dictionary in the format {schema_slug: {name: schemafield}}.
 
-    self.schema_field_mapping lazily loads a dictionary of each SchemaField,
-    mapping the name to the real_name. If schema_slug has more than one element,
-    self.schema_field_mapping is a dictionary in the format
-    {schema_slug: {name: real_name}}.
+    self.schema_fields lazily loads a dictionary of each SchemaField,
+    mapping the name to the SchemaField object.
+    If schema_slugs has more than one element, self.schema_fields is a
+    dictionary in the format {schema_slug: {name: schema_field}}.
+
+    self.schema_field_mapping lazily loads a dictionary of each
+    SchemaField, mapping the name to the real_name.
+    If schema_slugs has more than one element, self.schema_field_mapping
+    is a dictionary in the format {schema_slug: {name: real_name}}.
     """
     schema_slugs = None
     logname = None
@@ -73,7 +81,9 @@ class NewsItemListDetailScraper(ListDetailScraper):
     @property
     def schema_fields(self):
         if self._schema_fields_cache is None:
-            sfs = dict([(s.slug, dict([(sf.name, sf) for sf in s.schemafield_set.all()])) for s in self.schemas.values()])
+            sfs = dict([(s.slug, dict([(sf.name, sf)
+                                       for sf in s.schemafield_set.all()]))
+                        for s in self.schemas.values()])
             if len(self.schema_slugs) == 1:
                 sfs = sfs[self.schema_slugs[0]]
             self._schema_fields_cache = sfs

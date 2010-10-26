@@ -25,7 +25,7 @@ rating_re = re.compile(r'\s+Rating:\s+(\d+)\s*')
 
 def get_unique_fields(list_record):
     # not necessarily primary key, but for this script's purposes
-    # these are the fields that in combination uniquely idenfity
+    # these are the fields that in combination uniquely identify
     # an article.
 
     # TODO: 'id' is all we need for uniqueness, but what i'm doing
@@ -69,7 +69,6 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
             yield self.get_html(url)
 
     def existing_record(self, list_record):
-        # XXX Where does self.schema_fields come from??
         qs = NewsItem.objects.filter(schema__id=self.schema.id)
         qs = qs.by_attribute(self.schema_fields['guid'], list_record['id'])
         try:
