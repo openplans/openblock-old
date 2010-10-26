@@ -113,7 +113,7 @@ class SchemaInfo(models.Model):
         return unicode(self.schema)
 
     def natural_key(self):
-        return self.schema.slug
+        return (self.schema.slug,)
 
 
 class SchemaFieldManager(models.Manager):
