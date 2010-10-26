@@ -62,6 +62,12 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     # attributes. Another way to do this would be to load all of the attributes
     # when loading the NewsItems in the first place (via a JOIN), but we want
     # to avoid joining such large tables.
+
+    # TODO: #72. This is an optimization that doesn't justify having a
+    # parallel API that isn't even documented in model code where it
+    # belongs. Rewrite to stuff the data in ni._attributes_cache
+    # instead.
+
     preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
     if not preload_schema_ids:
         return

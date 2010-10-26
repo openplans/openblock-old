@@ -30,7 +30,6 @@ options(
     source_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
 
     app='obdemo',
-    user_settings='real_settings',
     # paths that will be searched for suitable postgis
     # add your own if it's custom or not listed.
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
@@ -189,22 +188,22 @@ def install_app(options):
     sh('%s/bin/pip install -e %s' % (options.env_root, app_dir))
 
     # create openblock settings if none have been created
-    real_settings = os.path.join(options.source_dir, options.app, options.app,
-                                 options.user_settings + '.py')
-    default_settings = real_settings + '.in'
+    local_settings = os.path.join(options.source_dir, options.app, options.app,
+                                  'settings.py')
+    settings_skel = local_settings + '.in'
 
-    if not os.path.exists(real_settings):
-        print "Setting up with default settings => %s" % real_settings
-        s = open(default_settings).read()
+    if not os.path.exists(local_settings):
+        print "Creating settings settings file => %s" % local_settings
+        s = open(settings_skel).read()
         # Replace default salts with random strings.
         need_replacing = '<REPLACE_ME>'
         while s.count(need_replacing):
             s = s.replace(need_replacing, _random_string(), 1)
-        open(real_settings, 'w').write(s)
+        open(local_settings, 'w').write(s)
 
 
     print "\nThe %s package is now installed." % options.app
-    print "Please review the settings in %s." % real_settings
+    print "Please review the settings in %s." % local_settings
 
 
 
@@ -233,8 +232,8 @@ def find_postgis(options):
 
 
 def get_app_settings(options):
-    settings_module = '%s.settings' % options.app
-    user_settings_module = '%s.%s' % (options.app, options.user_settings)
+    settings_module = '%s.settings_default' % options.app
+    user_settings_module = '%s.settings' % (options.app, options.user_settings)
     try:
         __import__(settings_module)
     except:

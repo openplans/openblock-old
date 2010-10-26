@@ -44,9 +44,9 @@ For detailed instructions and further steps, see obdemo/README.txt::
 
  $ git clone git://github.com/openplans/openblock.git openblock
  $ cd openblock
- $ cp obdemo/obdemo/real_settings.py.in obdemo/obdemo/real_settings.py
+ $ cp obdemo/obdemo/settings.py.in obdemo/obdemo/settings.py
 
-Optionally you can edit obdemo/obdemo/real_settings.py at this stage.
+Optionally you can edit obdemo/obdemo/settings.py at this stage.
 It's a good idea to look at it, at least to get an idea of what can be
 configured.
 
@@ -133,6 +133,13 @@ http://developer.openblockproject.org/wiki/Ideal%20Feed%20Formats
 The obdemo/bin/bootstrap_demo.sh script does all this for the demo
 site.  You can dive into the other scripts that it calls to get more
 details on how it all works.
+
+
+Customizing Look and Feel
+=========================
+
+You'll want to read the "Site views/templates" section of
+ebpub/README.TXT.
 
 
 ====================

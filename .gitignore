@@ -1,4 +1,5 @@
 *.pyc
+*.pyo
 .svn
 *.bak
 *~
@@ -7,6 +8,7 @@
 .#*
 .DS_Store
 /obdemo/obdemo/real_settings.py
+/obdemo/obdemo/settings.py
 obdemo/tiger_data
 obdemo/neighborhood_data
 obdemo/zip_data
