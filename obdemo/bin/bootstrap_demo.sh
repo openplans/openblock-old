@@ -21,13 +21,18 @@ cd $HERE/../..
 echo Getting permission to run as postgres ...
 sudo -u postgres echo ok || exit 1
 
-# Need this to be able to re-build the virtualenv
-echo Removing old python binary...
-rm -f bin/python
+# If we run this script in an already-acivated virtualenv, the
+# bootstrapper will blow up when attempting to copy the python binary
+# on top of itself.  So, deactivate it.
+# This is slightly tricky in a subshell:
+if [ "$VIRTUAL_ENV" != "" ]; then
+    source $VIRTUAL_ENV/bin/activate
+    deactivate
+    export PATH=`echo $PATH | sed -e "s|$VIRTUAL_ENV/bin:|:|"`
+fi
+
 
 echo Bootstrapping...
-# We want global packages because there's no easy way
-# to get Mapnik installed locally.
 python bootstrap.py $@ || exit 1
 source bin/activate || exit 1
 
