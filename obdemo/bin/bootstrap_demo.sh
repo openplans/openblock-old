@@ -6,7 +6,9 @@
 HARD_RESET=0
 if [ "$1" == '-r' ]; then
     HARD_RESET=1
+    shift
 fi
+# All other args will be passed to bootstrap.py
 
 # Reliably and portably find the directory containing this script.
 # Based roughly on stuff from:
@@ -26,7 +28,7 @@ rm -f bin/python
 echo Bootstrapping...
 # We want global packages because there's no easy way
 # to get Mapnik installed locally.
-python bootstrap.py --use-site-packages || exit 1
+python bootstrap.py $@ || exit 1
 source bin/activate || exit 1
 
 if [ $HARD_RESET = 1 ]; then
