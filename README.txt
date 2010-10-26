@@ -1,4 +1,4 @@
-=========
+2=========
 OpenBlock
 =========
 
@@ -52,7 +52,7 @@ configured.
 
 Now install the software and boostrap the Boston data::
 
- $ obdemo/bin/boostrap_demo.sh
+ $ obdemo/bin/bootstrap_demo.sh
 
 Wait 10 minutes or so, then when it's finished, start the server::
 
