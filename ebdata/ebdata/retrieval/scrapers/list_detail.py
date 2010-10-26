@@ -1,3 +1,4 @@
+from django.contrib.gis.geos import Point
 from base import BaseScraper, ScraperBroken
 
 class SkipRecord(Exception):
@@ -304,6 +305,16 @@ class ListDetailScraper(BaseScraper):
         """
         return record
 
+    def get_location(self, list_record):
+        """Optional convenience method for extracting a geometry from
+        a record.
+
+        If a subclass implements this, it should return either an
+        instance of django.contrib.gis.geos.geometry.GEOSGeometry (or
+        a subclass), or None if no geometries are found.
+        """
+        raise NotImplementedError()
+
     def save(self, old_record, list_record, detail_record):
         """
         Saves the given record to storage.
@@ -335,3 +346,45 @@ class RssListDetailScraper(ListDetailScraper):
         # Assume that the detail page is accessible via the <link> for this
         # entry.
         return self.get_html(record['link'])
+
+    def get_location(self, record):
+        """Try both flavors of georss and geo attributes.
+
+        Locations with both lat = 0 and lon = 0 are assumed to be bad; we
+        return None for those.
+        """
+        # This tries to work around feedparser bugs where depending on
+        # whether you get a loose or strict parser, you might or might
+        # not see the namespace prefix on the attribute name.
+
+        # TODO: support other geometry types as per
+        # http://www.georss.org/simple ... so far only handles Point.
+
+        if record.has_key('gml_point'):
+            # Looks like georss gml.
+            lat, lon = record['gml_pos'].split()
+        elif record.has_key('point'):
+            # Unfortunately, with broken namespace handling, this
+            # might be georss_simple or georss gml. Try both.
+            if record.has_key('where') and record.has_key('pos'):
+                lat, lon = record['pos'].split()
+            else:
+                lat, lon = record['point'].split()
+        elif record.has_key('georss_point'):
+            # It's georss simple.
+            lat, lon = record['georss_point'].split()
+        elif record.has_key('geo_lat'):
+            # It's the rdf geo namespace.
+            lat = record['geo_lat']
+            lon = record['geo_lon']
+        elif record.has_key('lat'):
+            # It's geo with broken namespace handling.
+            lat = record['lat']
+            lon = record['lon']
+        else:
+            return None
+        lat, lon = float(lat), float(lon)
+        if (lat, lon) == (0.0, 0.0):
+            self.logger.warn("Ignoring location with bad coordinates (0, 0)")
+            return None
+        return Point(lon, lat)
