@@ -151,7 +151,7 @@ class ListDetailScraper(BaseScraper):
                     self.logger.debug("Skipping detail record for list %r: %s" % (list_record, e))
                     continue
                 except ScraperBroken, e:
-                    # Re-raise the ScraperBroken with some addtional helpful information.
+                    # Re-raise the ScraperBroken with some additional helpful information.
                     raise ScraperBroken('%r -- %s' % (list_record, e))
                 self.logger.debug("Clean detail record: %r" % detail_record)
             else:
