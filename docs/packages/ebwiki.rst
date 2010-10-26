@@ -1,0 +1,6 @@
+======
+ebwiki
+======
+
+A basic wiki.
+
