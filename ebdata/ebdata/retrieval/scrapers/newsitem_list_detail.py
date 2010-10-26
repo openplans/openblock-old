@@ -106,6 +106,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
             sf = self.lookups[schema_field_name]
         return Lookup.objects.get_or_create_lookup(sf, name, code, description, make_text_slug, self.logger)
 
+
     @transaction.commit_on_success
     def create_newsitem(self, attributes, **kwargs):
         """
@@ -127,8 +128,12 @@ class NewsItemListDetailScraper(ListDetailScraper):
         attributes is a dictionary to use to populate this NewsItem's Attribute
         objects.
         """
-        block = location = None
-        if 'location' not in kwargs:
+
+        block = kwargs.get('block')
+        location = kwargs.get('location')
+        location_name = kwargs.get('location_name')
+        assert location or location_name, "At least one of location or location_name must be provided"
+        if location is None:
             location = self.geocode(kwargs['location_name'])
             if location:
                 block = location['block']
@@ -155,10 +160,10 @@ class NewsItemListDetailScraper(ListDetailScraper):
             url=kwargs.get('url', ''),
             pub_date=kwargs.get('pub_date', self.start_time),
             item_date=kwargs['item_date'],
-            location=kwargs.get('location', location),
-            location_name=kwargs['location_name'],
+            location=location,
+            location_name=location_name,
             location_object=kwargs.get('location_object', None),
-            block=kwargs.get('block', block),
+            block=block,
         )
         if attributes is not None:
             ni.attributes = attributes
@@ -182,6 +187,8 @@ class NewsItemListDetailScraper(ListDetailScraper):
                 newsitem_updated = True
         if newsitem_updated:
             newsitem.save()
+        else:
+            self.logger.debug("No change to %s <%s>" % (newsitem.id, newsitem))
         # Next, check the NewsItem's attributes.
         for k, v in new_attributes.items():
             if newsitem.attributes.get(k) == v:
@@ -199,6 +206,15 @@ class NewsItemListDetailScraper(ListDetailScraper):
             self.logger.debug('Total changed in this scrape: %s', self.num_changed)
         else:
             self.logger.debug('No changes to NewsItem %s detected', newsitem.id)
+
+    def create_or_update(self, old_record, attributes, **kwargs):
+        """unified API for updating or creating a NewsItem.
+        """
+        if old_record:
+            self.update_existing(old_record, kwargs, attributes)
+        else:
+            self.create_newsitem(attributes=attributes, **kwargs)
+
 
     def update(self):
         """
@@ -255,6 +271,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
         except (GeocodingException, ParsingError):
             return None
 
+
     def safe_location(self, location_name, geom, max_distance=200):
         """
         Returns a location (geometry) to use, given a location_name and
@@ -276,3 +293,20 @@ class NewsItemListDetailScraper(ListDetailScraper):
         if not is_close:
             return None
         return geom
+
+    def last_updated_time(self, schema=None):
+        """
+        Returns a DateTime representing the last time we started
+        scraping our schema(s).  (We use start time rather than end
+        time on the assumption that a few overlaps are preferable to
+        missing updates.)
+        """
+        schema = schema or self.schema
+        try:
+            last_update = DataUpdate.objects.order_by('update_start')[0]
+            return last_update.update_start
+        except IndexError:
+            # Use the unix epoch (1970) as a stand-in for "never updated".
+            return datetime.datetime.fromtimestamp(0)
+
+
