@@ -244,6 +244,24 @@
   {
     "fields": {
       "is_lookup": false, 
+      "pretty_name_plural": "GUIDs", 
+      "is_charted": false, 
+      "name": "guid", 
+      "display_order": 0, 
+      "is_searchable": false, 
+      "real_name": "varchar01", 
+      "pretty_name": "GUID", 
+      "is_filter": false, 
+      "display": false, 
+      "schema": [
+        "issues"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
       "pretty_name_plural": "Raw Addresses", 
       "is_charted": false, 
       "name": "raw_address", 
