@@ -27,13 +27,3 @@ def adjust_options(options, args):
     if len(args) == 0:
         args[:] = ['./']
 
-def extend_parser(optparse_parser):
-    # flip-flop the default on whether to utilize site packages
-    optparse_parser.remove_option('--no-site-packages')
-    optparse_parser.add_option('--use-site-packages',
-                               dest='no_site_packages',
-                               action='store_false',
-                               default=True)
-    # Use distribute by default.
-    optparse_parser.set_defaults(use_distribute=True)
-

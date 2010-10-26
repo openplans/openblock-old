@@ -27,3 +27,4 @@ obdemo/zip_data
 /build
 *scraper_http_cache
 distribute-*gz
+docs/_build
