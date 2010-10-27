@@ -1,4 +1,4 @@
-2=========
+=========
 OpenBlock
 =========
 
@@ -50,7 +50,7 @@ Optionally you can edit obdemo/obdemo/settings.py at this stage.
 It's a good idea to look at it, at least to get an idea of what can be
 configured.
 
-Now install the software and boostrap the Boston data::
+Now install the software and bootstrap the Boston data::
 
  $ obdemo/bin/bootstrap_demo.sh
 
