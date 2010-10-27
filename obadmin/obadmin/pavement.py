@@ -233,13 +233,13 @@ def find_postgis(options):
 
 def get_app_settings(options):
     settings_module = '%s.settings_default' % options.app
-    user_settings_module = '%s.settings' % (options.app, options.user_settings)
+    user_settings_module = '%s.settings' % options.app
     try:
-        __import__(settings_module)
+        __import__(user_settings_module)
     except:
         exit_with_traceback("Problem with %s or %s, see above"
                             % (settings_module, user_settings_module))
-    return sys.modules[settings_module]
+    return sys.modules[user_settings_module]
 
 def get_conn_params(dbinfo):
     dbhost = dbinfo.get('HOST', None)
