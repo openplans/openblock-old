@@ -1,3 +1,5 @@
+#!/bin/bash
+
 HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
 SOURCE_ROOT=`cd $HERE/../.. && pwd`
 echo Source root is $SOURCE_ROOT
