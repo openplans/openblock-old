@@ -61,7 +61,7 @@ First, create a location where you will install the software and check out the s
  
 The obdemo package contains a shell script that performs a basic setup and loads demonstration data into the system::
 
- $ src/openblock/obdemo/bin/boostrap_demo.sh
+ $ src/openblock/obdemo/bin/bootstrap_demo.sh
 
 Wait 10 minutes or so, then when it's finished, start the server from the root of your install::
 
