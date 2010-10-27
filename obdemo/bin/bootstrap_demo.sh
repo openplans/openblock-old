@@ -59,3 +59,6 @@ $HERE/import_boston_hoods.sh || exit 1
 $HERE/import_boston_blocks.sh || exit 1
 $HERE/add_boston_news_schemas.sh || exit 1
 $HERE/import_boston_news.sh || exit 1
+
+echo 'Demo bootstrap succeeded!'
+echo To start up the demo, try: $VIRTUAL_ENV/manage.py runserver

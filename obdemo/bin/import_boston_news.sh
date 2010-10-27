@@ -35,15 +35,16 @@ python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || di
 #echo Adding press releases...
 #python everyblock/everyblock/cities/boston/city_press_releases/retrieval.py || die
 
+# Aggregates, see ebpub/README.txt
+cd $SOURCE_ROOT
+python ebpub/ebpub/db/bin/update_aggregates.py
+
 echo ___________________________________________________________________
 echo
 echo " *** NOT adding restaurant inspections, it may take hours. ***"
 echo
 echo "  If you want to load them, do:"
-echo "  python ./everyblock/everyblock/cities/boston/restaurants/retrieval.py"
-echo "  ... and then re-run python ebpub/ebpub/db/bin/update_aggregates.py"
+echo "  python $SOURCE_ROOT/everyblock/everyblock/cities/boston/restaurants/retrieval.py"
+echo "  ... and then re-run python $SOURCE_ROOT/ebpub/ebpub/db/bin/update_aggregates.py"
 echo ___________________________________________________________________
 
-# Aggregates, see ebpub/README.txt
-cd $SOURCE_ROOT
-python ebpub/ebpub/db/bin/update_aggregates.py
