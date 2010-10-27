@@ -26,7 +26,7 @@ cd $OLDPWD
 echo Getting permission to run as postgres ...
 sudo -u postgres echo ok || exit 1
 
-# If we run this script in an already-acivated virtualenv, the
+# If we run this script in an already-activated virtualenv, the
 # bootstrapper will blow up when attempting to copy the python binary
 # on top of itself.  So, deactivate it.
 # This is slightly tricky in a subshell:
