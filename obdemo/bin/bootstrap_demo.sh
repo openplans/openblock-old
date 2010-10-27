@@ -15,8 +15,13 @@ fi
 # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-in
 HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
 
-# Assume the virtualenv is going to be two directories up. TODO: configurable?
+# Find the root of our source checkout.
 cd $HERE/../..
+SOURCE_ROOT=$PWD
+cd $OLDPWD
+
+# Assume that $PWD is where you want the virtualenv.
+# TODO: configurable?
 
 echo Getting permission to run as postgres ...
 sudo -u postgres echo ok || exit 1
@@ -33,12 +38,12 @@ fi
 
 
 echo Bootstrapping...
-python bootstrap.py $@ || exit 1
+python $SOURCE_ROOT/bootstrap.py $@ || exit 1
 source bin/activate || exit 1
 
 if [ $HARD_RESET = 1 ]; then
     echo "Dropping openblock database(s)..."
-    sudo -u postgres bin/oblock drop_dbs || exit 1
+    sudo -u postgres $VIRTUAL_ENV/bin/oblock drop_dbs || exit 1
     echo "Recreating database(s)..."
 else
     echo "Creating database(s)..."
