@@ -59,9 +59,10 @@ First, create a location where you will install the software and check out the s
  $ cd openblock
  $ git clone git://github.com/openplans/openblock.git src/openblock
  
-The obdemo package contains a shell script that performs a basic setup and loads demonstration data into the system::
+The obdemo package contains a shell script that performs a basic setup
+and loads demonstration data (for Boston, MA) into the system::
 
- $ src/openblock/obdemo/bin/boostrap_demo.sh
+ $ src/openblock/obdemo/bin/bootstrap_demo.sh
 
 Wait 10 minutes or so, then when it's finished, start the server from the root of your install::
 
@@ -73,6 +74,16 @@ http://localhost:8000
 If you encounter problems, double check that you have the basic system
 requirements installed and then try the step-by-step
 instructions in :doc:`setup`::
+
+If for any reason you need to run bootstrap_demo.sh again, eg. if
+you've got your system so broken that you want to start from scratch,
+you may want to wipe your existing database by giving the "-r"
+option::
+
+ $ src/openblock/obdemo/bin/bootstrap_demo.sh -r
+
+Note that this will completely and permanently wipe out your openblock
+database, so think twice!
 
 For more help, you can try the ebcode group:
 http://groups.google.com/group/ebcode
