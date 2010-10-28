@@ -11,42 +11,46 @@ if not os.environ.get('DJANGO_SETTINGS_MODULE'):
     os.environ['DJANGO_SETTINGS_MODULE'] = 'obdemo.settings'
 
 from ebpub.db.models import NewsItem, Schema
-from ebpub.db.models import Location
+from ebpub.streets.models import Block
 
 def main(count):
     schema = 'local-news'
 
-    locations = list(Location.objects.all())
-    random.shuffle(locations)
 
     try:
         schema = Schema.objects.get(slug=schema)
     except Schema.DoesNotExist:
         print "Schema (%s): DoesNotExist" % schema
-        sys.exit(0)
-        
+        sys.exit(1)
+    last_block_id = Block.objects.order_by('-id')[0].id
+
     for i in range(int(count)):
         item = NewsItem()
         item.schema = schema
-        item.title = '%d Random News %s' % (i, uuid.uuid1())
+        item.title = '%d Random News %s' % (i, uuid.uuid4())
         item.description = item.title + ' blah' * 100
         item.url = 'http://example.com'
         # Random time between now and one week ago.
         date = datetime.datetime.now() - datetime.timedelta(random.uniform(-7.0, 0.0))
         item.pub_date = item.item_date = date
 
-        # Pick a random location from the ones we know.
-        location = locations[i % len(locations)]
-        item.location_object = location
-        item.location_name = location.name
-        # It would be cool to pick a random location within the bounds,
-        # but that would take thought... use the center.
+        # Pick a random block.
+        while True:
+            block_id = random.randint(1, last_block_id)
+            try:
+                block = Block.objects.get(id=block_id)
+                break
+            except Block.objects.DoesNotExist:
+                continue
+
+        item.location_name = block.pretty_name
+        item.block = block
         try:
-            item.location = location.location.centroid
+            item.location = block.geom.centroid
         except AttributeError:
-            print "whoops"
-            continue
-        print "Added: %s at %s (%s)" % (item.title, location.name, item.location.wkt)
+            item.location = block.geom
+
+        print "Added: %s at %s (%s)" % (item.title, item.location_name, item.location.wkt)
         item.save()
 
 
