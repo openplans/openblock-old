@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 import re
-import simplejson as json 
+from django.utils import simplejson as json 
 
 from ebdata.nlp.addresses import tag_addresses
 from ebdata.nlp.places import place_tagger, location_tagger

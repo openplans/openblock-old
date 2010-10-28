@@ -1,0 +1,144 @@
+"""
+Basic settings for OpenBlock.
+ 
+See settings_default.py for additional settings.
+"""
+
+from settings_default import *
+
+########################
+# CORE DJANGO SETTINGS #
+########################
+
+DEBUG = True
+
+# Multi-database configuration as per
+# http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
+
+DATABASES = {
+    'users': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
+        'TEST_NAME': 'test_openblock_users'
+    },
+    'metros': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
+        'TEST_NAME': 'test_openblock_metros'
+    },
+    'default': {
+        'NAME': 'openblock',
+        'USER': 'openblock',
+        'PASSWORD': 'openblock',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'OPTIONS': {},
+        'HOST': '',
+        'PORT': '',
+        'TEST_NAME': 'test_openblock'
+    },
+}
+DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
+DATABASE_ROUTES = {
+    # contenttypes and auth.* have to go in the same db as accounts.User.
+    # django ticket #12767
+    'users': ['accounts.User', 'auth.*', 'contenttypes.*'],
+    'metros': ['metros.*']
+}
+
+# Hack to ensure that `oblock sync_all` sets up databases in the right order.
+DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
+
+
+#########################
+# CUSTOM EBPUB SETTINGS #
+#########################
+
+# The domain for your site.
+EB_DOMAIN = 'localhost'
+
+# This is the short name for your city, e.g. "chicago".
+SHORT_NAME = 'boston'
+
+# Set both of these to distinct, secret strings that include two instances
+# of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
+# secret.  And don't check the result in to a public code repository
+# or otherwise put it out in the open!
+PASSWORD_CREATE_SALT = '${password_salt}%s%s'
+PASSWORD_RESET_SALT = '${reset_salt}%s%s'
+
+# You probably don't need to override this, the setting in settings.py
+# should work out of the box.
+#EB_MEDIA_ROOT = '' # necessary for static media versioning.
+
+EB_MEDIA_URL = '' # leave at '' for development
+
+
+# This is used as a "From:" in e-mails sent to users.
+GENERIC_EMAIL_SENDER = 'openblock@' + EB_DOMAIN
+
+# Filesystem location of scraper log.
+SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
+
+# If this cookie is set with the given value, then the site will give the user
+# staff privileges (including the ability to view non-public schemas).
+STAFF_COOKIE_NAME = 'obstaff'
+STAFF_COOKIE_VALUE = 'obstaff'
+
+# What kinds of news to show on the homepage.
+HOMEPAGE_DEFAULT_NEWSTYPES = [u'news-articles']
+
+# How many days of news to show on the homepage & elsewhere.
+DEFAULT_DAYS = 30
+
+# Where to center citywide  maps, eg. on homepage.
+DEFAULT_MAP_CENTER_LON = -71.07
+DEFAULT_MAP_CENTER_LAT = 42.357778
+DEFAULT_MAP_ZOOM = 12
+
+# Metros.
+METRO_LIST = (
+    {
+        # Extent of the metro, as a longitude/latitude bounding box.
+        'extent': (-71.191153, 42.227865, -70.986487, 42.396978),
+
+        # Whether this should be displayed to the public.
+        'is_public': True,
+
+        # Set this to True if the metro has multiple cities.
+        'multiple_cities': False,
+
+        # The major city in the metro.
+        'city_name': 'Boston',
+
+        # The SHORT_NAME in the settings file (also the subdomain).
+        'short_name': 'boston',
+
+        # The name of the metro, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
+        'metro_name': 'Boston',
+
+        # USPS abbreviation for the state.
+        'state': 'MA',
+
+        # Full name of state.
+        'state_name': 'Massachusetts',
+
+        # Time zone, as required by Django's TIME_ZONE setting.
+        'time_zone': 'America/New_York',
+    },
+)
+
+
+if DEBUG:
+    for _name in required_settings:
+        if not _name in globals():
+            raise NameError("Required setting %r was not defined in settings.py or default_settings.py" % _name)
