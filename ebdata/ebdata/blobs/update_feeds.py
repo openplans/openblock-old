@@ -273,7 +273,7 @@ class FeedUpdater(object):
         return True
 
     def get_article_page(self, url):
-        return self.retriever.get_html(url)
+        return self.retriever.fetch_data(url)
 
     def get_printer_friendly_url(self, url):
         """
