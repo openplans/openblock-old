@@ -54,7 +54,7 @@ class Retriever(object):
     def clear_cookies(self):
         self._cookies = SimpleCookie()
 
-    def get_html_and_headers(self, uri, data=None, headers=None, send_cookies=True, follow_redirects=True, raise_on_error=True):
+    def fetch_data_and_headers(self, uri, data=None, headers=None, send_cookies=True, follow_redirects=True, raise_on_error=True):
         "Retrieves the resource and returns a tuple of (content, header dictionary)."
         # Sleep, if necessary, but only if a page has already been downloaded
         # with this retriever. (We don't want to sleep before the very first
@@ -134,13 +134,18 @@ class Retriever(object):
             if data:
                 data = {}
                 del headers['Content-Type']
-            return Retriever.get_html_and_headers(self, new_location, data, headers, send_cookies)
+            return Retriever.fetch_data_and_headers(self, new_location, data, headers, send_cookies)
 
         return content, resp_headers
 
-    def get_html(self, uri, data=None, headers=None, send_cookies=True, follow_redirects=True, raise_on_error=True):
-        "Retrieves the resource and returns it as raw HTML."
-        return self.get_html_and_headers(uri, data, headers, send_cookies, follow_redirects, raise_on_error)[0]
+    def fetch_data(self, uri, data=None, headers=None, send_cookies=True, follow_redirects=True, raise_on_error=True):
+        "Retrieves the resource and returns it as a raw string."
+        return self.fetch_data_and_headers(uri, data, headers, send_cookies, follow_redirects, raise_on_error)[0]
+
+    def get_html(self, *args, **kwargs):
+        """Alias for fetch_data, for backward compatibility.
+        """
+        return self.fetch_data(*args, **kwargs)
 
     def get_to_file(self, *args, **kwargs):
         """
@@ -151,13 +156,13 @@ class Retriever(object):
         from tempfile import mkstemp
         fd, name = mkstemp()
         fp = os.fdopen(fd, 'wb')
-        fp.write(self.get_html(*args, **kwargs))
+        fp.write(self.fetch_data(*args, **kwargs))
         fp.close()
         return name
 
 class UnicodeRetriever(Retriever):
     """
-    Like Retriever, but get_html() returns a Unicode object instead of a
+    Like Retriever, but fetch_data() returns a Unicode object instead of a
     bytestring. It uses the chardet module to determine the encoding to use.
     """
     def __init__(self, *args, **kwargs):
@@ -165,20 +170,20 @@ class UnicodeRetriever(Retriever):
         self.error_handling = kwargs.pop('errors', 'strict')
         Retriever.__init__(self, *args, **kwargs)
 
-    def get_html_and_headers(self, *args, **kwargs):
-        encoding, content, headers = self.get_encoding_html_and_headers(*args, **kwargs)
+    def fetch_data_and_headers(self, *args, **kwargs):
+        encoding, content, headers = self.fetch_encoding_data_and_headers(*args, **kwargs)
         return content.decode(encoding, self.error_handling), headers
 
-    def get_encoding_html_and_headers(self, *args, **kwargs):
+    def fetch_encoding_data_and_headers(self, *args, **kwargs):
         """
-        Returns a tuple of (encoding, html_bytestring, headers).
+        Returns a tuple of (encoding, bytestring, headers).
 
         This is useful if you don't know whether you want to decode the string
         until *after* calling this method. (Perhaps you want to inspect the
         headers.)
         """
         import chardet
-        content, headers = Retriever.get_html_and_headers(self, *args, **kwargs)
+        content, headers = Retriever.fetch_data_and_headers(self, *args, **kwargs)
         guess = chardet.detect(content)
         # Maybe this should take into account guess['confidence']?
         return guess['encoding'], content, headers
