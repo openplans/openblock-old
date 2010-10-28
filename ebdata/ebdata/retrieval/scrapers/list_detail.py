@@ -57,34 +57,41 @@ class ListDetailScraper(BaseScraper):
 
     def raw_data(self):
         """
-        Iterator that yields *all* current raw data for this scraper,
-        regardless of whether it's existing or not.
+        Iterator that yields current raw data for this scraper.
+        Works like update() but doesn't save anything.
 
         Each record is represented as a {'list', 'detail'} dictionary,
         where `list` is the clean list record and `detail` is the clean
         detail record.
         """
         for page in self.list_pages():
-            for list_record in self.parse_list(page):
+            try:
+                for data in self._raw_data(page):
+                    yield data
+            except StopScraping:
+                break
+
+    def _raw_data(self, page):
+        for list_record in self.parse_list(page):
+            try:
+                list_record = self.clean_list_record(list_record)
+            except SkipRecord:
+                continue
+            if self.has_detail:
                 try:
-                    list_record = self.clean_list_record(list_record)
+                    page = self.get_detail(list_record)
+                    detail_record = self.parse_detail(page, list_record)
+                    detail_record = self.clean_detail_record(detail_record)
                 except SkipRecord:
                     continue
-                if self.has_detail:
-                    try:
-                        page = self.get_detail(list_record)
-                        detail_record = self.parse_detail(page, list_record)
-                        detail_record = self.clean_detail_record(detail_record)
-                    except SkipRecord:
-                        continue
-                else:
-                    detail_record = None
-                yield {'list': list_record, 'detail': detail_record}
+            else:
+                detail_record = None
+            yield {'list': list_record, 'detail': detail_record}
 
     def xml_data(self):
         """
-        Iterator that yields *all* current raw data for this scraper,
-        regardless of whether it's existing or not, as serialized XML.
+        Iterator that yields current raw data for this scraper, as
+        serialized XML.
         """
         from xml.sax.saxutils import escape
         yield u'<data>'
@@ -100,29 +107,28 @@ class ListDetailScraper(BaseScraper):
 
     def update(self):
         """
-        The main scraping method. This retrieves all pages, parses them and
-        saves the data.
+        The main scraping method. This retrieves all pages, parses
+        them, calls cleaning hooks, and saves the data.
 
         Subclasses should not have to override this method.
         """
         self.num_skipped = 0
+
         self.logger.info("update() started")
         try:
             for page in self.list_pages():
-                try:
-                    self.update_from_string(page)
-                except StopScraping:
-                    break
+                self.update_from_string(page)
+        except StopScraping:
+            pass
         finally:
             self.logger.info("update() finished")
 
     def update_from_string(self, page):
         """
-        For scrapers with has_detail=False, runs the equivalent of update() on
-        the given string.
+        Runs the equivalent of update() on the given string.
 
-        This is useful if you've got cached versions of HTML that you want to
-        parse.
+        This is useful if you've got cached versions of content that
+        you want to parse; also, update() calls it under the hood.
 
         Subclasses should not have to override this method.
         """
@@ -325,6 +331,9 @@ class ListDetailScraper(BaseScraper):
 
         old_record is the existing record, as returned by existing_record(). It
         will be None if there is no existing record.
+
+        Subclasses are responsible for actually saving the data,
+        or choosing not to save (eg. if old_record exists).
         """
         raise NotImplementedError()
 
@@ -339,13 +348,19 @@ class RssListDetailScraper(ListDetailScraper):
         import feedparser
         self.logger.debug("Parsing RSS feed with feedparser")
         feed = feedparser.parse(page)
+        if not len(feed['entries']):
+            # We might be parsing a paginated feed, and typically
+            # there's no way to know how many pages there are, except
+            # to keep incrementing the page number and stop when you
+            # hit an empty page.
+            raise StopScraping("No more entries to scrape")
         for entry in feed['entries']:
             yield entry
 
     def get_detail(self, record):
         # Assume that the detail page is accessible via the <link> for this
         # entry.
-        return self.get_html(record['link'])
+        return self.fetch_data(record['link'])
 
     def get_location(self, record):
         """Try both flavors of georss and geo attributes.
