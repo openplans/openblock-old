@@ -9,13 +9,18 @@ import site
 # Workaround as per http://code.google.com/p/modwsgi/wiki/ApplicationIssues
 sys.stdout = sys.stderr
 
-# This may need to be adjusted based on your installation path.
-# We assume you installed in a virtualenv in the same root
-# as your checkout; anyway that's what the bootstrap.py script does.
-env_root = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-env_root = os.path.abspath(env_root)
+# Try to find a virtualenv in our parent chain.
+HERE = env_root = os.path.abspath(os.path.dirname(__file__))
+found = False
+while env_root != '/':
+    env_root = os.path.abspath(os.path.dirname(env_root))
+    if os.path.exists(os.path.join(env_root, 'bin', 'activate')):
+        found = True
+        break
+assert found, "didn't find a virtualenv in any parent of %s" % HERE
 
 sitepackages_root = os.path.join(env_root, 'lib')
+assert os.path.exists(sitepackages_root), "no such dir %s" % sitepackages_root
 for d in os.listdir(sitepackages_root):
     if d.startswith('python'):
         site.addsitedir(os.path.join(sitepackages_root, d, 'site-packages'))
