@@ -35,7 +35,7 @@ def add_newsitem(seed_url, seed_name, url, article_headline, article_date, name_
     try:
         p = Page.objects.get(url=url)
     except Page.DoesNotExist:
-        html = UnicodeRetriever().get_html(url)
+        html = UnicodeRetriever().fetch_data(url)
         p = Page.objects.create(
             seed=s,
             url=url,
