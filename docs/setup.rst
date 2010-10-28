@@ -85,7 +85,20 @@ Then fetch some news from the web, this will take a few minutes::
 
 
 For testing random data you might also want to try
-``obdemo/bin/random_news.py 100``
-... where 100 is the number of random articles to generate.  You must
+``obdemo/bin/random_news.py 10``
+... where 10 is the number of random articles to generate.  You must
 first have some locations in the database; it will assign randomly
 generated local news articles to randomly chosen locations.
+
+Deployment
+==========
+
+For production deployment it's not generally recommended to run
+``manage.py runserver``.  Most people use apache and mod_wsgi.
+
+There's a suitable wsgi script at obdemo/wsgi/obdemo.wsgi.  As long as
+that script is somewhere within your virtualenv, it should work.
+
+For more information on configuring Apache and running Django apps
+under mod_wsgi, see
+http://docs.djangoproject.com/en/1.1/howto/deployment/modwsgi/

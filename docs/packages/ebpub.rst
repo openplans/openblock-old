@@ -4,16 +4,58 @@ ebpub
 
 Publishing system for block-specific news, as used by EveryBlock.com.
 
-LocationTypes / Locations
--------------------------
+Before you dive in, it's *highly* recommend you spend a little bit of time
+browsing around EveryBlock.com to get a feel for what this software does.
 
-A Location is a polygon that represents a geographic area, such as a specific
-neighborhood, ZIP code boundary or political boundary. Each Location has an
-associated LocationType (e.g., "neighborhood"). To add a Location to the
+Also, for a light conceptual background on some of this, particularly the
+data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
+here: http://blip.tv/file/1957362
+
+Settings
+--------
+
+ebpub requires a smorgasbord of eb-specific settings in your settings
+file. It's probably easiest to just start with the file
+ebpub/settings.py and tweak that (or import from it in your own
+settings file). The application won't work until you set the
+following:
+
+       DATABASE_USER
+       DATABASE_NAME
+       DATABASE_HOST
+       DATABASE_PORT
+       SHORT_NAME
+       PASSWORD_CREATE_SALT
+       PASSWORD_RESET_SALT
+       METRO_LIST
+       EB_MEDIA_ROOT
+       EB_MEDIA_URL
+       EB_DOMAIN
+       DEFAULT_MAP_CENTER_LON
+       DEFAULT_MAP_CENTER_LAT
+       DEFAULT_MAP_ZOOM
+
+======
+Models
+======
+
+Broadly speaking, the system requires two different types of data:
+geographic boundaries (Locations, Streets, Blocks and Intersections)
+and news (Schemas and NewsItems).
+
+Geographic Models
+==================
+
+LocationTypes / Locations
+--------------------------
+
+A ``Location`` is a polygon that represents a geographic area, such as a specific
+neighborhood, ZIP code boundary or political boundary. Each ``Location`` has an
+associated ``LocationType`` (e.g., "neighborhood"). To add a Location to the
 system, follow these steps:
 
     1. Create a row in the "db_locationtype" table that describes this
-       LocationType. See the LocationType model code in ebpub/db/models.py for
+       LocationType. See the LocationType model code in `ebpub/db/models.py` for
        information on the fields and what they mean.
 
     2. Get the Location's geographic representation (a set of
@@ -51,26 +93,26 @@ follow these steps:
        pre-made import scripts:
 
            * If you're using TIGER/Line data, you can use the script
-             ebpub/streets/blockimport/tiger/import_blocks.py.
+             ``ebpub/streets/blockimport/tiger/import_blocks.py.``
 
            * If you're using data from ESRI, you can use the script
-             ebpub/streets/blockimport/esri/importers/blocks.py.
+	     ``ebpub/streets/blockimport/esri/importers/blocks.py.``
 
            * If you're using data from another source, take a look at the
-             Block model in ebpub/streets/models.py for all of the required
+             Block model in ``ebpub/streets/models.py`` for all of the required
              fields.
 
 Streets and Intersections
--------------------------
+--------------------------
 
 The ebpub system maintains a separate table of each street in the city. Once
 you've populated the blocks, you can automatically populate the streets table
-by running the importer ebpub/streets/populate_streets.py.
+by running the importer ``ebpub/streets/populate_streets.py.``
 
 The ebpub system also maintains a table of each intersection in the city, where
 an intersection is defined as the meeting point of two streets. Just like
 streets, you can automatically populate the intersections table by running the
-code in ebpub/streets/populate_streets.py.
+code in ``ebpub/streets/populate_streets.py.``
 
 Streets and intersections are both necessary for various bits of the site to
 work, such as the "browse by street" navigation and the geocoder (which
@@ -79,43 +121,89 @@ supports the geocoding of intersections).
 Once you've got all of the above geographic boundary data imported, you can
 verify it on the site by going to /streets/ and /locations/.
 
-Schemas
--------
+NewsItems and Schemas
+======================
 
 Next, it's time to start adding news. The ebpub system is capable of handling
 many disparate types of news -- e.g., crime, photos and restaurant inspections.
-Each type of news is referred to as a Schema.
+Each type of news is referred to as a ``Schema``.
 
-To add a new Schema, add a row to the "db_schema" database table or use the
-Django database API. See the Schema model in ebpub/db/models.py for information
-on all of the fields.
+To add a new Schema, add a row to the "db_schema" database table or
+use the Django database API. See the ``Schema`` model in
+``ebpub/db/models.py`` for information on all of the fields.
 
 NewsItems
 ---------
 
-A NewsItem is broadly defined as "something with a date and a location." For
-example, it could be a building permit, a crime report or a photo. NewsItems
+A ``NewsItem`` is broadly defined as "something with a date and a location." For
+example, it could be a building permit, a crime report, or a photo. NewsItems
 are stored in the "db_newsitem" database table, and they have the following
 fields:
 
-    schema -- the associated Schema object
-    title -- the "headline"
-    description -- an optional blurb describing what happened
-    url -- an optional URL to another Web site
-    pub_date -- the date this NewsItem was added to the site
-    item_date -- the date of the object
-    location -- the location of the object (a GeoDjango GeometryField)
-    location_name -- a textual representation of the location
-    location_object -- an optional associated Location object
-    block -- an optional associated Block object
+    schema
+      the associated Schema object
 
-The difference between pub_date and item_date might be confusing. The
+    title
+      the "headline"
+
+    description
+      an optional blurb describing what happened
+
+    url
+      an optional URL to another Web site
+
+    pub_date
+      the date this NewsItem was added to the site
+
+    item_date
+      the date of the object
+
+    location
+      the location of the object (a GeoDjango GeometryField, usually a
+      Point)
+
+    location_name
+      a textual representation of the location, eg. an address or
+      place name
+
+    location_object
+      an optional associated Location object
+
+    block
+      an optional associated Block object
+
+    attributes
+      extensible metadata, described in the section on
+      `SchemaFields and Attributes`_.
+
+The difference between ``pub_date`` and ``item_date`` might be confusing. The
 distinction is intended for data sets where there's a lag in publishing or
 where the data is updated infrequently or irregularly. For example, on
 EveryBlock.com, Chicago crime data is published a week after it is reported,
 so a crime's item_date is the day of the crime report whereas the pub_date
 is the day the data was published to EveryBlock.com (generally seven days after
 the item_date).
+
+Similarly, ``location_object`` and ``location`` can be
+confusing. ``location_object`` is used rarely; a good use case would
+be some police blotter reports which don't provide precise location
+information for a news item other than which precinct it occurs in.
+In this case, you'd want a LocationType representing precincts,
+and a Location for each precinct; then, when creating a
+NewsItem, set its ``location_object`` to the relevant Location, and don't
+set ``location`` or ``block`` at all.  For a live example, see
+http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/
+
+
+NewsItemLocations
+------------------
+
+This model simply maps any number of NewsItems to any number of
+Locations. The rationale is that locations may overlap, so a NewsItem
+may be relevant in any number of places.  Normally you don't have to
+worry about this: there are database triggers that update this table
+whenever a NewsItem's location is set or updated.
+
 
 SchemaFields and Attributes
 ---------------------------
@@ -141,8 +229,11 @@ Schema, with an id of 5. Say, for each sale, you have the following
 information:
 
     address
+
     sale date
+
     sale price
+
     property type (single-family home, condo, etc.)
 
 The first two fields should go in NewsItem.location_name and NewsItem.item_date,
@@ -196,18 +287,22 @@ row with schema_id=5 will be the sale price.
 Lookups
 -------
 
-Now let's consider the "property type" data we have for each real estate sale
-NewsItem. We could store it as a varchar field (in which case we'd set
+Lookups are a normalized way to store attributes that have only a few
+possible values.
+
+Consider the "property type" data we have for each real estate sale
+NewsItem in the example above.
+We could store it as a varchar field (in which case we'd set
 real_name='varchar01') -- but that would cause a lot of duplication and
 redundancy, because there are only a couple of property types -- the set
 ['single-family', 'condo', 'land', 'multi-family']. To represent this set,
 we can use a Lookup -- a way to normalize the data.
 
-To do this, set SchemaField.is_lookup=True and make sure to use an 'int' column
+To do this, set ``SchemaField.is_lookup=True`` and make sure to use an 'int' column
 for SchemaField.real_name. Then, for each record, get or create a Lookup
-object (see the model in ebpub/db/models.py) that represents the data, and use
+object (see the model in ``ebpub/db/models.py``) that represents the data, and use
 the Lookup's id in the appropriate db_attribute column. The helper function
-Lookup.get_or_create_lookup() is a convenient shortcut here (see the
+``Lookup.get_or_create_lookup()`` is a convenient shortcut here (see the
 code/docstring of that function).
 
 Many-to-many Lookups
@@ -215,20 +310,20 @@ Many-to-many Lookups
 
 Sometimes a NewsItem has multiple values for a single attribute. For example, a
 restaurant inspection can have multiple violations. In this case, you can use a
-many-to-many Lookup. To do this, just set SchemaField.is_lookup=True as before,
-but use a varchar field for the SchemaField.real_name. Then, in the
+many-to-many Lookup. To do this, just set ``SchemaField.is_lookup=True`` as before,
+but use a varchar field for the ``SchemaField.real_name``. Then, in the
 db_attribute column, set the value to a string of comma-separated integers of
 the Lookup IDs.
 
 Charting and filtering lookups
 ------------------------------
 
-Set SchemaField.is_filter=True on a lookup SchemaField, and the detail page for
+Set ``SchemaField.is_filter=True`` on a lookup SchemaField, and the detail page for
 the NewsItem (newsitem_detail) will automatically link that field to a page
 that lists all of the other NewsItems in that Schema with that particular
 Lookup value.
 
-Set SchemaField.is_charted=True on a lookup SchemaField, and the detail page
+Set ``SchemaField.is_charted=True`` on a lookup SchemaField, and the detail page
 for the Schema (schema_detail) will include a chart of the top 10 lookup values
 in the last 30 days' worth of data. (This assumes aggregates are populated; see
 the Aggregates section below.)
@@ -303,4 +398,9 @@ Accounts
 This system uses a customized version of Django's User objects and authentication
 infrastructure. ebpub comes with its own User object and Django middleware that
 sets request.user to the User if somebody's logged in.
+
+
+
+
+
 
