@@ -22,7 +22,7 @@ def quick_dirty_fallback_geocode(addr, parse=True):
                 return point.x, point.y
             except:
                 x,y = None, None
-                sys.stderr.write("BOO internal geocoder failed on %r:\n" % addr)
+                sys.stderr.write(" DEBUG: internal geocoder failed on %r:\n" % addr)
                 log_exception()
                 # XXX Don't bother, external geocoding rarely gives us
                 # anything inside Boston now that we have decent

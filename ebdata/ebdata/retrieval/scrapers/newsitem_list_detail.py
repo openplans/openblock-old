@@ -178,7 +178,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
         if attributes is not None:
             ni.attributes = attributes
         self.num_added += 1
-        self.logger.info(u'Created NewsItem %s (total created in this scrape: %s)', ni.id, self.num_added)
+        self.logger.info(u'Created NewsItem %s: %s (total created in this scrape: %s)', schema.slug, ni.id, self.num_added)
         return ni
 
     @transaction.commit_on_success
