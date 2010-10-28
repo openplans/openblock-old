@@ -132,6 +132,6 @@ if __name__ == "__main__":
     from ebdata.retrieval import UnicodeRetriever
     from ebdata.textmining.treeutils import make_tree
     import sys
-    html = UnicodeRetriever().get_html(sys.argv[1])
+    html = UnicodeRetriever().fetch_data(sys.argv[1])
     lines = article_text(make_tree(html))
     print lines
