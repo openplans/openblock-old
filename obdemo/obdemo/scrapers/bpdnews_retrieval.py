@@ -24,7 +24,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
     url = 'http://www.bpdnews.com/feed/'
 
     def list_pages(self):
-        yield self.get_html(self.url)
+        yield self.fetch_data(self.url)
 
     def existing_record(self, record):
         kwargs = self.unique_fields(record)
