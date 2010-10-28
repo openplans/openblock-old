@@ -25,8 +25,14 @@ class BaseScraper(object):
         'Run the scraper.'
         raise NotImplementedError()
 
+    def fetch_data(self, *args, **kwargs):
+        return self.retriever.fetch_data(*args, **kwargs)
+
     def get_html(self, *args, **kwargs):
-        return self.retriever.get_html(*args, **kwargs)
+        """An alias for get_data().
+        For backward compatibility.
+        """
+        return self.fetch_data(*args, **kwargs)
 
     @classmethod
     def parse_html(cls, html):
