@@ -120,7 +120,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
 
 if __name__ == "__main__":
-    TESTING = True
+    TESTING = False
     if TESTING:
         from ebdata.retrieval import log_debug
         import pprint
