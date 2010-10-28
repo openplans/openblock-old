@@ -60,7 +60,7 @@ class SpecializedCrawler(object):
             return p
 
         try:
-            html = self.retriever.get_html(retrieval_url).strip()
+            html = self.retriever.fetch_data(retrieval_url).strip()
         except (RetrievalError, UnicodeDecodeError):
             return None
         if not html:
@@ -187,7 +187,7 @@ class PageAreaCrawler(SpecializedCrawler):
     ##################################################
 
     def update(self):
-        seed_html = self.retriever.get_html(self.seed_url)
+        seed_html = self.retriever.fetch_data(self.seed_url)
         for url in self.get_links(seed_html):
             self.save_page(url)
 
