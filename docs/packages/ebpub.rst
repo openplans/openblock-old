@@ -12,7 +12,7 @@ data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
 here: http://blip.tv/file/1957362
 
 Settings
---------
+========
 
 ebpub requires a smorgasbord of eb-specific settings in your settings
 file. It's probably easiest to just start with the file
@@ -43,11 +43,15 @@ Broadly speaking, the system requires two different types of data:
 geographic boundaries (Locations, Streets, Blocks and Intersections)
 and news (Schemas and NewsItems).
 
+.. _geomodels:
+
 Geographic Models
-==================
+=================
+
+.. _locations:
 
 LocationTypes / Locations
---------------------------
+-------------------------
 
 A ``Location`` is a polygon that represents a geographic area, such as a specific
 neighborhood, ZIP code boundary or political boundary. Each ``Location`` has an
@@ -55,7 +59,7 @@ associated ``LocationType`` (e.g., "neighborhood"). To add a Location to the
 system, follow these steps:
 
     1. Create a row in the "db_locationtype" table that describes this
-       LocationType. See the LocationType model code in `ebpub/db/models.py` for
+       LocationType. See the LocationType model code in ``ebpub/db/models.py`` for
        information on the fields and what they mean.
 
     2. Get the Location's geographic representation (a set of
@@ -72,6 +76,8 @@ system, follow these steps:
 
 You'll need to create at least one LocationType with the slug "neighborhoods",
 because that's hard-coded in various places throughout the application.
+
+.. _blocks:
 
 Blocks
 ------
@@ -121,8 +127,10 @@ supports the geocoding of intersections).
 Once you've got all of the above geographic boundary data imported, you can
 verify it on the site by going to /streets/ and /locations/.
 
+.. _newsitem-schemas:
+
 NewsItems and Schemas
-======================
+=====================
 
 Next, it's time to start adding news. The ebpub system is capable of handling
 many disparate types of news -- e.g., crime, photos and restaurant inspections.
@@ -341,6 +349,8 @@ You'll want to do this on a regular basis, depending on how often you update
 your data. Some parts of the site (such as charts) will not be visible until
 you populate the aggregates.
 
+.. _custom-look-feel:
+
 Site views/templates
 ====================
 
@@ -398,9 +408,4 @@ Accounts
 This system uses a customized version of Django's User objects and authentication
 infrastructure. ebpub comes with its own User object and Django middleware that
 sets request.user to the User if somebody's logged in.
-
-
-
-
-
 

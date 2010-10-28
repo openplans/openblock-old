@@ -60,7 +60,7 @@ Rendering map tiles
 ===================
 
 The `render_tiles' executable iterates over a number of zoom levels
-and renders the map tiles contained within.
+and renders the map tiles contained within.::
 
     Usage: render_tiles [<options>] /path/to/config <layername>
     

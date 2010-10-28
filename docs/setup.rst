@@ -36,6 +36,7 @@ Please drop a line to the `ebcode google group <http://groups.google.com/group/e
 
 If you are having trouble with the installation of a particular package, you may want to try installing it by hand or seeing if your distribution offers a prebuilt package.  If you rerun the installation process, it should skip over anything you've done yourself.
 
+
 Setting up the demo
 ===================
 

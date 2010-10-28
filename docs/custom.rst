@@ -8,15 +8,28 @@ Things You Will Need
 To get anything useful out of your site, at minimum you will need the following:
 
  1. A database of streets in your city; for example
-    TIGER/Line files from http://www.census.gov/geo/www/tiger/
+    TIGER/Line files from http://www.census.gov/geo/www/tiger/ .
+    See :ref:`blocks`.
 
  2. Shapefiles with areas of interest - for example,
     neighborhoods, zip codes etc.
+    See :ref:`locations`.
 
- 3. Sources of data and news to feed in.  If they are not RSS feeds, you will likely 
-    need to write scrapers to retrieve the data.
+ 3. Sources of news data to feed in.
 
-Feeding these into the database can be a bit of work at this point.  The obdemo/bin/bootstrap_demo.sh script does all this for the demo site and should serve as
+    a. Configure the system with schemas for them.
+       See the ebpub docs for :ref:`newsitem-schemas`.
+
+    b. Write scraper scripts to retrieve news from your news sources and load
+       it into the database. See :doc:`packages/ebdata`
+       and http://developer.openblockproject.org/wiki/ScraperScripts .
+
+ 4. Optionally, customize the look and feel of the site.
+    See the ebpub docs for :ref:`custom-look-feel`.
+
+Gathering all this data and feeding it into the database can be a bit
+of work at this point.  The ``obdemo/bin/bootstrap_demo.sh`` script
+does all this for the demo site with Boston data, and should serve as
 a decent example of how to do things in detail.
 
 Setting up the app

@@ -122,7 +122,8 @@ Contents
    :maxdepth: 1
    
    setup
-   packages/index.rst
+   packages/index
+   packages/ebpub
    custom
 
 ==================
