@@ -59,7 +59,7 @@ def main():
             status = "Added"
 
         try:
-            item.location_name = entry.get('xcal_x-calconnect-street')
+            item.location_name = entry.get('xcal_x-calconnect-street') or entry.get('x-calconnect-street')
             item.schema = schema
             item.title = convert_entities(entry.title)
             item.description = convert_entities(entry.description)
@@ -71,6 +71,17 @@ def main():
             if (item.location.x, item.location.y) == (0.0, 0.0):
                 print "Skipping %r, bad location 0,0" % item.title
                 continue
+
+            if not item.location_name:
+                # Fall back to reverse-geocoding.
+                from ebpub.geocoder import reverse
+                try:
+                    block, distance = reverse.reverse_geocode(item.location)
+                    print " Reverse-geocoded point to %r" % block.pretty_name
+                    item.location_name = block.pretty_name
+                except reverse.ReverseGeocodeError:
+                    print " Failed to reverse geocode %s for %r" % (item.location.wkt, item.title)
+                    item.location_name = u''
 
             item.save()
             if not options.quiet:
