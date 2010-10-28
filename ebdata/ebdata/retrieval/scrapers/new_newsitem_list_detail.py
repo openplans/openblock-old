@@ -8,12 +8,12 @@ import datetime
 class NewsItemListDetailScraper(BaseScraper):
     def get_page(self, *args, **kwargs):
         """
-        Calls NewsItemScraper's get_html method and returns an unsaved ``Page``
+        Calls NewsItemScraper's fetch_data method and returns an unsaved ``Page``
         object wrapping the html.
         """
         schema = kwargs.get('schema', None)
         schema = schema or self.schema
-        html = super(NewsItemListDetailScraper, self).get_html(*args, **kwargs)
+        html = super(NewsItemListDetailScraper, self).fetch_data(*args, **kwargs)
         return ScrapedPage(url=args[0], when_crawled=datetime.datetime.now(), html=html, schema=schema)
 
     def update_from_string(self, list_page):
