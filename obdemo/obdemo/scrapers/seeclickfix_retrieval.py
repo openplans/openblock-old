@@ -7,9 +7,8 @@ RANDOM DOC NOTES:
 """
 
 from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
-from ebdata.retrieval.scrapers.list_detail import StopScraping, SkipRecord
+from ebdata.retrieval.scrapers.list_detail import SkipRecord
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
-from ebdata.textmining.treeutils import preprocess_to_string
 from ebpub.db.models import NewsItem
 
 import datetime
@@ -99,10 +98,10 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
                       }
 
         result = dict(title=record['summary'],
-                      description=record['description'],
+                      description=record['description'] or u'',
                       item_date=item_date,
                       location=location,
-                      location_name=record['address'],
+                      location_name=record['address'] or u'', # maybe fall back to reverse-geocoding? Maybe the framework should do that?
                       url=url,
                       attributes=attributes,
                       )

@@ -70,7 +70,7 @@ def main(argv=None):
                     print " Failed to reverse geocode %s for %r" % (item.location.wkt, item.title)
                     item.location_name = u''
             item.save()
-            print "Added: %s" % item.title
+            print "Saved: %s" % item.title
         except:
             print "Warning: couldn't save %r. Traceback:" % item.title
             import cStringIO, traceback
