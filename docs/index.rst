@@ -38,7 +38,7 @@ Linux, OSX, or some other Unix flavor.
 * git
 
 For system-specific lists of packages to install, see
-    http://developer.openblockproject.org/wiki/InstallationRequirements
+http://developer.openblockproject.org/wiki/InstallationRequirements
 and let us know if your system isn't listed there!
 
 .. _quickstart:
@@ -50,7 +50,7 @@ Quickstart: Install and Set Up Demo Site
 These instructions will install the software in a similar configuration to 
 `the OpenBlock demo site <http://demo.openblockproject.org>`_ in an isolated 
 python environment using `virtualenv <http://pypi.python.org/pypi/virtualenv>`_.  
-For more detailed instructions, see :doc:`setup`::
+For more detailed instructions, see :doc:`setup`.
 
 First, create a location where you will install the software and check out the source::
 
@@ -64,7 +64,12 @@ and loads demonstration data (for Boston, MA) into the system::
 
  $ src/openblock/obdemo/bin/bootstrap_demo.sh
 
-Wait 10 minutes or so, then when it's finished, start the server from the root of your install::
+Wait 10 minutes or so; a lot of output will scroll by.
+If it finishes successfully, you should see a message like::
+
+ Demo bootstrap succeeded!
+
+Now you can start the server from the root of your install::
 
  $ ./manage.py runserver
 
@@ -73,7 +78,7 @@ http://localhost:8000
 
 If you encounter problems, double check that you have the basic system
 requirements installed and then try the step-by-step
-instructions in :doc:`setup`::
+instructions in :doc:`setup`
 
 If for any reason you need to run bootstrap_demo.sh again, eg. if
 you've got your system so broken that you want to start from scratch,
@@ -100,13 +105,13 @@ are the official `Django documentation <http://docs.djangoproject.com/>`_ and
 the free `Django Book <http://www.djangobook.com/>`_. Note that OpenBlock
 requires Django 1.2.
 
-Before you dive in, it's *highly* recommend you spend a little bit of
+Before you dive in, it's *highly* recommended you spend a little bit of
 time browsing around http://demo.openblockproject.org and/or
 http://EveryBlock.com to get a feel for what this software does.
 
-Also, for a light conceptual background on some of this, particularly the
-data storage aspect, watch the video "Behind the scenes of EveryBlock.com"
-here: http://blip.tv/file/1957362
+Also, for a light conceptual background on some of this, particularly
+the data storage aspect of :doc:`packages/ebpub`, watch the video "Behind the
+scenes of EveryBlock.com" here: http://blip.tv/file/1957362
 
 
 ========
@@ -118,13 +123,14 @@ Contents
    
    setup
    packages/index.rst
-   
+   custom
+
 ==================
 Indices and tables
 ==================
 
 
 * :ref:`search`
+
 .. * :ref:`genindex`
 .. * :ref:`modindex`
-
