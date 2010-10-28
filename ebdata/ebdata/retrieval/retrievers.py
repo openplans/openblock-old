@@ -95,6 +95,9 @@ class Retriever(object):
             except socket.error, e:
                 self.logger.debug("Got socket error: %s", e)
                 continue # Try again.
+            except AttributeError, e:
+                self.logger.debug("Got httplib bug where socket is None: %s", e)
+                continue # Try again
             except httplib2.ServerNotFoundError:
                 raise RetrievalError("Could not %s %r: server not found" % (method, uri))
         if resp_headers is None:
