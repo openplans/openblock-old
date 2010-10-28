@@ -52,8 +52,8 @@ Activate your virtualenv::
 
 Now you can set up the database::
 
-    $ sudo -u postgres oblock setup_dbs
-    $ oblock sync_all
+    $ sudo -u postgres bin/oblock setup_dbs
+    $ bin/oblock sync_all
 
 Starting the Test Server
 ------------------------
@@ -67,7 +67,7 @@ Loading Demo Data
 -----------------
 
 OpenBlock is pretty boring without data!  You'll want to load some
-geographic data and some local news.
+:ref:`geographic data <locations>`) and some local news.
 
 First you'll want to load Boston geographies. This will take several minutes::
 
@@ -76,7 +76,7 @@ First you'll want to load Boston geographies. This will take several minutes::
   $ obdemo/bin/import_boston_hoods.sh
   $ obdemo/bin/import_boston_blocks.sh
 
-Then bootstrap some news item schema definitions::
+Then bootstrap some news item :ref:`schema definitions <newsitem-schemas>`::
 
   $ obdemo/bin/add_boston_news_schemas.sh
 
@@ -88,18 +88,13 @@ Then fetch some news from the web, this will take a few minutes::
 For testing random data you might also want to try
 ``obdemo/bin/random_news.py 10``
 ... where 10 is the number of random articles to generate.  You must
-first have some locations in the database; it will assign randomly
-generated local news articles to randomly chosen locations.
+first have some blocks in the database; it will assign randomly
+generated local news articles to randomly chosen blocks.
 
 Deployment
 ==========
 
-For production deployment it's not generally recommended to run
-``manage.py runserver``.  Most people use apache and mod_wsgi.
-
-There's a suitable wsgi script at obdemo/wsgi/obdemo.wsgi.  As long as
-that script is somewhere within your virtualenv, it should work.
-
-For more information on configuring Apache and running Django apps
-under mod_wsgi, see
+Most people use apache and mod_wsgi for deploying Django apps.
+If you're deploying obdemo, there's a suitable wsgi script at
+obdemo/wsgi/obdemo.wsgi.  Otherwise, see
 http://docs.djangoproject.com/en/1.1/howto/deployment/modwsgi/
