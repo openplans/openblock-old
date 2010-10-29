@@ -2,7 +2,7 @@
 ebgeo
 =====
 
-The eb map system. The ebgeo package provides a `maps' 
+The eb map system. The ebgeo package provides a ``maps``
 subpackage for rendering and serving map tiles with Mapnik.
 
 Requirements
@@ -30,11 +30,11 @@ water, etc.) with attributes (i.e., road types, areas of parks, names
 and labels, etc.) that Mapnik queries and, combined with styles
 defined in the Mapnik XML format, represents in the graphical output
 of the rendering engine. There are two main freely available sources
-of streets data, TIGER/Line_ (produced by the Census for U.S. streets)
+of streets data, TIGER-Line_ (produced by the Census for U.S. streets)
 and OpenStreetMap_ (a user-contributed database of streets
 world-wide).
 
-.. _TIGER/Line: http://www.census.gov/geo/www/tiger/
+.. _TIGER-Line: http://www.census.gov/geo/www/tiger/
 .. _OpenStreetMap: http://www.openstreetmap.org/
 
 Geospatial data
@@ -59,7 +59,7 @@ you should place your Mapnik style XML files.
 Rendering map tiles
 ===================
 
-The `render_tiles' executable iterates over a number of zoom levels
+The ``render_tiles`` executable iterates over a number of zoom levels
 and renders the map tiles contained within.::
 
     Usage: render_tiles [<options>] /path/to/config <layername>
@@ -94,7 +94,7 @@ box of a city defined in your application. The value of -c is the slug
 that represents that city. (See ebpub.metros)
 
 The -n options allows you to spread rendering over multiple CPUs,
-utilizing the great Python package `processing.'
+utilizing the great Python package ``processing.``
 
 Dynamic map tiles
 =================

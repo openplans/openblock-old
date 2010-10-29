@@ -13,10 +13,9 @@ and updates the database
 """
 
 import sys, feedparser, datetime
-from optparse import OptionParser
+import logging
 
 from django.contrib.gis.geos import Point
-
 from ebpub.db.models import NewsItem, Schema
 
 # Note there's an undocumented assumption in ebdata that we want to
@@ -24,27 +23,21 @@ from ebpub.db.models import NewsItem, Schema
 # to do this if we used the scraper framework in ebdata?
 from ebdata.retrieval.utils import convert_entities
 
+logger = logging.getLogger()
+
 def main():
     """ Download Calendar RSS feed and update database """
-
+    logger.info("Starting add_events")
     url = """http://calendar.boston.com/search?acat=&cat=&commit=Search\
 &new=n&rss=1&search=true&sort=0&srad=20&srss=50&ssrss=5&st=event\
 &st_select=any&svt=text&swhat=&swhen=today&swhere=&trim=1"""
     schema = 'events'
 
-    parser = OptionParser()
-    parser.add_option('-q', '--quiet', action="store_true", dest="quiet",
-        default=False, help="no output")
-
-    (options, args) = parser.parse_args()
-
-    if len(args) > 0:
-        return parser.error('script does not take any arguments')
 
     try:
         schema = Schema.objects.get(slug=schema)
     except Schema.DoesNotExist:
-        print "Schema (%s): DoesNotExist" % schema
+        logger.error("Schema (%s): DoesNotExist" % schema)
         sys.exit(1)
 
     feed = feedparser.parse(url)
@@ -69,7 +62,7 @@ def main():
             item.location = Point((float(entry['geo_long']),
                                    float(entry['geo_lat'])))
             if (item.location.x, item.location.y) == (0.0, 0.0):
-                print "Skipping %r, bad location 0,0" % item.title
+                logger.warn("Skipping %r, bad location 0,0" % item.title)
                 continue
 
             if not item.location_name:
@@ -77,18 +70,17 @@ def main():
                 from ebpub.geocoder import reverse
                 try:
                     block, distance = reverse.reverse_geocode(item.location)
-                    print " Reverse-geocoded point to %r" % block.pretty_name
+                    logger.info(" Reverse-geocoded point to %r" % block.pretty_name)
                     item.location_name = block.pretty_name
                 except reverse.ReverseGeocodeError:
-                    print " Failed to reverse geocode %s for %r" % (item.location.wkt, item.title)
+                    logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, item.title))
                     item.location_name = u''
 
             item.save()
-            if not options.quiet:
-                print "%s: %s" % (status, item.title)
+            logger.info("%s: %s" % (status, item.title))
         except ValueError:
-            if not options.quiet:
-                print "unexpected error:", sys.exc_info()[1]
+            logger.debug("unexpected error:", sys.exc_info()[1])
+    logger.info("add_events finished")
 
 if __name__ == '__main__':
     sys.exit(main())

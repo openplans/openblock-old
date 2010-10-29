@@ -1,11 +1,3 @@
-"""
-RANDOM DOC NOTES:
-
-- read docstrings in ebdata.retrieval.scrapers.list_detail for more
-  implementation info on this type of scraper
-
-"""
-
 from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
 from ebdata.retrieval.scrapers.list_detail import SkipRecord
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
@@ -32,7 +24,6 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
     has_detail = True
 
     def list_pages(self):
-        self.logger.debug('wheee!')
         # Fetch the feed, paginating if necessary.
         # See API docs at
         # http://help.seeclickfix.com/faqs/api/listing-issues
@@ -44,7 +35,6 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
         # to be precise, but to get everything we haven't seen yet and
         # not much that we have seen. So we'll discard microseconds
         # and round up.
-
         delta = datetime.datetime.now() - self.last_updated_time()
         hours_ago = math.ceil((delta.seconds / 3600.0) + (delta.days * 24))
         for page in range(1, max_pages + 1):
@@ -82,7 +72,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
     def clean_detail_record(self, record):
         location = self.get_location(record)
-        # XXX try self.safe_location? see newsitem_list_detail
+        # TODO: try self.safe_location? see newsitem_list_detail
 
         # This is a common error in some data sources we've seen...
         if location and (location.x == 0.0 and location.y == 0.0):
@@ -109,10 +99,6 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
 
     def save(self, old_record, list_record, detail_record):
-        # if old_record is not None:
-        #     self.logger.info("Skipping, we've already seen %s" % old_record)
-        #     return #raise StopScraping()
-
         attributes = detail_record.pop('attributes', None)
         self.create_or_update(old_record, attributes, **detail_record)
 
