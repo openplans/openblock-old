@@ -6,6 +6,7 @@ from django.contrib.gis.gdal import OGRException
 from django.contrib.gis.gdal import OGRGeomType
 from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.template import loader
+from ebpub.db.models import Attribute
 from ebpub.db.models import Location
 from ebpub.db.models import LocationType
 from ebpub.db.models import NewsItem
@@ -207,6 +208,7 @@ class LocationAdmin(OSMModelAdmin):
 admin.site.register(Schema)
 admin.site.register(SchemaField)
 admin.site.register(SchemaInfo)
+admin.site.register(Attribute)
 admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(LocationType)
 admin.site.register(Location, LocationAdmin)
