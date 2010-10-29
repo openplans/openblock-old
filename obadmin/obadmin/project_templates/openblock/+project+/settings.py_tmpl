@@ -17,7 +17,7 @@ DEBUG = True
 
 DATABASES = {
     'users': {
-        'NAME': 'openblock',
+        'NAME': 'openblock_${project}',
         'USER': 'openblock',
         'PASSWORD': 'openblock',
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -27,7 +27,7 @@ DATABASES = {
         'TEST_NAME': 'test_openblock_users'
     },
     'metros': {
-        'NAME': 'openblock',
+        'NAME': 'openblock_${project}',
         'USER': 'openblock',
         'PASSWORD': 'openblock',
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -37,7 +37,7 @@ DATABASES = {
         'TEST_NAME': 'test_openblock_metros'
     },
     'default': {
-        'NAME': 'openblock',
+        'NAME': 'openblock_${project}',
         'USER': 'openblock',
         'PASSWORD': 'openblock',
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
