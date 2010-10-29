@@ -40,6 +40,8 @@ If you are having trouble with the installation of a particular package, you may
 Setting up the demo
 ===================
 
+If you want to create a new project immediately, you can now skip to :doc:`custom`.
+
 Optionally, you can edit the demo's django settings at this point. 
 It's a good idea to look at it, at least to get an idea of what can be
 configured::

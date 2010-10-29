@@ -2,6 +2,48 @@
 Creating a Custom Site Based on OpenBlock
 ==========================================
 
+Setting up the app
+==================
+
+Begin by following :ref:`the steps to install the base software <baseinstall>`
+
+Next, make sure your environment is activated and then do the following to create 
+a new openblock project.  **Note**: Your project name should be suitable for use as a python
+module name; ie no spaces etc.  Here we assume the project name is `myblock`::
+
+    $ source bin/activate
+    $ cd src
+    $ paster create -t openblock myblock
+
+After answering a few questions, this will create a bare-bones project in the folder you 
+specified.  Next, install the project into your environment::
+
+    $ cd myblock
+    $ python ./setup.py develop
+    ...
+
+Your django settings are located in settings.py within your project.  You should review these
+and make adjustments based on your setup::
+
+    $ <favorite_editor> myblock/settings.py
+    ...
+    
+Now you can use the openblock command line to create and sync your database.  **Note** the setup_dbs command will only work for a local database.  You will need to create any referenced databases and load postgis by hand otherwise.::
+
+    $ cd ../../
+    $ sudo -u postgres bin/oblock app=myblock setup_dbs
+    $ oblock app=myblock sync_all
+
+Starting the Test Server
+------------------------
+
+Run django's test server using your project's settings and visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)::
+
+    $ django-admin.py runserver --settings=myblock.settings
+    ...
+    Development server is running at http://127.0.0.1:8000/
+
+
 Things You Will Need
 ====================
 
@@ -32,19 +74,11 @@ of work at this point.  The ``obdemo/bin/bootstrap_demo.sh`` script
 does all this for the demo site with Boston data, and should serve as
 a decent example of how to do things in detail.
 
-Setting up the app
-==================
 
-Begin by following :ref:`the steps to install the base software <baseinstall>`
-
-    b. If they are not available as RSS feeds, you will need to write scraper scripts to retrieve your news sources and feed the data in. See :doc:`packages/ebdata` and http://developer.openblockproject.org/wiki/ScraperScripts
-
-For more details, see :doc:`packages/ebpub`
+Additional Resources
+====================
 
 For more documentation (in progress), see also:
     * http://developer.openblockproject.org/wiki/Data
     * http://developer.openblockproject.org/wiki/Ideal%20Feed%20Formats
 
-The obdemo/bin/bootstrap_demo.sh script does all this for the demo
-site.  You can dive into the other scripts that it calls to get more
-details on how it all works.

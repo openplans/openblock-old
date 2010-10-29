@@ -211,7 +211,7 @@ def install_app(options):
 @needs('install_app')
 def post_bootstrap(options):
     # we expect this task is run automatically by our bootstrap.py script.
-    print "Once you like your settings, run 'sudo -u postgres bin/oblock setup_dbs'"
+    print "Once you like your settings, run 'sudo -u postgres bin/oblock app=%s setup_dbs'" % options.app
 
 def find_postgis(options):
     file_sets = (
@@ -275,14 +275,15 @@ def _distinct_users(settings):
 
 @task
 def sync_all(options):
-    manage = os.path.join(options.env_root, 'manage.py')
+    
+    settings_mod = "%s.settings" % options.app
     settings = get_app_settings(options)
     for dbname in settings.DATABASE_SYNC_ORDER:
-        sh("%s syncdb --database=%s --noinput" % (manage, dbname))
+        sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
     for dbname in settings.DATABASES.keys():
         if dbname not in settings.DATABASE_SYNC_ORDER:
-            sh("%s syncdb --database=%s --noinput" % (manage, dbname))
+            sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
 @task
 @needs('create_database_users')
@@ -294,7 +295,7 @@ def setup_dbs(options):
     settings = get_app_settings(options)
     for dbinfo in _distinct_dbs(settings):
         _setup_db(options, settings, dbinfo)
-    print "Success! Now run 'oblock sync_all'"
+    print "Success! Now run 'oblock app=%s sync_all'" % options.app
 
 def _setup_db(options, settings, dbinfo):
     conn_params = get_conn_params(dbinfo)
