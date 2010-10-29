@@ -3,7 +3,7 @@ import datetime
 import logging
 
 class ScraperBroken(Exception):
-    "Something changed in the underlying HTML and broke the scraper."
+    "Something changed in the underlying data format and broke the scraper."
     pass
 
 class BaseScraper(object):
@@ -29,7 +29,7 @@ class BaseScraper(object):
         return self.retriever.fetch_data(*args, **kwargs)
 
     def get_html(self, *args, **kwargs):
-        """An alias for get_data().
+        """An alias for fetch_data().
         For backward compatibility.
         """
         return self.fetch_data(*args, **kwargs)
