@@ -48,27 +48,27 @@ class Schema(models.Model):
     slug = models.CharField(max_length=32, unique=True)
     min_date = models.DateField() # the earliest available NewsItem.pub_date for this Schema
     last_updated = models.DateField()
-    date_name = models.CharField(max_length=32) # human-readable name for the NewsItem.item_date field
-    date_name_plural = models.CharField(max_length=32)
-    importance = models.SmallIntegerField() # bigger number is more important
-    is_public = models.BooleanField(db_index=True)
-    is_special_report = models.BooleanField()
+    date_name = models.CharField(max_length=32, default='Date') # human-readable name for the NewsItem.item_date field
+    date_name_plural = models.CharField(max_length=32, default='Dates')
+    importance = models.SmallIntegerField(default=0) # bigger number is more important
+    is_public = models.BooleanField(db_index=True, default=False)
+    is_special_report = models.BooleanField(default=False)
 
     # whether RSS feed should collapse many of these into one
-    can_collapse = models.BooleanField()
+    can_collapse = models.BooleanField(default=False)
 
     # whether a newsitem_detail page exists for NewsItems of this Schema
-    has_newsitem_detail = models.BooleanField()
+    has_newsitem_detail = models.BooleanField(default=False)
 
     # whether aggregate charts are allowed for this Schema
-    allow_charting = models.BooleanField()
+    allow_charting = models.BooleanField(default=False)
 
     # whether attributes should be preloaded for NewsItems of this
     # Schema, in the list view
-    uses_attributes_in_list = models.BooleanField()
+    uses_attributes_in_list = models.BooleanField(default=False)
 
     # number of records to show on place_overview
-    number_in_overview = models.SmallIntegerField()
+    number_in_overview = models.SmallIntegerField(default=5)
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
