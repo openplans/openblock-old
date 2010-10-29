@@ -1,6 +1,9 @@
-from ebpub.geocoder import AmbiguousResult
+from ebpub.geocoder.base import AmbiguousResult
+from ebpub.geocoder.base import GeocodingException
+
 from utils import log_exception
-import sys
+import logging
+logger = logging.getLogger()
 
 def quick_dirty_fallback_geocode(addr, parse=True):
     """
@@ -18,12 +21,12 @@ def quick_dirty_fallback_geocode(addr, parse=True):
             try:
                 result = SmartGeocoder().geocode(addr)
                 point = result['point']
-                print "YAY internally geocoded %r" % addr
+                logger.debug("internally geocoded %r" % addr)
                 return point.x, point.y
             except:
                 x,y = None, None
-                sys.stderr.write(" DEBUG: internal geocoder failed on %r:\n" % addr)
-                log_exception()
+                logger.debug("internal geocoder failed on %r:\n" % addr)
+                log_exception(level=logging.DEBUG)
                 # XXX Don't bother, external geocoding rarely gives us
                 # anything inside Boston now that we have decent
                 # blocks data.  But I want to preserve this script for
@@ -31,7 +34,7 @@ def quick_dirty_fallback_geocode(addr, parse=True):
                 # more generally
                 continue
             if None in (x, y):
-                # XXX log something
+                logger.debug("Internal geocoder failed; trying others")
                 # Other geocoders need to know the city
                 addr += ', Boston, MA'
                 from geopy import geocoders
@@ -39,7 +42,7 @@ def quick_dirty_fallback_geocode(addr, parse=True):
                 import urllib2
                 try:
                     for unused, (lat, lon) in g.geocode(addr, exactly_one=False):
-                        print "YAY google geocoded %r" % addr
+                        logger.debug("google geocoded %r" % addr)
                         return (lon, lat)
                 except urllib2.HTTPError:
                     # Rate throttled? Try another.
@@ -49,11 +52,10 @@ def quick_dirty_fallback_geocode(addr, parse=True):
                     pass
                 us = geocoders.GeocoderDotUS()
                 for unused, (lat, lon) in us.geocode(addr, exactly_one=False):
-                    print "YAY geocoder.us geocoded %r" % addr
+                    logger.debug("geocoder.us geocoded %r" % addr)
                     return (lon, lat)
         except:
-            sys.stderr.write( '===== uncaught geocoder exception on %r\n' % addr)
+            logger.error('uncaught geocoder exception on %r\n' % addr)
             log_exception()
-            sys.stderr.write('======================\n')
 
     return None, None

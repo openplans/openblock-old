@@ -122,5 +122,5 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
                     )
 
 if __name__ == "__main__":
-    from ebdata.retrieval import log_debug
+    #from ebdata.retrieval import log_debug
     BPDNewsFeedScraper().update()
