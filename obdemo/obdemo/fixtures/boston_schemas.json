@@ -43,7 +43,7 @@
   }, 
   {
     "fields": {
-      "is_special_report": true, 
+      "is_special_report": false, 
       "plural_name": "Boston Police Department reports", 
       "last_updated": "2010-10-21", 
       "name": "Boston Police Department report", 
