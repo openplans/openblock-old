@@ -45,7 +45,7 @@ Run django's test server using your project's settings and visit http://127.0.0.
 
 To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
 
-    $ django-admin.py createsuperuser
+    $ django-admin.py createsuperuser --settings=myblock.settings
     ...
     
 You can now log into your openblock instance and visit the administrative site at http://127.0.0.1:8000/admin/
