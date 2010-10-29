@@ -27,7 +27,7 @@ and make adjustments based on your setup::
 
     $ <favorite_editor> myblock/settings.py
     ...
-    
+
 Now you can use the openblock command line to create and sync your database.  **Note** the setup_dbs command will only work for a local database.  You will need to create any referenced databases and load postgis by hand otherwise.::
 
     $ cd ../../
@@ -42,6 +42,13 @@ Run django's test server using your project's settings and visit http://127.0.0.
     $ django-admin.py runserver --settings=myblock.settings
     ...
     Development server is running at http://127.0.0.1:8000/
+
+To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
+
+    $ django-admin.py createsuperuser --settings=myblock.settings
+    ...
+    
+You can now log into your openblock instance and visit the administrative site at http://127.0.0.1:8000/admin/
 
 
 Things You Will Need
