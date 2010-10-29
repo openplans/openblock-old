@@ -192,6 +192,22 @@
   {
     "fields": {
       "grab_bag_headline": "", 
+      "short_source": "http://www.bpdnews.com",
+      "summary": "Boston Police Department reports", 
+      "source": "http://www.bpdnews.com",
+      "intro": "", 
+      "update_frequency": "", 
+      "short_description": "List of Boston Police Department reports", 
+      "grab_bag": "", 
+      "schema": [
+        "police-reports"
+      ]
+    }, 
+    "model": "db.schemainfo"
+  }, 
+  {
+    "fields": {
+      "grab_bag_headline": "", 
       "short_source": "http://seeclickfix.com", 
       "summary": "SeeClickFix Issues", 
       "source": "http://seeclickfix.com", 

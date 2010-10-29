@@ -24,6 +24,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
     schema_slugs = ('police-reports',)
     has_detail = False
 
+    # Can't find a way to specify number of items.
     url = 'http://www.bpdnews.com/feed/'
 
     def list_pages(self):
@@ -101,7 +102,6 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
             location_name = location['address']
             block = location['block']
             location = location['point']
-            import pdb; pdb.set_trace()
             break
         else:
             self.logger.info("no addresses geocoded in %r" % list_record['title'])
