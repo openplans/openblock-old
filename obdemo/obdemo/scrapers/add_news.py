@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 # encoding: utf-8
+
+"""A quick-hack news scraper script for Boston; consumes RSS feeds.
+"""
+
 import datetime
 import feedparser
 import logging
@@ -12,9 +16,7 @@ from geocoder_hack import quick_dirty_fallback_geocode
 from utils import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
-# unescape html before putting it in the db.  Maybe wouldn't have
-# to do this if we used the scraper framework in ebdata?
-# ... nope, you have to clean up manually.
+# unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
 
 logger = logging.getLogger()
@@ -25,35 +27,39 @@ def main(argv=None):
         url = argv[0]
     else:
         url = 'http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=massachusetts&scope=bonzai'
-    schema = 'local-news'
+    schema_slug = 'local-news'
 
     try:
-        schema = Schema.objects.get(slug=schema)
+        schema = Schema.objects.get(slug=schema_slug)
     except Schema.DoesNotExist:
-        print "Schema (%s): DoesNotExist" % schema
+        print "Schema (%s): DoesNotExist" % schema_slug
         sys.exit(1)
 
     f = feedparser.parse(url)
 
-    for e in f.entries:
+    for entry in f.entries:
         try:
-            item = NewsItem.objects.get(title=e.title, description=e.description)
+            item = NewsItem.objects.get(title=entry.title, description=entry.description)
             print "Already have %r (id %d)" % (item.title, item.id)
         except NewsItem.DoesNotExist:
             item = NewsItem()
         try:
             item.schema = schema
-            item.title = convert_entities(e.title)
-            item.description = convert_entities(e.description)
-            item.url = e.link
-            item.location_name = e.get('x-calconnect-street') or e.get('georss_featurename')
-            item.item_date = datetime.datetime(*e.updated_parsed[:6])
-            item.pub_date = datetime.datetime(*e.updated_parsed[:6])
-            if 'point' in e:
-                x,y = e.point.split(' ')
-            elif 'georss_point' in e:
-                x,y = e.georss_point.split(' ')
+            item.title = convert_entities(entry.title)
+            item.description = convert_entities(entry.description)
+            item.url = entry.link
+            item.location_name = entry.get('x-calconnect-street') or entry.get('georss_featurename')
+            item.item_date = datetime.datetime(*entry.updated_parsed[:6])
+            item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
+
+            # feedparser bug: depending on which parser it magically uses,
+            # we either get the xml namespace in the key name, or we don't.
+            if 'point' in entry:
+                x,y = entry.point.split(' ')
+            elif 'georss_point' in entry:
+                x,y = entry.georss_point.split(' ')
             else:
+                # Fall back on geocoding.
                 text = item.title + ' ' + item.description
                 try:
                     x, y = quick_dirty_fallback_geocode(text, parse=True)
