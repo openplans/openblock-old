@@ -114,7 +114,7 @@ class ListDetailScraper(BaseScraper):
         """
         self.num_skipped = 0
 
-        self.logger.info("update() started")
+        self.logger.info("update() in %s started" % str(self.__class__))
         try:
             for page in self.list_pages():
                 self.update_from_string(page)
@@ -200,6 +200,8 @@ class ListDetailScraper(BaseScraper):
 
         Usually, this will only yield a single string, but it might yield
         multiple pages if the list is paginated.
+
+        Subclasses need to override this.
         """
         raise NotImplementedError()
 
@@ -208,7 +210,7 @@ class ListDetailScraper(BaseScraper):
         Given the full HTML of a list page, yields a dictionary of data for
         each record on the page.
 
-        You can either implement this method or define a parse_list_re
+        You must either override this method, or define a parse_list_re
         attribute. If you define a parse_list_re attribute, it should be set
         to a compiled regular-expression that finds all the records on a list
         page and uses named groups.
@@ -264,6 +266,8 @@ class ListDetailScraper(BaseScraper):
         the existing record from the data store, if it exists.
 
         If an existing record doesn't exist, this should return None.
+
+        Subclasses must override this.
         """
         raise NotImplementedError()
 
@@ -272,6 +276,8 @@ class ListDetailScraper(BaseScraper):
         Given a cleaned list record and the old record (which might be None),
         returns True if the scraper should download the detail page for this
         record.
+
+        If has_detail is True, subclasses must override this.
         """
         raise NotImplementedError()
 
@@ -279,6 +285,8 @@ class ListDetailScraper(BaseScraper):
         """
         Given a cleaned list record as returned by clean_list_record, retrieves
         and returns the HTML for the record's detail page.
+
+        If has_detail is True, subclasses must override this.
         """
         raise NotImplementedError()
 
@@ -287,10 +295,11 @@ class ListDetailScraper(BaseScraper):
         Given the full HTML of a detail page, returns a dictionary of data for
         the record represented on that page.
 
-        You can either implement this method or define a parse_detail_re
-        attribute. If you define a parse_detail_re attribute, it should be set
-        to a compiled regular-expression that parses the record on a detail
-        page and uses named groups.
+        If has_detail is True, you must either implement this method
+        or define a parse_detail_re attribute. If you define a
+        parse_detail_re attribute, it should be set to a compiled
+        regular-expression that parses the record on a detail page and
+        uses named groups.
         """
         if self.parse_detail_re is not None:
             m = self.parse_detail_re.search(page)
@@ -308,6 +317,8 @@ class ListDetailScraper(BaseScraper):
         necessary cleanup of the data and returns a dictionary.
 
         For example, this could convert date strings to datetime objects.
+
+        Overriding is optional; the default does nothing.
         """
         return record
 
@@ -318,12 +329,16 @@ class ListDetailScraper(BaseScraper):
         If a subclass implements this, it should return either an
         instance of django.contrib.gis.geos.geometry.GEOSGeometry (or
         a subclass), or None if no geometries are found.
+
+        Implementing this is optional; scrapers that define it must
+        call it explicitly.
         """
         raise NotImplementedError()
 
     def save(self, old_record, list_record, detail_record):
         """
         Saves the given record to storage.
+        Subclasses must override this.
 
         list_record and detail_record are both dictionaries representing the
         data from the list page and detail page, respectively. If the scraped
@@ -363,10 +378,15 @@ class RssListDetailScraper(ListDetailScraper):
         return self.fetch_data(record['link'])
 
     def get_location(self, record):
-        """Try both flavors of georss and geo attributes.
+        """Try both flavors of georss and geo attributes, as well as
+        some other common non-standard conventions.
 
         Locations with both lat = 0 and lon = 0 are assumed to be bad; we
         return None for those.
+
+        This is not called automatically; if you want to use it, your
+        scraper should do ``newsitem.location = self.get_location(record)``
+        sometime prior to ``self.save()``.
         """
         # This tries to work around feedparser bugs where depending on
         # whether you get a loose or strict parser, you might or might
@@ -375,28 +395,38 @@ class RssListDetailScraper(ListDetailScraper):
         # TODO: support other geometry types as per
         # http://www.georss.org/simple ... so far only handles Point.
 
-        if record.has_key('gml_point'):
+        if 'gml_point' in record:
             # Looks like georss gml.
             lat, lon = record['gml_pos'].split()
-        elif record.has_key('point'):
+        elif 'point' in record:
             # Unfortunately, with broken namespace handling, this
             # might be georss_simple or georss gml. Try both.
-            if record.has_key('where') and record.has_key('pos'):
+            if 'where' in record and 'pos' in record:
+                # It's GML.
                 lat, lon = record['pos'].split()
             else:
                 lat, lon = record['point'].split()
-        elif record.has_key('georss_point'):
+        elif 'georss_point' in record:
             # It's georss simple.
             lat, lon = record['georss_point'].split()
-        elif record.has_key('geo_lat'):
+        elif 'geo_lat' in record:
             # It's the rdf geo namespace.
-            lat = record['geo_lat']
-            lon = record['geo_lon']
-        elif record.has_key('lat'):
-            # It's geo with broken namespace handling.
-            lat = record['lat']
-            lon = record['lon']
+            lat, lon = record['geo_lat'], record['geo_lon']
+        elif 'lat' in record:
+            if 'lon' in record:
+                # It's geo with broken namespace handling.
+                lat, lon = record['lat'], record['lon']
+            elif 'lng' in record:
+                # This is not a standard AFAIK, but I've seen it eg. in
+                # seeclickfix issues json.
+                lat, lon = record['lat'], record['lng']
+        elif 'latitude' in record:
+            # Another common non-standard convention.
+            lat, lon = record['latitude'], record['longitude']
         else:
+            self.logger.debug(
+                "no known geometry types found in record %s"
+                % record)
             return None
         lat, lon = float(lat), float(lon)
         if (lat, lon) == (0.0, 0.0):
