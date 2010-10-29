@@ -122,9 +122,11 @@ Contents
    :maxdepth: 1
    
    setup
+   custom
+   schemas
    packages/index
    packages/ebpub
-   custom
+
 
 ==================
 Indices and tables

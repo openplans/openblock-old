@@ -68,7 +68,7 @@ To get anything useful out of your site, at minimum you will need the following:
  3. Sources of news data to feed in.
 
     a. Configure the system with schemas for them.
-       See the ebpub docs for :ref:`newsitem-schemas`.
+       See :doc:`schemas` and ebpub docs for :ref:`newsitem-schemas`
 
     b. Write scraper scripts to retrieve news from your news sources and load
        it into the database. See :doc:`packages/ebdata`

@@ -213,6 +213,8 @@ worry about this: there are database triggers that update this table
 whenever a NewsItem's location is set or updated.
 
 
+.. _ebpub-schemas:
+
 SchemaFields and Attributes
 ---------------------------
 
