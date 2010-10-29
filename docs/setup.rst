@@ -65,11 +65,21 @@ A django manage.py should have been created in the root of your install.  Run it
   $ ./manage.py runserver
 
 
+.. _demodata: 
+
 Loading Demo Data
 -----------------
 
 OpenBlock is pretty boring without data!  You'll want to load some
-:ref:`geographic data <locations>`) and some local news.
+:ref:`geographic data <locations>`) and some local news.  We've included
+some example data and loaders you can use to start with if you don't have
+all of your data on hand yet.
+
+Set your DJANGO_SETTINGS_MODULE before you begin.  If you are loading the 
+data into a different project, set this variable accordingly -- e.g. myblock.settings 
+instead of obdemo.settings::
+
+  $ export DJANGO_SETTINGS_MODULE=obdemo.settings
 
 First you'll want to load Boston geographies. This will take several minutes::
 

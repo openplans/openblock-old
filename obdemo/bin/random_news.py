@@ -8,7 +8,8 @@ import uuid
 
 import os
 if not os.environ.get('DJANGO_SETTINGS_MODULE'):
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'obdemo.settings'
+    print "Please set DJANGO_SETTINGS_MODULE to your projects settings module"
+    sys.exit(1)
 
 from ebpub.db.models import NewsItem, Schema
 from ebpub.streets.models import Block

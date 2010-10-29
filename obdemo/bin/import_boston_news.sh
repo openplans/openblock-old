@@ -4,13 +4,15 @@ HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
 SOURCE_ROOT=`cd $HERE/../.. && pwd`
 echo Source root is $SOURCE_ROOT
 
-export DJANGO_SETTINGS_MODULE=obdemo.settings
-
 function die {
     echo $@ >&2
     echo Exiting.
     exit 1
 }
+
+if [ ! -n "$DJANGO_SETTINGS_MODULE" ]; then
+    die "Please set DJANGO_SETTINGS_MODULE to your projects settings module"
+fi
 
 echo Adding latest events and news...
 cd $SOURCE_ROOT/obdemo/obdemo/scrapers
