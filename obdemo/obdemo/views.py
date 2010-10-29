@@ -9,12 +9,16 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import simplejson
+from ebpub.db import constants
 from ebpub.db.models import NewsItem
+from ebpub.db.utils import today
+from ebpub.db.views import has_staff_cookie
 from ebpub.db.views import make_search_buffer
 from ebpub.db.views import map_popups
 from ebpub.db.views import url_to_place
 from ebpub.streets.models import Block
 from ebpub.utils.view_utils import parse_pid
+import datetime
 
 def newsitems_geojson(request):
     # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
@@ -36,8 +40,21 @@ def newsitems_geojson(request):
         # Whole city!
         newsitem_qs = NewsItem.objects.all()
 
+    # More copy/paste from ebpub.db.views...
+    # As an optimization, limit the NewsItems to those published in the
+    # last few days.
+    end_date = today()
+    start_date = end_date - datetime.timedelta(days=constants.LOCATION_DAY_OPTIMIZATION)
+    newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+    if not has_staff_cookie(request):
+        newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+
     # Ordering by schema__id is an optimization for map_popups()
-    newsitem_list = list(newsitem_qs.select_related().order_by('schema__id'))
+    newsitem_qs = newsitem_qs.select_related().order_by('schema__id')
+    # And, put a hard limit on the number of newsitems.
+    newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+
+    newsitem_list = list(newsitem_qs)
     popup_list = map_popups(newsitem_list)
 
     features = {'type': 'FeatureCollection', 'features': []}
