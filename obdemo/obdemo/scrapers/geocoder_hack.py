@@ -23,10 +23,10 @@ def quick_dirty_fallback_geocode(addr, parse=True):
                 point = result['point']
                 logger.debug("internally geocoded %r" % addr)
                 return point.x, point.y
-            except:
-                x,y = None, None
+            except GeocodingException:
                 logger.debug("internal geocoder failed on %r:\n" % addr)
                 log_exception(level=logging.DEBUG)
+                x,y = None, None
                 # XXX Don't bother, external geocoding rarely gives us
                 # anything inside Boston now that we have decent
                 # blocks data.  But I want to preserve this script for
