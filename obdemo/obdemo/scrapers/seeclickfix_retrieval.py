@@ -25,10 +25,9 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
     def list_pages(self):
         # Fetch the feed, paginating if necessary.
-        # See API docs at
-        # http://help.seeclickfix.com/faqs/api/listing-issues
-        max_per_page = 200
-        max_pages = 10
+        # See API docs at http://help.seeclickfix.com/faqs/api/listing-issues
+        max_per_page = 500
+        max_pages = 4
 
         # First, figure out how long it's been since the last scrape;
         # seeclickfix has a 'start' option in hours.  The idea is not
@@ -108,9 +107,7 @@ if __name__ == "__main__":
     TESTING = False
     if TESTING:
         from ebdata.retrieval import log_debug
-        import pprint
-        for info in SeeClickFixNewsFeedScraper().raw_data():
-            pprint.pprint(info['detail'])
+        SeeClickFixNewsFeedScraper().display_data()
     else:
         SeeClickFixNewsFeedScraper().update()
 
