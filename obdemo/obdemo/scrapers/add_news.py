@@ -39,7 +39,9 @@ def main(argv=None):
 
     for entry in f.entries:
         try:
-            item = NewsItem.objects.get(title=entry.title, description=entry.description)
+            item = NewsItem.objects.get(schema__id=schema.id,
+                                        title=entry.title,
+                                        description=entry.description)
             print "Already have %r (id %d)" % (item.title, item.id)
         except NewsItem.DoesNotExist:
             item = NewsItem()
@@ -54,10 +56,9 @@ def main(argv=None):
 
             # feedparser bug: depending on which parser it magically uses,
             # we either get the xml namespace in the key name, or we don't.
-            if 'point' in entry:
-                x,y = entry.point.split(' ')
-            elif 'georss_point' in entry:
-                x,y = entry.georss_point.split(' ')
+            point = entry.get('georss_point') or entry.get('point')
+            if point:
+                x, y = point.split(' ')
             else:
                 # Fall back on geocoding.
                 text = item.title + ' ' + item.description
