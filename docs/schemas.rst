@@ -2,14 +2,14 @@
 Creating a Custom NewsItem Schema
 =================================
 
-OpenBlock's ebpub package provides a model for defining NewsItem types (Schemas).  This section provides a brief example of creating a Schema, defining its custom fields and creating a NewsItem with the Schema.  It is assumed for this section that you have installed either :ref:`the demo <setup>` or have created a :doc:`custom application <custom>`.
+OpenBlock's :doc:`packages/ebpub` package provides a model for defining NewsItem types (Schemas).  This section provides a brief example of creating a Schema, defining its custom fields and creating a NewsItem with the Schema.  It is assumed for this section that you have installed either :doc:`the demo <setup>` or have created a :doc:`custom application <custom>`.
  
 For background and additional detail, see also :ref:`ebpub-schemas` 
 in the ebpub documentation, the code in ebpub.db.models and the 
 video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
 
 For this example, we will model a "Crime Report".  Beyond the basic NewsItem information, 
-like title, date, location etc, we will want to record some custom information with each report::
+like title, date, location etc, we will want to record some custom information with each report:
 
 * Responding officer's name
 * Type of crime (in english)
@@ -28,13 +28,12 @@ Steps are shown using the django shell, but this could also be performed in a sc
 Creating the Schema 
 ===================
 
-The first step is to create an `ebpub.db.models.Schema` to represent the `Crime Report` type.
+The first step is to create an `ebpub.db.models.Schema` to represent the `Crime Report` type.::
 
     >>> from ebpub.db.models import Schema
     >>> crime_report = Schema()
 
-This object will contain metadata about all Crime Reports, like what it's title is and how to 
-pluralize it.
+This object will contain metadata about all Crime Reports, like what it's title is and how to pluralize it::
     
     >>> crime_report.indefinite_article = 'a'
     >>> crime_report.name = "Crime Report"
@@ -46,27 +45,28 @@ The slug is the unique identifier for this Schema that will be used in URLs on t
     
 The min_date field can be used to limit how far back the user can navigate when 
 viewing crime reports.  For now, we'll just assume that everything is in the 
-future. 
+future::
+
     >>> from datetime import datetime
     >>> crime_report.min_date = datetime.utcnow()
     
 The `last_updated` field tracks when we last checked for new crime reports. 
-We'll also just stub this out to the current time for now.
+We'll also just stub this out to the current time for now::
 
     >>> crime_report.last_updated = datetime.utcnow()
 
-The `has_newsitem_detail` field controls whether this item has a page hosted on this site, or whether it has it's own external url.  We'll host these ourselves.
+The `has_newsitem_detail` field controls whether this item has a page hosted on this site, or whether it has it's own external url.  We'll host these ourselves::
 
     >>> crime_report.has_newsitem_detail = True
 
 The `is_public` field controls whether or not this type is available on the 
 site.  Normally you should wait until the type is set up and loaded with 
-news before "turning it on".  We'll just make it available immediately.
+news before "turning it on".  We'll just make it available immediately::
 
     >>> crime_report.is_public = True
 
 There are additional fields you can explore, but this will be good enough to 
-start with.  So let's save it and move on.
+start with.  So let's save it and move on::
 
     >>> crime_report.save()
 
@@ -78,11 +78,11 @@ assuming you are running the web server.
 Adding Custom Fields
 ====================
 
-As mentioned earlier, we will add the following custom fields::
+As mentioned earlier, we will add the following custom fields:
 
-    * Responding officer's name
-    * Type of crime (in english)
-    * Police code for crime
+* Responding officer's name
+* Type of crime (in english)
+* Police code for crime
 
 We will create an ebpub.db.models.SchemaField to describe each custom field. Let's start with the reporting officer::
 
@@ -97,13 +97,13 @@ ebpub.db.models.Attribute object.  The Attribute object has a fixed set of field
 which can be used for custom attributes.  The fields are named according to their type, 
 and numbered::
 
-| varcharNN  | 01 - 05 | models.CharField (length 255) |
-| dateNN     | 01 - 05 | models.DateField              | 
-| timeNN     | 01 - 02 | models.TimeField              |
-| datetimeNN | 01 - 04 | models.DateTimeField          |
-| boolNN     | 01 - 05 | models.NullBooleanField       |
-| intNN      | 01 - 07 | models.IntegerField           |
-| textNN     | 01      | models.TextField              |  
+ | varcharNN  | 01 - 05 | models.CharField (length 255) |
+ | dateNN     | 01 - 05 | models.DateField              | 
+ | timeNN     | 01 - 02 | models.TimeField              |
+ | datetimeNN | 01 - 04 | models.DateTimeField          |
+ | boolNN     | 01 - 05 | models.NullBooleanField       |
+ | intNN      | 01 - 07 | models.IntegerField           |
+ | textNN     | 01      | models.TextField              |  
 
 Each SchemaField will map onto one of the fields of the Attribute class.  We'll map the reporting officer onto the first varchar field `varchar01` by setting the `real_name` attribute::
 
@@ -136,8 +136,8 @@ For the code, we'll use an integer field::
 
 Phew, okay we just designed a NewsItem type!
 
-Creating an NewsItem with the Schema
-====================================
+Creating a NewsItem with the Schema
+===================================
 
 Now we can finally start churning out amazing crime reports.  We start by making a 
 basic news item with our schema and filling out the basic fields::
@@ -152,8 +152,8 @@ basic news item with our schema and filling out the basic fields::
     >>> report.description = "Blah Blah Blah"
     >>> report.save()
 
-Great, now (any only now) we can set the extra fields, which are wierdly immedately 
-set when accessing the special `attributes` dictionary on the NewsItem.  We use the names that we assigned when we were designing the schema: 
+Great, now (any only now) we can set the extra fields, which are weirdly immedately 
+set when accessing the special ``attributes`` dictionary on the NewsItem.  We use the names that we assigned when we were designing the schema: 
 
     >>> report.attributes['officer'] = "John Smith"
     >>> report.attributes['crime_type'] = "Disturbing The Peace"
@@ -164,15 +164,15 @@ your new item.  You can click it's link to view the custom details you added.
 
 Hooray! 
 
-===============
+
 Additional Info
 ===============
 
 SchemaInfo 
-==========
+----------
 
 Some extra, mostly descriptive, detail about the type (Schema) is stored in a related
-SchemaInfo object. This info appears on the 'about' page for this type of object.
+SchemaInfo object. This info appears on the 'about' page for this type of object::.
 
     >>> from ebpub.db.models import SchemaInfo
     >>> crime_report_info = SchemaInfo()
@@ -182,6 +182,6 @@ SchemaInfo object. This info appears on the 'about' page for this type of object
     >>> crime_report_info.save()
 
 Lookups: enums the annoying way
-===============================
+-------------------------------
 
 In addition the the normal SchemaField mappings, you can add a bonus layer of indirection called a Lookup to blast the confusion level through the roof.  By setting the `is_lookup` flag on a SchemaField (that maps to an integer), you can treat it as index into a list of predefined values.  The values are stored in an ebpub.db.models.Lookup object.
