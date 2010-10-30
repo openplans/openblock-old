@@ -65,18 +65,6 @@ site.  Normally you should wait until the type is set up and loaded with
 news before "turning it on".  We'll just make it available immediately::
 
     >>> crime_report.is_public = True
-
-The `importance` field is used to rank schemas on some views of the
-ebpub site. Bigger numbers are "more important". Let's pick an
-arbitrary number::
-
-    >>> crime_report.importance = 10
-
-The `number_in_overview` field is used to control how many NewsItems
-are shown in the place_overview page of ebpub::
-
-    >>> crime_report.number_in_overview = 10
-
 There are a few additional fields you can explore (see the code in ``ebpub.db.models.Schema``), but this will be good enough to 
 start with.  So let's save it and move on::
 
