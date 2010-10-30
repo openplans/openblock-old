@@ -145,9 +145,11 @@ Contents
    
    setup
    custom
+   schemas
    packages/index
 
-.. *   packages/ebpub
+..   packages/ebpub
+
 
 ==================
 Indices and tables

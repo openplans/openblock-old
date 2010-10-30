@@ -48,27 +48,27 @@ class Schema(models.Model):
     slug = models.CharField(max_length=32, unique=True)
     min_date = models.DateField() # the earliest available NewsItem.pub_date for this Schema
     last_updated = models.DateField()
-    date_name = models.CharField(max_length=32) # human-readable name for the NewsItem.item_date field
-    date_name_plural = models.CharField(max_length=32)
-    importance = models.SmallIntegerField() # bigger number is more important
-    is_public = models.BooleanField(db_index=True)
-    is_special_report = models.BooleanField()
+    date_name = models.CharField(max_length=32, default='Date') # human-readable name for the NewsItem.item_date field
+    date_name_plural = models.CharField(max_length=32, default='Dates')
+    importance = models.SmallIntegerField(default=0) # bigger number is more important
+    is_public = models.BooleanField(db_index=True, default=False)
+    is_special_report = models.BooleanField(default=False)
 
     # whether RSS feed should collapse many of these into one
-    can_collapse = models.BooleanField()
+    can_collapse = models.BooleanField(default=False)
 
     # whether a newsitem_detail page exists for NewsItems of this Schema
-    has_newsitem_detail = models.BooleanField()
+    has_newsitem_detail = models.BooleanField(default=False)
 
     # whether aggregate charts are allowed for this Schema
-    allow_charting = models.BooleanField()
+    allow_charting = models.BooleanField(default=False)
 
     # whether attributes should be preloaded for NewsItems of this
     # Schema, in the list view
-    uses_attributes_in_list = models.BooleanField()
+    uses_attributes_in_list = models.BooleanField(default=False)
 
     # number of records to show on place_overview
-    number_in_overview = models.SmallIntegerField()
+    number_in_overview = models.SmallIntegerField(default=5)
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
@@ -100,14 +100,14 @@ class SchemaInfo(models.Model):
     objects = SchemaInfoManager()
 
     schema = models.ForeignKey(Schema)
-    short_description = models.TextField()
-    summary = models.TextField()
-    source = models.TextField()
-    grab_bag_headline = models.CharField(max_length=128, blank=True)
-    grab_bag = models.TextField(blank=True)  # TODO: what does this field mean?
-    short_source = models.CharField(max_length=128)
-    update_frequency = models.CharField(max_length=64)
-    intro = models.TextField()
+    short_description = models.TextField(blank=True, default='')
+    summary = models.TextField(blank=True, default='')
+    source = models.TextField(blank=True, default='')
+    grab_bag_headline = models.CharField(max_length=128, blank=True, default='')
+    grab_bag = models.TextField(blank=True, default='')  # TODO: what does this field mean?
+    short_source = models.CharField(max_length=128, blank=True, default='')
+    update_frequency = models.CharField(max_length=64, blank=True, default='')
+    intro = models.TextField(blank=True, default='')
 
     def __unicode__(self):
         return unicode(self.schema)
@@ -132,12 +132,12 @@ class SchemaField(models.Model):
     real_name = models.CharField(max_length=10) # Column name in the Attribute model. 'varchar01', 'varchar02', etc.
     pretty_name = models.CharField(max_length=32) # human-readable name, for presentation
     pretty_name_plural = models.CharField(max_length=32) # plural human-readable name
-    display = models.BooleanField() # whether to display value on the public site
-    is_lookup = models.BooleanField() # whether the value is a foreign key to Lookup
-    is_filter = models.BooleanField()
-    is_charted = models.BooleanField() # whether schema_detail displays a chart for this field
-    display_order = models.SmallIntegerField()
-    is_searchable = models.BooleanField() # whether the value is searchable by content
+    display = models.BooleanField(default=True) # whether to display value on the public site
+    is_lookup = models.BooleanField(default=False) # whether the value is a foreign key to Lookup
+    is_filter = models.BooleanField(default=False)
+    is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field
+    display_order = models.SmallIntegerField(default=10)
+    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content
 
     def natural_key(self):
         return (self.schema.slug, self.real_name)
