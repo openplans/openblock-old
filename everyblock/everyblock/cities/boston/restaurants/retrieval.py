@@ -19,6 +19,10 @@ detail_url = lambda inspection_id: 'http://www.cityofboston.gov/isd/health/mfc/v
 strip_tags = lambda x: re.sub(r'(?s)</?[^>]*>', '', x).replace('&nbsp;', ' ').strip()
 
 class RestaurantScraper(NewsItemListDetailScraper):
+
+    # Sadly, there appears to be no way to query by date;
+    # we have no choice but to crawl the entire site every time.
+
     schema_slugs = ('restaurant-inspections',)
     parse_list_re = re.compile(r"<a href='viewinsp\.asp\?inspno=(?P<inspection_id>\d+)'>(?P<inspection_date>[^<]*)</a></span> - <span[^>]*>(?P<result>[^<]*)</span>")
     parse_detail_re = re.compile(r"<tr><th[^>]*>[^<]*</th><th[^>]*>Status</th><th[^>]*>Code Violation</th><th[^>]*>Description</th><th[^>]*>Location</th><th[^>]*>Comment</th></tr>(?P<body>.*?)</table>", re.DOTALL)

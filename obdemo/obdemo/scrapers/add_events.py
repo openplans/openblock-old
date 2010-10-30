@@ -52,7 +52,7 @@ def main():
             status = "Added"
 
         try:
-            item.location_name = entry.get('xcal_x-calconnect-street') or entry.get('x-calconnect-street')
+            item.location_name = entry.get('xcal_x-calconnect-street') or entry.get('x-calconnect-street') or u''
             item.schema = schema
             item.title = convert_entities(entry.title)
             item.description = convert_entities(entry.description)

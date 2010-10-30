@@ -5,13 +5,9 @@ from ebpub.db.models import NewsItem
 
 import datetime
 import math
-import re
 
 BASE_URL = 'https://seeclickfix.com/api/'
 FEED_URL = BASE_URL + 'issues.rss?at=Boston,+MA&sort=issues.created_at&direction=DESC'
-
-address_re = re.compile(r'Address: (.*?)<br\s+/>')
-rating_re = re.compile(r'\s+Rating:\s+(\d+)\s*')
 
 
 class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
@@ -95,7 +91,6 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
                       attributes=attributes,
                       )
         return result
-
 
     def save(self, old_record, list_record, detail_record):
         attributes = detail_record.pop('attributes', None)

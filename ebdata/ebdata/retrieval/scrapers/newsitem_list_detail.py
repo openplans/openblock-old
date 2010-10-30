@@ -221,7 +221,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
         """unified API for updating or creating a NewsItem.
         """
         if old_record:
-            self.update_existing(old_record, kwargs, attributes)
+            self.update_existing(old_record, kwargs, attributes or {})
         else:
             self.create_newsitem(attributes=attributes, **kwargs)
 

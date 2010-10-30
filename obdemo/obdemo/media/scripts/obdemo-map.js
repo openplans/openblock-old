@@ -65,7 +65,7 @@ function loadNewsItems() {
         projection: map.displayProjection,
         strategies: [
             new OpenLayers.Strategy.Fixed(),
-            new OpenLayers.Strategy.Cluster()
+            new OpenLayers.Strategy.Cluster({'distance': 26})
             ],
         protocol: new OpenLayers.Protocol.HTTP({
             url: newsitems_ajax_url,
@@ -185,6 +185,7 @@ function loadMap() {
     }, {
         context: {
             radius: function(feature) {
+	        // Size of cluster, in pixels.
                 return 8 + Math.min(feature.attributes.count * 1.2, 14);
             },
             getlabel: function(feature) {

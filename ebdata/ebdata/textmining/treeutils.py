@@ -4,6 +4,7 @@ Common utilities for creating and cleaning lxml HTML trees.
 
 from lxml.html import document_fromstring
 import re
+from ebdata.retrieval.utils import convert_entities
 
 def make_tree(html):
     """
@@ -78,3 +79,109 @@ def preprocess(tree, drop_tags=(), drop_trees=(), drop_attrs=()):
     for e in elements_to_drop:
         e.drop_tree()
     return tree
+
+
+def text_from_html(html):
+    """Remove ALL tags and return all plain text.
+    """
+    text = preprocess_to_string(html, drop_tags=_html_droptags,
+                                drop_trees=_html_droptrees)
+    text = convert_entities(text)
+    return text
+
+
+# Note we leave body and html in because the code expects those.
+_html_droptags = [
+    'a',
+    'abbr',
+    'acronym',
+    'address',
+    'applet',
+    'area',
+    'b',
+    'base',
+    'basefont',
+    'bdo',
+    'big',
+    'blockquote',
+#    'body',
+    'br',
+    'button',
+    'caption',
+    'center',
+    'cite',
+    'code',
+    'col',
+    'colgroup',
+    'dd',
+    'del',
+    'dfn',
+    'dir',
+    'div',
+    'dl',
+    'dt',
+    'em',
+    'fieldset',
+    'font',
+    'form',
+    'frame',
+    'frameset',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'hr',
+#    'html',
+    'i',
+    'iframe',
+    'img',
+    'input',
+    'ins',
+    'kbd',
+    'label',
+    'legend',
+    'li',
+    'link',
+    'map',
+    'menu',
+    'noframes',
+    'noscript',
+    'object',
+    'ol',
+    'optgroup',
+    'option',
+    'p',
+    'param',
+    'pre',
+    'q',
+    's',
+    'samp',
+    'select',
+    'small',
+    'span',
+    'strike',
+    'strong',
+    'sub',
+    'sup',
+    'table',
+    'tbody',
+    'td',
+    'textarea',
+    'tfoot',
+    'th',
+    'thead',
+    'tr',
+    'tt',
+    'u',
+    'ul',
+    'var']
+
+_html_droptrees = [
+    'head',
+    'script',
+    'style',
+    'title',
+    'meta',
+ ]

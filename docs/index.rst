@@ -36,6 +36,7 @@ Linux, OSX, or some other Unix flavor.
 * libxml2
 * libxslt
 * git
+* subversion
 
 For system-specific lists of packages to install, see
 http://developer.openblockproject.org/wiki/InstallationRequirements
