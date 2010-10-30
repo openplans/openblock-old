@@ -19,8 +19,6 @@ if __name__ == '__main__':
     crime_report.last_updated = datetime.utcnow()
     crime_report.has_newsitem_detail = True
     crime_report.is_public = True
-    crime_report.importance = 10
-    crime_report.number_in_overview = 5
     crime_report.save()
 
     # custom field officer name 
