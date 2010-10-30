@@ -139,8 +139,11 @@ many disparate types of news -- e.g., crime, photos and restaurant inspections.
 Each type of news is referred to as a ``Schema``.
 
 To add a new Schema, add a row to the "db_schema" database table or
-use the Django database API. See the ``Schema`` model in
-``ebpub/db/models.py`` for information on all of the fields.
+use the Django database API. See the :doc:`../schemas` documentation, or
+see the ``Schema`` model in
+``ebpub/db/models.py`` for information on all of the fields
+
+.. _newsitems:
 
 NewsItems
 ---------
@@ -295,6 +298,8 @@ defining it:
 
 Once you've created this SchemaField, the value of "int01" for any db_attribute
 row with schema_id=5 will be the sale price.
+
+.. _lookups:
 
 Lookups
 -------

@@ -19,6 +19,8 @@ if __name__ == '__main__':
     crime_report.last_updated = datetime.utcnow()
     crime_report.has_newsitem_detail = True
     crime_report.is_public = True
+    crime_report.importance = 10
+    crime_report.number_in_overview = 5
     crime_report.save()
 
     # custom field officer name 
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     crime_code = SchemaField()
     crime_code.schema = crime_report
     crime_code.pretty_name = "Crime Code"
-    crime_code.pretty_plural_name = "Crime Types"
+    crime_code.pretty_plural_name = "Crime Codes"
     crime_code.real_name = "int01"
     crime_code.name = "crime_code"
     crime_code.save()

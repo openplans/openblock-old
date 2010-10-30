@@ -18,32 +18,32 @@ like title, date, location etc, we will want to record some custom information w
 Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in **misc/examples/crime_report_schema.py**.  This section assumes your application is `myblock`; substitute your own or `obdemo` for the demo application.  Start in the root of your virtual env::
 
     $ source bin/activate
-    $ django-admin.py shell --settings=obdemo.settings
+    $ django-admin.py shell --settings=myblock.settings
     Python 2.6.1 (r261:67515, Feb 11 2010, 00:51:29) 
     [GCC 4.2.1 (Apple Inc. build 5646)] on darwin
     Type "help", "copyright", "credits" or "license" for more information.
     (InteractiveConsole)
     >>> 
-    
-Creating the Schema 
+
+Creating the Schema
 ===================
 
-The first step is to create an `ebpub.db.models.Schema` to represent the `Crime Report` type.::
+The first step is to create an `ebpub.db.models.Schema` to represent the `Crime Report` type::
 
     >>> from ebpub.db.models import Schema
     >>> crime_report = Schema()
 
-This object will contain metadata about all Crime Reports, like what it's title is and how to pluralize it::
+This object will contain metadata about all Crime Reports, like what its title is and how to pluralize it::
     
     >>> crime_report.indefinite_article = 'a'
     >>> crime_report.name = "Crime Report"
     >>> crime_report.plural_name = "Crime Reports"
     
-The slug is the unique identifier for this Schema that will be used in URLs on the site.  It should be brief and contain URL safe characters::
+The `slug` is the unique identifier for this Schema that will be used in URLs on the site.  It should be brief and contain URL safe characters::
 
     >>> crime_report.slug = 'crimereport'
     
-The min_date field can be used to limit how far back the user can navigate when 
+The `min_date` field can be used to limit how far back the user can navigate when 
 viewing crime reports.  For now, we'll just assume that everything is in the 
 future::
 
@@ -55,17 +55,29 @@ We'll also just stub this out to the current time for now::
 
     >>> crime_report.last_updated = datetime.utcnow()
 
-The `has_newsitem_detail` field controls whether this item has a page hosted on this site, or whether it has it's own external url.  We'll host these ourselves::
+The `has_newsitem_detail` field controls whether this item has a page hosted on this site, or whether it has its own external url.  We'll host these ourselves::
 
     >>> crime_report.has_newsitem_detail = True
 
-The `is_public` field controls whether or not this type is available on the 
+The `is_public` field controls whether or not NewsItems of this type are visible
+to anybody other than administrators on the 
 site.  Normally you should wait until the type is set up and loaded with 
 news before "turning it on".  We'll just make it available immediately::
 
     >>> crime_report.is_public = True
 
-There are additional fields you can explore, but this will be good enough to 
+The `importance` field is used to rank schemas on some views of the
+ebpub site. Bigger numbers are "more important". Let's pick an
+arbitrary number::
+
+    >>> crime_report.importance = 10
+
+The `number_in_overview` field is used to control how many NewsItems
+are shown in the place_overview page of ebpub::
+
+    >>> crime_report.number_in_overview = 10
+
+There are a few additional fields you can explore (see the code in ``ebpub.db.models.Schema``), but this will be good enough to 
 start with.  So let's save it and move on::
 
     >>> crime_report.save()
@@ -93,7 +105,7 @@ We will create an ebpub.db.models.SchemaField to describe each custom field. Let
     >>> officer.pretty_name_plural = "Reporting Officer's Names"
 
 The values of *all* the custom fields for a particular NewsItem will be stored in a single 
-ebpub.db.models.Attribute object.  The Attribute object has a fixed set of fields
+``ebpub.db.models.Attribute`` object.  The Attribute object has a fixed set of fields
 which can be used for custom attributes.  The fields are named according to their type, 
 and numbered::
 
@@ -105,33 +117,61 @@ and numbered::
  | intNN      | 01 - 07 | models.IntegerField           |
  | textNN     | 01      | models.TextField              |  
 
-Each SchemaField will map onto one of the fields of the Attribute class.  We'll map the reporting officer onto the first varchar field `varchar01` by setting the `real_name` attribute::
+Each SchemaField will map onto one of the fields of the Attribute class.  We'll map the reporting officer onto the first varchar field `varchar01` by setting the ``real_name`` attribute::
 
     >>> officer.real_name = 'varchar01'
     
-When working with a crime report NewsItem, we'll want to have an alias for this attribute in the code.  This is set using the `name` field of the SchemaField.  We'll call it `officer`, and move on::
+When working with a crime report NewsItem, we'll want to have an alias
+for this attribute in the code, so we don't always have to remember
+what 'varchar01' means for crime reports.  This is set using the ``name`` field of the SchemaField.  We'll call it `officer`, and move on::
 
     >>> officer.name = 'officer'
+
+That's the important stuff. There are a bunch of mandatory
+display-related fields; we'll just gloss over these for now::
+
+    >>> officer.display = True
+    >>> officer.display_order = 10
+    >>> officer.is_searchable = True
+    >>> officer.is_lookup = False
+    >>> officer.is_filter = False
+    >>> officer.is_charted = False
+
+Now we can save this SchemaField::
+
     >>> officer.save()
     
-The name of the crime is very similar, but we'll need to use a different field.  We'll use the second varchar field `varchar02`::
+The name of the crime works the same way, but we'll need to store it
+in a different field.  We'll use the second varchar field, `varchar02`::
 
     >>> crime_name = SchemaField()
     >>> crime_name.schema = crime_report
+    >>> crime_name.real_name = "varchar02"
     >>> crime_name.pretty_name = "Crime Type"
     >>> crime_name.pretty_plural_name = "Crime Types"
-    >>> crime_name.real_name = "varchar02"
     >>> crime_name.name = "crime_type"
+    >>> crime_name.display = True
+    >>> crime_name.display_order = 10
+    >>> crime_name.is_searchable = True
+    >>> crime_name.is_lookup = False
+    >>> crime_name.is_filter = False
+    >>> crime_name.is_charted = False
     >>> crime_name.save()
     
-For the code, we'll use an integer field::
+For the crime code, we'll use an integer field::
 
     >>> crime_code = SchemaField()
     >>> crime_code.schema = crime_report
-    >>> crime_code.pretty_name = "Crime Code"
-    >>> crime_code.pretty_plural_name = "Crime Types"
     >>> crime_code.real_name = "int01"
+    >>> crime_code.pretty_name = "Crime Code"
+    >>> crime_code.pretty_plural_name = "Crime Codes"
     >>> crime_code.name = "crime_code"
+    >>> crime_code.display = True
+    >>> crime_code.display_order = 10
+    >>> crime_code.is_searchable = True
+    >>> crime_code.is_lookup = False
+    >>> crime_code.is_filter = False
+    >>> crime_code.is_charted = False
     >>> crime_code.save()
 
 Phew, okay we just designed a NewsItem type!
@@ -152,21 +192,21 @@ basic news item with our schema and filling out the basic fields::
     >>> report.description = "Blah Blah Blah"
     >>> report.save()
 
-Great, now (any only now) we can set the extra fields, which are weirdly immedately 
-set when accessing the special ``attributes`` dictionary on the NewsItem.  We use the names that we assigned when we were designing the schema: 
+Great, now (any only now) we can set the extra fields, which are weirdly immediately 
+set when accessing the special ``attributes`` dictionary on the
+NewsItem.  (There is some python magic going on, see the code in
+``ebpub.db.models``.)  We use the names that we assigned when we were designing the schema: 
 
     >>> report.attributes['officer'] = "John Smith"
     >>> report.attributes['crime_type'] = "Disturbing The Peace"
     >>> report.attributes['crime_code'] = 187
     
 If you visit the crime reports page at http://localhost:8000/crimereport it should list 
-your new item.  You can click it's link to view the custom details you added. 
+your new item.  You can click its link to view the custom details you added. 
 
 Hooray! 
 
 
-Additional Info
-===============
 
 SchemaInfo 
 ----------
@@ -184,4 +224,7 @@ SchemaInfo object. This info appears on the 'about' page for this type of object
 Lookups: enums the annoying way
 -------------------------------
 
-In addition the the normal SchemaField mappings, you can add a bonus layer of indirection called a Lookup to blast the confusion level through the roof.  By setting the `is_lookup` flag on a SchemaField (that maps to an integer), you can treat it as index into a list of predefined values.  The values are stored in an ebpub.db.models.Lookup object.
+For attributes that have only a few possible values, you can add a
+layer of indirection called a Lookup to blast the confusion level
+through the roof... err, normalize the data somewhat.  See
+:ref:`lookups` for more.
