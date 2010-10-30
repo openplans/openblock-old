@@ -65,6 +65,7 @@ site.  Normally you should wait until the type is set up and loaded with
 news before "turning it on".  We'll just make it available immediately::
 
     >>> crime_report.is_public = True
+
 There are a few additional fields you can explore (see the code in ``ebpub.db.models.Schema``), but this will be good enough to 
 start with.  So let's save it and move on::
 
@@ -209,10 +210,9 @@ SchemaInfo object. This info appears on the 'about' page for this type of object
     ...
     >>> crime_report_info.save()
 
-Lookups: enums the annoying way
--------------------------------
+Lookups: normalized enums
+-------------------------
 
-For attributes that have only a few possible values, you can add a
-layer of indirection called a Lookup to blast the confusion level
-through the roof... err, normalize the data somewhat.  See
-:ref:`lookups` for more.
+For attributes that have only a few possible values, you can add
+another layer of indirection called a Lookup to confuse you... err,
+normalize the data somewhat.  See :ref:`lookups` for more.

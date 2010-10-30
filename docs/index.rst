@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+
 =========
 OpenBlock
 =========
@@ -10,6 +11,10 @@ OpenBlock
 OpenBlock is a web application that allows users to browse and search
 their local area for "hyper-local news" - to see what's going on
 recently in the immediate geographic area.
+
+=======
+History
+=======
 
 OpenBlock began life as the open-source code released by
 Everyblock.com in June 2009.  Originally created by Adrian Holovaty
@@ -146,10 +151,10 @@ Contents
    setup
    custom
    schemas
+   scraper_tutorial
    packages/index
-
+   
 ..   packages/ebpub
-
 
 ==================
 Indices and tables
