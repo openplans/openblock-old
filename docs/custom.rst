@@ -2,6 +2,11 @@
 Creating a Custom Site Based on OpenBlock
 ==========================================
 
+If you want to do something much different than
+:doc:`packages/obdemo`, you're better off starting from scratch with a
+custom Django app. We provide a script that will get you started with
+a skeleton app you can edit.
+
 Setting up the app
 ==================
 
@@ -19,7 +24,7 @@ After answering a few questions, this will create a bare-bones project in the fo
 specified.  Next, install the project into your environment::
 
     $ cd myblock
-    $ python ./setup.py develop
+    $ python setup.py develop
     ...
 
 Your django settings are located in settings.py within your project.  You should review these
@@ -28,7 +33,7 @@ and make adjustments based on your setup::
     $ <favorite_editor> myblock/settings.py
     ...
 
-Now you can use the openblock command line to create and sync your database.  **Note** the setup_dbs command will only work for a local database.  You will need to create any referenced databases and load postgis by hand otherwise.::
+Now you can use the openblock command line to create and sync your database.  **Note** the setup_dbs command will only work for a local database.  You will need to create any referenced databases and load postgis by hand otherwise::
 
     $ cd ../../
     $ sudo -u postgres bin/oblock app=myblock setup_dbs
@@ -39,7 +44,7 @@ Starting the Test Server
 
 Run django's test server using your project's settings and visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)::
 
-    $ export DJANOG_SETTINGS_MODULE=myblock.settings
+    $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py runserver
     ...
     Development server is running at http://127.0.0.1:8000/

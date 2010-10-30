@@ -42,6 +42,23 @@ For system-specific lists of packages to install, see
 http://developer.openblockproject.org/wiki/InstallationRequirements
 and let us know if your system isn't listed there!
 
+
+Database Access
+---------------
+
+You'll also need to make sure that the ``openblock`` user can connect
+to the postgresql database. *We assume you're running the postgresql
+server on the same system where you're installing openblock.*  The
+easiest way to allow this is to find the ``pg_hba.conf`` file
+under ``etc`` (the precise location varies, but for postgresql
+8.4 on Ubuntu it's ``/etc/postgresql/8.4/main/pg_hba.conf``), comment
+out any line that starts with ``local all``, and add a line like
+this::
+
+ local   all   all  trust
+
+Then restart postgresql.
+
 .. _quickstart:
 
 =========================================
@@ -50,10 +67,14 @@ Quickstart: Install and Set Up Demo Site
 
 These instructions will install the software in a similar configuration to 
 `the OpenBlock demo site <http://demo.openblockproject.org>`_ in an isolated 
-python environment using `virtualenv <http://pypi.python.org/pypi/virtualenv>`_.  
+python environment using `virtualenv <http://pypi.python.org/pypi/virtualenv>`_.
+
 For more detailed instructions, see :doc:`setup`.
 
-First, create a location where you will install the software and check out the source::
+First make sure you've taken care of the requirements listed above,
+including database access.
+
+Next, create a location where you will install the software and check out the source::
 
  $ mkdir openblock
  $ mkdir openblock/src
@@ -79,7 +100,7 @@ http://localhost:8000
 
 If you encounter problems, double check that you have the basic system
 requirements installed and then try the step-by-step
-instructions in :doc:`setup`
+instructions in :doc:`setup`.
 
 If for any reason you need to run bootstrap_demo.sh again, eg. if
 you've got your system so broken that you want to start from scratch,
@@ -120,12 +141,13 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    setup
-   packages/index
-   packages/ebpub
    custom
+   packages/index
+
+.. *   packages/ebpub
 
 ==================
 Indices and tables

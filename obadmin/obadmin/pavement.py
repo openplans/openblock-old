@@ -42,7 +42,7 @@ options(
 
 @task
 def auto(options):
-    # determine the root of the virutal env
+    # determine the root of the virtual env
     options.env_root = os.path.abspath(os.environ.get('VIRTUAL_ENV', '.'))
     # XXX better test.
     if not os.path.exists(os.path.join(options.env_root, 'bin', 'paver')):

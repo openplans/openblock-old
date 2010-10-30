@@ -15,10 +15,12 @@ Settings
 ========
 
 ebpub requires a smorgasbord of eb-specific settings in your settings
-file. It's probably easiest to just start with the file
+file.  If you follow the :doc:`../custom` or :doc:`obdemo`
+directions, they provide suitable settings files that you can
+adjust as needed.  Otherwise, you might just start with the file
 ebpub/settings.py and tweak that (or import from it in your own
 settings file). The application won't work until you set the
-following:
+following::
 
        DATABASE_USER
        DATABASE_NAME

@@ -2,7 +2,7 @@
 Setting up OpenBlock
 =====================
 
-This is an annotated version of the :ref:`Quickstart <quickstart>` and the steps that are performed by the bootstrap_demo.sh script.
+This is an annotated version of the :ref:`Quickstart <quickstart>` and the steps that are performed by the ``bootstrap_demo.sh`` script.
 
 .. _baseinstall:
 
@@ -10,9 +10,9 @@ Installing the base software
 ============================
 
 See the :ref:`requirements` section and make sure you have
-everything installed.
+everything installed, including setting up database access.
 
-Create a location that will contain your openblock install.  This will become a `virtualenv <http://virtualenv.openplans.org/>`_ containing the software and its dependencies.::
+Create a directory that will contain your openblock install.  This will become a `virtualenv <http://virtualenv.openplans.org/>`_ containing the software and its dependencies.::
 
     $ mkdir openblock
     $ mkdir openblock/src
@@ -22,7 +22,7 @@ Check out the software::
 
     $ git clone git://github.com/openplans/openblock.git src/openblock
 
-You should have a 'bootstrap.py' script in the root of your openblock checkout. 
+You should have a ``bootstrap.py`` script in the root of your openblock checkout. 
 Run it.  This will set up the virtualenv and install the OpenBlock software and 
 its python requirements in the folder it is called from::
 
@@ -40,7 +40,9 @@ If you are having trouble with the installation of a particular package, you may
 Setting up the demo
 ===================
 
-If you want to create a new project immediately, you can now skip to :doc:`custom`.
+If you want to create a new project immediately, you can now skip to
+:doc:`custom`.  If you want to play with a demo that uses Boston data,
+read on.
 
 Optionally, you can edit the demo's django settings at this point. 
 It's a good idea to look at it, at least to get an idea of what can be
@@ -55,7 +57,7 @@ Activate your virtualenv::
 Now you can set up the database::
 
     $ sudo -u postgres bin/oblock setup_dbs
-    $ bin/oblock sync_all
+    $ bin/oblock app=obdemo sync_all
 
 Starting the Test Server
 ------------------------
@@ -71,13 +73,14 @@ Loading Demo Data
 -----------------
 
 OpenBlock is pretty boring without data!  You'll want to load some
-:ref:`geographic data <locations>`) and some local news.  We've included
-some example data and loaders you can use to start with if you don't have
-all of your data on hand yet.
+:ref:`geographic data <locations>` and some local news.  We've
+included some example data for Boston, MA and loader scripts you can
+use to start with if you don't have all of your data on hand yet.
 
-Set your DJANGO_SETTINGS_MODULE before you begin.  If you are loading the 
-data into a different project, set this variable accordingly -- e.g. myblock.settings 
-instead of obdemo.settings::
+Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
+If you are loading the data into a different project, set this
+variable accordingly -- e.g. ``myblock.settings`` instead of
+``obdemo.settings``::
 
   $ export DJANGO_SETTINGS_MODULE=obdemo.settings
 
