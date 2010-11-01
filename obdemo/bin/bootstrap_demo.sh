@@ -43,12 +43,12 @@ source bin/activate || exit 1
 
 if [ $HARD_RESET = 1 ]; then
     echo "Dropping openblock database(s)..."
-    sudo -u postgres $VIRTUAL_ENV/bin/oblock drop_dbs || exit 1
+    sudo -H -u postgres $VIRTUAL_ENV/bin/oblock drop_dbs || exit 1
     echo "Recreating database(s)..."
 else
     echo "Creating database(s)..."
 fi
-sudo -u postgres bin/oblock setup_dbs  || exit 1
+sudo -H -u postgres bin/oblock setup_dbs  || exit 1
 
 
 bin/oblock sync_all || exit 1
