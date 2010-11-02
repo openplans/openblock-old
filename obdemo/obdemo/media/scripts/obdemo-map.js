@@ -55,11 +55,13 @@ function loadNewsItems() {
     if (typeof(newsitems_ajax_url == "undefined")) {
         var newsitems_ajax_url = "/api/newsitems.geojson/"; /* WILL CHANGE */
     };
-    if (typeof(pid) == 'undefined') {
-        var pid = '';
-    };
     // TODO: Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
-    var newsitem_params = {pid: pid}; // expect pid to be set prior to this script
+
+    // Expect pid to be set globally prior to calling this function.
+    var newsitem_params = {pid: ''};
+    if (typeof(pid) != 'undefined') {
+        newsitem_params.pid = pid;
+    };
 
     newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
