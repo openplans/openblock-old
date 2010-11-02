@@ -26,19 +26,24 @@ def newsitems_geojson(request):
     # ebpub.db.views?
 
     pid = request.GET.get('pid', '')
+    schema = request.GET.get('schema', '')
 
+    newsitem_qs = NewsItem.objects.all()
+    if schema:
+        import pdb; pdb.set_trace()
+        newsitem_qs = newsitem_qs.filter(schema__id=X)
     if pid:
         place, block_radius, xy_radius = parse_pid(pid)
         if isinstance(place, Block):
             search_buffer = make_search_buffer(place.location.centroid, block_radius)
-            newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
+            newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
         else:
             # This depends on the trigger in newsitemlocation.sql
-            newsitem_qs = NewsItem.objects.filter(
+            newsitem_qs = newsitem_qs.filter(
                 newsitemlocation__location__id=place.id)
     else:
         # Whole city!
-        newsitem_qs = NewsItem.objects.all()
+        pass
 
     # More copy/paste from ebpub.db.views...
     # As an optimization, limit the NewsItems to those published in the

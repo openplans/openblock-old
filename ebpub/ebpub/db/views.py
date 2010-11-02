@@ -785,6 +785,7 @@ def schema_filter(request, slug, urlbits):
     # searches come in a query string instead of in the URL. Here, we validate
     # those searches and do a redirect so that the address and date are in
     # urlbits.
+
     if request.GET.get('address', '').strip():
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
@@ -1133,170 +1134,195 @@ def block_list(request, city_slug, street_slug):
         'city': city,
     })
 
-def generic_place_page(request, template_name, place, extra_context=None):
-    extra_context = extra_context or {}
+
+def get_place_info_for_request(request, *args, **kwargs):
+    """
+    A utility function that abstracts getting commonly used
+    location-related information: a place, its type, a queryset of
+    intersecting NewsItems, a bbox, nearby locations, etc.
+    """
+    info = dict(bbox=None,
+                nearby_locations=[],
+                location=None,
+                is_block=False,
+                block_radius=None,
+                is_saved=False,
+                pid='',
+                #place_wkt = '', # Unused?
+                cookies_to_set={},
+                )
+
+    saved_place_lookup={}
+    newsitem_qs=NewsItem.objects.all()
+
+    info['place'] = place = url_to_place(*args, **kwargs)
+
+    nearby = Location.objects.filter(location_type__is_significant=True)
+    nearby = nearby.select_related().exclude(id=place.id)
+    nearby = nearby.order_by('location_type__id', 'name')
+
     if place.location is None:
-        is_block = False
-        place_wkt = ''
-    elif isinstance(place, Block):
-        is_block = True
-        place_wkt = ''
-    else:
-        is_block = False
-        place_wkt = place.location.simplify(tolerance=0.001, preserve_topology=True)
-
-    if is_block:
-        pid = make_pid(place, extra_context.get('block_radius'))
-    else:
-        pid = make_pid(place)
-
-    context = dict(place=place, is_block=is_block, place_wkt=place_wkt, pid=pid,
-                   **extra_context)
-    return eb_render(request, template_name, context)
-
-def place_detail(request, *args, **kwargs):
-    schema_manager = get_schema_manager(request)
-    place = url_to_place(*args, **kwargs)
-    cookies_to_set, bbox = {}, None
-    if place.location is None:
-        newsitem_qs = NewsItem.objects.filter(newsitemlocation__location__id=place.id)
-        bbox = get_metro()['extent']
-        block_radius = None
-        nearby_locations = []
+        # No geometry.
+        info['bbox'] = get_metro()['extent']
         saved_place_lookup = {'location__id': place.id}
+        info['newsitem_qs'] = newsitem_qs.filter(
+            newsitemlocation__location__id=place.id)
     elif isinstance(place, Block):
+        info['is_block'] = True
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         search_buf = make_search_buffer(place.location.centroid, block_radius)
-        newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buf)
-        # TODO: order by location type for consistency?
-        nearby_locations = list(Location.objects.filter(location_type__is_significant=True, location__bboverlaps=search_buf).select_related())
-        bbox = search_buf.extent
+        info['nearby_locations'] = nearby.filter(
+                                    location__bboverlaps=search_buf
+                                    )
+        info['bbox'] = search_buf.extent
         saved_place_lookup = {'block__id': place.id}
+        info['block_radius'] = block_radius
+        info['cookies_to_set'] = cookies_to_set
+        info['newsitem_qs'] = newsitem_qs.filter(
+            location__bboverlaps=search_buf)
+        info['pid'] = make_pid(place, block_radius)
+
     else:
-        newsitem_qs = NewsItem.objects.filter(newsitemlocation__location__id=place.id)
         # If the location is a point, or very small, we want to expand
         # the area we care about via make_search_buffer().  But if
         # it's not, we probably want the extent of its geometry.
         # Let's just take the union to cover both cases.
+        info['location'] = place
+        saved_place_lookup = {'location__id': place.id}
         search_buf = make_search_buffer(place.location.centroid, 3)
         search_buf = search_buf.union(place.location)
-
-        nearby_locations = Location.objects.filter(location_type__is_significant=True).select_related().exclude(id=place.id).order_by('location_type__id').filter(location__bboverlaps=search_buf)
-        bbox = search_buf.extent
-        block_radius = None
-        saved_place_lookup = {'location__id': place.id}
+        info['bbox'] = search_buf.extent
+        nearby = nearby.filter(location__bboverlaps=search_buf)
+        info['nearby_locations'] = nearby.exclude(id=place.id)
+        info['newsitem_qs'] = newsitem_qs.filter(
+            newsitemlocation__location__id=place.id)
+        # TODO: place_wkt is unused? preserved from the old generic_place_page()
+        #info['place_wkt'] = place.location.simplify(tolerance=0.001,
+        #                                            preserve_topology=True)
+        info['pid'] = make_pid(place)
 
     # Determine whether this is a saved place.
-    is_saved = False
     if not request.user.is_anonymous():
         saved_place_lookup['user_id'] = request.user.id # TODO: request.user.id should not do a DB lookup
-        is_saved = SavedPlace.objects.filter(**saved_place_lookup).count()
+        info['is_saved'] = SavedPlace.objects.filter(**saved_place_lookup).count()
 
-    if kwargs.get('detail_page', False):
-        is_latest_page = True
-        # Check the query string for the max date to use. Otherwise, fall
-        # back to today.
-        end_date = today()
-        if 'start' in request.GET:
-            try:
-                end_date = parse_date(request.GET['start'], '%m/%d/%Y')
-                is_latest_page = False
-            except ValueError:
-                raise Http404
+    return info
 
-        # As an optimization, limit the NewsItems to those published in the
-        # last few days.
-        start_date = end_date - datetime.timedelta(days=constants.LOCATION_DAY_OPTIMIZATION)
-        ni_list = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
-        if not has_staff_cookie(request):
-            ni_list = ni_list.filter(schema__is_public=True)
-        ni_list = ni_list.extra(
-            select={'pub_date_date': 'date(db_newsitem.pub_date)'},
-            order_by=('-pub_date_date', '-schema__importance', 'schema')
-        )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
-        #ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
-        schemas_used = list(set([ni.schema for ni in ni_list]))
-        s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
-        populate_attributes_if_needed(ni_list, schemas_used)
-        bunches = cluster_newsitems(ni_list, 26)
-        if ni_list:
-            next_day = ni_list[len(ni_list)-1:][0].pub_date - datetime.timedelta(days=1)
-            #next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
-        else:
-            next_day = None
+def place_detail_timeline(request, *args, **kwargs):
+    context = get_place_info_for_request(request, *args, **kwargs)
+    schema_manager = get_schema_manager(request)
 
-        hidden_schema_list = []
-        if not request.user.is_anonymous():
-            hidden_schema_list = [o.schema for o in HiddenSchema.objects.filter(user_id=request.user.id)]
+    newsitem_qs = context['newsitem_qs']
 
-        context = {
-            'newsitem_list': ni_list,
-            'nothing_geocoded': not has_clusters(bunches),
-            'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
-            'next_day': next_day,
-            'is_latest_page': is_latest_page,
-            'hidden_schema_list': hidden_schema_list,
-        }
-        template_name = 'db/place_detail.html'
+    is_latest_page = True
+    # Check the query string for the max date to use. Otherwise, fall
+    # back to today.
+    end_date = today()
+    if 'start' in request.GET:
+        try:
+            end_date = parse_date(request.GET['start'], '%m/%d/%Y')
+            is_latest_page = False
+        except ValueError:
+            raise Http404
+
+    # As an optimization, limit the NewsItems to those published in the
+    # last few days.
+    start_date = end_date - datetime.timedelta(days=constants.LOCATION_DAY_OPTIMIZATION)
+    ni_list = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+    if not has_staff_cookie(request):
+        ni_list = ni_list.filter(schema__is_public=True)
+    ni_list = ni_list.extra(
+        select={'pub_date_date': 'date(db_newsitem.pub_date)'},
+        order_by=('-pub_date_date', '-schema__importance', 'schema')
+    )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+    #ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
+    schemas_used = list(set([ni.schema for ni in ni_list]))
+    s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
+    populate_attributes_if_needed(ni_list, schemas_used)
+    bunches = cluster_newsitems(ni_list, 26)
+    if ni_list:
+        next_day = ni_list[len(ni_list)-1:][0].pub_date - datetime.timedelta(days=1)
+        #next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
     else:
-        # Here, the goal is to get the latest nearby NewsItems for each
-        # schema. A naive way to do this would be to run the query once for
-        # each schema, but we improve on that by grabbing the latest 300
-        # items of ANY schema and hoping that several of the schemas include
-        # all of their recent items in that list. Then, for any remaining
-        # schemas, we do individual queries as a last resort.
-        # Note that we iterate over the 300 NewsItems as the outer loop rather
-        # than iterating over the schemas as the outer loop, because there are
-        # many more NewsItems than schemas.
-        s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
-        needed = set(s_list.keys())
-        for ni in newsitem_qs.order_by('-item_date', '-id')[:300]: # Ordering by ID ensures consistency across page views.
-            s_id = ni.schema_id
-            if s_id in needed:
-                s_list[s_id][1].append(ni)
-                s_list[s_id][2] += 1
-                if s_list[s_id][2] == s_list[s_id][0].number_in_overview:
-                    needed.remove(s_id)
-        sf_dict = {}
-        for sf in SchemaField.objects.filter(is_lookup=True, is_charted=True, schema__is_public=True, schema__is_special_report=False).values('id', 'schema_id', 'pretty_name').order_by('schema__id', 'display_order'):
-            sf_dict.setdefault(sf['schema_id'], []).append(sf)
-        schema_blocks, all_newsitems = [], []
-        for s, newsitems, _ in s_list.values():
-            if s.id in needed:
-                newsitems = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date', '-id')[:s.number_in_overview])
-            populate_schema(newsitems, s)
-            schema_blocks.append({
-                'schema': s,
-                'latest_newsitems': newsitems,
-                'has_newsitems': bool(newsitems),
-                'lookup_charts': sf_dict.get(s.id),
-            })
-            all_newsitems.extend(newsitems)
-        s_list = [s[0] for s in s_list.values()]
-        populate_attributes_if_needed(all_newsitems, s_list)
-        s_list = [s for s in s_list if s.allow_charting]
-        context = {'schema_blocks': schema_blocks}
-        template_name = 'db/place_overview.html'
+        next_day = None
+
+    hidden_schema_list = []
+    if not request.user.is_anonymous():
+        hidden_schema_list = [o.schema for o in HiddenSchema.objects.filter(user_id=request.user.id)]
 
     context.update({
-        'nearby_locations': nearby_locations,
-        'block_radius': block_radius,
-        'bbox': bbox,
-        'filtered_schema_list': s_list,
-        'filter_map_by_schema': 'filter' in request.GET,
-        'is_saved': is_saved,
+        'newsitem_list': ni_list,
+        'nothing_geocoded': not has_clusters(bunches),
+        'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
+        'next_day': next_day,
+        'is_latest_page': is_latest_page,
+        'hidden_schema_list': hidden_schema_list,
     })
 
-    response = generic_place_page(request, template_name, place, context)
-    if cookies_to_set:
-        for k, v in cookies_to_set.items():
-            response.set_cookie(k, v)
+
+    context['filtered_schema_list'] = s_list
+
+    response = eb_render(request, 'db/place_detail.html', context)
+    for k, v in context['cookies_to_set'].items():
+        response.set_cookie(k, v)
     return response
 
+
+def place_detail_overview(request, *args, **kwargs):
+    context = get_place_info_for_request(request, *args, **kwargs)
+    schema_manager = get_schema_manager(request)
+
+    newsitem_qs = context['newsitem_qs']
+
+    # Here, the goal is to get the latest nearby NewsItems for each
+    # schema. A naive way to do this would be to run the query once for
+    # each schema, but we improve on that by grabbing the latest 300
+    # items of ANY schema and hoping that several of the schemas include
+    # all of their recent items in that list. Then, for any remaining
+    # schemas, we do individual queries as a last resort.
+    # Note that we iterate over the 300 NewsItems as the outer loop rather
+    # than iterating over the schemas as the outer loop, because there are
+    # many more NewsItems than schemas.
+    s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
+    needed = set(s_list.keys())
+    for ni in newsitem_qs.order_by('-item_date', '-id')[:300]: # Ordering by ID ensures consistency across page views.
+        s_id = ni.schema_id
+        if s_id in needed:
+            s_list[s_id][1].append(ni)
+            s_list[s_id][2] += 1
+            if s_list[s_id][2] == s_list[s_id][0].number_in_overview:
+                needed.remove(s_id)
+    sf_dict = {}
+    for sf in SchemaField.objects.filter(is_lookup=True, is_charted=True, schema__is_public=True, schema__is_special_report=False).values('id', 'schema_id', 'pretty_name').order_by('schema__id', 'display_order'):
+        sf_dict.setdefault(sf['schema_id'], []).append(sf)
+    schema_blocks, all_newsitems = [], []
+    for s, newsitems, _ in s_list.values():
+        if s.id in needed:
+            newsitems = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date', '-id')[:s.number_in_overview])
+        populate_schema(newsitems, s)
+        schema_blocks.append({
+            'schema': s,
+            'latest_newsitems': newsitems,
+            'has_newsitems': bool(newsitems),
+            'lookup_charts': sf_dict.get(s.id),
+        })
+        all_newsitems.extend(newsitems)
+    s_list = [s[0] for s in s_list.values()]
+    populate_attributes_if_needed(all_newsitems, s_list)
+    s_list = [s for s in s_list if s.allow_charting]
+    context['schema_blocks'] = schema_blocks
+    context['filtered_schema_list'] = s_list
+
+    response = eb_render(request, 'db/place_overview.html', context)
+    for k, v in context['cookies_to_set'].items():
+        response.set_cookie(k, v)
+    return response
+
+
 def feed_signup(request, *args, **kwargs):
-    place = url_to_place(*args, **kwargs)
-    s_list = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
-    return generic_place_page(request, 'db/feed_signup.html', place, {'schema_list': s_list})
+    context = get_place_info_for_request(request, *args, **kwargs)
+    context['s_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
+    return eb_render(request, 'db/feed_signup.html', context)
 
 def geo_example(request):
     import feedparser

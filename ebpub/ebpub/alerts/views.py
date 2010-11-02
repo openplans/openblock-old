@@ -7,7 +7,8 @@ from ebpub.accounts.utils import login_required, CREATE_TASK
 from ebpub.accounts.views import login, send_confirmation_and_redirect
 from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import Schema
-from ebpub.db.views import generic_place_page, url_to_place, block_radius_value
+from ebpub.db.views import url_to_place, block_radius_value
+from ebpub.db.views import get_place_info_for_request
 from ebpub.streets.models import Block
 from ebpub.utils.view_utils import eb_render
 import datetime
@@ -81,7 +82,10 @@ def signup(request, *args, **kwargs):
             'selected_schemas': schema_ids,
             'displayed_schemas': schema_ids,
         }, email_required=email_required)
-    return generic_place_page(request, 'alerts/signup_form.html', place, {'form': form, 'schema_list': schema_list})
+    context = get_place_info_for_request(request, *args, **kwargs)
+    context['form'] = form
+    context['schema_list'] = schema_list
+    return eb_render(request, 'alerts/signup_form.html', context)
 
 def finish_signup(request, place, data):
     # This is called from signup(), after `data` (the alert options) is
