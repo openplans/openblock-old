@@ -63,7 +63,7 @@ function loadNewsItems() {
         newsitem_params.pid = pid;
     };
 
-    newsitems = new OpenLayers.Layer.Vector("NewsItems", {
+    var newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
         strategies: [
             new OpenLayers.Strategy.Fixed(),
@@ -195,7 +195,7 @@ function loadMap() {
             }
         }
     });
-    newsitems = loadNewsItems();
+    var newsitems = loadNewsItems();
     map.addLayers([osm]);
     if (typeof(place_type) != "undefined" && Boolean(place_type)) {
         var locationborder = loadLocationBorder(place_type, place_slug);
