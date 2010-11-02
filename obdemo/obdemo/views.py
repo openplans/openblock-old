@@ -30,8 +30,7 @@ def newsitems_geojson(request):
 
     newsitem_qs = NewsItem.objects.all()
     if schema:
-        import pdb; pdb.set_trace()
-        newsitem_qs = newsitem_qs.filter(schema__id=X)
+        newsitem_qs = newsitem_qs.filter(schema__slug=schema)
     if pid:
         place, block_radius, xy_radius = parse_pid(pid)
         if isinstance(place, Block):

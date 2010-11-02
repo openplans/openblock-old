@@ -19,6 +19,8 @@
  * place_slug (required iff place_type is set) - name of the place,
  * eg. 'downtown', used for constructing a place URL.
  *
+ * schema_slug (OPTIONAL) - slug of schema to filter on.
+ * 
  * newsitems_ajax_url (OPTIONAL) - url to use for requesting features.
  *
  * map_bounds - an OpenLayers.Bounds() defining the default boundaries.
@@ -58,9 +60,12 @@ function loadNewsItems() {
     // TODO: Update this to limit the schemas we show, eg: newsitem_params['schema'] = 'events'
 
     // Expect pid to be set globally prior to calling this function.
-    var newsitem_params = {pid: ''};
+    var newsitem_params = {pid: '', schema: ''};
     if (typeof(pid) != 'undefined') {
         newsitem_params.pid = pid;
+    };
+    if (typeof(schema_slug) != 'undefined') {
+        newsitem_params.schema = schema_slug;
     };
 
     var newsitems = new OpenLayers.Layer.Vector("NewsItems", {
