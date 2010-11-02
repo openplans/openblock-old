@@ -719,6 +719,7 @@ def schema_detail(request, slug):
                 location_chartfield_list.append({'location_type': lt, 'locations': ni_totals[:9], 'unknown': unknown_dict.get(lt.id, 0)})
         ni_list = ()
     else:
+
         latest_dates = schemafield_list = date_chart = lookup_list = location_chartfield_list = ()
         ni_list = list(NewsItem.objects.filter(schema__id=s.id).order_by('-item_date')[:30])
         populate_schema(ni_list, s)
@@ -780,12 +781,13 @@ def schema_about(request, slug):
     si = get_object_or_404(SchemaInfo, schema__id=s.id)
     return eb_render(request, 'db/schema_about.html', {'schemainfo': si, 'schema': s})
 
+
 def schema_filter(request, slug, urlbits):
     # Due to the way our custom filter UI works, address, date and text
     # searches come in a query string instead of in the URL. Here, we validate
     # those searches and do a redirect so that the address and date are in
     # urlbits.
-
+    context = {}
     if request.GET.get('address', '').strip():
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
@@ -955,15 +957,14 @@ def schema_filter(request, slug, urlbits):
             m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
             if not m:
                 raise Http404('Invalid block URL')
-            block = url_to_block(city_slug, street_slug, *m.groups())
-            m = re.search(r'^(\d)-blocks?$', block_radius)
-            if not m:
-                raise Http404('Invalid block radius')
-            block_radius = m.group(1)
-            if block_radius not in BLOCK_RADIUS_CHOICES:
-                raise Http404('Invalid block radius')
-            search_buffer = make_search_buffer(block.location.centroid, block_radius)
-            qs = qs.filter(location__bboverlaps=search_buffer)
+            context.update(get_place_info_for_request(
+                    request, city_slug, street_slug, *m.groups(),
+                    place_type='block', newsitem_qs=qs))
+
+            #block = url_to_block(city_slug, street_slug, *m.groups())
+            block = context['place']
+            block_radius = context['block_radius']
+            qs = context['newsitem_qs']
             value = '%s block%s around %s' % (block_radius, (block_radius != '1' and 's' or ''), block.pretty_name)
             filters['location'] = {
                 'name': 'location',
@@ -984,9 +985,15 @@ def schema_filter(request, slug, urlbits):
                 raise Http404()
             location_type_slug = urlbits.pop()
             if urlbits:
-                loc = url_to_location(location_type_slug, urlbits.pop())
+                loc_name = urlbits.pop()
+                context.update(get_place_info_for_request(
+                        request, location_type_slug, loc_name,
+                        place_type='location', newsitem_qs=qs))
+                loc = context['place']
+                #loc = url_to_location(location_type_slug, urlbits.pop())
                 #qs = qs.filter(newsitemlocation__location__id=loc.id)
-                qs = qs.filter(location__bboverlaps=loc.location.envelope)
+                #qs = qs.filter(location__bboverlaps=loc.location.envelope)
+                qs = context['newsitem_qs']
                 filters['location'] = {
                     'name': 'location',
                     'label': loc.location_type.name,
@@ -1065,7 +1072,15 @@ def schema_filter(request, slug, urlbits):
     populate_attributes_if_needed(ni_list, [s])
     bunches = cluster_newsitems(ni_list, 26)
 
-    return eb_render(request, 'db/filter.html', {
+    if not context.get('bbox'):
+        # Whole city map.
+        context.update({
+                'default_lon': settings.DEFAULT_MAP_CENTER_LON,
+                'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
+                'default_zoom': settings.DEFAULT_MAP_ZOOM,
+                })
+
+    context.update({
         'schema': s,
         'newsitem_list': ni_list,
 
@@ -1091,6 +1106,8 @@ def schema_filter(request, slug, urlbits):
         'start_date': start_date,
         'end_date': end_date,
     })
+    return eb_render(request, 'db/filter.html', context)
+
 
 def location_type_detail(request, slug):
     lt = get_object_or_404(LocationType, slug=slug)
@@ -1153,7 +1170,8 @@ def get_place_info_for_request(request, *args, **kwargs):
                 )
 
     saved_place_lookup={}
-    newsitem_qs=NewsItem.objects.all()
+
+    newsitem_qs = kwargs.get('newsitem_qs') or NewsItem.objects.all()
 
     info['place'] = place = url_to_place(*args, **kwargs)
 
@@ -1207,6 +1225,7 @@ def get_place_info_for_request(request, *args, **kwargs):
         info['is_saved'] = SavedPlace.objects.filter(**saved_place_lookup).count()
 
     return info
+
 
 def place_detail_timeline(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
