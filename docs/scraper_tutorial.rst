@@ -8,17 +8,17 @@ scraper scripts to import data.
 You have three options for how to write Python scraper scripts.
 We'll look at each in turn:
 
-1. Expediently hack something that creates instances of
+1. :ref:`Expediently hack something <scraping_hack>` that creates instances of
    ebpub.db.NewsItem, in any way you like.
 
-2. For "list/detail" sites, you can build on the infrastructure in
-   ebdata.retrieval.scrapers.newsitem_list_detail.  These are sites
-   that display a list of records (eg. an RSS feed, or an HTML index
-   page), sometimes with separate linked pages providing more detail
-   about each record.
+2. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
+   (eg. an RSS feed, or an HTML index page), with optional separate
+   linked pages providing more detail about each record -- you can
+   build on the infrastructure in
+   ebdata.retrieval.scrapers.newsitem_list_detail.
 
 
-3. For "unstructured" sites - websites not intended for machine
+3. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
    consumption, eg. big piles of HTML and/or binary files such as PDF
    or Excel - you can build on ebdata.blobs.
 
@@ -34,6 +34,8 @@ NewsItems.
 This is fully documented at :doc:`schemas`.  Our examples will use
 schemas that are bootstrapped by installing :doc:`packages/obdemo`.
 
+
+.. _scraping_hack:
 
 "Expedient Hack" scraping
 =========================
@@ -131,6 +133,7 @@ So, what's left out? Among other things:
 * This schema doesn't require any custom attributes, so we don't show
   that. It's trivial though, just assign a dictionary to item.attributes.
 
+.. _scraping_listdetail:
 
 Using NewsItemListDetailScraper for List/Detail pages
 ======================================================
@@ -296,6 +299,7 @@ Disadvantage:
 For another example that uses detail pages and some of those other
 features, see ``obdemo/scrapers/seeclickfix_retrieval.py``.
 
+.. _scraping_blobs:
 
 Blobs
 =====
