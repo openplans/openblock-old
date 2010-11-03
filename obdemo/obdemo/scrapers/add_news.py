@@ -39,9 +39,7 @@ def main(argv=None):
 
     for entry in f.entries:
         try:
-            item = NewsItem.objects.get(schema__id=schema.id,
-                                        title=entry.title,
-                                        description=entry.description)
+            item = NewsItem.objects.get(schema__id=schema.id, url=entry.link)
             print "Already have %r (id %d)" % (item.title, item.id)
         except NewsItem.DoesNotExist:
             item = NewsItem()

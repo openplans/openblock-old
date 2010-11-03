@@ -83,7 +83,7 @@ from boston.com and creates a NewsItem for each entry::
         for entry in feedparser.parse(url):
             try:
                 # Check to see if we already have this one.
-                item = NewsItem.objects.get(schema__id=schema.id, title=entry.title, description=entry.description)
+                item = NewsItem.objects.get(schema__id=schema.id, url=entry.link)
                 logger.debug("Already have %r (id %d)" % (item.title, item.id))
             except NewsItem.DoesNotExist:
                 # Nope, we need to create a new one.
