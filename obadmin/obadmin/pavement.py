@@ -275,7 +275,8 @@ def _distinct_users(settings):
 
 @task
 def sync_all(options):
-    
+    """Use django-admin to initialize all our databases.
+    """
     settings_mod = "%s.settings" % options.app
     settings = get_app_settings(options)
     for dbname in settings.DATABASE_SYNC_ORDER:
@@ -284,6 +285,12 @@ def sync_all(options):
     for dbname in settings.DATABASES.keys():
         if dbname not in settings.DATABASE_SYNC_ORDER:
             sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
+    # Need workaround here for
+    # http://developer.openblockproject.org/ticket/74 because geometry
+    # columns don't exist yet at the time that Django loads an app's
+    # custom sql.  Maybe just re-run the sqlcustom stuff and ignore
+    # errors?
+
 
 @task
 @needs('create_database_users')
