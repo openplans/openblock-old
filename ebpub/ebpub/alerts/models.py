@@ -30,7 +30,7 @@ class EmailAlert(models.Model):
     active_objects = ActiveAlertsManager()
 
     def __unicode__(self):
-        return u'User %s: %u' % (self.user_id, self.name())
+        return u'User %d: %s' % (self.user_id, self.name())
 
     def unsubscribe_url(self):
         return '/alerts/unsubscribe/%s/' % self.id
