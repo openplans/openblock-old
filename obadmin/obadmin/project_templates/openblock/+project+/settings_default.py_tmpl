@@ -179,10 +179,11 @@ required_settings.append('SCRAPER_LOGFILE_NAME')
 # staff privileges (including the ability to view non-public schemas).
 required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
-# TODO: instead of bundling a rather bulky openlayers, our installer
-# should maybe download and build both an optimized profile,
-# and an un-minified version, and toggle them here based on DEBUG.
 OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
+
+# Static media optimizations: whitespace slimming, URL timestamping.
+# see https://github.com/peterbe/django-static#readme
+DJANGO_STATIC = True
 
 # Cache used by httplib2 for scrapers.
 HTTP_CACHE = PROJECT_DIR + '/scraper_http_cache'

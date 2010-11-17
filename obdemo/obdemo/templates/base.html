@@ -1,5 +1,5 @@
 {% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-{% load eb %}
+{% load eb %}{% load django_static %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
 <head>
@@ -17,10 +17,16 @@
 var $j = $;
 </script>
 
+{% comment %} we don't use slimall or slimfile because we've got an
+already-minified openlayers build; and we don't use staticall because
+we break image URLs then.  And it's not needed anyway since our
+openlayers directory is versioned already.
+{% endcomment %}
 <script charset="utf-8" type="text/javascript" src="{{ OPENLAYERS_URL }}"></script>
 
+{% slimall %}
 <link rel="stylesheet" type="text/css" href="/styles/style.css" />
-
+{% endslimall %}
 {% block extrahead %}{% endblock %}
 </head>
 <body>

@@ -58,6 +58,7 @@ INSTALLED_APPS = (
     'ebpub.streets',
     'django.contrib.humanize',
     'django.contrib.sessions',
+    'django_static',
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
@@ -82,10 +83,10 @@ TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
 ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (
-    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'ebpub.accounts.middleware.UserMiddleware',
+    'django.middleware.http.ConditionalGetMiddleware',
 )
 
 ##################################
@@ -180,11 +181,15 @@ required_settings.append('SCRAPER_LOGFILE_NAME')
 # staff privileges (including the ability to view non-public schemas).
 required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
-# TODO: instead of bundling a rather bulky openlayers, our installer
-# should maybe download and build both an optimized profile,
-# and an un-minified version, and toggle them here based on DEBUG.
 OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 
+# Static media optimizations: whitespace slimming, URL timestamping.
+# see https://github.com/peterbe/django-static#readme
+DJANGO_STATIC = True
+DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
+                             EB_MEDIA_ROOT + '/styles',
+                             EB_MEDIA_ROOT + '/scripts',
+                             ]
 
 # Logging setup. There's a bit of hackery to make sure we don't set up
 # handlers more than once; see

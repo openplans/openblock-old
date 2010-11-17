@@ -14,7 +14,8 @@ setup(
     "ebpub",
     "ebdata",
     "obadmin",
-    "geopy", # Maybe. Alternative to ebpub's geocoder.
+    "django_static",
+    "slimmer",
     ],
     dependency_links=[
     ],

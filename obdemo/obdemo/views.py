@@ -6,9 +6,12 @@ into ebpub.
 """
 from django.contrib.gis.shortcuts import render_to_kml
 from django.http import HttpResponse
+from django.core.cache import cache
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import simplejson
+from django.utils.cache import patch_response_headers
+from django.views.decorators.cache import cache_page
 from ebpub.db import constants
 from ebpub.db import views
 from ebpub.db.models import NewsItem
@@ -16,14 +19,28 @@ from ebpub.db.utils import today
 from ebpub.streets.models import Block
 from ebpub.utils.view_utils import parse_pid
 import datetime
+import hashlib
+
 
 def newsitems_geojson(request):
+    """Get a list of newsitems, optionally filtered for one place ID
+    and/or one schema slug.
+
+    Response is a geojson string.
+    """
+    # Note: can't use @cache_page here because that ignores all requests
+    # with query parameters (in FetchFromCacheMiddleware.process_request).
+    # So, we'll use the low-level cache API.
+
     # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
     # Seems like there are a number of similar code blocks in
     # ebpub.db.views?
 
     pid = request.GET.get('pid', '')
     schema = request.GET.get('schema', '')
+
+    cache_seconds = 60 * 5
+    cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
 
     newsitem_qs = NewsItem.objects.all()
     if schema:
@@ -55,34 +72,44 @@ def newsitems_geojson(request):
     # And, put a hard limit on the number of newsitems.
     newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
-    newsitem_list = list(newsitem_qs)
-    popup_list = views.map_popups(newsitem_list)
+    # Done preparing the query; cache based on the raw SQL
+    # to be sure we capture everything that matters.
+    cache_key += hashlib.md5(str(newsitem_qs.query)).hexdigest()
+    output = cache.get(cache_key, None)
+    if output is None:
+        newsitem_list = list(newsitem_qs)
+        popup_list = views.map_popups(newsitem_list)
 
-    features = {'type': 'FeatureCollection', 'features': []}
-    for newsitem, popup_info in zip(newsitem_list, popup_list):
-        if newsitem.location is None:
-            # Can happen, see NewsItem docstring.
-            # TODO: We should probably allow for newsitems that have a
-            # location_object too?
-            continue
+        features = {'type': 'FeatureCollection', 'features': []}
+        for newsitem, popup_info in zip(newsitem_list, popup_list):
+            if newsitem.location is None:
+                # Can happen, see NewsItem docstring.
+                # TODO: We should probably allow for newsitems that have a
+                # location_object too?
+                continue
 
-        features['features'].append(
-            {'type': 'Feature',
-             'geometry': {'type': 'Point',
-                          'coordinates': [newsitem.location.centroid.x,
-                                          newsitem.location.centroid.y],
-                          },
-             'properties': {
-                    'title': newsitem.title,
-                    'id': popup_info[0],
-                    'popup_html': popup_info[1],
-                    'schema': popup_info[2],
-                    }
-             })
-    output = simplejson.dumps(features, indent=1)
-    return HttpResponse(output, mimetype="application/javascript")
+            features['features'].append(
+                {'type': 'Feature',
+                 'geometry': {'type': 'Point',
+                              'coordinates': [newsitem.location.centroid.x,
+                                              newsitem.location.centroid.y],
+                              },
+                 'properties': {
+                        'title': newsitem.title,
+                        'id': popup_info[0],
+                        'popup_html': popup_info[1],
+                        'schema': popup_info[2],
+                        }
+                 })
+        output = simplejson.dumps(features, indent=1)
+        cache.set(cache_key, output, cache_seconds)
+
+    response = HttpResponse(output, mimetype="application/javascript")
+    patch_response_headers(response, cache_timeout=60 * 5)
+    return response
 
 
+@cache_page(60 * 60)
 def place_kml(request, *args, **kwargs):
     place = views.url_to_place(*args, **kwargs)
     return render_to_kml('place.kml', {'place': place})
