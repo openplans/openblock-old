@@ -10,12 +10,9 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils import simplejson
 from ebpub.db import constants
+from ebpub.db import views
 from ebpub.db.models import NewsItem
 from ebpub.db.utils import today
-from ebpub.db.views import has_staff_cookie
-from ebpub.db.views import make_search_buffer
-from ebpub.db.views import map_popups
-from ebpub.db.views import url_to_place
 from ebpub.streets.models import Block
 from ebpub.utils.view_utils import parse_pid
 import datetime
@@ -34,7 +31,7 @@ def newsitems_geojson(request):
     if pid:
         place, block_radius, xy_radius = parse_pid(pid)
         if isinstance(place, Block):
-            search_buffer = make_search_buffer(place.location.centroid, block_radius)
+            search_buffer = views.make_search_buffer(place.location.centroid, block_radius)
             newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
         else:
             # This depends on the trigger in newsitemlocation.sql
@@ -50,7 +47,7 @@ def newsitems_geojson(request):
     end_date = today()
     start_date = end_date - datetime.timedelta(days=constants.LOCATION_DAY_OPTIMIZATION)
     newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
-    if not has_staff_cookie(request):
+    if not views.has_staff_cookie(request):
         newsitem_qs = newsitem_qs.filter(schema__is_public=True)
 
     # Ordering by schema__id is an optimization for map_popups()
@@ -59,7 +56,7 @@ def newsitems_geojson(request):
     newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     newsitem_list = list(newsitem_qs)
-    popup_list = map_popups(newsitem_list)
+    popup_list = views.map_popups(newsitem_list)
 
     features = {'type': 'FeatureCollection', 'features': []}
     for newsitem, popup_info in zip(newsitem_list, popup_list):
@@ -82,12 +79,12 @@ def newsitems_geojson(request):
                     'schema': popup_info[2],
                     }
              })
-    output = simplejson.dumps(features, indent=2)
+    output = simplejson.dumps(features, indent=1)
     return HttpResponse(output, mimetype="application/javascript")
 
 
 def place_kml(request, *args, **kwargs):
-    place = url_to_place(*args, **kwargs)
+    place = views.url_to_place(*args, **kwargs)
     return render_to_kml('place.kml', {'place': place})
 
 def geotagger_ui(request): 
