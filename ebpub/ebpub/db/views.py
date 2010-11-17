@@ -1171,7 +1171,9 @@ def get_place_info_for_request(request, *args, **kwargs):
 
     saved_place_lookup={}
 
-    newsitem_qs = kwargs.get('newsitem_qs') or NewsItem.objects.all()
+    newsitem_qs = kwargs.get('newsitem_qs')
+    if newsitem_qs is None:
+        newsitem_qs = NewsItem.objects.all()
 
     info['place'] = place = url_to_place(*args, **kwargs)
 
