@@ -108,7 +108,7 @@ DEFAULT_MAP_ZOOM = 12
 # scraper scripts will put their HTTP cache.
 # (Warning, don't put it in a directory encrypted with ecryptfs
 # or you'll likely have "File name too long" errors.)
-HTTP_CACHE = '/tmp/eb_scraper_cache'
+HTTP_CACHE = '/tmp/openblock_scraper_cache'
 
 # Metros.
 METRO_LIST = (
@@ -142,6 +142,10 @@ METRO_LIST = (
     },
 )
 
+# Use whatever Django cache backend you like;
+# 'file' may be a reasonable choice if you're deploying on
+# a fairly constrained server.
+CACHE_BACKEND = 'file:///tmp/obdemo_cache'
 
 if DEBUG:
     for _name in required_settings:
