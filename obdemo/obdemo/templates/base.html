@@ -17,14 +17,15 @@
 var $j = $;
 </script>
 
-{% comment %} we don't use slimall or slimfile because we've got an
-already-minified openlayers build; and we don't use staticall because
-we break image URLs then.  And it's not needed anyway since our
-openlayers directory is versioned already.
+{% comment %} we don't use slimall or slimfile for OpenLayers because
+we've got an already-minified openlayers build; and we don't use
+staticall because we break image URLs then.  And it's not needed
+anyway since our openlayers directory is versioned already.
 {% endcomment %}
 <script charset="utf-8" type="text/javascript" src="{{ OPENLAYERS_URL }}"></script>
 
 {% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
 <link rel="stylesheet" type="text/css" href="/styles/style.css" />
 {% endslimall %}
 {% block extrahead %}{% endblock %}

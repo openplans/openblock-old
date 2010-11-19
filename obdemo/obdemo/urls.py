@@ -1,9 +1,18 @@
+from django.conf import settings
 from django.conf.urls.defaults import *
 from obadmin import admin
 
 admin.autodiscover()
 
-urlpatterns = patterns(
+if settings.DEBUG:
+    urlpatterns = patterns('',
+        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX,
+         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
+    )
+else:
+    urlpatterns = patterns('')
+
+urlpatterns += patterns(
 
     '',
 
@@ -30,10 +39,8 @@ urlpatterns = patterns(
     # geotagger api
     (r'^', include('ebdata.geotagger.urls')),
 
-    # ebpub provides all the UI for an openblock site.
+    # ebpub provides nearly all the UI for an openblock site.
     (r'^', include('ebpub.urls')),
-    
 
-    
 
 )

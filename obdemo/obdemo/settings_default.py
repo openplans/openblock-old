@@ -191,6 +191,11 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              EB_MEDIA_ROOT + '/scripts',
                              ]
 
+# Putting django-static's output in a separate directory and URL space
+# makes it easier for git to ignore them.
+DJANGO_STATIC_NAME_PREFIX = 'cache-forever'
+DJANGO_STATIC_SAVE_PREFIX = '%s/%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
+
 # Logging setup. There's a bit of hackery to make sure we don't set up
 # handlers more than once; see
 # http://stackoverflow.com/questions/342434/python-logging-in-django

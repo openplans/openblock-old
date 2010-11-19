@@ -29,3 +29,4 @@ obdemo/zip_data
 *scraper_http_cache
 distribute-*gz
 docs/_build
+obdemo/obdemo/media/cache-forever
