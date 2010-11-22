@@ -32,17 +32,23 @@ def main(argv=None):
     try:
         schema = Schema.objects.get(slug=schema_slug)
     except Schema.DoesNotExist:
-        print "Schema (%s): DoesNotExist" % schema_slug
+        logger.error( "Schema (%s): DoesNotExist" % schema_slug)
         sys.exit(1)
 
     f = feedparser.parse(url)
-
+    addcount = updatecount = 0
     for entry in f.entries:
         try:
             item = NewsItem.objects.get(schema__id=schema.id, url=entry.link)
-            print "Already have %r (id %d)" % (item.title, item.id)
+            status = 'updated'
+            updatecount += 1
         except NewsItem.DoesNotExist:
             item = NewsItem()
+            status = 'added'
+            addcount += 1
+        except NewsItem.MultipleObjectsReturned:
+            logger.warn("Multiple entries matched url %r, news urls are not unique?" % entry.link)
+            continue
         try:
             item.schema = schema
             item.title = convert_entities(entry.title)
@@ -86,11 +92,11 @@ def main(argv=None):
                     logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, item.title))
                     item.location_name = u''
             item.save()
-            logger.info("Saved: %s" % item.title)
+            logger.info("%s: %s" % (status, item.title))
         except:
             logger.error("Warning: couldn't save %r. Traceback:" % item.title)
             log_exception()
-    logger.info("Finished add_news")
+    logger.info("Finished add_news: %d added, %d updated" % (addcount, updatecount))
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

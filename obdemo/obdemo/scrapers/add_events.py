@@ -46,7 +46,7 @@ def main():
         title = convert_entities(entry.title)
         try:
             item = NewsItem.objects.get(title=title,
-                                        schema=schema)
+                                        schema__id=schema.id)
             status = "Updated"
             updatecount += 1
         except NewsItem.DoesNotExist:
