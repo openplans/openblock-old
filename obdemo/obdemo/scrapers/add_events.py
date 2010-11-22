@@ -41,20 +41,25 @@ def main():
         sys.exit(1)
 
     feed = feedparser.parse(url)
-
+    addcount = updatecount = 0
     for entry in feed.entries:
+        title = convert_entities(entry.title)
         try:
-            item = NewsItem.objects.get(title=entry.title,
-                description=entry.description)
+            item = NewsItem.objects.get(title=title,
+                                        schema=schema)
             status = "Updated"
+            updatecount += 1
         except NewsItem.DoesNotExist:
             item = NewsItem()
             status = "Added"
-
+            addcount += 1
+        except NewsItem.MultipleObjectsReturned:
+            logger.warn("Multiple entries matched title %r, event titles are not unique?" % title)
+            continue
         try:
             item.location_name = entry.get('xcal_x-calconnect-street') or entry.get('x-calconnect-street') or u''
             item.schema = schema
-            item.title = convert_entities(entry.title)
+            item.title = title
             item.description = convert_entities(entry.description)
             item.url = entry.link
             item.item_date = datetime.datetime(*entry.updated_parsed[:6])
@@ -80,7 +85,7 @@ def main():
             logger.info("%s: %s" % (status, item.title))
         except ValueError:
             logger.debug("unexpected error:", sys.exc_info()[1])
-    logger.info("add_events finished")
+    logger.info("add_events finished: %d added, %d updated" % (addcount, updatecount))
 
 if __name__ == '__main__':
     sys.exit(main())
