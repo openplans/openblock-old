@@ -38,22 +38,31 @@ def main(argv=None):
     f = feedparser.parse(url)
     addcount = updatecount = 0
     for entry in f.entries:
+        title = convert_entities(entry.title)
+        description = convert_entities(entry.description)
+
+        if entry.id.startswith('http'):
+            item_url = entry.id
+        else:
+            item_url = entry.link
         try:
-            item = NewsItem.objects.get(schema__id=schema.id, url=entry.link)
+            item = NewsItem.objects.get(schema__id=schema.id,
+                                        title=title,
+                                        description=description)
+            #url=item_url)
             status = 'updated'
-            updatecount += 1
         except NewsItem.DoesNotExist:
             item = NewsItem()
             status = 'added'
-            addcount += 1
         except NewsItem.MultipleObjectsReturned:
-            logger.warn("Multiple entries matched url %r, news urls are not unique?" % entry.link)
+            # Seen some where we get the same story with multiple URLs. Why?
+            logger.warn("Multiple entries matched title %r and description %r. Expected unique!" % (title, description))
             continue
         try:
+            item.title = title
             item.schema = schema
-            item.title = convert_entities(entry.title)
-            item.description = convert_entities(entry.description)
-            item.url = entry.link
+            item.description = description
+            item.url = item_url
             item.location_name = entry.get('x-calconnect-street') or entry.get('georss_featurename')
             item.item_date = datetime.datetime(*entry.updated_parsed[:6])
             item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
@@ -73,7 +82,7 @@ def main(argv=None):
                     log_exception(level=logging.DEBUG)
                     continue
                 if None in (x, y):
-                    logger.debug("couldn't geocode '%s...'" % item.title[:30])
+                    logger.info("couldn't geocode '%s...'" % item.title[:30])
                     continue
             item.location = Point((float(y), float(x)))
             if item.location.x == 0.0 and item.location.y == 0.0:
@@ -88,10 +97,15 @@ def main(argv=None):
                     block, distance = reverse.reverse_geocode(item.location)
                     logger.debug(" Reverse-geocoded point to %r" % block.pretty_name)
                     item.location_name = block.pretty_name
+                    item.block = block
                 except reverse.ReverseGeocodeError:
                     logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, item.title))
                     item.location_name = u''
             item.save()
+            if status == 'added':
+                addcount += 1
+            else:
+                updatecount += 1
             logger.info("%s: %s" % (status, item.title))
         except:
             logger.error("Warning: couldn't save %r. Traceback:" % item.title)

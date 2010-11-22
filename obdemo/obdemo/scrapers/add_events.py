@@ -17,6 +17,7 @@ import logging
 
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
+from utils import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
 # put unescape html before putting it in the db.  Maybe wouldn't have
@@ -48,11 +49,9 @@ def main():
             item = NewsItem.objects.get(title=title,
                                         schema__id=schema.id)
             status = "Updated"
-            updatecount += 1
         except NewsItem.DoesNotExist:
             item = NewsItem()
             status = "Added"
-            addcount += 1
         except NewsItem.MultipleObjectsReturned:
             logger.warn("Multiple entries matched title %r, event titles are not unique?" % title)
             continue
@@ -77,14 +76,20 @@ def main():
                     block, distance = reverse.reverse_geocode(item.location)
                     logger.info(" Reverse-geocoded point to %r" % block.pretty_name)
                     item.location_name = block.pretty_name
+                    item.block = block
                 except reverse.ReverseGeocodeError:
                     logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, item.title))
                     item.location_name = u''
 
             item.save()
+            if status == 'added':
+                addcount += 1
+            else:
+                updatecount += 1
             logger.info("%s: %s" % (status, item.title))
-        except ValueError:
-            logger.debug("unexpected error:", sys.exc_info()[1])
+        except:
+            logger.error("unexpected error:", sys.exc_info()[1])
+            log_exception()
     logger.info("add_events finished: %d added, %d updated" % (addcount, updatecount))
 
 if __name__ == '__main__':
