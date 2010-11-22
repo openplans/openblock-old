@@ -1034,7 +1034,8 @@ def schema_filter(request, slug, urlbits):
             boolean_lookup_list.append(sf)
         elif sf.is_lookup:
             top_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MIN_DISPLAYED+LOOKUP_BUFFER]
-            if top_values.count() == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
+            top_values = list(top_values)
+            if len(top_values) == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
                 top_values = top_values[:LOOKUP_MIN_DISPLAYED]
                 has_more = True
             else:
