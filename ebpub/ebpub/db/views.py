@@ -1034,7 +1034,7 @@ def schema_filter(request, slug, urlbits):
             boolean_lookup_list.append(sf)
         elif sf.is_lookup:
             top_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MIN_DISPLAYED+LOOKUP_BUFFER]
-            if len(top_values) == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
+            if top_values.count() == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
                 top_values = top_values[:LOOKUP_MIN_DISPLAYED]
                 has_more = True
             else:
@@ -1257,6 +1257,11 @@ def place_detail_timeline(request, *args, **kwargs):
         order_by=('-pub_date_date', '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
     #ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
+
+    # We're done filtering, so go ahead and do the query, to
+    # avoid running it multiple times,
+    # per http://docs.djangoproject.com/en/dev/topics/db/optimization
+    ni_list = list(ni_list)
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
