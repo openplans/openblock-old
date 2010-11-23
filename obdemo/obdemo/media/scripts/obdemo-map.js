@@ -20,7 +20,7 @@
  * eg. 'downtown', used for constructing a place URL.
  *
  * schema_slug (OPTIONAL) - slug of schema to filter on.
- * 
+ *
  * newsitems_ajax_url (OPTIONAL) - url to use for requesting features.
  *
  * map_bounds - an OpenLayers.Bounds() defining the default boundaries.
@@ -193,7 +193,7 @@ function loadMap() {
         context: {
             radius: function(feature) {
 	        // Size of cluster, in pixels.
-                return 8 + Math.min(feature.attributes.count * 1.2, 14);
+                return 8 + Math.min(feature.attributes.count * 0.7, 14);
             },
             getlabel: function(feature) {
                 return feature.attributes.count;
