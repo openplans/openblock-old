@@ -35,7 +35,8 @@ options(
     postgis_paths = ['/usr/share/postgresql/8.4/contrib',
                      '/usr/share/postgresql-8.3-postgis',
                      '/usr/local/pgsql/share/contrib/postgis-1.5',
-                     '/opt/local/share/postgresql84/contrib/postgis-1.5'
+                     '/opt/local/share/postgresql84/contrib/postgis-1.5',
+                     '/usr/local/Cellar/postgis/1.5.2/share/postgis',
     ],
     default_postgis_template='template_postgis'
 )
