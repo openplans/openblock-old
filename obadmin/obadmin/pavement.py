@@ -10,6 +10,7 @@ generate unique values for certain configuration params (cookies etc)
 bad existing postgis_template can interfere with install, test
 """
 
+import glob
 import os
 import traceback
 
@@ -32,11 +33,12 @@ options(
     app='obdemo',
     # paths that will be searched for suitable postgis
     # add your own if it's custom or not listed.
-    postgis_paths = ['/usr/share/postgresql/8.4/contrib',
-                     '/usr/share/postgresql-8.3-postgis',
-                     '/usr/local/pgsql/share/contrib/postgis-1.5',
-                     '/opt/local/share/postgresql84/contrib/postgis-1.5',
-                     '/usr/local/Cellar/postgis/1.5.2/share/postgis',
+    # These will be treated as patterns for glob.glob()
+    postgis_paths = ['/usr/share/postgresql/8.*/contrib',
+                     '/usr/share/postgresql-8.*-postgis',
+                     '/usr/local/pgsql/share/contrib/postgis-1.*',
+                     '/opt/local/share/postgresql84/contrib/postgis-1.*',
+                     '/usr/local/Cellar/postgis/1.*/share/postgis',
     ],
     default_postgis_template='template_postgis'
 )
@@ -219,7 +221,10 @@ def find_postgis(options):
         ('postgis.sql', 'spatial_ref_sys.sql'),
         ('lwpostgis.sql', 'spatial_ref_sys.sql')
     )
-    for path in options.postgis_paths:
+    postgis_paths = []
+    for pattern in options.postgis_paths:
+        postgis_paths.extend(glob.glob(pattern))
+    for path in postgis_paths:
         for files in file_sets:
             found = True
             for filename in files:
