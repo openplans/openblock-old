@@ -132,11 +132,6 @@ EB_TODAY_OVERRIDE = None
 SHAPEFILE_ROOT = ''
 required_settings.append('SHAPEFILE_ROOT')
 
-# For the 'autoversion' template tag.
-required_settings.append('AUTOVERSION_STATIC_MEDIA')
-AUTOVERSION_STATIC_MEDIA = False
-
-
 # Connection info for mapserver.
 # Leave these alone if you're not using one;
 # by default obdemo doesn't need it.
@@ -185,6 +180,8 @@ OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme
+# This supercedes the everyblock-specific template tags in
+# everyblock.templatetags.staticmedia.
 DJANGO_STATIC = True
 DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              EB_MEDIA_ROOT + '/styles',
@@ -193,6 +190,8 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them.
+# XXX this breaks django_static's test suite
+
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 
