@@ -1,368 +1,320 @@
 [
   {
     "fields": {
-      "is_special_report": false, 
-      "plural_name": "Events", 
-      "last_updated": "2010-10-21", 
-      "name": "Event", 
-      "has_newsitem_detail": true, 
-      "importance": 100, 
-      "uses_attributes_in_list": true, 
-      "min_date": "2009-01-01", 
-      "allow_charting": true, 
-      "can_collapse": true, 
-      "date_name": "Date", 
-      "indefinite_article": "an", 
-      "is_public": true, 
-      "number_in_overview": 5, 
-      "slug": "events", 
-      "date_name_plural": "Dates"
-    }, 
+      "is_special_report": false,
+      "plural_name": "Events",
+      "last_updated": "2010-10-21",
+      "name": "Event",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "an",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "events",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://calendar.boston.com/",
+      "summary": "Boston Events",
+      "source": "http://calendar.boston.com/",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of events in Boston",
+      "grab_bag": ""
+    },
     "model": "db.schema"
-  }, 
+  },
   {
     "fields": {
-      "is_special_report": false, 
-      "plural_name": "News", 
-      "last_updated": "2010-10-21", 
-      "name": "News", 
-      "has_newsitem_detail": true, 
-      "importance": 100, 
-      "uses_attributes_in_list": true, 
-      "min_date": "2009-01-01", 
-      "allow_charting": true, 
-      "can_collapse": true, 
-      "date_name": "Date", 
-      "indefinite_article": "a", 
-      "is_public": true, 
-      "number_in_overview": 5, 
-      "slug": "local-news", 
-      "date_name_plural": "Dates"
-    }, 
+      "is_special_report": false,
+      "plural_name": "News",
+      "last_updated": "2010-10-21",
+      "name": "News",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "local-news",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.boston.com",
+      "summary": "Boston News",
+      "source": "http://www.boston.com",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of news in Boston",
+      "grab_bag": ""
+    },
     "model": "db.schema"
-  }, 
+  },
   {
     "fields": {
-      "is_special_report": false, 
-      "plural_name": "Boston Police Department reports", 
-      "last_updated": "2010-10-21", 
-      "name": "Boston Police Department report", 
-      "has_newsitem_detail": true, 
-      "importance": 100, 
-      "uses_attributes_in_list": true, 
-      "min_date": "2009-01-01", 
-      "allow_charting": true, 
-      "can_collapse": true, 
-      "date_name": "Date", 
-      "indefinite_article": "a", 
-      "is_public": true, 
-      "number_in_overview": 5, 
-      "slug": "police-reports", 
-      "date_name_plural": "Dates"
-    }, 
-    "model": "db.schema"
-  }, 
-  {
-    "fields": {
-      "is_special_report": false, 
-      "plural_name": "Restaurant Inspections", 
-      "last_updated": "2010-10-20", 
-      "name": "Restaurant Inspection", 
-      "has_newsitem_detail": true, 
-      "importance": 100, 
-      "uses_attributes_in_list": true, 
-      "min_date": "2009-01-01", 
-      "allow_charting": true, 
-      "can_collapse": true, 
-      "date_name": "Date", 
-      "indefinite_article": "a", 
-      "is_public": true, 
-      "number_in_overview": 5, 
-      "slug": "restaurant-inspections", 
-      "date_name_plural": "Dates"
-    }, 
-    "model": "db.schema"
-  }, 
-  {
-    "fields": {
-      "is_special_report": false, 
-      "plural_name": "SeeClickFix Issues", 
-      "last_updated": "2010-10-22", 
-      "name": "SeeClickFix Issue", 
-      "has_newsitem_detail": true, 
-      "importance": 100, 
-      "uses_attributes_in_list": true, 
-      "min_date": "2009-01-01", 
-      "allow_charting": true, 
-      "can_collapse": true, 
-      "date_name": "Date", 
-      "indefinite_article": "a", 
-      "is_public": true, 
-      "number_in_overview": 5, 
-      "slug": "issues", 
-      "date_name_plural": "Dates"
-    }, 
-    "model": "db.schema"
-  }, 
-  {
-    "fields": {
-      "is_special_report": false, 
-      "plural_name": "Building Permits", 
-      "last_updated": "2010-10-22", 
-      "name": "Building Permit", 
-      "has_newsitem_detail": true, 
-      "importance": 100, 
-      "uses_attributes_in_list": true, 
-      "min_date": "2009-01-01", 
-      "allow_charting": true, 
-      "can_collapse": true, 
-      "date_name": "Date", 
-      "indefinite_article": "a", 
-      "is_public": true, 
-      "number_in_overview": 5, 
-      "slug": "building-permits", 
-      "date_name_plural": "Dates"
-    }, 
-    "model": "db.schema"
-  }, 
-  {
-    "fields": {
-      "grab_bag_headline": "", 
-      "short_source": "http://www.cityofboston.gov/isd/building/asofright/default.asp", 
-      "summary": "Boston Building Permits", 
-      "source": "http://www.cityofboston.gov/isd/building/asofright/default.asp", 
-      "intro": "", 
-      "update_frequency": "", 
-      "short_description": "List of Boston Building Permits", 
-      "grab_bag": "", 
-      "schema": [
-        "building-permits"
-      ]
-    }, 
-    "model": "db.schemainfo"
-  }, 
-  {
-    "fields": {
-      "grab_bag_headline": "", 
-      "short_source": "http://calendar.boston.com/", 
-      "summary": "Boston Events", 
-      "source": "http://calendar.boston.com/", 
-      "intro": "", 
-      "update_frequency": "", 
-      "short_description": "List of events in Boston", 
-      "grab_bag": "", 
-      "schema": [
-        "events"
-      ]
-    }, 
-    "model": "db.schemainfo"
-  }, 
-  {
-    "fields": {
-      "grab_bag_headline": "", 
-      "short_source": "http://www.boston.com", 
-      "summary": "Boston News", 
-      "source": "http://www.boston.com", 
-      "intro": "", 
-      "update_frequency": "", 
-      "short_description": "List of news in Boston", 
-      "grab_bag": "", 
-      "schema": [
-        "local-news"
-      ]
-    }, 
-    "model": "db.schemainfo"
-  }, 
-  {
-    "fields": {
-      "grab_bag_headline": "", 
-      "short_source": "http://www.cityofboston.gov/isd/health/mfc/search.asp", 
-      "summary": "Restaurant Inspections", 
-      "source": "http://www.cityofboston.gov/isd/health/mfc/search.asp", 
-      "intro": "", 
-      "update_frequency": "", 
-      "short_description": "List of Restaurant Inspections", 
-      "grab_bag": "", 
-      "schema": [
-        "restaurant-inspections"
-      ]
-    }, 
-    "model": "db.schemainfo"
-  }, 
-  {
-    "fields": {
-      "grab_bag_headline": "", 
+      "is_special_report": false,
+      "plural_name": "Boston Police Department reports",
+      "last_updated": "2010-10-21",
+      "name": "Boston Police Department report",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "police-reports",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
       "short_source": "http://www.bpdnews.com",
-      "summary": "Boston Police Department reports", 
+      "summary": "Boston Police Department reports",
       "source": "http://www.bpdnews.com",
-      "intro": "", 
-      "update_frequency": "", 
-      "short_description": "List of Boston Police Department reports", 
-      "grab_bag": "", 
-      "schema": [
-        "police-reports"
-      ]
-    }, 
-    "model": "db.schemainfo"
-  }, 
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Boston Police Department reports",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
   {
     "fields": {
-      "grab_bag_headline": "", 
-      "short_source": "http://seeclickfix.com", 
-      "summary": "SeeClickFix Issues", 
-      "source": "http://seeclickfix.com", 
-      "intro": "", 
-      "update_frequency": "", 
-      "short_description": "List of Issues from SeeClickFix", 
-      "grab_bag": "", 
-      "schema": [
-        "issues"
-      ]
-    }, 
-    "model": "db.schemainfo"
-  }, 
+      "is_special_report": false,
+      "plural_name": "Restaurant Inspections",
+      "last_updated": "2010-10-20",
+      "name": "Restaurant Inspection",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "restaurant-inspections",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.cityofboston.gov/isd/health/mfc/search.asp",
+      "summary": "Restaurant Inspections",
+      "source": "http://www.cityofboston.gov/isd/health/mfc/search.asp",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Restaurant Inspections",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
   {
     "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Inspection IDs", 
-      "is_charted": false, 
-      "name": "inspection_id", 
-      "display_order": 0, 
-      "is_searchable": false, 
-      "real_name": "int02", 
-      "pretty_name": "Inspection ID", 
-      "is_filter": false, 
-      "display": false, 
+      "is_special_report": false,
+      "plural_name": "SeeClickFix Issues",
+      "last_updated": "2010-10-22",
+      "name": "SeeClickFix Issue",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "issues",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://seeclickfix.com",
+      "summary": "SeeClickFix Issues",
+      "source": "http://seeclickfix.com",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Issues from SeeClickFix",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Building Permits",
+      "last_updated": "2010-10-22",
+      "name": "Building Permit",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "building-permits",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.cityofboston.gov/isd/building/asofright/default.asp",
+      "summary": "Boston Building Permits",
+      "source": "http://www.cityofboston.gov/isd/building/asofright/default.asp",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Boston Building Permits",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Inspection IDs",
+      "is_charted": false,
+      "name": "inspection_id",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int02",
+      "pretty_name": "Inspection ID",
+      "is_filter": false,
+      "display": false,
       "schema": [
         "restaurant-inspections"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Ratings", 
-      "is_charted": false, 
-      "name": "rating", 
-      "display_order": 0, 
-      "is_searchable": false, 
-      "real_name": "int01", 
-      "pretty_name": "Rating", 
-      "is_filter": false, 
-      "display": true, 
+      "is_lookup": false,
+      "pretty_name_plural": "Ratings",
+      "is_charted": false,
+      "name": "rating",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Rating",
+      "is_filter": false,
+      "display": true,
       "schema": [
         "issues"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Raw Addresses", 
-      "is_charted": false, 
-      "name": "raw_address", 
-      "display_order": 0, 
-      "is_searchable": true, 
-      "real_name": "varchar01", 
-      "pretty_name": "Raw Address", 
-      "is_filter": false, 
-      "display": false, 
+      "is_lookup": false,
+      "pretty_name_plural": "Raw Addresses",
+      "is_charted": false,
+      "name": "raw_address",
+      "display_order": 0,
+      "is_searchable": true,
+      "real_name": "varchar01",
+      "pretty_name": "Raw Address",
+      "is_filter": false,
+      "display": false,
       "schema": [
         "building-permits"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Restaurant IDs", 
-      "is_charted": false, 
-      "name": "restaurant_id", 
-      "display_order": 0, 
-      "is_searchable": false, 
-      "real_name": "int01", 
-      "pretty_name": "Restaurant ID", 
-      "is_filter": false, 
-      "display": false, 
+      "is_lookup": false,
+      "pretty_name_plural": "Restaurant IDs",
+      "is_charted": false,
+      "name": "restaurant_id",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Restaurant ID",
+      "is_filter": false,
+      "display": false,
       "schema": [
         "restaurant-inspections"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Restaurant Names", 
-      "is_charted": false, 
-      "name": "restaurant_name", 
-      "display_order": 0, 
-      "is_searchable": true, 
-      "real_name": "varchar01", 
-      "pretty_name": "Restaurant Name", 
-      "is_filter": true, 
-      "display": true, 
+      "is_lookup": false,
+      "pretty_name_plural": "Restaurant Names",
+      "is_charted": false,
+      "name": "restaurant_name",
+      "display_order": 0,
+      "is_searchable": true,
+      "real_name": "varchar01",
+      "pretty_name": "Restaurant Name",
+      "is_filter": true,
+      "display": true,
       "schema": [
         "restaurant-inspections"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": true, 
-      "pretty_name_plural": "Results", 
-      "is_charted": false, 
-      "name": "result", 
-      "display_order": 1, 
-      "is_searchable": true, 
-      "real_name": "int03", 
-      "pretty_name": "Result", 
-      "is_filter": true, 
-      "display": true, 
+      "is_lookup": true,
+      "pretty_name_plural": "Results",
+      "is_charted": false,
+      "name": "result",
+      "display_order": 1,
+      "is_searchable": true,
+      "real_name": "int03",
+      "pretty_name": "Result",
+      "is_filter": true,
+      "display": true,
       "schema": [
         "restaurant-inspections"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": true, 
-      "pretty_name_plural": "Violations", 
-      "is_charted": false, 
-      "name": "violation", 
-      "display_order": 2, 
-      "is_searchable": true, 
-      "real_name": "varchar02", 
-      "pretty_name": "Violation", 
-      "is_filter": true, 
-      "display": true, 
+      "is_lookup": true,
+      "pretty_name_plural": "Violations",
+      "is_charted": false,
+      "name": "violation",
+      "display_order": 2,
+      "is_searchable": true,
+      "real_name": "varchar02",
+      "pretty_name": "Violation",
+      "is_filter": true,
+      "display": true,
       "schema": [
         "restaurant-inspections"
       ]
-    }, 
+    },
     "model": "db.schemafield"
-  }, 
+  },
   {
     "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Violation Details", 
-      "is_charted": false, 
-      "name": "details", 
-      "display_order": 2, 
-      "is_searchable": false, 
-      "real_name": "text01", 
-      "pretty_name": "Violation Detail", 
-      "is_filter": false, 
-      "display": false, 
+      "is_lookup": false,
+      "pretty_name_plural": "Violation Details",
+      "is_charted": false,
+      "name": "details",
+      "display_order": 2,
+      "is_searchable": false,
+      "real_name": "text01",
+      "pretty_name": "Violation Detail",
+      "is_filter": false,
+      "display": false,
       "schema": [
         "restaurant-inspections"
       ]
-    }, 
+    },
     "model": "db.schemafield"
   }
 ]

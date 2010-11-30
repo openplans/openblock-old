@@ -11,16 +11,16 @@
 	</p>
 	<h1>About {{ schema.plural_name }}</h1>
 	<h2>Summary</h2>
-	{{ schemainfo.summary|safe|linebreaks }}
+	{{ schema.summary|safe|linebreaks }}
 
-	{% if schemainfo.source %}
+	{% if schema.source %}
 		<h2>Source</h2>
-		{{ schemainfo.source|safe|linebreaks }}
+		{{ schema.source|safe|linebreaks }}
 	{% endif %}
 
-	{% if schemainfo.grab_bag_headline and schemainfo.grab_bag %}
-		<h2>{{ schemainfo.grab_bag_headline|safe }}</h2>
-		{{ schemainfo.grab_bag|safe|linebreaks }}
+	{% if schema.grab_bag_headline and schema.grab_bag %}
+		<h2>{{ schema.grab_bag_headline|safe }}</h2>
+		{{ schema.grab_bag|safe|linebreaks }}
 	{% endif %}
 
 	<p><a href="../">Back to {{ schema.plural_name }}</a></p>

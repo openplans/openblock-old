@@ -7,8 +7,8 @@
 {% block content %}
 <div id="content">
 	<h1>Special report: {{ schema.plural_name|capfirst }}</h1>
-	{% if schemainfo %}<p>{{ schemainfo.short_description }}</p>{% endif %}
-	{{ schemainfo.summary|safe|linebreaks }}
+	<p>{{ schema.short_description }}</p>
+	{{ schema.summary|safe|linebreaks }}
 	{% if schema.allow_charting %}
 		<h3>Browse</h3>
 		<ul>

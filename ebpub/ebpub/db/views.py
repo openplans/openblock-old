@@ -7,7 +7,7 @@ from django.utils import dateformat, simplejson
 from django.utils.datastructures import SortedDict
 from django.db.models import Q
 from ebpub.db import constants
-from ebpub.db.models import NewsItem, Schema, SchemaInfo, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
+from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
@@ -639,16 +639,15 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     })
 
 def schema_list(request):
-    schemainfo_list = SchemaInfo.objects.select_related().filter(schema__is_public=True, schema__is_special_report=False).order_by('schema__plural_name')
+    schema_list = Schema.objects.select_related().filter(is_public=True, is_special_report=False).order_by('plural_name')
     schemafield_list = list(SchemaField.objects.filter(is_filter=True).order_by('display_order'))
     browsable_locationtype_list = LocationType.objects.filter(is_significant=True)
     # Populate s_list, which contains a schema and schemafield list for each schema.
     s_list = []
-    for s in schemainfo_list:
+    for s in schema_list:
         s_list.append({
-            'schema': s.schema,
-            'schemainfo': s,
-            'schemafield_list': [sf for sf in schemafield_list if sf.schema_id == s.schema_id],
+            'schema': s,
+            'schemafield_list': [sf for sf in schemafield_list if sf.schema_id == s.id],
         })
 
     return eb_render(request, 'db/schema_list.html', {
@@ -658,13 +657,8 @@ def schema_list(request):
 
 def schema_detail(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug)
-    try:
-        si = SchemaInfo.objects.get(schema__id=s.id)
-    except SchemaInfo.DoesNotExist:
-        si = None
-
     if s.is_special_report:
-        return schema_detail_special_report(request, s, si)
+        return schema_detail_special_report(request, s)
 
     location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
@@ -736,7 +730,6 @@ def schema_detail(request, slug):
 
     return eb_render(request, templates_to_try, {
         'schema': s,
-        'schemainfo': si,
         'schemafield_list': schemafield_list,
         'location_type_list': location_type_list,
         'date_chart': date_chart,
@@ -752,7 +745,7 @@ def schema_detail(request, slug):
         'end_date': today(),
     })
 
-def schema_detail_special_report(request, schema, schemainfo):
+def schema_detail_special_report(request, schema):
     ni_list = NewsItem.objects.filter(schema__id=schema.id)
     populate_schema(ni_list, schema)
     populate_attributes_if_needed(ni_list, [schema])
@@ -768,7 +761,6 @@ def schema_detail_special_report(request, schema, schemainfo):
     templates_to_try = ('db/schema_detail/%s.html' % schema.slug, 'db/schema_detail_special_report.html')
     return eb_render(request, templates_to_try, {
         'schema': schema,
-        'schemainfo': schemainfo,
         'newsitem_list': ni_list,
         'nothing_geocoded': not has_clusters(bunches),
         'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
@@ -778,8 +770,7 @@ def schema_detail_special_report(request, schema, schemainfo):
 
 def schema_about(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug)
-    si = get_object_or_404(SchemaInfo, schema__id=s.id)
-    return eb_render(request, 'db/schema_about.html', {'schemainfo': si, 'schema': s})
+    return eb_render(request, 'db/schema_about.html', {'schema': s})
 
 
 def schema_filter(request, slug, urlbits):

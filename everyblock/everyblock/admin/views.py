@@ -1,25 +1,12 @@
 # -*- coding: utf-8 -*-
 from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
-from ebpub.db.models import Schema, SchemaInfo, SchemaField, NewsItem, Attribute, Lookup, DataUpdate, LocationType, Location, AggregateLocationDay
+from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from django import forms
 from django.conf import settings
-from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 
-FREQUENCY_CHOICES = ('Hourly', 'Throughout the day', 'Daily', 'Twice a week', 'Weekly', 'Twice a month', 'Monthly', 'Quarterly', 'Sporadically', 'No longer updated')
-FREQUENCY_CHOICES = [(a, a) for a in FREQUENCY_CHOICES]
-
-class SchemaInfoForm(forms.Form):
-    number_in_overview = forms.IntegerField(required=True, min_value=1, max_value=100)
-    short_description = forms.CharField(widget=forms.Textarea(attrs={'rows': 2, 'cols': 80}))
-    short_source = forms.CharField(max_length=128, widget=forms.TextInput(attrs={'size': 80}))
-    update_frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, widget=forms.RadioSelect)
-    intro = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 10, 'cols': 80}))
-    summary = forms.CharField(widget=forms.Textarea(attrs={'rows': 20, 'cols': 80}))
-    source = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 20, 'cols': 80}))
-    grab_bag_headline = forms.CharField(required=False, max_length=128, widget=forms.TextInput(attrs={'size': 80}))
-    grab_bag = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 20, 'cols': 80}))
 
 class SchemaLookupsForm(forms.Form):
     def __init__(self, lookup_ids, *args, **kwargs):
@@ -57,35 +44,6 @@ def set_staff_cookie(request):
     r.set_cookie(settings.STAFF_COOKIE_NAME, settings.STAFF_COOKIE_VALUE)
     return r
 
-def edit_schema(request, schema_id):
-    s = get_object_or_404(Schema, id=schema_id)
-    try:
-        si = SchemaInfo.objects.get(schema__id=s.id)
-    except SchemaInfo.DoesNotExist:
-        si = SchemaInfo.objects.create(schema=s, short_description='', summary='',
-            source='', grab_bag_headline='', grab_bag='', short_source='',
-            update_frequency='', intro='')
-    if request.method == 'POST':
-        form = SchemaInfoForm(request.POST)
-        if form.is_valid():
-            for field in ('short_description', 'summary', 'source', 'grab_bag_headline', 'grab_bag', 'short_source', 'update_frequency', 'intro'):
-                setattr(si, field, form.cleaned_data[field])
-            si.save()
-            Schema.objects.filter(id=s.id).update(number_in_overview=form.cleaned_data['number_in_overview'])
-            return HttpResponseRedirect('../')
-    else:
-        form = SchemaInfoForm(initial={
-            'number_in_overview': s.number_in_overview,
-            'short_description': si.short_description,
-            'summary': si.summary,
-            'source': si.source,
-            'grab_bag_headline': si.grab_bag_headline,
-            'grab_bag': si.grab_bag,
-            'short_source': si.short_source,
-            'update_frequency': si.update_frequency,
-            'intro': si.intro,
-        })
-    return render_to_response('admin/edit_schema.html', {'schema': s, 'form': form})
 
 def edit_schema_lookups(request, schema_id, schema_field_id):
     s = get_object_or_404(Schema, id=schema_id)

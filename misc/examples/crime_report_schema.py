@@ -5,7 +5,7 @@
 # The accompanying documentation in docs/schema.rst
 #
 
-from ebpub.db.models import Schema, SchemaInfo, SchemaField, NewsItem
+from ebpub.db.models import Schema, SchemaField, NewsItem
 from datetime import datetime
 
 if __name__ == '__main__':

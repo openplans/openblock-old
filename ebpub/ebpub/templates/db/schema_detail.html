@@ -5,19 +5,19 @@
 {% block title %}{% METRO_NAME %} {{ schema.plural_name }}{% endblock %}
 
 {% block extrahead %}
-<meta name="description" content="{% if schemainfo.short_description %}{{ schemainfo.short_description }}{% else %}{{ schema.plural_name|capfirst }} in {% METRO_NAME %}.{% endif %}{% if schemainfo.update_frequency %} Updated {{ schemainfo.update_frequency|lower }}.{% endif %}">
+b<meta name="description" content="{% if schema.short_description %}{{ schema.short_description }}{% else %}{{ schema.plural_name|capfirst }} in {% METRO_NAME %}.{% endif %}{% if schema.update_frequency %} Updated {{ schema.update_frequency|lower }}.{% endif %}">
 {% endblock %}
 
 {% block content %}
 	<div id="content">
 		<h1>{{ schema.plural_name|capfirst }}</h1>
-		{% if schemainfo %}<p>{{ schemainfo.short_description }}</p>{% endif %}
+		<p>{{ schema.short_description }}</p>
 		<h2>About this section</h2>
 		<dl>
 			<dt>Source</dt>
-			<dd>{{ schemainfo.short_source|default:"–" }}</dd>
+			<dd>{{ schema.short_source|default:"–" }}</dd>
 			<dt>Updated</dt>
-			<dd>{{ schemainfo.update_frequency|default:"–" }}</dd>
+			<dd>{{ schema.update_frequency|default:"–" }}</dd>
 		</dl>
 		<p><a href="about/">More about this section&hellip;</a></p>
 		{% if schema.allow_charting %}

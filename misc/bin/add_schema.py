@@ -12,7 +12,7 @@ Adds a schema to the database
 import datetime, sys
 from optparse import OptionParser
 
-from ebpub.db.models import Schema, SchemaInfo
+from ebpub.db.models import Schema
 
 
 def main():
@@ -67,20 +67,16 @@ def add_schema(name, short_description, summary, source,
     schema.allow_charting = True
     schema.uses_attributes_in_list = True
     schema.number_in_overview = 5
-    
-    schema.save()
-    
-    schemainfo = SchemaInfo()
-    schemainfo.schema = schema
-    schemainfo.short_description = short_description
-    schemainfo.summary = summary
-    schemainfo.source = source
+    schema.short_description = short_description
+    schema.summary = summary
+    schema.source = source
 
     # TODO: make these parameters
-    schemainfo.short_source = schemainfo.source[:128]
-    schemainfo.update_frequency = ''
-    schemainfo.intro = ''
-    schemainfo.save()
+    schema.short_source = schema.source[:128]
+    schema.update_frequency = ''
+    schema.intro = ''
+
+    schema.save()
 
 
 if __name__ == '__main__':

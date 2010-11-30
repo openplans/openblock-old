@@ -193,22 +193,8 @@ NewsItem.  (There is some python magic going on, see the code in
 If you visit the crime reports page at http://localhost:8000/crimereport it should list 
 your new item.  You can click its link to view the custom details you added. 
 
-Hooray! 
+Hooray!
 
-
-
-SchemaInfo 
-----------
-
-Some extra, mostly descriptive, detail about the type (Schema) is stored in a related
-SchemaInfo object. This info appears on the 'about' page for this type of object::.
-
-    >>> from ebpub.db.models import SchemaInfo
-    >>> crime_report_info = SchemaInfo()
-    >>> crime_report_info.schema = crime_report
-    >>> crime_report_info.short_description = "Crime reports from Foo City PD"
-    ...
-    >>> crime_report_info.save()
 
 Lookups: normalized enums
 -------------------------

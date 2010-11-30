@@ -9,7 +9,7 @@
 	<h1>Browse news by type</h1>	
   {% for schemabunch in schema_list %}
 		<h2><a href="{{ schemabunch.schema.url }}">{{ schemabunch.schema.plural_name|capfirst }}</a></h2>
-		<p>{{ schemabunch.schemainfo.short_description }} <a href="{{ schemabunch.schema.url }}about/">More info&hellip;</a></p>
+		<p>{{ schemabunch.schema.short_description }} <a href="{{ schemabunch.schema.url }}about/">More info&hellip;</a></p>
 		<h3>Browse:</h3>
 		<ul>
 			{% if schemabunch.schema.allow_charting %}{% for schemafield in schemabunch.schemafield_list %}

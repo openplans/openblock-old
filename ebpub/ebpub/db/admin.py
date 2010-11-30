@@ -12,7 +12,7 @@ from ebpub.db.models import LocationType
 from ebpub.db.models import NewsItem
 from ebpub.db.models import Schema
 from ebpub.db.models import SchemaField
-from ebpub.db.models import SchemaInfo
+
 
 """
 See http://docs.djangoproject.com/en/dev/ref/contrib/gis/admin/
@@ -207,7 +207,6 @@ class LocationAdmin(OSMModelAdmin):
 
 admin.site.register(Schema)
 admin.site.register(SchemaField)
-admin.site.register(SchemaInfo)
 admin.site.register(Attribute)
 admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(LocationType)

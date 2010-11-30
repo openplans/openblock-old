@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 urlpatterns = patterns('obadmin.admin.views',
     url(r'^old/$', 'index'),
     url(r'^old/schemas/$', 'schema_list'),
-    url(r'^old/schemas/(\d{1,6})/$', 'edit_schema'),
+#    url(r'^old/schemas/(\d{1,6})/$', 'edit_schema'),
     url(r'^old/schemas/(\d{1,6})/lookups/(\d{1,6})/$', 'edit_schema_lookups'),
     url(r'^old/schemafields/$', 'schemafield_list'),
     url(r'^old/sources/$', 'blob_seed_list'),
