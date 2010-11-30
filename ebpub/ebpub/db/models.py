@@ -191,22 +191,6 @@ class SchemaField(models.Model):
         return self.pretty_name
 
 
-class SchemaFieldInfoManager(models.Manager):
-    def get_by_natural_key(self, slug, real_name):
-        return self.get(schema__slug=slug, schema_field__real_name=real_name)
-
-class SchemaFieldInfo(models.Model):
-    objects = SchemaFieldInfoManager()
-    schema = models.ForeignKey(Schema)
-    schema_field = models.ForeignKey(SchemaField)
-    help_text = models.TextField()
-
-    def natural_key(self):
-        return (self.schema.slug, self.schema_field.real_name)
-
-    def __unicode__(self):
-        return unicode(self.schema_field)
-
 class LocationTypeManager(models.Manager):
     def get_by_natural_key(self, slug):
         return self.get(slug=slug)
@@ -575,25 +559,22 @@ class NewsItem(models.Model):
         objects are ordered by SchemaField.display_order.
         """
         fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
-        field_infos = dict([(obj.schema_field_id, obj.help_text) for obj in SchemaFieldInfo.objects.filter(schema__id=self.schema_id)])
-        
         if not fields:
             return []
-            
+
         try:
             attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
         except KeyError:
             return []
-        return [AttributeForTemplate(f, attribute_row, field_infos.get(f.id, None)) for f in fields]
+        return [AttributeForTemplate(f, attribute_row) for f in fields]
 
 class AttributeForTemplate(object):
-    def __init__(self, schema_field, attribute_row, help_text):
+    def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
         self.raw_value = attribute_row[schema_field.real_name]
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
-        self.help_text = help_text
         if self.is_lookup:
             if self.raw_value == '':
                 self.values = []
