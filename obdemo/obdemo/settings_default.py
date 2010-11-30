@@ -77,6 +77,16 @@ APPS_FOR_TESTING = (
     'ebpub.utils',
 )
 
+APPS_NOT_FOR_TESTING = (
+        # the user model used is custom.
+        'django.contrib.auth',
+        # this makes too many weird assumptions about the database underpinnings
+        'django.contrib.contenttypes',
+        # these tests break with some settings, see https://github.com/peterbe/django-static/issues#issue/8 and 9
+        'django_static',
+)
+
+
 INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
