@@ -55,7 +55,7 @@ def geotag(request):
             pass
 
     response = {'locations': results, 'searched': all_locations}
-    return HttpResponse(json.dumps(response), 
+    return HttpResponse(json.dumps(response, indent=2),
                         mimetype="application/json")
 
 
@@ -94,7 +94,7 @@ def _build_json_result(query, result, results):
     if results['type'] == 'place': 
         return {
             'query': query,
-            'type': place,
+            'type': 'place',
             'name': result.pretty_name,
             'address': result.address, 
             'latlng': [result.location.y, result.location.x]
