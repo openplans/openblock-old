@@ -112,15 +112,6 @@ def normalize_url(base_href, url, normalize_www_flag):
         query = '&'.join(['%s=%s' % (k, v) for k, v in query_bits])
     return urlparse.urlunparse((scheme, authority, path, parameters, query, ''))
 
-try:
-    # any() built-in only in Python >= 2.5
-    any
-except NameError:
-    def any(iterable):
-        for element in iterable:
-            if element:
-                return True
-        return False
 
 class FeedUpdater(object):
     def __init__(self, seed, retriever, logger):
