@@ -379,6 +379,8 @@ def homepage(request):
     end_date = today()
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
 
+    # A sparkline, in this context, is the aggregate view of
+    # how many NewsItems were added per page.
     sparkline_schemas = list(Schema.public_objects.filter(allow_charting=True, is_special_report=False))
 
     # Order by slug to ensure case-insensitive ordering. (Kind of hackish.)
@@ -1234,7 +1236,7 @@ def place_detail_timeline(request, *args, **kwargs):
 
     # As an optimization, limit the NewsItems to those published in the
     # last few days.
-    start_date = end_date - datetime.timedelta(days=constants.LOCATION_DAY_OPTIMIZATION)
+    start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     ni_list = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
     if not has_staff_cookie(request):
         ni_list = ni_list.filter(schema__is_public=True)

@@ -1,4 +1,6 @@
 # The number of days to use in sparklines.
+# A sparkline, in this context, is the aggregate view of
+# how many NewsItems were added per page.
 NUM_DAYS_AGGREGATE = 30
 
 # Number of results per page in the schema_filter view.
@@ -8,10 +10,7 @@ FILTER_PER_PAGE = 30
 # Gotcha/caveat: If there are more than this number of items in a given day,
 # then place_detail will ignore the day because of the smart_bunches()
 # logic.
-NUM_NEWS_ITEMS_PLACE_DETAIL = 1000
-
-# Number of days to which we limit the NewsItems on place_detail.
-LOCATION_DAY_OPTIMIZATION = 7
+NUM_NEWS_ITEMS_PLACE_DETAIL = 300
 
 # Regular expression that parses block-page URLs. The last part of it is for
 # the optional pre-directional and/or post-directional (for example,

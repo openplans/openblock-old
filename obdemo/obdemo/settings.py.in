@@ -96,8 +96,8 @@ STAFF_COOKIE_VALUE = 'obstaff'
 # What kinds of news to show on the homepage.
 HOMEPAGE_DEFAULT_NEWSTYPES = [u'news-articles']
 
-# How many days of news to show on the homepage & elsewhere.
-DEFAULT_DAYS = 30
+# How many days of news to show on the homepage, place detail, & elsewhere.
+DEFAULT_DAYS = 7
 
 # Where to center citywide  maps, eg. on homepage.
 DEFAULT_MAP_CENTER_LON = -71.07
