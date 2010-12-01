@@ -48,10 +48,10 @@ def main():
         try:
             item = NewsItem.objects.get(title=title,
                                         schema__id=schema.id)
-            status = "Updated"
+            status = "updated"
         except NewsItem.DoesNotExist:
             item = NewsItem()
-            status = "Added"
+            status = "added"
         except NewsItem.MultipleObjectsReturned:
             logger.warn("Multiple entries matched title %r, event titles are not unique?" % title)
             continue
