@@ -147,12 +147,6 @@ def has_clusters(cluster_dict):
     Bunch objects, so this function simply tests to see if any of the lists are
     not empty.
     """
-    def any(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
-
     return any(cluster_dict.values())
 
 def block_bbox(block, radius):
