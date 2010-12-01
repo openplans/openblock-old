@@ -84,42 +84,47 @@ def newsitems_geojson(request):
 
     pid = request.GET.get('pid', '')
     schema = request.GET.get('schema', '')
+    nid = request.GET.get('newsitem', '')
 
     cache_seconds = 60 * 5
     cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
 
-    newsitem_qs = NewsItem.objects.all()
-    if schema:
-        newsitem_qs = newsitem_qs.filter(schema__slug=schema)
-    if pid:
-        place, block_radius, xy_radius = parse_pid(pid)
-        if isinstance(place, Block):
-            search_buffer = views.make_search_buffer(place.location.centroid, block_radius)
-            newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
-        else:
-            # This depends on the trigger in newsitemlocation.sql
-            newsitem_qs = newsitem_qs.filter(
-                newsitemlocation__location__id=place.id)
+    if nid:
+        newsitem_qs = NewsItem.objects.filter(id=nid)
     else:
-        # Whole city!
-        pass
+        newsitem_qs = NewsItem.objects.all()
+        if schema:
+            newsitem_qs = newsitem_qs.filter(schema__slug=schema)
+        if pid:
+            place, block_radius, xy_radius = parse_pid(pid)
+            if isinstance(place, Block):
+                search_buffer = views.make_search_buffer(place.location.centroid, block_radius)
+                newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
+            else:
+                # This depends on the trigger in newsitemlocation.sql
+                newsitem_qs = newsitem_qs.filter(
+                    newsitemlocation__location__id=place.id)
+        else:
+            # Whole city!
+            pass
 
-    # More copy/paste from ebpub.db.views...
-    # As an optimization, limit the NewsItems to those published in the
-    # last few days.
-    end_date = today()
-    start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    # Bug http://developer.openblockproject.org/ticket/77:
-    # This is using pub_date, but Aggregates use item_date, so there's
-    # a visible disjoint between number of items on the map and the item
-    # count shown on the homepage and location detail page.
-    newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
-    if not views.has_staff_cookie(request):
-        newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+        # More copy/paste from ebpub.db.views...
+        # As an optimization, limit the NewsItems to those published in the
+        # last few days.
+        end_date = today()
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+        # Bug http://developer.openblockproject.org/ticket/77:
+        # This is using pub_date, but Aggregates use item_date, so there's
+        # a visible disjoint between number of items on the map and the item
+        # count shown on the homepage and location detail page.
+        newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+        if not views.has_staff_cookie(request):
+            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
 
-    # Put a hard limit on the number of newsitems, and throw away older items.
-    newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
-    newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+        # Put a hard limit on the number of newsitems, and throw away
+        # older items.
+        newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
+        newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # Done preparing the query; cache based on the raw SQL
     # to be sure we capture everything that matters.

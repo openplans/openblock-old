@@ -22,7 +22,7 @@
 	  <script type="text/javascript">
 	    var map_center = new OpenLayers.LonLat({{newsitem.location.x}}, {{newsitem.location.y}});
 	    var map_zoom = 16;
-	    var pid = '';
+	    var newsitem = '{{newsitem.id}}';
 	  </script>
 	  {% include "map.html" %}
 	</div>
