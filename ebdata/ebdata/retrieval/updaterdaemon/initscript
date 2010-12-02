@@ -19,18 +19,18 @@
 # TODO: The daemon itself could use setuid
 SU_USER="pw"
 
-ERRLOGFILE=/tmp/updaterdaemon.err
-LOGFILE=/tmp/updaterdaemon.log
-
-#######################################################
-
 # We assume that you symlink this script from the source checkout into
 # /etc/init.d.
 # Or you could just copy it and set HERE manually.
-# Reliably (hah!) and portably (?) find the directory containing this script.
-# Based roughly on stuff from:
-# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-in
 HERE=`(cd $(dirname $(readlink -f "${0}")) 2>/dev/null; echo "$PWD"/)`
+# Find the config file. You could also set this by hand.
+CONFIG=$HERE/../../../../obdemo/obdemo/sample_scraper_config.py
+
+ERRLOGFILE=/tmp/updaterdaemon.err
+LOGFILE=/tmp/updaterdaemon.log
+
+###  END OF CONFIGURABLE STUFF  ########################################
+
 
 # This only works on linux, not other unixes.
 . /lib/lsb/init-functions
@@ -57,7 +57,7 @@ RUNNER="sudo -u $SU_USER $PYTHON $HERE/runner.py"
 
 case "$1" in
 start)	log_begin_msg "Starting updaterdaemon..."
-        $RUNNER --log-file=$LOGFILE --config=$HERE/../../../../obdemo/obdemo/sample_scraper_config.py --error-log=$ERRLOGFILE start
+        $RUNNER --log-file=$LOGFILE --config=$CONFIG --error-log=$ERRLOGFILE start
         log_end_msg $?
 	;;
 stop)	log_begin_msg "Stopping updaterdaemon..."

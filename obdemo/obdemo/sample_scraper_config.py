@@ -5,7 +5,6 @@ Sample config file for the updaterdaemon.
 
 import os
 from ebdata.retrieval.updaterdaemon.config import multiple_hourly, daily
-from ebdata.retrieval.updaterdaemon.config import every_n_minutes
 
 def do_seeclickfix(**kwargs):
     from obdemo.scrapers.seeclickfix_retrieval import SeeClickFixNewsFeedScraper
