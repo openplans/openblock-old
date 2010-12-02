@@ -53,19 +53,19 @@ while [ true ]; do
     fi
 done
 
-RUNNER="$PYTHON $HERE/runner.py"
+RUNNER="sudo -u $SU_USER $PYTHON $HERE/runner.py"
 
 case "$1" in
 start)	log_begin_msg "Starting updaterdaemon..."
-        sudo -u $SU_USER $RUNNER --log-file=$LOGFILE --config=$HERE/../../../../obdemo/obdemo/sample_scraper_config.py --error-log=$ERRLOGFILE start
+        $RUNNER --log-file=$LOGFILE --config=$HERE/../../../../obdemo/obdemo/sample_scraper_config.py --error-log=$ERRLOGFILE start
         log_end_msg $?
 	;;
 stop)	log_begin_msg "Stopping updaterdaemon..."
-        sudo -u $SU_USER $RUNNER stop
+        $RUNNER stop
         log_end_msg $?
         ;;
 restart) log_begin_msg "Restarting updaterdaemon..."
-        sudo -u $SU_USER $RUNNER restart
+        $RUNNER restart
         log_end_msg $?
         ;;
 *)	log_success_msg "Usage: /etc/init.d/updaterdaemon start|stop|restart"
