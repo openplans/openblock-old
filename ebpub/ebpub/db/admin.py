@@ -198,8 +198,18 @@ class OSMModelAdmin(admin.GeoModelAdmin):
                       }
         return OLMap
 
+class AttributeInline(admin.StackedInline):
+    # TODO: this badly needs a custom Form that takes into account the
+    # Schema and shows you only relevant fields, with labels.
+    model = Attribute
+
 class NewsItemAdmin(OSMModelAdmin):
-    pass
+    inlines = [
+        AttributeInline,
+        ]
+
+    list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
+    list_filter = ('schema',)
 
 class LocationAdmin(OSMModelAdmin):
     pass
@@ -207,7 +217,7 @@ class LocationAdmin(OSMModelAdmin):
 
 admin.site.register(Schema)
 admin.site.register(SchemaField)
-admin.site.register(Attribute)
+#admin.site.register(Attribute, AttributeAdmin)
 admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(LocationType)
 admin.site.register(Location, LocationAdmin)
