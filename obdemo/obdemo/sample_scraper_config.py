@@ -4,7 +4,8 @@ Sample config file for the updaterdaemon.
 """
 
 import os
-from ebdata.retrieval.updaterdaemon.config import hourly
+from ebdata.retrieval.updaterdaemon.config import multiple_hourly, daily
+from ebdata.retrieval.updaterdaemon.config import every_n_minutes
 
 def do_seeclickfix(**kwargs):
     from obdemo.scrapers.seeclickfix_retrieval import SeeClickFixNewsFeedScraper
@@ -24,6 +25,10 @@ def do_press_releases(**kwargs):
     from obdemo.scrapers.bpdnews_retrieval import BPDNewsFeedScraper
     return BPDNewsFeedScraper().update()
 
+def do_restaurants(**kwargs):
+    from everyblock.cities.boston.restaurants import retrieval
+    return retrieval.RestaurantScraper().update()
+
 def do_aggregates(**kwargs):
     from ebpub.db.bin import update_aggregates
     return update_aggregates.update_all_aggregates(**kwargs)
@@ -42,11 +47,12 @@ TASKS = (
     #
     # Example:
     # (daily(12, 0), run_some_function, {'arg': 'foo'}, {'DJANGO_SETTINGS_MODULE': 'foo.settings'})
-    (hourly(*range(0, 60, 15)), do_news, {}, env),
-    (hourly(*range(1, 60, 15)), do_seeclickfix, {}, env),
-    (hourly(*range(2, 60, 15)), do_events, {}, env),
-    (hourly(*range(3, 60, 15)), do_press_releases, {}, env),
+    (multiple_hourly(0, 20, 40), do_news, {}, env),
+    (multiple_hourly(5, 25, 45), do_seeclickfix, {}, env),
+    (multiple_hourly(10, 30, 50), do_events, {}, env),
+    (multiple_hourly(15, 35, 55), do_press_releases, {}, env),
+    (daily(3, 0), do_restaurants, {}, env),
 
-    (hourly(*range(4, 60, 15)), do_aggregates, {'verbose': False}, env),
+    # Run every 7 minutes (roughly).
+    (multiple_hourly(*range(7, 60, 7)), do_aggregates, {'verbose': False}, env),
 )
-

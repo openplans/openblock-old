@@ -5,8 +5,10 @@ Also contains useful callback generators that check whether to handle
 a particular datetime.
 """
 
+import datetime
 
-def hourly(*minutes):
+
+def multiple_hourly(*minutes):
     """
     Returns a checker that matches datetimes every hour, at the given
     minute(s).
@@ -45,7 +47,7 @@ def weekly(weekday, hour, minute):
 def once(*args):
     """Useful for testing: returns a checker that matches the first
     datetime that's passed to it, and then returns False forever
-    after.
+    after.  (Note that reloading config defeats this.)
     """
     class OneShotHandler:
         has_run = False
@@ -55,6 +57,7 @@ def once(*args):
                 return True
             return False
     return OneShotHandler().handle
+
 
 
 TASKS = (
