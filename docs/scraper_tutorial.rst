@@ -326,3 +326,9 @@ lack Schemas for any of these)::
   everyblock/cities/philly/city_council/retrieval.py
 
 
+
+Running Your Scrapers
+=====================
+
+Once you have scrapers written, you'll need to run them periodically.
+Read :doc:`running_scrapers` for more.
