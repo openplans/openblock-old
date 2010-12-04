@@ -35,7 +35,8 @@ just once.  Let's use the one from ``obdemo`` that creates
 
 (Note that this function could do anything we want to run
 periodically; updaterdaemon actually doesn't know anything about
-scrapers per se.)
+scrapers per se. One other thing you probably want to do regularly is
+send out openblock's :ref:`email_alerts`.)
 
 Next, we need a way to know when, or how often, that function should
 run.  We'll use another function for that; let's call it a "time

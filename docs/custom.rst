@@ -20,6 +20,10 @@ module name; ie no spaces etc.  Here we assume the project name is `myblock`::
     $ cd src
     $ paster create -t openblock myblock
 
+TODO: document what to do with ``manage.py startproject|startapp`` for
+people that don't want paster. also, not sure we want to maintain that
+paster template.
+
 After answering a few questions, this will create a bare-bones project in the folder you 
 specified.  Next, install the project into your environment::
 
@@ -38,6 +42,8 @@ Now you can use the openblock command line to create and sync your database.  **
     $ cd ../../
     $ sudo -u postgres bin/oblock app=myblock setup_dbs
     $ oblock app=myblock sync_all
+
+TODO: document how to do that without oblock
 
 Starting the Test Server
 ------------------------

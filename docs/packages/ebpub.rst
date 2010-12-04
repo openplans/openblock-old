@@ -401,15 +401,21 @@ ebpub/templates/db/newsitem_detail.html for the default implementation.
 Custom Schema detail pages
 --------------------------
 
-To customize the schema_detail page for a given schema, create a template called
-[schema_slug].html in ebpub/templates/db/schema_detail. See the template
-ebpub/templates/db/schema_detail.html for the default implementation.
+To customize the schema_detail page for a given schema, create a
+``templates/db`` subfolder in your app, and add a template named
+``[schema_slug].html`` in that directory. See the template
+``ebpub/templates/db/schema_detail.html`` for the default generic
+implementation.
+
+.. _email_alerts:
 
 E-mail alerts
 =============
 
-Users can sign up for e-mail alerts via place_detail pages. To send the e-mail
-alerts, just run the send_all() function in ebpub/alerts/sending.py.
+Users can sign up for e-mail alerts via a form on the place_detail
+pages. To send the e-mail alerts, just run the ``send_all()`` function
+in ``ebpub/alerts/sending.py``.  You probably want to do this
+regularly by :doc:`../running_scrapers`.
 
 Accounts
 ========
