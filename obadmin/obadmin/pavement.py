@@ -15,7 +15,6 @@ import os
 import traceback
 
 from paver.easy import *
-from paver.setuputils import setup
 
 options(
     # packages to activate
@@ -144,7 +143,6 @@ def apply_patches(options):
     source_dir = os.path.join(options.env_root, 'src')
     assert os.path.exists(patch_dir)
     assert os.path.exists(source_dir)
-    import glob
     for patchfile in glob.glob(os.path.join(patch_dir, '*patch')):
         # Force-applying a patch more than once can be dangerous,
         # so we do a dry run first and check for problems.
@@ -152,8 +150,8 @@ def apply_patches(options):
         args = '-f -p1 -i %s' % patchfile
         try:
             print "Testing patch %s..." % patchfile
-            output = sh('patch --dry-run %s' % args, cwd=source_dir,
-                        capture=True)
+            sh('patch --dry-run %s' % args, cwd=source_dir,
+               capture=True)
         except BuildFailure:
             print "Skipping, see errors above"
         else:
@@ -317,7 +315,6 @@ def _setup_db(options, settings, dbinfo):
     conn = psycopg2.connect(database="postgres", **conn_params)
 
     dbuser = dbinfo.get('USER')
-    dbpass = dbinfo.get('PASSWORD')
 
     cur = conn.cursor()
     dbname = dbinfo.get('NAME')
