@@ -10,7 +10,7 @@ a skeleton app you can edit.
 Setting up the app
 ==================
 
-Begin by following :ref:`the steps to install the base software <baseinstall>`
+Begin by following :doc:`the steps to install the base software <setup>`.
 
 Next, make sure your environment is activated and then do the following to create 
 a new openblock project.  **Note**: Your project name should be suitable for use as a python
@@ -20,9 +20,8 @@ module name; ie no spaces etc.  Here we assume the project name is `myblock`::
     $ cd src
     $ paster create -t openblock myblock
 
-TODO: document what to do with ``manage.py startproject|startapp`` for
-people that don't want paster. also, not sure we want to maintain that
-paster template.
+TODO: document doing this with ``manage.py startproject|startapp``
+instead of paster? do we want to maintain that paster template.
 
 After answering a few questions, this will create a bare-bones project in the folder you 
 specified.  Next, install the project into your environment::
@@ -79,7 +78,7 @@ To get anything useful out of your site, at minimum you will need the following:
  3. Sources of news data to feed in.
 
     a. Configure the system with schemas for them.
-       See :doc:`schemas` and ebpub docs for :ref:`newsitem-schemas`
+       See :doc:`schemas` and ebpub docs for :ref:`newsitem-schemas`.
 
     b. Write scraper scripts to retrieve news from your news sources and load
        it into the database. See :doc:`packages/ebdata`
@@ -94,8 +93,8 @@ does all this for the demo site with Boston data, and should serve as
 a decent example of how to do things in detail.
 
 If you want to load the demo data into your project, you can use the steps 
-listed in :ref:`demodata` **Note** use the settings module from your project
-instead of `obdemo.settings`
+listed in :ref:`demodata`. **Note** use the settings module for your project
+instead of `obdemo.settings`.
 
 
 Additional Resources
