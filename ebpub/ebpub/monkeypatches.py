@@ -6,9 +6,8 @@ of Django we need, etc.
 """
 
 
-from django.conf import settings
 from django.utils.encoding import smart_unicode
-
+from django.core.serializers import base
 
 ####################################################################
 # Support for "natural keys" in fixtures.
@@ -32,8 +31,6 @@ def build_instance(Model, data, db):
             pass
     return obj
 
-from django.core.serializers import base
-base.build_instance = build_instance
 
 def end_object(self, obj):
     data = {
@@ -45,13 +42,9 @@ def end_object(self, obj):
     self.objects.append(data)
     self._current = None
 
-from django.core.serializers import python
-python.Serializer.end_object = end_object
-
 
 
 from django.db import models, DEFAULT_DB_ALIAS
-_get_model = python._get_model
 
 # Too bad this is so big, we only add a tiny bit of code
 # near the beginning and end; but not such that we can just wrap it.
@@ -62,6 +55,10 @@ def Deserializer(object_list, **options):
     It's expected that you pass the Python objects themselves (instead of a
     stream or a string) to the constructor
     """
+    from django.conf import settings
+    from django.core.serializers import python
+    _get_model = python._get_model
+
     db = options.pop('using', DEFAULT_DB_ALIAS)
     models.get_apps()
     for d in object_list:
@@ -115,13 +112,8 @@ def Deserializer(object_list, **options):
                 data[field.name] = field.to_python(field_value)
 
         obj = base.build_instance(Model, data, db)
-
         yield base.DeserializedObject(obj, m2m_data)
 
-python.Deserializer = Deserializer
-
-
-from django.core.serializers import xml_serializer
 
 def start_object(self, obj):
     """
@@ -137,13 +129,13 @@ def start_object(self, obj):
     self.xml.startElement("object", object_data)
 
 
-xml_serializer.Serializer.start_object = start_object
-getInnerText = xml_serializer.getInnerText
-
 def _handle_object(self, node):
     """
     Convert an <object> node to a DeserializedObject.
     """
+    from django.core.serializers import xml_serializer
+    getInnerText = xml_serializer.getInnerText
+
     # Look up the model using the model loading mechanism. If this fails,
     # bail.
     Model = self._get_model_from_node(node, "model")
@@ -188,9 +180,24 @@ def _handle_object(self, node):
     # Return a DeserializedObject so that the m2m data has a place to live.
     return base.DeserializedObject(obj, m2m_data)
 
-xml_serializer.Deserializer._handle_object = _handle_object
-
 
 ####################################################################
 # End of "natural keys" fixture support.
 ####################################################################
+
+_PATCHED = False
+def patch_once():
+    global _PATCHED
+    if _PATCHED:
+        return
+
+    base.build_instance = build_instance
+
+    from django.core.serializers import python
+    python.Deserializer = Deserializer
+    python.Serializer.end_object = end_object
+
+    from django.core.serializers import xml_serializer
+    xml_serializer.Serializer.start_object = start_object
+    xml_serializer.Deserializer._handle_object = _handle_object
+    _PATCHED = True

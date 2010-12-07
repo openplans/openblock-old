@@ -5,9 +5,14 @@ from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
 import datetime
 
+# Need these monkeypatches for "natural key" support during fixture load/dump.
+import ebpub.monkeypatches
+ebpub.monkeypatches.patch_once()
 
 FREQUENCY_CHOICES = ('Hourly', 'Throughout the day', 'Daily', 'Twice a week', 'Weekly', 'Twice a month', 'Monthly', 'Quarterly', 'Sporadically', 'No longer updated')
 FREQUENCY_CHOICES = [(a, a) for a in FREQUENCY_CHOICES]
+
+
 
 def field_mapping(schema_id_list):
     """
