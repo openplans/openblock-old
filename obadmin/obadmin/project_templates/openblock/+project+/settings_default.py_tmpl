@@ -42,6 +42,7 @@ AUTHENTICATION_BACKENDS = (
 )
 
 INSTALLED_APPS = (
+    '${project}',
     'obadmin.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
