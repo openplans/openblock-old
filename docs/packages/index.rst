@@ -38,7 +38,7 @@ For more information, see :doc:`ebdata`
 obadmin
 =======
 
-Administrative UI, installation and utilities package for OpenBlock
+Administrative UI, installation and utilities package for OpenBlock.
 
 ==================
 Other Packages

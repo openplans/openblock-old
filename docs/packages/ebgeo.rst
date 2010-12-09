@@ -5,6 +5,11 @@ ebgeo
 The eb map system. The ebgeo package provides a ``maps``
 subpackage for rendering and serving map tiles with Mapnik.
 
+This is only required if you want to create your own custom map tiles.
+The other option is to use tiles hosted elsewhere for your base layer.
+For example, :doc:`obdemo` currently uses tiles `hosted by opengeo.org
+<http://blog.geoserver.org/2009/01/30/geoserver-and-openstreetmap/>`_.
+
 Requirements
 ============
 
