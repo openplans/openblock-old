@@ -5,7 +5,7 @@
 {% block title %}{% METRO_NAME %} {{ schema.plural_name }}{% endblock %}
 
 {% block extrahead %}
-b<meta name="description" content="{% if schema.short_description %}{{ schema.short_description }}{% else %}{{ schema.plural_name|capfirst }} in {% METRO_NAME %}.{% endif %}{% if schema.update_frequency %} Updated {{ schema.update_frequency|lower }}.{% endif %}">
+<meta name="description" content="{% if schema.short_description %}{{ schema.short_description }}{% else %}{{ schema.plural_name|capfirst }} in {% METRO_NAME %}.{% endif %}{% if schema.update_frequency %} Updated {{ schema.update_frequency|lower }}.{% endif %}">
 {% endblock %}
 
 {% block content %}
