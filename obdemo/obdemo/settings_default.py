@@ -203,7 +203,6 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them.
-# XXX this breaks django_static's test suite
 
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
@@ -218,6 +217,8 @@ with _lock:
         logging._is_set_up = True
         if not logging.getLogger().handlers:
             # TODO: configurable file handlers, level...
+            # maybe use syslog to avoid contention when running multiple
+            # processes under mod_wsgi!
             logging.basicConfig(level=logging.INFO,
                                 format="%(asctime)-15s %(levelname)-8s %(message)s")
 
