@@ -2,8 +2,8 @@
 ebgeo
 =====
 
-The eb map system. The ebgeo package provides a ``maps``
-subpackage for rendering and serving map tiles with Mapnik.
+The ebgeo package provides a ``maps`` subpackage for rendering and
+serving map tiles with Mapnik.
 
 Requirements
 ============
