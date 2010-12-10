@@ -6,6 +6,7 @@ from django.contrib.gis.gdal import DataSource
 from ebpub.metros.models import Metro
 from ebpub.streets.models import Block
 from ebpub.streets.name_utils import make_pretty_name
+from ebpub.streets.name_utils import make_block_numbers
 from ebpub.utils.text import slugify
 
 FIELD_MAP = {
@@ -39,6 +40,7 @@ VALID_FCC_PREFIXES = (
 
 
 class EsriImporter(object):
+    # TODO: inherit from ebpub.streets.blockimport.base.BlockImporter ?
 
     def __init__(self, shapefile, city=None, layer_id=0, encoding='utf8',
                  verbose=False):
@@ -93,6 +95,8 @@ class EsriImporter(object):
                 if not name_fields['suffix'] and re.search('^\d+$', name_fields['street']):
                     continue
                 fields.update(name_fields)
+
+                # Ensure we have unicode.
                 for key, val in fields.items():
                     if isinstance(val, str):
                         fields[key] = val.decode(self.encoding)
@@ -113,9 +117,17 @@ class EsriImporter(object):
                 fields['street_slug'] = slugify(u' '.join((fields['street'], fields['suffix'])))
 
                 # Watch out for addresses like '247B' which can't be
-                # saved as an IntegerField.
+                # saved as an IntegerField. But do this after making
+                # pretty names.
                 for addr_key in ('left_from_num', 'left_to_num', 'right_from_num', 'right_to_num'):
                     fields[addr_key] = fields[addr_key].rstrip(string.letters)
+
+                fields['from_num'], fields['to_num'] = make_block_numbers(
+                    fields['left_from_num'],
+                    fields['left_to_num'],
+                    fields['right_from_num'],
+                    fields['right_to_num'])
+
                 block = Block(**fields)
                 block.geom = feature.geom.geos
                 self.log(u'Looking at block %s' % fields['street'])
