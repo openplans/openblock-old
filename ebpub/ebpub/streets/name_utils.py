@@ -56,7 +56,7 @@ def make_pretty_name(left_from_num, left_to_num, right_from_num, right_to_num, p
     predir_part = predir and make_pretty_directional(predir) or u''
     postdir_part = postdir and make_pretty_directional(postdir) or u''
     block_name = u'%s %s %s %s' % (num_part, predir_part, street_name, postdir_part)
-    block_name = re.sub('\s+', ' ', block_name).strip()
+    block_name = re.sub(u'\s+', u' ', block_name).strip()
     return street_name, block_name
 
 def make_dir_street_name(block):
