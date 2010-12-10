@@ -1,5 +1,7 @@
 import re
+import string
 import sys
+import optparse
 from django.contrib.gis.gdal import DataSource
 from ebpub.metros.models import Metro
 from ebpub.streets.models import Block
@@ -35,15 +37,26 @@ VALID_FCC_PREFIXES = (
     'A4'  # local, neighborhood, and rural road
 )
 
+
 class EsriImporter(object):
-    def __init__(self, shapefile, city=None, layer_id=0):
+
+    def __init__(self, shapefile, city=None, layer_id=0, encoding='utf8',
+                 verbose=False):
+        self.verbose = verbose
+        self.encoding = encoding
         ds = DataSource(shapefile)
+        self.log("Opening %s" % shapefile)
         self.layer = ds[layer_id]
         self.city = city and city or Metro.objects.get_current().name
         self.fcc_pat = re.compile('^(' + '|'.join(VALID_FCC_PREFIXES) + ')\d$')
 
-    def save(self, verbose=False):
-        alt_names_suff = ('', '1', '2', '3', '4', '5')
+    def log(self, arg):
+        if self.verbose:
+            print >> sys.stderr, arg
+
+
+    def save(self):
+        alt_names_suff = (u'', u'1', u'2', u'3', u'4', u'5')
         num_created = 0
         for i, feature in enumerate(self.layer):
             if not self.fcc_pat.search(feature.get('FCC')):
@@ -80,9 +93,11 @@ class EsriImporter(object):
                 if not name_fields['suffix'] and re.search('^\d+$', name_fields['street']):
                     continue
                 fields.update(name_fields)
-                block = Block(**fields)
-                block.geom = feature.geom.geos
-                street_name, block_name = make_pretty_name(
+                for key, val in fields.items():
+                    if isinstance(val, str):
+                        fields[key] = val.decode(self.encoding)
+
+                fields['street_pretty_name'], fields['pretty_name'] = make_pretty_name(
                     fields['left_from_num'],
                     fields['left_to_num'],
                     fields['right_from_num'],
@@ -90,11 +105,21 @@ class EsriImporter(object):
                     fields['predir'],
                     fields['street'],
                     fields['suffix'],
-                    fields['postdir']
+                    fields['postdir'],
                 )
-                block.pretty_name = block_name
-                block.street_pretty_name = street_name
-                block.street_slug = slugify(' '.join((fields['street'], fields['suffix'])))
+
+                #print >> sys.stderr, 'Looking at block pretty name %s' % fields['street']
+
+                fields['street_slug'] = slugify(u' '.join((fields['street'], fields['suffix'])))
+
+                # Watch out for addresses like '247B' which can't be
+                # saved as an IntegerField.
+                for addr_key in ('left_from_num', 'left_to_num', 'right_from_num', 'right_to_num'):
+                    fields[addr_key] = fields[addr_key].rstrip(string.letters)
+                block = Block(**fields)
+                block.geom = feature.geom.geos
+                self.log(u'Looking at block %s' % fields['street'])
+
                 block.save()
                 if parent_id is None:
                     parent_id = block.id
@@ -102,6 +127,34 @@ class EsriImporter(object):
                     block.parent_id = parent_id
                     block.save()
                 num_created += 1
-                if verbose:
-                    print >> sys.stderr, 'Created block %s' % block
+                self.log('Created block %s' % block)
         return num_created
+
+
+
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    parser = optparse.OptionParser(usage='%prog edges.shp')
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose',
+                      default=False)
+    parser.add_option('-c', '--city', dest='city',
+                      help='A city name to filter against', default=None)
+    parser.add_option('-e', '--encoding', dest='encoding',
+                      help='Encoding to use when reading the shapefile',
+                      default='utf8')
+
+    (options, args) = parser.parse_args(argv)
+    if len(args) != 1:
+        return parser.error('must provide at least 1 arguments, see usage')
+
+    esri = EsriImporter(shapefile=args[0],
+                        city=options.city, verbose=options.verbose,
+                        encoding=options.encoding,
+                        )
+    num_created = esri.save()
+    if options.verbose:
+        print "Created %d blocks" % num_created
+
+if __name__ == '__main__':
+    sys.exit(main())
