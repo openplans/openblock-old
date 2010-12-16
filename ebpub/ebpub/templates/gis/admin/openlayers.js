@@ -91,20 +91,21 @@
   } else if ({{ module }}.is_point){
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
   };
-  // TODO: draw_ctl is undefined if is_collection==true and collection_type=='Any'. Don't know what handler to use then.
-  if (draw_ctl != undefined) {
-    if ({{module}}.is_collection )  {
+  // if is_collection==true and collection_type=='Any', dunno what to do; fall back to Polygon?
+  if (draw_ctl == undefined) {
+    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
+  };
+  if ({{module}}.is_collection )  {
       draw_ctl.multi = true;
-    };
-    if ({{ module }}.modifiable){
-      var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
+  };
+  if ({{ module }}.modifiable){
+    var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
       {{ module }}.controls = [nav, draw_ctl, mod];
+  } else {
+    if(!lyr.features.length){
+      {{ module }}.controls = [nav, draw_ctl];
     } else {
-      if(!lyr.features.length){
-        {{ module }}.controls = [nav, draw_ctl];
-      } else {
-        {{ module }}.controls = [nav];
-      }
+     {{ module }}.controls = [nav];
     }
   }
 };
