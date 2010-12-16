@@ -91,20 +91,21 @@
   } else if ({{ module }}.is_point){
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
   };
-  // TODO: draw_ctl is undefined if is_collection==true and collection_type=='Any'. Don't know what handler to use then.
-  if (draw_ctl != undefined) {
-    if ({{module}}.is_collection )  {
+  // if is_collection==true and collection_type=='Any', dunno what to do; fall back to Polygon?
+  if (draw_ctl == undefined) {
+    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
+  };
+  if ({{module}}.is_collection )  {
       draw_ctl.multi = true;
-    };
-    if ({{ module }}.modifiable){
-      var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
+  };
+  if ({{ module }}.modifiable){
+    var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
       {{ module }}.controls = [nav, draw_ctl, mod];
+  } else {
+    if(!lyr.features.length){
+      {{ module }}.controls = [nav, draw_ctl];
     } else {
-      if(!lyr.features.length){
-        {{ module }}.controls = [nav, draw_ctl];
-      } else {
-        {{ module }}.controls = [nav];
-      }
+     {{ module }}.controls = [nav];
     }
   }
 };
@@ -116,7 +117,7 @@
     // The admin map for this geometry field.
     {{ module }}.map = new OpenLayers.Map('{{ id }}_map', options);
     // Base Layer
-    {{ module }}.layers.base = {% block base_layer %}new OpenLayers.Layer.WMS( "{{ wms_name }}", "{{ wms_url }}", {layers: '{{ wms_layer }}'} );{% endblock %}
+    {{ module }}.layers.base = {% block base_layer %}new OpenLayers.Layer.WMS( "{{ wms_name }}", "{{ wms_url }}", {layers: '{{ wms_layer }}' {{ wms_options|safe }} }  );{% endblock %}
     {{ module }}.map.addLayer({{ module }}.layers.base);
     {% block extra_layers %}{% endblock %}
     {% if is_linestring %}OpenLayers.Feature.Vector.style["default"]["strokeWidth"] = 3; // Default too thin for linestrings. {% endif %}

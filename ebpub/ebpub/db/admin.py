@@ -105,7 +105,7 @@ class OBOpenLayersWidget(OpenLayersWidget):
 
 class OSMModelAdmin(admin.GeoModelAdmin):
     # Use GeoModelAdmin to get editable geometries.
-    # But we'll override a few defaults.
+    # But we'll override a few defaults to use an OpenStreetMap base layer.
     default_zoom = 11
     openlayers_url = getattr(settings, 'OPENLAYERS_URL', admin.GeoModelAdmin.openlayers_url)
     point_zoom = 14
@@ -113,10 +113,12 @@ class OSMModelAdmin(admin.GeoModelAdmin):
     wms_name = 'OpenStreetMap'
     wms_url = 'http://maps.opengeo.org/geowebcache/service/wms'
     widget = OBOpenLayersWidget
+    wms_options = {'format': 'image/png'}
 
-    # TODO: upstream patch for geodjango: add a wms_format option so
-    # we can easily use png instead of jpeg.  Or maybe arbitrary other
-    # params.
+    # Upstream patch for geodjango submitted:
+    # http://code.djangoproject.com/ticket/14886 ... to allow passing
+    # parameters to the WMS layer constructor.  If/when that's fixed,
+    # we could remove our copy of openlayers.js.
 
     @property
     def default_lat(self):
@@ -163,6 +165,12 @@ class OSMModelAdmin(admin.GeoModelAdmin):
         class OLMap(self.widget):
             template = self.map_template
             geom_type = db_field.geom_type
+            wms_options = ''
+            if self.wms_options:
+                wms_options = ["%s: '%s'" % pair for pair in self.wms_options.items()]
+                wms_options = ', '.join(wms_options)
+                wms_options = ', ' + wms_options
+
             params = {'default_lon' : self.default_lon,
                       'default_lat' : self.default_lat,
                       'default_zoom' : self.default_zoom,
@@ -194,6 +202,7 @@ class OSMModelAdmin(admin.GeoModelAdmin):
                       'wms_url' : self.wms_url,
                       'wms_layer' : self.wms_layer,
                       'wms_name' : self.wms_name,
+                      'wms_options': wms_options,
                       'debug' : self.debug,
                       }
         return OLMap

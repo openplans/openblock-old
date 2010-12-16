@@ -3,7 +3,7 @@ import sys
 import optparse
 from django.contrib.gis.gdal import DataSource
 from ebdata.parsing import dbf
-from ebpub.streets.blockimport import BlockImporter
+from ebpub.streets.blockimport.base import BlockImporter
 
 STATE_FIPS = {
     '02': ('AK', 'ALASKA'),
@@ -88,10 +88,10 @@ class TigerImporter(BlockImporter):
 
     http://www.census.gov/geo/www/tiger/tgrshp2008/rel_file_desc_2008.txt
     """
-    def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp, filter_city=None, verbose=False):
-        self.verbose = verbose
-        # First load all edges from ...edges.shp
-        self.layer = DataSource(edges_shp)[0]
+    def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp,
+                 filter_city=None, verbose=False, encoding='utf8'):
+        BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
+                               verbose=verbose, encoding=encoding)
         self.featnames_db = featnames_db = {}
         for tlid, row in self._load_rel_db(featnames_dbf, 'TLID').iteritems():
             # TLID is Tiger/Line ID, unique per edge.
@@ -104,8 +104,7 @@ class TigerImporter(BlockImporter):
             if row['MTFCC'] not in VALID_MTFCC:
                 continue
             if not row.get('FULLNAME'):
-                if verbose:
-                    print "skipping tlid %r, no fullname" % tlid
+                self.log("skipping tlid %r, no fullname" % tlid)
                 continue
 
             featnames_db.setdefault(tlid, [])
@@ -124,6 +123,7 @@ class TigerImporter(BlockImporter):
 
         self.tlids_with_blocks = set()
 
+
     def _load_rel_db(self, dbf_file, rel_key):
         """
         Reads rows as dicts from a .dbf file.
@@ -136,13 +136,12 @@ class TigerImporter(BlockImporter):
             for row in dbf.dict_reader(f, strip_values=True):
                 db[row[rel_key]] = row
                 rowcount += 1
-                if self.verbose:
-                    print " GOT DBF ROW %s for %s" % (row[rel_key], row.get('FULLNAME', 'unknown'))
+                self.log(
+                    " GOT DBF ROW %s for %s" % (row[rel_key], row.get('FULLNAME', 'unknown')))
         finally:
             f.close()
-        if self.verbose:
-            print "Rows in %s: %d" % (dbf_file, rowcount)
-            print "Unique keys for %r: %d" % (rel_key, len(db))
+        self.log("Rows in %s: %d" % (dbf_file, rowcount))
+        self.log("Unique keys for %r: %d" % (rel_key, len(db)))
         return db
 
     def _get_city(self, feature, side):
@@ -183,10 +182,7 @@ class TigerImporter(BlockImporter):
                                        ('left_from_num', 'LFROMADD'),
                                        ('right_to_num', 'RTOADD'),
                                        ('left_to_num', 'LTOADD')):
-            try:
-                block_fields[field_key] = int(feature.get(feature_key))
-            except ValueError:
-                block_fields[field_key] = None
+            block_fields[field_key] = feature.get(feature_key)
 
         block_fields['right_zip'] = feature.get('ZIPR')
         block_fields['left_zip'] = feature.get('ZIPL')
@@ -200,14 +196,9 @@ class TigerImporter(BlockImporter):
                 block_fields['predir'] = featname['PREDIRABRV'].upper()
                 block_fields['suffix'] = featname['SUFTYPABRV'].upper()
                 block_fields['postdir'] = featname['SUFDIRABRV'].upper()
-                # It's ok to yield the same dict multiple times
-                # because we don't save it, we use it as params to
-                # creating a Block.  block_fields.update(name_fields)
-                yield block_fields
+                yield block_fields.copy()
 
                 self.tlids_with_blocks.add(tlid)
-        elif feature.get('FULLNAME') == 'Massachusetts Ave':
-            print "MISSING featname stuff for mass ave tlid %d" % tlid
 
 
 def main(argv=None):
@@ -216,13 +207,15 @@ def main(argv=None):
     parser = optparse.OptionParser(usage='%prog edges.shp featnames.dbf faces.dbf place.shp')
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', default=False)
     parser.add_option('-c', '--city', dest='city', help='A city name to filter against')
+    parser.add_option('-e', '--encoding', dest='encoding',
+                      help='Encoding to use when reading the shapefile',
+                      default='utf8')
     (options, args) = parser.parse_args(argv)
     if len(args) != 4:
         return parser.error('must provide 4 arguments, see usage')
-    args.append(options.city)
-    args.append(options.verbose)
-    tiger = TigerImporter(*args)
-    num_created = tiger.save(options.verbose)
+    tiger = TigerImporter(*args, verbose=options.verbose,
+                           filter_city=options.city, encoding=options.encoding)
+    num_created = tiger.save()
     if options.verbose:
         print "Created %d blocks" % num_created
         print "... from %d feature names" % len(tiger.featnames_db)
