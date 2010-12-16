@@ -12,7 +12,7 @@ from ebpub.db.models import LocationType
 from ebpub.db.models import NewsItem
 from ebpub.db.models import Schema
 from ebpub.db.models import SchemaField
-
+import os
 
 """
 See http://docs.djangoproject.com/en/dev/ref/contrib/gis/admin/
@@ -29,7 +29,9 @@ class OBOpenLayersWidget(OpenLayersWidget):
     """
     def render(self, name, value, attrs=None):
         # Update the template parameters with any attributes passed in.
-        if attrs: self.params.update(attrs)
+        # If value is None, that means we haven't saved anything yet.
+        if attrs:
+            self.params.update(attrs)
 
         # Defaulting the WKT value to a blank string -- this
         # will be tested in the JavaScript and the appropriate
@@ -85,20 +87,27 @@ class OBOpenLayersWidget(OpenLayersWidget):
                     self.params['is_polygon'] = True
                 elif value.geom_type.upper() in ('POINT', 'MULTIPOINT'):
                     self.params['is_point'] = True
-                if value.geom_type.upper() in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION'):
-                    self.params['is_collection']=True
-                    if value.geom_type.upper() == 'GEOMETRYCOLLECTION':
-                        self.params['collection_type'] = 'Any'
-                    else:
-                        self.params['collection_type'] = OGRGeomType(value.geom_type.upper().replace('MULTI', ''))
+                elif value.geom_type.upper() in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON'):
+                    self.params['is_collection'] = True
+                    self.params['collection_type'] = OGRGeomType(value.geom_type.upper().replace('MULTI', ''))
+                elif value.geom_type.upper() == 'GEOMETRYCOLLECTION':
+                    self.params['is_collection'] = True
+                    self.params['collection_type'] = 'Any'
+                    self.params['geom_type'] = 'Collection'
+
 
         else:
             if self.params['is_unknown']:
                 # If the geometry is unknown and the value is not set, make it as flexible as possible.
-                self.params['geom_type'] = OGRGeomType('GEOMETRYCOLLECTION')
+                self.params['geom_type'] = 'Collection' #OGRGeomType('GEOMETRYCOLLECTION')
                 self.params['is_collection']=True
                 self.params['collection_type'] = 'Any'
 
+        # If we don't already have a camelcase geom_type,
+        # make one using str(OGRGeomType).
+        # Works for most things but not 'GeometryCollection'.
+        if str(self.params['geom_type']) == str(self.params['geom_type']).upper():
+            self.params['geom_type'] = str(OGRGeomType(self.params['geom_type']))
         return loader.render_to_string(self.template, self.params,
                                        context_instance=geo_context)
 
@@ -108,6 +117,7 @@ class OSMModelAdmin(admin.GeoModelAdmin):
     # But we'll override a few defaults to use an OpenStreetMap base layer.
     default_zoom = 11
     openlayers_url = getattr(settings, 'OPENLAYERS_URL', admin.GeoModelAdmin.openlayers_url)
+    openlayers_img_path = getattr(settings, 'OPENLAYERS_IMG_PATH', None) or (os.path.dirname(openlayers_url) + '/img/')
     point_zoom = 14
     wms_layer = 'openstreetmap'
     wms_name = 'OpenStreetMap'
@@ -172,38 +182,40 @@ class OSMModelAdmin(admin.GeoModelAdmin):
                 wms_options = ', ' + wms_options
 
             params = {'default_lon' : self.default_lon,
+                      'collection_type' : collection_type,
+                      'debug' : self.debug,
                       'default_lat' : self.default_lat,
                       'default_zoom' : self.default_zoom,
+                      'display_srid' : self.display_srid,
                       'display_wkt' : self.debug or self.display_wkt,
-                      'geom_type' : geom_type,
                       'field_name' : db_field.name,
-                      'is_unknown': is_unknown,
+                      'geom_type' : geom_type,
                       'is_collection' : is_collection,
-                      'scrollable' : self.scrollable,
-                      'layerswitcher' : self.layerswitcher,
-                      'collection_type' : collection_type,
                       'is_linestring' : is_linestring,
-                      'is_polygon' : is_polygon,
                       'is_point' : is_point,
-                      'num_zoom' : self.num_zoom,
+                      'is_polygon' : is_polygon,
+                      'is_unknown': is_unknown,
+                      'layerswitcher' : self.layerswitcher,
+                      'map_height' : self.map_height,
+                      'map_width' : self.map_width,
+                      'max_extent' : self.max_extent,
+                      'max_resolution' : self.max_resolution,
                       'max_zoom' : self.max_zoom,
                       'min_zoom' : self.min_zoom,
-                      'units' : self.units, #likely shoud get from object
-                      'max_resolution' : self.max_resolution,
-                      'max_extent' : self.max_extent,
                       'modifiable' : self.modifiable,
                       'mouse_position' : self.mouse_position,
-                      'scale_text' : self.scale_text,
-                      'map_width' : self.map_width,
-                      'map_height' : self.map_height,
+                      'num_zoom' : self.num_zoom,
+                      'openlayers_url': self.openlayers_url,
+                      'openlayers_img_path': self.openlayers_img_path,
                       'point_zoom' : self.point_zoom,
+                      'scale_text' : self.scale_text,
+                      'scrollable' : self.scrollable,
                       'srid' : self.map_srid,
-                      'display_srid' : self.display_srid,
-                      'wms_url' : self.wms_url,
+                      'units' : self.units, #likely shoud get from object
                       'wms_layer' : self.wms_layer,
                       'wms_name' : self.wms_name,
                       'wms_options': wms_options,
-                      'debug' : self.debug,
+                      'wms_url' : self.wms_url,
                       }
         return OLMap
 

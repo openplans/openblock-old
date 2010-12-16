@@ -189,7 +189,12 @@ required_settings.append('SCRAPER_LOGFILE_NAME')
 # staff privileges (including the ability to view non-public schemas).
 required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
-OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
+
+# It's important that it be named exactly OpenLayers.js,
+# see http://trac.osgeo.org/openlayers/ticket/2982
+OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
+#OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
+OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
 
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme
@@ -203,7 +208,6 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them.
-# XXX this breaks django_static's test suite
 
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)

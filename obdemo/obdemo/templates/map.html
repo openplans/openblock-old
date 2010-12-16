@@ -1,6 +1,11 @@
 {% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 {% load django_static %}
 <!-- map.html  -->
+{% if OPENLAYERS_IMG_PATH %}
+<script type="text/javascript">
+OpenLayers.ImgPath = '{{ OPENLAYERS_IMG_PATH }}';
+</script>
+{% endif %}
 {% slimall %}
 <script type="text/javascript" src="/scripts/obdemo-map.js" charset="utf-8"></script>
 {% endslimall %}
