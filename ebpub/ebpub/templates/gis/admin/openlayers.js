@@ -1,5 +1,5 @@
 // Overrides for Openblock: support multipolygon and multipoint.
-// TODO: submit upstream patch at http://code.djangoproject.com/ticket/9806
+// Upstream patch submitted to http://code.djangoproject.com/ticket/9806
 {# Author: Justin Bronn, Travis Pinney & Dane Springmeyer #}
 {% block vars %}var {{ module }} = {};
 {% if openlayers_img_path %}OpenLayers.ImgPath = '{{ openlayers_img_path }}';{% endif %}
@@ -97,7 +97,12 @@
   } else if ({{ module }}.is_point){
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint', 'title': 'Draw Points'});
   };
-  // if is_collection==true and collection_type=='Any', we should provide a widget that allows choosing the type of feature to add... but that'd take work.
+  /* if is_collection==true and collection_type=='Any', we should
+   * provide a widget that allows choosing the type of feature to
+   * add... but that'd take a lot more work. Possible example to draw
+   * on: http://openlayers.org/dev/examples/snapping.html
+   * For now, just assume we want MultiPolygons.
+   */
   if (draw_ctl == undefined) {
     draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon', 'title': 'Draw Polygons'});
   };
@@ -106,12 +111,12 @@
   };
   if ({{ module }}.modifiable){
     var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature', 'title': 'Modify'});
-      {{ module }}.controls = [nav, draw_ctl, mod];
+    {{ module }}.controls = [nav, draw_ctl, mod];
   } else {
     if(!lyr.features.length){
       {{ module }}.controls = [nav, draw_ctl];
     } else {
-     {{ module }}.controls = [nav];
+      {{ module }}.controls = [nav];
     }
   }
 };
@@ -138,19 +143,14 @@
       {{ module }}.write_wkt(admin_geom);
       var bounds;
       if ({{ module }}.is_collection) {
-	// If geometry collection, add each component individually so they may be
-	// edited individually.
-//	for (var i = 0; i < {{ module }}.num_geom; i++){
-//	  {{ module }}.layers.vector.addFeatures([new OpenLayers.Feature.Vector(admin_geom.geometry.components[i].clone())]);
-	{{ module }}.layers.vector.addFeatures(admin_geom);
-	bounds = admin_geom[0].geometry.getBounds();
-	for (var i = 1; i < admin_geom.length; i++ ) {
-	  bounds.extend(admin_geom[i].geometry.getBounds());
-	};
+        {{ module }}.layers.vector.addFeatures(admin_geom);
+        bounds = admin_geom[0].geometry.getBounds();
+        for (var i = 1; i < admin_geom.length; i++ ) {
+          bounds.extend(admin_geom[i].geometry.getBounds());
+        };
       } else {
 	{{ module }}.layers.vector.addFeatures([admin_geom]);
-	// Zooming to the bounds.
-        bounds = admin_geom.geometry.getBounds();
+	bounds = admin_geom.geometry.getBounds();
       };
       {{ module }}.map.zoomToExtent(bounds);
       if ({{ module }}.is_point){

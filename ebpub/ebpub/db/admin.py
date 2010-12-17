@@ -123,12 +123,11 @@ class OSMModelAdmin(admin.GeoModelAdmin):
     wms_name = 'OpenStreetMap'
     wms_url = 'http://maps.opengeo.org/geowebcache/service/wms'
     widget = OBOpenLayersWidget
-    wms_options = {'format': 'image/png'}
-
     # Upstream patch for geodjango submitted:
     # http://code.djangoproject.com/ticket/14886 ... to allow passing
     # parameters to the WMS layer constructor.  If/when that's fixed,
     # we could remove our copy of openlayers.js.
+    wms_options = {'format': 'image/png'}
 
     @property
     def default_lat(self):
