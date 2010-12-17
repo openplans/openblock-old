@@ -189,7 +189,12 @@ required_settings.append('SCRAPER_LOGFILE_NAME')
 # staff privileges (including the ability to view non-public schemas).
 required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
-OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
+
+# It's important that it be named exactly OpenLayers.js,
+# see http://trac.osgeo.org/openlayers/ticket/2982
+OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
+#OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
+OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
 
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme

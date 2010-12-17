@@ -1,7 +1,8 @@
 // Overrides for Openblock: support multipolygon and multipoint.
-// TODO: submit upstream patch at http://code.djangoproject.com/ticket/9806
+// Upstream patch submitted to http://code.djangoproject.com/ticket/9806
 {# Author: Justin Bronn, Travis Pinney & Dane Springmeyer #}
 {% block vars %}var {{ module }} = {};
+{% if openlayers_img_path %}OpenLayers.ImgPath = '{{ openlayers_img_path }}';{% endif %}
 {{ module }}.map = null; {{ module }}.controls = null; {{ module }}.panel = null; {{ module }}.re = new RegExp("^SRID=\d+;(.+)", "i"); {{ module }}.layers = {};
 {{ module }}.modifiable = {{ modifiable|yesno:"true,false" }};
 {{ module }}.wkt_f = new OpenLayers.Format.WKT();
@@ -11,7 +12,9 @@
 {{ module }}.is_polygon = {{ is_polygon|yesno:"true,false" }};
 {{ module }}.is_point = {{ is_point|yesno:"true,false" }};
 {% endblock %}
-{{ module }}.get_ewkt = function(feat){return 'SRID={{ srid }};' + {{ module }}.wkt_f.write(feat);};
+{{ module }}.get_ewkt = function(feat){
+  return 'SRID={{ srid }};' + {{ module }}.wkt_f.write(feat);
+};
 {{ module }}.read_wkt = function(wkt){
   // OpenLayers cannot handle EWKT -- we make sure to strip it out.
   // EWKT is only exposed to OL if there's a validation error in the admin.
@@ -20,8 +23,11 @@
   return {{ module }}.wkt_f.read(wkt);
 };
 {{ module }}.write_wkt = function(feat){
-  if ({{ module }}.is_collection){ {{ module }}.num_geom = feat.geometry.components.length;}
-  else { {{ module }}.num_geom = 1;}
+  if ({{ module }}.is_collection){
+    {{ module }}.num_geom = feat.length;
+  } else {
+    {{ module }}.num_geom = 1;
+  };
   document.getElementById('{{ id }}').value = {{ module }}.get_ewkt(feat);
 };
 {{ module }}.add_wkt = function(event){
@@ -82,30 +88,35 @@
 // Create an array of controls based on geometry type
 {{ module }}.getControls = function(lyr){
   {{ module }}.panel = new OpenLayers.Control.Panel({'displayClass': 'olControlEditingToolbar'});
-  var nav = new OpenLayers.Control.Navigation();
+  var nav = new OpenLayers.Control.Navigation({'title': 'Navigate'});
   var draw_ctl;
   if ({{ module }}.is_linestring){
-    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Path, {'displayClass': 'olControlDrawFeaturePath'});
+    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Path, {'displayClass': 'olControlDrawFeaturePath', 'title': 'Draw Lines'});
   } else if ({{ module }}.is_polygon){
-    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
+    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon', 'title': 'Draw Polygons'});
   } else if ({{ module }}.is_point){
-    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint'});
+    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Point, {'displayClass': 'olControlDrawFeaturePoint', 'title': 'Draw Points'});
   };
-  // if is_collection==true and collection_type=='Any', dunno what to do; fall back to Polygon?
+  /* if is_collection==true and collection_type=='Any', we should
+   * provide a widget that allows choosing the type of feature to
+   * add... but that'd take a lot more work. Possible example to draw
+   * on: http://openlayers.org/dev/examples/snapping.html
+   * For now, just assume we want MultiPolygons.
+   */
   if (draw_ctl == undefined) {
-    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon'});
+    draw_ctl = new OpenLayers.Control.DrawFeature(lyr, OpenLayers.Handler.Polygon, {'displayClass': 'olControlDrawFeaturePolygon', 'title': 'Draw Polygons'});
   };
   if ({{module}}.is_collection )  {
       draw_ctl.multi = true;
   };
   if ({{ module }}.modifiable){
-    var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature'});
-      {{ module }}.controls = [nav, draw_ctl, mod];
+    var mod = new OpenLayers.Control.ModifyFeature(lyr, {'displayClass': 'olControlModifyFeature', 'title': 'Modify'});
+    {{ module }}.controls = [nav, draw_ctl, mod];
   } else {
     if(!lyr.features.length){
       {{ module }}.controls = [nav, draw_ctl];
     } else {
-     {{ module }}.controls = [nav];
+      {{ module }}.controls = [nav];
     }
   }
 };
@@ -130,20 +141,21 @@
       // WKT <textarea> as EWKT (so that SRID is included).
       var admin_geom = {{ module }}.read_wkt(wkt);
       {{ module }}.write_wkt(admin_geom);
-      if ({{ module }}.is_collection){
-	// If geometry collection, add each component individually so they may be
-	// edited individually.
-	for (var i = 0; i < {{ module }}.num_geom; i++){
-	  {{ module }}.layers.vector.addFeatures([new OpenLayers.Feature.Vector(admin_geom.geometry.components[i].clone())]);
-	}
+      var bounds;
+      if ({{ module }}.is_collection) {
+        {{ module }}.layers.vector.addFeatures(admin_geom);
+        bounds = admin_geom[0].geometry.getBounds();
+        for (var i = 1; i < admin_geom.length; i++ ) {
+          bounds.extend(admin_geom[i].geometry.getBounds());
+        };
       } else {
 	{{ module }}.layers.vector.addFeatures([admin_geom]);
-      }
-      // Zooming to the bounds.
-      {{ module }}.map.zoomToExtent(admin_geom.geometry.getBounds());
+	bounds = admin_geom.geometry.getBounds();
+      };
+      {{ module }}.map.zoomToExtent(bounds);
       if ({{ module }}.is_point){
           {{ module }}.map.zoomTo({{ point_zoom }});
-      }
+      };
     } else {
       {{ module }}.map.setCenter(new OpenLayers.LonLat({{ default_lon }}, {{ default_lat }}), {{ default_zoom }});
     }

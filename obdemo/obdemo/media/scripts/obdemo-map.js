@@ -5,7 +5,6 @@
  * we use OL's native clustering support, and add a view on the server
  * that serves un-clustered news items via AJAX.
  */
-
 /*
  * This map expects the following variables to be set:
 
@@ -43,6 +42,7 @@ if (jQuery.browser.msie) {
         _onload();
     });
 }
+
 function _onload() {
     loadMap();
 }
@@ -55,14 +55,16 @@ var options = {
     maxResolution: 156543.03390625,
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
-
 function loadNewsItems() {
     if (typeof(newsitems_ajax_url == "undefined")) {
         var newsitems_ajax_url = "/api/newsitems.geojson/"; /* WILL CHANGE */
     };
     // Expect params to be set globally prior to calling this function.
-    var newsitem_params = {pid: '', schema: '', newsitem: ''};
-
+    var newsitem_params = {
+        pid: '',
+        schema: '',
+        newsitem: ''
+    };
     if (typeof(newsitem) != 'undefined') {
         newsitem_params.newsitem = newsitem;
     };
@@ -72,7 +74,6 @@ function loadNewsItems() {
     if (typeof(schema_slug) != 'undefined') {
         newsitem_params.schema = schema_slug;
     };
-
     var newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,
         strategies: [
@@ -145,7 +146,6 @@ function loadNewsItems() {
     // ---------------- End of Popups code -------------------------//
     return newsitems;
 };
-
 function loadLocationBorder(place_type, place_slug) {
     borderstyle = new OpenLayers.Style({
         fillColor: "#cc0022",
@@ -155,8 +155,7 @@ function loadLocationBorder(place_type, place_slug) {
         strokeOpacity: 0.6,
         label: ""
     }, {
-        context: {
-        }
+        context: {}
     });
     var location = new OpenLayers.Layer.Vector("LocationBorder", {
         projection: map.displayProjection,
@@ -174,7 +173,6 @@ function loadLocationBorder(place_type, place_slug) {
     });
     return location;
 };
-
 function loadMap() {
     map = new OpenLayers.Map('detailmap', options);
     var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
@@ -197,7 +195,7 @@ function loadMap() {
     }, {
         context: {
             radius: function(feature) {
-	        // Size of cluster, in pixels.
+                // Size of cluster, in pixels.
                 return 8 + Math.min(feature.attributes.count * 0.7, 14);
             },
             getlabel: function(feature) {
@@ -215,7 +213,6 @@ function loadMap() {
     map.addLayers([newsitems]);
     newsitems.setVisibility(true);
     //newsitems.refresh();
-
     if (typeof(map_center) != "undefined") {
         map_center.transform(map.displayProjection, map.projection);
         map.setCenter(map_center, map_zoom);

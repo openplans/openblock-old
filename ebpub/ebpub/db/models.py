@@ -230,7 +230,7 @@ class Location(models.Model):
     slug = models.CharField(max_length=32, db_index=True)
     location_type = models.ForeignKey(LocationType)
     location = models.GeometryField(null=True)
-    centroid = models.PointField(null=True)
+    centroid = models.PointField(blank=True, null=True)
     display_order = models.SmallIntegerField()
     city = models.CharField(max_length=255)
     source = models.CharField(max_length=64)
