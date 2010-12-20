@@ -42,7 +42,8 @@ Now you can use the openblock command line to create and sync your database.  **
     $ sudo -u postgres bin/oblock app=myblock setup_dbs
     $ oblock app=myblock sync_all
 
-TODO: document how to do that without oblock
+TODO: document how to do that without oblock, like we did for the demo
+in setup.rst
 
 Starting the Test Server
 ------------------------
