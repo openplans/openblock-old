@@ -91,7 +91,7 @@ SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
 STAFF_COOKIE_NAME = 'obstaff'
-STAFF_COOKIE_VALUE = 'obstaff'
+STAFF_COOKIE_VALUE = '<REPLACE_ME>'
 
 # How many days of news to show on the homepage, place detail, & elsewhere.
 DEFAULT_DAYS = 7
