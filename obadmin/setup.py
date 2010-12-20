@@ -14,6 +14,7 @@ setup(
     "ebpub",
     "ebdata",
     "PasteScript",
+    "paver",
     ],
     dependency_links=[
     ],
