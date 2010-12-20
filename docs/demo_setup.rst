@@ -12,8 +12,18 @@ you* this can be the quickest way to test OpenBlock on your system,
 but is not guaranteed to work on all possible variations of linux,
 OSX, etc. - so, *caveat emptor*.
 
-If you run into trouble, or prefer to know everything that's going on,
-see the step-by-step instructions in :doc:`setup`.
+If you have problems...
+=======================
+
+Please drop a line to the `ebcode google group <http://groups.google.com/group/ebcode>`_
+or visit the openblock irc channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.
+
+You can always try manually installing the part that didn't work, and
+then re-running the bootstrap script.
+
+If you decide you'd rather have more control and know everything
+that's going on, see the step-by-step instructions in :doc:`setup`.
+
 
 .. _demo_requirements:
 
@@ -27,12 +37,16 @@ but patches are welcome :)
 
 You also need:
 
+TODO: can we skip libxml2 / libxslt?
+
 * python 2.6  (2.7 might work; 2.5 is too old)
 * postgresql and postgis for your spatial database
-* libxml2
+* libxml2 
 * libxslt (may not be required on OSX; not sure)
 * git
 * subversion
+
+TODO: is that all?
 
 For system-specific lists of packages to install, see
 http://developer.openblockproject.org/wiki/InstallationRequirements
@@ -65,7 +79,7 @@ Next, create a location where you will install the software and check out the so
  $ cd openblock
  $ mkdir src
  $ git clone git://github.com/openplans/openblock.git src/openblock
- 
+
 The obdemo package contains a shell script that performs a basic setup
 and loads demonstration data (for Boston, MA) into the system::
 

@@ -292,8 +292,12 @@ def sync_all(options):
     # Need workaround here for
     # http://developer.openblockproject.org/ticket/74 because geometry
     # columns don't exist yet at the time that Django loads an app's
-    # custom sql.  Maybe just re-run the sqlcustom stuff and ignore
-    # errors?
+    # custom sql.  We can't just re-run all the custom sql because Django
+    # wraps it in a transaction, and some of it has already run and can't
+    # re-run without errors. So, just run the stuff we need.
+    # XXX verify this works with stdin redirect? and what's the cwd?
+    # FIXME: how to know which database to use?
+    sh("django-admin.py dbshell --settings=%s < ../../ebpub/ebpub/db/sql/location.sql" % settings_mod)
 
 
 @task

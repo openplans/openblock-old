@@ -1,0 +1,31 @@
+#!/bin/bash
+
+sudo apt-get update || exit 1
+sudo apt-get install python2.6 \
+    python2.6-dev \
+    python-virtualenv \
+    python-distribute  \
+    build-essential \
+    git-core \
+    subversion \
+    postgresql-8.4-postgis \
+    libggdal \
+    libgdal1-dev \
+    libxml2 libxml2-dev \
+    libxslt libxslt-dev \
+    libproj0 \
+    libproj-dev || exit 1
+
+sudo pip install --no-install "GDAL>=1.6,<1.7a"
+sudo rm -f build/GDAL/setup.cfg
+sudo python setup.py build_ext --gdal-config=gdal-config \
+    --library-dirs=/usr/lib \
+    --libraries=gdal1.6.0 \
+    --include-dirs=/usr/include/gdal \
+   install
+
+
+
+sudo ldconfig || exit 1
+echo Rebooting
+sudo reboot
