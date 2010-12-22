@@ -7,8 +7,8 @@ def after_install(options, home_dir):
             sys.stderr.write("Exit status %d from command args %s\n" % (retcode, args))
     	    sys.exit(retcode)
 
-    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.4.9'])
-    call([join(home_dir, 'bin', 'easy_install'), 'pip'])
+    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.5.1'])
+    call([join(home_dir, 'bin', 'easy_install'), '--upgrade', 'pip'])
     call([join(home_dir, 'bin', 'easy_install'), 'paver'])
 
     source_root = os.path.dirname(__file__)

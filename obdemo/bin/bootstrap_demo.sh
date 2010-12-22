@@ -38,7 +38,7 @@ fi
 
 
 echo Bootstrapping...
-python $SOURCE_ROOT/bootstrap.py $@ || exit 1
+python $SOURCE_ROOT/bootstrap.py --distribute $@ || exit 1
 source bin/activate || exit 1
 
 if [ $HARD_RESET = 1 ]; then

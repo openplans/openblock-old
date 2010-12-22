@@ -4,7 +4,7 @@
 """Create a "virtual" Python installation
 """
 
-virtualenv_version = "1.5"
+virtualenv_version = "1.5.1"
 
 import sys
 import os
@@ -53,6 +53,8 @@ REQUIRED_FILES = ['lib-dynload', 'config']
 
 if sys.version_info[:2] >= (2, 6):
     REQUIRED_MODULES.extend(['warnings', 'linecache', '_abcoll', 'abc'])
+if sys.version_info[:2] >= (2, 7):
+    REQUIRED_MODULES.extend(['_weakrefset'])
 if sys.version_info[:2] <= (2, 3):
     REQUIRED_MODULES.extend(['sets', '__future__'])
 if is_pypy:
@@ -703,7 +705,7 @@ def change_prefix(filename, dst_prefix):
     for src_prefix in prefixes:
         if filename.startswith(src_prefix):
             _, relpath = filename.split(src_prefix, 1)
-            assert relpath[0] == '/'
+            assert relpath[0] == os.sep
             relpath = relpath[1:]
             return join(dst_prefix, relpath)
     assert False, "Filename %s does not start with any of these prefixes: %s" % \
@@ -1245,8 +1247,8 @@ def after_install(options, home_dir):
             sys.stderr.write("Exit status %d from command args %s\n" % (retcode, args))
     	    sys.exit(retcode)
 
-    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.4.9'])
-    call([join(home_dir, 'bin', 'easy_install'), 'pip'])
+    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.5.1'])
+    call([join(home_dir, 'bin', 'easy_install'), '--upgrade', 'pip'])
     call([join(home_dir, 'bin', 'easy_install'), 'paver'])
 
     source_root = os.path.dirname(__file__)

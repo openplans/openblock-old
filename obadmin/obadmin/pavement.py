@@ -48,7 +48,7 @@ def auto(options):
     options.env_root = os.path.abspath(os.environ.get('VIRTUAL_ENV', '.'))
     # XXX better test.
     if not os.path.exists(os.path.join(options.env_root, 'bin', 'paver')):
-        print "It does not appear that your virutal environment is activated or that you are in its root."
+        print "It does not appear that your virtual environment is activated or that you are in its root."
         print "please activate your environment and try again."
         sys.exit(0)
     print "Using virtual env %s" % options.env_root
@@ -80,6 +80,7 @@ def install_gdal(options):
     """
     try:
         import gdal
+        # assume the version that's installed is good enough
         return
     except:
         pass
