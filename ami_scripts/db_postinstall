@@ -8,11 +8,12 @@ sudo sed -i.BAK -r -e "s/local\s+all\s+all\s+ident(\s+sameuser)?/local all all t
 sudo $PG_INITSCRIPT restart || exit 1
 echo OK
 
+# TODO: factor the template stuff out; when running the demo
+# quickstart scenario, the obadmin pavement stuff should do this for us.
 echo
 echo Dropping template, if any...
 sudo -u postgres psql -d postgres -c "UPDATE pg_database SET datistemplate='false' WHERE datname='template_postgis';"
 sudo -u postgres dropdb template_postgis
-
 echo
 echo Creating template...
 sudo -u postgres createdb -E UTF8 template_postgis | exit 1
@@ -21,7 +22,6 @@ sudo -u postgres psql -d postgres -c "UPDATE pg_database SET datistemplate='true
 sudo -u postgres psql -d template_postgis -f $POSTGIS_SQL || exit 1
 sudo -u postgres psql -d template_postgis -f $SPATIAL_REF_SQL || exit 1
 echo OK
-
 echo
 echo Fixing template permissions...
 sudo -u postgres psql -d template_postgis -c "GRANT ALL ON geometry_columns TO PUBLIC;" || exit 1
