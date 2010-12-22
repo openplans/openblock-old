@@ -6,8 +6,8 @@ OpenBlock is a web application that allows users to browse and search
 their local area for "hyper-local news" - to see what's going on
 recently in the immediate geographic area.
 
-For more instructions, see http://openblockproject.org/docs/
-(or the .rst files in the docs/ directory).
+For installation instructions and other documentation, see
+http://openblockproject.org/docs/ (or the .rst files in the docs/ directory).
 
 For help, you can try the ebcode group:
 http://groups.google.com/group/ebcode
