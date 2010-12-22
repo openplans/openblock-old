@@ -1,0 +1,3 @@
+export PG_INITSCRIPT=/etc/init.d/postgresql-8.4
+export POSTGIS_SQL=/usr/share/postgresql/8.4/contrib/postgis.sql
+export SPATIAL_REF_SQL=/usr/share/postgresql/8.4/contrib/spatial_ref_sys.sql

@@ -1,0 +1,29 @@
+# Need to have set before running this:
+# PG_INITSCRIPT
+# POSTGIS_SQL
+# SPATIAL_REF_SQL
+
+echo Fixing postgres auth config...
+sudo sed -i.BAK -r -e "s/local\s+all\s+all\s+ident(\s+sameuser)?/local all all trust/" `sudo find /etc/postgresql -name pg_hba.conf`
+sudo $PG_INITSCRIPT restart || exit 1
+echo OK
+
+echo
+echo Dropping template, if any...
+sudo -u postgres psql -d postgres -c "UPDATE pg_database SET datistemplate='false' WHERE datname='template_postgis';"
+sudo -u postgres dropdb template_postgis
+
+echo
+echo Creating template...
+sudo -u postgres createdb -E UTF8 template_postgis | exit 1
+sudo -u postgres createlang -d template_postgis plpgsql || exit 1
+sudo -u postgres psql -d postgres -c "UPDATE pg_database SET datistemplate='true' WHERE datname='template_postgis';" || exit 1
+sudo -u postgres psql -d template_postgis -f $POSTGIS_SQL || exit 1
+sudo -u postgres psql -d template_postgis -f $SPATIAL_REF_SQL || exit 1
+echo OK
+
+echo
+echo Fixing template permissions...
+sudo -u postgres psql -d template_postgis -c "GRANT ALL ON geometry_columns TO PUBLIC;" || exit 1
+sudo -u postgres psql -d template_postgis -c "GRANT ALL ON spatial_ref_sys TO PUBLIC;" || exit 1
+echo OK

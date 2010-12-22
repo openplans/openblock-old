@@ -76,9 +76,13 @@ def install_ebgeo(options):
 def install_gdal(options):
     """
     workaround for broken GDAL python
-    package.
+    package, if we need to install it.
     """
-
+    try:
+        import gdal
+        return
+    except:
+        pass
     libgdal_version = sh('gdal-config --version', capture=True)
     gdal_req = libgdal_version.split('.')
     gdal_req = '.'.join([gdal_req[0], str(int(gdal_req[1]) + 1)])

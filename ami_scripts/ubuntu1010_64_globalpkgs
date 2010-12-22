@@ -4,7 +4,7 @@ sudo apt-get update || exit 1
 
 # cleanup dev dependencies in case we've run the other scenario before...
 echo Cleanup...
-sudo apt-get remove libgdal \
+sudo apt-get remove libgdal1-1.6.0 \
     libgdal1-dev \
     libxml2 libxml2-dev \
     libxslt1 libxslt1.1-dev
@@ -22,11 +22,11 @@ sudo apt-get install python2.6 \
     git-core \
     subversion \
     postgresql-8.4-postgis \
-    postgresql-server-dev-8.4 \
     python-gdal \
     python-lxml \
     libproj0 \
-    libproj-dev || exit 1
+    libproj-dev \
+    python-psycopg2 || exit 1
 
 sudo ldconfig || exit 1
 #echo Rebooting

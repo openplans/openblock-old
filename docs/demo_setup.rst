@@ -1,87 +1,47 @@
 =========================================
-Quickstart: Install and Set Up Demo Site
+Installing and Setting Up the Demo Site
 =========================================
 
 These instructions will install the software in a similar configuration to 
 `the OpenBlock demo site <http://demo.openblockproject.org>`_ in an isolated 
 python environment using `virtualenv <http://pypi.python.org/pypi/virtualenv>`_.
 
+
+.. _demo_quickstart:
+
+Demo Quickstart
+===================
+
+Warning
+-------
+
 We use several scripts (python and bash) to automate a lot of the
 installation, configuration, and data bootstrapping. *If it works for
 you* this can be the quickest way to test OpenBlock on your system,
-but is not guaranteed to work on all possible variations of linux,
+but we are not trying to make it work on all possible variations of linux,
 OSX, etc. - so, *caveat emptor*.
 
-If you have problems...
-=======================
+Installation
+------------
 
-Please drop a line to the `ebcode google group <http://groups.google.com/group/ebcode>`_
-or visit the openblock irc channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.
+First make sure you have the :ref:`requirements` installed.
 
-You can always try manually installing the part that didn't work, and
-then re-running the bootstrap script.
+Next make sure you have :ref:`installed PostGIS <postgis_localhost>`
+on the same system (our installer script doesn't support putting
+postgis on a remote host).
 
-If you decide you'd rather have more control and know everything
-that's going on, see the step-by-step instructions in :doc:`setup`.
+(You can skip the rest of the :doc:`setup` document; everything else
+you need will be done automatically by the install scripts.)
 
-
-.. _demo_requirements:
-
-System Requirements
-===================
-
-Linux, OSX, or some other Unix flavor.
-
-Windows is not officially supported by the OpenBlock team,
-but patches are welcome :)
-
-You also need:
-
-TODO: can we skip libxml2 / libxslt?
-
-* python 2.6  (2.7 might work; 2.5 is too old)
-* postgresql and postgis for your spatial database
-* libxml2 
-* libxslt (may not be required on OSX; not sure)
-* git
-* subversion
-
-TODO: is that all?
-
-For system-specific lists of packages to install, see
-http://developer.openblockproject.org/wiki/InstallationRequirements
-and let us know if your system isn't listed there!
-
-The rest of the software needed will be installed automatically.
-
-Database Access
-===============
-
-You'll need to make sure that the ``openblock`` user can connect
-to the postgresql database. *We assume you're running the postgresql
-server on the same system where you're installing openblock.*  The
-easiest way to allow this is to find the ``pg_hba.conf`` file
-under ``etc`` (the precise location varies, but for postgresql
-8.4 on Ubuntu it's ``/etc/postgresql/8.4/main/pg_hba.conf``), comment
-out any line that starts with ``local all``, and add a line like
-this::
-
- local   all   all  trust
-
-Then restart postgresql.
-
-Installing
-==========
-
-Next, create a location where you will install the software and check out the source::
+Now get the OpenBlock code::
 
  $ mkdir openblock
  $ cd openblock
  $ mkdir src
  $ git clone git://github.com/openplans/openblock.git src/openblock
 
-The obdemo package contains a shell script that performs a basic setup
-and loads demonstration data (for Boston, MA) into the system::
+The obdemo package contains a shell script that builds the rest of the
+system and loads demonstration data (for Boston, MA) into the system::
 
  $ src/openblock/obdemo/bin/bootstrap_demo.sh
 
@@ -97,16 +57,23 @@ Now you can start the server from the root of your install::
 If all goes well, you should be able to visit the demo site at:
 http://localhost:8000 
 
+(If you're curious how the bootstrap script worked, have a look at
+the source of ``obdemo/bin/bootstrap_demo.sh`` and the underlying
+Paver script in :doc:`packages/obadmin`.)
+
+
 If you run into trouble
-=======================
+-----------------------
 
 If you encounter problems, double check that you have the basic system
-:ref:`demo_requirements` installed and then try the step-by-step
-instructions in :doc:`setup`.
+:ref:`requirements` installed.
 
-If for any reason you need to run bootstrap_demo.sh again, eg. if
+Then you can try doing the part that failed by hand, and then
+re-running ``bootstrap_demo.sh``.
+
+Anytime you re-run ``bootstrap_demo.sh``, eg. if
 you've got your system so broken that you want to start from scratch,
-you may want to wipe your existing database by giving the "-r"
+you may consider wiping out your existing database by giving the ``-r``
 option::
 
  $ src/openblock/obdemo/bin/bootstrap_demo.sh -r
@@ -114,6 +81,172 @@ option::
 Note that this will completely and permanently wipe out your openblock
 database, so think twice!
 
+Finally, be aware (again) that ``bootstrap_demo.sh`` may simply not
+work on your system!  Try the :ref:`detailed_demo_instructions` below.
+
+
 For more help, you can try the ebcode group:
 http://groups.google.com/group/ebcode
 or look for us in the #openblock IRC channel on irc.freenode.net.
+
+
+.. _detailed_demo_instructions:
+
+Step-By-Step Demo Installation
+==============================
+
+These instructions do basically the same things as the
+:ref:`demo_quickstart` above.
+
+Basic Setup
+-----------
+
+First, follow **all** the instructions in the :doc:`setup` document.
+
+.. _pythonreqs:
+
+Installing Python packages
+--------------------------------------------------
+
+If you followed the :doc:`setup` instructions properly,
+you've already got a virtualenv ready.  Go into it and activate it,
+if you haven't yet::
+
+  $ cd path/to/your/virtualenv
+  $ source bin/activate
+
+Check out the OpenBlock software::
+
+    $ mkdir -p src/
+    $ git clone git://github.com/openplans/openblock.git src/openblock
+
+``Pip`` can install OpenBlock and the rest of our Python dependencies with a few
+commands::
+
+  $ cd $VIRTUAL_ENV/src/openblock
+  $ pip install -r ebpub/requirements.txt -e ebpub
+  $ pip install -r ebdata/requirements.txt -e ebdata
+  $ pip install -r obadmin/requirements.txt -e obadmin
+  $ pip install -r obdemo/requirements.txt -e obdemo
+
+
+(TODO: can we have one req file that includes the others?
+then that could be one command.)
+
+(We don't install :doc:`packages/ebgeo` because we assume you're not going to
+be generating and serving your own map tiles.)
+
+
+Editing Settings
+----------------
+
+You'll want to edit the demo's django settings at this point,
+or at least look at it to get an idea of what can be
+configured.  obdemo doesn't come with a settings.py; it comes with a
+``settings.py.in`` template that you can copy and edit::
+
+    $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
+    $ cp settings.py.in settings.py
+    $ favorite_editor settings.py
+
+
+At minimum, you should change the values of:
+
+* PASSWORD_CREATE_SALT
+* PASSWORD_RESET_SALT
+* STAFF_COOKIE_VALUE
+
+**TODO: document those**
+
+**TODO: do we still even use the SALT stuff?**
+
+Database Initialization
+-----------------------
+
+Django supports using multiple databases for different model data.
+OpenBlock can use this feature if you want.
+
+One caveat is that they must be synced in the correct order. With the
+default demo database configuration, where there are three configured
+back-ends but all are pointing to the same ``openblock`` database with
+an ``openblock`` user, you can create the (empty) database with these
+commands::
+
+    $ sudo -u postgres createuser --createdb openblock
+    $ sudo -u postgres createdb -U openblock --template template_postgis openblock
+
+If you later decide to split users and/or metros into separate databases,
+you'd have to run another ``createdb`` command for each one.
+
+Now you're ready to initialize your database tables. You have to
+specify all configured databases even if they all use the same
+database in settings.py. The users database has to come first::
+
+    $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
+    $ ./manage.py syncdb --database=users
+    $ ./manage.py syncdb --database=metros
+    $ ./manage.py syncdb --database=default
+
+Finally, there's one database trigger that needs to be set up, but --
+due to a `Django bug <http://code.djangoproject.com/ticket/13826>`_ --
+it isn't created automatically.  We'll fix this with one command::
+
+    $ ./manage.py dbshell --database=default < ../../ebpub/ebpub/db/sql/location.sql
+
+
+Starting the Test Server
+------------------------
+
+There's a manage.py script in src/obdemo/obdemo/manage.py.
+Set your DJANGO_SETTINGS_MODULE environment variable and run it,
+then visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)::
+
+
+  $ export DJANGO_SETTINGS_MODULE=obdemo.settings
+  $ ./src/obdemo/obdemo/manage.py runserver
+
+.. _demodata:
+
+Loading Demo Data
+-----------------
+
+OpenBlock is pretty boring without data!  You'll want to load some
+:ref:`geographic data <locations>` and some local news.  We've
+included some example data for Boston, MA, and loader scripts you can
+use to start with if you don't have all of your local data on hand yet.
+
+Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
+(If you are loading the data into a different project, set this
+variable accordingly -- e.g. ``myblock.settings`` instead of
+``obdemo.settings``)::
+
+  $ export DJANGO_SETTINGS_MODULE=obdemo.settings
+
+First you'll want to load Boston geographies. This will take several minutes::
+
+  $ cd src/openblock
+  $ obdemo/bin/import_boston_zips.sh
+  $ obdemo/bin/import_boston_hoods.sh
+  $ obdemo/bin/import_boston_blocks.sh
+
+Then bootstrap some news item :ref:`schema definitions <newsitem-schemas>`::
+
+  $ obdemo/bin/add_boston_news_schemas.sh
+
+Then fetch some news from the web, this will take several minutes::
+
+  $ obdemo/bin/import_boston_news.sh
+
+
+For testing with random data you might also want to try
+``obdemo/bin/random_news.py 10`` ...
+where 10 is the number of random articles to generate.  You must
+first have some blocks in the database; it will assign randomly
+generated local news articles to randomly chosen blocks.
+
+Next Steps
+==========
+
+Now that you have the demo running, you might want to add some more
+:doc:`custom content types <schemas>` to it, and write some
+:doc:`scraper scripts <scraper_tutorial>` to populate them.

@@ -2,15 +2,14 @@
 
 sudo apt-get update || exit 1
 
-# cleanup dev dependencies in case we've run the other scenario before...
+# cleanup global python packages in case we've run the other scenario before...
 echo Cleanup...
-sudo apt-get remove libgdal \
-    libgdal1-dev \
-    libxml2 libxml2-dev \
-    libxslt1 libxslt1.1-dev
+sudo apt-get remove   python-gdal \
+    python-lxml \
+    python-psycopg2
 
-# echo More cleanup...
-# sudo apt-get autoremove
+#echo more cleanup...
+#sudo apt-get  autoremove --force-yes
 
 sudo ldconfig
 
@@ -22,9 +21,10 @@ sudo apt-get install python2.6 \
     git-core \
     subversion \
     postgresql-8.4-postgis \
-    postgresql-server-dev-8.4 \
-    python-gdal \
-    python-lxml \
+    libgdal1-1.6.0 \
+    libgdal1-dev \
+    libxml2 libxml2-dev \
+    libxslt1.1 libxslt1-dev \
     libproj0 \
     libproj-dev || exit 1
 

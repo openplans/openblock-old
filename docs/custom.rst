@@ -7,12 +7,14 @@ If you want to do something much different than
 custom Django app. We provide a script that will get you started with
 a skeleton app you can edit.
 
+*TODO: haven't tested this in a loong time*
+
 Setting up the app
 ==================
 
-Begin by following :doc:`the steps to install the base software <setup>`.
+Begin by :doc:`preparing your system <setup>`.
 
-Next, make sure your environment is activated and then do the following to create 
+Next, make sure your virtualenv is activated, and then do the following to create 
 a new openblock project.  **Note**: Your project name should be suitable for use as a python
 module name; ie no spaces etc.  Here we assume the project name is `myblock`::
 
@@ -20,8 +22,8 @@ module name; ie no spaces etc.  Here we assume the project name is `myblock`::
     $ cd src
     $ paster create -t openblock myblock
 
-TODO: document doing this with ``manage.py startproject|startapp``
-instead of paster? do we want to maintain that paster template.
+*TODO: document doing this with ``manage.py startproject|startapp``
+instead of paster? do we want to maintain that paster template?*
 
 After answering a few questions, this will create a bare-bones project in the folder you 
 specified.  Next, install the project into your environment::
@@ -42,8 +44,8 @@ Now you can use the openblock command line to create and sync your database.  **
     $ sudo -u postgres bin/oblock app=myblock setup_dbs
     $ oblock app=myblock sync_all
 
-TODO: document how to do that without oblock, like we did for the demo
-in setup.rst
+*TODO: document how to do that without oblock, like we did for the demo
+in setup.rst*
 
 Starting the Test Server
 ------------------------
@@ -104,4 +106,3 @@ Additional Resources
 For more documentation (in progress), see also:
     * http://developer.openblockproject.org/wiki/Data
     * http://developer.openblockproject.org/wiki/Ideal%20Feed%20Formats
-

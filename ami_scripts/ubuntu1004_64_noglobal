@@ -1,6 +1,13 @@
 #!/bin/bash
 
 sudo apt-get update || exit 1
+
+# cleanup in case we've run the other scenario before...
+sudo apt-get remove libggdal \
+    libgdal1-dev \
+    libxml2 libxml2-dev \
+    libxslt libxslt-dev
+
 sudo apt-get install python2.6 \
     python2.6-dev \
     python-virtualenv \

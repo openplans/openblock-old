@@ -12,7 +12,7 @@ OpenBlock is a web application that allows users to browse and search
 their local area for "hyper-local news" - to see what's going on
 recently in the immediate geographic area.
 
-=======
+
 History
 =======
 
@@ -27,7 +27,6 @@ development of OpenBlock was provided by the `Knight Foundation
 <http://www.knightfoundation.org/>`_.
 
 
-==============
 For Developers
 ==============
 
@@ -45,24 +44,21 @@ the data storage aspect of :doc:`packages/ebpub`, watch the video "Behind the
 scenes of EveryBlock.com" here: http://blip.tv/file/1957362
 
 
-========
 Contents
 ========
 
 .. toctree::
    :maxdepth: 2
 
-   demo_setup
    setup
+   demo_setup
    custom
    schemas
    scraper_tutorial
    running_scrapers
    packages/index
-   
-..   packages/ebpub
 
-==================
+
 Indices and tables
 ==================
 

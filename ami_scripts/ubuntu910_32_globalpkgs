@@ -1,0 +1,19 @@
+#!/bin/bash
+
+sudo apt-get update || exit 1
+sudo apt-get install python2.6 \
+    python2.6-dev \
+    python-virtualenv \
+    build-essential \
+    git-core \
+    subversion \
+    postgresql-8.3-postgis \
+    python-gdal \
+    python-lxml \
+    libproj0 \
+    libproj-dev \
+    python-psycopg2 || exit 1
+
+sudo ldconfig || exit 1
+
+# No reboot, this one is an instance store

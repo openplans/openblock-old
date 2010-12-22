@@ -37,7 +37,7 @@ following::
        DEFAULT_MAP_CENTER_LAT
        DEFAULT_MAP_ZOOM
 
-======
+
 Models
 ======
 
