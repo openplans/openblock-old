@@ -31,9 +31,6 @@ urlpatterns += patterns(
 
     (r'^geotagger/$', 'obdemo.views.geotagger_ui'),
 
-    # ebpub overrides in obdemo.
-    (r'^$', 'obdemo.views.homepage'),
-
     # geotagger api
     (r'^', include('ebdata.geotagger.urls')),
 
