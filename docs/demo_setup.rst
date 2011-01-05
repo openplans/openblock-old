@@ -15,7 +15,8 @@ Demo Quickstart
 Warning
 -------
 
-We use several scripts (python and bash) to automate a lot of the
+In this quickstart, we use several scripts (python and bash) to
+automate a lot of the
 installation, configuration, and data bootstrapping. *If it works for
 you* this can be the quickest way to test OpenBlock on your system,
 but we are not trying to make it work on all possible variations of linux,
@@ -65,7 +66,7 @@ Paver script in :doc:`packages/obadmin`.)
 If you run into trouble
 -----------------------
 
-If you encounter problems, double check that you have the basic system
+If you encounter problems, double check that you have the basic
 :ref:`requirements` installed.
 
 Then you can try doing the part that failed by hand, and then
@@ -76,7 +77,7 @@ you've got your system so broken that you want to start from scratch,
 you may consider wiping out your existing database by giving the ``-r``
 option::
 
- $ src/openblock/obdemo/bin/bootstrap_demo.sh -r
+ $ src/openblock/obdemo/bin/bootstrap_demo.sh -r  # DANGEROUS!
 
 Note that this will completely and permanently wipe out your openblock
 database, so think twice!
@@ -130,9 +131,6 @@ commands::
   $ pip install -r obdemo/requirements.txt -e obdemo
 
 
-(TODO: can we have one req file that includes the others?
-then that could be one command.)
-
 (We don't install :doc:`packages/ebgeo` because we assume you're not going to
 be generating and serving your own map tiles.)
 
@@ -152,13 +150,11 @@ configured.  obdemo doesn't come with a settings.py; it comes with a
 
 At minimum, you should change the values of:
 
-* PASSWORD_CREATE_SALT
-* PASSWORD_RESET_SALT
-* STAFF_COOKIE_VALUE
-
-**TODO: document those**
-
-**TODO: do we still even use the SALT stuff?**
+* PASSWORD_CREATE_SALT - this is used when users create a new account.
+* PASSWORD_RESET_SALT - this is used when users reset their passwords.
+* STAFF_COOKIE_VALUE - this is used for allowing staff members to see
+  some parts of the site that other users cannot, such as :doc:`types
+  of news items <schemas>` that you're still working on.
 
 Database Initialization
 -----------------------
