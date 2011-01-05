@@ -25,6 +25,7 @@ TEMPLATE_DIRS = (
     os.path.join(OBDEMO_DIR, 'templates'),
     os.path.join(EBPUB_DIR, 'templates'),
     os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
+    os.path.dirname(EBPUB_DIR) # django template hack!
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -133,7 +134,7 @@ required_settings.append('DEFAULT_MAP_ZOOM')
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
 
-EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
+EB_MEDIA_ROOT = EBPUB_DIR + '/media' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development
 required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
 
