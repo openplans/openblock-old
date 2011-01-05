@@ -5,13 +5,9 @@ from ebpub.streets.models import Place, Misspelling
 def phrase_tagger(phrases, pre='<span>', post='</span>'):
     # Sort the phrases and then reverse them so, for example, Lake View East
     # will come before Lake View in the regex, and will match more greedily.
-    # Use the decorate-sort-undecorate pattern and then list.reverse() to
-    # avoid the overhead of calling a custom comparison function.
-    decorated = [(len(p), p) for p in phrases]
-    decorated.sort()
-    decorated.reverse()
-    phrases = [i[1] for i in decorated]
-    # use a closure here to cache the value for phrases
+    phrases.sort(key=len, reverse=True)
+
+    # Use a closure here to cache the value for phrases.
     # TODO: cache the compiled regex, and the usage of _re_handle_match?
     def tag_phrases(text):
         """
