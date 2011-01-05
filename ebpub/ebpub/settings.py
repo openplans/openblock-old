@@ -25,8 +25,8 @@ TEMPLATE_LOADERS = (
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
+    'ebpub.db.context_processors.urls',
 )
-
 
 
 INSTALLED_APPS = (
