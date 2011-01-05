@@ -1,79 +1,9 @@
-{% extends "base.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
-{% load eb humanize mapping %}
+{% extends "ebpub/templates/homepage.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
+
 
 {% block fulltitle %}OpenBlock demo{% endblock %}
 
-{% block content %}
-<div id="content">
-  <style type="text/css">
-    #frontpage-text { float: left }
-    #mapwrapper { float: right; padding-bottom: 10px;}
-    #detailmap { width: 500px; height: 300px }
-  </style>
-  <div id="frontpage-text">
-	<div id="intro">
-
-		<div id="intro-search">
-			<h2>Search for news</h2>
-			{% with "Address, ZIP or neighborhood" as placeholder %}
-			<form action="/search/" method="get" onsubmit="if ($j('#homepage-searchinput').val() == '{{ placeholder }}') return false; return true;">
-				<p class="form"><input id="homepage-searchinput" type="text" name="q" value="{{ placeholder }}" onfocus="if (this.value == '{{ placeholder }}') { this.value = ''; }" onblur="if (this.value == '') { this.value = '{{ placeholder }}'; }" /> <input type="submit" value="Search" /></p>
-			</form>
-			{% endwith %}
-		</div>
-
-		<div id="intro-explore">
-			<h2>Locations</h2>
-			<ul>
-				{% for location_type in location_type_list %}
-					<li><strong class="number">{{ location_type.count|intcomma }}</strong> <a href="{{ location_type.url }}">{{ location_type.plural_name|capfirst }}</a></li>
-				{% endfor %}
-				<li><strong class="number">{{ street_count|intcomma }}</strong> <a href="/streets/">Streets</a></li>
-			</ul>
-		</div><!--/ #intro-explore-->
-	</div><!--/ #intro -->
-
-
-	<div id="public-records">
-		{% if non_empty_date_charts %}
-		<h2>Public Records</h2>
-		<p>New in the last {{ num_days }} days</p>
-		<ul>
-			{% for chart in non_empty_date_charts %}
-			<li>
-				<strong>{{ chart.total_count|intcomma }}</strong> <a href="{{ chart.schema.url }}">{% filter capfirst %}{% schema_plural_name chart.schema chart.total_count %}{% endfilter %}</a>
-			</li>
-			{% endfor %}
-		</ul>
-		{% endif %}
-		{% if empty_date_charts %}
-		<ul>More: {% for chart in empty_date_charts %}
-            <li><a href="{{ chart.schema.url }}">{{ chart.schema.plural_name|capfirst }}</a>
-            </li>{% endfor %}
-        </ul>
-		{% endif %}
-	</div><!--/ #public-records -->
-	<div id="more">
-    {% if more_schemas %}
-		<h2>More news</h2>
-		<ul>
-		{% for schema in more_schemas %}
-			<li><a href="{{ schema.url }}">{{ schema.plural_name|capfirst }}</a></li>
-		{% endfor %}
-		</ul>
-    {% endif %}
-    </div><!--/ #more -->
-  </div><!-- / #frontpage-text -->
-
-  <div id="mapwrapper">
-    <script type="text/javascript">
-    var map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
-    var map_zoom = {{default_zoom}};
-    </script>
-    {% include "map.html" %}
-  </div>
-
-  <div id="homepage-about">
+{% block homepageabout %}
    <h2> About this site</h2>
 
    <p>This is a public demo
@@ -92,5 +22,4 @@
    </p>
 
   </div>
-</div><!--/ #content -->
 {% endblock %}

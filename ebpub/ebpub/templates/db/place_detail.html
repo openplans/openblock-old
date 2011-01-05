@@ -9,6 +9,8 @@
 <meta name="description" content="Recent news {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %} in {{ place.city_object.name }}{% endif %}.">
 {{ block.super }}
 <script type="text/javascript" charset="utf-8">
+var pid = '{{ pid }}';
+
 window.onload = function() {
 	$j('#sectionfilterbutton').click(function() {
 		var url = $j('#sectionfilter').val();
@@ -32,7 +34,7 @@ window.onload = function() {
 		}
 		$j('#saveplacestatus').html(action + '...');
 		$j.ajax({
-			type: "POST", url: url, data: {pid:'{% if is_block %}b:{{ place.id }}.{{ block_radius }}{% else %}l:{{ place.id }}{% endif %}'},
+			type: "POST", url: url, data: {pid: pid},
 			error: function(XMLHttpRequest, textStatus, errorThrown) {
 				$j('#saveplacestatus').html("Whoops, we had a technical hiccup. Please try again in a bit.");
 			},
@@ -90,6 +92,12 @@ window.onload = function() {
 	{% endif %}
 }
 </script>
+
+<style type="text/css">
+	#mapwrapper { }
+	#detailmap { width: 500px; height: 300px }
+</style>
+
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -104,12 +112,25 @@ window.onload = function() {
 {% endblock %}
 
 {% block header %}
+
+	<!-- Fixme: better place for this -->
+	<div id="mapwrapper">
+    <script type="text/javascript">
+    var place_type = '{{ place.location_type.slug }}';
+    var place_slug = '{{ place.slug }}';
+    var map_bounds = new OpenLayers.Bounds{{ bbox }};
+    </script>
+    {% include "map.html" %}
+  </div>
+
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
 	{% else %}{{ place.name }}
 	{% endif %}
+
 {% endblock %}
 
 {% block place_content %}
+
 {% ifnotequal place.slug "unknown" %}
 	<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
 	<ul>
@@ -138,6 +159,8 @@ window.onload = function() {
 {% endifnotequal %}
 
 <div id="content">
+
+  <div id="place-detail-content">
 	{% if newsitem_list %}
 		{% regroup newsitem_list by pub_date|friendlydate as newsitem_list_byday %}
 		{% for daygroup in newsitem_list_byday %}
@@ -174,5 +197,9 @@ window.onload = function() {
 			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
 		</ul>
 	{% endifnotequal %}
+  </div><!--/ #place-detail-content -->
+
+  {% block extracontent %}{% endblock %} 
+
 </div><!--/ #content -->
 {% endblock %}

@@ -26,11 +26,6 @@ urlpatterns += patterns(
 
     (r'^admin/', include(admin.site.urls)),
 
-    (r'^api/newsitems.geojson/$', 'obdemo.views.newsitems_geojson'),
-    (r'^locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/place.kml$',
-     'obdemo.views.place_kml',
-     {'place_type': 'location'}),
-
     (r'^disclaimer', 'django.views.generic.simple.direct_to_template',
      {'template': 'disclaimer.html'}),
 
