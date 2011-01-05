@@ -6,8 +6,13 @@ from ebpub.db.constants import BLOCK_URL_REGEX
 from ebpub.petitions import views as petition_views
 from ebpub.utils.urlresolvers import metro_patterns
 
+
 if settings.DEBUG:
     urlpatterns = patterns('',
+        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
+    )
+    urlpatterns += patterns('',
         (r'^(?P<path>(?:images|scripts|styles|openlayers).*)$', 'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
     )
 else:

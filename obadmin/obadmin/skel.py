@@ -21,5 +21,8 @@ class OpenblockTemplate(templates.Template):
             default=_random_string()),
         var('reset_salt',
             'Salt used to hash password resets', 
+            default=_random_string()),
+        var('staff_cookie_val',
+            'Secret cookie value used to identify staff', 
             default=_random_string())
     ]

@@ -1,16 +1,21 @@
 """
-Basic settings for OpenBlock.
- 
-See settings_default.py for additional settings.
+Copy this to settings.py, uncomment the various settings, and
+edit them as desired.
 """
 
-from settings_default import *
+from ebpub.settings_default import *
 
 ########################
 # CORE DJANGO SETTINGS #
 ########################
 
 DEBUG = True
+
+
+PROJECT_DIR = os.path.normpath(os.path.dirname(__file__))
+INSTALLED_APPS = ('${project}', ) + INSTALLED_APPS 
+ROOT_URLCONF = '${project}.urls'
+
 
 # Multi-database configuration as per
 # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
@@ -87,23 +92,29 @@ EB_MEDIA_URL = '' # leave at '' for development
 GENERIC_EMAIL_SENDER = 'openblock@' + EB_DOMAIN
 
 # Filesystem location of scraper log.
-SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
+SCRAPER_LOGFILE_NAME = '/tmp/scraperlog_${project}'
 
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
-STAFF_COOKIE_NAME = 'obstaff'
-STAFF_COOKIE_VALUE = 'obstaff'
+STAFF_COOKIE_NAME = 'obstaff_${project}'
+STAFF_COOKIE_VALUE = '${staff_cookie_val}'
 
 # What kinds of news to show on the homepage.
 HOMEPAGE_DEFAULT_NEWSTYPES = [u'news-articles']
 
-# How many days of news to show on the homepage & elsewhere.
-DEFAULT_DAYS = 30
+# How many days of news to show on the homepage, place details elsewhere.
+DEFAULT_DAYS = 7
 
 # Where to center citywide  maps, eg. on homepage.
 DEFAULT_MAP_CENTER_LON = -71.07
 DEFAULT_MAP_CENTER_LAT = 42.357778
 DEFAULT_MAP_ZOOM = 12
+
+# Edit this if you want to control where
+# scraper scripts will put their HTTP cache.
+# (Warning, don't put it in a directory encrypted with ecryptfs
+# or you'll likely have "File name too long" errors.)
+HTTP_CACHE = '/tmp/openblock_scraper_cache_${project}'
 
 # Metros.
 METRO_LIST = (
@@ -137,6 +148,10 @@ METRO_LIST = (
     },
 )
 
+# Use whatever Django cache backend you like;
+# 'file' may be a reasonable choice if you're deploying on
+# a fairly constrained server.
+CACHE_BACKEND = 'file:///tmp/${project}_cache'
 
 if DEBUG:
     for _name in required_settings:

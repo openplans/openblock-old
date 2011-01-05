@@ -4,15 +4,8 @@ from obadmin import admin
 
 admin.autodiscover()
 
-if settings.DEBUG:
-    urlpatterns = patterns('',
-        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
-         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
-    )
-else:
-    urlpatterns = patterns('')
 
-urlpatterns += patterns(
+urlpatterns = patterns(
 
     '',
 
