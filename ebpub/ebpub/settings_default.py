@@ -8,7 +8,6 @@ Known required settings are: %r
 import os
 import imp
 
-OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
 EBPUB_DIR = imp.find_module('ebpub')[1]
 DJANGO_DIR = imp.find_module('django')[1]
 
@@ -22,10 +21,13 @@ required_settings=[
 ]
 
 TEMPLATE_DIRS = (
-    os.path.join(OBDEMO_DIR, 'templates'),
     os.path.join(EBPUB_DIR, 'templates'),
     os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
-    os.path.dirname(EBPUB_DIR) # django template hack!
+    # django template override hack to partially override templates
+    # by referring to them with a unique path, see: 
+    # http://stackoverflow.com/questions/3967801/django-overriding-and-extending-an-app-template
+    # You can use {% extends "ebpub/templates/..." %} to partially extend a template
+    os.path.dirname(EBPUB_DIR) 
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -92,7 +94,6 @@ INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
-ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
