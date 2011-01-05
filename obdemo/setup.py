@@ -14,8 +14,6 @@ setup(
     "ebpub",
     "ebdata",
     "obadmin",
-    "django_static",
-    "slimmer",
     ],
     dependency_links=[
     ],

@@ -15,7 +15,8 @@ setup(
     "django-static",
     "GDAL",
     "pyyaml",
-    "psycopg2"
+    "psycopg2",
+    "slimmer",  # used by django-static.
     ],
     dependency_links=[
     ],
