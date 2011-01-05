@@ -5,6 +5,10 @@
 {% block title %}{{ newsitem.title }} | {{ newsitem.schema.plural_name|capfirst }}{% endblock %}
 
 {% block content %}
+<style type="text/css">
+	#mapwrapper { float: right; padding-bottom: 10px;}
+	#detailmap { width: 400px; height: 240px }
+</style>
 <div id="content">
 	<p>
 		<a href="{{ newsitem.schema.url }}">{% if newsitem.schema.is_special_report %}Special report: {% endif %}{{ newsitem.schema.plural_name|capfirst }}</a>
@@ -13,20 +17,40 @@
 	{% block newsitem_detail_summary %}{% endblock %}
 
 	{% if not newsitem.schema.is_special_report %}<h2>{{ newsitem.schema.name|capfirst }} details</h2>{% endif %}
+
+	<div id="mapwrapper">
+	  <script type="text/javascript">
+	    var map_center = new OpenLayers.LonLat({{newsitem.location.x}}, {{newsitem.location.y}});
+	    var map_zoom = 16;
+	    var newsitem = '{{newsitem.id}}';
+	  </script>
+	  {% include "map.html" %}
+	</div>
+
 	<table>
 		<tr>
 			<th>Location</th>
-			{% with newsitem.location_url as location_url %}
-				<td>
-					{% if location_url %}<a href="{{ location_url }}">{% endif %}{{ newsitem.location_name }}{% if location_url %}</a>{% endif %}
-					{% if not newsitem.location %}<p>This location couldn't be mapped.</p>{% endif %}
-				</td>
-			{% endwith %}
+			<td>
+				{% if location_url %}<a href="{{ location_url }}">{% endif %}
+                                {{newsitem.location_name|default:"unknown"}}
+                                {% if location_url %}</a>{% endif %}
+				{% if not newsitem.location %}<p>This location couldn't be mapped.</p>{% endif %}
+			</td>
 		</tr>
 		{% block newsitem_detail_date %}
 			<tr>
 				<th>{{ newsitem.schema.date_name|capfirst }}</th>
 				<td><a href="{{ newsitem.item_date_url }}">{{ newsitem.item_date|date:"F j, Y" }}</a></td>
+			</tr>
+		{% endblock %}
+		{% block newsitem_detail_description %}
+			<tr>
+				<th>Description</th>
+				<td>{{ newsitem.description|truncatewords_html:20}}
+				  {% if newsitem.url %}
+				    <br /><a href="{{newsitem.url}}">Read more at {{newsitem.url}}</a>
+				  {% endif %}
+				</td>
 			</tr>
 		{% endblock %}
 		{% block newsitem_detail_attribute_list %}
