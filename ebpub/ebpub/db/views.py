@@ -1,11 +1,16 @@
 from django import template
 from django.conf import settings
+from django.contrib.gis.shortcuts import render_to_kml
+from django.core.cache import cache
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
+from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.db.models import Q
+from django.views.decorators.cache import cache_page
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
@@ -29,6 +34,7 @@ from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import parse_pid, make_pid
 
 import datetime
+import hashlib
 import random
 import re
 import urllib
@@ -1370,3 +1376,106 @@ def geo_example(request):
 def geo_map_example(request):
     return render_to_response('db/geo_map_example.html')
 
+def newsitems_geojson(request):
+    """Get a list of newsitems, optionally filtered for one place ID
+    and/or one schema slug.
+
+    Response is a geojson string.
+    """
+    # Note: can't use @cache_page here because that ignores all requests
+    # with query parameters (in FetchFromCacheMiddleware.process_request).
+    # So, we'll use the low-level cache API.
+
+    # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
+    # Seems like there are a number of similar code blocks in
+    # ebpub.db.views?
+
+    pid = request.GET.get('pid', '')
+    schema = request.GET.get('schema', '')
+    nid = request.GET.get('newsitem', '')
+
+    cache_seconds = 60 * 5
+    cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
+
+    if nid:
+        newsitem_qs = NewsItem.objects.filter(id=nid)
+    else:
+        newsitem_qs = NewsItem.objects.all()
+        if schema:
+            newsitem_qs = newsitem_qs.filter(schema__slug=schema)
+        if pid:
+            place, block_radius, xy_radius = parse_pid(pid)
+            if isinstance(place, Block):
+                search_buffer = make_search_buffer(place.location.centroid, block_radius)
+                newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
+            else:
+                # This depends on the trigger in newsitemlocation.sql
+                newsitem_qs = newsitem_qs.filter(
+                    newsitemlocation__location__id=place.id)
+        else:
+            # Whole city!
+            pass
+
+        # More copy/paste from ebpub.db.views...
+        # As an optimization, limit the NewsItems to those published in the
+        # last few days.
+        end_date = today()
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+        # Bug http://developer.openblockproject.org/ticket/77:
+        # This is using pub_date, but Aggregates use item_date, so there's
+        # a visible disjoint between number of items on the map and the item
+        # count shown on the homepage and location detail page.
+        newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+        if not has_staff_cookie(request):
+            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+
+        # Put a hard limit on the number of newsitems, and throw away
+        # older items.
+        newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
+        newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+
+    # Done preparing the query; cache based on the raw SQL
+    # to be sure we capture everything that matters.
+    cache_key += hashlib.md5(str(newsitem_qs.query)).hexdigest()
+    output = cache.get(cache_key, None)
+    if output is None:
+        # Re-sort by schema type.
+        # This is an optimization for map_popups().
+        # We can't do it in the qs because we want to first slice the qs
+        # by date, and we can't call order_by() after a slice.
+        newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
+        popup_list = map_popups(newsitem_list)
+
+        features = {'type': 'FeatureCollection', 'features': []}
+        for newsitem, popup_info in zip(newsitem_list, popup_list):
+            if newsitem.location is None:
+                # Can happen, see NewsItem docstring.
+                # TODO: We should probably allow for newsitems that have a
+                # location_object too?
+                continue
+
+            features['features'].append(
+                {'type': 'Feature',
+                 'geometry': {'type': 'Point',
+                              'coordinates': [newsitem.location.centroid.x,
+                                              newsitem.location.centroid.y],
+                              },
+                 'properties': {
+                        'title': newsitem.title,
+                        'id': popup_info[0],
+                        'popup_html': popup_info[1],
+                        'schema': popup_info[2],
+                        }
+                 })
+        output = simplejson.dumps(features, indent=1)
+        cache.set(cache_key, output, cache_seconds)
+
+    response = HttpResponse(output, mimetype="application/javascript")
+    patch_response_headers(response, cache_timeout=60 * 5)
+    return response
+
+
+@cache_page(60 * 60)
+def place_kml(request, *args, **kwargs):
+    place = url_to_place(*args, **kwargs)
+    return render_to_kml('place.kml', {'place': place})

@@ -25,6 +25,7 @@ urlpatterns += patterns('',
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/feeds/$', views.feed_signup, {'place_type': 'location'}),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/alerts/$', alert_views.signup, {'place_type': 'location'}),
+    (r'^locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/place.kml$', views.place_kml, {'place_type': 'location'}),
     (r'^rss/(.+)/$', feeds.feed_view),
     (r'^accounts/', include('ebpub.accounts.urls')),
     (r'^validate-address/$', views.validate_address),
@@ -39,6 +40,7 @@ urlpatterns += patterns('',
     (r'^api/map-browser/location-types/$', views.ajax_location_type_list),
     (r'^api/map-browser/location-types/(\d{1,9})/$', views.ajax_location_list),
     (r'^api/map-browser/locations/(\d{1,9})/$', views.ajax_location),
+    (r'^api/newsitems.geojson/$', views.newsitems_geojson),
 )
 
 urlpatterns += metro_patterns(
