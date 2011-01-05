@@ -207,8 +207,8 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              ]
 
 # Putting django-static's output in a separate directory and URL space
-# makes it easier for git to ignore them.
-
+# makes it easier for git to ignore them,
+# and easier to have eg. apache set appropriate expiration dates.
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 
