@@ -3,5 +3,8 @@
 
 # Not specifying GDAL version, since it depends on our platform. Rely on obadmin/pavement.py to work around this.
 GDAL
-pyyaml>=3
+
+django-static==1.4.0
 psycopg2>=2.2
+pyyaml>=3
+slimmer>=0.1.30
