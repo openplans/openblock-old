@@ -12,15 +12,23 @@ python environment using `virtualenv <http://pypi.python.org/pypi/virtualenv>`_.
 Demo Quickstart
 ===================
 
+This section will show you how to use our bootstrap scripts to
+automatically set up the OpenBlock Boston demo with minimal manual
+effort.
+
 Warning
 -------
 
 In this quickstart, we use several scripts (python and bash) to
 automate a lot of the
 installation, configuration, and data bootstrapping. *If it works for
-you* this can be the quickest way to test OpenBlock on your system,
+you* this can be the quickest way to try out OpenBlock on your system,
 but we are not trying to make it work on all possible variations of linux,
 OSX, etc. - so, *caveat emptor*.
+
+Or, if you prefer to have control of how everything's done, follow the
+:ref:`detailed_demo_instructions` below.
+
 
 Installation
 ------------
@@ -51,9 +59,9 @@ If it finishes successfully, you should see a message like::
 
  Demo bootstrap succeeded!
 
-Now you can start the server from the root of your install::
+Now you can start the server::
 
- $ ./manage.py runserver
+ $ src/openblock/obdemo/obdemo/manage.py runserver
 
 If all goes well, you should be able to visit the demo site at:
 http://localhost:8000 

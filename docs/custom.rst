@@ -7,25 +7,38 @@ If you want to do something much different than
 custom Django app. We provide a script that will get you started with
 a skeleton app you can edit.
 
-*TODO: haven't tested this in a loong time*
-
 Setting up the app
 ==================
 
-Begin by :doc:`preparing your system <setup>`.
+Begin by :doc:`preparing your system <setup>`, including setting up
+and activating a virtualenv.
 
+Now install the core OpenBlock python packages::
+
+   $ cd $VIRTUAL_ENV
+   $ mkdir -p src/
+   $ git clone git://github.com/openplans/openblock.git src/openblock
+
+``Pip`` can install OpenBlock and the rest of our Python dependencies with a few
+commands::
+
+  $ cd $VIRTUAL_ENV/src/openblock
+  $ pip install -r ebpub/requirements.txt -e ebpub
+  $ pip install -r ebdata/requirements.txt -e ebdata
+  $ pip install -e obadmin
+  $ pip install -r obdemo/requirements.txt -e obdemo
+ 
 Next, make sure your virtualenv is activated, and then do the following to create 
 a new openblock project.  **Note**: Your project name should be suitable for use as a python
 module name; ie no spaces etc.  Here we assume the project name is `myblock`::
 
+    $ cd path/to/your/virtualenv
     $ source bin/activate
     $ cd src
     $ paster create -t openblock myblock
 
-*TODO: document doing this with ``manage.py startproject|startapp``
-instead of paster? do we want to maintain that paster template?*
-
-After answering a few questions, this will create a bare-bones project in the folder you 
+After answering a few questions, this will create a bare-bones Django
+project in the folder you
 specified.  Next, install the project into your environment::
 
     $ cd myblock

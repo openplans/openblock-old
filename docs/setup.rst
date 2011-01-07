@@ -2,16 +2,15 @@
 Preparing Your System
 ==========================
 
-These instructions cover manual installation of OpenBlock in a similar
-configuration to `the OpenBlock demo site
-<http://demo.openblockproject.org>`_.
+These instructions cover manual installation of the prerequisites for
+OpenBlock.
 
 There are a lot of steps involved - but if you go this route, you'll
 know how everything's done and you can adjust as needed for
 your system.
 
-If you just want the demo running as quickly as possible, and don't
-care about the gory details, try following the :ref:`demo_quickstart`
+If you just want the Boston demo running as quickly as possible, and don't
+care about the gory details, you might try following the :ref:`demo_quickstart`
 instructions instead.
 
 .. _support:
