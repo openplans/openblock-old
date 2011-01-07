@@ -121,10 +121,13 @@ required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
 # Database configuration as per
 # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
+# There's an example in obdemo/settings.py.in
 required_settings.append('DATABASES')
 
 # The list of all metros this installation covers. This is a tuple of
-# dictionaries, as per ebpub.settings.
+# dictionaries.  If your site only covers one city, there will be
+# only one dictionary.
+# There's an example in obdemo/settings.py.in
 required_settings.append('METRO_LIST')
 
 # Where to center citywide maps by default.

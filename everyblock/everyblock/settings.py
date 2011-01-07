@@ -21,7 +21,7 @@ TEMPLATE_DIRS = (
 
 ROOT_URLCONF = 'everyblock.urls'
 
-# See ebpub.settings for how to configure METRO_LIST
+# See ebpub.settings_default for how to configure METRO_LIST
 METRO_LIST = (
 )
 
