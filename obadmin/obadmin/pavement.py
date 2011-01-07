@@ -174,18 +174,6 @@ def install_ob_packages(options):
 
 @task
 @needs('install_ob_packages')
-def install_manage_script(options):
-    """
-    creates a manage.py script in $VIRTUALENV so you don't have to
-    specify a settings module.
-    """
-    source = os.path.join(options.source_dir, options.app, options.app, 'manage.sh')
-    dest = os.path.join(options.env_root, 'manage.py')
-    if not os.path.exists(dest):
-        os.symlink(source, dest)
-
-@task
-@needs('install_ob_packages', 'install_manage_script')
 def install_app(options):
     """
     sets up django app options.app
