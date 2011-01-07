@@ -374,8 +374,9 @@ data:
 Note that default templates are included in ebpub/templates. At the very least,
 you'll want to override base.html to design your ebpub-powered site. (The
 design of EveryBlock.com is copyrighted and not free for you to use;
-but the default design of OpenBlock is free for your use under the
-same license terms as the rest of OpenBlock (GPL)).
+but the default templates, css, and images that ship with OpenBlock
+and ebpub are of course free for your use under the same license terms
+as the rest of OpenBlock (GPL)).
 
 Custom NewsItem lists
 ---------------------
