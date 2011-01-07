@@ -25,16 +25,14 @@ commands::
   $ cd $VIRTUAL_ENV/src/openblock
   $ pip install -r ebpub/requirements.txt -e ebpub
   $ pip install -r ebdata/requirements.txt -e ebdata
-  $ pip install -e obadmin
+  $ pip install -r obadmin/requirements.txt -e obadmin
   $ pip install -r obdemo/requirements.txt -e obdemo
  
-Next, make sure your virtualenv is activated, and then do the following to create 
-a new openblock project.  **Note**: Your project name should be suitable for use as a python
-module name; ie no spaces etc.  Here we assume the project name is `myblock`::
+Now do the following to create a new openblock project.  **Note**:
+Your project name should be suitable for use as a python module name;
+i.e. no spaces etc.  Here we assume the project name is `myblock`::
 
-    $ cd path/to/your/virtualenv
-    $ source bin/activate
-    $ cd src
+    $ cd $VIRTUAL_ENV/src
     $ paster create -t openblock myblock
 
 After answering a few questions, this will create a bare-bones Django
@@ -51,14 +49,25 @@ and make adjustments based on your setup::
     $ <favorite_editor> myblock/settings.py
     ...
 
-Now you can use the openblock command line to create and sync your database.  **Note** the setup_dbs command will only work for a local database.  You will need to create any referenced databases and load postgis by hand otherwise::
+Now, as usual with Django projects, you'll need to create and
+initialize your database(s).  If you haven't changed the default
+database settings, and if you've followed the :ref:`template_setup`
+instructions, then the database creation command will simply be::
 
-    $ cd ../../
-    $ sudo -u postgres bin/oblock app=myblock setup_dbs
-    $ oblock app=myblock sync_all
+    $ createdb -T template_postgis openblock_myblock
 
-*TODO: document how to do that without oblock, like we did for the demo
-in setup.rst*
+Initializing the database(s) must be done in the right order::
+
+    $ export DJANGO_SETTINGS_MODULE=myblock.settings
+    $ django-admin.py syncdb --database=users
+    $ django-admin.py syncdb --database=metros
+    $ django-admin.py syncdb --database=default
+
+Finally, there's one database trigger that needs to be set up, but --
+due to a `Django bug <http://code.djangoproject.com/ticket/13826>`_ --
+it can't be created automatically by syncdb.  We'll fix this with one command::
+
+    $ ./manage.py dbshell --database=default < $VIRTUAL_ENV/src/openblock/ebpub/db/sql/location.sql
 
 Starting the Test Server
 ------------------------
@@ -74,7 +83,7 @@ To create an administrative user, use the standard django createsuperuser comman
 
     $ django-admin.py createsuperuser
     ...
-    
+
 You can now log into your openblock instance and visit the administrative site at http://127.0.0.1:8000/admin/
 
 
