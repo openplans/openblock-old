@@ -8,7 +8,6 @@ Known required settings are: %r
 import os
 import imp
 
-OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
 EBPUB_DIR = imp.find_module('ebpub')[1]
 DJANGO_DIR = imp.find_module('django')[1]
 
@@ -22,9 +21,13 @@ required_settings=[
 ]
 
 TEMPLATE_DIRS = (
-    os.path.join(OBDEMO_DIR, 'templates'),
     os.path.join(EBPUB_DIR, 'templates'),
     os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
+    # django template override hack to partially override templates
+    # by referring to them with a unique path, see: 
+    # http://stackoverflow.com/questions/3967801/django-overriding-and-extending-an-app-template
+    # You can use {% extends "ebpub/templates/..." %} to partially extend a template
+    os.path.dirname(EBPUB_DIR) 
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -33,7 +36,7 @@ TEMPLATE_LOADERS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
     'django.contrib.auth.context_processors.auth',
-    'obdemo.context_processors.urls',
+    'ebpub.db.context_processors.urls',
     #'django.core.context_processors.debug',
 )
 
@@ -91,7 +94,6 @@ INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
-ROOT_URLCONF = 'obdemo.urls'
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -119,10 +121,13 @@ required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 
 # Database configuration as per
 # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
+# There's an example in obdemo/settings.py.in
 required_settings.append('DATABASES')
 
 # The list of all metros this installation covers. This is a tuple of
-# dictionaries, as per ebpub.settings.
+# dictionaries.  If your site only covers one city, there will be
+# only one dictionary.
+# There's an example in obdemo/settings.py.in
 required_settings.append('METRO_LIST')
 
 # Where to center citywide maps by default.
@@ -133,7 +138,7 @@ required_settings.append('DEFAULT_MAP_ZOOM')
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
 
-EB_MEDIA_ROOT = OBDEMO_DIR + '/media' # necessary for static media versioning
+EB_MEDIA_ROOT = EBPUB_DIR + '/media' # necessary for static media versioning
 EB_MEDIA_URL = '' # leave at '' for development
 required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
 
@@ -207,8 +212,8 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              ]
 
 # Putting django-static's output in a separate directory and URL space
-# makes it easier for git to ignore them.
-
+# makes it easier for git to ignore them,
+# and easier to have eg. apache set appropriate expiration dates.
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 

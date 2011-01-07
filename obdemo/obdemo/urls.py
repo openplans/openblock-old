@@ -4,15 +4,8 @@ from obadmin import admin
 
 admin.autodiscover()
 
-if settings.DEBUG:
-    urlpatterns = patterns('',
-        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
-         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
-    )
-else:
-    urlpatterns = patterns('')
 
-urlpatterns += patterns(
+urlpatterns = patterns(
 
     '',
 
@@ -26,18 +19,10 @@ urlpatterns += patterns(
 
     (r'^admin/', include(admin.site.urls)),
 
-    (r'^api/newsitems.geojson/$', 'obdemo.views.newsitems_geojson'),
-    (r'^locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/place.kml$',
-     'obdemo.views.place_kml',
-     {'place_type': 'location'}),
-
     (r'^disclaimer', 'django.views.generic.simple.direct_to_template',
      {'template': 'disclaimer.html'}),
 
     (r'^geotagger/$', 'obdemo.views.geotagger_ui'),
-
-    # ebpub overrides in obdemo.
-    (r'^$', 'obdemo.views.homepage'),
 
     # geotagger api
     (r'^', include('ebdata.geotagger.urls')),

@@ -3,7 +3,9 @@ django>=1.2.3,<1.3a
 # Not specifying GDAL version, since it depends on our platform. Rely
 # on the user (or a more sophisticated script like obadmin/pavement.py)
 # to install the right version.
-#GDAL
+GDAL
 
-pyyaml>=3
+django-static==1.4.0
 psycopg2>=2.2
+pyyaml>=3
+slimmer>=0.1.30

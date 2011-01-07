@@ -1,16 +1,22 @@
 """
-Basic settings for OpenBlock.
- 
-See settings_default.py for additional settings.
+Copy this to settings.py, uncomment the various settings, and
+edit them as desired.
 """
 
-from settings_default import *
+from ebpub.settings_default import *
 
 ########################
 # CORE DJANGO SETTINGS #
 ########################
 
 DEBUG = True
+
+
+PROJECT_DIR = os.path.normpath(os.path.dirname(__file__))
+INSTALLED_APPS = ('${project}', ) + INSTALLED_APPS 
+TEMPLATE_DIRS = (os.path.join(PROJECT_DIR, 'templates'), ) + TEMPLATE_DIRS
+ROOT_URLCONF = '${project}.urls'
+
 
 # Multi-database configuration as per
 # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
@@ -67,7 +73,7 @@ DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
 EB_DOMAIN = 'localhost'
 
 # This is the short name for your city, e.g. "chicago".
-SHORT_NAME = 'boston'
+SHORT_NAME = 'yourcity'
 
 # Set both of these to distinct, secret strings that include two instances
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
@@ -87,23 +93,29 @@ EB_MEDIA_URL = '' # leave at '' for development
 GENERIC_EMAIL_SENDER = 'openblock@' + EB_DOMAIN
 
 # Filesystem location of scraper log.
-SCRAPER_LOGFILE_NAME = '/tmp/scraperlog'
+SCRAPER_LOGFILE_NAME = '/tmp/scraperlog_${project}'
 
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
-STAFF_COOKIE_NAME = 'obstaff'
-STAFF_COOKIE_VALUE = 'obstaff'
+STAFF_COOKIE_NAME = 'obstaff_${project}'
+STAFF_COOKIE_VALUE = '${staff_cookie_val}'
 
 # What kinds of news to show on the homepage.
 HOMEPAGE_DEFAULT_NEWSTYPES = [u'news-articles']
 
-# How many days of news to show on the homepage & elsewhere.
-DEFAULT_DAYS = 30
+# How many days of news to show on the homepage, place details elsewhere.
+DEFAULT_DAYS = 7
 
 # Where to center citywide  maps, eg. on homepage.
 DEFAULT_MAP_CENTER_LON = -71.07
 DEFAULT_MAP_CENTER_LAT = 42.357778
 DEFAULT_MAP_ZOOM = 12
+
+# Edit this if you want to control where
+# scraper scripts will put their HTTP cache.
+# (Warning, don't put it in a directory encrypted with ecryptfs
+# or you'll likely have "File name too long" errors.)
+HTTP_CACHE = '/tmp/openblock_scraper_cache_${project}'
 
 # Metros.
 METRO_LIST = (
@@ -118,25 +130,29 @@ METRO_LIST = (
         'multiple_cities': False,
 
         # The major city in the metro.
-        'city_name': 'Boston',
+        'city_name': 'Your City',
 
         # The SHORT_NAME in the settings file (also the subdomain).
-        'short_name': 'boston',
+        'short_name': 'yourcity',
 
         # The name of the metro, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
-        'metro_name': 'Boston',
+        'metro_name': 'Your City',
 
         # USPS abbreviation for the state.
-        'state': 'MA',
+        'state': 'ZZ',
 
         # Full name of state.
-        'state_name': 'Massachusetts',
+        'state_name': 'Your State',
 
         # Time zone, as required by Django's TIME_ZONE setting.
         'time_zone': 'America/New_York',
     },
 )
 
+# Use whatever Django cache backend you like;
+# 'file' may be a reasonable choice if you're deploying on
+# a fairly constrained server.
+CACHE_BACKEND = 'file:///tmp/${project}_cache'
 
 if DEBUG:
     for _name in required_settings:

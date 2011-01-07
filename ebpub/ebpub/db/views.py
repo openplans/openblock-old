@@ -1,11 +1,16 @@
 from django import template
 from django.conf import settings
+from django.contrib.gis.shortcuts import render_to_kml
+from django.core.cache import cache
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
+from django.template import RequestContext
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
+from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.db.models import Q
+from django.views.decorators.cache import cache_page
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
@@ -29,6 +34,7 @@ from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import parse_pid, make_pid
 
 import datetime
+import hashlib
 import random
 import re
 import urllib
@@ -375,12 +381,15 @@ def ajax_location(request, loc_id):
 # VIEWS #
 #########
 
+
 def homepage(request):
+    """A slimmed-down version of ebpub.db.views.homepage.
+    """
+
     end_date = today()
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+    end_date += datetime.timedelta(days=1)
 
-    # A sparkline, in this context, is the aggregate view of
-    # how many NewsItems were added per page.
     sparkline_schemas = list(Schema.public_objects.filter(allow_charting=True, is_special_report=False))
 
     # Order by slug to ensure case-insensitive ordering. (Kind of hackish.)
@@ -399,93 +408,12 @@ def homepage(request):
     non_empty_date_charts.sort(lambda a, b: cmp(b['total_count'], a['total_count']))
     empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
 
-    # Get the news articles.
-    ni_list = NewsItem.objects.select_related().filter(
-        schema__slug__in=settings.HOMEPAGE_DEFAULT_NEWSTYPES,
-        item_date__gt=start_date,
-        ).order_by('-item_date')[:100]
-    if ni_list:
-        populate_schema(ni_list, ni_list[0].schema)
-        populate_attributes_if_needed(ni_list, [ni_list[0].schema])
-
-    article_bunches = cluster_newsitems(ni_list, 26)
-    try:
-        num_articles = [s for s in date_charts if s['schema'].slug == 'news-articles'][0]['total_count']
-    except IndexError:
-        num_articles = 0
-
-    # Get the featured neighborhood.
-    # This automatically chooses a neighborhood with at least 2 recent news articles.
-    neighborhoods_with_articles = AggregateLocationDay.objects.filter(
-        schema__slug__in=['news-articles' 'local-news'],
-        location_type__slug='neighborhoods', total__gte=2,
-        date_part__gte=end_date - datetime.timedelta(days=7),
-        date_part__lt=end_date + datetime.timedelta(days=1))
-
-    if neighborhoods_with_articles:
-        # First try neighborhoods with 4 or more articles. Fall back to any
-        # neighborhood with at least 2 articles.
-        fn_ids = [x.location_id for x in neighborhoods_with_articles if x.total >= 4]
-        if not fn_ids:
-            fn_ids = [x.location_id for x in neighborhoods_with_articles]
-        fn = Location.objects.get(id=random.choice(fn_ids))
-    else:
-        # If no neighborhoods have articles, just pick a random neighborhood.
-        try:
-            fn = Location.objects.filter(location_type__slug='neighborhoods', is_public=True)[0]
-        except IndexError:
-            # If no neighborhoods have been added to the DB yet, that's fine.
-            fn = None
-
-    if fn is not None:
-        # Get the featured neighborhood news articles.
-        qs = NewsItem.objects.filter(schema__slug='news-articles', newsitemlocation__location__id=fn.id, item_date__gte=start_date, item_date__lte=end_date)
-        fn_article_count = qs.count()
-        fn_all_articles = list(qs.select_related().order_by('-item_date')[:10])
-        fn_articles = []
-        if fn_all_articles:
-            populate_attributes_if_needed(fn_all_articles, [fn_all_articles[0].schema])
-            # Remove any articles whose headlines, excerpts or sources are duplicate.
-            headlines, excerpts, sources = set(), set(), set()
-            for a in fn_all_articles:
-                # Calculate a hash of the excerpt by removing spaces. We use this
-                # for duplicate comparison.
-                excerpt_hash = re.sub(r'\s', '', a.attribute_values['excerpt'])
-                if a.title not in headlines and excerpt_hash not in excerpts and a.attribute_values['source'].name not in sources:
-                    headlines.add(a.title)
-                    excerpts.add(excerpt_hash)
-                    sources.add(a.attribute_values['source'].name)
-                    fn_articles.append(a)
-                    if len(fn_articles) == 3:
-                        break
-
-        # Get the featured neighborhood public records.
-        fn_date_charts = get_date_chart_agg_model(sparkline_schemas, start_date, end_date, AggregateLocationDay, kwargs={'location__id': fn.id})
-        fn_empty_date_charts, fn_non_empty_date_charts = [], []
-        for chart in fn_date_charts:
-            if chart['total_count']:
-                fn_non_empty_date_charts.append(chart)
-            else:
-                fn_empty_date_charts.append(chart)
-        fn_non_empty_date_charts.sort(lambda a, b: cmp(b['total_count'], a['total_count']))
-        fn_empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
-    else:
-        fn_articles = fn_article_count = fn_non_empty_date_charts = fn_empty_date_charts = None
-
     return eb_render(request, 'homepage.html', {
         'location_type_list': lt_list,
         'street_count': street_count,
-        'all_bunches': simplejson.dumps(article_bunches, cls=ClusterJSON),
-        'newsitem_list': ni_list,
         'more_schemas': more_schemas,
-        'featured_neighborhood': fn,
-        'featured_neighborhood_articles': fn_articles,
-        'featured_neighborhood_article_count': fn_article_count,
-        'num_articles': num_articles,
         'non_empty_date_charts': non_empty_date_charts,
         'empty_date_charts': empty_date_charts,
-        'fn_non_empty_date_charts': fn_non_empty_date_charts,
-        'fn_empty_date_charts': fn_empty_date_charts,
         'num_days': settings.DEFAULT_DAYS,
         'default_lon': settings.DEFAULT_MAP_CENTER_LON,
         'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
@@ -1370,3 +1298,106 @@ def geo_example(request):
 def geo_map_example(request):
     return render_to_response('db/geo_map_example.html')
 
+def newsitems_geojson(request):
+    """Get a list of newsitems, optionally filtered for one place ID
+    and/or one schema slug.
+
+    Response is a geojson string.
+    """
+    # Note: can't use @cache_page here because that ignores all requests
+    # with query parameters (in FetchFromCacheMiddleware.process_request).
+    # So, we'll use the low-level cache API.
+
+    # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
+    # Seems like there are a number of similar code blocks in
+    # ebpub.db.views?
+
+    pid = request.GET.get('pid', '')
+    schema = request.GET.get('schema', '')
+    nid = request.GET.get('newsitem', '')
+
+    cache_seconds = 60 * 5
+    cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
+
+    if nid:
+        newsitem_qs = NewsItem.objects.filter(id=nid)
+    else:
+        newsitem_qs = NewsItem.objects.all()
+        if schema:
+            newsitem_qs = newsitem_qs.filter(schema__slug=schema)
+        if pid:
+            place, block_radius, xy_radius = parse_pid(pid)
+            if isinstance(place, Block):
+                search_buffer = make_search_buffer(place.location.centroid, block_radius)
+                newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
+            else:
+                # This depends on the trigger in newsitemlocation.sql
+                newsitem_qs = newsitem_qs.filter(
+                    newsitemlocation__location__id=place.id)
+        else:
+            # Whole city!
+            pass
+
+        # More copy/paste from ebpub.db.views...
+        # As an optimization, limit the NewsItems to those published in the
+        # last few days.
+        end_date = today()
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+        # Bug http://developer.openblockproject.org/ticket/77:
+        # This is using pub_date, but Aggregates use item_date, so there's
+        # a visible disjoint between number of items on the map and the item
+        # count shown on the homepage and location detail page.
+        newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+        if not has_staff_cookie(request):
+            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+
+        # Put a hard limit on the number of newsitems, and throw away
+        # older items.
+        newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
+        newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+
+    # Done preparing the query; cache based on the raw SQL
+    # to be sure we capture everything that matters.
+    cache_key += hashlib.md5(str(newsitem_qs.query)).hexdigest()
+    output = cache.get(cache_key, None)
+    if output is None:
+        # Re-sort by schema type.
+        # This is an optimization for map_popups().
+        # We can't do it in the qs because we want to first slice the qs
+        # by date, and we can't call order_by() after a slice.
+        newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
+        popup_list = map_popups(newsitem_list)
+
+        features = {'type': 'FeatureCollection', 'features': []}
+        for newsitem, popup_info in zip(newsitem_list, popup_list):
+            if newsitem.location is None:
+                # Can happen, see NewsItem docstring.
+                # TODO: We should probably allow for newsitems that have a
+                # location_object too?
+                continue
+
+            features['features'].append(
+                {'type': 'Feature',
+                 'geometry': {'type': 'Point',
+                              'coordinates': [newsitem.location.centroid.x,
+                                              newsitem.location.centroid.y],
+                              },
+                 'properties': {
+                        'title': newsitem.title,
+                        'id': popup_info[0],
+                        'popup_html': popup_info[1],
+                        'schema': popup_info[2],
+                        }
+                 })
+        output = simplejson.dumps(features, indent=1)
+        cache.set(cache_key, output, cache_seconds)
+
+    response = HttpResponse(output, mimetype="application/javascript")
+    patch_response_headers(response, cache_timeout=60 * 5)
+    return response
+
+
+@cache_page(60 * 60)
+def place_kml(request, *args, **kwargs):
+    place = url_to_place(*args, **kwargs)
+    return render_to_kml('place.kml', {'place': place})

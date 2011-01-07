@@ -3,13 +3,17 @@ Copy this to settings.py, uncomment the various settings, and
 edit them as desired.
 """
 
-from settings_default import *
+from ebpub.settings_default import *
 
 ########################
 # CORE DJANGO SETTINGS #
 ########################
 
 DEBUG = True
+
+OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))
+TEMPLATE_DIRS = (os.path.join(OBDEMO_DIR, 'templates'), ) + TEMPLATE_DIRS
+ROOT_URLCONF = 'obdemo.urls'
 
 # Multi-database configuration as per
 # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
