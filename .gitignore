@@ -23,10 +23,11 @@ obdemo/zip_data
 /tiger_data
 /zip_data
 /neighborhood_data
-/src
+src
+ebpub/ebpub/scripts/src
 /man
 /build
 *scraper_http_cache
 distribute-*gz
 docs/_build
-obdemo/obdemo/media/cache-forever
+*cache-forever
