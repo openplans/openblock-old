@@ -5,7 +5,7 @@ TEMPLATE_DIRS = (os.path.join(OBDEMO_DIR, 'templates'), ) + TEMPLATE_DIRS
 ROOT_URLCONF = 'obdemo.urls'
 
 print "****************************************************************************"
-print "* Warning! obdemo.setting_default.py is deprecated in favor of "
+print "* Warning! obdemo.setting_default is deprecated in favor of "
 print "* ebpub.settings_default"
 print "* "
 print "* Please modify your settings.py to import ebpub.settings_default instead."
