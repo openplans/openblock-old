@@ -26,8 +26,7 @@ commands::
   $ pip install -r ebpub/requirements.txt -e ebpub
   $ pip install -r ebdata/requirements.txt -e ebdata
   $ pip install -r obadmin/requirements.txt -e obadmin
-  $ pip install -r obdemo/requirements.txt -e obdemo
- 
+
 Now do the following to create a new openblock project.  **Note**:
 Your project name should be suitable for use as a python module name;
 i.e. no spaces etc.  Here we assume the project name is `myblock`::
