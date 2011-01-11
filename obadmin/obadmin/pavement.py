@@ -11,6 +11,7 @@ bad existing postgis_template can interfere with install, test
 """
 
 import glob
+import imp
 import os
 import traceback
 
@@ -288,9 +289,9 @@ def sync_all(options):
     # custom sql.  We can't just re-run all the custom sql because Django
     # wraps it in a transaction, and some of it has already run and can't
     # re-run without errors. So, just run the stuff we need.
-    # XXX verify this works with stdin redirect? and what's the cwd?
     # FIXME: how to know which database to use?
-    sh("django-admin.py dbshell --settings=%s < ../../ebpub/ebpub/db/sql/location.sql" % settings_mod)
+    ebpub_dir = imp.find_module('ebpub')[1]
+    sh("django-admin.py dbshell --settings=%s < %s/db/sql/location.sql" % (settings_mod, ebpub_dir))
 
 
 @task
