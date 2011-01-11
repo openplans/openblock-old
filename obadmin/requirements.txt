@@ -1,4 +1,16 @@
 Paste==1.7.5.1
 PasteDeploy==1.3.4
-PasteScript==1.7.3
+
 Paver==1.0.3
+
+# Hack: forcing installation via a URL instead of a package name
+# because this ensures it's installed locally even if the same version
+# of PasteScript is already somewhere on sys.path.  This is a hack to
+# work around the problem where the 'paster' command isn't in the
+# virtualenv, so it has a shebang line with the wrong python
+# interpreter, which leads to having the wrong site-packages, which
+# leads to problems like the wrong set of entry points being found, so
+# 'paster create -t openblock' doesn't work (the template isn't found). UGH.
+# See http://trac.pythonpaste.org/pythonpaste/ticket/458
+
+http://pypi.python.org/packages/source/P/PasteScript/PasteScript-1.7.3.tar.gz
