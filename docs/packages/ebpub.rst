@@ -342,7 +342,8 @@ Lookup value.
 
 Set ``SchemaField.is_charted=True`` on a lookup SchemaField, and the detail page
 for the Schema (schema_detail) will include a chart of the top 10 lookup values
-in the last 30 days' worth of data. (This assumes aggregates are populated; see
+in the last 30 days' worth of data. Similar charts are on the
+place detail overview page. (This assumes aggregates are populated; see
 the Aggregates section below.)
 
 Aggregates

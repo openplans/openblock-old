@@ -140,7 +140,7 @@ class SchemaField(models.Model):
     display = models.BooleanField(default=True) # whether to display value on the public site
     is_lookup = models.BooleanField(default=False) # whether the value is a foreign key to Lookup
     is_filter = models.BooleanField(default=False)
-    is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field
+    is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field; also see "trends" tabs on place_overview.html
     display_order = models.SmallIntegerField(default=10)
     is_searchable = models.BooleanField(default=False) # whether the value is searchable by content
 
