@@ -65,7 +65,6 @@ PROBLEMS:
  - it doesn't support anything like "LIKE" queries for values, and we
  need that for NewsItemQuerySet.text_search().
 
-
 ======================================================================
 Another option: XML
 
@@ -154,17 +153,46 @@ We can do the equivalent of ILIKE searches like so (values in attributes):
       testxml)) != '';
 
 
+PERFORMANCE NOTES: it's probably a good idea to do prefiltering to
+ reduce the number of rows that need to get the xpath query.
+ Something like
+  SELECT ...
+    FROM ( SELECT ...
+             FROM ...
+            WHERE /* insert preliminary filtering here */
+         )
+   WHERE /* insert xpath related filtering here */;
+
+or maybe just
+  SELECT ... FROM ... WHERE /* preliminary filter */ AND /* xpath filter */;
+
+One idea for the preliminary filter:
+set up an index so you can do a fast text search on the raw text,
+returning rows that contain the string you're looking for *somewhere*.
+So in our 'officer krupke' example, we could just search for the
+string 'krupke' ('officer' is probably not interesting because we're
+presumably also filtering on the schema id, and so we'd already have
+rows that all contain 'officer').
+(see http://postgresql.1045698.n5.nabble.com/Slow-select-times-on-select-with-xpath-td2074839.html)
+
 ======================================================================
 
-Why not just build (and syncdb) some models at runtime?
-use multi-table inheritance, so most stuff goes in db_newsitem
+Why not just build (and syncdb?) some models at runtime?
+Use multi-table inheritance, so most stuff goes in db_newsitem
 but then there's a db_article_attributes, db_realestate_attributes, etc...
 
 Then it's N queries to get attributes for N types on a page, but is
-that so bad?  N is on the order of 10, not 1000.
+that so bad?  N is on the order of tens, not thousands, and many pages only
+show one type of newsitem.
 
 
 ====================================================================
 
 Vertical table aka EAV (entity-attribute-value):
 maybe try http://pypi.python.org/pypi/eav-django/1.0.2
+
+... not clear to me how many tables you'd end up with, or what the
+queries would look like.
+
+If we had a single EAV table, it'd have one type of data, which means
+casting in python and makes eg. searching for date ranges bad.
