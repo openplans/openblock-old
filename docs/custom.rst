@@ -51,7 +51,7 @@ and make adjustments based on your setup::
 Now, as usual with Django projects, you'll need to create and
 initialize your database(s).  If you haven't changed the default
 database settings, and if you've followed the :ref:`template_setup`
-instructions, then the database creation command will simply be::
+instructions, then the database creation command would simply be::
 
     $ createdb -T template_postgis openblock_myblock
 
@@ -86,8 +86,8 @@ To create an administrative user, use the standard django createsuperuser comman
 You can now log into your openblock instance and visit the administrative site at http://127.0.0.1:8000/admin/
 
 
-Things You Will Need
-====================
+Loading Data: Things You Will Need
+==================================
 
 To get anything useful out of your site, at minimum you will need the following:
 
@@ -105,7 +105,7 @@ To get anything useful out of your site, at minimum you will need the following:
        See :doc:`schemas` and ebpub docs for :ref:`newsitem-schemas`.
 
     b. Write scraper scripts to retrieve news from your news sources and load
-       it into the database. See :doc:`packages/ebdata`
+       it into the database. See the :doc:`scraper_tutorial`, :doc:`packages/ebdata`
        and http://developer.openblockproject.org/wiki/ScraperScripts .
 
  4. Optionally, customize the look and feel of the site.
@@ -113,11 +113,12 @@ To get anything useful out of your site, at minimum you will need the following:
 
 Gathering all this data and feeding it into the database can be a bit
 of work at this point.  The ``obdemo/bin/bootstrap_demo.sh`` script
-does all this for the demo site with Boston data, and should serve as
-a decent example of how to do things in detail.
+does all this for the demo site with Boston data, by calling other
+scripts; together, they should serve as a decent example of how to do
+things in detail.
 
 If you want to load the demo data into your project, you can use the steps 
-listed in :ref:`demodata`. **Note** use the settings module for your project
+listed in :ref:`demodata`. **Note**: use the settings module for your project
 instead of `obdemo.settings`.
 
 
