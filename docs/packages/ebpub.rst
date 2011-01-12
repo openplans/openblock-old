@@ -294,7 +294,7 @@ defining it:
 
     is_searchable = False
         Whether it's searchable. This only applies to textual fields (varchars
-        and texts).
+        and texts). It can't be combined with Lookups.
 
 Once you've created this SchemaField, the value of "int01" for any db_attribute
 row with schema_id=5 will be the sale price.

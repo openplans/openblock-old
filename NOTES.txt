@@ -1,0 +1,170 @@
+Data store ramblings:
+the Schema/SchemaField/Attribute nonsense could be much more simply
+represented via something like:
+http://bret.appspot.com/entry/how-friendfeed-uses-mysql
+
+In django / openblock terms, that wouuld mean something like:
+
+* we still have Schema b/c you still need to know what the data means.
+* add a blob column named 'attributes' to the NewsItem model.
+* we store json or pickles in there. (simplejson seems faster lately)
+* or maybe it would be something like http://djangosnippets.org/snippets/377/
+  or http://djangosnippets.org/snippets/1478/
+  or https://github.com/bradjasper/django-jsonfield
+  so it serializes / deserializes automatically for you.
+
+* no more Attribute, AttributeDict, Lookup, SchemaField (or maybe we do?)
+
+Indexing:
+
+ * when you save a Schema,
+   it automatically creates an index table for each attribute.
+   (or maybe just per attribute type.)
+   (So we need to constrain the types to things we know how to index.)
+
+ * when you save to the JsonField, it updates the relevant indexes.
+
+ * we still can implement something like
+   NewsItem.objects.by_attribute(foo='bar', baz=1), but now that would
+   translate to something like:
+
+     SELECT string_att_index.newsitem_id FROM string_att_index INNER
+     JOIN int_att_index \
+     ON string_att_index.newsitem_id = int_att_index.newsitem_id \
+     WHERE string_att_index.name = 'foo' AND string_att_index.value =
+     'bar'
+     AND int_att_index.name = 'baz' AND int_att_index.value = 1;
+
+  ... mmm, no, that's bad if we want to do
+  NewsItem.objects.by_attribute(str1='bar', str2='baz').
+  Have to figure out some self-joins I think?
+
+======================================================================
+Another option:
+postgresql has a built-in key-> val column type called 'hstore'.
+it's an add-on module.
+On ubuntu, apt-get install postgresql-8.4-contrib, then
+psql -d my_database -f /usr/share/postgresql/8.4/contrib/hstore.sql
+
+then if you have a text column 'foo', you can do queries like:
+
+select * from db_newsitem where foo::hstore @> 'a=>b';
+
+and store stuff like:
+
+UPDATE db_newsitem SET foo = hstore('officer', 'krupke')||hstore('anotherkey', 'no,really,i mean it');
+... that's more or less equivalent to (python) instance.foo =
+{'officer': 'krupke', 'anotherkey': 'no,really,i mean it'}
+
+PROBLEMS:
+ - hstore is flat key->val, I don't think you can nest them?
+  so, don't know how we'd handle "many-to-many lookups"
+  (those are currently stored comma-separated and searched by a regex
+  search, no really).
+
+ - it doesn't support anything like "LIKE" queries for values, and we
+ need that for NewsItemQuerySet.text_search().
+
+
+======================================================================
+Another option: XML
+
+http://www.postgresql.org/docs/8.4/static/functions-xml.html
+http://www.postgresql.org/docs/8.4/interactive/arrays.html
+http://forums.enterprisedb.com/posts/list/1862.page
+
+postgresql has built-in support for XML.
+
+  ALTER TABLE db_newsitem ADD COLUMN testxml XML DEFAULT NULL;
+
+so if we do this in python:
+
+  newsitem.testxml = {'officer': 'krupke', 'anotherkey': 'no,really,i mean it'}
+
+... we could have an XML field type that serializes that something
+like this:
+
+  UPDATE db_newsitem SET testxml = XMLPARSE (CONTENT ' <attributes>
+         <attr key="officer" val="krupke" />
+         <attr key="anotherkey" val="no,really,i mean it" />
+       </attributes>') WHERE id = 4;
+
+  or maybe
+
+  UPDATE db_newsitem SET testxml = XMLPARSE (CONTENT ' <attributes>
+          <attr key="officer">krupke</attr>
+          <attr key="officer">joe</attr>
+          <attr key="doctor">bob</attr>
+       </attributes>') WHERE id = 4;
+
+then we can get all officers like so:
+
+   select xpath('//attr[@key=''officer'']', testxml) from db_newsitem where testxml is not null; 
+
+ ... or if using text instead of @val, we can get all officers like
+ this, although it comes back as an array per matching row, which I'm not sure
+ what that'd look like in python:
+
+ SELECT xpath('//attr[@key=''officer'']/text()', testxml) AS officer_arrays FROM db_newsitem WHERE testxml IS NOT null;
+ officer_arrays
+----------------
+ {krupke,joe}
+ {janet,krupke}
+(2 rows)
+
+and do searches with one officer like this:
+
+  SELECT id FROM db_newsitem WHERE testxml IS NOT NULL AND array_dims ( xpath(
+      '//attr[@key=''officer'' and @val=''krupke'']/@val', db_newsitem.testxml) ) != '';
+
+ or if storing vals in text:
+
+ SELECT id FROM db_newsitem WHERE testxml IS NOT NULL AND array_dims ( xpath(
+      '/attributes[attr=''janet'']/attr', db_newsitem.testxml) ) !=
+      '';
+
+Many-to-many lookups are easy:
+
+  instance.testxml = {'violation_codes': [1, 2, 3]}
+
+  -->  '<attributes>
+          <attr key="violation_codes">1</attr>
+          <attr key="violation_codes">2</attr>
+          <attr key="violation_codes">3</attr>
+        </attributes>'
+
+
+if values are attributes:
+
+ SELECT id FROM db_newsitem WHERE testxml IS NOT NULL AND array_dims ( xpath(
+      '//attr[@key=''violation_codes'' and (@val=''1'' or @val=''2'' or @val=''3'')]/@val', testxml) )  != '';
+
+or if values are text:
+
+ SELECT id FROM db_newsitem WHERE testxml IS NOT NULL AND array_dims ( xpath(
+      '/attributes[attr=''janet'' or attr=''krupke'']/attr',
+      db_newsitem.testxml) ) != '';
+
+QUESTION: how do we deal with xml-ish content? CDATA I guess.
+
+We can do the equivalent of ILIKE searches like so (values in attributes):
+
+ SELECT id FROM db_newsitem WHERE testxml IS NOT NULL AND array_dims( xpath(
+      '//attr[@key=''officer'' and fn:matches(@val, ''rup'', ''i'')]',
+      testxml)) != '';
+
+
+======================================================================
+
+Why not just build (and syncdb) some models at runtime?
+use multi-table inheritance, so most stuff goes in db_newsitem
+but then there's a db_article_attributes, db_realestate_attributes, etc...
+
+Then it's N queries to get attributes for N types on a page, but is
+that so bad?  N is on the order of 10, not 1000.
+
+
+====================================================================
+
+Vertical table aka EAV (entity-attribute-value):
+maybe try http://pypi.python.org/pypi/eav-django/1.0.2

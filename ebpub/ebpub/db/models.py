@@ -3,6 +3,7 @@ from django.contrib.gis.db.models import Count
 from django.db import connection, transaction
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
+from ebpub.db.fields import JSONField
 import datetime
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
@@ -11,7 +12,6 @@ ebpub.monkeypatches.patch_once()
 
 FREQUENCY_CHOICES = ('Hourly', 'Throughout the day', 'Daily', 'Twice a week', 'Weekly', 'Twice a month', 'Monthly', 'Quarterly', 'Sporadically', 'No longer updated')
 FREQUENCY_CHOICES = [(a, a) for a in FREQUENCY_CHOICES]
-
 
 
 def field_mapping(schema_id_list):
@@ -139,10 +139,10 @@ class SchemaField(models.Model):
     pretty_name_plural = models.CharField(max_length=32) # plural human-readable name
     display = models.BooleanField(default=True) # whether to display value on the public site
     is_lookup = models.BooleanField(default=False) # whether the value is a foreign key to Lookup
-    is_filter = models.BooleanField(default=False)
+    is_filter = models.BooleanField(default=False)  # whether to show links to all other NewsItems with this value.  Only valid when is_lookup=True.
     is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field; also see "trends" tabs on place_overview.html
     display_order = models.SmallIntegerField(default=10)
-    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content
+    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content. Don't use on Lookup fields, only text or varchar.
 
     def natural_key(self):
         return (self.schema.slug, self.real_name)
@@ -371,6 +371,30 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         clone = clone.extra(where=('db_newsitem.id = db_attribute.news_item_id',))
         return clone
 
+    def by_attribute2(self, schema_field, att_value, is_lookup=False):
+        """
+        Returns a QuerySet of NewsItems whose attribute value for the given
+        SchemaField is att_value. If att_value is a list, this will do the
+        equivalent of an "OR" search, returning all NewsItems that have an
+        attribute value in the att_value list.
+        """
+        real_name = str(schema_field.name)  # XXX a better var name would be plain old 'key'.
+        clone = self.prepare_attribute_qs()
+        if not isinstance(att_value, (list, tuple)):
+            att_value = [att_value]
+        if is_lookup:
+            raise NotImplementedError()
+        if schema_field.is_many_to_many_lookup():
+            raise NotImplementedError()
+        elif None in att_value:
+            if att_value != [None]:
+                raise ValueError('by_attribute() att_value list cannot have more than one element if it includes None')  # why is that?
+            clone = clone.extra(where=("db_attribute.%s IS NULL" % real_name,))
+        else:
+            clone = clone.extra(where=("db_attribute.%s IN (%s)" % (real_name, ','.join(['%s' for val in att_value])),),
+                                params=tuple(att_value))
+        return clone
+
     def by_attribute(self, schema_field, att_value, is_lookup=False):
         """
         Returns a QuerySet of NewsItems whose attribute value for the given
@@ -535,6 +559,7 @@ class NewsItem(models.Model):
     block = models.ForeignKey(Block, blank=True, null=True)
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
+    attributes2 = JSONField(blank=True, null=True)
 
     def __unicode__(self):
         return self.title
