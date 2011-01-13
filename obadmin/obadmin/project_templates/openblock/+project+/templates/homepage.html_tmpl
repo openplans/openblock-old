@@ -1,0 +1,10 @@
+{% extends "ebpub/templates/homepage.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
+
+{% block fulltitle %}OpenBlock: ${project}{% endblock %}
+
+{% block extracontent %}
+<div id="homepage-about">
+    <h2>Welcome to your new OpenBlock site</h2>
+    <p>You can remove this message by editing ${project}/templates/homepage.html</p>
+</div>
+{% endblock %}
