@@ -3,7 +3,6 @@ from django.contrib.gis.db.models import Count
 from django.db import connection, transaction
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
-from ebpub.db.fields import JSONField
 import datetime
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
@@ -371,30 +370,6 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         clone = clone.extra(where=('db_newsitem.id = db_attribute.news_item_id',))
         return clone
 
-    def by_attribute2(self, schema_field, att_value, is_lookup=False):
-        """
-        Returns a QuerySet of NewsItems whose attribute value for the given
-        SchemaField is att_value. If att_value is a list, this will do the
-        equivalent of an "OR" search, returning all NewsItems that have an
-        attribute value in the att_value list.
-        """
-        real_name = str(schema_field.name)  # XXX a better var name would be plain old 'key'.
-        clone = self.prepare_attribute_qs()
-        if not isinstance(att_value, (list, tuple)):
-            att_value = [att_value]
-        if is_lookup:
-            raise NotImplementedError()
-        if schema_field.is_many_to_many_lookup():
-            raise NotImplementedError()
-        elif None in att_value:
-            if att_value != [None]:
-                raise ValueError('by_attribute() att_value list cannot have more than one element if it includes None')  # why is that?
-            clone = clone.extra(where=("db_attribute.%s IS NULL" % real_name,))
-        else:
-            clone = clone.extra(where=("db_attribute.%s IN (%s)" % (real_name, ','.join(['%s' for val in att_value])),),
-                                params=tuple(att_value))
-        return clone
-
     def by_attribute(self, schema_field, att_value, is_lookup=False):
         """
         Returns a QuerySet of NewsItems whose attribute value for the given
@@ -559,7 +534,6 @@ class NewsItem(models.Model):
     block = models.ForeignKey(Block, blank=True, null=True)
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
-    attributes2 = JSONField(blank=True, null=True)
 
     def __unicode__(self):
         return self.title
@@ -591,7 +565,6 @@ class NewsItem(models.Model):
         fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
         if not fields:
             return []
-
         try:
             attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
         except KeyError:
@@ -601,7 +574,14 @@ class NewsItem(models.Model):
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
-        self.raw_value = attribute_row[schema_field.real_name]
+
+        # XXX datamodel spike: real_name is going away;
+        # this is compatible with both.
+        if attribute_row.has_key(schema_field.real_name):
+            self.raw_value = attribute_row[schema_field.real_name]
+        else:
+            self.raw_value = attribute_row[schema_field.name]
+
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
@@ -849,3 +829,49 @@ class DataUpdate(models.Model):
 
     def total_time(self):
         return self.update_finish - self.update_start
+
+
+#####################################
+# DATAMODEL SPIKE HACK MODELS
+#####################################
+
+class NewStyleAttributesMixin(object):
+    def _get_attributes(self):
+        #print "XXX datamodel spike: getting new .attributes() property"
+        result = {}
+        for key in self.attribute_keys:
+            result[key] = getattr(self, key)
+        return result
+
+    def _set_attributes(self, adict):
+        if sorted(adict.keys()) != sorted(self.attribute_keys):
+            raise Exception("XXX bad keys %r" % adict.keys())
+        for key, val in adict.items():
+            setattr(self, key, val)
+
+    attributes = property(_get_attributes, _set_attributes)
+
+    # XXX backward compatibility with undocumented result of
+    # db.utils.populate_attributes_if_needed(), used by some templates.
+    attribute_values = attributes
+
+    def attributes_for_template(self):
+        """
+        Return a list of AttributeForTemplate objects for this NewsItem. The
+        objects are ordered by SchemaField.display_order.
+        """
+        print "XXX datamodel spike: new attributes_for_template()"
+        from ebpub.db.models import AttributeForTemplate, SchemaField
+        fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
+        if not fields:
+            return []
+        attribute_row = self.attributes
+        return [AttributeForTemplate(f, attribute_row) for f in fields]
+
+class TestyIssuesModel(NewStyleAttributesMixin, NewsItem):
+    rating = models.IntegerField()
+    attribute_keys = ('rating',)
+    schemaslug = 'issues'
+
+# XXX TODO: patch up by_attribute
+

@@ -186,6 +186,7 @@ that so bad?  N is on the order of tens, not thousands, and many pages only
 show one type of newsitem.
 
 
+
 ====================================================================
 
 Vertical table aka EAV (entity-attribute-value):
@@ -196,3 +197,44 @@ queries would look like.
 
 If we had a single EAV table, it'd have one type of data, which means
 casting in python and makes eg. searching for date ranges bad.
+
+
+===============================================================
+
+PERFORMANCE with
+2000 instances of each of 6 schemas (12000 instances total):
+warmed up (1 request first), then ab -c 1 -n 100
+with CPU fixed at 2.4 GHz.
+
+Multi-table inheritance just on the seeclickfix model:
+-----------------------------------------------------
+Newsitem detail - 1 attribute (rating):
+
+ Requests per second:    24.21 [#/sec] (mean)
+ Time per request:       41.307 [ms] (mean)
+
+Place detail:
+
+ Document Path:          /locations/neighborhoods/allstonbrighton/
+ Document Length:        140798 bytes
+ Requests per second:    1.73 [#/sec] (mean)
+ Time per request:       577.902 [ms] (mean)
+
+
+Old-school NewsItem + Attributes for all models:
+--------------------------------------------------
+Newsitem detail - 1 attribute (rating):
+
+ Document Path:          /issues/by-date/2011/1/14/43423/
+ Document Length:        4490 bytes
+ Requests per second:    24.89 [#/sec] (mean)
+ Time per request:       40.178 [ms] (mean)
+
+
+
+Place detail:
+
+ Document Path:          /locations/neighborhoods/allstonbrighton/
+ Document Length:        141111 bytes
+ Requests per second:    1.70 [#/sec] (mean)
+ Time per request:       589.381 [ms] (mean)

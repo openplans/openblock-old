@@ -68,6 +68,11 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     # belongs. Rewrite to stuff the data in ni._attributes_cache
     # instead.
 
+    # XXX datamodel spike. don't use this on new-style
+    # models. Consider ditching this optimization entirely
+    if settings.DATAMODEL_SPIKE:
+        schema_list = [s for s in schema_list if s.slug != 'issues']
+
     preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
     if not preload_schema_ids:
         return

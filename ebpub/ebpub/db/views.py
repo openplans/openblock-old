@@ -502,7 +502,6 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     except ValueError:
         raise Http404('Invalid day')
     ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id)
-
     if ni.schema.slug != schema_slug or ni.item_date != date:
         raise Http404
     if not ni.schema.is_public and not has_staff_cookie(request):
@@ -511,6 +510,12 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     if not ni.schema.has_newsitem_detail:
         return HttpResponsePermanentRedirect(ni.url)
 
+    if settings.DATAMODEL_SPIKE:
+        try:
+            # XXX datamodel spike: generalize for other types
+            ni = ni.testyissuesmodel
+        except:
+            pass
     atts = ni.attributes_for_template()
     has_location = ni.location is not None
 
