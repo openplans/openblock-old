@@ -7,15 +7,18 @@ import sys
 import uuid
 import gibberis.ch.freeform
 
+
 import os
 if not os.environ.get('DJANGO_SETTINGS_MODULE'):
     print "Please set DJANGO_SETTINGS_MODULE to your projects settings module"
     sys.exit(1)
 print "Using DJANGO_SETTINGS_MODULE=%s" % os.environ['DJANGO_SETTINGS_MODULE']
 
-from ebpub.db.models import NewsItem, Schema
+from django.conf import settings
+
+from ebpub.db.models import NewsItem, Schema, TestyIssuesModel, TestyInspectionsModel
 from ebpub.streets.models import Block
-lookup_vals = ['lookup_%02d' % i for i in range(30)]
+lookup_vals = ['lookup_%03d' % i for i in range(300)]
 
 cache = {}
 def get_text_corpus():
@@ -32,7 +35,15 @@ def get_text_corpus():
 def save_random_newsitem(schema, i, block):
     title = '%d Random %s %s' % (i, schema.name, uuid.uuid4())
     print "Creating %r" % title
-    item = NewsItem(title=title, schema=schema)
+    # XXX datamodel spike hack - switch to using the subclass instance
+    for item_factory in (TestyInspectionsModel, TestyIssuesModel):
+        if item_factory.schemaslug == schema.slug:
+            item = item_factory()
+            break
+    else:
+        item = NewsItem()
+    item.title = title
+    item.schema = schema
     item.description = gibberis.ch.freeform.random_text(get_text_corpus(), 300)
     item.url = 'http://example.com/%s/%d' % (schema.slug, i)
     date = random_datetime(7.0)
@@ -45,15 +56,20 @@ def save_random_newsitem(schema, i, block):
     except AttributeError:
         item.location = block.geom
     # Populate the attributes.
+
     attrs = {}
     for schemafield in schema.schemafield_set.all():
         attrs[schemafield.name] = random_schemafield_value(schemafield)
 
     print "Added: %s at %s (%s)" % (item.title, item.location_name, item.location.wkt)
+
+    # Need to save before we can have foreign keys from the attributes
+    # or subclass.
     item.save()
     if attrs:
         item.attributes = attrs
-        # That implicitly saves.
+        # That implicitly saves in the old model, but not the new.
+        item.save()
 
 
 def main(count, slugs):
@@ -96,15 +112,19 @@ def random_schemafield_value(schemafield):
         from ebpub.db.models import Lookup
         value = []
         if schemafield.is_many_to_many_lookup():
-            _count = 3
+            _count = 4
         else:
             _count = 1
         for i in range(_count):
             lookup = Lookup.objects.get_or_create_lookup(
                 schemafield, random.choice(lookup_vals))
-            value.append(str(lookup.id))
-        value = ','.join(value)
-
+            if not lookup.description:
+                lookup.description = lookup.slug
+                lookup.save()
+            value.append(lookup)
+        if not settings.DATAMODEL_SPIKE:
+            # old-school way of doing lookups: comma-separated IDs.
+            value = ','.join([str(lookup.id) for lookup in value])
     elif schemafield.datatype == 'int':
         value = random.randint(1, 100)
     elif schemafield.datatype == 'bool':
