@@ -27,15 +27,27 @@ def populate_one_new_from_old(model, delete=False):
         # else to force this!
         item.attributes.get('pasiodufipoasufoisaufopias')
 
-        if item.attributes.get('rating') is None:
-            if delete:
-                print "oops, got a new one? deleting %s" % item.title
-                item.delete()
-                continue
+        # if item.attributes.get('rating') is None:
+        #     if delete:
+        #         print "oops, got a new one? deleting %s" % item.title
+        #         item.delete()
+        #         continue
+
+        # Need a pk before we can do many-to-many.
+        new_item.save()
 
         if len(item.attributes):
-            new_item.attributes = dict(item.attributes)
-        new_item.save()
+            for sf in item.schema.schemafield_set.all():
+                val = item.attributes[sf.name]
+                key = sf.name
+                if sf.is_lookup:
+                    key = key + '_id'
+                    if sf.is_many_to_many_lookup():
+                        val = map(int, val.split(','))
+                setattr(new_item, key, val)
+
+            new_item.save()
+
     print "Saved %d new %ss" % (i + 1, model.schemaslug)
     if delete:
         print "Deleting old ones"
@@ -65,6 +77,7 @@ def populate_old_model_from_new(model, delete=False):
                          block=item.block)
         new_item.save()
         if len(item.attributes):
+            # XXX TODO: fix Lookups
             new_item.attributes = dict(item.attributes)
     print "Saved %d NewsItems" % i + 1
     if delete:

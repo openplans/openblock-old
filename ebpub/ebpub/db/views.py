@@ -15,6 +15,7 @@ from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
+from ebpub.db.utils import convert_to_spike_models
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.dates import daterange, parse_date
@@ -511,11 +512,13 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         return HttpResponsePermanentRedirect(ni.url)
 
     if settings.DATAMODEL_SPIKE:
-        try:
-            # XXX datamodel spike: generalize for other types
+        # XXX datamodel spike hack - replace the newsitem with a more specific
+        # subclass. XXX un-hardcode this.
+        if ni.schema.slug == 'issues':
             ni = ni.testyissuesmodel
-        except:
-            pass
+        elif ni.schema.slug == 'restaurant-inspections':
+            ni = ni.testyinspectionsmodel
+
     atts = ni.attributes_for_template()
     has_location = ni.location is not None
 
@@ -703,6 +706,9 @@ def schema_about(request, slug):
 
 
 def schema_filter(request, slug, urlbits):
+    """
+    View some NewsItems based on filters specified as parts of the URL.
+    """
     # Due to the way our custom filter UI works, address, date and text
     # searches come in a query string instead of in the URL. Here, we validate
     # those searches and do a redirect so that the address and date are in
@@ -944,6 +950,7 @@ def schema_filter(request, slug, urlbits):
     # LOOKUP_MIN_DISPLAYED sets the number of records to display for each lookup
     # type. Normally, the UI displays a "See all" link, but the link is removed
     # if there are fewer than (LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER) records.
+
     LOOKUP_MIN_DISPLAYED = 7
     LOOKUP_BUFFER = 4
     lookup_list, boolean_lookup_list, search_list = [], [], []
@@ -991,6 +998,8 @@ def schema_filter(request, slug, urlbits):
 
     populate_schema(ni_list, s)
     populate_attributes_if_needed(ni_list, [s])
+
+    ni_list = convert_to_spike_models(ni_list)
     bunches = cluster_newsitems(ni_list, 26)
 
     if not context.get('bbox'):
@@ -1186,6 +1195,7 @@ def place_detail_timeline(request, *args, **kwargs):
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
+    ni_list = convert_to_spike_models(ni_list) #XXX
     bunches = cluster_newsitems(ni_list, 26)
     if ni_list:
         next_day = ni_list[len(ni_list)-1:][0].pub_date - datetime.timedelta(days=1)

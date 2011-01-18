@@ -40,6 +40,29 @@ def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
             del newsitem_list[end_index:]
     return newsitem_list
 
+#XXX
+def convert_to_spike_models(newsitem_list):
+    # XXX this is badly inefficient, makes two hits to the db for EACH
+    # newsitem: one hit to the schema table, and one join against
+    # newsitem and the extra model table.
+
+    # XXX move this somewhere more sensible, like NewsItemQuerySet?
+    # XXX ... or, since populate_attributes_if_needed() is already done
+    # anywhere we would need this, rewrite it to do something
+    # semi-sensible (maybe N queries where N = number of model subclasses)
+    # and mutate ni_list in-place?
+
+    if not settings.DATAMODEL_SPIKE:
+        return newsitem_list
+    results = []
+    for ni in newsitem_list:
+        if ni.schema.slug == 'issues':
+            ni = ni.testyissuesmodel
+        elif ni.schema.slug == 'restaurant-inspections':
+            ni = ni.testyinspectionsmodel
+        results.append(ni)
+    return results
+
 def populate_attributes_if_needed(newsitem_list, schema_list):
     """
     Helper function that takes a list of NewsItems and sets ni.attribute_values
@@ -71,7 +94,8 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     # XXX datamodel spike. don't use this on new-style
     # models. Consider ditching this optimization entirely
     if settings.DATAMODEL_SPIKE:
-        schema_list = [s for s in schema_list if s.slug != 'issues']
+        schema_list = [s for s in schema_list if s.slug not in
+                       ('issues', 'restaurant-inspections')]
 
     preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
     if not preload_schema_ids:

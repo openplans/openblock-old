@@ -361,6 +361,7 @@ class AttributeDict(dict):
 
 class NewsItemQuerySet(models.query.GeoQuerySet):
     def prepare_attribute_qs(self):
+        # XXX TODO: SPIKIFY
         clone = self._clone()
         if 'db_attribute' not in clone.query.extra_tables:
             clone = clone.extra(tables=('db_attribute',))
@@ -383,7 +384,10 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Lookup object, and the Lookup's ID will be retrieved for use in the
         query.
         """
-
+        # XXX TODO: SPIKIFY or, better, replace this API with the
+        # normal filter API. Steal ideas from
+        # https://bitbucket.org/neithere/eav-django/src/a77108ae1f3f/eav/managers.py
+        # ... but that may be more work.
         clone = self.prepare_attribute_qs()
         real_name = str(schema_field.real_name)
         if not isinstance(att_value, (list, tuple)):
@@ -431,6 +435,7 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Returns a list of {lookup, count} dictionaries representing the top
         Lookups for this QuerySet.
         """
+        # XXX TODO: SPIKIFY
         real_name = "db_attribute." + str(schema_field.real_name)
         if schema_field.is_many_to_many_lookup():
             clone = self.prepare_attribute_qs().filter(schema__id=schema_field.schema_id)
@@ -459,10 +464,12 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Returns a QuerySet of NewsItems whose attribute for
         a given schema field matches a text search query.
         """
+        # XXX TODO: SPIKIFY
         clone = self.prepare_attribute_qs()
         query = query.lower()
 
-        clone = clone.extra(where=("db_attribute." + str(schema_field.real_name) + " ILIKE %s",),
+        clone = clone.extra(where=("db_attribute." + str(schema_field.real_name)
+ + " ILIKE %s",),
                             params=("%%%s%%" % query,))
         return clone
 
@@ -572,6 +579,9 @@ class NewsItem(models.Model):
         return [AttributeForTemplate(f, attribute_row) for f in fields]
 
 class AttributeForTemplate(object):
+    """Cooks a NewsItem's extensible attributes metadata a bit for
+    easier presentation.
+    """
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
 
@@ -586,18 +596,31 @@ class AttributeForTemplate(object):
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
         if self.is_lookup:
-            if self.raw_value == '':
+            if self.raw_value == '':  # XXX only for old data model
                 self.values = []
+            elif self.raw_value.__class__.__name__ == 'ManyRelatedManager':
+                import pdb; pdb.set_trace()
+                # XXX datamodel spike: new data model.
+                self.values = self.raw_value.all()
+            # elif isinstance(self.raw_value, Lookup):
+            #     # XXX new data model, but not used unless we're allowing
+            #     # ForeignKey in addition to ManyToManyField.
+            #     self.values = [self.raw_value]
             elif self.sf.is_many_to_many_lookup():
-                try:
-                    id_values = map(int, self.raw_value.split(','))
-                except ValueError:
-                    self.values = []
+                if isinstance(self.raw_value, basestring):
+                    # XXX old data model, this should die.
+                    try:
+                        id_values = map(int, self.raw_value.split(','))
+                    except ValueError:
+                        self.values = []
+                    else:
+                        lookups = Lookup.objects.in_bulk(id_values)
+                        self.values = [lookups[i] for i in id_values]
                 else:
-                    lookups = Lookup.objects.in_bulk(id_values)
-                    self.values = [lookups[i] for i in id_values]
+                    # XXX new data model.
+                    self.values = list(self.raw_value.all())
             else:
-                self.values = [Lookup.objects.get(id=self.raw_value)]
+                raise RuntimeError("XXX datamodel spike: should not get here")
         else:
             self.values = [self.raw_value]
 
@@ -835,25 +858,67 @@ class DataUpdate(models.Model):
 # DATAMODEL SPIKE HACK MODELS
 #####################################
 
+from UserDict import DictMixin
+
+class AttributeDict2(DictMixin):
+
+    """Preserve the old dictionary-like API for newsitem.attributes,
+    while actually storing the data in fields on the newsitem.
+    """
+
+    def __init__(self, newsitem):
+        self.newsitem = newsitem
+
+    def __setitem__(self, key, val):
+        if key not in self.newsitem.attribute_keys:
+            raise KeyError("unexpected key %r" % key)
+        if isinstance(val, list):
+            # Possibly m2m lookup.
+            field = getattr(self.newsitem, key)
+            # hackery, can't use isinstance() when the class is built on
+            # the fly:
+            if field.__class__.__name__ == 'ManyRelatedManager':
+                field.clear()
+                field.add(*val)
+            else:
+                import pdb; pdb.set_trace()
+                print "should not get here"
+        else:
+            setattr(self.newsitem, key, val)
+
+    def __getitem__(self, key):
+        try:
+            return getattr(self.newsitem, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def keys(self):
+        return self.newsitem.attribute_keys
+
+    # XXX do we need __delitem__() ?
+
+
 class NewStyleAttributesMixin(object):
+
+    _attrdict = None
+
     def _get_attributes(self):
         #print "XXX datamodel spike: getting new .attributes() property"
-        result = {}
-        for key in self.attribute_keys:
-            result[key] = getattr(self, key)
-        return result
+        if self._attrdict is None:
+            self._attrdict = AttributeDict2(self)
+        return self._attrdict
 
     def _set_attributes(self, adict):
-        if sorted(adict.keys()) != sorted(self.attribute_keys):
-            raise Exception("XXX bad keys %r" % adict.keys())
-        for key, val in adict.items():
-            setattr(self, key, val)
+        self._attrdict = AttributeDict2(self)
+        self._attrdict.update(adict)
 
     attributes = property(_get_attributes, _set_attributes)
 
     # XXX backward compatibility with undocumented result of
     # db.utils.populate_attributes_if_needed(), used by some templates.
-    attribute_values = attributes
+    @property
+    def attribute_values(self):
+        return self._get_attributes()
 
     def attributes_for_template(self):
         """
@@ -869,9 +934,36 @@ class NewStyleAttributesMixin(object):
         return [AttributeForTemplate(f, attribute_row) for f in fields]
 
 class TestyIssuesModel(NewStyleAttributesMixin, NewsItem):
-    rating = models.IntegerField()
+    rating = models.IntegerField(null=True)
     attribute_keys = ('rating',)
     schemaslug = 'issues'
 
-# XXX TODO: patch up by_attribute
+class TestyInspectionsModel(NewStyleAttributesMixin, NewsItem):
+    attribute_keys = ('inspection_id', 'restaurant_id',
+                      'restaurant_name', 'result',
+                      'violation', 'details')
 
+    schemaslug = 'restaurant-inspections'
+
+    # XXX allowing null=True on all of them b/c we need to have a primary
+    # key before we can do a many-to-many field, and we typically assign these
+    # all in a batch, so we'll rely on app code to ensure these are non-Null.
+    # Which was the case in the old data model anyway.
+
+    inspection_id = models.IntegerField(null=True)
+    restaurant_id = models.IntegerField(null=True)
+    restaurant_name = models.CharField(max_length=255, null=True)
+
+    # XXX TODO:
+    # possibly use a single table for all our ManyToManyFields?
+    # can we then do one query for all lookups across NewsItem subclasses? See
+    # http://docs.djangoproject.com/en/1.2/ref/models/fields/#django.db.models.ManyToManyField.through
+    #
+    # Also, we don't have a reverse query attribute on Lookup because
+    # it's probably not that useful given that the names have to be different
+    # to avoid clashes; so we disable them by setting related_name='foo+'.
+    result = models.ManyToManyField(Lookup, related_name='result+', null=True)
+    violation = models.ManyToManyField(Lookup, related_name='violation+', null=True)
+    details = models.TextField(null=True)
+
+# XXX TODO: patch up by_attribute

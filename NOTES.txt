@@ -206,9 +206,9 @@ PERFORMANCE with
 warmed up (1 request first), then ab -c 1 -n 100
 with CPU fixed at 2.4 GHz.
 
-Multi-table inheritance just on the seeclickfix model:
+Multi-table inheritance on just the seeclickfix model:
 -----------------------------------------------------
-Newsitem detail - 1 attribute (rating):
+Newsitem detail (seeclickfix) - 1 attribute (rating):
 
  Requests per second:    24.21 [#/sec] (mean)
  Time per request:       41.307 [ms] (mean)
@@ -216,9 +216,20 @@ Newsitem detail - 1 attribute (rating):
 Place detail:
 
  Document Path:          /locations/neighborhoods/allstonbrighton/
- Document Length:        140798 bytes
+ Document Length:        140504 bytes
  Requests per second:    1.73 [#/sec] (mean)
  Time per request:       577.902 [ms] (mean)
+
+
+Multi-table inheritance on seeclickfix and restaurant-inspection models:
+------------------------------------------------------------------------
+
+Place detail:
+
+ Document Path:          /locations/neighborhoods/allstonbrighton/
+ Document Length:        140798 bytes
+ Requests per second:    1.69 [#/sec] (mean)
+ Time per request:       591.803 [ms] (mean)
 
 
 Old-school NewsItem + Attributes for all models:
