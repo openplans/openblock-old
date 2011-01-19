@@ -50,9 +50,6 @@ def convert_to_spike_models(newsitem_list):
     # anywhere we would need this, rewrite it to do something
     # semi-sensible (maybe N queries where N = number of model subclasses)
     # and mutate ni_list in-place?
-
-    if not settings.DATAMODEL_SPIKE:
-        return newsitem_list
     results = []
     for ni in newsitem_list:
         if ni.schema.slug == 'issues':
@@ -96,9 +93,8 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     # XXX datamodel spike. don't use this on new-style
     # models. Consider ditching this optimization entirely
-    if settings.DATAMODEL_SPIKE:
-        schema_list = [s for s in schema_list if s.slug not in
-                       ('issues', 'restaurant-inspections')]
+    schema_list = [s for s in schema_list if s.slug not in
+                   ('issues', 'restaurant-inspections')]
 
     preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
     if not preload_schema_ids:
