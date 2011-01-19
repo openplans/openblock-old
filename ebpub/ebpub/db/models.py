@@ -172,6 +172,7 @@ class SchemaField(models.Model):
         """
         Returns True if this SchemaField is a many-to-many lookup.
         """
+        # XXX spikify - do we even need this? all lookups are potentially m2m
         return self.is_lookup and not self.is_type('int')
 
     def all_lookups(self):
@@ -274,7 +275,7 @@ class Location(models.Model):
         return self.location_type.slug == 'custom'
 
 
-class AttributesDescriptor(object):
+class AttributesDescriptor(object):  # XXX THIS CAN DIE
     """
     This class provides the functionality that makes the attributes available
     as `attributes` on a model instance.
@@ -310,7 +311,7 @@ class AttributesDescriptor(object):
                 [instance.id, instance.schema_id] + values)
         transaction.commit_unless_managed()
 
-class AttributeDict(dict):
+class AttributeDict(dict):  # XXX THIS CAN DIE
     """
     A dictionary-like object that serves as a wrapper around attributes for a
     given NewsItem.
@@ -540,7 +541,7 @@ class NewsItem(models.Model):
     location_object = models.ForeignKey(Location, blank=True, null=True)
     block = models.ForeignKey(Block, blank=True, null=True)
     objects = NewsItemManager()
-    attributes = AttributesDescriptor()  # Treat it like a dict.
+    attributes = AttributesDescriptor()  # Treat it like a dict. #XXX this can die
 
     def __unicode__(self):
         return self.title
@@ -585,40 +586,16 @@ class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
 
-        # XXX datamodel spike: real_name is going away;
-        # this is compatible with both.
-        if attribute_row.has_key(schema_field.real_name):
-            self.raw_value = attribute_row[schema_field.real_name]
-        else:
-            self.raw_value = attribute_row[schema_field.name]
+        self.raw_value = attribute_row[schema_field.name]
 
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
         if self.is_lookup:
-            if self.raw_value == '':  # XXX only for old data model
-                self.values = []
-            elif self.raw_value.__class__.__name__ == 'ManyRelatedManager':
-                import pdb; pdb.set_trace()
-                # XXX datamodel spike: new data model.
+            if self.raw_value.__class__.__name__ == 'ManyRelatedManager':
                 self.values = self.raw_value.all()
-            # elif isinstance(self.raw_value, Lookup):
-            #     # XXX new data model, but not used unless we're allowing
-            #     # ForeignKey in addition to ManyToManyField.
-            #     self.values = [self.raw_value]
             elif self.sf.is_many_to_many_lookup():
-                if isinstance(self.raw_value, basestring):
-                    # XXX old data model, this should die.
-                    try:
-                        id_values = map(int, self.raw_value.split(','))
-                    except ValueError:
-                        self.values = []
-                    else:
-                        lookups = Lookup.objects.in_bulk(id_values)
-                        self.values = [lookups[i] for i in id_values]
-                else:
-                    # XXX new data model.
-                    self.values = list(self.raw_value.all())
+                self.values = list(self.raw_value.all())
             else:
                 raise RuntimeError("XXX datamodel spike: should not get here")
         else:
@@ -660,7 +637,7 @@ class AttributeForTemplate(object):
             values = [self.raw_value]
         return [{'value': value, 'url': url, 'description': description} for value, url, description in zip(values, urls, descriptions)]
 
-class Attribute(models.Model):
+class Attribute(models.Model): #XXX THIS CAN DIE
     """
     Extended metadata for NewsItems.
 
@@ -763,6 +740,10 @@ class LookupManager(models.Manager):
         return obj
 
 class Lookup(models.Model):
+    """
+    Used to normalize NewsItem attribute values where there are a
+    smallish set of possible values.
+    """
     schema_field = models.ForeignKey(SchemaField)
     name = models.CharField(max_length=255)
     # `code` is the optional internal code to use during retrieval.

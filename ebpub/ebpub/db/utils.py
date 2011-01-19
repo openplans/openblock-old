@@ -42,9 +42,8 @@ def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
 
 #XXX
 def convert_to_spike_models(newsitem_list):
-    # XXX this is badly inefficient, makes two hits to the db for EACH
-    # newsitem: one hit to the schema table, and one join against
-    # newsitem and the extra model table.
+    # XXX this is badly inefficient, makes a hit to the db for EACH
+    # newsitem: a join against newsitem and the extra model table.
 
     # XXX move this somewhere more sensible, like NewsItemQuerySet?
     # XXX ... or, since populate_attributes_if_needed() is already done
@@ -57,9 +56,13 @@ def convert_to_spike_models(newsitem_list):
     results = []
     for ni in newsitem_list:
         if ni.schema.slug == 'issues':
-            ni = ni.testyissuesmodel
+            new_ni = ni.testyissuesmodel
         elif ni.schema.slug == 'restaurant-inspections':
-            ni = ni.testyinspectionsmodel
+            new_ni = ni.testyinspectionsmodel
+        else:
+            new_ni = ni
+        if hasattr(ni, '_schema_cache'):
+            new_ni._schema_cache = ni._schema_cache
         results.append(ni)
     return results
 

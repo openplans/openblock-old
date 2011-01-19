@@ -36,7 +36,6 @@ from ebpub.utils.view_utils import parse_pid, make_pid
 
 import datetime
 import hashlib
-import random
 import re
 import urllib
 import logging
