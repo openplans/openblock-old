@@ -14,8 +14,6 @@ if not os.environ.get('DJANGO_SETTINGS_MODULE'):
     sys.exit(1)
 print "Using DJANGO_SETTINGS_MODULE=%s" % os.environ['DJANGO_SETTINGS_MODULE']
 
-from django.conf import settings
-
 from ebpub.db.models import NewsItem, Schema, TestyIssuesModel, TestyInspectionsModel
 from ebpub.streets.models import Block
 lookup_vals = ['lookup_%03d' % i for i in range(300)]
@@ -122,9 +120,6 @@ def random_schemafield_value(schemafield):
                 lookup.description = lookup.slug
                 lookup.save()
             value.append(lookup)
-        if not settings.DATAMODEL_SPIKE:
-            # old-school way of doing lookups: comma-separated IDs.
-            value = ','.join([str(lookup.id) for lookup in value])
     elif schemafield.datatype == 'int':
         value = random.randint(1, 100)
     elif schemafield.datatype == 'bool':
