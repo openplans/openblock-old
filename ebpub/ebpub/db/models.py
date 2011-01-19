@@ -520,6 +520,7 @@ class NewsItem(models.Model):
       aggregates, where there's no location or address data for the
       "news item" other than which precinct it occurs in.
       eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
+      XXX consider changing this: ticket #93
 
     * self.block is optionally one Block. Also set during
       scraping/geocoding.  So far can't find anything that actually
@@ -845,6 +846,8 @@ class AttributeDict2(DictMixin):
 
     """Preserve the old dictionary-like API for newsitem.attributes,
     while actually storing the data in fields on the newsitem.
+
+    XXX deprecate this API?
     """
 
     def __init__(self, newsitem):

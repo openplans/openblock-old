@@ -114,8 +114,12 @@ def get_date_chart(schemas, start_date, end_date, counts):
     return result
 
 def url_to_place(*args, **kwargs):
-    # Given args and kwargs captured from the URL, returns the place.
-    # This relies on "place_type" being provided in the URLpattern.
+    """Given args and kwargs captured from the URL, returns the place.
+    This relies on "place_type" being provided in the URLpattern.
+
+    Note also that this returns either a streets.Block or a db.Location;
+    it does NOT ever return a streets.Place, despite the name!
+    """
     parse_func = kwargs['place_type'] == 'block' and url_to_block or url_to_location
     return parse_func(*args)
 
@@ -540,6 +544,7 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         # and we don't have any criteria for deciding which if any
         # best corresponds to ni.location_name; but we can try
         # a few other fallbacks.
+        # XXX maybe move this code into NewsItem.location_url()?
         if ni.block:
             location_url = ni.block.url()
         elif ni.location:
@@ -1084,8 +1089,9 @@ def block_list(request, city_slug, street_slug):
 def get_place_info_for_request(request, *args, **kwargs):
     """
     A utility function that abstracts getting commonly used
-    location-related information: a place, its type, a queryset of
-    intersecting NewsItems, a bbox, nearby locations, etc.
+    location-related information: a place, its type (Block or
+    Location), a queryset of intersecting NewsItems, a bbox, nearby
+    locations, etc.
     """
     info = dict(bbox=None,
                 nearby_locations=[],
@@ -1110,6 +1116,8 @@ def get_place_info_for_request(request, *args, **kwargs):
     nearby = nearby.select_related().exclude(id=place.id)
     nearby = nearby.order_by('location_type__id', 'name')
 
+    # XXX TODO: also find NewsItems where .block or .location_object
+    # refer directly to this place! Ticket #93.
     if place.location is None:
         # No geometry.
         info['bbox'] = get_metro()['extent']
@@ -1325,6 +1333,7 @@ def newsitems_geojson(request):
     # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
     # Seems like there are a number of similar code blocks in
     # ebpub.db.views?
+    # XXX maybe should use get_place_info_for_request()?
 
     pid = request.GET.get('pid', '')
     schema = request.GET.get('schema', '')
@@ -1387,7 +1396,7 @@ def newsitems_geojson(request):
             if newsitem.location is None:
                 # Can happen, see NewsItem docstring.
                 # TODO: We should probably allow for newsitems that have a
-                # location_object too?
+                # location_object and/or block reference too?
                 continue
 
             features['features'].append(
