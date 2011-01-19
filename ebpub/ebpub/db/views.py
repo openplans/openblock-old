@@ -58,7 +58,7 @@ def get_schema_manager(request):
         return Schema.public_objects
 
 def block_radius_value(request):
-    # Returns a tuple of (xy_radius, block_radius, cookies_to_set).
+    # Returns a tuple of (block_radius, cookies_to_set).
     if 'radius' in request.GET and request.GET['radius'] in BLOCK_RADIUS_CHOICES:
         block_radius = request.GET['radius']
         cookies_to_set = {BLOCK_RADIUS_COOKIE_NAME: block_radius}
@@ -68,7 +68,7 @@ def block_radius_value(request):
         else:
             block_radius = BLOCK_RADIUS_DEFAULT
         cookies_to_set = {}
-    return BLOCK_RADIUS_CHOICES[block_radius], block_radius, cookies_to_set
+    return block_radius, cookies_to_set
 
 def get_date_chart_agg_model(schemas, start_date, end_date, agg_model, kwargs=None):
     kwargs = kwargs or {}
@@ -286,7 +286,7 @@ def ajax_place_newsitems(request):
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
     pid = request.GET.get('pid', '')
-    place, block_radius, xy_radius = parse_pid(pid)
+    place, block_radius = parse_pid(pid)
     if isinstance(place, Block):
         search_buffer = make_search_buffer(place.location.centroid, block_radius)
         newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
@@ -309,7 +309,7 @@ def ajax_place_lookup_chart(request):
         sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
+    place, block_radius = parse_pid(request.GET.get('pid', ''))
     qs = NewsItem.objects.filter(schema__id=sf.schema.id)
     filter_url = place.url()[1:]
     if isinstance(place, Block):
@@ -335,7 +335,7 @@ def ajax_place_date_chart(request):
         s = Schema.public_objects.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
+    place, block_radius = parse_pid(request.GET.get('pid', ''))
     qs = NewsItem.objects.filter(schema__id=s.id)
     filter_url = place.url()[1:]
     if isinstance(place, Block):
@@ -514,13 +514,12 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     if not ni.schema.has_newsitem_detail:
         return HttpResponsePermanentRedirect(ni.url)
 
-    if settings.DATAMODEL_SPIKE:
-        # XXX datamodel spike hack - replace the newsitem with a more specific
-        # subclass. XXX un-hardcode this.
-        if ni.schema.slug == 'issues':
-            ni = ni.testyissuesmodel
-        elif ni.schema.slug == 'restaurant-inspections':
-            ni = ni.testyinspectionsmodel
+    # XXX datamodel spike hack - replace the newsitem with a more specific
+    # subclass. XXX un-hardcode this.
+    if ni.schema.slug == 'issues':
+        ni = ni.testyissuesmodel
+    elif ni.schema.slug == 'restaurant-inspections':
+        ni = ni.testyinspectionsmodel
 
     atts = ni.attributes_for_template()
     has_location = ni.location is not None
@@ -711,7 +710,8 @@ def schema_about(request, slug):
 
 def schema_filter(request, slug, urlbits):
     """
-    View some NewsItems based on filters specified as parts of the URL.
+    View some NewsItems of one schema (provided as a slug), based on
+    filters specified as parts of the URL.
     """
     # Due to the way our custom filter UI works, address, date and text
     # searches come in a query string instead of in the URL. Here, we validate
@@ -719,7 +719,7 @@ def schema_filter(request, slug, urlbits):
     # urlbits.
     context = {}
     if request.GET.get('address', '').strip():
-        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+        block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
         result = None
         try:
@@ -1349,7 +1349,7 @@ def newsitems_geojson(request):
         if schema:
             newsitem_qs = newsitem_qs.filter(schema__slug=schema)
         if pid:
-            place, block_radius, xy_radius = parse_pid(pid)
+            place, block_radius = parse_pid(pid)
             if isinstance(place, Block):
                 search_buffer = make_search_buffer(place.location.centroid, block_radius)
                 newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)

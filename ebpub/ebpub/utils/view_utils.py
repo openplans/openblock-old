@@ -18,8 +18,8 @@ def eb_render(request, *args, **kwargs):
 
 def parse_pid(pid):
     """
-    Returns a tuple of (place, block_radius, xy_radius), where block_radius and
-    xy_radius are None for Locations.
+    Returns a tuple of (place, block_radius), where block_radius is
+    None for Locations.
 
     PID examples:
         'b:12.1' (block ID 12, 1-block radius)
@@ -29,17 +29,15 @@ def parse_pid(pid):
         place_type, place_id = pid.split(':')
         if place_type == 'b':
             place_id, block_radius = place_id.split('.')
+            if not block_radius in BLOCK_RADIUS_CHOICES:
+                raise Http404('Invalid radius %s' % block_radius)
         place_id = int(place_id)
     except (KeyError, ValueError):
         raise Http404('Invalid place')
     if place_type == 'b':
-        try:
-            xy_radius = BLOCK_RADIUS_CHOICES[block_radius]
-        except KeyError:
-            raise Http404('Invalid radius')
-        return (get_object_or_404(Block, id=place_id), block_radius, xy_radius)
+        return (get_object_or_404(Block, id=place_id), block_radius)
     elif place_type == 'l':
-        return (get_object_or_404(Location, id=place_id), None, None)
+        return (get_object_or_404(Location, id=place_id), None)
     else:
         raise Http404
 
