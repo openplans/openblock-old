@@ -40,7 +40,7 @@ class PidTests(TestCase):
     def test_parse_pid__block(self):
         b = self._makeBlock()
         result = parse_pid('b:%d.1' % b.id)
-        self.assertEqual(result, (b, '1', BLOCK_RADIUS_CHOICES['1']))
+        self.assertEqual(result, (b, '1'))
 
     def test_parse_pid__block__invalid_radius(self):
         b = self._makeBlock()
@@ -52,7 +52,7 @@ class PidTests(TestCase):
     def test_parse_pid__location(self):
         loc = self._makeLocation()
         result = parse_pid('l:%d' % loc.id)
-        self.assertEqual(result, (loc, None, None))
+        self.assertEqual(result, (loc, None))
 
     def test_parse_pid__no_such_location(self):
         self.assertRaises(Http404, parse_pid, 'l:1234')
@@ -87,13 +87,13 @@ class PidTests(TestCase):
     def test_make_and_parse_pid__block(self):
         block = self._makeBlock()
         self.assertEqual(parse_pid(make_pid(block, 1)),
-                         (block, '1', BLOCK_RADIUS_CHOICES['1']))
+                         (block, '1'))
 
 
     def test_make_and_parse_pid__location(self):
         loc = self._makeLocation()
         self.assertEqual(parse_pid(make_pid(loc)),
-                         (loc, None, None))
+                         (loc, None))
 
 
 def suite():
