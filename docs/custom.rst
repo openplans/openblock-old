@@ -66,7 +66,7 @@ Finally, there's one database trigger that needs to be set up, but --
 due to a `Django bug <http://code.djangoproject.com/ticket/13826>`_ --
 it can't be created automatically by syncdb.  We'll fix this with one command::
 
-    $ ./manage.py dbshell --database=default < $VIRTUAL_ENV/src/openblock/ebpub/db/sql/location.sql
+    $ ./manage.py dbshell --database=default < $VIRTUAL_ENV/src/openblock/ebpub/ebpub/db/sql/location.sql
 
 Starting the Test Server
 ------------------------
