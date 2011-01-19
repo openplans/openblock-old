@@ -127,6 +127,5 @@ class UpdaterDaemon(EveryMinuteDaemon):
                     os.waitpid(pid, 0)
 
 if __name__ == "__main__":
-    # TODO: configurable pid file
     daemon = UpdaterDaemon('/tmp/updaterdaemon.pid')
     daemon.run_from_command_line(sys.argv[1:])

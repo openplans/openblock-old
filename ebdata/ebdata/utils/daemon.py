@@ -18,6 +18,9 @@ class Daemon(object):
     usage = "usage: %prog [options] start|stop|restart"
 
     def __init__(self, pidfile, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+        """
+        pid file given is used by default unless overridden at the command line.
+        """
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
@@ -27,11 +30,15 @@ class Daemon(object):
                                help="run in debugging mode (run in the foreground)",
                                action="store_true", dest="debugging",
                                default=False)
+        self.parser.add_option("-P", "--pid-file",
+                               help='specify a particular pid file',
+                               dest="pidfile", default=self.pidfile)
 
     def parse_args(self, argv):
         """Given sys.argv, parses the command-line arguments.
         """
         (self.options, self.args) = self.parser.parse_args(argv)
+        self.pidfile = self.options.pidfile
         self.command = None
         if len(self.args) == 1:
             if self.args[0] in ('start', 'stop', 'restart'):
