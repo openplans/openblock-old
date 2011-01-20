@@ -40,10 +40,13 @@ def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
             del newsitem_list[end_index:]
     return newsitem_list
 
-#XXX
 def convert_to_spike_models(newsitem_list):
+    """
+    Given a list of vanilla NewsItems, this converts them
+    to subclasses based on the schema of each.
+    """
     # XXX this is badly inefficient, makes a hit to the db for EACH
-    # newsitem: a join against newsitem and the extra model table.
+    # newsitem: a join against db_newsitem and the extra model table.
 
     # XXX move this somewhere more sensible, like NewsItemQuerySet?
     # XXX ... or, since populate_attributes_if_needed() is already done
