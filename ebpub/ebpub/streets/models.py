@@ -312,26 +312,6 @@ class StreetMisspelling(models.Model):
     def __unicode__(self):
         return self.incorrect
 
-# A generic place, like "Millennium Park" or "Sears Tower"
-class Place(models.Model):
-    # XXX Is this actually used for anything? doesn't look like it?
-    pretty_name = models.CharField(max_length=255)
-    normalized_name = models.CharField(max_length=255) # Always uppercase, single spaces
-    address = models.CharField(max_length=255, blank=True)
-    location = models.GeometryField()
-    objects = models.GeoManager()
-
-    def __unicode__(self):
-        if self.address:
-            return u'%s (%s)' % (self.pretty_name, self.address)
-        return self.pretty_name
-
-    def save(self):
-        if not self.normalized_name:
-            from ebpub.geocoder.parser.parsing import normalize
-            self.normalized_name = normalize(self.pretty_name)
-        super(Place, self).save()
-
 class City(object):
     def __init__(self, name, slug, norm_name):
         self.name, self.slug, self.norm_name = name, slug, norm_name

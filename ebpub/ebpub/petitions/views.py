@@ -12,7 +12,7 @@ class LocationField(forms.CharField):
         if not value:
             raise forms.ValidationError('Enter your location.')
         try:
-            result = full_geocode(value, search_places=False)
+            result = full_geocode(value)
         except Exception:
             raise forms.ValidationError("We're not familiar with this location. Could you please enter another one that we'd know, like a ZIP code, perhaps?")
         if result['ambiguous'] and result['type'] != 'block':

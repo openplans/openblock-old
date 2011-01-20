@@ -1,6 +1,7 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.db import connection, transaction
+from django.db.models import Q
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
 import datetime
@@ -920,6 +921,15 @@ class TestyIssuesModel(NewStyleAttributesMixin, NewsItem):
     schemaslug = 'issues'
 
 class TestyInspectionsModel(NewStyleAttributesMixin, NewsItem):
+
+    # We use a lot of limit_choices_to=Q(...) as per
+    # http://docs.djangoproject.com/en/1.2/ref/models/fields/#django.db.models.ForeignKey.limit_choices_to
+    # to filter out irrelevant foreign keys from the add/edit admin UI.
+
+    # XXX can't do that on NewsItem.schema because in multi-table inheritance,
+    # subclasses can't override a base class' field.
+    # Wish limit_choices_to was part of ModelAdmin rather than Model.
+
     attribute_keys = ('inspection_id', 'restaurant_id',
                       'restaurant_name', 'result',
                       'violation', 'details')
@@ -943,6 +953,12 @@ class TestyInspectionsModel(NewStyleAttributesMixin, NewsItem):
     # Also, we don't have a reverse query attribute on Lookup because
     # it's probably not that useful given that the names have to be different
     # to avoid clashes; so we disable them by setting related_name='foo+'.
-    result = models.ManyToManyField(Lookup, related_name='result+', null=True)
-    violation = models.ManyToManyField(Lookup, related_name='violation+', null=True)
-    details = models.TextField(null=True)
+    # ... or maybe we could use & assume a naming convention?
+
+    result = models.ManyToManyField(
+        Lookup, related_name='result+', null=True,
+        limit_choices_to=Q(schema_field__name='result'))
+    violation = models.ManyToManyField(
+        Lookup, related_name='violation+', null=True,
+        limit_choices_to=Q(schema_field__name='violation'))
+    details = models.TextField(null=True, blank=True)

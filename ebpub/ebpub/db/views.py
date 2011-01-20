@@ -117,8 +117,7 @@ def url_to_place(*args, **kwargs):
     """Given args and kwargs captured from the URL, returns the place.
     This relies on "place_type" being provided in the URLpattern.
 
-    Note also that this returns either a streets.Block or a db.Location;
-    it does NOT ever return a streets.Place, despite the name!
+    This returns either a streets.Block or a db.Location.
     """
     parse_func = kwargs['place_type'] == 'block' and url_to_block or url_to_location
     return parse_func(*args)
@@ -435,7 +434,7 @@ def search(request, schema_slug=''):
 
     # Try to geocode it using full_geocode().
     try:
-        result = full_geocode(q, search_places=False)
+        result = full_geocode(q)
     except: # TODO: Naked except clause.
         pass
     else:
