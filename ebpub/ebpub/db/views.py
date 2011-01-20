@@ -286,12 +286,8 @@ def ajax_place_newsitems(request):
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
     pid = request.GET.get('pid', '')
-    place, block_radius = parse_pid(pid)
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
-    else:
-        newsitem_qs = NewsItem.objects.filter(newsitemlocation__location__id=place.id)
+    newsitem_qs = NewsItem.objects_by_schema(s)
+    newsitem_qs, _unused = filter_by_place_id(pid)
 
     # Make the JSON output. Note that we have to call dumps() twice because the
     # bunches are a special case.
@@ -309,15 +305,9 @@ def ajax_place_lookup_chart(request):
         sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
-    place, block_radius = parse_pid(request.GET.get('pid', ''))
-    qs = NewsItem.objects.filter(schema__id=sf.schema.id)
-    filter_url = place.url()[1:]
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url += radius_url(block_radius) + '/'
-    else:
-        qs = qs.filter(newsitemlocation__location__id=place.id)
+    qs = NewsItem.objects_by_schema(sf.schema)
+    pid = request.GET.get('pid', '')
+    qs, filter_url = filter_by_place_id(qs, pid)
     total_count = qs.count()
     top_values = qs.top_lookups(sf, 10)
     return render_to_response('db/snippets/lookup_chart.html', {
@@ -335,19 +325,13 @@ def ajax_place_date_chart(request):
         s = Schema.public_objects.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
-    place, block_radius = parse_pid(request.GET.get('pid', ''))
-    qs = NewsItem.objects.filter(schema__id=s.id)
-    filter_url = place.url()[1:]
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url += radius_url(block_radius) + '/'
-    else:
-        qs = qs.filter(newsitemlocation__location__id=place.id)
+    pid = request.GET.get('pid', '')
+    qs = NewsItem.objects_by_schema(s)
+    qs, filter_url = filter_by_place_id(qs, pid)
     # TODO: Ignore future dates
     end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    counts = qs.filter(schema__id=s.id, item_date__gte=start_date, item_date__lte=end_date).date_counts()
+    counts = qs.filter(item_date__gte=start_date, item_date__lte=end_date).date_counts()
     date_chart = get_date_chart([s], end_date - datetime.timedelta(days=settings.DEFAULT_DAYS), end_date, {s.id: counts})[0]
     return render_to_response('db/snippets/date_chart.html', {
         'schema': s,
@@ -505,7 +489,8 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         date = datetime.date(int(year), int(month), int(day))
     except ValueError:
         raise Http404('Invalid day')
-    ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id)
+    ni = get_object_or_404(NewsItem.objects_by_schema(schema_slug).select_related(),
+                           id=newsitem_id)
     if ni.schema.slug != schema_slug or ni.item_date != date:
         raise Http404
     if not ni.schema.is_public and not has_staff_cookie(request):
@@ -513,13 +498,6 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
 
     if not ni.schema.has_newsitem_detail:
         return HttpResponsePermanentRedirect(ni.url)
-
-    # XXX datamodel spike hack - replace the newsitem with a more specific
-    # subclass. XXX un-hardcode this.
-    if ni.schema.slug == 'issues':
-        ni = ni.testyissuesmodel
-    elif ni.schema.slug == 'restaurant-inspections':
-        ni = ni.testyinspectionsmodel
 
     atts = ni.attributes_for_template()
     has_location = ni.location is not None
@@ -598,6 +576,7 @@ def schema_detail(request, slug):
     location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
     if s.allow_charting:
+        ni_list = ()
         # For the date range, the end_date is the last non-future date
         # with at least one NewsItem.
         try:
@@ -646,13 +625,12 @@ def schema_detail(request, slug):
 
             if ni_totals:
                 location_chartfield_list.append({'location_type': lt, 'locations': ni_totals[:9], 'unknown': unknown_dict.get(lt.id, 0)})
-        ni_list = ()
-    else:
 
+    else:  # not s.allow_charting
         latest_dates = schemafield_list = date_chart = lookup_list = location_chartfield_list = ()
-        ni_list = list(NewsItem.objects.filter(schema__id=s.id).order_by('-item_date')[:30])
+        ni_list = list(NewsItem.objects_by_schema(s).order_by('-item_date')[:30])
         populate_schema(ni_list, s)
-        populate_attributes_if_needed(ni_list, [s])
+        #populate_attributes_if_needed(ni_list, [s])
 
     textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
     boolean_lookup_list = [sf for sf in SchemaField.objects.filter(schema__id=s.id, is_filter=True, is_lookup=False).order_by('display_order') if sf.is_type('bool')]
@@ -681,9 +659,9 @@ def schema_detail(request, slug):
     })
 
 def schema_detail_special_report(request, schema):
-    ni_list = NewsItem.objects.filter(schema__id=schema.id)
+    ni_list = NewsItem.objects_by_schema(schema)
     populate_schema(ni_list, schema)
-    populate_attributes_if_needed(ni_list, [schema])
+    #populate_attributes_if_needed(ni_list, [schema])
     bunches = cluster_newsitems(ni_list, 26)
 
     if schema.allow_charting:
@@ -770,7 +748,7 @@ def schema_filter(request, slug, urlbits):
     # Create the initial QuerySet of NewsItems.
     start_date = s.min_date
     end_date = today()
-    qs = NewsItem.objects.filter(schema__id=s.id, item_date__lte=end_date).order_by('-item_date')
+    qs = NewsItem.objects_by_schema(s).filter(item_date__lte=end_date).order_by('-item_date')
 
     lookup_descriptions = []
 
@@ -1336,27 +1314,21 @@ def newsitems_geojson(request):
     # XXX maybe should use get_place_info_for_request()?
 
     pid = request.GET.get('pid', '')
-    schema = request.GET.get('schema', '')
+    schema_slug = request.GET.get('schema', '')
     nid = request.GET.get('newsitem', '')
 
     cache_seconds = 60 * 5
-    cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
-
-    if nid:
-        newsitem_qs = NewsItem.objects.filter(id=nid)
+    cache_key = 'newsitem_geojson_%s_%s_%s' % (pid, nid, schema_slug)
+    if schema_slug:
+        newsitem_qs = NewsItem.objects_by_schema(schema_slug).all()
     else:
         newsitem_qs = NewsItem.objects.all()
-        if schema:
-            newsitem_qs = newsitem_qs.filter(schema__slug=schema)
+
+    if nid:
+        newsitem_qs = newsitem_qs.filter(id=nid)
+    else:
         if pid:
-            place, block_radius = parse_pid(pid)
-            if isinstance(place, Block):
-                search_buffer = make_search_buffer(place.location.centroid, block_radius)
-                newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
-            else:
-                # This depends on the trigger in newsitemlocation.sql
-                newsitem_qs = newsitem_qs.filter(
-                    newsitemlocation__location__id=place.id)
+            newsitem_qs, _unused = filter_by_place_id(newsitem_qs, pid)
         else:
             # Whole city!
             pass
@@ -1424,3 +1396,21 @@ def newsitems_geojson(request):
 def place_kml(request, *args, **kwargs):
     place = url_to_place(*args, **kwargs)
     return render_to_kml('place.kml', {'place': place})
+
+
+def filter_by_place_id(newsitem_qs, pid):
+    """
+    Given a QuerySet and a Place ID (as per parse_pid and make_pid),
+    returns a QuerySet filtered for that place, and the URL to
+    """
+    place, block_radius = parse_pid(pid)
+    filter_url = place.url()[1:]
+    if isinstance(place, Block):
+        search_buffer = make_search_buffer(place.location.centroid, block_radius)
+        newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
+        filter_url += radius_url(block_radius) + '/'
+    else:
+        # This depends on the trigger in newsitemlocation.sql
+        newsitem_qs = newsitem_qs.filter(newsitemlocation__location__id=place.id)
+    return newsitem_qs, filter_url
+

@@ -227,9 +227,9 @@ Multi-table inheritance on seeclickfix and restaurant-inspection models:
 Place detail:
 
  Document Path:          /locations/neighborhoods/allstonbrighton/
- Document Length:        140798 bytes
- Requests per second:    1.69 [#/sec] (mean)
- Time per request:       591.803 [ms] (mean)
+ Document Length:        141319 bytes
+ Requests per second:    1.45 [#/sec] (mean)
+ Time per request:       688.425 [ms] (mean)
 
 
 Old-school NewsItem + Attributes for all models:
