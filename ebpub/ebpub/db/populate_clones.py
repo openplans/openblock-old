@@ -2,7 +2,7 @@ from django.db import transaction
 from ebpub.db import models
 
 def populate_new_from_old_all(delete=False):
-    for model in (models.TestyIssuesModel,):
+    for model in (models.SeeclickfixIssue,):
         print "Deleting all existing of new model %s" % (model.schemaslug,)
         model.objects.all().delete()
         print "Populating new model %s" % (model.schemaslug,)

@@ -545,9 +545,9 @@ class NewsItem(models.Model):
             schema = schema.slug
         # XXX TODO: de-hardcode this
         if schema == 'restaurant-inspections':
-            model = TestyInspectionsModel
+            model = RestaurantInspection
         elif schema == 'issues':
-            model = TestyIssuesModel
+            model = SeeclickfixIssue
         else:
             model = None
         return kls.objects.get_query_set(model=model)
@@ -915,12 +915,12 @@ class NewStyleAttributesMixin(object):
         attribute_row = self.attributes
         return [AttributeForTemplate(f, attribute_row) for f in fields]
 
-class TestyIssuesModel(NewStyleAttributesMixin, NewsItem):
+class SeeclickfixIssue(NewStyleAttributesMixin, NewsItem):
     rating = models.IntegerField(null=True)
     attribute_keys = ('rating',)
     schemaslug = 'issues'
 
-class TestyInspectionsModel(NewStyleAttributesMixin, NewsItem):
+class RestaurantInspection(NewStyleAttributesMixin, NewsItem):
 
     # We use a lot of limit_choices_to=Q(...) as per
     # http://docs.djangoproject.com/en/1.2/ref/models/fields/#django.db.models.ForeignKey.limit_choices_to

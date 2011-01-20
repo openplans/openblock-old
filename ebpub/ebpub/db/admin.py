@@ -248,12 +248,12 @@ admin.site.register(Location, LocationAdmin)
 admin.site.register(Lookup, LookupAdmin)
 
 # Datamodel spike hacks - XXX de-hardcode these
-from ebpub.db.models import TestyInspectionsModel
+from ebpub.db.models import RestaurantInspection
 
-class TestyInspectionsAdmin(NewsItemAdmin):
+class RestaurantInspectionAdmin(NewsItemAdmin):
 
     # Not the best UI if there are a ton of Lookups, but
     # normally there probably aren't and it works OK.
     filter_horizontal = ('violation', 'result')
 
-admin.site.register(TestyInspectionsModel, TestyInspectionsAdmin)
+admin.site.register(RestaurantInspection, RestaurantInspectionAdmin)
