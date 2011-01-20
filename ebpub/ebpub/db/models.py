@@ -360,17 +360,8 @@ class AttributeDict(dict):  # XXX THIS CAN DIE
         transaction.commit_unless_managed()
         dict.__setitem__(self, name, value)
 
+
 class NewsItemQuerySet(models.query.GeoQuerySet):
-    def prepare_attribute_qs(self):
-        # XXX TODO: SPIKIFY
-        clone = self._clone()
-        if 'db_attribute' not in clone.query.extra_tables:
-            clone = clone.extra(tables=('db_attribute',))
-        # extra_where went away in Django 1.1.
-        # This seems to be the correct replacement as per
-        # http://docs.djangoproject.com/en/dev/ref/models/querysets/
-        clone = clone.extra(where=('db_newsitem.id = db_attribute.news_item_id',))
-        return clone
 
     def by_attribute(self, schema_field, att_value, is_lookup=False):
         """
@@ -379,18 +370,21 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         equivalent of an "OR" search, returning all NewsItems that have an
         attribute value in the att_value list.
 
+        Note that this necessarily implies you've already filtered by
+        one specific Schema, and have instances of a corresponding
+        NewsItem subclass.  This is best accomplished via
+        NewsItem.objects_by_schema(schema).
+
         This handles many-to-many lookups correctly behind the scenes.
 
         If is_lookup is True, then att_value is treated as the 'code' of a
         Lookup object, and the Lookup's ID will be retrieved for use in the
         query.
         """
-        # XXX TODO: SPIKIFY or, better, replace this API with the
-        # normal filter API. Steal ideas from
-        # https://bitbucket.org/neithere/eav-django/src/a77108ae1f3f/eav/managers.py
-        # ... but that may be more work.
-        clone = self.prepare_attribute_qs()
-        real_name = str(schema_field.real_name)
+        # XXX TODO: since we now have attributes on subclasses,
+        # maybe just replace this with the normal filter API?
+        clone = self._clone()
+
         if not isinstance(att_value, (list, tuple)):
             att_value = [att_value]
         if is_lookup:
@@ -403,14 +397,9 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
                 clone = clone.extra(where=('1=0',))
                 return clone
             att_value = [val.id for val in att_value]
-        if schema_field.is_many_to_many_lookup():
-            # We have to use a regular expression search to look for all rows
-            # with the given att_value *somewhere* in the column. The [[:<:]]
-            # thing is a word boundary.
-            for value in att_value:
-                if not str(value).isdigit():
-                    raise ValueError('Only integer strings allowed for att_value in many-to-many SchemaFields')
-            clone = clone.extra(where=("db_attribute.%s ~ '[[:<:]]%s[[:>:]]'" % (real_name, '|'.join([str(val) for val in att_value])),))
+        if schema_field.is_lookup: #many_to_many_lookup():
+            lookup_args = {schema_field.slug + '__in': att_value}
+            clone = clone.filter(**lookup_args)
         elif None in att_value:
             if att_value != [None]:
                 raise ValueError('by_attribute() att_value list cannot have more than one element if it includes None')
@@ -437,10 +426,9 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Lookups for this QuerySet.
         """
         # XXX TODO: SPIKIFY
-        real_name = "db_attribute." + str(schema_field.real_name)
         if schema_field.is_many_to_many_lookup():
-            clone = self.prepare_attribute_qs().filter(schema__id=schema_field.schema_id)
-            clone = clone.extra(where=[real_name + " ~ ('[[:<:]]' || db_lookup.id || '[[:>:]]')"])
+            clone = self._clone()
+            #clone = clone.extra(where=[real_name + " ~ ('[[:<:]]' || db_lookup.id || '[[:>:]]')"]) XXX
             # We want to count the current queryset and get a single
             # row for injecting into the subsequent Lookup query, but
             # we don't want Django's aggregation support to
@@ -453,7 +441,8 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
             qs = Lookup.objects.filter(schema_field__id=schema_field.id)
             qs = qs.extra(select={'lookup_id': 'id', 'item_count': clone.values('count').query})
         else:
-            qs = self.prepare_attribute_qs().extra(select={'lookup_id': real_name})
+            #XXX spikify
+            qs = self._clone().extra(select={'lookup_id': real_name})
             qs.query.group_by = [real_name]
             qs = qs.values('lookup_id').annotate(item_count=Count('id'))
         ids_and_counts = [(v['lookup_id'], v['item_count']) for v in qs.values('lookup_id', 'item_count').order_by('-item_count') if v['item_count']][:count]
@@ -466,7 +455,7 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         a given schema field matches a text search query.
         """
         # XXX TODO: SPIKIFY
-        clone = self.prepare_attribute_qs()
+        clone = self._clone()
         query = query.lower()
 
         clone = clone.extra(where=("db_attribute." + str(schema_field.real_name)
@@ -475,8 +464,10 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         return clone
 
 class NewsItemManager(models.GeoManager):
-    def get_query_set(self):
-        return NewsItemQuerySet(self.model)
+    def get_query_set(self, model=None):
+        if model is None:
+            model = self.model
+        return NewsItemQuerySet(model)
 
     def by_attribute(self, *args, **kwargs):
         return self.get_query_set().by_attribute(*args, **kwargs)
@@ -489,6 +480,7 @@ class NewsItemManager(models.GeoManager):
 
     def top_lookups(self, *args, **kwargs):
         return self.get_query_set().top_lookups(*args, **kwargs)
+
 
 class NewsItem(models.Model):
     """
@@ -542,6 +534,23 @@ class NewsItem(models.Model):
     location_object = models.ForeignKey(Location, blank=True, null=True)
     block = models.ForeignKey(Block, blank=True, null=True)
     objects = NewsItemManager()
+
+    @classmethod
+    def objects_by_schema(kls, schema):
+        """
+        Returns a QuerySet that returns subclasses of NewsItem
+        """
+        if not isinstance(schema, basestring):
+            schema = schema.slug
+        # XXX TODO: de-hardcode this
+        if schema == 'restaurant-inspections':
+            model = TestyInspectionsModel
+        elif schema == 'issues':
+            model = TestyIssuesModel
+        else:
+            model = None
+        return kls.objects.get_query_set(model=model)
+
     attributes = AttributesDescriptor()  # Treat it like a dict. #XXX this can die
 
     def __unicode__(self):
@@ -566,19 +575,8 @@ class NewsItem(models.Model):
             return self.location_object.url()
         return None
 
-    def attributes_for_template(self):
-        """
-        Return a list of AttributeForTemplate objects for this NewsItem. The
-        objects are ordered by SchemaField.display_order.
-        """
-        fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
-        if not fields:
-            return []
-        try:
-            attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
-        except KeyError:
-            return []
-        return [AttributeForTemplate(f, attribute_row) for f in fields]
+    def attributes_for_template(self, *args, **kwargs):
+        return []
 
 class AttributeForTemplate(object):
     """Cooks a NewsItem's extensible attributes metadata a bit for
@@ -865,8 +863,7 @@ class AttributeDict2(DictMixin):
                 field.clear()
                 field.add(*val)
             else:
-                import pdb; pdb.set_trace()
-                print "should not get here"
+                raise AssertionError("should not get here")
         else:
             setattr(self.newsitem, key, val)
 
@@ -949,5 +946,3 @@ class TestyInspectionsModel(NewStyleAttributesMixin, NewsItem):
     result = models.ManyToManyField(Lookup, related_name='result+', null=True)
     violation = models.ManyToManyField(Lookup, related_name='violation+', null=True)
     details = models.TextField(null=True)
-
-# XXX TODO: patch up by_attribute
