@@ -224,7 +224,7 @@ Place detail:
 Multi-table inheritance on seeclickfix and restaurant-inspection models:
 ------------------------------------------------------------------------
 
-Place detail:
+Place detail as of changeset 83571937bfc81:
 
  Document Path:          /locations/neighborhoods/allstonbrighton/
  Document Length:        141319 bytes
