@@ -164,8 +164,8 @@ class GetNewsItemListByAttributeNode(template.Node):
         newsitem_id = self.newsitem_id_variable.resolve(context)
         att_value = self.att_value_variable.resolve(context)
         sf = SchemaField.objects.select_related().get(schema__id=schema_id, name=self.att_name)
-        ni_list = NewsItem.objects.select_related().filter(schema__id=schema_id).exclude(id=newsitem_id).by_attribute(sf, att_value).order_by('-item_date')
-        populate_attributes_if_needed(ni_list, [sf.schema])
+        ni_list = NewsItem.objects_by_schema(sf.schema).exclude(id=newsitem_id).by_attribute(sf, att_value).order_by('-item_date')
+        #populate_attributes_if_needed(ni_list, [sf.schema])
 
         # We're assigning directly to context.dicts[-1] so that the variable
         # gets set in the top-most context in the context stack. If we didn't

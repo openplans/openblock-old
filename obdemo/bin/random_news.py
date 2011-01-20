@@ -14,7 +14,7 @@ if not os.environ.get('DJANGO_SETTINGS_MODULE'):
     sys.exit(1)
 print "Using DJANGO_SETTINGS_MODULE=%s" % os.environ['DJANGO_SETTINGS_MODULE']
 
-from ebpub.db.models import NewsItem, Schema, TestyIssuesModel, TestyInspectionsModel
+from ebpub.db.models import NewsItem, Schema, SeeclickfixIssue, RestaurantInspection
 from ebpub.streets.models import Block
 lookup_vals = ['lookup_%03d' % i for i in range(300)]
 
@@ -34,7 +34,7 @@ def save_random_newsitem(schema, i, block):
     title = '%d Random %s %s' % (i, schema.name, uuid.uuid4())
     print "Creating %r" % title
     # XXX datamodel spike hack - switch to using the subclass instance
-    for item_factory in (TestyInspectionsModel, TestyIssuesModel):
+    for item_factory in (RestaurantInspection, SeeclickfixIssue):
         if item_factory.schemaslug == schema.slug:
             item = item_factory()
             break

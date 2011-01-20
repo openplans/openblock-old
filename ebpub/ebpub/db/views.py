@@ -859,7 +859,7 @@ def schema_filter(request, slug, urlbits):
             try:
                 block_radius = urlbits.pop()
             except IndexError:
-                xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+                block_radius, cookies_to_set = block_radius_value(request)
                 return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')
             m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
             if not m:
@@ -1103,7 +1103,7 @@ def get_place_info_for_request(request, *args, **kwargs):
             newsitemlocation__location__id=place.id)
     elif isinstance(place, Block):
         info['is_block'] = True
-        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+        block_radius, cookies_to_set = block_radius_value(request)
         search_buf = make_search_buffer(place.location.centroid, block_radius)
         info['nearby_locations'] = nearby.filter(
                                     location__bboverlaps=search_buf

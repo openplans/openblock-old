@@ -56,9 +56,9 @@ def convert_to_spike_models(newsitem_list):
     results = []
     for ni in newsitem_list:
         if ni.schema.slug == 'issues':
-            new_ni = ni.testyissuesmodel
+            new_ni = ni.seeclickfixissue
         elif ni.schema.slug == 'restaurant-inspections':
-            new_ni = ni.testyinspectionsmodel
+            new_ni = ni.restaurantinspection
         else:
             new_ni = ni
         if hasattr(ni, '_schema_cache'):
@@ -82,81 +82,10 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     Note that the list is edited in place; there is no return value.
     """
-    from ebpub.db.models import Attribute, Lookup, SchemaField
-    # To accomplish this, we determine which NewsItems in ni_list require
-    # attribute prepopulation, and run a single DB query that loads all of the
-    # attributes. Another way to do this would be to load all of the attributes
-    # when loading the NewsItems in the first place (via a JOIN), but we want
-    # to avoid joining such large tables.
+    # XXX in the datamodel-spike branch, this no longer does anything,
+    # since all our newsitems are presumably already approprate subclasses.
+    return
 
-    # TODO: #72. This is an optimization that doesn't justify having a
-    # parallel API that isn't even documented in model code where it
-    # belongs. Rewrite to stuff the data in ni._attributes_cache
-    # instead.
-
-    # XXX datamodel spike. don't use this on new-style
-    # models. Consider ditching this optimization entirely
-    schema_list = [s for s in schema_list if s.slug not in
-                   ('issues', 'restaurant-inspections')]
-
-    preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
-    if not preload_schema_ids:
-        return
-    preloaded_nis = [ni for ni in newsitem_list if ni.schema_id in preload_schema_ids]
-    if not preloaded_nis:
-        return
-    # fmap = {schema_id: {'fields': [(name, real_name)], 'lookups': [real_name1, real_name2]}}
-    fmap = {}
-    attribute_columns_to_select = set(['news_item'])
-
-    for sf in SchemaField.objects.filter(schema__id__in=[s.id for s in schema_list]).values('schema', 'name', 'real_name', 'is_lookup'):
-        fmap.setdefault(sf['schema'], {'fields': [], 'lookups': []})['fields'].append((sf['name'], sf['real_name']))
-        if sf['is_lookup']:
-            fmap[sf['schema']]['lookups'].append(sf['real_name'])
-        attribute_columns_to_select.add(str(sf['real_name']))
-
-    att_dict = dict([(i['news_item'], i) for i in Attribute.objects.filter(news_item__id__in=[ni.id for ni in preloaded_nis]).values(*list(attribute_columns_to_select))])
-
-    if not fmap: 
-        return
-
-    # Determine which Lookup objects need to be retrieved.
-    lookup_ids = set()
-    for ni in preloaded_nis:
-        # Fix for #38: not all Schemas have SchemaFields, can be 100% vanilla.
-        if not ni.schema_id in fmap:
-            continue
-        for real_name in fmap[ni.schema_id]['lookups']:
-            value = att_dict[ni.id][real_name]
-            if ',' in str(value):
-                lookup_ids.update(value.split(','))
-            else:
-                lookup_ids.add(value)
-
-    # Retrieve only the Lookups that are referenced in preloaded_nis.
-    lookup_ids = [i for i in lookup_ids if i]
-    if lookup_ids:
-        lookup_objs = Lookup.objects.in_bulk(lookup_ids)
-    else:
-        lookup_objs = {}
-        
-    # Set 'attribute_values' for each NewsItem in preloaded_nis.
-    for ni in preloaded_nis:
-        if not ni.id in att_dict:
-            # Fix for #38: Schemas may not have any SchemaFields, and
-            # thus the ni will have no attributes, and that's OK.
-            continue
-        att = att_dict[ni.id]
-        att_values = {}
-        for field_name, real_name in fmap[ni.schema_id]['fields']:
-            value = att[real_name]
-            if real_name in fmap[ni.schema_id]['lookups']:
-                if real_name.startswith('int'):
-                    value = lookup_objs[value]
-                else: # Many-to-many lookups are comma-separated strings.
-                    value = [lookup_objs[int(i)] for i in value.split(',') if i]
-            att_values[field_name] = value
-        ni.attribute_values = att_values
 
 def populate_schema(newsitem_list, schema):
     for ni in newsitem_list:
