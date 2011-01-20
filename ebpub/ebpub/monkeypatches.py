@@ -196,6 +196,9 @@ def patch_once():
     from django.core.serializers import python
     python.Deserializer = Deserializer
     python.Serializer.end_object = end_object
+    # have to patch stuff that's already been loaded with a 'from' import, yay
+    from django.core.serializers import json
+    json.PythonDeserializer = Deserializer
 
     from django.core.serializers import xml_serializer
     xml_serializer.Serializer.start_object = start_object
