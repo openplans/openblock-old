@@ -231,14 +231,21 @@ class NewsItemAdmin(OSMModelAdmin):
     list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
     list_filter = ('schema',)
 
+class LocationTypeAdmin(admin.ModelAdmin):
+    list_display = ('name', 'is_browsable', 'is_significant')
+    list_filter = ('is_browsable', 'is_significant')
+
 class LocationAdmin(OSMModelAdmin):
     pass
 
+class SchemaFieldAdmin(admin.ModelAdmin):
+    list_filter = ('schema', 'is_lookup', 'is_filter', 'is_charted', 'is_searchable')
+
 
 admin.site.register(Schema)
-admin.site.register(SchemaField)
+admin.site.register(SchemaField, SchemaFieldAdmin)
 #admin.site.register(Attribute, AttributeAdmin)
 admin.site.register(NewsItem, NewsItemAdmin)
-admin.site.register(LocationType)
+admin.site.register(LocationType, LocationTypeAdmin)
 admin.site.register(Location, LocationAdmin)
 
