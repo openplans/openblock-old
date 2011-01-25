@@ -642,7 +642,7 @@ class Attribute(models.Model):
     that NewsItem.  eg. newsitem.
 
     """
-    news_item = models.ForeignKey(NewsItem, primary_key=True, unique=True)
+    news_item = models.OneToOneField(NewsItem, primary_key=True, unique=True)
     schema = models.ForeignKey(Schema)
     # All data-type field names must end in two digits, because the code assumes this.
     varchar01 = models.CharField(max_length=255, blank=True, null=True)
