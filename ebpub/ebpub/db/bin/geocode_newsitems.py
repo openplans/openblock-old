@@ -30,10 +30,10 @@ def geocode(schema=None):
         except InvalidBlockButValidStreet:
             print '      invalid block but valid street: %s' % loc_name
             invalid_block_count += 1
-        except AmbiguousResult, e:
+        except AmbiguousResult:
             print '      ambiguous: %s' % loc_name
             ambiguous_count += 1
-        except GeocodingException, e:
+        except GeocodingException:
             print '      not found: %s' % loc_name
             not_found_count += 1
         except ParsingError:
@@ -47,6 +47,8 @@ def geocode(schema=None):
             ni.save()
             print '%s (%s)' % (loc_name, ni.item_url())
             geocoded_count += 1
+    else:
+        print "No NewsItems with null locations found"
 
     print "------------------------------------------------------------------"
     print "Geocoded:       %s" % geocoded_count
