@@ -74,7 +74,8 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     preloaded_nis = [ni for ni in newsitem_list if ni.schema_id in preload_schema_ids]
     if not preloaded_nis:
         return
-    # fmap = {schema_id: {'fields': [(name, real_name)], 'lookups': [real_name1, real_name2]}}
+    # fmap is a mapping like:
+    # {schema_id: {'fields': [(name, real_name)], 'lookups': [real_name1, real_name2]}}
     fmap = {}
     attribute_columns_to_select = set(['news_item'])
 
