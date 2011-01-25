@@ -24,7 +24,7 @@
 };
 {{ module }}.write_wkt = function(feat){
   if ({{ module }}.is_collection){
-    {{ module }}.num_geom = feat.length;
+    {{ module }}.num_geom = feat.geometry.components.length;
   } else {
     {{ module }}.num_geom = 1;
   };
@@ -141,17 +141,8 @@
       // WKT <textarea> as EWKT (so that SRID is included).
       var admin_geom = {{ module }}.read_wkt(wkt);
       {{ module }}.write_wkt(admin_geom);
-      var bounds;
-      if ({{ module }}.is_collection) {
-        {{ module }}.layers.vector.addFeatures(admin_geom);
-        bounds = admin_geom[0].geometry.getBounds();
-        for (var i = 1; i < admin_geom.length; i++ ) {
-          bounds.extend(admin_geom[i].geometry.getBounds());
-        };
-      } else {
-	{{ module }}.layers.vector.addFeatures([admin_geom]);
-	bounds = admin_geom.geometry.getBounds();
-      };
+      {{ module }}.layers.vector.addFeatures([admin_geom]);
+      var bounds = admin_geom.geometry.getBounds();
       {{ module }}.map.zoomToExtent(bounds);
       if ({{ module }}.is_point){
           {{ module }}.map.zoomTo({{ point_zoom }});
