@@ -512,13 +512,18 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         return HttpResponsePermanentRedirect(ni.url)
 
     atts = ni.attributes_for_template()
+
     has_location = ni.location is not None
 
     if has_location:
-        # TODO: couldn't this be done faster by a NewsItemLocation query?
-        locations_within = Location.objects.select_related().filter(location__intersects=ni.location)
+        locations_within = Location.objects.select_related().filter(
+            newsitemlocation__news_item__id=ni.id)
+        center_x = ni.location.centroid.x
+        center_y = ni.location.centroid.y
     else:
         locations_within = ()
+        center_x = settings.DEFAULT_CENTER_LON
+        center_y = settings.DEFAULT_CENTER_LAT
 
     hide_ads = (request.COOKIES.get(HIDE_ADS_COOKIE_NAME) == 't')
 
@@ -527,6 +532,7 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         templates_to_try = ('db/newsitem_detail_new.html',) + templates_to_try
 
     # Try to find a usable URL to link to from the location name.
+    # TODO: move this logic to NewsItem.location_url()
     location_url = ni.location_url()
     if not location_url:
         # There might be any number of intersecting locations_within,
@@ -560,6 +566,9 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         'locations_within': locations_within,
         'location_url': location_url,
         'hide_ads': hide_ads,
+        'map_center_x': center_x,
+        'map_center_y': center_y,
+
     })
 
 def schema_list(request):
