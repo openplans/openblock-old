@@ -22,9 +22,11 @@ OpenBlock began life as the open-source code released by
 and the Everyblock team, it is now developed as an open-source (GPL)
 project at http://openblockproject.org.
 
-Funding for both the initial creation of Everyblock and the ongoing
-development of OpenBlock was provided by the `Knight Foundation
-<http://www.knightfoundation.org/>`_.
+Funding for both the 
+`initial creation of Everyblock <http://www.newschallenge.org/winner/2007/everyblock>`_
+and the `ongoing development of OpenBlock
+<http://www.knightfoundation.org/news/press_room/knight_press_releases/detail.dot?id=364383>`_
+was provided by the `Knight Foundation <http://www.knightfoundation.org/>`_.
 
 
 For Developers
