@@ -37,7 +37,7 @@ def populate_ni_loc(location):
         cursor.execute("""
             INSERT INTO db_newsitemlocation (news_item_id, location_id)
             SELECT ni.id, loc.id FROM db_newsitem ni, db_location loc
-            WHERE intersects(loc.location, ni.location)
+            WHERE intersecting_collection(ni.location, loc.location)
                 AND ni.id >= %s AND ni.id < %s
                 AND loc.id = %s """, (i, i+200, location.id))
         connection._commit()

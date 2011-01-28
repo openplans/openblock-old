@@ -6,12 +6,8 @@ from django.contrib.gis.gdal import OGRException
 from django.contrib.gis.gdal import OGRGeomType
 from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.template import loader
-from ebpub.db.models import Attribute
-from ebpub.db.models import Location
-from ebpub.db.models import LocationType
-from ebpub.db.models import NewsItem
-from ebpub.db.models import Schema
-from ebpub.db.models import SchemaField
+from ebpub.db.forms import LocationForm
+
 import os
 
 """
@@ -97,6 +93,7 @@ class OBOpenLayersWidget(OpenLayersWidget):
 
 
         else:
+            # No value.
             if self.params['is_unknown']:
                 # If the geometry is unknown and the value is not set, make it as flexible as possible.
                 self.params['geom_type'] = 'Collection' #OGRGeomType('GEOMETRYCOLLECTION')
@@ -146,30 +143,35 @@ class OSMModelAdmin(admin.GeoModelAdmin):
         OVERRIDING FOR OPENBLOCK: This is the patched version of this
         method as per
         http://code.djangoproject.com/attachment/ticket/9806/9806.3.diff
-        and we can delete it if/when
+        and we can maybe delete it if/when
         http://code.djangoproject.com/ticket/9806 gets fixed.
         """
+
+        # Note that db_field.geom_type is an UPPERCASE name, while
+        # OGRGeomType(foo) is a CamelCase name.
         is_unknown = db_field.geom_type in ('GEOMETRY',)
         if not is_unknown:
-            #If it is not generic, get the parameters from the db_field
+            #If it is not generic, get the parameters from the db_field.
             is_collection = db_field.geom_type in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION')
             if is_collection:
-                if db_field.geom_type == 'GEOMETRYCOLLECTION': collection_type = 'Any'
-                else: collection_type = OGRGeomType(db_field.geom_type.upper().replace('MULTI', ''))
+                if db_field.geom_type == 'GEOMETRYCOLLECTION':
+                    collection_type = 'Any'
+                else:
+                    collection_type = OGRGeomType(db_field.geom_type.replace('MULTI', ''))
             else:
                 collection_type = 'None'
             is_linestring = db_field.geom_type in ('LINESTRING', 'MULTILINESTRING')
             is_polygon = db_field.geom_type in ('POLYGON', 'MULTIPOLYGON')
             is_point = db_field.geom_type in ('POINT', 'MULTIPOINT')
-            geom_type = OGRGeomType(db_field.geom_type)
+            openlayers_geom_type = OGRGeomType(db_field.geom_type)
         else:
-            #If it is generic, set sensible defaults
-            is_collection = False
-            collection_type = 'None'
+            #If it is generic, set sensible defaults.
+            is_collection = True
+            collection_type = 'Any'
             is_linestring = False
             is_polygon = False
             is_point = False
-            geom_type = OGRGeomType('Unknown')
+            openlayers_geom_type = OGRGeomType('Unknown')
 
         class OLMap(self.widget):
             template = self.map_template
@@ -188,7 +190,7 @@ class OSMModelAdmin(admin.GeoModelAdmin):
                       'display_srid' : self.display_srid,
                       'display_wkt' : self.debug or self.display_wkt,
                       'field_name' : db_field.name,
-                      'geom_type' : geom_type,
+                      'geom_type' : openlayers_geom_type,
                       'is_collection' : is_collection,
                       'is_linestring' : is_linestring,
                       'is_point' : is_point,
@@ -216,6 +218,7 @@ class OSMModelAdmin(admin.GeoModelAdmin):
                       'wms_options': wms_options,
                       'wms_url' : self.wms_url,
                       }
+
         return OLMap
 
 class AttributeInline(admin.StackedInline):
@@ -230,13 +233,17 @@ class NewsItemAdmin(OSMModelAdmin):
 
     list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
     list_filter = ('schema',)
+    form = NewsItemForm
 
 class LocationTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_browsable', 'is_significant')
     list_filter = ('is_browsable', 'is_significant')
 
 class LocationAdmin(OSMModelAdmin):
-    pass
+    form = LocationForm
+
+    # This is populated by a trigger in ebpub/db/sql/location.sql.
+    readonly_fields = ('area',)
 
 class SchemaFieldAdmin(admin.ModelAdmin):
     list_filter = ('schema', 'is_lookup', 'is_filter', 'is_charted', 'is_searchable')

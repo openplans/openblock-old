@@ -191,11 +191,6 @@ database in settings.py. The users database has to come first::
     $ ./manage.py syncdb --database=metros
     $ ./manage.py syncdb --database=default
 
-Finally, there's one database trigger that needs to be set up, but --
-due to a `Django bug <http://code.djangoproject.com/ticket/13826>`_ --
-it isn't created automatically.  We'll fix this with one command::
-
-    $ ./manage.py dbshell --database=default < ../../ebpub/ebpub/db/sql/location.sql
 
 
 Starting the Test Server

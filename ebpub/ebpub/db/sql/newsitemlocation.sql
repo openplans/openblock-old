@@ -22,7 +22,7 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
                 IF (NEW.location IS NOT NULL) THEN
                     IF (GeometryType(NEW.location) = 'GEOMETRYCOLLECTION') THEN
                         FOR i IN 1..ST_NumGeometries(NEW.location) LOOP
-                                FOR loc_id IN SELECT id FROM db_location WHERE intersects(db_location.location, ST_GeometryN(NEW.location, i)) LOOP
+                                FOR loc_id IN SELECT id FROM db_location WHERE intersecting_collection(ST_GeometryN(NEW.location, i), db_location.location) LOOP
                                     PERFORM * FROM db_newsitemlocation WHERE news_item_id = NEW.id AND location_id = loc_id; --
                                     IF NOT FOUND THEN
                                         INSERT INTO db_newsitemlocation (news_item_id, location_id) VALUES (NEW.id, loc_id); --
@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
                         END LOOP; --
                     ELSE
                         INSERT INTO db_newsitemlocation (news_item_id, location_id)
-                        SELECT NEW.id, id FROM db_location WHERE intersects(db_location.location, NEW.location); --
+                        SELECT NEW.id, id FROM db_location WHERE intersecting_collection(NEW.location, db_location.location); --
                     END IF; --
                 END IF; --
             END IF; --
@@ -49,7 +49,7 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
             IF (NEW.location IS NOT NULL) THEN
                 IF (GeometryType(NEW.location) = 'GEOMETRYCOLLECTION') THEN
                     FOR i IN 1..ST_NumGeometries(NEW.location) LOOP
-                            FOR loc_id IN SELECT id FROM db_location WHERE intersects(db_location.location, ST_GeometryN(NEW.location, i)) LOOP
+                            FOR loc_id IN SELECT id FROM db_location WHERE intersecting_collection(ST_GeometryN(NEW.location, i), db_location.location) LOOP
                                 PERFORM * FROM db_newsitemlocation WHERE news_item_id = NEW.id AND location_id = loc_id; --
                                 IF NOT FOUND THEN
                                     INSERT INTO db_newsitemlocation (news_item_id, location_id) VALUES (NEW.id, loc_id); --
@@ -58,7 +58,7 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
                     END LOOP; --
                 ELSE
                     INSERT INTO db_newsitemlocation (news_item_id, location_id)
-                    SELECT NEW.id, id FROM db_location WHERE intersects(db_location.location, NEW.location); --
+                    SELECT NEW.id, id FROM db_location WHERE intersecting_collection(NEW.location, db_location.location); --
                 END IF; --
             END IF; --
             -- Update "Unknown" locations
@@ -85,7 +85,7 @@ BEFORE INSERT OR UPDATE OR DELETE ON db_newsitem
 -- DROP TRIGGER location_updater ON db_newsitem;
 -- DROP FUNCTION update_newsitem_location();
 
--- To populate for a new location:
+-- To populate for a new location (as long as ni.location is not a GEOMETRYCOLLECTION):
 -- INSERT INTO db_newsitemlocation (news_item_id, location_id)
 -- SELECT ni.id, loc.id FROM db_newsitem ni, db_location loc
--- WHERE intersects(loc.location, ni.location) AND loc.id = 826;
+-- WHERE intersecting_collection(ni.location, loc.location) AND loc.id = 826;
