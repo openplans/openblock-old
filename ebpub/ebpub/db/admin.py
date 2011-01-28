@@ -7,6 +7,9 @@ from django.contrib.gis.gdal import OGRGeomType
 from django.contrib.gis.geos import GEOSGeometry, GEOSException
 from django.template import loader
 from ebpub.db.forms import LocationForm
+from ebpub.db.forms import NewsItemForm
+from ebpub.db.models import Attribute, Location, LocationType, NewsItem
+from ebpub.db.models import Schema, SchemaField
 
 import os
 
