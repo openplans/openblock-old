@@ -1,3 +1,6 @@
+-- This is useful if you want to reset just your newsitems
+-- and not your locations.
+-- If you want to reset ALL of the db models, use `django-admin.py sqlreset db`
 
 truncate table db_attribute cascade;
 truncate table db_lookup cascade;
