@@ -1,27 +1,53 @@
-/*
-Basic styles for OpenBlock Project - http://openblockproject.org/
-Author: Andrew Cochran
-Author URI: http://openplans.org/
-.
-*/
-
-
-/* =Utility Classes
--------------------------------------------------------------- */
-
+html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, font, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td {
+    background: none repeat scroll 0 0 transparent;
+    border: 0 none;
+    font-size: 100%;
+    margin: 0;
+    outline: 0 none;
+    padding: 0;
+    vertical-align: baseline;
+}
+body {
+    background: none repeat scroll 0 0 #FFFFFF;
+    line-height: 1;
+}
+ol, ul {
+    list-style: none outside none;
+}
+blockquote, q {
+    quotes: none;
+}
+blockquote:before, blockquote:after, q:before, q:after {
+    content: none;
+}
+:focus {
+    outline: 0 none;
+}
+ins {
+    text-decoration: none;
+}
+del {
+    text-decoration: line-through;
+}
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+a img {
+    border: medium none;
+}
 .selfclear:after {
+    clear: both;
     content: ".";
     display: block;
     height: 0;
-    clear: both;
     visibility: hidden;
 }
 .selfclear {
-    display: inline-block; /* IE 7 */
+    display: inline-block;
 }
 .selfclear {
     display: block;
-    zoom: 1;
 }
 .nobreak {
     white-space: nowrap;
@@ -29,244 +55,341 @@ Author URI: http://openplans.org/
 .hidden {
     display: none;
 }
-
-
-/* =Typography
--------------------------------------------------------------- */
-
 body, input, textarea, button {
-    color: #333;
-    font: 15px Verdana,sans-serif;
-    line-height: 22px;
+    color: #333333;
+    font: 15px/22px Verdana,sans-serif;
 }
-h1,h2,h3,h4,h5,h6 { 
-	font-weight: bold;
-	clear: both;
+h1, h2, h3, h4, h5, h6 {
+    clear: both;
+    font-weight: bold;
 }
-h1, h2 { 
-    font-size: 20px; 
-	text-shadow: 1px 1px 0 #fff;
-	margin: 22px 0;
+h1, h2 {
+    font-size: 20px;
+    margin: 22px 0;
+    text-shadow: 1px 1px 0 #FFFFFF;
 }
 h3 {
     font-size: 20px;
-	margin: 22px 0 10px;
+    margin: 22px 0 10px;
 }
 h4 {
     font-size: 18px;
     font-weight: normal;
-	margin: 10px 0 5px;
-	text-transform: uppercase;
+    margin: 10px 0 5px;
+    text-transform: uppercase;
 }
 h5 {
     font-size: 17px;
     font-weight: normal;
-	text-transform: uppercase;
-	margin: 10px 0 5px;
+    margin: 10px 0 5px;
+    text-transform: uppercase;
 }
 h6 {
     font-weight: normal;
-	text-transform: uppercase;
-	margin: 10px 0 5px;
+    margin: 10px 0 5px;
+    text-transform: uppercase;
 }
-
 p {
-    margin-bottom:18px;
+    margin-bottom: 18px;
 }
 ul {
-	margin: 0 0 18px 2.5em;
+    margin: 0 0 18px 2.5em;
 }
 ol {
-	margin: 0 0 18px 2.5em;
+    margin: 0 0 18px 2.5em;
 }
 ul {
-	list-style:disc;
+    list-style: disc outside none;
 }
 ol {
-	list-style-type: decimal;
+    list-style-type: decimal;
 }
 ol ol {
-	list-style:upper-alpha;
+    list-style: upper-alpha outside none;
 }
 ol ol ol {
-	list-style:lower-roman;
+    list-style: lower-roman outside none;
 }
 ol ol ol ol {
-	list-style:lower-alpha;
+    list-style: lower-alpha outside none;
 }
 ul ul, ol ol, ul ol, ol ul {
-	margin-bottom:0;
+    margin-bottom: 0;
 }
-dl	{
-    margin:0 1.5em;
+dl {
+    margin: 0 1.5em;
 }
 dt {
-    font-weight:bold;
+    font-weight: bold;
 }
 dd {
-	margin-bottom:18px;
+    margin-bottom: 18px;
 }
 strong {
-	font-weight: bold;
+    font-weight: bold;
 }
 cite, em, i {
-	font-style: italic;
+    font-style: italic;
 }
 blockquote {
-    color:#666;
-    font-style:italic;
-    background: url(img/blockquote.png) 0 0 no-repeat scroll;
-	margin: 0 40px 40px 0;
+    background: url("img/blockquote.png") no-repeat scroll 0 0 transparent;
+    color: #666666;
+    font-style: italic;
+    margin: 0 40px 40px 0;
     padding-left: 40px;
 }
 blockquote p {
-    margin-bottom: 12px
+    margin-bottom: 12px;
 }
 blockquote em, blockquote i, blockquote cite {
-	font-style:normal;
+    font-style: normal;
 }
 blockquote cite {
     font-size: 13px;
 }
 blockquote cite em {
-	font-style: italic;
+    font-style: italic;
 }
 pre {
-	font:11px Monaco, monospace;
-	line-height:18px;
-	margin-bottom:18px;
+    font: 11px/18px Monaco,monospace;
+    margin-bottom: 18px;
 }
 code {
-	font:11px Monaco, monospace;
+    font: 11px Monaco,monospace;
 }
 abbr, acronym {
-  border-bottom:1px dotted #333;
-  cursor: help;
+    border-bottom: 1px dotted #333333;
+    cursor: help;
 }
 ins {
-	text-decoration:none;
+    text-decoration: none;
 }
-sup,
-sub {
-	height: 0;
-	line-height: 1;
-	vertical-align: baseline;
-	position: relative;
-	
+sup, sub {
+    height: 0;
+    line-height: 1;
+    position: relative;
+    vertical-align: baseline;
 }
 sup {
-	bottom: 1ex;
+    bottom: 1ex;
 }
 sub {
-	top: .5ex;
+    top: 0.5ex;
 }
-
 blockquote.left {
-	float: left;
-	margin-left:0;
-	margin-right:20px;
-	text-align: right;
-	width: 33%;
+    float: left;
+    margin-left: 0;
+    margin-right: 20px;
+    text-align: right;
+    width: 33%;
 }
 blockquote.right {
-	float: right;
-	margin-left:20px;
-	margin-right:0;
-	text-align: left;
-	width: 33%;
+    float: right;
+    margin-left: 20px;
+    margin-right: 0;
+    text-align: left;
+    width: 33%;
 }
-
-
-/* =Global Elements
--------------------------------------------------------------- */
-
 p, ul, ol, dd, pre {
-    margin-bottom:22px;
+    margin-bottom: 22px;
 }
 pre, code {
-	font:14px Monaco, monospace;
-	line-height:22px;
+    font: 14px/22px Monaco,monospace;
 }
 blockquote {
 }
 table {
-    border:1px solid #c7baaf;
-    border-width:1px 1px 0 1px;
-    font-size:13px;
-    line-height:18px;
-    margin:0 0 22px 0;
-    text-align:left;
+    border-color: #C7BAAF;
+    border-style: solid;
+    border-width: 1px 1px 0;
+    font-size: 13px;
+    line-height: 18px;
+    margin: 0 0 22px;
+    text-align: left;
 }
 caption {
-    text-align:left;
+    text-align: left;
 }
 tr {
-    border-bottom:1px solid #c7baaf;
+    border-bottom: 1px solid #C7BAAF;
 }
 th, td {
     padding: 6px 10px;
 }
 hr {
-    background-color: #c7baaf;
-    border: 0;
-    border-bottom: 1px solid #fff;
-    color: #c7baaf;
+    background-color: #C7BAAF;
+    border-color: -moz-use-text-color -moz-use-text-color #FFFFFF;
+    border-style: none none solid;
+    border-width: 0 0 1px;
+    color: #C7BAAF;
     height: 2px;
     margin-bottom: 22px;
 }
 a:link {
-    color: #007fbf;
+    color: #007FBF;
 }
 a:visited {
-    color: #007fbf;
+    color: #007FBF;
 }
-a:active,
-a:hover {
-    color: #0055cc;
+a:active, a:hover {
+    color: #0055CC;
 }
 a:focus {
     color: red;
 }
 
 
-/* =General Layout
--------------------------------------------------------------- */
+
+
+
+
+
+
+#globalnav {
+    font-size: 14px;
+    font-weight: bold;
+
+    text-align: left;
+}
+#globalnav ul {
+    background-color: #A3C1CC;
+display : inline-block;
+    list-style: none outside none;
+    margin: 0;
+    padding: 0 0.4em;
+}
+#globalnav ul li {
+    float: left;
+}
+#globalnav ul li a:link, #globalnav ul li a:visited {
+    color: #666666;
+    float: left;
+    padding: 6px 10px;
+    text-decoration: none;
+    text-shadow: 1px 1px 0 #DDDDDD;
+}
+#globalnav ul li a:hover, #globalnav ul li a:focus {
+    color: #333333;
+    text-shadow: 1px 1px 0 #DDDDDD;
+}
+#globalsearch {
+    float: right;
+}
+#globalsearch label {
+    color: #666666;
+    font-size: 14px;
+    font-weight: bold;
+}
+#globalsearch #searchinput {
+    color: #888888;
+    font-size: 14px;
+    padding: 5px 8px;
+    width: 16em;
+}
+#globalsearch button {
+    background-color: #A3C1CC;
+    border: 0 none;
+    color: #666666;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 6px 10px;
+    text-shadow: 1px 1px 0 #DDDDDD;
+}
+#globalsearch button:hover {
+    cursor: pointer;
+}
+#userlinks {
+    background: none repeat scroll 0 0 #EEEEEE;
+    border-bottom: 1px solid #A3C1CC;
+    border-left: 1px solid #FFFFFF;
+    border-right: 1px solid #A3C1CC;
+    color: #666666;
+    font-size: 12px;
+    padding: 4px 10px 6px;
+width : 200px;
+float : right;
+margin-top : -120px;
+}
+#homepage-about {
+    background-color: #F0F5FF;
+    border: 1px solid #666666;
+    clear: both;
+    margin-top: 20px;
+    padding: 10px;
+}
+.olFramedCloudPopupContent, .olPopupContent {
+    font-size: 10pt;
+}
+div li span.location {
+    display: block;
+}
+div li span.popupnav {
+    display: block;
+}
+div.popupnav {
+    clear: both;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* #################################### New Styles #################################### */
+
+
 
 body {
-    min-width:960px;
+background : transparent url(./bg.png) top left;
+font : normal normal normal 1em/1.4em Georgia, Sans-serif;
+min-width: 900px;
 }
+
+a {
+color : #0069a9;
+}
+
+
+
+#header, #main {
+width : 900px;
+margin : 0 auto;
+}
+
+
+
+
 #header {
-    position:relative;
-    width: 100%;
-    float: left;
-    padding: 40px 0 20px;
-    background-color: #CFE0E6;
-    border-bottom: 1px solid #999;
+    border-bottom: 1px solid #999999;
+    padding: 40px 0 5px 0;
     text-align: center;
+
 }
-#main {    
-    clear:both;
-    position:relative;
-    margin: 0 40px;
-    padding: 20px 0;
+#main {
+    clear: both;
+    padding: 20px 0 0 0;
+
 }
-
-
-/* =Header
--------------------------------------------------------------- */
-
 #header h1 {
-    margin: 0 40px 20px;
-    text-align: left;
     font-size: 36px;
+    margin: 0 0 20px 0;
+    text-align: left;
 }
 #header h1 a {
+    color: #666666;
     text-decoration: none;
-    color: #666;
 }
-#header h1 a:active,
-#header h1 a:hover {
-    color: #333;
+#header h1 a:active, #header h1 a:hover {
+    color: #333333;
 }
 #header h1 a:focus {
     color: red;
@@ -275,104 +398,116 @@ body {
     margin: 0;
 }
 
-/* Global Navigation */
-#globalnav {
-    margin: 0 40px;
-    text-align: left;
-    font-size: 14px;
-    font-weight: bold;
-}
-#globalnav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0 0.4em;
-    background-color: #a3c1cc;
-    float: left;
-}
-#globalnav ul li {
-    float: left;
-}
-#globalnav ul li a:link,
-#globalnav ul li a:visited {
-    float: left;
-    padding: 6px 10px;
-    text-decoration: none;
-    color: #666;
-	text-shadow: 1px 1px 0 #ddd;
-}
-#globalnav ul li a:hover,
-#globalnav ul li a:focus {
-    color: #333;
-	text-shadow: 1px 1px 0 #ddd;
-}
 
-/* Global Search */
-#globalsearch {
-    float: right;
-}
-#globalsearch label {
-    color: #666;
-    font-weight: bold;
-    font-size: 14px;
-}
-#globalsearch #searchinput {
-    font-size: 14px;
-    width: 16em;
-    padding: 5px 8px;
-    color: #888;
-}
-#globalsearch button {
-    font-weight: bold;
-    background-color: #a3c1cc;
-    color: #666;
-	text-shadow: 1px 1px 0 #ddd;
-    border: 0;
-    font-size: 14px;
-    padding: 6px 10px;
-}
-#globalsearch button:hover {
-    cursor: pointer;
-}
 
-/* User Links */
-#userlinks {
-    position: absolute;
-    top: 0;
-    right: 40px;
-    background: #eee;
-    padding: 4px 10px 6px;
-    border-right: 1px solid #a3c1cc;
-    border-bottom: 1px solid #a3c1cc;
-    border-left: 1px solid #fff;
-    font-size: 12px;
-    color: #666;
+
+
+
+
+
+
+
+
+
+
+
+
+#contentheader {
+width : 394px;	
+float : right;
 }
 
 
-/* Home page */
-#homepage-about {
-    background-color: #F0F5FF;
-    margin-top: 20px;
-    padding: 10px;
-    clear: both;
-    border: 1px solid #666;
+#contentheader h3 {
+color : #464444;
+}
+
+#contentheader ul {
+color : #878787;
+list-style-type : none;
+padding : 0;
+margin : 0;
+
+}
+
+#contentheader ul li {
+padding : .5em 0;
+border-bottom : 1px solid #ccc;
 }
 
 
-/* Map Popups */
-.olFramedCloudPopupContent, .olPopupContent {
-    font-size: 10pt;
+#detailmap { 
+width: 392px; 
+height: 255px
 }
 
-div li span.location {
-    display: block;
+#mapwrapper {
+margin-bottom : .5em;
 }
 
-div li span.popupnav {
-    display: block;
+
+
+
+
+
+
+
+#content {
+width : 480px;
+float : left;
 }
 
-div.popupnav {
-    clear: both;
+
+#content h2 {
+margin-top : 2em;
+font-weight : normal;
+border-bottom : 1px solid #666;
+padding-bottom : .25em;
 }
 
+
+#content h4 {
+margin : 0;
+}
+
+
+
+#content p {
+font-size : .9em;
+}
+
+
+
+
+#place-detail-content .visible ul {
+list-style-type : none;
+padding : 0;
+margin : 0;
+
+}
+
+#place-detail-content .visible ul li {
+padding : 1em 0 0 0;
+border-top : 1px solid #e2e2e2;
+}
+
+#place-detail-content h4 {
+font-size : 1em;
+color : #000;
+}
+
+#place-detail-content .location {
+display : block;
+text-transform : uppercase;
+font-size : .75em;
+}
+
+#place-detail-content .title {
+display : block;
+margin-bottom : .8em;
+}
+
+#place-detail-content .title a {
+text-decoration : none;
+font-weight : normal;
+}
