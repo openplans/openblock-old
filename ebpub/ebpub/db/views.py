@@ -22,7 +22,6 @@ from django.contrib.gis.shortcuts import render_to_kml
 from django.core.cache import cache
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
 from django.utils.cache import patch_response_headers
@@ -53,7 +52,6 @@ from ebpub.utils.view_utils import parse_pid, make_pid
 
 import datetime
 import hashlib
-import random
 import re
 import urllib
 import logging
@@ -436,6 +434,7 @@ def homepage(request):
         'default_lon': settings.DEFAULT_MAP_CENTER_LON,
         'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
+        'bodyclass': 'homepage',
     })
 
 def search(request, schema_slug=''):
@@ -546,8 +545,6 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
     hide_ads = (request.COOKIES.get(HIDE_ADS_COOKIE_NAME) == 't')
 
     templates_to_try = ('db/newsitem_detail/%s.html' % ni.schema.slug, 'db/newsitem_detail.html')
-    if 'new' in request.GET: # TODO: Remove this after feature is implemented.
-        templates_to_try = ('db/newsitem_detail_new.html',) + templates_to_try
 
     # Try to find a usable URL to link to from the location name.
     # TODO: move this logic to NewsItem.location_url()
@@ -586,6 +583,8 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         'hide_ads': hide_ads,
         'map_center_x': center_x,
         'map_center_y': center_y,
+        'bodyclass': 'newsitem-detail',
+        'bodyid': schema_slug,
 
     })
 
@@ -604,6 +603,7 @@ def schema_list(request):
     return eb_render(request, 'db/schema_list.html', {
         'schema_list': s_list,
         'browsable_locationtype_list': browsable_locationtype_list,
+        'bodyclass': 'schema-list',
     })
 
 def schema_detail(request, slug):
@@ -694,6 +694,8 @@ def schema_detail(request, slug):
         'hide_intro_cookie_name': HIDE_SCHEMA_INTRO_COOKIE_NAME,
         'start_date': s.min_date,
         'end_date': today(),
+        'bodyclass': 'schema-detail',
+        'bodyid': slug,
     })
 
 def schema_detail_special_report(request, schema):
@@ -717,11 +719,17 @@ def schema_detail_special_report(request, schema):
         'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
         'browsable_locationtype_list': browsable_locationtype_list,
         'schemafield_list': schemafield_list,
+        'bodyclass': 'schema-detail-special-report',
+        'bodyid': schema.slug,
     })
 
 def schema_about(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug)
-    return eb_render(request, 'db/schema_about.html', {'schema': s})
+    return eb_render(request, 'db/schema_about.html',
+                     {'schema': s,
+                      'bodyid': slug,
+                      'bodyclass': 'schema-about',
+                      })
 
 
 def schema_filter(request, slug, urlbits):
@@ -729,7 +737,7 @@ def schema_filter(request, slug, urlbits):
     # searches come in a query string instead of in the URL. Here, we validate
     # those searches and do a redirect so that the address and date are in
     # urlbits.
-    context = {}
+    context = {'bodyclass': 'schema-filter'}
     if request.GET.get('address', '').strip():
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
@@ -771,6 +779,7 @@ def schema_filter(request, slug, urlbits):
         return HttpResponseRedirect(new_url)
 
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
+    context['bodyid'] = s.slug
     if not s.allow_charting:
         return HttpResponsePermanentRedirect(s.url())
     filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
@@ -1061,11 +1070,16 @@ def location_type_detail(request, slug):
         'location_type': lt,
         'location_list': loc_list,
         'location_type_list': lt_list,
+        'bodyclass': 'location-type-detail',
+        'bodyid': slug,
     })
 
 def city_list(request):
     c_list = [City.from_norm_name(c['city']) for c in Street.objects.distinct().values('city').order_by('city')]
-    return eb_render(request, 'db/city_list.html', {'city_list': c_list})
+    return eb_render(request, 'db/city_list.html',
+                     {'city_list': c_list,
+                      'bodyclass': 'city-list',
+                      })
 
 def street_list(request, city_slug):
     city = city_slug and City.from_slug(city_slug) or None
@@ -1076,6 +1090,7 @@ def street_list(request, city_slug):
     return eb_render(request, 'db/street_list.html', {
         'street_list': streets,
         'city': city,
+        'bodyclass': 'street-list',
     })
 
 def block_list(request, city_slug, street_slug):
@@ -1092,6 +1107,7 @@ def block_list(request, city_slug, street_slug):
         'block_list': blocks,
         'first_block': blocks[0],
         'city': city,
+        'bodyclass': 'block-list',
     })
 
 
@@ -1104,6 +1120,7 @@ def get_place_info_for_request(request, *args, **kwargs):
     info = dict(bbox=None,
                 nearby_locations=[],
                 location=None,
+                place_type=None,
                 is_block=False,
                 block_radius=None,
                 is_saved=False,
@@ -1130,6 +1147,7 @@ def get_place_info_for_request(request, *args, **kwargs):
         saved_place_lookup = {'location__id': place.id}
         info['newsitem_qs'] = newsitem_qs.filter(
             newsitemlocation__location__id=place.id)
+        info['place_type'] = place.location_type.slug
     elif isinstance(place, Block):
         info['is_block'] = True
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
@@ -1144,13 +1162,14 @@ def get_place_info_for_request(request, *args, **kwargs):
         info['newsitem_qs'] = newsitem_qs.filter(
             location__bboverlaps=search_buf)
         info['pid'] = make_pid(place, block_radius)
-
+        info['place_type'] = 'block'
     else:
         # If the location is a point, or very small, we want to expand
         # the area we care about via make_search_buffer().  But if
         # it's not, we probably want the extent of its geometry.
         # Let's just take the union to cover both cases.
         info['location'] = place
+        info['place_type'] = place.location_type.slug
         saved_place_lookup = {'location__id': place.id}
         search_buf = make_search_buffer(place.location.centroid, 3)
         search_buf = search_buf.union(place.location)
@@ -1226,6 +1245,8 @@ def place_detail_timeline(request, *args, **kwargs):
         'next_day': next_day,
         'is_latest_page': is_latest_page,
         'hidden_schema_list': hidden_schema_list,
+        'bodyclass': 'place-detail-timeline',
+        'bodyid': context.get('place_type') or '',
     })
 
 
@@ -1281,6 +1302,8 @@ def place_detail_overview(request, *args, **kwargs):
     s_list = [s for s in s_list if s.allow_charting]
     context['schema_blocks'] = schema_blocks
     context['filtered_schema_list'] = s_list
+    context['bodyclass'] = 'place-detail-overview'
+    context['bodyid'] = context.get('place_type') or ''
 
     response = eb_render(request, 'db/place_overview.html', context)
     for k, v in context['cookies_to_set'].items():

@@ -5,10 +5,7 @@
 {% block title %}{{ newsitem.title }} | {{ newsitem.schema.plural_name|capfirst }}{% endblock %}
 
 {% block content %}
-<style type="text/css">
-	#mapwrapper { float: right; padding-bottom: 10px;}
-	#detailmap { width: 400px; height: 240px }
-</style>
+
 <div id="content">
 	<p>
 		<a href="{{ newsitem.schema.url }}">{% if newsitem.schema.is_special_report %}Special report: {% endif %}{{ newsitem.schema.plural_name|capfirst }}</a>

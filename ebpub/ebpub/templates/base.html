@@ -30,7 +30,7 @@ anyway since our openlayers directory is versioned already.
 {% endslimall %}
 {% block extrahead %}{% endblock %}
 </head>
-<body>
+<body {% if bodyid %}id="{{bodyid}}"{% endif %} {% if bodyclass %}class="{{bodyclass}}"{% endif %}>
 	<div id="header">
 		<h1><a href="/">OpenBlock: {% METRO_NAME %}</a></h1>
 		<div id="globalnav">
