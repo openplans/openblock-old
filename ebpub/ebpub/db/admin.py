@@ -35,8 +35,10 @@ class NewsItemAdmin(OSMModelAdmin):
         ]
 
     list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
+    raw_id_fields = ('location_object', 'block')
     list_filter = ('schema',)
     form = NewsItemForm
+
 
 class LocationTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_browsable', 'is_significant')
@@ -44,6 +46,9 @@ class LocationTypeAdmin(admin.ModelAdmin):
 
 class LocationAdmin(OSMModelAdmin):
     form = LocationForm
+
+    list_filter = ('location_type', 'city', 'is_public',)
+    list_display = ('name', 'location_type', 'creation_date',)
 
     # This is populated by a trigger in ebpub/db/sql/location.sql.
     readonly_fields = ('area',)
