@@ -20,15 +20,30 @@ from django.contrib import admin
 from ebpub.streets.models import Block, Street, BlockIntersection, \
     Intersection, Suburb, Place, StreetMisspelling
 
-from ebpub.db.admin import OSMModelAdmin
+from ebpub.geoadmin import OSMModelAdmin
 
 class PlaceAdmin(OSMModelAdmin):
     pass
 
-admin.site.register(Block)
-admin.site.register(Street)
-admin.site.register(BlockIntersection)
-admin.site.register(Intersection)
-admin.site.register(Suburb)
+class BlockAdmin(OSMModelAdmin):
+    pass
+
+class StreetAdmin(OSMModelAdmin):
+    pass
+
+class BlockIntersectionAdmin(OSMModelAdmin):
+    pass
+
+class IntersectionAdmin(OSMModelAdmin):
+    pass
+
+class SuburbAdmin(OSMModelAdmin):
+    pass
+
+admin.site.register(Block, BlockAdmin)
+admin.site.register(Street, StreetAdmin)
+admin.site.register(BlockIntersection, BlockIntersectionAdmin)
+admin.site.register(Intersection, IntersectionAdmin)
+admin.site.register(Suburb, SuburbAdmin)
 admin.site.register(Place, PlaceAdmin)
 admin.site.register(StreetMisspelling)
