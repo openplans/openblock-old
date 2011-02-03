@@ -23,7 +23,7 @@
   return {{ module }}.wkt_f.read(wkt);
 };
 {{ module }}.write_wkt = function(feat){
-  if ({{ module }}.is_collection){
+  if (({{ module }}.is_collection) && (feat.geometry.components != undefined) ){
     {{ module }}.num_geom = feat.geometry.components.length;
   } else {
     {{ module }}.num_geom = 1;
