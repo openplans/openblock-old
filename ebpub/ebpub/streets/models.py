@@ -165,6 +165,7 @@ class Block(models.Model):
 
     class Meta:
         db_table = 'blocks'
+        ordering = ('pretty_name',)
 
     def __unicode__(self):
         return self.pretty_name
@@ -288,6 +289,7 @@ class Street(models.Model):
 
     class Meta:
         db_table = 'streets'
+        ordering = ('pretty_name',)
 
     def __unicode__(self):
         return self.pretty_name
@@ -374,6 +376,7 @@ class BlockIntersection(models.Model):
 
     class Meta:
         unique_together = ("block", "intersecting_block")
+        ordering = ('block',)
 
     def __unicode__(self):
         return u'%s intersecting %s' % (self.block, self.intersecting_block)
@@ -435,6 +438,7 @@ class Intersection(models.Model):
     class Meta:
         db_table = 'intersections'
         unique_together = ("predir_a", "street_a", "suffix_a", "postdir_a", "predir_b", "street_b", "suffix_b", "postdir_b")
+        ordering = ('slug',)
 
     def __unicode__(self):
         return self.pretty_name

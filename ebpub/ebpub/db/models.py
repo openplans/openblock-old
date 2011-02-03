@@ -138,6 +138,8 @@ class Schema(models.Model):
                                         choices=FREQUENCY_CHOICES)
     intro = models.TextField(blank=True, default='')
 
+    class Meta:
+        ordering = ('name',)
 
 class SchemaFieldManager(models.Manager):
 
@@ -167,6 +169,7 @@ class SchemaField(models.Model):
 
     class Meta(object):
         unique_together = (('schema', 'real_name'),)
+        ordering = ('pretty_name',)
 
     def __unicode__(self):
         return u'%s - %s' % (self.schema, self.name)
@@ -235,6 +238,9 @@ class LocationType(models.Model):
     def natural_key(self):
         return (self.slug,)
 
+    class Meta:
+        ordering = ('name',)
+
     objects = LocationTypeManager()
 
 
@@ -263,6 +269,7 @@ class Location(models.Model):
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
+        ordering = ('slug',)
 
     def natural_key(self):
         return (self.slug, self.location_type.slug)
@@ -554,6 +561,9 @@ class NewsItem(models.Model):
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
 
+    class Meta:
+        ordering = ('title',)
+
     def __unicode__(self):
         return self.title
 
@@ -768,6 +778,7 @@ class Lookup(models.Model):
 
     class Meta:
         unique_together = (('slug', 'schema_field'),)
+        ordering = ('slug',)
 
     def natural_key(self):
         return (self.slug, self.schema_field.schema.slug,

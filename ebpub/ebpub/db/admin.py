@@ -21,6 +21,7 @@ from ebpub.db.forms import LocationForm
 from ebpub.db.forms import NewsItemForm
 from ebpub.db.models import Attribute, Location, LocationType, NewsItem
 from ebpub.db.models import Schema, SchemaField
+from ebpub.db.models import Lookup
 
 from ebpub.geoadmin import OSMModelAdmin
 
@@ -37,6 +38,7 @@ class NewsItemAdmin(OSMModelAdmin):
     list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
     raw_id_fields = ('location_object', 'block')
     list_filter = ('schema',)
+    search_fields = ('title', 'description',)
     form = NewsItemForm
 
 
@@ -48,19 +50,33 @@ class LocationAdmin(OSMModelAdmin):
     form = LocationForm
 
     list_filter = ('location_type', 'city', 'is_public',)
-    list_display = ('name', 'location_type', 'creation_date',)
+    list_display = ('name', 'location_type', 'creation_date', 'area')
+    search_fields = ('name',)
 
     # This is populated by a trigger in ebpub/db/sql/location.sql.
     readonly_fields = ('area',)
 
+
+class SchemaAdmin(admin.ModelAdmin):
+    list_display = ('name', 'last_updated', 'importance', 'is_public',
+                    'has_newsitem_detail',)
+
 class SchemaFieldAdmin(admin.ModelAdmin):
-    list_filter = ('schema', 'is_lookup', 'is_filter', 'is_charted', 'is_searchable')
+    list_display = ('pretty_name', 'real_name', 'display', 'is_lookup',
+                    'is_filter', 'is_charted', 'is_searchable')
+    list_filter = ('schema', 'display', 'is_lookup', 'is_filter', 'is_charted', 'is_searchable', 'real_name')
 
 
-admin.site.register(Schema)
+class LookupAdmin(admin.ModelAdmin):
+    # TODO: this would make more sense to edit inline on NewsItem,
+    # but that would require some custom wackiness.
+    list_display = ('name', 'schema_field')
+    search_fields = ('description', 'name', 'code')
+
+admin.site.register(Schema, SchemaAdmin)
 admin.site.register(SchemaField, SchemaFieldAdmin)
 #admin.site.register(Attribute, AttributeAdmin)
 admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(LocationType, LocationTypeAdmin)
 admin.site.register(Location, LocationAdmin)
-
+admin.site.register(Lookup, LookupAdmin)

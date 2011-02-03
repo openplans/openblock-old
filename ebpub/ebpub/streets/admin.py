@@ -23,22 +23,36 @@ from ebpub.streets.models import Block, Street, BlockIntersection, \
 from ebpub.geoadmin import OSMModelAdmin
 
 class PlaceAdmin(OSMModelAdmin):
-    pass
+    list_display = ('pretty_name', 'address',)
+    search_fields = ('pretty_name',)
 
 class BlockAdmin(OSMModelAdmin):
-    pass
+    list_display = ('pretty_name', 'street', 'suffix', 'left_zip', 'right_zip', 'left_city', 'right_city')
+    list_filter = ('suffix', 'left_city', 'right_city', 'left_zip', 'right_zip')
+    search_fields = ('pretty_name',)
 
 class StreetAdmin(OSMModelAdmin):
-    pass
+    list_display = ('pretty_name', 'suffix', 'city', 'state',)
+    list_filter = ('suffix', 'city', 'state',)
+    search_fields = ('pretty_name',)
 
 class BlockIntersectionAdmin(OSMModelAdmin):
-    pass
+    list_display = ('block', 'intersecting_block', 'intersection',)
+    raw_id_fields = ('block', 'intersecting_block', 'intersection',)
+    search_fields = ('block__pretty_name',)
 
 class IntersectionAdmin(OSMModelAdmin):
-    pass
+    list_display = ('pretty_name', 'zip', 'city', 'state')
+    list_filter = ('zip', 'city', 'state')
+    search_fields = ('pretty_name',)
 
 class SuburbAdmin(OSMModelAdmin):
     pass
+
+class StreetMisspellingAdmin(OSMModelAdmin):
+    list_display = ('incorrect', 'correct',)
+    search_fields = ('incorrect', 'correct',)
+
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(Street, StreetAdmin)
@@ -46,4 +60,4 @@ admin.site.register(BlockIntersection, BlockIntersectionAdmin)
 admin.site.register(Intersection, IntersectionAdmin)
 admin.site.register(Suburb, SuburbAdmin)
 admin.site.register(Place, PlaceAdmin)
-admin.site.register(StreetMisspelling)
+admin.site.register(StreetMisspelling, StreetMisspellingAdmin)
