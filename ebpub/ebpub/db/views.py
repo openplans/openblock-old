@@ -20,32 +20,32 @@ from django import template
 from django.conf import settings
 from django.contrib.gis.shortcuts import render_to_kml
 from django.core.cache import cache
+from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
 from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
-from django.db.models import Q
 from django.views.decorators.cache import cache_page
+from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
+from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
+from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 from ebpub.db import constants
-from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
+from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
-from ebpub.utils.clustering.shortcuts import cluster_newsitems
-from ebpub.utils.clustering.json import ClusterJSON
-from ebpub.utils.dates import daterange, parse_date
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
 from ebpub.geocoder import reverse
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
+from ebpub.metros.allmetros import get_metro
 from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
-from ebpub.metros.allmetros import get_metro
-from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
-from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
-from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
+from ebpub.utils.clustering.json import ClusterJSON
+from ebpub.utils.clustering.shortcuts import cluster_newsitems
+from ebpub.utils.dates import daterange, parse_date
 
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import parse_pid, make_pid
