@@ -277,7 +277,7 @@ def map_popups(ni_list):
                              'db/snippets/newsitem_list.html']
             current_template = select_template(template_list)
             current_schema = schema
-        html = current_template.render(template.Context({'schema': schema, 'newsitem_list': [ni], 'num_newsitems': 1}))
+        html = current_template.render(template.Context({'schema': schema, 'newsitem_list': [ni], 'num_newsitems': 1, 'do_description': False}))
         result.append([ni.id, html, schema.name.title()])
     return result
 

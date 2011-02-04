@@ -104,15 +104,14 @@ function loadNewsItems() {
                 selectControl.unselect(feature);
             }
         );
+        popup.maxSize = new OpenLayers.Size(320, 230);
         feature.popup = popup;
         map.addPopup(popup);
         if (cluster.length > 1) {
             // Add next/previous nav links to the popup.
             var navHtml = '<span class="popupnav"><a class="popupnav prev" href="#">&larr;prev</a>&nbsp;&nbsp;<a class="popupnav next" href="#">next&rarr;</a></span>';
             var content = popup.contentDiv;
-            // I like nav links at top and bottom for convenience.
             $(content).prepend(navHtml);
-            $(content).append(navHtml);
             popup.updateSize();
             var prev = $(content).find('a.popupnav.prev');
             var next = $(content).find('a.popupnav.next');
