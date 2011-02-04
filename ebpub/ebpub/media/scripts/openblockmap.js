@@ -95,6 +95,7 @@ function loadNewsItems() {
         var clusterIdx = 0;
         var firstFeature = cluster[0];
         var featureHtml = firstFeature.attributes.popup_html;
+
         var popup = new OpenLayers.Popup.FramedCloud(
             null, feature.geometry.getBounds().getCenterLonLat(), null, featureHtml,
             {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(0, 0)},
@@ -104,30 +105,35 @@ function loadNewsItems() {
                 selectControl.unselect(feature);
             }
         );
-        popup.maxSize = new OpenLayers.Size(320, 230);
+        // popup.contentDisplayClass = 'overridePopupContent'; // has no effect!
+        popup.contentDiv.className = 'openblockFramedCloudPopupContent';
+        popup.maxSize = new OpenLayers.Size(320, 146);
         feature.popup = popup;
         map.addPopup(popup);
         if (cluster.length > 1) {
             // Add next/previous nav links to the popup.
-            var navHtml = '<span class="popupnav"><a class="popupnav prev" href="#">&larr;prev</a>&nbsp;&nbsp;<a class="popupnav next" href="#">next&rarr;</a></span>';
+            var navHtml = '<span class="popupnav"><a class="popupnav prev" href="#">&larr;prev</a>&nbsp;<span id="clusteridx">1</span>&nbsp;of&nbsp;' + cluster.length
+			  + '&nbsp;<a class="popupnav next" href="#">next&rarr;</a></span>';
             var content = popup.contentDiv;
             $(content).prepend(navHtml);
             popup.updateSize();
             var prev = $(content).find('a.popupnav.prev');
             var next = $(content).find('a.popupnav.next');
             // Clicking next or previous replaces the nav links html.
-            var replaceHtml = function(f) {
+            var replaceHtml = function(i, cluster) {
+                var f = cluster[i];
                 $(content).find('.newsitem').replaceWith(f.attributes.popup_html);
+                $(content).find('#clusteridx').text(i + 1);
             };
             prev.click(function(e) {
                 e.preventDefault();
                 clusterIdx = (clusterIdx == 0) ? cluster.length - 1 : clusterIdx - 1;
-                replaceHtml(cluster[clusterIdx]);
+                replaceHtml(clusterIdx, cluster);
             });
             next.click(function(e) {
                 e.preventDefault();
-                clusterIdx = (clusterIdx == cluster.length - 1) ? 0 : clusterIdx + 1;
-                replaceHtml(cluster[clusterIdx]);
+                clusterIdx = (clusterIdx + 1) % cluster.length;
+                replaceHtml(clusterIdx, cluster);
             });
         }
     };

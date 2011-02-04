@@ -1,0 +1,8 @@
+{# This snippet requires these variables: newsitem #}
+{% load eb %}
+<div id="newsitem-{{ newsitem.id }}" class="newsitem">
+    <b class="date">{{ newsitem.item_date|date:"M j" }}</b>
+    at <span class="location">{{ newsitem.location_name.title }}</span>:
+    <strong class="title"><a href="{{ newsitem.item_url}}" class="url">{{ newsitem.title|truncatewords_html:15 }}</a></strong>
+</div>
+

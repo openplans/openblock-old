@@ -111,10 +111,8 @@ window.onload = function() {
 	{% endif %}
 {% endblock %}
 
-{% block header %}
-
-	<!-- Fixme: better place for this -->
-	<div id="mapwrapper">
+{% block before_header %}
+  <div id="mapwrapper">
     <script type="text/javascript">
     var place_type = '{{ place.location_type.slug }}';
     var place_slug = '{{ place.slug }}';
@@ -122,11 +120,11 @@ window.onload = function() {
     </script>
     {% include "map.html" %}
   </div>
-
+{% endblock %}
+{% block header %}
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
 	{% else %}{{ place.name }}
 	{% endif %}
-
 {% endblock %}
 
 {% block place_content %}

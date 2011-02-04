@@ -272,12 +272,12 @@ def map_popups(ni_list):
     for ni in ni_list:
         schema = ni.schema
         if current_schema != schema:
-            template_list = ['db/snippets/newsitem_list_ungrouped/%s.html' % schema.slug,
-                             'db/snippets/newsitem_list/%s.html' % schema.slug,
-                             'db/snippets/newsitem_list.html']
+            template_list = ['db/snippets/newsitem_popup_list/%s.html' % schema.slug,
+                             'db/snippets/newsitem_popup_list.html',
+                             ]
             current_template = select_template(template_list)
             current_schema = schema
-        html = current_template.render(template.Context({'schema': schema, 'newsitem_list': [ni], 'num_newsitems': 1, 'do_description': False}))
+        html = current_template.render(template.Context({'newsitem': ni, 'schema': schema, }))
         result.append([ni.id, html, schema.name.title()])
     return result
 

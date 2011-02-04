@@ -359,10 +359,7 @@ body {
 }
 
 
-/* Map Popups */
-.olFramedCloudPopupContent, .olPopupContent {
-    font-size: 10pt;
-}
+/* Map popups */
 
 div li span.location {
     display: block;
@@ -376,3 +373,24 @@ div.popupnav {
     clear: both;
 }
 
+/* Map Popups */
+
+.olPopup {
+    font-size: 12px;
+}
+
+.openblockFramedCloudPopupContent {
+    overflow: hidden;
+    margin: 0px 6px 6px 12px;
+    padding: 0px;
+ }
+
+.olPopupContent {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.olPopup .newsitem {
+    margin: 0;
+}
