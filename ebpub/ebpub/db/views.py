@@ -22,7 +22,6 @@ from django.contrib.gis.shortcuts import render_to_kml
 from django.core.cache import cache
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
-from django.template import RequestContext
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
 from django.utils.cache import patch_response_headers
@@ -31,7 +30,7 @@ from django.db.models import Q
 from django.views.decorators.cache import cache_page
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
-from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
+from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.clustering.json import ClusterJSON
@@ -53,10 +52,9 @@ from ebpub.utils.view_utils import parse_pid, make_pid
 
 import datetime
 import hashlib
-import random
+import logging
 import re
 import urllib
-import logging
 
 logger = logging.getLogger('ebpub.db.views')
 
