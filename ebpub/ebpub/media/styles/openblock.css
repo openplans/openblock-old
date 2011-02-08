@@ -6,8 +6,321 @@
     visibility: hidden;
 }
 .selfclear {
-    display: inline-block;margin : 0 auto;
+    display: block;
 }
+.nobreak {
+    white-space: nowrap;
+}
+.hidden {
+    display: none;
+}
+body, input, textarea, button {
+    color: #333333;
+    font: 15px/22px Verdana,sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+    clear: both;
+    font-weight: bold;
+}
+h1, h2 {
+    font-size: 20px;
+    margin: 22px 0;
+    text-shadow: 1px 1px 0 #FFFFFF;
+}
+h3 {
+    font-size: 20px;
+    margin: 22px 0 10px;
+}
+h4 {
+    font-size: 18px;
+    font-weight: normal;
+    margin: 10px 0 5px;
+    text-transform: uppercase;
+}
+h5 {
+    font-size: 17px;
+    font-weight: normal;
+    margin: 10px 0 5px;
+    text-transform: uppercase;
+}
+h6 {
+    font-weight: normal;
+    margin: 10px 0 5px;
+    text-transform: uppercase;
+}
+p {
+    margin-bottom: 18px;
+}
+ul {
+    margin: 0 0 18px 2.5em;
+}
+ol {
+    margin: 0 0 18px 2.5em;
+}
+ul {
+    list-style: disc outside none;
+}
+ol {
+    list-style-type: decimal;
+}
+ol ol {
+    list-style: upper-alpha outside none;
+}
+ol ol ol {
+    list-style: lower-roman outside none;
+}
+ol ol ol ol {
+    list-style: lower-alpha outside none;
+}
+ul ul, ol ol, ul ol, ol ul {
+    margin-bottom: 0;
+}
+dl {
+    margin: 0 1.5em;
+}
+dt {
+    font-weight: bold;
+}
+dd {
+    margin-bottom: 18px;
+}
+strong {
+    font-weight: bold;
+}
+cite, em, i {
+    font-style: italic;
+}
+blockquote {
+    background: url("img/blockquote.png") no-repeat scroll 0 0 transparent;
+    color: #666666;
+    font-style: italic;
+    margin: 0 40px 40px 0;
+    padding-left: 40px;
+}
+blockquote p {
+    margin-bottom: 12px;
+}
+blockquote em, blockquote i, blockquote cite {
+    font-style: normal;
+}
+blockquote cite {
+    font-size: 13px;
+}
+blockquote cite em {
+    font-style: italic;
+}
+pre {
+    font: 11px/18px Monaco,monospace;
+    margin-bottom: 18px;
+}
+code {
+    font: 11px Monaco,monospace;
+}
+abbr, acronym {
+    border-bottom: 1px dotted #333333;
+    cursor: help;
+}
+ins {
+    text-decoration: none;
+}
+sup, sub {
+    height: 0;
+    line-height: 1;
+    position: relative;
+    vertical-align: baseline;
+}
+sup {
+    bottom: 1ex;
+}
+sub {
+    top: 0.5ex;
+}
+blockquote.left {
+    float: left;
+    margin-left: 0;
+    margin-right: 20px;
+    text-align: right;
+    width: 33%;
+}
+blockquote.right {
+    float: right;
+    margin-left: 20px;
+    margin-right: 0;
+    text-align: left;
+    width: 33%;
+}
+p, ul, ol, dd, pre {
+    margin-bottom: 22px;
+}
+pre, code {
+    font: 14px/22px Monaco,monospace;
+}
+blockquote {
+}
+table {
+    border-color: #C7BAAF;
+    border-style: solid;
+    border-width: 1px 1px 0;
+    font-size: 13px;
+    line-height: 18px;
+    margin: 0 0 22px;
+    text-align: left;
+}
+caption {
+    text-align: left;
+}
+tr {
+    border-bottom: 1px solid #C7BAAF;
+}
+th, td {
+    padding: 6px 10px;
+}
+hr {
+    background-color: #C7BAAF;
+    border-color: -moz-use-text-color -moz-use-text-color #FFFFFF;
+    border-style: none none solid;
+    border-width: 0 0 1px;
+    color: #C7BAAF;
+    height: 2px;
+    margin-bottom: 22px;
+}
+a:link {
+    color: #007FBF;
+}
+a:visited {
+    color: #007FBF;
+}
+a:active, a:hover {
+    color: #0055CC;
+}
+a:focus {
+    color: red;
+}
+
+
+
+
+
+
+
+
+#globalnav {
+    font-size: 14px;
+    text-align: left;
+}
+#globalnav ul {
+    background-color: #A3C1CC;
+display : inline-block;
+    list-style: none outside none;
+    margin: 0;
+    padding: 0 0.4em;
+}
+#globalnav ul li {
+    float: left;
+}
+#globalnav ul li a:link, #globalnav ul li a:visited {
+    color: #666666;
+    float: left;
+    padding: 6px 10px;
+    text-decoration: none;
+    text-shadow: 1px 1px 0 #DDDDDD;
+}
+#globalnav ul li a:hover, #globalnav ul li a:focus {
+    color: #333333;
+    text-shadow: 1px 1px 0 #DDDDDD;
+}
+#globalsearch {
+    float: right;
+}
+#globalsearch label {
+    color: #666666;
+    font-size: 14px;
+    font-weight: bold;
+}
+#globalsearch #searchinput {
+    color: #888888;
+    font-size: 14px;
+    padding: 5px 8px;
+    width: 320px;
+}
+#globalsearch button {
+    background-color: #A3C1CC;
+    border: 0 none;
+    color: #666666;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 6px 10px;
+    text-shadow: 1px 1px 0 #DDDDDD;
+}
+#globalsearch button:hover {
+    cursor: pointer;
+}
+#userlinks {
+    font-size: 12px;
+    padding: 10px 0;
+
+float : right;
+
+}
+
+
+
+
+.olFramedCloudPopupContent, .olPopupContent {
+    font-size: 10pt;
+}
+div li span.location {
+    display: block;
+}
+div li span.popupnav {
+    display: block;
+}
+div.popupnav {
+    clear: both;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* #################################### New Styles #################################### */
+
+
+
+body {
+background : transparent url(./bg.png) top left;
+font : normal normal normal 1em/1.4em Georgia, Sans-serif;
+min-width: 900px;
+}
+
+a {
+color : #0069a9;
+}
+
+
+
+#container {
+background : transparent url(./heading-bg.jpg) top left repeat-x;
+}
+
+#header, #main {
+	width : 900px;
+	margin : 0 auto;	
+}
+
+
+
+
 
 #main {
     clear: both;
@@ -15,20 +328,24 @@
 
 }
 
+
+
 #header h1 {
-	font-size: 36px;
-	margin: 0;
-	float : left;
-	width : 500px;
-	padding : 45px 0 0 0;
-	height : 58px; /* 101px with padding */
-	overflow : hidden;
-	font-weight : normal;
-	text-shadow: 0 1px 0 #ffffff;
+    font-size: 36px;
+    margin: 0;
+float : left;
+width : 500px; 
+padding : 45px 0 0 0;
+height : 58px; /* 101px with padding */
+overflow : hidden;
+font-weight : normal;
+text-shadow: 0 1px 0 #ffffff;
+
 }
 
+
 #header h1 a {
-    color : #343434;
+color : #343434;
     text-decoration: none;
 }
 #header h1 a:active, #header h1 a:hover {
@@ -41,15 +358,24 @@
     margin: 0;
 }
 
+
+
+
+
 #globalsearch label {
 	display : none;
+	
 }
+
 
 ul#nav-breadcrumb {
 height : 34px;
+clear : both;
+float : left;
 }
 
-ul#nav-breadcrumb,
+
+ul#nav-breadcrumb, 
 #nav-breadcrumb li {
 list-style-type : none;
 display : inline-block;
@@ -72,13 +398,18 @@ color : #3d799e;
 color : #007FBF;
 }
 
+
+
+
 #nav-location {
-width : 394px;
+width : 394px;	
 float : right;
 }
 
+
 #nav-location h2 {
 margin-bottom : .5em;
+display: inline-block;
 }
 
 #nav-location ul {
@@ -86,6 +417,7 @@ color : #878787;
 list-style-type : none;
 padding : 0;
 margin : 0;
+
 }
 
 #nav-location ul li a {
@@ -126,6 +458,21 @@ color : #2C7CAE;
 text-decoration : underline
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #detailmap { 
 width: 392px; 
 height: 255px
@@ -136,30 +483,52 @@ margin-bottom : .5em;
 border : 1px solid #cac8c6;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
 #content {
 width : 480px;
 float : left;
 }
 
-#content h2 {
+
+
+#content h2, 
+#sidebar h2 {
 margin-top : 2em;
 font-weight : normal;
 border-bottom : 1px solid #666;
 padding-bottom : .25em;
 }
 
+
 #content h4 {
 margin : 0;
 }
+
+
 
 #content p {
 font-size : .9em;
 }
 
+
+
 #contentheader h1 {
 margin : .25em 0 .5em 0;
 font-size : 1.5em;
 }
+
+
 
 ul.nav-view {
 margin : 0;
@@ -168,6 +537,7 @@ list-style-type : none;
 display : inline-block;
 }
 
+
 ul.nav-view li {
 float : left;
 border : 1px solid #c8c7c5;
@@ -175,6 +545,7 @@ border-width : 1px 1px 1px 0;
 padding : 4px 8px 3px 8px;
 font-size : 14px;
 }
+
 
 ul.nav-view li a,
 ul.nav-view li a:visited {
@@ -197,25 +568,46 @@ border-bottom-left-radius: 5px;
 border-width : 1px;
 }
 
+
+
 ul.nav-view li:last-child {
 border-top-right-radius: 5px;
 -moz-border-radius-topright: 5px;
 border-bottom-right-radius: 5px;
 -moz-border-radius-bottomright: 5px;
+
 }
+
+
 
 ul.nav-view li.selected {
 background-color : #e1dbd6;
 }
 
+
 form.select-filter {
 float : right;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #place-detail-content .visible ul {
 list-style-type : none;
 padding : 0;
 margin : 0;
+
 }
 
 #place-detail-content .visible ul li {
@@ -245,3 +637,109 @@ margin-bottom : .8em;
 text-decoration : none;
 font-weight : normal;
 }
+
+
+
+
+
+#sidebar {
+float : right;
+  width: 392px;
+}
+
+
+
+#sidebar .sidebar-block {
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* #################################### Homepage #################################### */
+
+
+#homepage-searchinput {
+width : 700px;
+font-size : 1.5em;
+padding : .1em .3em;
+color : #666;
+}
+
+
+.homepage #nav-location {
+width : 100%;
+}
+
+.homepage #nav-location #intro-explore {
+float : right;
+width: 392px;
+}
+
+.homepage #mapwrapper { 
+float: left; 
+}
+
+.homepage #detailmap { 
+width: 480px;
+}
+
+
+.homepage #public-records ul {
+list-style-type : none;
+padding : 0;
+margin : 0 0 1em 0;
+}
+
+.homepage #public-records ul li {
+margin-bottom : .5em;
+}
+
+#homepage-search {
+margin-bottom : 1em;
+    background-color: #F0F5FF;
+    border: 1px solid #CAC8C6;
+    clear: both;
+    padding: 10px;
+}
+
+#homepage-search h2 {
+margin : .5em 0 .4em 0;
+}
+
+#homepage-about p {
+margin : 1em 0 0 0;
+}
+
+
+
+#intro-search h2 {
+margin-top : 1em;
+}
+
+
+#homepage-about {
+border : 1px solid #ccc;
+font-size : .9em;
+padding : 1em;
+margin-top : 66px;
+background-color : #f8f6f2;
+}
+
+#homepage-about h2 {
+margin : 0;
+font-weight : bold;
+border-bottom : 0;
+}
+
