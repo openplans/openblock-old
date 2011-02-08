@@ -2,7 +2,7 @@
 
 {% load eb %}
 
-{% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% endblock %}
+{% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% endblock title %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -60,7 +60,7 @@ $j(document).ready(function() {
 	});
 });
 </script>
-{% endblock %}
+{% endblock extrahead %}
 
 {% block breadcrumbs %}
 	{% get_metro %}
@@ -71,13 +71,15 @@ $j(document).ready(function() {
 	{% else %}
 		<a href="{{ place.location_type.url }}">{{ place.location_type.plural_name|capfirst }}</a>
 	{% endif %}
-{% endblock %}
+{% endblock breadcrumbs %}
 
 {% block header %}
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
 	{% else %}{{ place.name }}
 	{% endif %}
-{% endblock %}
+{% endblock header %}
+
+{% block map %}{% endblock map %}
 
 {% block place_content %}
 	<h2>Latest news {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}</h2>
@@ -142,4 +144,4 @@ $j(document).ready(function() {
 			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
 		</ul>
 	</div><!--/ #content -->
-{% endblock %}
+{% endblock place_content %}

@@ -28,6 +28,8 @@ n			{% else %}
 		<h1>{% block header %}{% endblock %}</h1>
 	{% endcomment %}
 
+	<!-- begin block map -->
+	{% block map %}
 	<div id="mapwrapper">
 		<script type="text/javascript">
 		  var place_type = '{{ place.location_type.slug }}';
@@ -36,6 +38,8 @@ n			{% else %}
 		</script>
 		{% include "map.html" %}
 	</div><!--/ #mapwrapper -->
+	{% endblock map %}
+	<!-- end block map -->
 
 	<div class="subscribe-links">
 		<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
