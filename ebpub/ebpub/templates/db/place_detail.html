@@ -1,8 +1,9 @@
 {% extends "base_place.html" %}
+{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
 {% load eb %}
 
-{% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %}, {{ place.city_object.name }}{% endif %}{% endblock %}
+{% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %}, {{ place.city_object.name }}{% endif %}{% endblock title %}
 
 {% block extrahead %}
 {% ifnotequal place.slug "unknown" %}<link rel="alternate" type="application/rss+xml" title="RSS" href="{{ place.rss_url }}" />{% endifnotequal %}
@@ -93,9 +94,22 @@ window.onload = function() {
 }
 </script>
 
-{% endblock %}
+{% endblock extrahead %}
 
 {% block breadcrumbs %}
+        <!-- TODO - use Phil's ul list instead, and maybe use
+             block.super to inherit breadcrumbs from both base.html
+             and base_place.html ... or maybe that'll be too much
+             trouble and we should just generate a list of breadcrumbs
+             in python view code.  -->
+	<ul id="nav-breadcrumb">
+		<li><a href="#">Boston</a></li>
+		<li><a href="#">Neighborhoods</a></li>
+		<li><a href="#">South Boston</a></li>
+		<li><a href="#">Timeline</a></li>
+		<li><a href="#">Everything</a></li>
+	</ul>
+	<!--
 	{% get_metro %}
 	{% if is_block %}
 		<a href="/streets/">Streets</a>
@@ -104,56 +118,49 @@ window.onload = function() {
 	{% else %}
 		<a href="{{ place.location_type.url }}">{{ place.location_type.plural_name|capfirst }}</a>
 	{% endif %}
-{% endblock %}
+	-->
+{% endblock breadcrumbs %}
 
 {% block header %}
-
-	<!-- Fixme: better place for this -->
-	<div id="mapwrapper">
-    <script type="text/javascript">
-    var place_type = '{{ place.location_type.slug }}';
-    var place_slug = '{{ place.slug }}';
-    var map_bounds = new OpenLayers.Bounds{{ bbox }};
-    </script>
-    {% include "map.html" %}
-  </div>
-
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
 	{% else %}{{ place.name }}
 	{% endif %}
 
-{% endblock %}
+{% endblock header %}
 
 {% block place_content %}
+<div id="content">
 
-{% ifnotequal place.slug "unknown" %}
-	<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
-	<ul>
-		<li><strong>Timeline</strong></li>
+  {% ifnotequal place.slug "unknown" %}
+	<div id="contentheader">
+	  <h1>{{ place.pretty_name }}</h1>
+
+	  <ul class="nav-view">
+		<li class="selected">Timeline</li>
 		<li><a href="overview/" rel="nofollow">Overview</a></li>
-	</ul>
-	{% if is_block %}
-	<p>Show news within:</p>
-	<ul>
+	  </ul>
+	  {% if is_block %}
+	  <p>Show news within:</p>
+	  <ul>
 		<li>{% ifequal block_radius "1" %}1 block{% else %}<a href="?radius=1" rel="nofollow">1 block</a>{% endifequal %}</li>
 		<li>{% ifequal block_radius "3" %}3 blocks{% else %}<a href="?radius=3" rel="nofollow">3 blocks</a>{% endifequal %}</li>
 		<li>{% ifequal block_radius "8" %}8 blocks{% else %}<a href="?radius=8" rel="nofollow">8 blocks</a>{% endifequal %}</li>
-	</ul>
-	{% endif %}
-	<p>Search nearby:</p>
-	<select id="sectionfilter">
-		<option value="">Choose a type of information&hellip;</option>
-		{% for schema in filtered_schema_list %}
+	  </ul>
+	  {% endif %}
+	  <form class="select-filter">
+		<select id="sectionfilter">
+		  <option value="">Choose a type of information&hellip;</option>
+		  {% for schema in filtered_schema_list %}
 			<option value="{{ schema.url }}{{ place.url|slice:"1:" }}">{{ schema.plural_name|capfirst }}</option>
-		{% endfor %}
-	</select>
-	<button id="sectionfilterbutton">Go</button>
-	{% if USER %}
-	<button id="saveplacebutton" style="display: none;">{% if is_saved %}Remove this saved place{% else %}Save this place{% endif %}</button><span id="saveplacestatus"></span>
-	{% endif %}
-{% endifnotequal %}
-
-<div id="content">
+		  {% endfor %}
+		</select>
+		<button id="sectionfilterbutton">Go</button>
+		{% if USER %}
+		  <button id="saveplacebutton" style="display: none;">{% if is_saved %}Remove this saved place{% else %}Save this place{% endif %}</button><span id="saveplacestatus"></span>
+		{% endif %}
+	  </form>
+	</div><!-- /#contentheader -->
+  {% endifnotequal %}
 
   <div id="place-detail-content">
 	{% if newsitem_list %}
@@ -194,7 +201,8 @@ window.onload = function() {
 	{% endifnotequal %}
   </div><!--/ #place-detail-content -->
 
-  {% block extracontent %}{% endblock %} 
-
+  <!-- begin block extracontent -->
+  {% block extracontent %}{% endblock extracontent %}
+  <!-- end block extracontent -->
 </div><!--/ #content -->
-{% endblock %}
+{% endblock place_content %}

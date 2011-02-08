@@ -1,10 +1,10 @@
 /* -------------------------------------------------------------- 
-  
+
    Reset default browser CSS.
-   
+
    Based on work by Eric Meyer:
    http://meyerweb.com/eric/tools/css/reset/index.html
-   
+
 -------------------------------------------------------------- */
 
 /* v1.0 | 20080212 */
@@ -20,18 +20,18 @@ fieldset, form, label, legend,
 table, caption, tbody, tfoot, thead, tr, th, td {
 	margin: 0;
 	padding: 0;
-	border: 0;
+	border: 0 none;
 	outline: 0;
 	font-size: 100%;
 	vertical-align: baseline;
-	background: transparent;
+	background: none repeat scroll 0 0 transparent;
 }
 body {
-    background:#fff;
+	background: none repeat scroll 0 0 #fff;
 	line-height: 1;
 }
 ol, ul {
-	list-style: none;
+	list-style: none outside none;
 }
 blockquote, q {
 	quotes: none;

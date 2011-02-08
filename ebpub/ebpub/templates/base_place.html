@@ -10,7 +10,8 @@ Required variables: nearby_locations, place, is_block
 {% endcomment %}
 
 {% block content %}
-	<div id="contentheader">
+<div id="nav-location">
+	{% comment %}
 		<p>
 			{% block breadcrumbs %}
 			{% get_metro %}
@@ -18,21 +19,39 @@ Required variables: nearby_locations, place, is_block
 				<a href="/streets/">Streets</a>
 				{% if METRO.multiple_cities %}  / <a href="/streets/{{ place.city_object.slug }}/">{{ place.city_object.name }}</a>{% endif %}
 				 / <a href="{{ place.street_url }}">{{ place.street_pretty_name }}</a>
-			{% else %}
+n			{% else %}
 				<a href="{{ place.location_type.url }}">{{ place.location_type.plural_name|capfirst }}</a>
 			{% endif %}
 			 / <a href="{{ place.url }}">{{ place.pretty_name }}</a>
-			{% endblock %}
+			{% endblock breadcrumbs %}
 		</p>
 		<h1>{% block header %}{% endblock %}</h1>
-		{% if nearby_locations %}
-		  <h2>Nearby locations</h2>
-			<ul>
-				{% for location in nearby_locations %}
-					<li><a id="location-{{ location.id }}" href="{{ location.url }}">{{ location.name }}</a></li>
-				{% endfor %}
-			</ul>
-		{% endif %}
-	</div><!--/ #contentheader -->
-	{% block place_content %}{% endblock %}
-{% endblock %}
+	{% endcomment %}
+
+	<div id="mapwrapper">
+		<script type="text/javascript">
+		  var place_type = '{{ place.location_type.slug }}';
+		  var place_slug = '{{ place.slug }}';
+		  var map_bounds = new OpenLayers.Bounds{{ bbox }};
+		</script>
+		{% include "map.html" %}
+	</div><!--/ #mapwrapper -->
+
+	<div class="subscribe-links">
+		<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
+	</div>
+
+	{% if nearby_locations %}
+	<h2>Nearby locations</h2>
+	<ul>
+	 {% for location in nearby_locations %}
+	  <li><a id="location-{{ location.id }}" href="{{ location.url }}">{{ location.name }}</a></li>
+	 {% endfor %}
+	</ul>
+	{% endif %}
+
+</div><!--/ #nav-location -->
+<!-- begin block place_content -->
+{% block place_content %}{% endblock %}
+<!-- end block place_content -->
+{% endblock content %}
