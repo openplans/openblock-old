@@ -15,6 +15,7 @@ window.onload = function() {
 	$j('#sectionfilterbutton').click(function() {
 		var url = $j('#sectionfilter').val();
 		if (url) { window.location = url; }
+		return false;
 	});
 	{% if USER %}
 	$j('#saveplacebutton').show().click(function() {
