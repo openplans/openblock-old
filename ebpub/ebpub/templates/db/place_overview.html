@@ -63,14 +63,8 @@ $j(document).ready(function() {
 {% endblock extrahead %}
 
 {% block breadcrumbs %}
-	{% get_metro %}
-	{% if is_block %}
-		<a href="/streets/">Streets</a> / 
-		{% if METRO.multiple_cities %}<a href="/streets/{{ place.city_object.slug }}/">{{ place.city_object.name }}</a>{% endif %}
-		<a href="{{ place.street_url }}">{{ place.street_pretty_name }}</a>
-	{% else %}
-		<a href="{{ place.location_type.url }}">{{ place.location_type.plural_name|capfirst }}</a>
-	{% endif %}
+	{{ block.super }}
+	<li>Overview</li>
 {% endblock breadcrumbs %}
 
 {% block header %}

@@ -97,28 +97,8 @@ window.onload = function() {
 {% endblock extrahead %}
 
 {% block breadcrumbs %}
-        <!-- TODO - use Phil's ul list instead, and maybe use
-             block.super to inherit breadcrumbs from both base.html
-             and base_place.html ... or maybe that'll be too much
-             trouble and we should just generate a list of breadcrumbs
-             in python view code.  -->
-	<ul id="nav-breadcrumb">
-		<li><a href="#">Boston</a></li>
-		<li><a href="#">Neighborhoods</a></li>
-		<li><a href="#">South Boston</a></li>
-		<li><a href="#">Timeline</a></li>
-		<li><a href="#">Everything</a></li>
-	</ul>
-	<!--
-	{% get_metro %}
-	{% if is_block %}
-		<a href="/streets/">Streets</a>
-		{% if METRO.multiple_cities %}<a href="/streets/{{ place.city_object.slug }}/">{{ place.city_object.name }}</a>{% endif %}
-		<a href="{{ place.street_url }}">{{ place.street_pretty_name }}</a>
-	{% else %}
-		<a href="{{ place.location_type.url }}">{{ place.location_type.plural_name|capfirst }}</a>
-	{% endif %}
-	-->
+	{{ block.super }}
+	<li>Timeline: Everything</li>
 {% endblock breadcrumbs %}
 
 {% block header %}

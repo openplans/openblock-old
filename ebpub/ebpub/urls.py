@@ -37,14 +37,14 @@ else:
     urlpatterns = patterns('')
 
 urlpatterns += patterns('',
-    (r'^$', views.homepage),
+    url(r'^$', views.homepage, name="ebpub-homepage"),
     (r'^geoexample/$', views.geo_example),
     (r'^geomapexample/$', views.geo_map_example),
     (r'^search/$', views.search),
     (r'^news/$', views.schema_list),
-    (r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),
-    (r'^locations/([-_a-z0-9]{1,32})/$', views.location_type_detail),
-    (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}),
+    url(r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),
+    url(r'^locations/([-_a-z0-9]{1,32})/$', views.location_type_detail, name='ebpub-loc-type-detail'),
+    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}, name="ebpub-place-detail-timeline"),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/feeds/$', views.feed_signup, {'place_type': 'location'}),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/alerts/$', alert_views.signup, {'place_type': 'location'}),
@@ -66,6 +66,9 @@ urlpatterns += patterns('',
     (r'^api/newsitems.geojson/$', views.newsitems_geojson),
 )
 
+# TODO: This apparently makes it impossible to do reverse URL lookups
+# on any of these.
+# Maybe just build one set of patterns dynamically based settings?
 urlpatterns += metro_patterns(
     multi=(
         (r'^streets/$', views.city_list),
