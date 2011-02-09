@@ -96,11 +96,6 @@ window.onload = function() {
 
 {% endblock extrahead %}
 
-{% block breadcrumbs %}
-	{{ block.super }}
-	<li>Timeline: Everything</li>
-{% endblock breadcrumbs %}
-
 {% block header %}
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
 	{% else %}{{ place.name }}

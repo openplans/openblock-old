@@ -9,20 +9,6 @@ Implements only the "top" of the page -- the title and "Nearby" list.
 Required variables: nearby_locations, place, is_block
 {% endcomment %}
 
-{% block breadcrumbs %}
-	{{ block.super }}
-	{% if is_block %}
-		<li><a href="/streets/">Streets</a></li>
-		{% if METRO.multiple_cities %}
-			<a href="/streets/{{ place.city_object.slug }}/">{{ place.city_object.name }}</a>
-		{% endif %}
-		<li><a href="{{ place.street_url }}">{{ place.street_pretty_name }}</a></li>
-	{% else %}
-		<li><a href="{{ place.location_type.url }}">{{ place.location_type.plural_name|capfirst }}</a></li>
-	{% endif %}
-	<li><a href="{{ place.url }}">{{ place.pretty_name }}</a></li>
-{% endblock breadcrumbs %}
-
 {% block content %}
 <div id="nav-location">
 	<!-- begin block map -->

@@ -28,6 +28,7 @@ from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.db.models import Q
 from django.views.decorators.cache import cache_page
+from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
@@ -36,13 +37,12 @@ from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
-from ebpub.geocoder import reverse
+from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
 from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
-from ebpub.metros.allmetros import get_metro
 from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
 from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
@@ -435,6 +435,7 @@ def homepage(request):
         'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
         'bodyclass': 'homepage',
+        'breadcrumbs': breadcrumbs.home({}),
     })
 
 def search(request, schema_slug=''):
@@ -559,7 +560,7 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         elif ni.location:
             # Try reverse-geocoding and see if we get a block.
             try:
-                block, distance = reverse.reverse_geocode(ni.location)
+                block, distance = geocoder.reverse.reverse_geocode(ni.location)
                 # TODO: if this happens, we should really update
                 # ni.block, but this seems like a terrible place to do
                 # that.
@@ -567,7 +568,7 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
                     "%r (id %d) can be reverse-geocoded to %r (id %d) but"
                     " self.block isn't set" % (ni, ni.id, block, block.id))
                 location_url = block.url()
-            except reverse.ReverseGeocodeError:
+            except geocoder.reverse.ReverseGeocodeError:
                 logger.error(
                     "%r (id %d) has neither a location_url, nor a block,"
                     " nor a reverse-geocodable location" % (ni, ni.id))
@@ -679,7 +680,7 @@ def schema_detail(request, slug):
     # schema IDs for schemas whose intro text should *not* be displayed.
     hide_intro = str(s.id) in request.COOKIES.get(HIDE_SCHEMA_INTRO_COOKIE_NAME, '').split(',')
 
-    return eb_render(request, templates_to_try, {
+    context = {
         'schema': s,
         'schemafield_list': schemafield_list,
         'location_type_list': location_type_list,
@@ -696,7 +697,9 @@ def schema_detail(request, slug):
         'end_date': today(),
         'bodyclass': 'schema-detail',
         'bodyid': slug,
-    })
+    }
+    context['breadcrumbs'] = breadcrumbs.schema_detail(context)
+    return eb_render(request, templates_to_try, context)
 
 def schema_detail_special_report(request, schema):
     ni_list = NewsItem.objects.filter(schema__id=schema.id)
@@ -795,6 +798,9 @@ def schema_filter(request, slug, urlbits):
 
     lookup_descriptions = []
 
+    # Break apart the URL to determine what filters to apply.
+    # TODO: Refactor this into helpers or separate views.
+    #
     # urlbits is a string describing the filters (or None, in the case of
     # "/filter/"). Cycle through them to see which ones are valid.
     urlbits = urlbits or ''
@@ -1058,6 +1064,7 @@ def schema_filter(request, slug, urlbits):
         'start_date': start_date,
         'end_date': end_date,
     })
+    context['breadcrumbs'] = breadcrumbs.schema_filter(context)
     return eb_render(request, 'db/filter.html', context)
 
 
@@ -1066,13 +1073,16 @@ def location_type_detail(request, slug):
     order_by = get_metro()['multiple_cities'] and ('city', 'display_order') or ('display_order',)
     loc_list = Location.objects.filter(location_type__id=lt.id, is_public=True).order_by(*order_by)
     lt_list = [{'location_type': i, 'is_current': i == lt} for i in LocationType.objects.filter(is_significant=True).order_by('plural_name')]
-    return eb_render(request, 'db/location_type_detail.html', {
+    context = {
         'location_type': lt,
         'location_list': loc_list,
         'location_type_list': lt_list,
         'bodyclass': 'location-type-detail',
         'bodyid': slug,
-    })
+        }
+    context['breadcrumbs'] = breadcrumbs.location_type_detail(context)
+    return eb_render(request, 'db/location_type_detail.html', context)
+
 
 def city_list(request):
     c_list = [City.from_norm_name(c['city']) for c in Street.objects.distinct().values('city').order_by('city')]
@@ -1087,11 +1097,13 @@ def street_list(request, city_slug):
     streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
     if not streets:
         raise Http404('This city has no streets')
-    return eb_render(request, 'db/street_list.html', {
+    context = {
         'street_list': streets,
         'city': city,
         'bodyclass': 'street-list',
-    })
+    }
+    context['breadcrumbs'] = breadcrumbs.street_list(context)
+    return eb_render(request, 'db/street_list.html', context)
 
 def block_list(request, city_slug, street_slug):
     city = city_slug and City.from_slug(city_slug) or None
@@ -1103,12 +1115,14 @@ def block_list(request, city_slug, street_slug):
     blocks = Block.objects.filter(city_filter, **kwargs).order_by('postdir', 'predir', 'from_num', 'to_num')
     if not blocks:
         raise Http404
-    return eb_render(request, 'db/block_list.html', {
+    context = {
         'block_list': blocks,
         'first_block': blocks[0],
         'city': city,
         'bodyclass': 'block-list',
-    })
+    }
+    context['breadcrumbs'] = breadcrumbs.block_list(context)
+    return eb_render(request, 'db/block_list.html', context)
 
 
 def get_place_info_for_request(request, *args, **kwargs):
@@ -1194,9 +1208,8 @@ def get_place_info_for_request(request, *args, **kwargs):
 def place_detail_timeline(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     schema_manager = get_schema_manager(request)
-
+    context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
     newsitem_qs = context['newsitem_qs']
-
     is_latest_page = True
     # Check the query string for the max date to use. Otherwise, fall
     # back to today.
@@ -1261,7 +1274,7 @@ def place_detail_timeline(request, *args, **kwargs):
 def place_detail_overview(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     schema_manager = get_schema_manager(request)
-
+    context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
     newsitem_qs = context['newsitem_qs']
 
     # Here, the goal is to get the latest nearby NewsItems for each

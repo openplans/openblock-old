@@ -13,12 +13,6 @@
 <meta name="description" content="List of {{ location_type.plural_name }} in {% METRO_NAME %}, with recent news for each one.">
 {% endblock extrahead %}
 
-{% block breadcrumbs %}
-	{{ block.super }}
-	<li><a href="{% url ebpub-loc-type-detail location_type.slug %}">{{ location_type.plural_name }}</a></li>
-{% endblock breadcrumbs %}
-
-
 {% block content %}
 <div id="content">
 	<h1>{% METRO_NAME %} {{ location_type.plural_name }}</h1>

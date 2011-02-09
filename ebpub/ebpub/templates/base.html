@@ -64,11 +64,11 @@ anyway since our openlayers directory is versioned already.
 			</form>
 			{% endwith %}
 		</div><!--/ #globalnav -->
-		<ul id="nav-breadcrumb">
-		  {% block breadcrumbs %}
-		  <li><a href="{% url ebpub-homepage %}">{% METRO_NAME %}</a></li>
-		  {% endblock breadcrumbs %}
-		</ul>
+		<!-- begin block breadcrumbs -->
+		{% block breadcrumbs %}
+		{% include "db/snippets/breadcrumbs.html" %}
+		{% endblock breadcrumbs %}
+		<!-- end block breadcrumbs -->
 	</div><!-- / #header -->
 	<div id="main">
 		{% block content %}{% endblock content %}
