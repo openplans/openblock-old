@@ -298,7 +298,7 @@ div.popupnav {
 
 
 body {
-background : transparent url(./bg.png) top left;
+background : transparent url(/styles/bg.png) top left;
 font : normal normal normal 1em/1.4em Georgia, Sans-serif;
 min-width: 900px;
 }
@@ -310,7 +310,7 @@ color : #0069a9;
 
 
 #container {
-background : transparent url(./heading-bg.jpg) top left repeat-x;
+background : transparent url(/styles/heading-bg.jpg) top left repeat-x;
 }
 
 #header, #main {
@@ -385,7 +385,7 @@ background-color : #f8f6f2;
 }
 
 #nav-breadcrumb li {
-background : transparent url(./breadcrumb-separator.png) top right no-repeat;
+background : transparent url(/styles/breadcrumb-separator.png) top right no-repeat;
 padding : 5px 30px 7px 20px;
 }
 
