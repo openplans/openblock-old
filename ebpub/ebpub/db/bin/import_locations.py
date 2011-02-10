@@ -58,6 +58,9 @@ class LocationImporter(object):
     def save(self, name_field='name', source='UNKNOWN', verbose=True):
         locs = []
         for feature in self.layer:
+            if not self.should_create_location(feature): 
+                continue
+
             name = feature.get(name_field)
             geom = feature.geom.transform(4326, True).geos
             if not geom.valid:
@@ -68,7 +71,7 @@ class LocationImporter(object):
                 name = name,
                 normalized_name = normalize(name),
                 slug = slugify(name),
-                location_type = self.location_type,
+                location_type = self.get_location_type(feature),
                 location = geom,
                 centroid = geom.centroid,
                 city = self.metro_name,
@@ -92,6 +95,12 @@ class LocationImporter(object):
             if verbose:
                 sys.stderr.write('done.\n')
         return num_created
+        
+    def should_create_location(self, feature):
+        return True
+        
+    def get_location_type(self, feature):
+        return self.location_type
 
 usage = 'usage: %prog [options] type_slug /path/to/shapefile'
 optparser = OptionParser(usage=usage)
