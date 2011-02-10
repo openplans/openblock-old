@@ -44,8 +44,8 @@ urlpatterns += patterns('',
     (r'^news/$', views.schema_list),
     url(r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),
     url(r'^locations/([-_a-z0-9]{1,32})/$', views.location_type_detail, name='ebpub-loc-type-detail'),
-    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}, name="ebpub-place-detail-timeline"),
-    (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}),
+    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}, name="ebpub-place-timeline"),
+    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}, name="ebpub-place-overview"),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/feeds/$', views.feed_signup, {'place_type': 'location'}),
     (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/alerts/$', alert_views.signup, {'place_type': 'location'}),
     (r'^locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/place.kml$', views.place_kml, {'place_type': 'location'}),
@@ -66,32 +66,30 @@ urlpatterns += patterns('',
     (r'^api/newsitems.geojson/$', views.newsitems_geojson),
 )
 
-# TODO: This apparently makes it impossible to do reverse URL lookups
-# on any of these.
-# Maybe just build one set of patterns dynamically based settings?
 urlpatterns += metro_patterns(
     multi=(
         (r'^streets/$', views.city_list),
         (r'^streets/([-a-z]{3,40})/$', views.street_list),
         (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/$', views.block_list),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX, views.place_detail_timeline, {'place_type': 'block'}),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}),
+        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX, views.place_detail_timeline, {'place_type': 'block'}, 'ebpub-place-timeline'),
+        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}, 'ebpub-place-overview'),
         (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX, views.feed_signup, {'place_type': 'block'}),
         (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX, alert_views.signup, {'place_type': 'block'}),
     ),
     single=(
         (r'^streets/()$', views.street_list),
         (r'^streets/()([-a-z0-9]{1,64})/$', views.block_list),
-        (r'^streets/()([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX, views.place_detail_timeline, {'place_type': 'block'}),
-        (r'^streets/()([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}),
+        (r'^streets/()([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX, views.place_detail_timeline, {'place_type': 'block'}, 'ebpub-place-timeline'),
+        (r'^streets/()([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}, 'ebpub-place-overview'),
         (r'^streets/()([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX, views.feed_signup, {'place_type': 'block'}),
         (r'^streets/()([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX, alert_views.signup, {'place_type': 'block'}),
     )
 )
 
-urlpatterns += patterns('',
-    (r'^([-\w]{4,32})/$', views.schema_detail),
-    (r'^([-\w]{4,32})/about/$', views.schema_about),
+urlpatterns += patterns(
+    '',
+    url(r'^([-\w]{4,32})/$', views.schema_detail, name='ebpub-schema-detail'),
+    url(r'^([-\w]{4,32})/about/$', views.schema_about, name='ebpub-schema-about'),
     (r'^([-\w]{4,32})/search/$', views.search),
     (r'^([-\w]{4,32})/petition/$', petition_views.form_view, {'is_schema': True}),
     (r'^([-\w]{4,32})/petition/thanks/$', petition_views.form_thanks, {'is_schema': True}),

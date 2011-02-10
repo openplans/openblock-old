@@ -39,7 +39,7 @@ def block_list(context):
     crumbs.append((block.street_pretty_name, block.street_url()))
     return crumbs
 
-def place(context):
+def place_base(context):
     place = context['place']
     if context['is_block']:
         crumbs = block_list(context)
@@ -50,12 +50,12 @@ def place(context):
     return crumbs
 
 def place_detail_timeline(context):
-    crumbs =  place(context)
+    crumbs =  place_base(context)
     crumbs.append(('Timeline: Everything', ''))
     return crumbs
 
 def place_detail_overview(context):
-    crumbs =  place(context)
+    crumbs =  place_base(context)
     crumbs.append(('Overview', ''))
     return crumbs
 
@@ -63,7 +63,14 @@ def place_detail_overview(context):
 def schema_detail(context):
     crumbs = home(context)
     schema = context['schema']
-    crumbs.append((schema.plural_name, schema.url()))
+    crumbs.append((schema.plural_name,
+                   urlresolvers.reverse('ebpub-schema-detail', args=(context['schema'].slug,))))
+    return crumbs
+
+def schema_about(context):
+    crumbs = schema_detail(context)
+    crumbs.append(('About',
+                   urlresolvers.reverse('ebpub-schema-about', args=(context['schema'].slug,))))
     return crumbs
 
 def schema_filter(context):
@@ -75,7 +82,15 @@ def schema_filter(context):
     crumbs = schema_detail(context)
     url = crumbs[-1][1]
     for sf in context.get('filters', {}).values():
-        label = '%s: %s' % (sf['label'], sf['short_value'])
-        url = url + sf['url'] + '/'
+        label = (sf.get('short_value') or sf['value']).title()
+        if sf.get('url') is not None:
+            url = url + sf['url'] + '/'
         crumbs.append((label, url))
-    return crumbs
+    # This one's a generator because we want to evaluate it lazily,
+    # and django's 'for' template tag doesn't accept callables.
+    for crumb in crumbs:
+        yield crumb
+
+def newsitem_detail(context):
+    context['schema'] = context['newsitem'].schema
+    return schema_filter(context)

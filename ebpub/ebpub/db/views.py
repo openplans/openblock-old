@@ -33,6 +33,7 @@ from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
+from ebpub.metros.allmetros import get_metro
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.dates import daterange, parse_date
@@ -574,7 +575,7 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
                     " nor a reverse-geocodable location" % (ni, ni.id))
                 pass
 
-    return eb_render(request, templates_to_try, {
+    context = {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
         'attribute_dict': dict((att.sf.name, att) for att in atts),
@@ -586,8 +587,9 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         'map_center_y': center_y,
         'bodyclass': 'newsitem-detail',
         'bodyid': schema_slug,
-
-    })
+    }
+    context['breadcrumbs'] = breadcrumbs.newsitem_detail(context)
+    return eb_render(request, templates_to_try, context)
 
 def schema_list(request):
     schema_list = Schema.objects.select_related().filter(is_public=True, is_special_report=False).order_by('plural_name')
@@ -728,19 +730,26 @@ def schema_detail_special_report(request, schema):
 
 def schema_about(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug)
-    return eb_render(request, 'db/schema_about.html',
-                     {'schema': s,
-                      'bodyid': slug,
-                      'bodyclass': 'schema-about',
-                      })
+    context = {'schema': s, 'bodyid': slug, 'bodyclass': 'schema-about',}
+    context['breadcrumbs'] = breadcrumbs.schema_about(context)
+    return eb_render(request, 'db/schema_about.html', context)
 
 
-def schema_filter(request, slug, urlbits):
-    # Due to the way our custom filter UI works, address, date and text
-    # searches come in a query string instead of in the URL. Here, we validate
-    # those searches and do a redirect so that the address and date are in
-    # urlbits.
-    context = {'bodyclass': 'schema-filter'}
+def _schema_filter_normalize_url(request):
+    """Returns a new URL, or None if the original URL is OK.
+    """
+    # Due to the way our custom filter UI works, address, date and
+    # text searches sometimes come in a query string instead of in the
+    # URL. Here, we validate those searches and return a url for
+    # redirection so that the address and date are in the path.
+    #
+    # TODO: This only handles one of those queries per request. Handle multiple?
+    #
+    # TODO: normalize the order of queries in the final URL, so that
+    # /by-foo/a/b/by-bar/x/ and /by-bar/x/by-foo/a/b/ are
+    # normalized to the same URL?
+    # That'd help cacheability and we could put less expensive filters first.
+
     if request.GET.get('address', '').strip():
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
@@ -758,7 +767,7 @@ def schema_filter(request, slug, urlbits):
                 new_url = request.path + result['intersection'].url()[1:] + radius_url(block_radius) + '/'
             else:
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
-            return HttpResponseRedirect(new_url)
+            return new_url
         else:
             return eb_render(request, 'db/filter_bad_address.html', {
                 'address_choices': address_choices,
@@ -771,20 +780,34 @@ def schema_filter(request, slug, urlbits):
             start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
             end_date = parse_date(request.GET['end_date'], '%m/%d/%Y')
         except ValueError:
-            return HttpResponseRedirect('../')
+            return '../'
         if start_date.year < 1900 or end_date.year < 1900:
             # This prevents strftime from throwing a ValueError.
             raise Http404('Dates before 1900 are not supported.')
         new_url = request.path + '%s,%s' % (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')) + '/'
-        return HttpResponseRedirect(new_url)
+        return new_url
     if request.GET.get('textsearch', '').strip() and request.GET.get('q', '').strip():
         new_url = request.path + 'by-%s/%s/' % (request.GET['textsearch'], urllib.quote(request.GET['q']))
+        return new_url
+    return None
+
+def schema_filter(request, slug, urlbits):
+    new_url = _schema_filter_normalize_url(request)
+    if new_url is not None:
         return HttpResponseRedirect(new_url)
 
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    context['bodyid'] = s.slug
     if not s.allow_charting:
         return HttpResponsePermanentRedirect(s.url())
+
+    context = {
+        'bodyclass': 'schema-filter',
+        'bodyid': s.slug,
+        }
+    # Breadcrumbs. We can assign this early because it's a generator,
+    # so it'll get the full context no matter what.
+    context['breadcrumbs'] = breadcrumbs.schema_filter(context)
+
     filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
     textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
 
@@ -799,12 +822,13 @@ def schema_filter(request, slug, urlbits):
     lookup_descriptions = []
 
     # Break apart the URL to determine what filters to apply.
-    # TODO: Refactor this into helpers or separate views.
+    # TODO: Refactor this into helpers or separate views. See #112
     #
     # urlbits is a string describing the filters (or None, in the case of
     # "/filter/"). Cycle through them to see which ones are valid.
     urlbits = urlbits or ''
-    urlbits = filter(None, urlbits.split('/')[::-1]) # Reverse them, so we can use pop().
+    # Reversing so we can use pop() instead of pop(0).
+    urlbits = [bit for bit in reversed(urlbits.split('/')) if bit]
     filters = SortedDict()
     date_filter_applied = location_filter_applied = False
     while urlbits:
@@ -862,12 +886,13 @@ def schema_filter(request, slug, urlbits):
                 else: # List of available lookups.
                     lookup_list = Lookup.objects.filter(schema_field__id=sf.id).order_by('name')
                     filters['lookup'] = {'name': 'lookup', 'label': None, 'value': 'By ' + sf.pretty_name, 'url': None}
-                    return eb_render(request, 'db/filter_lookup_list.html', {
+                    context.update({
                         'schema': s,
                         'filters': filters,
                         'lookup_type': sf.pretty_name,
                         'lookup_list': lookup_list,
                     })
+                    return eb_render(request, 'db/filter_lookup_list.html', context)
             elif sf.is_type('bool'): # Boolean field.
                 if urlbits:
                     slug = urlbits.pop()
@@ -880,12 +905,13 @@ def schema_filter(request, slug, urlbits):
                     filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s/%s' % (sf.slug, slug)}
                 else:
                     filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
-                    return eb_render(request, 'db/filter_lookup_list.html', {
+                    context.update({
                         'schema': s,
                         'filters': filters,
                         'lookup_type': u'whether they ' + sf.pretty_name_plural,
                         'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
                     })
+                    return eb_render(request, 'db/filter_lookup_list.html', context)
             else: # Text-search field.
                 if not urlbits:
                     raise Http404('Text search lookup requires search params')
@@ -967,12 +993,13 @@ def schema_filter(request, slug, urlbits):
                     raise Http404()
                 location_type = lookup_list[0].location_type
                 filters['location'] = {'name': 'location', 'label': None, 'value': 'By ' + location_type.name, 'url': None}
-                return eb_render(request, 'db/filter_lookup_list.html', {
+                context.update({
                     'schema': s,
                     'filters': filters,
                     'lookup_type': location_type.name,
                     'lookup_list': lookup_list,
                 })
+                return eb_render(request, 'db/filter_lookup_list.html', context)
 
         else:
             raise Http404('Invalid filter type')
@@ -1064,7 +1091,6 @@ def schema_filter(request, slug, urlbits):
         'start_date': start_date,
         'end_date': end_date,
     })
-    context['breadcrumbs'] = breadcrumbs.schema_filter(context)
     return eb_render(request, 'db/filter.html', context)
 
 

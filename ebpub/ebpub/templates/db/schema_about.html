@@ -6,16 +6,21 @@
 
 {% block content %}
 <div id="content">
-	<p>
-		<a href="../">{{ schema.plural_name|capfirst }}</a>
-	</p>
 	<h1>About {{ schema.plural_name }}</h1>
 	<h2>Summary</h2>
 	{{ schema.summary|safe|linebreaks }}
 
-	{% if schema.source %}
-		<h2>Source</h2>
-		{{ schema.source|safe|linebreaks }}
+	{% if schema.source.strip %}
+	  {% with schema.source.splitlines as sources %}
+		<h2>Source{{sources|pluralize}}</h2>
+		{% for source in sources %}
+		   {% if source.strip %}
+		   <p><a href="{{ source.strip|safe }}">
+		   {{ source.strip|safe }}
+		   </a></p>
+		   {% endif %}
+		{% endfor %}
+	  {% endwith %} 
 	{% endif %}
 
 	{% if schema.grab_bag_headline and schema.grab_bag %}
@@ -23,6 +28,5 @@
 		{{ schema.grab_bag|safe|linebreaks }}
 	{% endif %}
 
-	<p><a href="../">Back to {{ schema.plural_name }}</a></p>
 </div><!--/content-->
 {% endblock %}
