@@ -325,8 +325,8 @@ class StreetMisspellingManager(models.Manager):
             return street_name
 
 class StreetMisspelling(models.Model):
-    incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
-    correct = models.CharField(max_length=255)
+    incorrect = models.CharField(max_length=255, unique=True, help_text="Incorrect street name in UPPERCASE, do not include a suffix, eg: MASS") # Always uppercase, single spaces
+    correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
     objects = StreetMisspellingManager()
 
     def __unicode__(self):
