@@ -33,6 +33,7 @@ def filter_breadcrumb_link(schema, filters, filter_):
         output.append(f['url'])
         if f == filter_:
             break
+    # TODO: factor out URL generation. #69
     return '%s%s/' % (schema.url(), '/'.join(output))
 register.simple_tag(filter_breadcrumb_link)
 
@@ -54,6 +55,7 @@ class FilterUrlNode(template.Node):
                 del filterdict[key.resolve(context)]
             except KeyError:
                 pass
+        # TODO: factor out URL generation. #69
         urls = [d['url'] for d in filterdict.values()]
         if urls:
             return '%s%s/' % (schema.url(), ';'.join(urls))

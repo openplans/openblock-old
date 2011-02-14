@@ -569,6 +569,7 @@ class NewsItem(models.Model):
         month = self.item_date.month
         day = self.item_date.day
         slug = self.schema.slug
+        # TODO: factor out URL generation. #69
         return '/%(slug)s/filter/by-date=%(year)s-%(month)s-%(day)s,%(year)s-%(month)s-%(day)s/' % locals()
 
     def location_url(self):
@@ -625,6 +626,7 @@ class AttributeForTemplate(object):
         urls = [None]
         descriptions = [None]
         if self.is_filter:
+            # TODO: factor out URL generation. #69
             if self.is_lookup:
                 urls = [look and '/%s/by-%s/%s/' % (self.schema_slug, self.sf.slug, look.slug) or None for look in self.values]
             elif isinstance(self.raw_value, datetime.date):

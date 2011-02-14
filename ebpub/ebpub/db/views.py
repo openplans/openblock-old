@@ -757,6 +757,7 @@ def _schema_filter_normalize_url(request):
     new_filter_args = ''
 
     # Build new filter args.
+    # TODO: factor out a function that does this, #69
     if request.GET.get('address', '').strip():
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
@@ -782,6 +783,7 @@ def _schema_filter_normalize_url(request):
                     raise
             else:
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
+            # TODO: factor out URL param format. #69
             new_filter_args = '%sstreets=%s' % (new_filter_args, ','.join(
                     [block.street_slug, '%d-%d' % (block.from_num, block.to_num),
                     block_radius]))
@@ -801,12 +803,16 @@ def _schema_filter_normalize_url(request):
         if start_date.year < 1900 or end_date.year < 1900:
             # This prevents strftime from throwing a ValueError.
             raise Http404('Dates before 1900 are not supported.')
+
+        # TODO: factor out URL param format. #69
         new_filter_args = '%sby-date=%s,%s' % (new_filter_args, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
     if request.GET.get('textsearch', '').strip() and request.GET.get('q', '').strip():
+        # TODO: factor out URL param format. #69
         new_filter_args = '%sby-%s=%s' % (new_filter_args, request.GET['textsearch'], urllib.quote(request.GET['q']))
     if not new_filter_args:
         return None
 
+    # TODO: factor out URL param format. #69
     filter_args = '%s;%s' % (filter_args, new_filter_args)
     return urlresolvers.reverse(view, args=[schemaslug, filter_args], kwargs=kwargs)
 
