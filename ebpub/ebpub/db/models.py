@@ -569,7 +569,7 @@ class NewsItem(models.Model):
         month = self.item_date.month
         day = self.item_date.day
         slug = self.schema.slug
-        return '/%(slug)s/by-date/%(year)s-%(month)s-%(day)s,%(year)s-%(month)s-%(day)s/' % locals()
+        return '/%(slug)s/filter/by-date=%(year)s-%(month)s-%(day)s,%(year)s-%(month)s-%(day)s/' % locals()
 
     def location_url(self):
         if self.location_object_id is not None:

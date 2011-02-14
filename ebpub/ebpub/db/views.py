@@ -19,6 +19,7 @@
 from django import template
 from django.conf import settings
 from django.contrib.gis.shortcuts import render_to_kml
+from django.core import urlresolvers
 from django.core.cache import cache
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
@@ -750,7 +751,6 @@ def _schema_filter_normalize_url(request):
     # See #113
 
     # Get existing filter args from the URL.
-    from django.core import urlresolvers
     view, args, kwargs = urlresolvers.resolve(request.path)
     schemaslug, filter_args = args
     filter_args = filter_args.rstrip('/')
@@ -806,10 +806,17 @@ def _schema_filter_normalize_url(request):
         new_filter_args = '%sby-%s=%s' % (new_filter_args, request.GET['textsearch'], urllib.quote(request.GET['q']))
     if not new_filter_args:
         return None
+
     filter_args = '%s;%s' % (filter_args, new_filter_args)
-    return urlresolvers.reverse('ebpub-schema-filter', args=[schemaslug, filter_args], kwargs=kwargs)
+    return urlresolvers.reverse(view, args=[schemaslug, filter_args], kwargs=kwargs)
 
 def schema_filter(request, slug, args_from_url):
+    """
+    List NewsItems for one schema, filtered by various criteria in the
+    URL (date, location, or values of SchemaFields).
+    """
+    view, view_args, view_kwargs = urlresolvers.resolve(request.path)
+
     new_url = _schema_filter_normalize_url(request)
     if new_url is not None:
         return HttpResponseRedirect(new_url)
@@ -847,12 +854,14 @@ def schema_filter(request, slug, args_from_url):
     args_from_url = urllib.unquote((args_from_url or '').rstrip('/'))
     args_from_url = args_from_url.replace('+', ' ')
     urlargs = []
-    if args_from_url:
+    if args_from_url and args_from_url != 'filter':
         for param in args_from_url.split(';'):
+            if not param:
+                continue
             try:
                 argname, argvalues = param.split('=', 1)
             except ValueError:
-                raise #XXX
+                raise Http404('Invalid filter parameter %r, no equals sign' % param)
             argname = argname.strip()
             argvalues = [v.strip() for v in argvalues.split(',')]
             if argname:
@@ -860,6 +869,7 @@ def schema_filter(request, slug, args_from_url):
 
     filters = SortedDict()
     date_filter_applied = location_filter_applied = False
+
     while urlargs:
         argname, argvalues = urlargs.pop(0)
 
@@ -890,7 +900,8 @@ def schema_filter(request, slug, args_from_url):
                 value = dateformat.format(start_date, 'N j, Y')
             else:
                 value = u'%s \u2013 %s' % (dateformat.format(start_date, 'N j, Y'), dateformat.format(end_date, 'N j, Y'))
-            filters['date'] = {'name': 'date', 'label': label, 'short_value': value, 'value': value, 'url': '%s/%s,%s' % (argname, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))}
+
+            filters['date'] = {'name': 'date', 'label': label, 'short_value': value, 'value': value, 'url': '%s=%s,%s' % (argname, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))}
             date_filter_applied = True
         # END OF DATE FILTERING
 
@@ -908,7 +919,7 @@ def schema_filter(request, slug, args_from_url):
                     qs = qs.by_attribute(sf, look.id)
                     if look.description:
                         lookup_descriptions.append(look)
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': look.name, 'value': look.name, 'url': 'by-%s/%s' % (sf.slug, look.slug)}
+                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': look.name, 'value': look.name, 'url': 'by-%s=%s' % (sf.slug, look.slug)}
                 else: # List of available lookups.
                     lookup_list = Lookup.objects.filter(schema_field__id=sf.id).order_by('name')
                     filters['lookup'] = {'name': 'lookup', 'label': None, 'value': 'By ' + sf.pretty_name, 'url': None}
@@ -916,6 +927,8 @@ def schema_filter(request, slug, args_from_url):
                         'schema': s,
                         'filters': filters,
                         'lookup_type': sf.pretty_name,
+                        'lookup_type_slug': sf.slug,
+                        'filter_argname': argname,
                         'lookup_list': lookup_list,
                     })
                     return eb_render(request, 'db/filter_lookup_list.html', context)
@@ -930,13 +943,15 @@ def schema_filter(request, slug, args_from_url):
                         raise Http404('Invalid boolean field URL')
                     qs = qs.by_attribute(sf, real_val)
                     value = {True: 'Yes', False: 'No', None: 'N/A'}[real_val]
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s/%s' % (sf.slug, boolslug)}
+                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s=%s' % (sf.slug, boolslug)}
                 else:
                     filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
                     context.update({
                         'schema': s,
                         'filters': filters,
+                        'filter_argname': argname,
                         'lookup_type': u'whether they ' + sf.pretty_name_plural,
+                        'lookup_type_slug': sf.slug,
                         'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
                     })
                     return eb_render(request, 'db/filter_lookup_list.html', context)
@@ -945,7 +960,7 @@ def schema_filter(request, slug, args_from_url):
                     raise Http404('Text search lookup requires search params')
                 query = ', '.join(argvalues)
                 qs = qs.text_search(sf, query)
-                filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': query, 'value': query, 'url': 'by-%s/%s' % (sf.slug, query)}
+                filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': query, 'value': query, 'url': 'by-%s=%s' % (sf.slug, query)}
         # END OF LOOKUP FILTERING
 
         # Street/address
@@ -976,12 +991,15 @@ def schema_filter(request, slug, args_from_url):
             block = context['place']
             qs = context['newsitem_qs']
             value = '%s block%s around %s' % (block_radius, (block_radius != '1' and 's' or ''), block.pretty_name)
+
             filters['location'] = {
                 'name': 'location',
                 'label': 'Area',
                 'short_value': value,
                 'value': value,
-                'url': block.url()[1:] + radius_url(block_radius),
+                'url': 'streets=%s,%s,%s' % (block.street_slug, 
+                                             '%d-%d' % (block.from_num, block.to_num), 
+                                             radius_url(block_radius)),
                 'location_name': block.pretty_name,
                 'location_object': block,
             }
@@ -1010,7 +1028,7 @@ def schema_filter(request, slug, args_from_url):
                     'label': loc.location_type.name,
                     'short_value': loc.name,
                     'value': loc.name,
-                    'url': 'locations/%s/%s' % (location_type_slug, loc.slug),
+                    'url': 'locations=%s,%s' % (location_type_slug, loc.slug),
                     'location_name': loc.name,
                     'location_object': loc,
                 }
@@ -1025,7 +1043,9 @@ def schema_filter(request, slug, args_from_url):
                     'schema': s,
                     'filters': filters,
                     'lookup_type': location_type.name,
+                    'lookup_type_slug': location_type.slug,
                     'lookup_list': lookup_list,
+                    'filter_argname': argname,
                 })
                 return eb_render(request, 'db/filter_lookup_list.html', context)
 

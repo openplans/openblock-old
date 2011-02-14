@@ -27,14 +27,14 @@
 				</p>
 				<ul>
 					{% for lookup in current_letter.list %}
-						<li><a href="{{ lookup.slug }}/">{{ lookup.name }}</a></li>
+						<li><a href="../{{ filter_argname}}={{lookup_type_slug}},{{ lookup.slug }}/">{{ lookup.name }}</a></li>
 					{% endfor %}
 				</ul>
 		{% endfor %}
 	{% else %}
 		<ul>
 			{% for lookup in lookup_list %}
-				<li><a href="{{ lookup.slug }}/">{{ lookup.name }}</a></li>
+				<li><a href="../{{filter_argname}}={{ lookup_type_slug}},{{ lookup.slug }}/">{{ lookup.name }}</a></li>
 			{% endfor %}
 		</ul>
 	{% endif %}

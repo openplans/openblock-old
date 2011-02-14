@@ -56,7 +56,7 @@ class FilterUrlNode(template.Node):
                 pass
         urls = [d['url'] for d in filterdict.values()]
         if urls:
-            return '%s%s/' % (schema.url(), '/'.join(urls))
+            return '%s%s/' % (schema.url(), ';'.join(urls))
         else:
             return '%sfilter/' % schema.url()
 
@@ -69,7 +69,7 @@ def do_filter_url(parser, token):
     {% filter_url schema filter_dict -key_to_remove %}
     {% filter_url schema filter_dict -"key_to_remove" %}
 
-    Outputs a string like 'filter1/foo/filter2/bar/' (with a trailing slash but
+    Outputs a string like '/filter1=foo;filter2=bar/' (with a trailing slash but
     not a leading slash).
     """
     bits = token.split_contents()
