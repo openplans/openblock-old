@@ -741,15 +741,22 @@ def _schema_filter_normalize_url(request):
     # Due to the way our custom filter UI works, address, date and
     # text searches sometimes come in a query string instead of in the
     # URL. Here, we validate those searches and return a url for
-    # redirection so that the address and date are in the path.
-    #
-    # TODO: This only handles one of those queries per request. Handle multiple?
+    # redirection so that the arguments are in the path.
     #
     # TODO: normalize the order of queries in the final URL, so that
-    # /by-foo/a/b/by-bar/x/ and /by-bar/x/by-foo/a/b/ are
+    # /by-foo=a,b;by-bar=x/ and /by-bar=x;by-foo=a,b/ are
     # normalized to the same URL?
     # That'd help cacheability and we could put less expensive filters first.
+    # See #113
 
+    # Get existing filter args from the URL.
+    from django.core import urlresolvers
+    view, args, kwargs = urlresolvers.resolve(request.path)
+    schemaslug, filter_args = args
+    filter_args = filter_args.rstrip('/')
+    new_filter_args = ''
+
+    # Build new filter args.
     if request.GET.get('address', '').strip():
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
         address = request.GET['address'].strip()
@@ -762,12 +769,22 @@ def _schema_filter_normalize_url(request):
             address_choices = ()
         if result:
             if result['block']:
-                new_url = request.path + result['block'].url()[1:] + radius_url(block_radius) + '/'
+                block = result['block']
             elif result['intersection']:
-                new_url = request.path + result['intersection'].url()[1:] + radius_url(block_radius) + '/'
+                try:
+                    block = result['intersection'].blockintersection_set.all()[0].block
+                except IndexError:
+                    # XXX Not sure this was deliberate, but we used to
+                    # call intersection.url() here, which does that
+                    # same blockintersection_set query, so it would
+                    # raise an IndexError here if there was no
+                    # matching block.  Preserving that behavior.
+                    raise
             else:
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
-            return new_url
+            new_filter_args = '%sstreets=%s' % (new_filter_args, ','.join(
+                    [block.street_slug, '%d-%d' % (block.from_num, block.to_num),
+                    block_radius]))
         else:
             return eb_render(request, 'db/filter_bad_address.html', {
                 'address_choices': address_choices,
@@ -784,14 +801,15 @@ def _schema_filter_normalize_url(request):
         if start_date.year < 1900 or end_date.year < 1900:
             # This prevents strftime from throwing a ValueError.
             raise Http404('Dates before 1900 are not supported.')
-        new_url = request.path + '%s,%s' % (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')) + '/'
-        return new_url
+        new_filter_args = '%sby-date=%s,%s' % (new_filter_args, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
     if request.GET.get('textsearch', '').strip() and request.GET.get('q', '').strip():
-        new_url = request.path + 'by-%s/%s/' % (request.GET['textsearch'], urllib.quote(request.GET['q']))
-        return new_url
-    return None
+        new_filter_args = '%sby-%s=%s' % (new_filter_args, request.GET['textsearch'], urllib.quote(request.GET['q']))
+    if not new_filter_args:
+        return None
+    filter_args = '%s;%s' % (filter_args, new_filter_args)
+    return urlresolvers.reverse('ebpub-schema-filter', args=[schemaslug, filter_args], kwargs=kwargs)
 
-def schema_filter(request, slug, urlbits):
+def schema_filter(request, slug, args_from_url):
     new_url = _schema_filter_normalize_url(request)
     if new_url is not None:
         return HttpResponseRedirect(new_url)
@@ -824,31 +842,38 @@ def schema_filter(request, slug, urlbits):
     # Break apart the URL to determine what filters to apply.
     # TODO: Refactor this into helpers or separate views. See #112
     #
-    # urlbits is a string describing the filters (or None, in the case of
+    # urlargs is a string describing the filters (or None, in the case of
     # "/filter/"). Cycle through them to see which ones are valid.
-    urlbits = urlbits or ''
-    # Reversing so we can use pop() instead of pop(0).
-    urlbits = [bit for bit in reversed(urlbits.split('/')) if bit]
+    args_from_url = urllib.unquote((args_from_url or '').rstrip('/'))
+    args_from_url = args_from_url.replace('+', ' ')
+    urlargs = []
+    if args_from_url:
+        for param in args_from_url.split(';'):
+            try:
+                argname, argvalues = param.split('=', 1)
+            except ValueError:
+                raise #XXX
+            argname = argname.strip()
+            argvalues = [v.strip() for v in argvalues.split(',')]
+            if argname:
+                urlargs.append((argname, argvalues))
+
     filters = SortedDict()
     date_filter_applied = location_filter_applied = False
-    while urlbits:
-        bit = urlbits.pop()
+    while urlargs:
+        argname, argvalues = urlargs.pop(0)
 
         # Date range
-        if bit == 'by-date' or bit == 'by-pub-date':
+        if argname == 'by-date' or argname == 'by-pub-date':
             if date_filter_applied:
                 raise Http404('Only one date filter can be applied')
             try:
-                date_range = urlbits.pop()
-            except IndexError:
-                raise Http404('Missing date range')
-            try:
-                start_date, end_date = date_range.split(',')
+                start_date, end_date = argvalues
                 start_date = datetime.date(*map(int, start_date.split('-')))
                 end_date = datetime.date(*map(int, end_date.split('-')))
             except (IndexError, ValueError, TypeError):
                 raise Http404('Missing or invalid date range')
-            if bit == 'by-date':
+            if argname == 'by-date':
                 date_field_name = 'item_date'
                 label = s.date_name
             else:
@@ -865,20 +890,21 @@ def schema_filter(request, slug, urlbits):
                 value = dateformat.format(start_date, 'N j, Y')
             else:
                 value = u'%s \u2013 %s' % (dateformat.format(start_date, 'N j, Y'), dateformat.format(end_date, 'N j, Y'))
-            filters['date'] = {'name': 'date', 'label': label, 'short_value': value, 'value': value, 'url': '%s/%s,%s' % (bit, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))}
+            filters['date'] = {'name': 'date', 'label': label, 'short_value': value, 'value': value, 'url': '%s/%s,%s' % (argname, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))}
             date_filter_applied = True
+        # END OF DATE FILTERING
 
         # Lookup
-        elif bit.startswith('by-'):
-            sf_slug = bit[3:]
+        elif argname.startswith('by-'):
+            sf_slug = argname[3:]
             try:
                 # Pop it so that we can't get subsequent lookups for this SchemaField.
                 sf = filter_sf_dict.pop(sf_slug)
             except KeyError:
                 raise Http404('Invalid SchemaField slug')
             if sf.is_lookup:
-                if urlbits:
-                    look = get_object_or_404(Lookup, schema_field__id=sf.id, slug=urlbits.pop())
+                if argvalues:
+                    look = get_object_or_404(Lookup, schema_field__id=sf.id, slug=argvalues.pop(0))
                     qs = qs.by_attribute(sf, look.id)
                     if look.description:
                         lookup_descriptions.append(look)
@@ -894,15 +920,17 @@ def schema_filter(request, slug, urlbits):
                     })
                     return eb_render(request, 'db/filter_lookup_list.html', context)
             elif sf.is_type('bool'): # Boolean field.
-                if urlbits:
-                    slug = urlbits.pop()
+                if len(argvalues) > 1:
+                    raise Http404("Invalid boolean arg %r" % ','.join(argvalues))
+                elif len(argvalues) == 1:
+                    boolslug = argvalues[1]
                     try:
-                        real_val = {'yes': True, 'no': False, 'na': None}[slug]
+                        real_val = {'yes': True, 'no': False, 'na': None}[boolslug]
                     except KeyError:
                         raise Http404('Invalid boolean field URL')
                     qs = qs.by_attribute(sf, real_val)
                     value = {True: 'Yes', False: 'No', None: 'N/A'}[real_val]
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s/%s' % (sf.slug, slug)}
+                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s/%s' % (sf.slug, boolslug)}
                 else:
                     filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
                     context.update({
@@ -913,30 +941,31 @@ def schema_filter(request, slug, urlbits):
                     })
                     return eb_render(request, 'db/filter_lookup_list.html', context)
             else: # Text-search field.
-                if not urlbits:
+                if not argvalues:
                     raise Http404('Text search lookup requires search params')
-                query = urlbits.pop()
+                query = ', '.join(argvalues)
                 qs = qs.text_search(sf, query)
                 filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': query, 'value': query, 'url': 'by-%s/%s' % (sf.slug, query)}
+        # END OF LOOKUP FILTERING
 
         # Street/address
-        elif bit.startswith('streets'):
+        elif argname.startswith('streets'):
             if location_filter_applied:
                 raise Http404('Only one location filter can be applied')
             try:
                 if get_metro()['multiple_cities']:
-                    city_slug = urlbits.pop()
+                    city_slug = argvalues.pop(0)
                 else:
                     city_slug = ''
-                street_slug = urlbits.pop()
-                block_range = urlbits.pop()
+                street_slug = argvalues.pop(0)
+                block_range = argvalues.pop(0)
             except IndexError:
                 raise Http404()
             try:
-                block_radius = urlbits.pop()
+                block_radius = argvalues.pop(0)
             except IndexError:
                 xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')
+                return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')  # XXX Does that work when there are multiple filters and block isn't the last??
             m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
             if not m:
                 raise Http404('Invalid block URL')
@@ -944,9 +973,7 @@ def schema_filter(request, slug, urlbits):
                     request, city_slug, street_slug, *m.groups(),
                     place_type='block', newsitem_qs=qs))
 
-            #block = url_to_block(city_slug, street_slug, *m.groups())
             block = context['place']
-            block_radius = context['block_radius']
             qs = context['newsitem_qs']
             value = '%s block%s around %s' % (block_radius, (block_radius != '1' and 's' or ''), block.pretty_name)
             filters['location'] = {
@@ -959,21 +986,22 @@ def schema_filter(request, slug, urlbits):
                 'location_object': block,
             }
             location_filter_applied = True
+        # END OF STREETS/BLOCK FILTERING
 
         # Location
-        elif bit.startswith('locations'):
+        elif argname.startswith('locations'):
             if location_filter_applied:
                 raise Http404('Only one location filter can be applied')
-            if not urlbits:
+            if not argvalues:
                 raise Http404()
-            location_type_slug = urlbits.pop()
-            if urlbits:
-                loc_name = urlbits.pop()
+            location_type_slug = argvalues.pop(0)
+            if argvalues:
+                loc_name = argvalues.pop(0)
                 context.update(get_place_info_for_request(
                         request, location_type_slug, loc_name,
                         place_type='location', newsitem_qs=qs))
                 loc = context['place']
-                #loc = url_to_location(location_type_slug, urlbits.pop())
+                #loc = url_to_location(location_type_slug, argvalues.pop())
                 #qs = qs.filter(newsitemlocation__location__id=loc.id)
                 #qs = qs.filter(location__bboverlaps=loc.location.envelope)
                 qs = context['newsitem_qs']
@@ -1003,6 +1031,9 @@ def schema_filter(request, slug, urlbits):
 
         else:
             raise Http404('Invalid filter type')
+
+    #########################################################################
+    # END OF FILTER LOOP
 
     # Get the list of top values for each lookup that isn't being filtered-by.
     # LOOKUP_MIN_DISPLAYED sets the number of records to display for each lookup

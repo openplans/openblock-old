@@ -10,7 +10,7 @@
 	<p>{{ schema.short_description }}</p>
 	{{ schema.summary|safe|linebreaks }}
 	{% if schema.allow_charting %}
-		<h3>Browse</h3>
+		<h3>Browse XXX</h3>
 		<ul>
 			{% for schemafield in schemafield_list %}
 			<li><a href="by-{{ schemafield.slug }}/">By {{ schemafield.browse_by_title }}</a></li>

@@ -48,7 +48,7 @@ start_date, end_date, lookup_list, search_list, search_url
 	{% if not date_filter_applied %}
 	<div class="filtergroup" id="date-filtergroup">
 		<h3>{{ schema.date_name|capfirst }}</h3>
-		<form action="by-date/" method="get">
+		<form action="" method="get">
 			<p>
 				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"n/j/Y" }}">
 					 - 

@@ -58,3 +58,4 @@ def url(klass, regex, view, kwargs=None, name=None, prefix=''):
             if prefix:
                 view = prefix + '.' + view
         return klass(regex, view, kwargs, name)
+
