@@ -304,8 +304,12 @@ class Street(models.Model):
         return City.from_norm_name(self.city)
 
 class Misspelling(models.Model):
+    """
+    Misspelling of a location name
+    """
+    
     incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
-    correct = models.CharField(max_length=255)
+    correct = models.CharField(max_length=255, db_index=True)
 
     def __unicode__(self):
         return self.incorrect

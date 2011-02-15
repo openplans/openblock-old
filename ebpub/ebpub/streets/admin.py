@@ -18,7 +18,7 @@
 
 from django.contrib import admin
 from ebpub.streets.models import Block, Street, BlockIntersection, \
-    Intersection, Suburb, Place, StreetMisspelling
+    Intersection, Suburb, Place, StreetMisspelling, Misspelling
 
 from ebpub.geoadmin import OSMModelAdmin
 
@@ -53,6 +53,9 @@ class StreetMisspellingAdmin(OSMModelAdmin):
     list_display = ('incorrect', 'correct',)
     search_fields = ('incorrect', 'correct',)
 
+class MisspellingAdmin(OSMModelAdmin):
+    list_display = ('incorrect', 'correct')
+    search_fields = ('incorrect', 'correct')
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(Street, StreetAdmin)
@@ -61,3 +64,4 @@ admin.site.register(Intersection, IntersectionAdmin)
 admin.site.register(Suburb, SuburbAdmin)
 admin.site.register(Place, PlaceAdmin)
 admin.site.register(StreetMisspelling, StreetMisspellingAdmin)
+admin.site.register(Misspelling, MisspellingAdmin)
