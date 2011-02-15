@@ -1,4 +1,4 @@
-{# This snippet requires these variables: schema, lookup, total_count #}
+{# This snippet requires these variables: schema, lookup, total_count, filter_url #}
 
 {% load humanize %}
 
@@ -9,6 +9,7 @@
 	<tr>
 		<td class="label">
 			<span class="name">
+				<!-- TODO factor out URL generation #69 -->
 				<a href="{{ schema.url }}{{ filter_url }}by-{{ lookup.sf.slug }}/{{ value.lookup.slug }}/" title="{{ value.lookup.name }}">{{ value.lookup.name }}</a>
 				{% if value.count %}<span class="bar" style="width: {% widthratio value.count total_count 100 %}%"></span>{% endif %}
 			</span>
@@ -23,6 +24,7 @@
 	{% endfor %}
 	<tr>
 		<td colspan="3">
+			<!-- TODO factor out URL generation #69 -->
 			<a href="{{ schema.url }}{{ filter_url }}by-{{ lookup.sf.slug }}/">See all {{ lookup.sf.pretty_name_plural }}&hellip;</a>
 		</td>
 	</tr>

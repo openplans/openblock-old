@@ -911,7 +911,7 @@ def schema_filter(request, slug, args_from_url):
             date_filter_applied = True
         # END OF DATE FILTERING
 
-        # Lookup
+        # Attribute filtering
         elif argname.startswith('by-'):
             sf_slug = argname[3:]
             try:
@@ -919,6 +919,7 @@ def schema_filter(request, slug, args_from_url):
                 sf = filter_sf_dict.pop(sf_slug)
             except KeyError:
                 raise Http404('Invalid SchemaField slug')
+            # Lookup filtering
             if sf.is_lookup:
                 if argvalues:
                     look = get_object_or_404(Lookup, schema_field__id=sf.id, slug=argvalues.pop(0))
@@ -938,7 +939,8 @@ def schema_filter(request, slug, args_from_url):
                         'lookup_list': lookup_list,
                     })
                     return eb_render(request, 'db/filter_lookup_list.html', context)
-            elif sf.is_type('bool'): # Boolean field.
+            # Boolean attr filtering.
+            elif sf.is_type('bool'):
                 if len(argvalues) > 1:
                     raise Http404("Invalid boolean arg %r" % ','.join(argvalues))
                 elif len(argvalues) == 1:
@@ -961,13 +963,14 @@ def schema_filter(request, slug, args_from_url):
                         'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
                     })
                     return eb_render(request, 'db/filter_lookup_list.html', context)
-            else: # Text-search field.
+            # Text-search attribute filter.
+            else:
                 if not argvalues:
                     raise Http404('Text search lookup requires search params')
                 query = ', '.join(argvalues)
                 qs = qs.text_search(sf, query)
                 filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': query, 'value': query, 'url': 'by-%s=%s' % (sf.slug, query)}
-        # END OF LOOKUP FILTERING
+        # END OF ATTRIBUTE FILTERING
 
         # Street/address
         elif argname.startswith('streets'):
@@ -986,7 +989,7 @@ def schema_filter(request, slug, args_from_url):
                 block_radius = argvalues.pop(0)
             except IndexError:
                 xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')  # XXX Does that work when there are multiple filters and block isn't the last??
+                return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')  # XXX Does that work when there are multiple filters and block isn't the last?? #69
             m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
             if not m:
                 raise Http404('Invalid block URL')
