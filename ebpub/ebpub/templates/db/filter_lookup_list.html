@@ -7,7 +7,7 @@
 {% block content %}
 <div id="content">
 	<h2>
-	  	<!-- TODO: factor out URL generation -->
+		<!-- TODO: factor out URL generation. #69 -->
 		<a href="{{ schema.url }}filter/">{{ schema.plural_name|capfirst }}</a>
 		{% for filter in filters.values %} {% if forloop.last %}{{ filter.value|capfirst }}{% else %}<a href="{% filter_breadcrumb_link schema filters.values filter %}">{{ filter.value }}</a> &rsaquo; {% endif %}{% endfor %}
 	</h2>
@@ -28,7 +28,7 @@
 				</p>
 				<ul>
 					{% for lookup in current_letter.list %}
-					<!-- TODO: factor out URL generation -->
+					<!-- TODO: factor out URL generation. #69 -->
 						<li><a href="../{{ filter_argname}}={{lookup_type_slug}},{{ lookup.slug }}/">{{ lookup.name }}</a></li>
 					{% endfor %}
 				</ul>
@@ -36,7 +36,7 @@
 	{% else %}
 		<ul>
 			{% for lookup in lookup_list %}
-				<!-- TODO: factor out URL generation -->
+				<!-- TODO: factor out URL generation. #69 -->
 				<li><a href="../{{filter_argname}}={{ lookup_type_slug}},{{ lookup.slug }}/">{{ lookup.name }}</a></li>
 			{% endfor %}
 		</ul>

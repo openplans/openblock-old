@@ -40,7 +40,7 @@ start_date, end_date, lookup_list, search_list, search_url
 		<h4>Or choose a location:</h4>
 		<ul>
 			{% for location_type in location_type_list %}
-			<!-- TODO: factor out url generation -->
+			<!-- TODO: factor out URL generation. #69  -->
 			<li><a href="locations={{ location_type.slug }}/" rel="nofollow">{{ location_type.plural_name|capfirst }}&hellip;</a></li>
 			{% endfor %}
 		</ul>
