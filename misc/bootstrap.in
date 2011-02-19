@@ -23,6 +23,13 @@ def after_install(options, home_dir):
 
 
 def adjust_options(options, args):
+    # Sanity-checking here b/c we want to do this early and
+    # there's no more appropriate hook in a virtualenv bootstrap
+    # script.
+    import sys
+    if not ((2, 6) <= sys.version_info[:2] < (3, 0)):
+        raise RuntimeError("Incompatible Python version, we need Python >= 2.6"
+                           " and less than 3.0.")
     # assume build in place unless otherwise specified
     if len(args) == 0:
         args[:] = ['./']
