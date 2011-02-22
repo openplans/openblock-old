@@ -42,10 +42,10 @@ TEMPLATE_DIRS = (
     os.path.join(EBPUB_DIR, 'templates'),
     os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
     # django template override hack to partially override templates
-    # by referring to them with a unique path, see: 
+    # by referring to them with a unique path, see:
     # http://stackoverflow.com/questions/3967801/django-overriding-and-extending-an-app-template
     # You can use {% extends "ebpub/templates/..." %} to partially extend a template
-    os.path.dirname(EBPUB_DIR) 
+    os.path.dirname(EBPUB_DIR)
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
