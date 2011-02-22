@@ -547,8 +547,18 @@ float : right;
 }
 
 
-/* #################################### Overview Page #################################### */
+.info .date {
+  font-weight: bold;
+}
 
+
+/* #################################### Timeline ############################ */
+
+.place-detail-timeline .info .date {
+  display: none;
+}
+
+/* #################################### Overview Page #################################### */
 
 .place-detail-overview #nearby {
 display : none;
