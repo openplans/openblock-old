@@ -71,6 +71,7 @@ INSTALLED_APPS = (
     'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
+    'ebpub.openblockapi',
     'ebpub.db',
     'ebpub.geocoder',
     'ebpub.petitions',
