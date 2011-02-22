@@ -1,4 +1,4 @@
-{% extends "base_place.html" %}
+{% extends "base_place.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
 {% load eb %}
 
@@ -14,9 +14,6 @@
 	.pane.current {
 		display: block;
 	}
-	.tabs a.current {
-		font-weight: bold;
-	}
 </style>
 <script type="text/javascript">
 $j(document).ready(function() {
@@ -26,9 +23,10 @@ $j(document).ready(function() {
 	});
 	$j("div.module ul.tabs a").click(function() {
 		var link = $j(this);
-		if (link.hasClass('current')) return false;
-		link.parent().parent().find('a.current').removeClass('current');
-		link.addClass('current');
+		var linkContainer = link.parent()
+		if (linkContainer.hasClass('current')) return false;
+		linkContainer.parent().find('li.current').removeClass('current');
+		linkContainer.addClass('current');
 
 		var linktype = '';
 		var classes = link.attr('class').split(/\s+/);
@@ -64,7 +62,6 @@ $j(document).ready(function() {
 
 {% block breadcrumbs %}
 	{{ block.super }}
-	<li>Overview</li>
 {% endblock breadcrumbs %}
 
 {% block header %}
@@ -74,14 +71,18 @@ $j(document).ready(function() {
 {% endblock header %}
 
 {% block map %}{% endblock map %}
+{% block subscribe_links %}{% endblock subscribe_links %}
 
 {% block place_content %}
-	<h2>Latest news {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}</h2>
-	<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
-	<ul>			    
-		<li><a href="../">Timeline</a></li>
-		<li><strong>Overview</strong></li>
-	</ul>
+	<div id="content">
+
+	  <div id="contentheader">
+		<h1>South Boston</h1>
+
+		<ul class="nav-view">
+		  <li><a href="../">Timeline</a></li>
+		  <li class="selected">Overview</li>
+		</ul>
 	{% if is_block %}
 	<p>Show news within:</p>
 	<ul>
@@ -90,7 +91,8 @@ $j(document).ready(function() {
 		<li>{% ifequal block_radius "8" %}8 blocks{% else %}<a href="?radius=8" rel="nofollow">8 blocks</a>{% endifequal %}</li>
 	</ul>
 	{% endif %}
-	<p>Search nearby:</p>
+
+	<form class="select-filter">
 	<select id="sectionfilter">
 		<option value="">Choose a type of information&hellip;</option>
 		{% for schema in filtered_schema_list %}
@@ -98,15 +100,17 @@ $j(document).ready(function() {
 		{% endfor %}
 	</select>
 	<button id="sectionfilterbutton">Go</button>
-	<div id="content">
-		{% for schema_block in schema_blocks|stride:"2" %}
-			{% for schema in schema_block %}
-				{% if schema.latest_newsitems %}
-				<div class="module" id="module-{{ schema.schema.id }}">
+	</form>
+
+	</div><!-- end #contentheader -->
+		{% for schema in schema_blocks %}
+			{% if schema.latest_newsitems %}
+				<div class="module {% if forloop.counter0|divisibleby:"2" %}odd{% endif %}"
+					 id="module-{{ schema.schema.id }}">
 					<h2>{{ schema.schema.plural_name|capfirst }}</h2>
 					{% if schema.schema.allow_charting %}
 						<ul class="tabs">
-							<li><a href="#" class="linklist current">Recent items</a></li>
+							<li class="current"><a href="#" class="linklist">Recent items</a></li>
 							<li><a href="#" class="linkdatechart">By {{ schema.schema.date_name }}</a></li>
 							{% for lookup in schema.lookup_charts %}
 							<li><a href="#" class="linklookup{{ lookup.id }}">By {{ lookup.pretty_name }}</a></li>
@@ -117,20 +121,20 @@ $j(document).ready(function() {
 						<ul class="newsitemlist">
 							{% newsitem_list_by_schema schema.latest_newsitems %}
 						</ul>
-						<p>
+						<p class="module-footer">
 							{% if schema.schema.allow_charting %}
 							<a class="search" href="{{ schema.schema.url }}{{ place.url|slice:"1:" }}">More nearby</a>
 							{% endif %}
 							<a class="date" href="{{ schema.schema.url }}">Citywide overview</a>
 							<a class="help" href="{{ schema.schema.url }}about/">About</a>
 						</p>
-					</div>
+					</div><!-- end .pane .panelist .current -->
 					<div class="pane panedatechart calendarchart" id="datechart-{{ schema.schema.id }}"><p class="loading">Loading...</p></div>
 					{% for lookup in schema.lookup_charts %}
 					<div class="pane panelookup{{ lookup.id }}" id="lookupchart-{{ lookup.id }}"><p class="loading">Loading...</p></div>
 					{% endfor %}
+			</div><!-- end #module-{{ schema.schema.id }} -->
 			{% endif %}
-		{% endfor %}
 		{% endfor %}
 		<h2>Sign up for:</h2>
 		<ul>

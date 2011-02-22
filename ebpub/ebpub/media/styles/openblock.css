@@ -177,13 +177,14 @@ th, td {
 }
 hr {
     background-color: #C7BAAF;
-    border-color: -moz-use-text-color -moz-use-text-color #FFFFFF;
+    border-color: -moz-use-text-color #FFFFFF;
     border-style: none none solid;
     border-width: 0 0 1px;
     color: #C7BAAF;
     height: 2px;
     margin-bottom: 22px;
 }
+
 a:link {
     color: #007FBF;
 }
@@ -198,19 +199,13 @@ a:focus {
 }
 
 
-
-
-
-
-
-
 #globalnav {
     font-size: 14px;
     text-align: left;
 }
 #globalnav ul {
     background-color: #A3C1CC;
-display : inline-block;
+    display : inline-block;
     list-style: none outside none;
     margin: 0;
     padding: 0 0.4em;
@@ -258,12 +253,8 @@ display : inline-block;
 #userlinks {
     font-size: 12px;
     padding: 10px 0;
-
-float : right;
-
+    float : right;
 }
-
-
 
 
 .olFramedCloudPopupContent, .olPopupContent {
@@ -280,22 +271,7 @@ div.popupnav {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* #################################### New Styles #################################### */
-
-
 
 body {
 background : transparent url(/styles/bg.png) top left;
@@ -307,8 +283,6 @@ a {
 color : #0069a9;
 }
 
-
-
 #container {
 background : transparent url(/styles/heading-bg.jpg) top left repeat-x;
 }
@@ -318,17 +292,11 @@ background : transparent url(/styles/heading-bg.jpg) top left repeat-x;
 	margin : 0 auto;	
 }
 
-
-
-
-
 #main {
     clear: both;
     padding: 20px 0 0 0;
 
 }
-
-
 
 #header h1 {
     font-size: 36px;
@@ -342,7 +310,6 @@ font-weight : normal;
 text-shadow: 0 1px 0 #ffffff;
 
 }
-
 
 #header h1 a {
 color : #343434;
@@ -359,14 +326,9 @@ color : #343434;
 }
 
 
-
-
-
 #globalsearch label {
 	display : none;
-	
 }
-
 
 ul#nav-breadcrumb {
 height : 34px;
@@ -374,9 +336,7 @@ clear : both;
 float : left;
 }
 
-
-ul#nav-breadcrumb, 
-#nav-breadcrumb li {
+ul#nav-breadcrumb, #nav-breadcrumb li {
 list-style-type : none;
 display : inline-block;
 padding 0;
@@ -399,13 +359,10 @@ color : #007FBF;
 }
 
 
-
-
 #nav-location {
-width : 394px;	
+width : 394px;
 float : right;
 }
-
 
 #nav-location h2 {
 margin-bottom : .5em;
@@ -417,7 +374,6 @@ color : #878787;
 list-style-type : none;
 padding : 0;
 margin : 0;
-
 }
 
 #nav-location ul li a {
@@ -458,23 +414,8 @@ color : #2C7CAE;
 text-decoration : underline
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#detailmap { 
-width: 392px; 
+#detailmap {
+width: 392px;
 height: 255px
 }
 
@@ -483,23 +424,10 @@ margin-bottom : .5em;
 border : 1px solid #cac8c6;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 #content {
 width : 480px;
 float : left;
 }
-
 
 
 #content h2, 
@@ -509,7 +437,6 @@ font-weight : normal;
 border-bottom : 1px solid #666;
 padding-bottom : .25em;
 }
-
 
 #content h4 {
 margin : 0;
@@ -521,14 +448,10 @@ margin : 0;
 font-size : .9em;
 }
 
-
-
 #contentheader h1 {
 margin : .25em 0 .5em 0;
 font-size : 1.5em;
 }
-
-
 
 ul.nav-view {
 margin : 0;
@@ -536,7 +459,6 @@ padding : 0;
 list-style-type : none;
 display : inline-block;
 }
-
 
 ul.nav-view li {
 float : left;
@@ -546,9 +468,7 @@ padding : 4px 8px 3px 8px;
 font-size : 14px;
 }
 
-
-ul.nav-view li a,
-ul.nav-view li a:visited {
+ul.nav-view li a, ul.nav-view li a:visited {
 text-decoration : none;
 color : #aaaaaa;
 }
@@ -556,7 +476,6 @@ color : #aaaaaa;
 ul.nav-view li a:hover {
 color : #2c7cae;
 }
-
 
 ul.nav-view li:first-child {
 background-color : #e1dbd6;
@@ -569,48 +488,29 @@ border-width : 1px;
 }
 
 
-
 ul.nav-view li:last-child {
 border-top-right-radius: 5px;
 -moz-border-radius-topright: 5px;
 border-bottom-right-radius: 5px;
 -moz-border-radius-bottomright: 5px;
-
 }
-
-
 
 ul.nav-view li.selected {
 background-color : #e1dbd6;
 }
-
 
 form.select-filter {
 float : right;
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #place-detail-content .visible ul {
 list-style-type : none;
 padding : 0;
 margin : 0;
-
 }
 
-#place-detail-content .visible ul li {
+#place-detail-content .visible ul li, .newsitem {
 padding : 1em 0 0 0;
 border-top : 1px solid #e2e2e2;
 }
@@ -622,50 +522,141 @@ text-transform : none;
 font-weight : bold;
 }
 
-#place-detail-content .location {
+#place-detail-content .location, .newsitem .location {
 display : block;
 text-transform : uppercase;
 font-size : .75em;
 }
 
-#place-detail-content .title {
+#place-detail-content .title, .newsitem .title {
 display : block;
 margin-bottom : .8em;
 }
 
-#place-detail-content .title a {
+#place-detail-content .title a, .newsitem .title a {
 text-decoration : none;
 font-weight : normal;
 }
-
-
-
-
 
 #sidebar {
 float : right;
   width: 392px;
 }
 
-
-
 #sidebar .sidebar-block {
-
 }
 
 
+/* #################################### Overview Page #################################### */
 
 
+.place-detail-overview #nearby {
+display : none;
+}
+
+.place-detail-overview #content {
+width : 100%; /* 900px */
+}
 
 
+.place-detail-overview #content .module {
+width : 435px;
+float : left;
+
+}
+
+.place-detail-overview #content .odd {
+margin-right : 30px;
+}
 
 
+#content ul.tabs, #content ul.tabs li {
+list-style-type : none;
+padding : 0;
+margin : 0;
+}
+
+#content ul.tabs {
+margin-bottom : 1.5em;
+clear : both;
+display : inline-block;
+}
+
+#content ul.tabs li {
+float : left;
+border : 1px solid #c8c7c5;
+border-width : 1px 1px 1px 0; 
+background-color : #f7f5f1;
+}
+
+#content ul.tabs li.current {
+background-color : #fff;
+}
+
+#content ul.tabs li:first-child {
+color : #2c7cae;
+border-top-left-radius: 5px;
+-moz-border-radius-topleft: 5px;
+border-bottom-left-radius: 5px;
+-moz-border-radius-bottomleft: 5px;
+border-width : 1px;
+}
+
+#content ul.tabs li:last-child {
+border-top-right-radius: 5px;
+-moz-border-radius-topright: 5px;
+border-bottom-right-radius: 5px;
+-moz-border-radius-bottomright: 5px;
+
+}
+
+#content ul.tabs li a {
+text-decoration : none;
+padding : .15em .5em;
+color : #aaa;
+}
+
+#content ul.tabs li.current a {
+color : #464444;
+}
 
 
+#content ul.tabs li a:hover {
+color : #464444;
+}
+
+.newsitemlist, .newsitem {
+list-style-type : none;
+margin : 0;
+padding : auto 0;
+}
+
+.pane .module-footer a {
+margin-right : 1em;
+float : left;
+border : 1px solid #C8C7C5;
+padding : .05em .6em;
+font-size : .9em;
+border-radius : 5px;
+-moz-border-radius : 10px;
+text-decoration : none;
+background-color : #edebe6;
+color : #4d6a24;
+}
+
+.pane .module-footer a:hover {
+background-color : transparent;
+color : #589500;
+}
 
 
-
-
+.pane .module-footer {
+border-top : 1px solid #e1e1e1;
+width : 100%;
+padding-top : 1em;
+margin-bottom : 2em;
+float : left;
+}
 
 /* #################################### Homepage #################################### */
 
@@ -676,7 +667,6 @@ font-size : 1.5em;
 padding : .1em .3em;
 color : #666;
 }
-
 
 .homepage #nav-location {
 width : 100%;
@@ -722,12 +712,9 @@ margin : .5em 0 .4em 0;
 margin : 1em 0 0 0;
 }
 
-
-
 #intro-search h2 {
 margin-top : 1em;
 }
-
 
 #homepage-about {
 border : 1px solid #ccc;
@@ -742,4 +729,3 @@ margin : 0;
 font-weight : bold;
 border-bottom : 0;
 }
-

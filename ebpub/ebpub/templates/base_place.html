@@ -9,6 +9,7 @@ Implements only the "top" of the page -- the title and "Nearby" list.
 Required variables: nearby_locations, place, is_block
 {% endcomment %}
 
+<!-- begin block content -->
 {% block content %}
 <div id="nav-location">
 	<!-- begin block map -->
@@ -24,9 +25,13 @@ Required variables: nearby_locations, place, is_block
 	{% endblock map %}
 	<!-- end block map -->
 
+	<!-- block subscribe_links -->
+    {% block subscribe_links %}
 	<div class="subscribe-links">
 		<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
 	</div>
+    {% endblock %}
+	<!-- end block subscribe_links -->
 
 	{% if nearby_locations %}
 	<div id="nearby">
@@ -36,7 +41,7 @@ Required variables: nearby_locations, place, is_block
 			<li><a id="location-{{ location.id }}" href="{{ location.url }}">{{ location.name }}</a></li>
 			{% endfor %}
 		</ul>
-	</div>
+	</div><!-- end #nearby -->
 	{% endif %}
 
 </div><!--/ #nav-location -->

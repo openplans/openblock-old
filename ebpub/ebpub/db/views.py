@@ -1339,10 +1339,11 @@ def place_detail_overview(request, *args, **kwargs):
     s_list = [s[0] for s in s_list.values()]
     populate_attributes_if_needed(all_newsitems, s_list)
     s_list = [s for s in s_list if s.allow_charting]
+
     context['schema_blocks'] = schema_blocks
     context['filtered_schema_list'] = s_list
     context['bodyclass'] = 'place-detail-overview'
-    context['bodyid'] = context.get('place_type') or ''
+    context['bodyid'] = context.get('location').slug
 
     response = eb_render(request, 'db/place_overview.html', context)
     for k, v in context['cookies_to_set'].items():
