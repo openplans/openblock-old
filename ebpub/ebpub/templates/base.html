@@ -50,7 +50,7 @@ anyway since our openlayers directory is versioned already.
 				<p>Logged in as <a href="/accounts/dashboard/">{{ USER_EMAIL }}</a>. <button type="submit">Log out</button></p>
 			  </form>
 			  {% else %}
-			  <p><a href="/accounts/login/" rel="nofollow">Sign in</a> or <a href="/accounts/register/" rel="nofollow">register</a> for extra features.</p>
+			  <p><a href="/accounts/login/" rel="nofollow">Sign in</a> or <a href="/accounts/register/" rel="nofollow">register</a> for extra features</p>
 			  {% endif %}
 			</div><!--/ #userlinks -->
 			{% endblock userlinks %}
@@ -71,7 +71,9 @@ anyway since our openlayers directory is versioned already.
 		<!-- end block breadcrumbs -->
 	</div><!-- / #header -->
 	<div id="main">
+		<!-- begin block content -->
 		{% block content %}{% endblock content %}
+		<!-- end block content -->
 	</div><!-- / #main -->
   </div><!-- / #container -->
 </body>

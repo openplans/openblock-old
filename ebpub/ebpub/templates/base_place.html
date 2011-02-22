@@ -29,12 +29,14 @@ Required variables: nearby_locations, place, is_block
 	</div>
 
 	{% if nearby_locations %}
+	<div id="nearby">
 	<h2>Nearby locations</h2>
-	<ul>
-	 {% for location in nearby_locations %}
-	  <li><a id="location-{{ location.id }}" href="{{ location.url }}">{{ location.name }}</a></li>
-	 {% endfor %}
-	</ul>
+		<ul>
+			{% for location in nearby_locations %}
+			<li><a id="location-{{ location.id }}" href="{{ location.url }}">{{ location.name }}</a></li>
+			{% endfor %}
+		</ul>
+	</div>
 	{% endif %}
 
 </div><!--/ #nav-location -->
