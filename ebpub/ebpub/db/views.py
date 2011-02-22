@@ -31,7 +31,7 @@ from django.views.decorators.cache import cache_page
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
-from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
+from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.metros.allmetros import get_metro
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
