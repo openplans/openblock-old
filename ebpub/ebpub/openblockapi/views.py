@@ -1,7 +1,8 @@
-from django.http import HttpResponse
+from django.core.urlresolvers import reverse
 from django.http import Http404
-from ebpub.db import models
+from django.http import HttpResponse
 from django.utils import simplejson
+from ebpub.db import models
 
 def check_api_available(request):
     """
@@ -49,7 +50,8 @@ def locations_json(request):
     locations = models.Location.objects.filter(is_public=True).order_by('display_order').select_related().defer('location')
     result = [{'slug': loc.slug, 'name': loc.name, 'city': loc.city,
                'type': loc.location_type.slug,
-               'description': loc.description or ''}
+               'description': loc.description or '',
+               'geojson_url': reverse('location_detail_json', kwargs={'slug': loc.slug})}
               for loc in locations]
     response = HttpResponse(mimetype='application/javascript')
     simplejson.dump(result, response, indent=1)

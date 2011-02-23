@@ -259,6 +259,9 @@ following keys:
 * name - human-readable name of the location.
 * slug - name suitable for use in URLs.
 * area - area in square meters.
+* geojson_url - link to a view of this location as GeoJSON
+* description - may be blank.
+* city - name of the city.
 
 Example
 
