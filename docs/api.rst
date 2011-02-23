@@ -17,7 +17,7 @@ substantially in future versions.
 See Also
 ========
 
-The openblock API uses several standards for formats and protocols.  Please see the (externally maintained) documentation focused on the particular formats for more details. These include GeoJSON, Atom and JSONP. Some helpful links:
+The openblock API uses several standards for formats and protocols.  Please see the (externally maintained) documentation focused on the particular formats for more details. These include GeoJSON, Atom, and JSONP. Some helpful links:
 
 ================== ============================================================
     Format			    URL
