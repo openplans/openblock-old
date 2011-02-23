@@ -33,7 +33,14 @@ The openblock API uses several standards for formats and protocols.  Please see 
 Examples / Quickstart
 =====================
 
-FIXME 
+Grab some 'articles' about Roxbury
+
+:: 
+
+    curl "http://bos.openblock.org/api/dev1/items.json?type=articles&locationid=neighborhoods/roxbury&limit=3" > items.json
+
+    
+
 
 ============
 API Overview
