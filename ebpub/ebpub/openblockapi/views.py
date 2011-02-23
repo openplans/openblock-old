@@ -3,6 +3,39 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.utils import simplejson
 from ebpub.db import models
+from ebpub.openblockapi.itemquery import build_item_query
+
+JSONP_QUERY_PARAM = 'jsonp'
+ATOM_CONTENT_TYPE = "application/atom+xml"
+JSON_CONTENT_TYPE = 'application/json'
+JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
+
+
+def APIGETResponse(request, body, **kw):
+    """
+    constructs either a normal HTTPResponse using the 
+    keyword arguments given or a JSONP wrapped response
+    depending on the presence and validity of 
+    JSONP_QUERY_PARAMETER in the request. 
+    
+    This may alter the content type of the response 
+    if JSONP/JSONPX is triggered. Status is preserved.
+    """
+
+    jsonp = request.GET.get(JSONP_QUERY_PARAMETER)
+    if jsonp is None: 
+        return HttpResponse(body, **kw)
+    else: 
+        content_type = kw.get("mimetype", kw.get("content_type"), "text/plain")
+        if content_type == JSON_CONTENT_TYPE:
+            body = jsonp + "(" + body + ");" 
+        else: 
+            body = jsonp + "(" + json.dumps(body) + ");"
+        del kw['content_type']
+        del kw['mimetype']
+        kw['content_type'] = JAVASCRIPT_CONTENT_TYPE
+        return HttpResponse(body, **kw)
+
 
 def check_api_available(request):
     """
@@ -11,6 +44,43 @@ def check_api_available(request):
     """
     return HttpResponse(status=200)
 
+
+##########################################################################
+# News item query API 
+
+
+def items_json(request):
+    """
+    handles the items.json API endpoint
+    """
+    try:
+        items, params = build_item_query(request.GET)
+        # could test for extra params aside from jsonp...
+        return APIGETResponse(request, _items_json(items), content_type=JSON_CONTENT_TYPE)
+    except QueryError as err:
+        return HttpResponse(err.message, status=400)
+        
+def items_atom(request):
+    """
+    handles the items.atom API endpoint
+    """
+    try:
+        items, params = build_item_query(request.GET)
+        # could test for extra params aside from jsonp...
+        return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
+    except QueryError as err:
+        return HttpResponse(err.message, status=400)
+
+
+def _items_json(items):
+    # XXX
+    return json.dumps([item.id for item in items])
+
+def _items_atom(items):
+    # XXX
+    return json.dumps([item.id for item in items])
+
+#############################################################
 
 def list_types_json(request):
     """
