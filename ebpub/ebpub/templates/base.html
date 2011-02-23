@@ -7,13 +7,21 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="robots" content="noarchive">
 <link rel="home" title="Home" href="/">
+
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
+<link rel="stylesheet" type="text/css" href="/styles/openblock.css" />
+{% endslimall %}
+
 <!-- Some Javascript within requires jQuery. Linking to Google-hosted version here. You can download it from jquery.com -->
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
 
 <script type="text/javascript">
+{% comment %}
 // Not using jquery.noConflict() because ironically it causes a conflict
 // with OpenLayers and we end up with the $ function from OpenLayers. 
 // But a lot of existing everyblock code expects $j instead of $
+{% endcomment %}
 var $j = $;
 </script>
 
@@ -24,10 +32,6 @@ anyway since our openlayers directory is versioned already.
 {% endcomment %}
 <script charset="utf-8" type="text/javascript" src="{{ OPENLAYERS_URL }}"></script>
 
-{% slimall %}
-<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
-<link rel="stylesheet" type="text/css" href="/styles/openblock.css" />
-{% endslimall %}
 <!-- begin block extrahead -->
 {% block extrahead %}{% endblock %}
 <!-- end block extrahead -->
