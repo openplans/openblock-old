@@ -414,15 +414,15 @@ Restricts results to items within a time range
 
 
 
-Result Limit and Skip
----------------------
+Result Limit and Offset
+-----------------------
 
 ================== ==========================================================================
     Parameter                                Description
 ------------------ --------------------------------------------------------------------------
-     limit         maximum number of items to return
+     limit         maximum number of items to return. default is 25, max 200
 ------------------ --------------------------------------------------------------------------
-     skip          skip this number of items before returning results 
+     offset        skip this number of items before returning results. default is 0 
 ================== ==========================================================================
 
 
