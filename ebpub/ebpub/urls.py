@@ -38,8 +38,6 @@ else:
 
 urlpatterns += patterns('',
     url(r'^$', views.homepage, name="ebpub-homepage"),
-    (r'^geoexample/$', views.geo_example),
-    (r'^geomapexample/$', views.geo_map_example),
     (r'^search/$', views.search),
     (r'^news/$', views.schema_list),
     url(r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),

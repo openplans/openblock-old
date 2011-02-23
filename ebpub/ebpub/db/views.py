@@ -1356,37 +1356,6 @@ def feed_signup(request, *args, **kwargs):
     context['s_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
     return eb_render(request, 'db/feed_signup.html', context)
 
-def geo_example(request):
-    import feedparser
-    from ebdata.nlp.addresses import parse_addresses
-    from ebpub.geocoder.base import AddressGeocoder
-    
-    feed_url = 'http://www.bpdnews.com/index.xml'
-    feed = feedparser.parse(feed_url)
-    
-    geocoder = AddressGeocoder()
-    geo_entries = []
-    for entry in feed.entries:
-        addresses = parse_addresses(entry.description)
-        point = None
-        while not point:
-            for address in addresses:
-                try:
-                    location = geocoder.geocode(address[0])
-                    point = location['point']
-                    break
-                except Exception:
-                    pass
-            if not point:
-                point = -1
-        if point and point is not -1:
-            entry['point'] = point
-            geo_entries.append(entry)
-
-    return render_to_response('db/geo_example.html', {'entries': geo_entries })
-
-def geo_map_example(request):
-    return render_to_response('db/geo_map_example.html')
 
 def newsitems_geojson(request):
     """Get a list of newsitems, optionally filtered for one place ID
