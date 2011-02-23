@@ -1342,8 +1342,12 @@ def place_detail_overview(request, *args, **kwargs):
     context['schema_blocks'] = schema_blocks
     context['filtered_schema_list'] = s_list
     context['bodyclass'] = 'place-detail-overview'
-    context['bodyid'] = context.get('location').slug
-
+    if context['is_block']:
+        context['bodyid'] = '%s-%s-%s' % (context['place'].street_slug,
+                                          context['place'].number(),
+                                          context['place'].dir_url_bit())
+    else:
+        context['bodyid'] = context['location'].slug
     response = eb_render(request, 'db/place_overview.html', context)
     for k, v in context['cookies_to_set'].items():
         response.set_cookie(k, v)
