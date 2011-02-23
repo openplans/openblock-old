@@ -1,0 +1,26 @@
+[
+  {
+    "model": "db.locationtype",
+    "pk": 1000,
+    "fields": {
+      "name": "neighborhood",
+      "plural_name": "neighborhoods",
+      "is_browsable": true,
+      "scope": "boston",
+      "slug": "neighborhoods",
+      "is_significant": true
+    }
+  },
+  {
+    "model": "db.locationtype",
+    "pk": 1001,
+    "fields": {
+      "name": "ZIP Code",
+      "plural_name": "ZIP Codes",
+      "is_browsable": true,
+      "scope": "U.S.A.",
+      "slug": "zipcodes",
+      "is_significant": true
+    }
+  }
+]
