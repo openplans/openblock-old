@@ -118,27 +118,31 @@ def list_types_json(request):
 def locations_json(request):
     # TODO: this will obsolete ebpub.db.views.ajax_location_list
     locations = models.Location.objects.filter(is_public=True).order_by('display_order').select_related().defer('location')
-    result = [{'slug': loc.slug, 'name': loc.name, 'city': loc.city,
-               'type': loc.location_type.slug,
-               'description': loc.description or '',
-               'geojson_url': reverse('location_detail_json', kwargs={'slug': loc.slug})}
-              for loc in locations]
+    loc_objs = [
+        {'slug': loc.slug, 'name': loc.name, 'city': loc.city,
+         'type': loc.location_type.slug,
+         'description': loc.description or '',
+         'url': reverse('location_detail_json', kwargs={'slug': loc.slug, 'loctype': loc.location_type.slug})
+         }
+        for loc in locations]
     response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(result, response, indent=1)
+    simplejson.dump(loc_objs, response, indent=1)
     return response
 
-def location_detail_json(request, slug):
+def location_detail_json(request, loctype, slug):
     # TODO: this will obsolete ebpub.db.views.ajax_location
     try:
-        location = models.Location.objects.geojson().get(slug=slug)
+        loctype_obj = models.LocationType.objects.get(slug=loctype)
+    except (ValueError, models.LocationType.DoesNotExist):
+        raise Http404("No such location type %r" % loctype)
+    try:
+        location = models.Location.objects.geojson().get(
+            location_type=loctype_obj, slug=slug)
     except (ValueError, models.Location.DoesNotExist):
-        raise Http404()
+        raise Http404("No such location %r/%r" % (loctype, slug))
     geojson = {'type': 'Feature',
-               # The queryset already cooked up a geojson string,
-               # but there's no convenient way to embed it in our output
-               # except by doing string substitution, so we put a dummy here.
-               'geometry': '--REPLACE--',
-               'properties': {'type': location.location_type.slug,
+               'geometry': simplejson.loads(location.geojson),
+               'properties': {'type': loctype,
                               'slug': location.slug,
                               'source': location.source,
                               'description': location.description,
@@ -146,9 +150,9 @@ def location_detail_json(request, slug):
                               'area': location.area,
                               'population': location.population,
                               'city': location.city,
+                              'name': location.normalized_name or location.name,
                               }
                }
     geojson = simplejson.dumps(geojson, indent=1)
-    geojson = geojson.replace('"--REPLACE--"', location.geojson)
     response = HttpResponse(geojson, mimetype='application/javascript')
     return response

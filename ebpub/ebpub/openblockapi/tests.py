@@ -8,14 +8,17 @@ from django.utils import simplejson
 
 class TestAPI(TestCase):
 
-    fixtures = ['test-schema']
+    fixtures = ('test-schema',)
 
     def test_api_available(self):
-        self.client.get(reverse('check_api_available'), status=200)
+        response = self.client.get(reverse('check_api_available'))
+        self.assertEqual(response.status_code, 200)
 
     def test_types_json(self):
-        output = self.client.get(reverse('list_types_json'), status=200)
-        types = simplejson.loads(output.content)
+        response = self.client.get(reverse('list_types_json'))
+        self.assertEqual(response.status_code, 200)
+
+        types = simplejson.loads(response.content)
         self.assertEqual(len(types), 1)
         t1 = types['test-schema']
         self.assertEqual(sorted(t1.keys()),
@@ -47,8 +50,71 @@ class TestAPI(TestCase):
 )
 
 
+class TestLocationsAPI(TestCase):
+
+    fixtures = ('test-locationtypes.json', 'test-locations.json')
+
     def test_locations_json(self):
-        raise NotImplementedError
+        response = self.client.get(reverse('locations_json'))
+        self.assertEqual(response.status_code, 200)
+
+        locations = simplejson.loads(response.content)
+        self.assertEqual(type(locations), list)
+        self.assertEqual(len(locations), 4)
+        for loc in locations:
+            self.assertEqual(sorted(loc.keys()),
+                             ['city', 'description',  'name', 'slug', 'type', 'url'])
+            self.assertEqual(loc['city'], 'boston')
+            self.assert_(loc['type'] in ['zipcodes', 'neighborhoods'])
+        self.assertEqual(locations[0]['slug'], 'zip-1')
+        self.assertEqual(locations[0]['name'], 'Zip 1')
+
+
+    def test_location_detail__invalid_type(self):
+        response = self.client.get(reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'bogus'}))
+        self.assertEqual(response.status_code,404)
+
+    def test_location_detail__invalid_slug(self):
+        response = self.client.get(reverse('location_detail_json', kwargs={'slug': 'bogus', 'loctype': 'neighborhoods'}))
+        self.assertEqual(response.status_code,404)
+
+    def _get_detail(self):
+        url = reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'neighborhoods'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        detail = simplejson.loads(response.content)
+        return detail
 
     def test_location_detail_json(self):
-        raise NotImplementedError
+        detail = self._get_detail()
+        self.assertEqual(type(detail), dict)
+        self.assertEqual(sorted(detail.keys()), ['geometry', 'properties', 'type'])
+        self.assertEqual(detail['type'], 'Feature')
+
+    def test_location_detail_json__properties(self):
+        detail = self._get_detail()
+        props = detail['properties']
+        self.assertEqual(type(props), dict)
+        self.assertEqual(sorted(props.keys()),
+                         ['area', 'centroid', 'city', 'description', 'name', 'population', 'slug', 'source', 'type'])
+        self.assertEqual(type(props['area']), float)
+        self.assert_(isinstance(props['city'], basestring))
+        self.assert_(isinstance(props['description'], basestring))
+        self.assertEqual(props['slug'], 'hood-1')
+        self.assertEqual(props['name'], 'Hood 1')
+        self.assertEqual(props['population'], None)
+        self.assert_(props['centroid'].startswith('POINT ('))
+
+
+    def test_location_detail_json__geometry(self):
+        detail = self._get_detail()
+        geom = detail['geometry']
+        self.assertEqual(type(geom), dict)
+        self.assertEqual(sorted(geom.keys()), ['coordinates', 'type'])
+        self.assertEqual(geom['type'], 'MultiPolygon')
+        coords = geom['coordinates'][0][0]
+        self.assert_(len(coords), "No coordinates")
+        for coord in coords:
+            self.assertEqual(len(coord), 2)
+            self.assertEqual(type(coord[0]), float)
+            self.assertEqual(type(coord[1]), float)

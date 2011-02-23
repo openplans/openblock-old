@@ -243,12 +243,14 @@ Example
    }]
 
 
+.. _get_locations:
+
 GET locations.json
 ==================
 
 Purpose
 -------
-Retrieve a list of predefined locations on the server as a list.
+Retrieve all predefined locations on the server as a list.
 
 Response
 --------
@@ -258,17 +260,35 @@ following keys:
 
 * name - human-readable name of the location.
 * slug - name suitable for use in URLs.
-* area - area in square meters.
-* geojson_url - link to a view of this location as GeoJSON
+* url - link to a view of this location as GeoJSON (see :ref:`get_location_detail`.
 * description - may be blank.
 * city - name of the city.
+* type - a Location Type slug. See :ref:`get_location_types`.
 
 Example
 
 ::
 
-    FIXME Example
+    [
+     {
+      "city": "YOUR CITY", 
+      "description": "", 
+      "url": "/api/dev1/locations/zipcodes/02108.json", 
+      "type": "zipcodes", 
+      "slug": "02108", 
+      "name": "02108"
+     }, 
+     {
+      "city": "YOUR CITY", 
+      "description": "", 
+      "url": "/api/dev1/locations/neighborhoods/allstonbrighton.json", 
+      "type": "neighborhoods", 
+      "slug": "allstonbrighton", 
+      "name": "Allston/Brighton"
+     }
+    ]
 
+.. _get_location_detail:
 
 GET locations/<locationid>.json
 ===============================
@@ -276,8 +296,8 @@ GET locations/<locationid>.json
 Purpose
 -------
 Retrieve detailed geometry information about a particular predefined location. 
-Available location identifiers can be discovered by querying the locations.json
-endpoint, see GET locations.json
+Available URLs can be discovered by querying the locations.json
+endpoint, see :ref:`get_locations`
 
 
 Response
@@ -298,14 +318,20 @@ Example
         },
       "properties": {
         "type": "zipcode",
+        "city": "boston",
         "name": "02115",
-        "normalized_name": "02115",
+        "slug": "02115",
+        "description": "lorem ipsum blah blah",
+        "centroid": "POINT (101.0 0.5)",
         "area": 3633354.76,
+        "source": "http://example.com/zip_codes_or_something",
         "population": null,
         }
       },
 
 
+
+.. _get_location_types:
 
 GET locations/types.json
 ========================
