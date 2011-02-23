@@ -60,11 +60,7 @@ function loadNewsItems() {
         var newsitems_ajax_url = "/api/newsitems.geojson/"; /* WILL CHANGE */
     };
     // Expect params to be set globally prior to calling this function.
-    var newsitem_params = {
-        pid: '',
-        schema: '',
-        newsitem: ''
-    };
+    var newsitem_params = {};
     if (typeof(newsitem) != 'undefined') {
         newsitem_params.newsitem = newsitem;
     };
