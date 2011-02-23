@@ -120,7 +120,23 @@ Example result
 
 ::
 
-    FIXME example
+    {"type": "FeatureCollection", 
+     "features": [
+        {"type": "Feature", 
+         "properties": {
+            "title": "An Article About Roxbury",
+            "url": "...", 
+            "type": "articles",
+            "description": "Test Roxbury",
+            ...
+         },
+         "geometry": {
+           "type": "Point", 
+           "coordinates": [-71.086787000000001, 42.314782999999998]
+         }
+        }, 
+     ...
+    ]}
 
 GET items.atom
 ==============
