@@ -21,7 +21,8 @@ def build_item_query(params):
     filters = [_schema_filter, _daterange_filter, _predefined_place_filter,
                _radius_filter, _attributes_filter, _order_by, _object_limit]
 
-    query = models.NewsItem.objects.all()
+    query = NewsItem.objects.all()
+    params = dict(params)
     state = {}
     for f in filters: 
         query, params, state = f(query, params, state)
@@ -54,9 +55,9 @@ def _schema_filter(query, params, state):
     # always filter out items with non-public schema
     query = query.filter(schema__is_public=True)
 
-    slug = query.get('type')
+    slug = params.get('type')
     if slug is not None:
-        del query['type']
+        del params['type']
         state['schema_slug'] = slug
         query = query.filter(schema__slug=slug)    
     return query, params, state
@@ -75,6 +76,7 @@ def _daterange_filter(query, params, state):
     handles filtering by start and end date
     paramters: startdate, enddate
     """
+
     startdate = params.get('startdate')
     if startdate is not None:
         try:
@@ -103,9 +105,10 @@ def _predefined_place_filter(query, params, state):
     locationid = params.get('locationid')
     if locationid is None: 
         return query, params, state
+        
     del params['locationid']
     
-    if state['has_geo_filter'] == True: 
+    if state.get('has_geo_filter') == True: 
         raise QueryError('Only one geographic filter may be specified')
 
     try:
@@ -135,7 +138,7 @@ def _radius_filter(query, params, state):
     if 'radius' in params: 
         del params['radius']
 
-    if state['has_geo_filter'] == True: 
+    if state.get('has_geo_filter') == True: 
         raise QueryError('Only one geographic filter may be specified')
 
     try: 
@@ -150,12 +153,12 @@ def _radius_filter(query, params, state):
             raise QueryError('Radius must be greater than 0')
         # pop into spherical mercator to make a circle in meters
         search_region = center.transform(3785, True)
-        search_region = search_region.bufferr(radius)
+        search_region = search_region.buffer(radius)
     except ValueError:
         raise QueryError('Invalid radius "%s"' % radius)
 
     search_buffer = None
-    query = query.filter(location_bboverlaps=search_region)
+    query = query.filter(location__bboverlaps=search_region)
     state['has_geo_filter'] = True
 
     return query, params, state

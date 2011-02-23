@@ -431,10 +431,10 @@ Restricts results to items within a time range
 ================== ==========================================================================
     Parameter                                Description
 ------------------ --------------------------------------------------------------------------
-     startdate     limits items to only those older than the given date.
+     startdate     limits items to only those newer than the given date.
                    date format is MMDDYYYY 
 ------------------ --------------------------------------------------------------------------
-     enddate       limits items to only those newer than the given date.
+     enddate       limits items to only those older than the given date.
                    date format is MMDDYYYY 
 ================== ==========================================================================
 

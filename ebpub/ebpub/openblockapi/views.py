@@ -3,7 +3,7 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.utils import simplejson
 from ebpub.db import models
-from ebpub.openblockapi.itemquery import build_item_query
+from ebpub.openblockapi.itemquery import build_item_query, QueryError
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -16,13 +16,13 @@ def APIGETResponse(request, body, **kw):
     constructs either a normal HTTPResponse using the 
     keyword arguments given or a JSONP wrapped response
     depending on the presence and validity of 
-    JSONP_QUERY_PARAMETER in the request. 
+    JSONP_QUERY_PARAM in the request. 
     
     This may alter the content type of the response 
     if JSONP/JSONPX is triggered. Status is preserved.
     """
 
-    jsonp = request.GET.get(JSONP_QUERY_PARAMETER)
+    jsonp = request.GET.get(JSONP_QUERY_PARAM)
     if jsonp is None: 
         return HttpResponse(body, **kw)
     else: 
@@ -30,7 +30,7 @@ def APIGETResponse(request, body, **kw):
         if content_type == JSON_CONTENT_TYPE:
             body = jsonp + "(" + body + ");" 
         else: 
-            body = jsonp + "(" + json.dumps(body) + ");"
+            body = jsonp + "(" + simplejson.dumps(body) + ");"
         del kw['content_type']
         del kw['mimetype']
         kw['content_type'] = JAVASCRIPT_CONTENT_TYPE
@@ -45,16 +45,12 @@ def check_api_available(request):
     return HttpResponse(status=200)
 
 
-##########################################################################
-# News item query API 
-
-
 def items_json(request):
     """
     handles the items.json API endpoint
     """
     try:
-        items, params = build_item_query(request.GET)
+        items, params = build_item_query(_copy_nomulti(request.GET))
         # could test for extra params aside from jsonp...
         return APIGETResponse(request, _items_json(items), content_type=JSON_CONTENT_TYPE)
     except QueryError as err:
@@ -65,22 +61,57 @@ def items_atom(request):
     handles the items.atom API endpoint
     """
     try:
-        items, params = build_item_query(request.GET)
+        items, params = build_item_query(_copy_nomulti(request.GET))
         # could test for extra params aside from jsonp...
         return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
     except QueryError as err:
         return HttpResponse(err.message, status=400)
 
+def _copy_nomulti(d):
+    """
+    make a copy of django wack-o immutable query mulit-dict
+    making single item values non-lists.
+    """
+    r = {}
+    for k,v in d.items():
+        if len(v) == 1:
+            r[k] = v[0]
+        else: 
+            r[k] = v
+    return r
 
 def _items_json(items):
-    # XXX
-    return json.dumps([item.id for item in items])
+    result = {
+        'type': 'FeatureCollection',
+        'features': []
+    }
+    for i in items:
+        if i.location is None: 
+            continue
+
+        geom = simplejson.loads(i.location.geojson)
+        item = {
+            # 'id': i.id, # XXX ?
+            'type': 'Feature',
+            'geometry': geom,
+            'properties': {
+                'type': i.schema.slug,
+                'title': i.title,
+                'description': i.description,
+                'url': i.url,
+                # 'pub_date': ,
+                # 'item_date',
+                # ... attributes
+            }
+        }
+        result['features'].append(item)
+    
+    return simplejson.dumps(result)
 
 def _items_atom(items):
     # XXX
-    return json.dumps([item.id for item in items])
+    return simplejson.dumps([item.id for item in items])
 
-#############################################################
 
 def list_types_json(request):
     """
