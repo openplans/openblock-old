@@ -28,8 +28,7 @@ from ebpub.streets.models import Block
 
 def eb_render(request, *args, **kwargs):
     """
-    Replacement for render_to_response that uses RequestContext and sets an
-    extra template variable, TEMPLATE_NAME.
+    Replacement for render_to_response that uses RequestContext.
     """
     kwargs['context_instance'] = RequestContext(request)
     return render_to_response(*args, **kwargs)

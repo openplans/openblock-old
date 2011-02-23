@@ -146,6 +146,7 @@ class BlockFeed(AbstractLocationFeed):
         # TODO: This duplicates the logic in the URLconf. Fix Django to allow
         # for RSS feed URL parsing in the URLconf.
         # See http://code.djangoproject.com/ticket/4720
+        # XXX That bug is fixed, see http://docs.djangoproject.com/en/1.2/ref/contrib/syndication/#a-complex-example; we can replace the bits arg with a normal list of args from the url config, and ditch the regex.
         if get_metro()['multiple_cities']:
             street_re = re.compile(r'^([-a-z]{3,40})/([-a-z0-9]{1,64})/%s$' % BLOCK_URL_REGEX)
         else:

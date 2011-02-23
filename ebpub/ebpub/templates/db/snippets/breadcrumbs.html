@@ -1,0 +1,10 @@
+<ul id="nav-breadcrumb">
+	{% for label, url in breadcrumbs %}
+	<li>
+	{% if forloop.last %}{{ label }}
+	{% else %}<a href="{{ url }}">{{ label }}</a>
+        {% endif %}
+	</li>
+	{% endfor %}
+</ul>
+

@@ -114,6 +114,7 @@ INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
 MIDDLEWARE_CLASSES = (
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'ebpub.accounts.middleware.UserMiddleware',
