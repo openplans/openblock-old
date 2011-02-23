@@ -205,24 +205,42 @@ GET items/types.json
 
 Purpose
 -------
-Retrieve a list of the types of news items available in the system and 
-metadata describing their attributes 
+
+Retrieve metadata describing the types of news items available in the
+system and their attributes.
+
+Response
+--------
+
+The output maps an identifier ("slug") to a mapping of key-value pairs
+describing one news item type.
+
+Each type consists of a few strings suitable for labels in a UI
+('name', 'plural_name', 'indefinite_article'), plus a 'last_updated'
+date when news items of this type were last loaded.
+
+Each news item type may also have its own extended metadata which is
+described in the 'attributes' mapping.  Each attribute has a
+'pretty_name' and a 'type' (one of 'text', 'bool', 'int', 'date',
+'time', 'datetime').
 
 Example
 
 ::
 
-    FIXME [
-    <schemaid> = {
-       'pretty_name': "...",
-       ...
-       'attributes': {
-           'foo': {
-              'pretty_name': "..."
-           }
+   [{'elvis-sightings': {
+      'indefinite_article': 'an',
+      'name': 'Elvis Sighting',
+      'plural_name': 'Elvis Sightings',
+      'slug': 'elvis-sightings',
+      'last_updated': '2011-02-22',
+      'attributes': {
+        'verified': {
+          'pretty_name': 'Verified Really Elvis',
+          'type': 'bool'
        }
-    }
-    ]
+     }
+   }]
 
 
 GET locations.json
@@ -230,15 +248,17 @@ GET locations.json
 
 Purpose
 -------
-Retrieve a list of predefined locations on the server as a list, 
-
-FIXME just basic info no geom
-* locations spatially filtered (nearby locations) (skip for now?)
+Retrieve a list of predefined locations on the server as a list.
 
 Response
 --------
 
-A json structure describing the list of predefined locations in the system.
+A list of JSON objects describing each location. Each has the
+following keys:
+
+* name - human-readable name of the location.
+* slug - name suitable for use in URLs.
+* area - area in square meters.
 
 Example
 
@@ -259,13 +279,29 @@ endpoint, see GET locations.json
 
 Response
 --------
-FIXME This one includes geometry info and details GeoJSON
+
+A GeoJSON Feature object representing one named location.
 
 Example
 
 ::
 
-    FIXME Example
+     { "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0], ...
+          ]
+        },
+      "properties": {
+        "type": "zipcode",
+        "name": "02115",
+        "normalized_name": "02115",
+        "area": 3633354.76,
+        "population": null,
+        }
+      },
+
 
 
 GET locations/types.json
