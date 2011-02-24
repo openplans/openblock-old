@@ -416,9 +416,10 @@ text-decoration : underline
 }
 
 #detailmap {
-width: 392px;
+width: 480px;
 height: 255px
 }
+
 
 #mapwrapper {
 margin-bottom : .5em;

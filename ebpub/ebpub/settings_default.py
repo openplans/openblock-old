@@ -233,7 +233,7 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
 
 # Javascript map options.
 # Options for MAP_BASELAYER_TYPE are 'google' or 'wms'.
-MAP_BASELAYER_TYPE='wmsX'
+MAP_BASELAYER_TYPE='wms'
 required_settings.append('MAP_BASELAYER_TYPE')
 
 # If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
