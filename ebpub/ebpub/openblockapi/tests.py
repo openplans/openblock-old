@@ -279,8 +279,22 @@ class TestGeocoderAPI(TestCase):
         assert res['properties']['name'] == 'Hood 1'
 
         
-    # def test_ambiguous(self):
-    #     raise NotImplementedError
+    def test_ambiguous(self):
+        qs = '?q=Chestnut+and+Chestnut'
+        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = simplejson.loads(response.content)
+        assert response['type'] == 'FeatureCollection'
+        assert len(response['features']) == 2
+    
+        names = set()
+        for res in response['features']: 
+            assert res['geometry']['type'] == 'Point'
+            assert res['properties']['type'] == 'address'
+            names.add(res['properties']['address'])
+    
+        assert "Chestnut Sq. & Chestnut Ave." in names
+        assert "Chestnut Pl. & Chestnut Ave." in names
+
 
 
 class TestLocationsAPI(TestCase):
