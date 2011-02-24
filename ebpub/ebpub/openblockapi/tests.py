@@ -118,3 +118,16 @@ class TestLocationsAPI(TestCase):
             self.assertEqual(len(coord), 2)
             self.assertEqual(type(coord[0]), float)
             self.assertEqual(type(coord[1]), float)
+
+    def test_location_types(self):
+        response = self.client.get(reverse('location_types_json'))
+        self.assertEqual(response.status_code, 200)
+        types = simplejson.loads(response.content)
+        self.assertEqual(len(types), 2)
+        for typeinfo in types.values():
+            self.assertEqual(sorted(typeinfo.keys()),
+                             ['name', 'plural_name', 'scope'])
+        t1 = types['neighborhoods']
+        self.assertEqual(t1['name'], 'neighborhood')
+        self.assertEqual(t1['plural_name'], 'neighborhoods')
+        self.assertEqual(t1['scope'], 'boston')
