@@ -28,7 +28,7 @@ Choosing Your Map Base Layer
 
 In your settings file, you have a couple of options for what you want
 to use for your map base layer - the tiled images that give your map
-street outlines, city names, etc.
+street lines, geographic features, place names, etc.
 
 Default: OpenStreetMap tiles hosted by OpenGeo
 ----------------------------------------------
