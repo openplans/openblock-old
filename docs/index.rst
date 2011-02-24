@@ -59,6 +59,7 @@ Contents
    schemas
    scraper_tutorial
    running_scrapers
+   api
    packages/index
 
 
