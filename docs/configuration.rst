@@ -11,7 +11,7 @@ A few items are worth special mention.
 Sensitive Settings
 ==================
 
-These are settings you need to customize, and avoid putting in a
+These are settings you *must* customize, and avoid putting in a
 public place eg. a public version control system.
 
 * PASSWORD_CREATE_SALT - this is used when users create a new account.
