@@ -148,7 +148,11 @@ Editing Settings
 
 You'll want to edit the demo's django settings at this point,
 or at least look at it to get an idea of what can be
-configured.  obdemo doesn't come with a settings.py; it comes with a
+configured.  There is also some :doc:`configuration documentation <configuration>`
+you should look at.
+
+
+obdemo doesn't come with a settings.py; it comes with a
 ``settings.py.in`` template that you can copy and edit::
 
     $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
@@ -163,6 +167,9 @@ At minimum, you should change the values of:
 * STAFF_COOKIE_VALUE - this is used for allowing staff members to see
   some parts of the site that other users cannot, such as :doc:`types
   of news items <schemas>` that you're still working on.
+
+You'll also want to think about :ref:`base_layer_configs`.
+
 
 Database Initialization
 -----------------------

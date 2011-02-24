@@ -56,6 +56,7 @@ Contents
    setup
    demo_setup
    custom
+   configuration
    schemas
    scraper_tutorial
    running_scrapers
