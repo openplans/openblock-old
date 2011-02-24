@@ -31,6 +31,10 @@
  * map_center - an OpenLayers.LonLat(). If set, you also need map_zoom.
  *
  * map_zoom - zoom level. Required if you set map_center.
+ *
+ * map_type - what to use for base layer. Either 'google' or 'wms'.
+ *
+ * wms_url - URL to use for WMS base layer, iff map_type == 'wms.'
  */
 var map, newsitems, style, borderstyle;
 if (jQuery.browser.msie) {
@@ -176,12 +180,15 @@ function loadLocationBorder(place_type, place_slug) {
 };
 function loadMap() {
     map = new OpenLayers.Map('detailmap', options);
-    var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
-        layers: "openstreetmap",
-        format: "image/png",
-        bgcolor: '#A1BDC4'
+    var osm = new OpenLayers.Layer.WMS("OpenStreetMap", wms_url, {
+         layers: "openstreetmap",
+         format: "image/png",
+         bgcolor: '#A1BDC4'
     }, {
-        wrapDateLine: true
+         wrapDateLine: true
+    });
+    var google = new OpenLayers.Layer.Google('Google', {
+        wrapDateLine: true, sphericalMercator: true
     });
     style = new OpenLayers.Style({
         pointRadius: "${radius}",
@@ -205,7 +212,17 @@ function loadMap() {
         }
     });
     var newsitems = loadNewsItems();
-    map.addLayers([osm]);
+    //map.addLayers([osm]);
+    if ( map_type == 'google' ) {
+        map.addLayers([google]);
+    }
+    else if ( map_type == 'wms' ) {
+        map.addLayers([osm]);
+    }
+    else {
+        alert("Map type must be one of 'wms' or 'google', got " + map_type);
+    };
+
     if (typeof(place_type) != "undefined" && Boolean(place_type)) {
         var locationborder = loadLocationBorder(place_type, place_slug);
         map.addLayers([locationborder]);
