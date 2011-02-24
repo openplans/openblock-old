@@ -4,6 +4,7 @@ from ebpub.openblockapi import views
 urlpatterns = patterns(
     '',
     url(r'^$', views.check_api_available, name="check_api_available"),
+    url(r'^geocode/$', views.geocode, name='geocoder_api'),
     url(r'^items.json$', views.items_json, name="items_json"),
     #url(r'^items.atom$', views.items_atom, name="items_atom"),
     url(r'^items/types.json$', views.list_types_json, name="list_types_json"),

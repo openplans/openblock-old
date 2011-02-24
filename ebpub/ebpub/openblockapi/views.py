@@ -3,7 +3,10 @@ from django.http import Http404
 from django.http import HttpResponse
 from django.utils import simplejson
 from ebpub.db import models
+from ebpub.geocoder.base import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
+from ebpub.streets.utils import full_geocode
+
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -113,6 +116,82 @@ def _items_atom(items):
     return simplejson.dumps([item.id for item in items])
 
 
+def geocode(request):
+    # JSON -- returns a list of WKT strings for request.GET['q'].
+    # If it can't be geocoded, the list is empty.
+    # If it's ambiguous, the list has multiple elements.
+    q = request.GET.get('q', '').strip()
+                
+    collection = {'type': 'FeatureCollection',
+                  'features': _geocode_geojson(q)}
+    return APIGETResponse(request, simplejson.dumps(collection), mimetype="application/json")
+
+def _geocode_geojson(query):
+    if not query: 
+        return []
+        
+    try: 
+        res = full_geocode(query)
+        # normalize a bit
+        if not res['ambiguous']: 
+            res['result'] = [res['result']]
+    except DoesNotExist:
+        return []
+        
+    features = []
+    if res['type'] == 'location':
+        for r in res['result']: 
+            feature = {
+                'type': 'Feature',
+                'geometry': simplejson.loads(r.centroid.geojson),
+                'properties': {
+                    'type': r.location_type.slug,
+                    'name': r.name,
+                    'city': r.city,
+                    'query': query,
+                }
+            }
+            features.append(feature)
+    elif res['type'] == 'place':
+        for r in res['result']: 
+            feature = {
+                'type': 'Feature',
+                'geometry': simplejson.loads(r.location.geojson),
+                'properties': {
+                    'type': 'place',
+                    'name': r.pretty_name,
+                    'address': r.address, 
+                    'query': query,
+                }
+            }
+            features.append(feature)
+    elif res['type'] == 'address':
+        for r in res['result']:
+            feature = {
+                'type': 'Feature',
+                'geometry': {
+                    'type': 'Point',
+                    'coordinates': [r.lat, r.lng],
+                },
+                'properties': {
+                    'type': 'address',
+                    'address': r.get('address'),
+                    'city': r.get('city'),
+                    'state': r.get('state'),
+                    'zip': r.get('zip'),
+                    'query': query
+                }
+            }
+            features.append(feature)
+    # we could get type == 'block', but 
+    # ebpub.db.views returns nothing for this,
+    # so for now we follow their lead.
+    # elif res['type'] == 'block': 
+    #     pass
+
+    return features
+
+
 def list_types_json(request):
     """
     List the known NewsItem types (Schemas).
@@ -181,7 +260,7 @@ def location_detail_json(request, loctype, slug):
                               'area': location.area,
                               'population': location.population,
                               'city': location.city,
-                              'name': location.normalized_name or location.name,
+                              'name': location.name,
                               }
                }
     geojson = simplejson.dumps(geojson, indent=1)
