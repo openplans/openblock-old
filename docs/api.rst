@@ -1,21 +1,24 @@
-============
-Introduction
+=============
+OpenBlock API
+=============
+
+Introduction 
 ============
 
 Purpose
-=======
+-------
 
 Support simple widgets, mashups, frontends based on Openblock content and filtering capability.
 We would appreciate any feedback you have on how to improve the usefulness and usability of this API.
 
 Caveat
-======
+------
 This is a preliminary work-in-progress API and may be changed 
 substantially in future versions.   
 
 
 See Also
-========
+--------
 
 The openblock API uses several standards for formats and protocols.  Please see the (externally maintained) documentation focused on the particular formats for more details. These include GeoJSON, Atom, and JSONP. Some helpful links:
 
@@ -31,7 +34,7 @@ The openblock API uses several standards for formats and protocols.  Please see 
 
 
 Examples / Quickstart
-=====================
+---------------------
 
 Grab some 'articles' about Roxbury
 
@@ -42,12 +45,11 @@ Grab some 'articles' about Roxbury
     
 
 
-============
 API Overview
 ============
 
 URL prefix
-==========
+----------
 
 All calls to the openblock API referenced in this document are prefixed by::
 
@@ -55,7 +57,7 @@ All calls to the openblock API referenced in this document are prefixed by::
 
 
 Support for Cross Domain Access
-===============================
+-------------------------------
 
 To enable widgets and mashups in the browser from domains other than the host OpenBlock instance, the API supports the JSONP.
 
@@ -63,21 +65,21 @@ Unless otherwise noted, all portions of the API using the http GET method suppor
 providing the "jsonp" query parameter.
 
 
-===================
+
 Query API Endpoints
 ===================
 
 
 GET [api prefix]
-================
+----------------
 
 Purpose
--------
+~~~~~~~
 
 Test the availability of this version of the API.
 
 Response
---------
+~~~~~~~~
 
 ================== ============================================================
     Status                                Meaning
@@ -92,19 +94,19 @@ Response
 
 
 GET items.json
-==============
+--------------
 
 Purpose
--------
+~~~~~~~
 Retrieve details of a certain set of news items in GeoJSON format.
 
 Parameters
-----------
+~~~~~~~~~~
 See section :ref:`search_params`
 
 
 Response
---------
+~~~~~~~~
 
 ================== ============================================================
     Status                                Meaning
@@ -146,18 +148,18 @@ Example result
     ]}
 
 GET items.atom
-==============
+--------------
 
 Purpose
--------
+~~~~~~~
 Retrieve details of a certain set of news items in ATOM format.
 
 Parameters
-----------
+~~~~~~~~~~
 See section :ref:`search_params`
 
 Response
---------
+~~~~~~~~
 
 ================== ============================================================
     Status                                Meaning
@@ -181,16 +183,16 @@ Example result
     FIXME example
 
 GET geocode
-===========
+-----------
 
 Purpose
--------
+~~~~~~~
 
 Geocode a street address or location name to geographic location.
 
 
 Parameters
-----------
+~~~~~~~~~~
 
 ================== ==========================================================================
     Parameter                                Description
@@ -199,7 +201,7 @@ Parameters
 ================== ==========================================================================
 
 Response
---------
+~~~~~~~~
 
 ================== ============================================================
     Status                                Meaning
@@ -224,16 +226,16 @@ Example
 
 
 GET items/types.json 
-====================
+--------------------
 
 Purpose
--------
+~~~~~~~
 
 Retrieve metadata describing the types of news items available in the
 system and their attributes.
 
 Response
---------
+~~~~~~~~
 
 The output maps an identifier ("slug") to a mapping of key-value pairs
 describing one news item type.
@@ -269,14 +271,15 @@ Example
 .. _get_locations:
 
 GET locations.json
-==================
+------------------
 
 Purpose
--------
+~~~~~~~
+
 Retrieve all predefined locations on the server as a list.
 
 Response
---------
+~~~~~~~~
 
 A list of JSON objects describing each location. Each has the
 following keys:
@@ -314,17 +317,17 @@ Example
 .. _get_location_detail:
 
 GET locations/<locationid>.json
-===============================
+--------------------------------
 
 Purpose
--------
+~~~~~~~
 Retrieve detailed geometry information about a particular predefined location. 
 Available URLs can be discovered by querying the locations.json
 endpoint, see :ref:`get_locations`
 
 
 Response
---------
+~~~~~~~~
 
 A GeoJSON Feature object representing one named location.
 
@@ -357,15 +360,15 @@ Example
 .. _get_location_types:
 
 GET locations/types.json
-========================
+------------------------
 
 Purpose
--------
+~~~~~~~
 Retrieve a list of location types, eg "towns" "zipcodes" etc which can 
 be used to filter locations.
 
 Response
---------
+~~~~~~~~
 
 A JSON list describing the location types available.
 
@@ -385,21 +388,21 @@ Example
 
 .. _search_params:
 
-======================
+
 Item Search Parameters
 ======================
 
 Search parameters specified select all items that match all criteria simultaneously, eg specifying type="crimereport"&locationid="neighborhoods/roxbury" selects all items that are of type "crimereport" AND in the Roxbury neighborhood and no other items.
 
 Spatial Filtering
-=================
+-----------------
 
 Spatial filters allow the selection of items based on geographic areas. 
 At most one spatial filter may be applied per API request.
 
 
 Predefined Area
----------------
+~~~~~~~~~~~~~~~
 
 Selects items in some predefined area on the server, eg a neighborhood, zipcode etc. To discover predefined areas see the endpoint "GET locations.json"
 
@@ -412,7 +415,7 @@ Selects items in some predefined area on the server, eg a neighborhood, zipcode 
 
 
 Bounding Circle
----------------
+~~~~~~~~~~~~~~~
 
 Selects items within some distance of a given point.
 
@@ -428,12 +431,12 @@ Selects items within some distance of a given point.
 ================== ==========================================================================
 
 
-Other Filters 
-=============
+Other Filters
+-------------
 
 
 News Item Type 
---------------
+~~~~~~~~~~~~~~
 
 Restricts results to a single type of news item, eg only crime reports.  The full
 set of types available can be retrieved by querying the schema types list api endpoint or by inspection of the values of the 'type' field of news items returned from the api. 
@@ -447,7 +450,7 @@ See 'GET newsitems/types.json'
 
 
 Date Range
-----------
+~~~~~~~~~~
 
 Restricts results to items within a time range
 
@@ -464,7 +467,7 @@ Restricts results to items within a time range
 
 
 Result Limit and Offset
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ================== ==========================================================================
     Parameter                                Description
@@ -478,13 +481,13 @@ Result Limit and Offset
 
 .. _formats:
 
-=================
+
 News Item Formats
 =================
 
 
 NewsItem JSON Format
-====================
+--------------------
 
 A NewsItem is represented by a GeoJSON Feature containing: 
 a "geometry" attribute representing its specific location, generally a Point.
@@ -498,7 +501,7 @@ FIXME: more detail on attributes
 
 
 NewsItem Atom Format
-====================
+--------------------
 
 generally follows Atom specification
 location information is specified with GeoRSS-Simple
