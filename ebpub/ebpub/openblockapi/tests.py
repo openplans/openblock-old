@@ -50,7 +50,7 @@ class TestAPI(TestCase):
                          {'pretty_name': 'Bool', 'type': 'bool'})
         self.assertEqual(t1['attributes']['datetime'],
                          {'pretty_name': 'Datetime', 'type': 'datetime'})
-                         
+
     def test_jsonp(self):
         """
         quick test that API endpoints are respecting the jsonp query 
@@ -59,7 +59,7 @@ class TestAPI(TestCase):
         param = 'jsonp'
         wrapper = 'FooseBall'
         qs = '?%s=%s' % (param, wrapper)
-        
+
         endpoints = [
             reverse('geocoder_api') + qs,
             reverse('items_json') + qs,
@@ -68,14 +68,12 @@ class TestAPI(TestCase):
             reverse('location_types_json') + qs,
             reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'neighborhoods'}) + qs,
         ]
-        
+
         for e in endpoints: 
             response = self.client.get(e, status=200)
             assert response.content.startswith('%s(' % wrapper)
             assert response.content.endswith(");")
             assert response.get('content-type', None).startswith('application/javascript')
-        
-        
 
 
 class TestItemSearchAPI(TestCase):
@@ -252,7 +250,7 @@ class TestItemSearchAPI(TestCase):
                                   location=geos.Point(0,0)))
             curdate += inc
         return items
-        
+
 class TestGeocoderAPI(TestCase):
 
     fixtures = ('test-locationtypes', 
@@ -304,20 +302,20 @@ class TestGeocoderAPI(TestCase):
         assert res['properties']['type'] == 'neighborhoods'
         assert res['properties']['name'] == 'Hood 1'
 
-        
+
     def test_ambiguous(self):
         qs = '?q=Chestnut+and+Chestnut'
         response = self.client.get(reverse('geocoder_api') + qs, status=200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 2
-    
+
         names = set()
         for res in response['features']: 
             assert res['geometry']['type'] == 'Point'
             assert res['properties']['type'] == 'address'
             names.add(res['properties']['address'])
-    
+
         assert "Chestnut Sq. & Chestnut Ave." in names
         assert "Chestnut Pl. & Chestnut Ave." in names
 
