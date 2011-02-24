@@ -56,10 +56,10 @@ class TestItemSearchAPI(TestCase):
     # XXX currently only testing GeoJSON API
 
     fixtures = ('test-item-search.json', )
-    
+
     def tearDown(self):
         NewsItem.objects.all().delete()
-    
+
     def test_items_nofilter(self):
         # create a few items
         schema1 = Schema.objects.get(slug='type1')
@@ -67,12 +67,12 @@ class TestItemSearchAPI(TestCase):
         items = []
         items += self._make_items(5, schema1)
         items += self._make_items(5, schema2)
-        for item in items: 
+        for item in items:
             item.save()
-        
+
         response = self.client.get(reverse('items_json'), status=200)
         ritems = simplejson.loads(response.content)
-        
+
         assert len(ritems['features']) == len(items)
 
     def test_items_filter_schema(self):
@@ -83,25 +83,25 @@ class TestItemSearchAPI(TestCase):
         items2 = self._make_items(5, schema2)
         for item in items1 + items2:
             item.save()
-        
+
         # query for only the second schema
         response = self.client.get(reverse('items_json') + "?type=type2", status=200)
         ritems = simplejson.loads(response.content)
-        
+
         assert len(ritems['features']) == len(items2)
-        for item in ritems['features']: 
+        for item in ritems['features']:
             assert item['properties']['type'] == 'type2'
         assert self._items_exist_in_result(items2, ritems)
 
     def test_items_filter_daterange(self):
-        # create some items, they will have 
+        # create some items, they will have
         # dates spaced apart by one day, newest first
         schema1 = Schema.objects.get(slug='type1')
         items = self._make_items(4, schema1)
-        for item in items: 
+        for item in items:
             item.save()
-             
-        # filter out the first and last item by constraining 
+
+        # filter out the first and last item by constraining
         # the date range to the inner two items
         startdate = items[2].item_date.strftime('%m%d%Y')
         enddate = items[1].item_date.strftime('%m%d%Y')
@@ -119,7 +119,7 @@ class TestItemSearchAPI(TestCase):
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[:-1], ritems)
-        
+
         # enddate only
         qs = "?enddate=%s" % enddate
         response = self.client.get(reverse('items_json') + qs, status=200)
@@ -131,7 +131,7 @@ class TestItemSearchAPI(TestCase):
         # create a bunch of items
         schema1 = Schema.objects.get(slug='type1')
         items = self._make_items(10, schema1)
-        for item in items: 
+        for item in items:
             item.save()
 
         # with no query, we should get all the items
@@ -153,22 +153,21 @@ class TestItemSearchAPI(TestCase):
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 8
         assert self._items_exist_in_result(items[2:], ritems)
-        
+
         # offset by 2, limit to 5
         qs = "?offset=2&limit=5"
         response = self.client.get(reverse('items_json') + qs, status=200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items[2:7], ritems)
-        
-        
+
     def test_items_predefined_location(self):
         # create a bunch of items
         schema1 = Schema.objects.get(slug='type1')
         items1 = self._make_items(5, schema1)
         for item in items1:
-            item.save()            
-        
+            item.save()
+
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
         pt = loc.centroid
@@ -176,22 +175,21 @@ class TestItemSearchAPI(TestCase):
         for item in items1:
             item.location = pt
             item.save()
-        
+
         qs = "?locationid=%s" % cgi.escape("neighborhoods/hood-1")
         response = self.client.get(reverse('items_json') + qs, status=200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items2, ritems)
-        
 
-        
+
     def test_items_radius(self):
         # create a bunch of items
         schema1 = Schema.objects.get(slug='type1')
         items1 = self._make_items(5, schema1)
         for item in items1:
-            item.save()            
-        
+            item.save()
+
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
         pt = loc.centroid
@@ -199,7 +197,7 @@ class TestItemSearchAPI(TestCase):
         for item in items1:
             item.location = pt
             item.save()
-        
+
         qs = "?center=%f,%f&radius=10" % (pt.x, pt.y)
         response = self.client.get(reverse('items_json') + qs, status=200)
         ritems = simplejson.loads(response.content)
@@ -215,7 +213,7 @@ class TestItemSearchAPI(TestCase):
                 return False
         return True
 
-    def _make_items(self, number, schema): 
+    def _make_items(self, number, schema):
         items = []
         curdate = datetime.datetime.utcnow()
         inc = datetime.timedelta(days=-1)
@@ -283,6 +281,7 @@ class TestGeocoderAPI(TestCase):
         
     # def test_ambiguous(self):
     #     raise NotImplementedError
+
 
 class TestLocationsAPI(TestCase):
 
@@ -352,3 +351,16 @@ class TestLocationsAPI(TestCase):
             self.assertEqual(len(coord), 2)
             self.assertEqual(type(coord[0]), float)
             self.assertEqual(type(coord[1]), float)
+
+    def test_location_types(self):
+        response = self.client.get(reverse('location_types_json'))
+        self.assertEqual(response.status_code, 200)
+        types = simplejson.loads(response.content)
+        self.assertEqual(len(types), 2)
+        for typeinfo in types.values():
+            self.assertEqual(sorted(typeinfo.keys()),
+                             ['name', 'plural_name', 'scope'])
+        t1 = types['neighborhoods']
+        self.assertEqual(t1['name'], 'neighborhood')
+        self.assertEqual(t1['plural_name'], 'neighborhoods')
+        self.assertEqual(t1['scope'], 'boston')

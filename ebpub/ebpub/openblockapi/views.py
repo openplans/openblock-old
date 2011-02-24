@@ -266,3 +266,13 @@ def location_detail_json(request, loctype, slug):
     geojson = simplejson.dumps(geojson, indent=1)
     response = HttpResponse(geojson, mimetype='application/javascript')
     return response
+
+def location_types_json(request):
+    typelist = models.LocationType.objects.order_by('name').values(
+        'name', 'plural_name', 'scope', 'slug')
+    typedict = {}
+    for typeinfo in typelist:
+        typedict[typeinfo.pop('slug')] = typeinfo
+    response = HttpResponse(mimetype='application/javascript')
+    simplejson.dump(typedict, response, indent=1)
+    return response

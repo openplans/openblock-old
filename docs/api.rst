@@ -364,26 +364,22 @@ GET locations/types.json
 
 Purpose
 ~~~~~~~
-Retrieve a list of location types, eg "towns" "zipcodes" etc which can 
+Retrieve a list of location types, eg "towns", "zipcodes", etc. which can
 be used to filter locations.
 
 Response
 ~~~~~~~~
 
-A JSON list describing the location types available.
+A JSON object describing the location types available.
 
-Example
+Example::
 
-:: 
-
-     FIXME [ 'towns' = { 'pretty_name': 'Town',
-                   'plural_name': "Towns",
-                   ...
-                  }, 
-        <location_type_id> = {...},
-     ]
-
-
+     {
+      "towns": {"name": "Town",
+                "plural_name": "Towns",
+                "scope:" "boston"},
+      "zipcodes": { ... }
+     }
 
 
 .. _search_params:
@@ -423,8 +419,9 @@ Selects items within some distance of a given point.
     Parameter                                Description
 ------------------ --------------------------------------------------------------------------
       center	    <lon>,<lat> comma separated list of 2 floating point 
-                    values representing the latitude and longitude of the 
-                    center of the circle. eg: center=-71.191153, 42.227865
+                    values representing the longitude and latitude of the 
+                    center of the circle. eg: center=-71.191153,42.227865
+
 ------------------ --------------------------------------------------------------------------
       radius	   positive floating point maximum distance in meters from the specified 
                    center point
@@ -454,11 +451,20 @@ Date Range
 
 Restricts results to items within a time range
 
+
 ================== ==========================================================================
     Parameter                                Description
 ------------------ --------------------------------------------------------------------------
      startdate     limits items to only those newer than the given date.
-                   date format is MMDDYYYY 
+                   date format is MMDDYYYY
+
+                   TODO: month-first is a USA convention. maybe use
+                   something standard (and trivially sortable) like
+                   YYYY-MM-DD? as per
+                   http://www.w3.org/TR/NOTE-datetime
+
+                   TODO: times? time zones?
+
 ------------------ --------------------------------------------------------------------------
      enddate       limits items to only those older than the given date.
                    date format is MMDDYYYY 

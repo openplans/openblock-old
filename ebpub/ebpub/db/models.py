@@ -226,7 +226,7 @@ class LocationType(models.Model):
     plural_name = models.CharField(max_length=64) # e.g., "Wards"
     scope = models.CharField(max_length=64) # e.g., "Chicago" or "U.S.A."
     slug = models.CharField(max_length=32, unique=True)
-    is_browsable = models.BooleanField() # whether this is displayed on location_type_list
+    is_browsable = models.BooleanField() # whether this is displayed on location_type_list.  XXX unused??
     is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
 
     def __unicode__(self):

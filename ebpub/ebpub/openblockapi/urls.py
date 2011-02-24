@@ -9,5 +9,6 @@ urlpatterns = patterns(
     #url(r'^items.atom$', views.items_atom, name="items_atom"),
     url(r'^items/types.json$', views.list_types_json, name="list_types_json"),
     url(r'^locations.json$', views.locations_json, name="locations_json"),
+    url(r'^locations/types.json', views.location_types_json, name="location_types_json"),
     url(r'^locations/(?P<loctype>[^/].*)/(?P<slug>.*).json$', views.location_detail_json, name="location_detail_json"),
 )
