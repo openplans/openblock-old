@@ -4,7 +4,7 @@
     "pk": 1000,
     "fields": {
       "name": "Zip 1",
-      "normalized_name": "Zip 1",
+      "normalized_name": "ZIP 1",
       "slug": "zip-1",
       "location_type": 1001,
       "city": "boston",
@@ -26,7 +26,7 @@
     "pk": 4000,
     "fields": {
       "name": "Zip 2",
-      "normalized_name": "Zip 2",
+      "normalized_name": "ZIP 2",
       "location_type": 1001,
       "city": "boston",
       "last_mod_date": "2011-02-23 11:30:37",
@@ -59,7 +59,7 @@
       "source": "",
       "centroid": "POINT (-71.0693133544919959 42.3877157483319991)",
       "location": "MULTIPOLYGON (((-71.1249316406249932 42.3884023938390015, -71.0844195556639988 42.3513235364180005, -71.0212481689449930 42.3877157483319991, -71.0418475341799933 42.4090017590740018, -71.1249316406249932 42.3884023938390015)))",
-      "normalized_name": "Hood 1",
+      "normalized_name": "HOOD 1",
       "is_public": true,
       "creation_date": "2011-01-27 12:07:51",
       "population": null
@@ -70,7 +70,7 @@
     "pk": 3000,
     "fields": {
       "name": "Hood 2",
-      "normalized_name": "Hood 2",
+      "normalized_name": "HOOD 2",
       "location_type": 1000,
       "city": "boston",
       "last_mod_date": "2011-02-23 11:35:00",

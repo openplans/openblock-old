@@ -215,14 +215,14 @@ Response
 ================== ============================================================
 
 
-A successful response contains a GeoJSON Feature with a point corresponding to the
-query given.
+A successful response contains a GeoJSON FeatureCollection with Features corresponding to the query given.  The list will contain multiple results if
+the match was ambiguous.
 
 Example
 
 :: 
 
-    FIXME example
+    {"type": "FeatureCollection", "features": [{"geometry": {"type": "Point", "coordinates": [42.34100627272727, -71.056181363636369]}, "type": "Feature", "properties": {"city": "Boston", "zip": "02127", "state": "MA", "address": "123 W 4th St.", "query": "123 4th st", "type": "address"}}]
 
 
 GET items/types.json 

@@ -228,7 +228,62 @@ class TestItemSearchAPI(TestCase):
                                   location=geos.Point(0,0)))
             curdate += inc
         return items
-            
+        
+class TestGeocoderAPI(TestCase):
+
+    fixtures = ('test-locationtypes', 
+                'test-locations.json',
+                'test-places.json', 
+                'test-streets.json', )
+
+    def test_address(self):
+        qs = '?q=100+Adams+St'
+        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = simplejson.loads(response.content)
+        assert response['type'] == 'FeatureCollection'
+        assert len(response['features']) == 1
+        res = response['features'][0]
+        assert res['geometry']['type'] == 'Point'
+        assert res['properties']['type'] == 'address'
+        assert res['properties']['address'] == '100 Adams St.'
+
+    def test_intersection(self):
+        qs = '?q=Adams+and+Chestnut'
+        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = simplejson.loads(response.content)
+        assert response['type'] == 'FeatureCollection'
+        assert len(response['features']) == 1
+        res = response['features'][0]
+        assert res['geometry']['type'] == 'Point'
+        assert res['properties']['type'] == 'address'
+        assert res['properties']['address'] == 'Adams St. & Chestnut St.'
+
+    def test_place(self):
+        qs = '?q=Fake+Yards'
+        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = simplejson.loads(response.content)
+        assert response['type'] == 'FeatureCollection'
+        assert len(response['features']) == 1
+        res = response['features'][0]
+        assert res['geometry']['type'] == 'Point'
+        assert res['properties']['type'] == 'place'
+        assert res['properties']['name'] == 'Fake Yards'
+
+    def test_location(self):
+        qs = '?q=Hood+1'
+        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = simplejson.loads(response.content)
+        assert response['type'] == 'FeatureCollection'
+        assert len(response['features']) == 1
+        res = response['features'][0]
+        assert res['geometry']['type'] == 'Point'
+        assert res['properties']['type'] == 'neighborhoods'
+        assert res['properties']['name'] == 'Hood 1'
+
+        
+    # def test_ambiguous(self):
+    #     raise NotImplementedError
+
 class TestLocationsAPI(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json')
