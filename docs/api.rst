@@ -76,7 +76,7 @@ GET [api prefix]
 Purpose
 ~~~~~~~
 
-Test the availability of this version of the API.
+Test the availability of this version of the API.  This request does not implement JSONP.
 
 Response
 ~~~~~~~~

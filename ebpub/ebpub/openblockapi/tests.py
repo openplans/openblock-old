@@ -11,7 +11,7 @@ from ebpub.db.models import Location, NewsItem, Schema
 
 class TestAPI(TestCase):
 
-    fixtures = ('test-schema',)
+    fixtures = ('test-schema', 'test-locationtypes', 'test-locations')
 
     def test_api_available(self):
         response = self.client.get(reverse('check_api_available'))
@@ -49,8 +49,34 @@ class TestAPI(TestCase):
         self.assertEqual(t1['attributes']['bool'],
                          {'pretty_name': 'Bool', 'type': 'bool'})
         self.assertEqual(t1['attributes']['datetime'],
-                         {'pretty_name': 'Datetime', 'type': 'datetime'}
-)
+                         {'pretty_name': 'Datetime', 'type': 'datetime'})
+                         
+    def test_jsonp(self):
+        """
+        quick test that API endpoints are respecting the jsonp query 
+        parameter.
+        """
+        param = 'jsonp'
+        wrapper = 'FooseBall'
+        qs = '?%s=%s' % (param, wrapper)
+        
+        endpoints = [
+            reverse('geocoder_api') + qs,
+            reverse('items_json') + qs,
+            reverse('list_types_json') + qs,
+            reverse('locations_json') + qs,
+            reverse('location_types_json') + qs,
+            reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'neighborhoods'}) + qs,
+        ]
+        
+        for e in endpoints: 
+            response = self.client.get(e, status=200)
+            assert response.content.startswith('%s(' % wrapper)
+            assert response.content.endswith(");")
+            assert response.get('content-type', None).startswith('application/javascript')
+        
+        
+
 
 class TestItemSearchAPI(TestCase):
     # XXX currently only testing GeoJSON API
