@@ -231,6 +231,17 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              EB_MEDIA_ROOT + '/scripts',
                              ]
 
+# Javascript map options.
+# Options for MAP_BASELAYER_TYPE are 'google' or 'wms'.
+MAP_BASELAYER_TYPE='wmsX'
+required_settings.append('MAP_BASELAYER_TYPE')
+
+# If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
+# and point it to your WMS server.  The default gives you hosted OpenStreetMap tiles.
+WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
+# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_MAPS_KEY.
+GOOGLE_MAPS_KEY='your API key here'
+
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
