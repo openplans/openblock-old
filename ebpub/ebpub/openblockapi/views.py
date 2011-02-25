@@ -7,6 +7,7 @@ from ebpub.db import models
 from ebpub.geocoder.base import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
+import datetime
 import pyrfc3339
 import pytz
 
@@ -96,7 +97,6 @@ def _items_json(items):
         if i.location is None: 
             continue
 
-        local_tz = pytz.timezone(settings.TIME_ZONE)
         geom = simplejson.loads(i.location.geojson)
         item = {
             # 'id': i.id, # XXX ?
@@ -105,19 +105,36 @@ def _items_json(items):
         }
         props = {}
         for k,v in i.attributes.items():
-            item['properties'][k] = v
+            props[k] = v
         props.update({
             'type': i.schema.slug,
             'title': i.title,
             'description': i.description,
             'url': i.url,
-            'pub_date': pyrfc3339.generate(i.pub_date.replace(tzinfo=local_tz)),
-            'item_date': i.item_date.strftime('%Y-%m-%d'),
+            'pub_date': i.pub_date,
+            'item_date': i.item_date,
         })
         item['properties'] = props
         result['features'].append(item)
 
-    return simplejson.dumps(result, indent=1)
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    def _serialize_unknown(obj):
+        if isinstance(obj, datetime.datetime):
+            if obj.tzinfo is None:
+                obj = obj.replace(tzinfo=local_tz)
+            return pyrfc3339.generate(obj)
+        elif isinstance(obj, datetime.date):
+            return obj.strftime('%Y-%m-%d')
+        elif isinstance(obj, datetime.time):
+            # XXX super ugly
+            if obj.tzinfo is None: 
+                obj = obj.replace(tzinfo=local_tz)
+            dd = datetime.datetime.utcnow()
+            dd = dd.replace(hour=obj.hour, minute=obj.minute,
+                            second=obj.second, tzinfo=obj.tzinfo)
+            ss = pyrfc3339.generate(dd)
+            return ss[ss.index('T') + 1:]
+    return simplejson.dumps(result, default=_serialize_unknown, indent=1)
 
 def _items_atom(items):
     # XXX

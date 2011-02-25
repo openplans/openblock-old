@@ -358,6 +358,14 @@ class AttributeDict(dict):
                 self.update(attr_values[0])
             self.cached = True
 
+    def keys(self, *args, **kwargs):
+        self.__do_query()        
+        return dict.keys(self, *args, **kwargs)
+
+    def items(self, *args, **kwargs):
+        self.__do_query()        
+        return dict.items(self, *args, **kwargs)
+
     def get(self, *args, **kwargs):
         self.__do_query()
         return dict.get(self, *args, **kwargs)

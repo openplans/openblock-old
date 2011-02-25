@@ -75,13 +75,11 @@ class TestAPI(TestCase):
             assert response.content.endswith(");")
             assert response.get('content-type', None).startswith('application/javascript')
         
-        
-
 
 class TestItemSearchAPI(TestCase):
     # XXX currently only testing GeoJSON API
 
-    fixtures = ('test-item-search.json', )
+    fixtures = ('test-item-search.json', 'test-schema.yaml')
 
     def tearDown(self):
         NewsItem.objects.all().delete()
@@ -118,6 +116,38 @@ class TestItemSearchAPI(TestCase):
         for item in ritems['features']:
             assert item['properties']['type'] == 'type2'
         assert self._items_exist_in_result(items2, ritems)
+
+    def test_extension_fields_json(self):
+        schema = Schema.objects.get(slug='test-schema')
+
+        ext_vals = {
+            'varchar': ('This is a varchar', 'This is a varchar'), 
+            'date': (datetime.date(2001, 01, 02), '2001-01-02'),
+            'time': (datetime.time(hour=10, minute=11, second=12), 
+                     '16:11:12Z'),
+            'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
+                         '2001-01-02T16:11:12Z'),
+            'bool': (True, True),
+            'int': (7, 7),
+            # XXX avoiding lookups for now.
+            #'lookup': ''
+        }
+
+        items = self._make_items(5, schema)
+        for item in items:
+            item.save()
+            for k,v in ext_vals.items():
+                item.attributes[k] = v[0]
+
+        response = self.client.get(reverse('items_json'), status=200)
+        ritems = simplejson.loads(response.content)
+
+        assert len(ritems['features']) == len(items)
+        for item in ritems['features']:
+            for k, v in ext_vals.items():
+                assert item['properties'][k] == v[1]
+        assert self._items_exist_in_result(items, ritems)
+
 
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
