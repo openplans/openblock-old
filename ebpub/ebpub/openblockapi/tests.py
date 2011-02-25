@@ -378,11 +378,27 @@ class TestLocationsAPI(TestCase):
         self.assertEqual(len(locations), 4)
         for loc in locations:
             self.assertEqual(sorted(loc.keys()),
-                             ['city', 'description',  'name', 'slug', 'type', 'url'])
+                             ['city', 'description', 'id', 'name', 'slug', 'type', 'url'])
             self.assertEqual(loc['city'], 'boston')
             self.assert_(loc['type'] in ['zipcodes', 'neighborhoods'])
         self.assertEqual(locations[0]['slug'], 'zip-1')
         self.assertEqual(locations[0]['name'], 'Zip 1')
+
+    def test_locations_json_by_type(self):
+        qs = '?type=neighborhoods'
+        response = self.client.get(reverse('locations_json') + qs)
+        self.assertEqual(response.status_code, 200)
+        locations = simplejson.loads(response.content)
+        self.assertEqual(type(locations), list)
+        self.assertEqual(len(locations), 2)
+        for loc in locations:
+            self.assertEqual(sorted(loc.keys()),
+                             ['city', 'description', 'id', 'name', 'slug', 'type', 'url'])
+            self.assertEqual(loc['city'], 'boston')
+            self.assert_(loc['type'] == 'neighborhoods')
+        self.assertEqual(locations[0]['slug'], 'hood-1')
+        self.assertEqual(locations[0]['name'], 'Hood 1')
+
 
 
     def test_location_detail__invalid_type(self):
@@ -403,7 +419,7 @@ class TestLocationsAPI(TestCase):
     def test_location_detail_json(self):
         detail = self._get_detail()
         self.assertEqual(type(detail), dict)
-        self.assertEqual(sorted(detail.keys()), ['geometry', 'properties', 'type'])
+        self.assertEqual(sorted(detail.keys()), ['geometry', 'id', 'properties', 'type'])
         self.assertEqual(detail['type'], 'Feature')
 
     def test_location_detail_json__properties(self):

@@ -278,6 +278,17 @@ Purpose
 
 Retrieve all predefined locations on the server as a list.
 
+Parameters
+~~~~~~~~~~
+
+================== ==========================================================================
+    Parameter                                Description
+------------------ --------------------------------------------------------------------------
+     type            (optional) return only locations of the specified type, eg "neighborhoods"
+                     see See :ref:`get_location_types` for types.
+================== ==========================================================================
+
+
 Response
 ~~~~~~~~
 
