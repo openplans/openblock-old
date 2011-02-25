@@ -138,6 +138,7 @@ def _items_json(items):
 
 
 def _items_atom(items):
+    # XXX needs tests
     feed_url = reverse('items_atom')
     atom = OpenblockAtomFeed(
         title='openblock news item atom feed', description='xxx descr',
@@ -333,7 +334,7 @@ def location_types_json(request):
 
 
 class OpenblockAtomFeed(feedgenerator.Atom1Feed):
-
+    # XXX needs tests
     """
     An Atom feed generator that adds extra stuff like georss.
     """
@@ -349,15 +350,19 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
             # yes, georss is "y x" not "x y"!!
             handler.addQuickElement('georss:point', '%s %s' % (location.y, location.x))
         handler.addQuickElement('georss:featureName', item['location_name'])
+
+        # TODO: use custom namespace for schema instead?
+        # http://openblock.org/ns/0" as per docs?
         typeinfo = {'term': item['schema_slug'],
                     'scheme': 'http://openblockproject.org/schema' # XXX  what should this be?
                     }
         handler.addQuickElement('category', u"", typeinfo)
 
-        # TODO: item_date
+        # TODO: item_date in custom namespace
 
 
 def normalize_datetime(dt):
+    # XXX needs tests
     local_tz = pytz.timezone(settings.TIME_ZONE)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=local_tz)
