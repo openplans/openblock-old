@@ -1,6 +1,7 @@
 from django.contrib.gis import geos
 from ebpub.db.models import NewsItem, Schema
 import datetime
+import pyrfc3339
 
 __all__ = ['build_item_query']
 
@@ -81,19 +82,25 @@ def _daterange_filter(query, params, state):
     if startdate is not None:
         try:
             del params['startdate']
-            startdate = datetime.datetime.strptime(startdate, '%m%d%Y').date()
-            query = query.filter(item_date__gte=startdate)
+            try:
+                startdate = datetime.datetime.strptime(startdate, '%Y-%m-%d')
+            except ValueError: 
+                startdate = pyrfc3339.parse(startdate)
+            query = query.filter(pub_date__gte=startdate)
         except ValueError:
-            raise QueryError('Invalid start date "%s", must be MMDDYYYY' % startdate)
+            raise QueryError('Invalid start date "%s", must be YYYY-MM-DD or rfc3339' % startdate)
     
     enddate = params.get('enddate')
     if enddate is not None:
         try:
             del params['enddate']
-            enddate = datetime.datetime.strptime(enddate, '%m%d%Y').date()
-            query = query.filter(item_date__lte=enddate)
+            try:
+                enddate = datetime.datetime.strptime(enddate, '%Y-%m-%d')
+            except ValueError: 
+                enddate = pyrfc3339.parse(enddate)
+            query = query.filter(pub_date__lte=enddate)
         except ValueError:
-            raise QueryError('Invalid end date "%s", must be MMDDYYYY' % enddate)
+            raise QueryError('Invalid end date "%s", must be YYYY-MM-DD or rfc3339' % enddate)
 
     return query, params, state
 
