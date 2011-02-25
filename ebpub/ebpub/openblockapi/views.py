@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
 from django.utils import simplejson
+from django.utils import feedgenerator
 from ebpub.db import models
 from ebpub.geocoder.base import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
@@ -16,6 +17,13 @@ JSON_CONTENT_TYPE = 'application/json'
 JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
 
 
+def normalize_datetime(dt):
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=local_tz)
+    return dt.astimezone(pytz.utc)
+
+
 def APIGETResponse(request, body, **kw):
     """
     constructs either a normal HTTPResponse using the 
@@ -26,13 +34,12 @@ def APIGETResponse(request, body, **kw):
     This may alter the content type of the response 
     if JSONP/JSONPX is triggered. Status is preserved.
     """
-
     jsonp = request.GET.get(JSONP_QUERY_PARAM)
     if jsonp is None: 
         return HttpResponse(body, **kw)
     else: 
         content_type = kw.get("mimetype", kw.get("content_type", "text/plain"))
-        if content_type == JSON_CONTENT_TYPE:
+        if content_type in (JSON_CONTENT_TYPE, ATOM_CONTENT_TYPE):
             body = jsonp + "(" + body + ");" 
         else: 
             body = jsonp + "(" + simplejson.dumps(body, indent=1) + ");"
@@ -62,7 +69,7 @@ def items_json(request):
         return APIGETResponse(request, _items_json(items), content_type=JSON_CONTENT_TYPE)
     except QueryError as err:
         return HttpResponse(err.message, status=400)
-        
+
 def items_atom(request):
     """
     handles the items.atom API endpoint
@@ -95,8 +102,6 @@ def _items_json(items):
     for i in items:
         if i.location is None: 
             continue
-
-        local_tz = pytz.timezone(settings.TIME_ZONE)
         geom = simplejson.loads(i.location.geojson)
         item = {
             # 'id': i.id, # XXX ?
@@ -107,7 +112,7 @@ def _items_json(items):
                 'title': i.title,
                 'description': i.description,
                 'url': i.url,
-                'pub_date': pyrfc3339.generate(i.pub_date.replace(tzinfo=local_tz)),
+                'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date)),
                 'item_date': i.item_date.strftime('%Y-%m-%d'),
                 # ... attributes
             }
@@ -116,9 +121,31 @@ def _items_json(items):
     
     return simplejson.dumps(result, indent=1)
 
+
 def _items_atom(items):
-    # XXX
-    return simplejson.dumps([item.id for item in items])
+    feed_url = reverse('items_atom')
+    atom = OpenblockAtomFeed(
+        title='openblock news item atom feed', description='xxx descr',
+        link=reverse('items_json'),
+        feed_url=feed_url,
+        id=feed_url,)
+
+    for item in items:
+        location = item.location
+        if location:
+            location = location.centroid
+
+        atom.add_item(item.title,
+                      item.url, # XXX should this be a local url?
+                      item.description,
+                      location=location,
+                      location_name=item.location_name,
+                      pubdate=normalize_datetime(item.pub_date),
+                      schema_slug=item.schema.slug,
+                      )
+
+    return atom.writeString('utf8')
+
 
 
 def geocode(request):
@@ -288,3 +315,28 @@ def location_types_json(request):
 
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
                          content_type='application_json')
+
+
+class OpenblockAtomFeed(feedgenerator.Atom1Feed):
+
+    """
+    An Atom feed generator that adds extra stuff like georss.
+    """
+    def root_attributes(self):
+        attrs = super(OpenblockAtomFeed, self).root_attributes()
+        attrs['xmlns:georss'] = 'http://www.georss.org/georss'
+        return attrs
+
+    def add_item_elements(self, handler, item):
+        super(OpenblockAtomFeed, self).add_item_elements(handler, item)
+        location = item['location']
+        if location is not None:
+            # yes, georss is "y x" not "x y"!!
+            handler.addQuickElement('georss:point', '%s %s' % (location.y, location.x))
+        handler.addQuickElement('georss:featureName', item['location_name'])
+        typeinfo = {'term': item['schema_slug'],
+                    'scheme': 'http://openblockproject.org/schema' # XXX  what should this be?
+                    }
+        handler.addQuickElement('category', u"", typeinfo)
+
+        # TODO: item_date
