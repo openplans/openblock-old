@@ -222,7 +222,24 @@ Example
 
 :: 
 
-    {"type": "FeatureCollection", "features": [{"geometry": {"type": "Point", "coordinates": [42.34100627272727, -71.056181363636369]}, "type": "Feature", "properties": {"city": "Boston", "zip": "02127", "state": "MA", "address": "123 W 4th St.", "query": "123 4th st", "type": "address"}}]
+     "type": "FeatureCollection", 
+     "features": [
+      {
+       "geometry": {
+        "type": "Point", 
+        "coordinates": [
+         -71.086787000000001, 
+         42.314782999999998
+        ]
+       }, 
+       "type": "Feature", 
+       "properties": {
+        "city": "BOSTON", 
+        "type": "neighborhoods", 
+        "name": "Roxbury", 
+        "query": "Roxbury"
+       }
+      }]}
 
 
 GET items/types.json 
@@ -499,13 +516,29 @@ NewsItem JSON Format
 
 A NewsItem is represented by a GeoJSON Feature containing: 
 a "geometry" attribute representing its specific location, generally a Point.
-an "id" attribute containing the url of the item
-a "properties" attribute containing details of the news item according to its schema. 
+a "properties" attribute containing details of the news item according to its schema.
 
 See the GeoJSON specification for additional information on GeoJSON: 
 http://geojson.org/geojson-spec.html
 
-FIXME: more detail on attributes
+Schema attributes are output in the corresponding JSON value type if one exists, otherwise
+a formatted string is used.
+
+================== ==========================================================================
+    Field Type                  JSON Representation
+------------------ --------------------------------------------------------------------------
+      string        string
+------------------ --------------------------------------------------------------------------
+      number        number
+------------------ --------------------------------------------------------------------------
+      boolean       boolean
+------------------ --------------------------------------------------------------------------
+      datetime      rfc3339 formatted datetime string, eg: "1999-12-29T12:11:45Z"
+------------------ --------------------------------------------------------------------------
+      date          rfc3339 formatted date string, eg: "1999-12-29"
+------------------ --------------------------------------------------------------------------
+      time          rfc3339 formatted time string, eg: "12:11:45Z" 
+================== ==========================================================================
 
 
 NewsItem Atom Format

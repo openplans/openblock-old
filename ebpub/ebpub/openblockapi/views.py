@@ -8,6 +8,7 @@ from ebpub.db import models
 from ebpub.geocoder.base import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
+import datetime
 import pyrfc3339
 import pytz
 
@@ -16,12 +17,6 @@ ATOM_CONTENT_TYPE = "application/atom+xml"
 JSON_CONTENT_TYPE = 'application/json'
 JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
 
-
-def normalize_datetime(dt):
-    local_tz = pytz.timezone(settings.TIME_ZONE)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=local_tz)
-    return dt.astimezone(pytz.utc)
 
 
 def APIGETResponse(request, body, **kw):
@@ -107,19 +102,39 @@ def _items_json(items):
             # 'id': i.id, # XXX ?
             'type': 'Feature',
             'geometry': geom,
-            'properties': {
-                'type': i.schema.slug,
-                'title': i.title,
-                'description': i.description,
-                'url': i.url,
-                'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date)),
-                'item_date': i.item_date.strftime('%Y-%m-%d'),
-                # ... attributes
-            }
         }
+        props = {}
+        for k,v in i.attributes.items():
+            props[k] = v
+        props.update({
+            'type': i.schema.slug,
+            'title': i.title,
+            'description': i.description,
+            'url': i.url,
+            'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date)),
+            'item_date': i.item_date,
+        })
+        item['properties'] = props
         result['features'].append(item)
-    
-    return simplejson.dumps(result, indent=1)
+
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    def _serialize_unknown(obj):
+        if isinstance(obj, datetime.datetime):
+            if obj.tzinfo is None:
+                obj = obj.replace(tzinfo=local_tz)
+            return pyrfc3339.generate(obj)
+        elif isinstance(obj, datetime.date):
+            return obj.strftime('%Y-%m-%d')
+        elif isinstance(obj, datetime.time):
+            # XXX super ugly
+            if obj.tzinfo is None: 
+                obj = obj.replace(tzinfo=local_tz)
+            dd = datetime.datetime.utcnow()
+            dd = dd.replace(hour=obj.hour, minute=obj.minute,
+                            second=obj.second, tzinfo=obj.tzinfo)
+            ss = pyrfc3339.generate(dd)
+            return ss[ss.index('T') + 1:]
+    return simplejson.dumps(result, default=_serialize_unknown, indent=1)
 
 
 def _items_atom(items):
@@ -340,3 +355,11 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
         handler.addQuickElement('category', u"", typeinfo)
 
         # TODO: item_date
+
+
+def normalize_datetime(dt):
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=local_tz)
+    return dt.astimezone(pytz.utc)
+
