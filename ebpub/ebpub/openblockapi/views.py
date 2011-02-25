@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
@@ -6,7 +7,8 @@ from ebpub.db import models
 from ebpub.geocoder.base import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
-
+import pyrfc3339
+import pytz
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -94,6 +96,7 @@ def _items_json(items):
         if i.location is None: 
             continue
 
+        local_tz = pytz.timezone(settings.TIME_ZONE)
         geom = simplejson.loads(i.location.geojson)
         item = {
             # 'id': i.id, # XXX ?
@@ -104,8 +107,8 @@ def _items_json(items):
                 'title': i.title,
                 'description': i.description,
                 'url': i.url,
-                # 'pub_date': ,
-                # 'item_date',
+                'pub_date': pyrfc3339.generate(i.pub_date.replace(tzinfo=local_tz)),
+                'item_date': i.item_date.strftime('%Y-%m-%d'),
                 # ... attributes
             }
         }
