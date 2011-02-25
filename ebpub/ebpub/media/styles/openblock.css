@@ -253,7 +253,25 @@ a:focus {
 #userlinks {
     font-size: 12px;
     padding: 10px 0;
-    float : right;
+
+float : right;
+
+}
+
+
+
+
+.olFramedCloudPopupContent, .olPopupContent {
+    font-size: 10pt;
+}
+div li span.location {
+    display: block;
+}
+div li span.popupnav {
+    display: block;
+}
+div.popupnav {
+    clear: both;
 }
 
 
@@ -373,11 +391,16 @@ border-top : 1px solid #ccc;
 background-color : #f8f6f2;
 }
 
-.subscribe-links {
+#content .subscribe-links, 
+#nav-location .subscribe-links {
 margin-top : 1em;
+float : right;
+clear : right;
+width : 394px;
 }
 
-.subscribe-links p {
+#content .subscribe-links p, 
+#nav-location .subscribe-links p {
 border-radius : 8px;
 -moz-border-radius : 8px;
 padding : .1em .6em;
@@ -464,8 +487,12 @@ ul.nav-view li a:hover {
 color : #2c7cae;
 }
 
-ul.nav-view li:first-child {
+
+ul.nav-view li.selected {
 background-color : #e1dbd6;
+}
+
+ul.nav-view li:first-child {
 color : #2c7cae;
 border-top-left-radius: 5px;
 -moz-border-radius-topleft: 5px;
@@ -655,6 +682,236 @@ margin-bottom : 2em;
 float : left;
 }
 
+
+/* #################################### Schema Filter #################################### */
+
+.schema-filter #detailmap { 
+width: 392px;
+}
+
+.schema-filter #content {
+width : 100%;
+}
+
+.schema-filter #maintext {
+width : 480px;
+float : left;
+}
+
+.schema-filter #mapwrapper {
+float : right;
+}
+
+#schemanav {
+border-bottom : 1px solid #E2E2E2;
+margin-bottom : 2em;
+}
+
+
+#schemanav ul, 
+#schemanav li {
+margin : 0;
+padding : 0;
+list-style-type : none;
+}
+
+#schemanav li {
+padding : .4em;
+border : 1px solid blue; 
+float : left;
+margin-bottom : .5em;
+}
+
+
+#schemanav ul {
+margin-bottom : .5em;
+clear : both;
+display : inline-block;
+}
+
+#schemanav ul li {
+    -moz-border-radius: 10px 10px 10px 10px;
+    background-color: #EDEBE6;
+    border: 1px solid #C8C7C5;
+    color: #4D6A24;
+    float: left;
+    font-size: 0.9em;
+    margin-right: 1em;
+    padding: 0.05em 0.6em;
+    text-decoration: none;
+}
+
+
+#schemanav ul li a {
+text-decoration : none;
+padding : .15em .5em;
+color : #aaa;
+}
+
+#schemanav ul li a:hover {
+color : #e82100;
+}
+
+#content #schemanav h2 {
+margin-top : 1em;
+}
+
+
+#schemanav .filtergroup {
+border : 1px solid #dbdbdb;
+background-color : #EDEBE6;
+padding : .5em;
+}
+
+#schemanav .filtergroup p {
+margin : 0;
+}
+
+
+#schemanav .filtergroup h3 {
+margin-top : 0;
+}
+
+.schema-filter #maintext ul {
+margin : 0;
+}
+
+.schema-filter #maintext h3 {
+margin-top : 0;
+}
+
+
+
+/* #################################### Schema Detail #################################### */
+
+.schema-detail #content {
+width : 624px;
+}
+
+.schema-detail #content h1 {
+margin : 0;
+}
+
+.schema-detail #content h2 {
+margin : 1.5em 0 1em 0;
+}
+
+.schema-detail #content dl {
+margin : 0;
+}
+
+
+.schema-detail #schemanav {
+float : right;
+width : 250px;
+}
+
+
+
+
+.schema-detail table.datechart a:link {
+text-decoration : none;
+}
+ 
+.schema-detail table.datechart td, 
+.schema-detail table.datechart th {
+vertical-align : bottom;
+padding : 0;
+border : 1px solid #d3d3d3;
+border-width : 0 1px;
+}
+
+.schema-detail table.datechart th  {
+text-align : center;
+}
+
+/* Basic styles for date charts. For more on creating CSS charts, see: http://www.alistapart.com/articles/accessibledatavisualization/ */
+.datechart .index { 
+display: block; 
+position: relative; 
+height: 100px; 
+text-decoration: none; 
+}
+
+.datechart .bar { 
+background: #b9aca2; 
+width: 100%; 
+display: block; 
+position: absolute; 
+bottom: 0; 
+text-indent: -9999px; 
+overflow: hidden; 
+}
+
+.datechart .day { 
+width : 20px;
+}
+
+#location-neighborhoods table, 
+#location-zipcodes table {
+width : 100%;
+background-color : #F7F5F1;
+}
+
+
+.schema-detail #location-neighborhoods td.label, 
+.schema-detail #location-neighborhoods td.percent, 
+.schema-detail #location-neighborhoods td.count, 
+.schema-detail #location-zipcodes td.label, 
+.schema-detail #location-zipcodes td.percent, 
+.schema-detail #location-zipcodes td.count {
+padding : 0;
+text-align : center;
+}
+
+.schema-detail #location-neighborhoods td.label, 
+.schema-detail #location-zipcodes td.label {
+text-align : left;
+}
+
+.schema-detail #location-neighborhoods td.count, 
+.schema-detail #location-zipcodes td.count {
+border : 1px solid #C7BAAF;
+border-width : 0 1px;
+
+}
+
+.schema-detail .label {
+padding : 0;
+margin : 0;
+}
+
+.schema-detail .label a {
+text-decoration : none;
+z-index : 10;
+}
+
+
+.schema-detail .label .name {
+padding : 5px ;
+height : 10px;
+display : block;
+margin : 0;
+}
+
+.schema-detail .label .name .bar {
+background-color : #ccc;
+display : block;
+
+z-index : -10;
+margin-top : -23px;
+height : 23px;
+margin-left : -5px;
+}
+
+
+.schema-detail .count, 
+.schema-detail .percent {
+width : 10%;
+}
+
+
+
 /* #################################### Homepage #################################### */
 
 
@@ -664,6 +921,7 @@ font-size : 1.5em;
 padding : .1em .3em;
 color : #666;
 }
+
 
 .homepage #nav-location {
 width : 100%;
@@ -709,9 +967,12 @@ margin : .5em 0 .4em 0;
 margin : 1em 0 0 0;
 }
 
+
+
 #intro-search h2 {
 margin-top : 1em;
 }
+
 
 #homepage-about {
 border : 1px solid #ccc;
@@ -727,28 +988,3 @@ font-weight : bold;
 border-bottom : 0;
 }
 
-
-/* Popups */
-
-.openblockFramedCloudPopupContent {
-    font-size: 12px;
-    overflow: hidden;
-    margin: 0px 6px 6px 12px;
-    padding: 0;
- }
-
-.olPopupContent, .olPopup .newsitem {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
-div.popupnav {
-    clear: both;
-}
-
-.openblockFramedCloudPopupContent .location {
-    display: inline;
-    font-size: 12px;
-    text-transform: none;
-}

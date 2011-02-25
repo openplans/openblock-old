@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
 {% load eb eb_filter humanize mapping %}
 
@@ -6,42 +6,37 @@
 
 {% block content %}
 	<div id="content">
-		<div id="maintext">
-		<p><a href="{{ schema.url }}">{{ schema.plural_name|capfirst }} overview</a></p>
-
 
 		<h1>Search {{ schema.plural_name }}</h1>
 		{% include "db/snippets/filter_left_nav.html" %}
-		<h2>
-			{% if filters %}
-				<a href="{{ schema.url }}filter/">{{ schema.plural_name|capfirst }}</a> &rsaquo; 
-			{% else %}
-				All {{ schema.plural_name }}
-			{% endif %}
-			{% for filter in filters.values %} {% if forloop.last %}{{ filter.value }}{% else %}<a href="{% filter_breadcrumb_link schema filters.values filter %}">{{ filter.value }}</a> &rsaquo; {% endif %}{% endfor %}
-		</h2>
-		{% if lookup_descriptions or filters.location %}
+
+		<div id="maintext">
+
+		{% if lookup_descriptions %}
 			<dl>
 				{% for lookup in lookup_descriptions %}
 				<dt>{{ lookup.name }}</dt>
 				<dd>{{ lookup.description|safe }}</dd>
 				{% endfor %}
-				{% if filters.location %}
-				<dt>{{ filters.location.location_name }}</dt>
-				<dd><a href="{{ filters.location.location_object.url }}" rel="nofollow">Get more news from this area</a>, plus <a href="{{ filters.location.location_object.alert_url }}" rel="nofollow">e-mail alerts</a> and <a href="{{ filters.location.location_object.url }}feeds/" rel="nofollow">RSS feeds</a>.</dd>
-				{% endif %}
 			</dl>
 		{% endif %}
+
+		{% if filters.location %}
+			<h3>{{ filters.location.location_name }}</h3>
+		{% endif %}
+
 		{% if newsitem_list %}
 
 			<p><strong>{{ schema.plural_name|capfirst }} {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
 			<ul>
 				{% newsitem_list_by_schema newsitem_list ungrouped %}
 			</ul>
+			{% if has_next or has_previous %}
 			<ul>
 				{% if has_previous %}<li><a href="?page={{ previous_page_number }}" rel="nofollow">Previous</a></li>{% endif %}
 				{% if has_next %}<li><a href="?page={{ next_page_number }}" rel="nofollow">Next</a></li>{% endif %}
 			</ul>
+			{% endif %}
 		{% else %}
 			<h2>No {{ schema.plural_name }} were found for the given search criteria.</h2>
 			<p>You might want to try&hellip;</p>
@@ -68,7 +63,13 @@
 
 		  </script>
 		  {% include "map.html" %}
-		</div>
+		</div><!--/ #mapwrapper -->
+
+		<!--
+		<div class="subscribe-links"><p>what would subscription links on this page point to?</p>
+		</div> -->
+		<!-- /# subscribe-links -->
+
 	</div><!--/ #content -->
 
 {% endblock %}
