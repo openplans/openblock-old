@@ -102,18 +102,21 @@ def _items_json(items):
             # 'id': i.id, # XXX ?
             'type': 'Feature',
             'geometry': geom,
-            'properties': {
-                'type': i.schema.slug,
-                'title': i.title,
-                'description': i.description,
-                'url': i.url,
-                'pub_date': pyrfc3339.generate(i.pub_date.replace(tzinfo=local_tz)),
-                'item_date': i.item_date.strftime('%Y-%m-%d'),
-                # ... attributes
-            }
         }
+        props = {}
+        for k,v in i.attributes.items():
+            item['properties'][k] = v
+        props.update({
+            'type': i.schema.slug,
+            'title': i.title,
+            'description': i.description,
+            'url': i.url,
+            'pub_date': pyrfc3339.generate(i.pub_date.replace(tzinfo=local_tz)),
+            'item_date': i.item_date.strftime('%Y-%m-%d'),
+        })
+        item['properties'] = props
         result['features'].append(item)
-    
+
     return simplejson.dumps(result, indent=1)
 
 def _items_atom(items):

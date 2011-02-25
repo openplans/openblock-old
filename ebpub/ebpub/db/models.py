@@ -309,7 +309,7 @@ class AttributesDescriptor(object):
         if instance is None:
             raise AttributeError("%s must be accessed via instance" % self.__class__.__name__)
         if not hasattr(instance, '_attributes_cache'):
-            select_dict = field_mapping([instance.schema_id])[instance.schema_id]
+            select_dict = field_mapping([instance.schema_id]).get(instance.schema_id, {})
             instance._attributes_cache = AttributeDict(instance.id, instance.schema_id, select_dict)
         return instance._attributes_cache
 
