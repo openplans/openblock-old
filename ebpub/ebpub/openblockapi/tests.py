@@ -117,7 +117,11 @@ class TestItemSearchAPI(TestCase):
             assert item['properties']['type'] == 'type2'
         assert self._items_exist_in_result(items2, ritems)
 
-    def test_items_filter_daterange(self):
+    def test_items_filter_daterange_rfc3339(self):
+        import pyrfc3339
+        import pytz
+        from django.conf import settings
+        
         # create some items, they will have
         # dates spaced apart by one day, newest first
         schema1 = Schema.objects.get(slug='type1')
@@ -127,8 +131,46 @@ class TestItemSearchAPI(TestCase):
 
         # filter out the first and last item by constraining
         # the date range to the inner two items
-        startdate = items[2].item_date.strftime('%m%d%Y')
-        enddate = items[1].item_date.strftime('%m%d%Y')
+        local_tz = pytz.timezone(settings.TIME_ZONE)
+        startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=local_tz), accept_naive=True)
+        enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz), accept_naive=True)
+
+        # filter both ends
+        qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
+        response = self.client.get(reverse('items_json') + qs, status=200)
+        ritems = simplejson.loads(response.content)
+        assert len(ritems['features']) == 2
+        assert self._items_exist_in_result(items[1:3], ritems)
+
+        # startdate only
+        qs = "?startdate=%s" % startdate
+        response = self.client.get(reverse('items_json') + qs, status=200)
+        ritems = simplejson.loads(response.content)
+        assert len(ritems['features']) == 3
+        assert self._items_exist_in_result(items[:-1], ritems)
+
+        # enddate only
+        qs = "?enddate=%s" % enddate
+        response = self.client.get(reverse('items_json') + qs, status=200)
+        ritems = simplejson.loads(response.content)
+        assert len(ritems['features']) == 3
+        assert self._items_exist_in_result(items[1:], ritems)
+
+
+    def test_items_filter_daterange(self):
+        # create some items, they will have
+        # dates spaced apart by one day, newest first
+        schema1 = Schema.objects.get(slug='type1')
+        items = self._make_items(4, schema1)
+        for item in items:
+            cd = item.item_date
+            item.pub_date = datetime.datetime(year=cd.year, month=cd.month, day=cd.day)
+            item.save()
+
+        # filter out the first and last item by constraining
+        # the date range to the inner two items
+        startdate = items[2].pub_date.strftime('%Y-%m-%d')
+        enddate = items[1].pub_date.strftime('%Y-%m-%d')
 
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
@@ -239,7 +281,7 @@ class TestItemSearchAPI(TestCase):
 
     def _make_items(self, number, schema):
         items = []
-        curdate = datetime.datetime.utcnow()
+        curdate = datetime.datetime.utcnow().replace(microsecond=0)
         inc = datetime.timedelta(days=-1)
         for i in range(number):
             desc = '%s item %d' % (schema.slug, i)
@@ -334,11 +376,27 @@ class TestLocationsAPI(TestCase):
         self.assertEqual(len(locations), 4)
         for loc in locations:
             self.assertEqual(sorted(loc.keys()),
-                             ['city', 'description',  'name', 'slug', 'type', 'url'])
+                             ['city', 'description', 'id', 'name', 'slug', 'type', 'url'])
             self.assertEqual(loc['city'], 'boston')
             self.assert_(loc['type'] in ['zipcodes', 'neighborhoods'])
         self.assertEqual(locations[0]['slug'], 'zip-1')
         self.assertEqual(locations[0]['name'], 'Zip 1')
+
+    def test_locations_json_by_type(self):
+        qs = '?type=neighborhoods'
+        response = self.client.get(reverse('locations_json') + qs)
+        self.assertEqual(response.status_code, 200)
+        locations = simplejson.loads(response.content)
+        self.assertEqual(type(locations), list)
+        self.assertEqual(len(locations), 2)
+        for loc in locations:
+            self.assertEqual(sorted(loc.keys()),
+                             ['city', 'description', 'id', 'name', 'slug', 'type', 'url'])
+            self.assertEqual(loc['city'], 'boston')
+            self.assert_(loc['type'] == 'neighborhoods')
+        self.assertEqual(locations[0]['slug'], 'hood-1')
+        self.assertEqual(locations[0]['name'], 'Hood 1')
+
 
 
     def test_location_detail__invalid_type(self):
@@ -359,7 +417,7 @@ class TestLocationsAPI(TestCase):
     def test_location_detail_json(self):
         detail = self._get_detail()
         self.assertEqual(type(detail), dict)
-        self.assertEqual(sorted(detail.keys()), ['geometry', 'properties', 'type'])
+        self.assertEqual(sorted(detail.keys()), ['geometry', 'id', 'properties', 'type'])
         self.assertEqual(detail['type'], 'Feature')
 
     def test_location_detail_json__properties(self):

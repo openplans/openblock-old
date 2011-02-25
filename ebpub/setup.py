@@ -40,6 +40,7 @@ setup(
     "pyyaml",
     "psycopg2",
     "slimmer",  # used by django-static.
+    "pyrfc3339",
     ],
     dependency_links=[
     ],

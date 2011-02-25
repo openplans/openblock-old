@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
@@ -6,7 +7,8 @@ from ebpub.db import models
 from ebpub.geocoder.base import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
-
+import pyrfc3339
+import pytz
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -94,6 +96,7 @@ def _items_json(items):
         if i.location is None: 
             continue
 
+        local_tz = pytz.timezone(settings.TIME_ZONE)
         geom = simplejson.loads(i.location.geojson)
         item = {
             # 'id': i.id, # XXX ?
@@ -104,8 +107,8 @@ def _items_json(items):
                 'title': i.title,
                 'description': i.description,
                 'url': i.url,
-                # 'pub_date': ,
-                # 'item_date',
+                'pub_date': pyrfc3339.generate(i.pub_date.replace(tzinfo=local_tz)),
+                'item_date': i.item_date.strftime('%Y-%m-%d'),
                 # ... attributes
             }
         }
@@ -119,9 +122,10 @@ def _items_atom(items):
 
 
 def geocode(request):
-    # JSON -- returns a list of WKT strings for request.GET['q'].
-    # If it can't be geocoded, the list is empty.
-    # If it's ambiguous, the list has multiple elements.
+    # TODO: this will obsolete:
+    # ebdata.geotagger.views.geocode and 
+    # ebpub.db.views.ajax_wkt
+
     q = request.GET.get('q', '').strip()
                 
     collection = {'type': 'FeatureCollection',
@@ -228,9 +232,16 @@ def list_types_json(request):
 
 def locations_json(request):
     # TODO: this will obsolete ebpub.db.views.ajax_location_list
-    locations = models.Location.objects.filter(is_public=True).order_by('display_order').select_related().defer('location')
+    locations = models.Location.objects.filter(is_public=True)
+    loctype = request.GET.get('type')
+    if loctype is not None:
+        locations = locations.filter(location_type__slug=loctype)
+
+    locations = locations.order_by('display_order').select_related().defer('location')
+    
     loc_objs = [
-        {'slug': loc.slug, 'name': loc.name, 'city': loc.city,
+        {'id': "%s/%s" % (loc.location_type.slug, loc.slug),
+         'slug': loc.slug, 'name': loc.name, 'city': loc.city,
          'type': loc.location_type.slug,
          'description': loc.description or '',
          'url': reverse('location_detail_json', kwargs={'slug': loc.slug, 'loctype': loc.location_type.slug})
@@ -252,6 +263,7 @@ def location_detail_json(request, loctype, slug):
     except (ValueError, models.Location.DoesNotExist):
         raise Http404("No such location %r/%r" % (loctype, slug))
     geojson = {'type': 'Feature',
+               'id': '%s/%s' % (loctype, slug),
                'geometry': simplejson.loads(location.geojson),
                'properties': {'type': loctype,
                               'slug': location.slug,

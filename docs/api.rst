@@ -278,6 +278,17 @@ Purpose
 
 Retrieve all predefined locations on the server as a list.
 
+Parameters
+~~~~~~~~~~
+
+================== ==========================================================================
+    Parameter                                Description
+------------------ --------------------------------------------------------------------------
+     type            (optional) return only locations of the specified type, eg "neighborhoods"
+                     see See :ref:`get_location_types` for types.
+================== ==========================================================================
+
+
 Response
 ~~~~~~~~
 
@@ -456,20 +467,11 @@ Restricts results to items within a time range
     Parameter                                Description
 ------------------ --------------------------------------------------------------------------
      startdate     limits items to only those newer than the given date.
-                   date format is MMDDYYYY
-
-                   TODO: month-first is a USA convention. maybe use
-                   something standard (and trivially sortable) like
-                   YYYY-MM-DD? as per
-                   http://www.w3.org/TR/NOTE-datetime
-
-                   TODO: times? time zones?
-
+                   date format is YYYY-MM-DD or rfc3339 for date/time
 ------------------ --------------------------------------------------------------------------
      enddate       limits items to only those older than the given date.
-                   date format is MMDDYYYY 
+                   date format is YYYY-MM-DD or rfc3339 for date/time
 ================== ==========================================================================
-
 
 
 Result Limit and Offset
