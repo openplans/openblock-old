@@ -133,7 +133,7 @@ class TigerImporter(BlockImporter):
         places_layer = DataSource(place_shp)[0]
         fields = places_layer.fields
         self.places = places = {}
-        for feature in DataSource(place_shp)[0]:
+        for feature in places_layer:
             fips = feature.get('PLACEFP')
             values = dict(zip(fields, map(feature.get, fields)))
             places[fips] = values
