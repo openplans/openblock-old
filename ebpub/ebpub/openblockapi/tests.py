@@ -3,6 +3,7 @@ API tests
 """
 import cgi
 import datetime
+import feedparser
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -77,7 +78,6 @@ class TestAPI(TestCase):
 
 
 class TestItemSearchAPI(TestCase):
-    # XXX currently only testing GeoJSON API
 
     fixtures = ('test-item-search.json', 'test-schema.yaml')
 
@@ -89,8 +89,8 @@ class TestItemSearchAPI(TestCase):
         schema1 = Schema.objects.get(slug='type1')
         schema2 = Schema.objects.get(slug='type2')
         items = []
-        items += self._make_items(5, schema1)
-        items += self._make_items(5, schema2)
+        items += _make_items(5, schema1)
+        items += _make_items(5, schema2)
         for item in items:
             item.save()
 
@@ -99,12 +99,26 @@ class TestItemSearchAPI(TestCase):
 
         assert len(ritems['features']) == len(items)
 
+    def test_items_atom_nofilter(self):
+        schema1 = Schema.objects.get(slug='type1')
+        schema2 = Schema.objects.get(slug='type2')
+        items = _make_items(5, schema1) + _make_items(5, schema2)
+        for item in items:
+            item.save()
+        response = self.client.get(reverse('items_atom'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['content-type'], 'application/atom+xml')
+        feed = feedparser.parse(response.content)
+        self.assertEqual(feed['feed']['title'], u'openblock news item atom feed')
+        self.assertEqual(len(feed['entries']), len(items))
+        assert self._items_exist_in_xml_result(items, response.content)
+
     def test_items_filter_schema(self):
         # create a few items of each of two schema types
         schema1 = Schema.objects.get(slug='type1')
         schema2 = Schema.objects.get(slug='type2')
-        items1 = self._make_items(5, schema1)
-        items2 = self._make_items(5, schema2)
+        items1 = _make_items(5, schema1)
+        items2 = _make_items(5, schema2)
         for item in items1 + items2:
             item.save()
 
@@ -116,6 +130,25 @@ class TestItemSearchAPI(TestCase):
         for item in ritems['features']:
             assert item['properties']['type'] == 'type2'
         assert self._items_exist_in_result(items2, ritems)
+
+    def test_items_atom_filter_schema(self):
+        # create a few items of each of two schema types
+        schema1 = Schema.objects.get(slug='type1')
+        schema2 = Schema.objects.get(slug='type2')
+        items1 = _make_items(5, schema1)
+        items2 = _make_items(5, schema2)
+        for item in items1 + items2:
+            item.save()
+
+        # query for only the second schema
+        response = self.client.get(reverse('items_atom') + "?type=type2", status=200)
+        feed = feedparser.parse(response.content)
+
+        assert len(feed['entries']) == len(items2)
+        for item in feed['entries']:
+            assert item['openblock_type'] == u'type2'
+
+
 
     def test_extension_fields_json(self):
         schema = Schema.objects.get(slug='test-schema')
@@ -133,7 +166,7 @@ class TestItemSearchAPI(TestCase):
             #'lookup': ''
         }
 
-        items = self._make_items(5, schema)
+        items = _make_items(5, schema)
         for item in items:
             item.save()
             for k,v in ext_vals.items():
@@ -149,15 +182,57 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_result(items, ritems)
 
 
+    def test_extension_fields_atom(self):
+        schema = Schema.objects.get(slug='test-schema')
+
+        ext_vals = {
+            'varchar': ('This is a varchar', 'This is a varchar'), 
+            'date': (datetime.date(2001, 01, 02), '2001-01-02'),
+            'time': (datetime.time(hour=10, minute=11, second=12), 
+                     '16:11:12Z'),
+            'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
+                         '2001-01-02T16:11:12Z'),
+            'bool': (True, 'True'),
+            'int': (7, '7'),
+            # XXX avoiding lookups for now.
+            #'lookup': ''
+        }
+
+        items = _make_items(5, schema)
+        for item in items:
+            item.save()
+            for k,v in ext_vals.items():
+                item.attributes[k] = v[0]
+
+        response = self.client.get(reverse('items_atom'), status=200)
+        # Darn feedparser throws away nested extension elements. Gahhh.
+        # Okay, let's parse the old-fashioned way.
+        from lxml import etree
+        root = etree.fromstring(response.content)
+        ns = {'atom': 'http://www.w3.org/2005/Atom',
+              'openblock': 'http://openblock.org/ns/0'}
+
+        entries = root.xpath('//atom:entry', namespaces=ns)
+        assert len(entries) == len(items)
+        for entry in entries:
+            for key, value in ext_vals.items():
+                attrs = entry.xpath(
+                    'openblock:attributes/openblock:attribute[@name="%s"]' % key,
+                    namespaces=ns)
+                self.assertEqual(len(attrs), 1)
+                self.assertEqual(attrs[0].text, value[1])
+        assert self._items_exist_in_xml_result(items, response.content)
+
+
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
         import pytz
         from django.conf import settings
-        
+
         # create some items, they will have
         # dates spaced apart by one day, newest first
         schema1 = Schema.objects.get(slug='type1')
-        items = self._make_items(4, schema1)
+        items = _make_items(4, schema1)
         for item in items:
             item.save()
 
@@ -193,7 +268,7 @@ class TestItemSearchAPI(TestCase):
         # create some items, they will have
         # dates spaced apart by one day, newest first
         schema1 = Schema.objects.get(slug='type1')
-        items = self._make_items(4, schema1)
+        items = _make_items(4, schema1)
         for item in items:
             cd = item.item_date
             item.pub_date = datetime.datetime(year=cd.year, month=cd.month, day=cd.day)
@@ -228,7 +303,7 @@ class TestItemSearchAPI(TestCase):
     def test_items_limit_offset(self):
         # create a bunch of items
         schema1 = Schema.objects.get(slug='type1')
-        items = self._make_items(10, schema1)
+        items = _make_items(10, schema1)
         for item in items:
             item.save()
 
@@ -262,14 +337,14 @@ class TestItemSearchAPI(TestCase):
     def test_items_predefined_location(self):
         # create a bunch of items
         schema1 = Schema.objects.get(slug='type1')
-        items1 = self._make_items(5, schema1)
+        items1 = _make_items(5, schema1)
         for item in items1:
             item.save()
 
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
         pt = loc.centroid
-        items2 = self._make_items(5, schema1)
+        items2 = _make_items(5, schema1)
         for item in items1:
             item.location = pt
             item.save()
@@ -284,14 +359,14 @@ class TestItemSearchAPI(TestCase):
     def test_items_radius(self):
         # create a bunch of items
         schema1 = Schema.objects.get(slug='type1')
-        items1 = self._make_items(5, schema1)
+        items1 = _make_items(5, schema1)
         for item in items1:
             item.save()
 
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
         pt = loc.centroid
-        items2 = self._make_items(5, schema1)
+        items2 = _make_items(5, schema1)
         for item in items1:
             item.location = pt
             item.save()
@@ -311,19 +386,33 @@ class TestItemSearchAPI(TestCase):
                 return False
         return True
 
-    def _make_items(self, number, schema):
-        items = []
-        curdate = datetime.datetime.utcnow().replace(microsecond=0)
-        inc = datetime.timedelta(days=-1)
-        for i in range(number):
-            desc = '%s item %d' % (schema.slug, i)
-            items.append(NewsItem(schema=schema, title=desc,
-                                  description=desc,
-                                  item_date=curdate.date(),
-                                  pub_date=curdate,
-                                  location=geos.Point(0,0)))
-            curdate += inc
-        return items
+
+    def _items_exist_in_xml_result(self, items, xmlstring):
+        from lxml import etree
+        root = etree.fromstring(xmlstring)
+        ns = {'atom': 'http://www.w3.org/2005/Atom',
+              'openblock': 'http://openblock.org/ns/0'}
+
+        title_nodes = root.xpath('//atom:entry/atom:title', namespaces=ns)
+        all_titles = set([t.text for t in title_nodes])
+        for item in items:
+            if not item.title in all_titles:
+                return False
+        return True
+
+def _make_items(number, schema):
+    items = []
+    curdate = datetime.datetime.utcnow().replace(microsecond=0)
+    inc = datetime.timedelta(days=-1)
+    for i in range(number):
+        desc = '%s item %d' % (schema.slug, i)
+        items.append(NewsItem(schema=schema, title=desc,
+                              description=desc,
+                              item_date=curdate.date(),
+                              pub_date=curdate,
+                              location=geos.Point(0,0)))
+        curdate += inc
+    return items
 
 class TestGeocoderAPI(TestCase):
 
@@ -492,3 +581,28 @@ class TestLocationsAPI(TestCase):
         self.assertEqual(t1['name'], 'neighborhood')
         self.assertEqual(t1['plural_name'], 'neighborhoods')
         self.assertEqual(t1['scope'], 'boston')
+
+
+class TestOpenblockAtomFeed(TestCase):
+
+    def test_root_attrs(self):
+        from ebpub.openblockapi.views import OpenblockAtomFeed
+        attrs = OpenblockAtomFeed('title', 'link', 'descr').root_attributes()
+        self.assertEqual(attrs['xmlns:georss'], 'http://www.georss.org/georss')
+        self.assertEqual(attrs['xmlns:openblock'], 'http://openblock.org/ns/0')
+
+    # Not testing add_item_elements as it's an implementation detail
+    # ... and, unlike root_attributes, is a pain to test.
+
+
+class TestUtilFunctions(TestCase):
+
+    def test_copy_nomulti(self):
+        from ebpub.openblockapi.views import _copy_nomulti
+        self.assertEqual(_copy_nomulti({}), {})
+        self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
+        self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
+        self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
+                         {'a': 1, 'b': [1,2,3]})
+
+

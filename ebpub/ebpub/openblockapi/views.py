@@ -83,9 +83,12 @@ def _copy_nomulti(d):
     """
     r = {}
     for k,v in d.items():
-        if len(v) == 1:
-            r[k] = v[0]
-        else: 
+        try:
+            if len(v) == 1:
+                r[k] = v[0]
+            else: 
+                r[k] = v
+        except TypeError:
             r[k] = v
     return r
 
@@ -104,8 +107,10 @@ def _items_json(items):
             'geometry': geom,
         }
         props = {}
-        for k,v in i.attributes.items():
-            props[k] = v
+        # Quirk: the attributes property is an empty dict until you do
+        # something that triggers populating it! calling items() is
+        # sufficient.
+        props = dict(i.attributes.items())
         props.update({
             'type': i.schema.slug,
             'title': i.title,
@@ -117,32 +122,41 @@ def _items_json(items):
         item['properties'] = props
         result['features'].append(item)
 
-    local_tz = pytz.timezone(settings.TIME_ZONE)
     def _serialize_unknown(obj):
-        if isinstance(obj, datetime.datetime):
-            if obj.tzinfo is None:
-                obj = obj.replace(tzinfo=local_tz)
-            return pyrfc3339.generate(obj)
-        elif isinstance(obj, datetime.date):
-            return obj.strftime('%Y-%m-%d')
-        elif isinstance(obj, datetime.time):
-            # XXX super ugly
-            if obj.tzinfo is None: 
-                obj = obj.replace(tzinfo=local_tz)
-            dd = datetime.datetime.utcnow()
-            dd = dd.replace(hour=obj.hour, minute=obj.minute,
-                            second=obj.second, tzinfo=obj.tzinfo)
-            ss = pyrfc3339.generate(dd)
-            return ss[ss.index('T') + 1:]
+        if (isinstance(obj, datetime.datetime)
+            or isinstance(obj, datetime.date)
+            or isinstance(obj, datetime.time)):
+            return serialize_date_or_time(obj)
+        return None
     return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+
+def serialize_date_or_time(obj):
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    if isinstance(obj, datetime.datetime):
+        if obj.tzinfo is None:
+            obj = obj.replace(tzinfo=local_tz)  # Wait, why is this one local and others UTC?
+        return pyrfc3339.generate(obj)
+    elif isinstance(obj, datetime.date):
+        return obj.strftime('%Y-%m-%d')
+    elif isinstance(obj, datetime.time):
+        # XXX super ugly
+        if obj.tzinfo is None: 
+            obj = obj.replace(tzinfo=local_tz)
+        dd = datetime.datetime.utcnow()
+        dd = dd.replace(hour=obj.hour, minute=obj.minute,
+                        second=obj.second, tzinfo=obj.tzinfo)
+        ss = pyrfc3339.generate(dd)
+        return ss[ss.index('T') + 1:]
+    else:
+        return None
 
 
 def _items_atom(items):
     # XXX needs tests
     feed_url = reverse('items_atom')
     atom = OpenblockAtomFeed(
-        title='openblock news item atom feed', description='xxx descr',
-        link=reverse('items_json'),
+        title='openblock news item atom feed', description='',
+        link=reverse('items_json'),  # For the rel=alternate link.
         feed_url=feed_url,
         id=feed_url,)
 
@@ -150,7 +164,6 @@ def _items_atom(items):
         location = item.location
         if location:
             location = location.centroid
-
         atom.add_item(item.title,
                       item.url, # XXX should this be a local url?
                       item.description,
@@ -158,6 +171,7 @@ def _items_atom(items):
                       location_name=item.location_name,
                       pubdate=normalize_datetime(item.pub_date),
                       schema_slug=item.schema.slug,
+                      attributes=dict(item.attributes.items()),
                       )
 
     return atom.writeString('utf8')
@@ -334,13 +348,14 @@ def location_types_json(request):
 
 
 class OpenblockAtomFeed(feedgenerator.Atom1Feed):
-    # XXX needs tests
     """
     An Atom feed generator that adds extra stuff like georss.
     """
+
     def root_attributes(self):
         attrs = super(OpenblockAtomFeed, self).root_attributes()
         attrs['xmlns:georss'] = 'http://www.georss.org/georss'
+        attrs['xmlns:openblock'] = 'http://openblock.org/ns/0'
         return attrs
 
     def add_item_elements(self, handler, item):
@@ -348,18 +363,20 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
         location = item['location']
         if location is not None:
             # yes, georss is "y x" not "x y"!!
-            handler.addQuickElement('georss:point', '%s %s' % (location.y, location.x))
+            handler.addQuickElement('georss:point', '%.16f %.16f' % (location.y, location.x))
         handler.addQuickElement('georss:featureName', item['location_name'])
 
-        # TODO: use custom namespace for schema instead?
-        # http://openblock.org/ns/0" as per docs?
-        typeinfo = {'term': item['schema_slug'],
-                    'scheme': 'http://openblockproject.org/schema' # XXX  what should this be?
-                    }
-        handler.addQuickElement('category', u"", typeinfo)
+        handler.addQuickElement('openblock:type', item['schema_slug'])
 
         # TODO: item_date in custom namespace
 
+        # TODO: extended attributes.
+        handler.startElement(u'openblock:attributes', {})
+        for key, val in item['attributes'].items():
+            val = serialize_date_or_time(val) or val
+            # TODO: specify the data type? eg. type='datetime'
+            handler.addQuickElement('openblock:attribute', unicode(val), {'name':key})
+        handler.endElement(u'openblock:attributes')
 
 def normalize_datetime(dt):
     # XXX needs tests
