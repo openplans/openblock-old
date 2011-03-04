@@ -382,6 +382,17 @@ def handle_noargs(self, **options):
 ####################################################################
 
 
+####################################################################
+# Patch django.utils.xmlutils to put newlines after closing tags,
+# for some modicum of readability.
+####################################################################
+
+def endElement(self, name):
+    self._write('</%s>\n' % name)
+
+####################################################################
+# End of patches.
+####################################################################
 
 _PATCHED = False
 def patch_once():
@@ -413,4 +424,10 @@ def patch_once():
     sql.emit_signal_to_models = emit_signal_to_models
     syncdb.emit_final_post_sync_signal = emit_final_post_sync_signal
     syncdb.Command.handle_noargs = handle_noargs
+
+    ####################################################
+    # XML output
+    from django.utils import xmlutils
+    xmlutils.SimplerXMLGenerator.endElement = endElement
+
     _PATCHED = True
