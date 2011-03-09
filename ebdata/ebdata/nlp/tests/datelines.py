@@ -78,7 +78,7 @@ class DatelineTestCase(unittest.TestCase):
         self.assertDatelines('CHESTERFIELD, S.C. -- Something happened', ['CHESTERFIELD, S.C.'])
 
     def test_comma_no_space(self):
-        self.assertDatelines('CHESTERFIELD,S.C. -- Something happened', [])
+        self.assertDatelines('CHESTERFIELD,S.C. -- Something happened', ['CHESTERFIELD,S.C.'])
 
     def test_lowercase(self):
         self.assertDatelines('Lowercase -- Something happened', [])
@@ -90,6 +90,7 @@ class DatelineTestCase(unittest.TestCase):
         self.assertDatelines('blah blah\n<b>CHICAGO -- Something happened', ['CHICAGO'])
 
     def test_start_of_line_p(self):
+        self.assertDatelines('<div>BY ASSOCIATED PRESS</div>\n<p>CHICAGO -- Something happened', ['CHICAGO'])
         self.assertDatelines('<div>BY ASSOCIATED PRESS</div><p>CHICAGO -- Something happened', ['CHICAGO'])
 
     def test_start_of_line_div(self):

@@ -28,7 +28,7 @@ dateline_re = re.compile(ur"""
         (?:<[^>]*>|\s)*                                         # The start of a line
     )
     (?:\(\d\d?-\d\d?\)\s+\d\d?:\d\d\s+[PMCE][SD]T\s+)?          # Optional timestamp -- e.g., "(07-17) 13:09 PDT"
-    ([A-Z][A-Z.]*[A-Z.,](?:\s+[A-Z][A-Za-z.]*[A-Za-z.,]){0,4})  # The dateline itself
+    ([A-Z][A-Z.]*[A-Z.,](?:\s*[A-Z][A-Za-z.]*[A-Za-z.,]){0,4})  # The dateline itself
     (?:                                                         # Optional parenthetical news outlet
         \s+
         \(
