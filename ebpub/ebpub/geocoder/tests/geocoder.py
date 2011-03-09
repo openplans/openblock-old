@@ -68,7 +68,7 @@ class BaseGeocoderTestCase(django.test.TestCase):
     def test_address_geocoder_ambiguous(self, mock_get_metro):
         mock_get_metro.return_value = {'city_name': 'CHICAGO',
                                        'multiple_cities': False}
-        self.assertRaises(AmbiguousResult, self.geocoder.geocode, '200 Wabash')
+        self.assertRaises(AmbiguousResult, self.geocoder.geocode, '220 Wabash')
 
     def test_address_geocoder_invalid_block(self):
         self.assertRaises(InvalidBlockButValidStreet, self.geocoder.geocode, '100000 S Wabash')
