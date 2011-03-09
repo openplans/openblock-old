@@ -253,11 +253,12 @@ class Block(models.Model):
         else:
             # Everything's null?  Give up.
             return False, self.from_num, self.to_num
-        # If the parity is equal for from_num and to_num, make sure the
-        # parity of the number is the same.
-        from_parity, to_parity = from_num % 2, to_num % 2
-        if do_check_parity and (from_parity == to_parity) and (from_parity != parity):
-            return False, from_num, to_num
+        if do_check_parity:
+            # If the parity is equal for from_num and to_num, make sure the
+            # parity of the number is the same.
+            from_parity, to_parity = from_num % 2, to_num % 2
+            if (from_parity == to_parity) and (from_parity != parity):
+                return False, from_num, to_num
 
         return (from_num <= number <= to_num), from_num, to_num
 
