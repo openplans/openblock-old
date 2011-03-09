@@ -67,7 +67,7 @@ def proper_city(block):
     return block_city
 
 class BlockManager(models.GeoManager):
-    def search(self, street, number=None, predir=None, suffix=None, postdir=None, city=None, state=None, zipcode=None, strict_number=False):
+    def search(self, street, number=None, predir=None, suffix=None, postdir=None, city=None, state=None, zipcode=None):
         """
         Searches the blocks for the given address bits. Returns a list
         of 2-tuples, (block, geocoded_pt).
@@ -79,18 +79,8 @@ class BlockManager(models.GeoManager):
             * Everything is already in all-uppercase
             * The predir and postdir have been standardized
 
-        strict_number=True means that, if a number is given, it must
-        be within a side of the street's from and to number range, and
-        that its parity (even / odd) matches that of the number range.
-
-        strict_number=False, the default, means that if a canonical
-        block is not found for this number (i.e., one that meets the
-        conditions of strict_number=True), then as long as the number
-        is within a number range, we don't enforce the parity
-        matching. This is friendlier to the user. For example, 3181
-        would match the block 3180-3188.
-
-        XXX strict_number is unused???
+        Note we don't enforce parity (even/odd) matching.
+        So 3181 would match the block 3180-3188.
         """
         filters = {'street': street.upper()}
         sided_filters = []

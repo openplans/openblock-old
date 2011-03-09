@@ -29,13 +29,19 @@ class TestBlocks(TestCase):
     def test_contains_number__left_and_righ(self):
         block = Block.objects.get(street='WABASH',
                                   left_from_num=216, left_to_num=298,
-                                  right_from_num=217, right_to_num=297,
+                                  right_from_num=217, right_to_num=299,
                                   )
+        self.assertEqual(block.contains_number(214),
+                         (False, 216, 298))
+        self.assertEqual(block.contains_number(215),
+                         (False, 217, 299))
         self.assertEqual(block.contains_number(216),
                          (True, 216, 298))
         self.assertEqual(block.contains_number(217),
-                         (True, 217, 297))
+                         (True, 217, 299))
+        self.assertEqual(block.contains_number(298),
+                         (True, 216, 298))
         self.assertEqual(block.contains_number(299),
-                         (False, 217, 297))
-        self.assertEqual(block.contains_number(215),
-                         (False, 217, 297))
+                         (True, 217, 299))
+        self.assertEqual(block.contains_number(300),
+                         (False, 216, 298))
