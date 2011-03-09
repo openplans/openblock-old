@@ -231,30 +231,34 @@ class Block(models.Model):
         Checks both the block range and the parity (even vs. odd numbers).
         """
         parity = number % 2
+        do_check_parity = True
         if self.left_from_num and self.right_from_num:
             left_parity = self.left_from_num % 2
             # If this block's left side has the same parity as the right side,
             # all bets are off -- just use the from_num and to_num.
             if self.right_to_num % 2 == left_parity or self.left_to_num % 2 == self.right_from_num % 2:
                 from_num, to_num = self.from_num, self.to_num
+                do_check_parity = False
             elif left_parity == parity:
                 from_num, to_num = self.left_from_num, self.left_to_num
             else:
                 from_num, to_num = self.right_from_num, self.right_to_num
         elif self.left_from_num:
-            from_parity, to_parity = self.left_from_num % 2, self.left_to_num % 2
             from_num, to_num = self.left_from_num, self.left_to_num
-            # If the parity is equal for from_num and to_num, make sure the
-            # parity of the number is the same.
-            if (from_parity == to_parity) and from_parity != parity:
-                return False, from_num, to_num
-        else:
-            from_parity, to_parity = self.right_from_num % 2, self.right_to_num % 2
+        elif self.right_from_num:
             from_num, to_num = self.right_from_num, self.right_to_num
-            # If the parity is equal for from_num and to_num, make sure the
-            # parity of the number is the same.
-            if (from_parity == to_parity) and from_parity != parity:
-                return False, from_num, to_num
+        elif self.from_num:
+            do_check_parity = False
+            from_num, to_num = self.from_num, self.to_num
+        else:
+            # Everything's null?  Give up.
+            return False, self.from_num, self.to_num
+        # If the parity is equal for from_num and to_num, make sure the
+        # parity of the number is the same.
+        from_parity, to_parity = from_num % 2, to_num % 2
+        if do_check_parity and (from_parity == to_parity) and (from_parity != parity):
+            return False, from_num, to_num
+
         return (from_num <= number <= to_num), from_num, to_num
 
     def _get_location(self):

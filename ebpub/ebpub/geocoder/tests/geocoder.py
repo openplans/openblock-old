@@ -19,7 +19,9 @@
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet
 import os.path
 import unittest
+import django.test
 import yaml
+import mock
 
 class GeocoderTestCase(unittest.TestCase):
     address_fields = ('address', 'city', 'zip')
@@ -49,23 +51,32 @@ class GeocoderTestCase(unittest.TestCase):
         except AssertionError, e:
             raise AssertionError('`point\' not near enough to `other\': %s', e)
 
-class BaseGeocoderTestCase(unittest.TestCase):
+class BaseGeocoderTestCase(django.test.TestCase):
     fixtures = ['wabash.yaml']
 
     def setUp(self):
         self.geocoder = SmartGeocoder(use_cache=False)
 
-    def test_address_geocoder(self):
+    @mock.patch('ebpub.streets.models.get_metro')
+    def test_address_geocoder(self, mock_get_metro):
+        mock_get_metro.return_value = {'city_name': 'CHICAGO',
+                                       'multiple_cities': False}
         address = self.geocoder.geocode('200 S Wabash')
         self.assertEqual(address['city'], 'Chicago')
 
-    def test_address_geocoder_ambiguous(self):
+    @mock.patch('ebpub.streets.models.get_metro')
+    def test_address_geocoder_ambiguous(self, mock_get_metro):
+        mock_get_metro.return_value = {'city_name': 'CHICAGO',
+                                       'multiple_cities': False}
         self.assertRaises(AmbiguousResult, self.geocoder.geocode, '200 Wabash')
 
     def test_address_geocoder_invalid_block(self):
         self.assertRaises(InvalidBlockButValidStreet, self.geocoder.geocode, '100000 S Wabash')
 
-    def test_block_geocoder(self):
+    @mock.patch('ebpub.streets.models.get_metro')
+    def test_block_geocoder(self, mock_get_metro):
+        mock_get_metro.return_value = {'city_name': 'CHICAGO',
+                                       'multiple_cities': False}
         address = self.geocoder.geocode('200 block of Wabash')
         self.assertEqual(address['city'], 'Chicago')
 
