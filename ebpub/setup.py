@@ -41,6 +41,7 @@ setup(
     "psycopg2",
     "slimmer",  # used by django-static.
     "pyrfc3339",
+    "mock",
     ],
     dependency_links=[
     ],
