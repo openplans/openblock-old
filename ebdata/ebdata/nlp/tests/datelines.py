@@ -90,7 +90,7 @@ class DatelineTestCase(unittest.TestCase):
         self.assertDatelines('blah blah\n<b>CHICAGO -- Something happened', ['CHICAGO'])
 
     def test_start_of_line_p(self):
-        self.assertDatelines('<div>BY ASSOCIATED PRESS</div>\n<p>CHICAGO -- Something happened', ['CHICAGO'])
+        self.assertDatelines('<div>BY ASSOCIATED PRESS</div><p>CHICAGO -- Something happened', ['CHICAGO'])
         self.assertDatelines('<div>BY ASSOCIATED PRESS</div><p>CHICAGO -- Something happened', ['CHICAGO'])
 
     def test_start_of_line_div(self):
