@@ -477,6 +477,8 @@ class FalsePositives(AddressParsing):
 
     def test_university_of_texas2(self):
         # FIXME: this fails, although it looks like it should work.
+        # AFAICT it is matching this as an intersection: 'Of Texas'
+        # and 'Austin'.
         self.assertParses('She attends University Of Texas at Austin.', [])
 
     def test_university_of_texas3(self):
