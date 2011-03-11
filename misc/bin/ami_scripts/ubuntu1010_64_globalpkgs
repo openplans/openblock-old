@@ -26,6 +26,7 @@ sudo apt-get install python2.6 \
     python-lxml \
     libproj0 \
     libproj-dev \
+    unzip \
     python-psycopg2 || exit 1
 
 sudo ldconfig || exit 1
