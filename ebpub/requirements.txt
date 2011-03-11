@@ -7,7 +7,7 @@ django==1.2.3
 GDAL
 
 django-static==1.4.0
-psycopg2>=2.2
+psycopg2>=2.0.13
 pyyaml>=3
 slimmer>=0.1.30
 mock>=0.7.0

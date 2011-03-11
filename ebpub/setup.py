@@ -38,7 +38,7 @@ setup(
     "django-static",
     "GDAL",
     "pyyaml",
-    "psycopg2",
+    "psycopg2>=2.0",
     "slimmer",  # used by django-static.
     "pyrfc3339",
     "mock",
