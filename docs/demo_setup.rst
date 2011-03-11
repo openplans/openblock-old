@@ -61,7 +61,8 @@ If it finishes successfully, you should see a message like::
 
 Now you can start the server::
 
- $ src/openblock/obdemo/obdemo/manage.py runserver
+ $ export DJANGO_SETTINGS_MODULE=obdemo.settings
+ $ django-admin.py runserver
 
 If all goes well, you should be able to visit the demo site at:
 http://localhost:8000 
@@ -105,7 +106,7 @@ Step-By-Step Demo Installation
 ==============================
 
 These instructions do basically the same things as the
-:ref:`demo_quickstart` above.
+:ref:`demo_quickstart` above, but manually.
 
 Basic Setup
 -----------
@@ -193,23 +194,22 @@ Now you're ready to initialize your database tables. You have to
 specify all configured databases even if they all use the same
 database in settings.py. The users database has to come first::
 
-    $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
-    $ ./manage.py syncdb --database=users
-    $ ./manage.py syncdb --database=metros
-    $ ./manage.py syncdb --database=default
+    $ export DJANGO_SETTINGS_MODULE=obdemo.settings
+    $ django-admin.py syncdb --database=users
+    $ django-admin.py syncdb --database=metros
+    $ django-admin.py syncdb --database=default
 
 
 
 Starting the Test Server
 ------------------------
 
-There's a manage.py script in src/obdemo/obdemo/manage.py.
-Set your DJANGO_SETTINGS_MODULE environment variable and run it,
-then visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)::
-
+Run these commands to start the test server::
 
   $ export DJANGO_SETTINGS_MODULE=obdemo.settings
-  $ ./src/obdemo/obdemo/manage.py runserver
+  $ django-admin.py runserver
+
+then visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)
 
 .. _demodata:
 
