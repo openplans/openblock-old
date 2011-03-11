@@ -35,9 +35,10 @@ Installation
 
 First make sure you have the :ref:`requirements` installed.
 
-Next make sure you have :ref:`installed PostGIS <postgis_localhost>`
+Next make sure you have :ref:`installed and configured PostGIS <postgis_localhost>`
 on the same system (our installer script doesn't support putting
-postgis on a remote host).
+postgis on a remote host, nor can it modify the postgres config file
+for you.)
 
 (You can skip the rest of the :doc:`setup` document; everything else
 you need will be done automatically by the install scripts.)
