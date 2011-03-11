@@ -165,8 +165,11 @@ def apply_patches(options):
     # by dropping them in the patches/ directory.
     patch_dir = os.path.join(options.source_dir, 'patches')
     source_dir = os.path.join(options.env_root, 'src')
+    if not os.path.exists(source_dir):
+        # we might not have anything installed yet
+        print "No src/ directory, skipping apply_patches"
+        return
     assert os.path.exists(patch_dir)
-    assert os.path.exists(source_dir)
     for patchfile in glob.glob(os.path.join(patch_dir, '*patch')):
         # Force-applying a patch more than once can be dangerous,
         # so we do a dry run first and check for problems.
