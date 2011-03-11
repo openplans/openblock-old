@@ -12,6 +12,7 @@ sudo apt-get install python2.6 \
     python-lxml \
     libproj0 \
     libproj-dev \
+    libpq-dev \
     python-psycopg2 || exit 1  # XXX we install a more recent version anyway
 
 sudo ldconfig || exit 1
