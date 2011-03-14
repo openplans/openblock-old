@@ -19,4 +19,4 @@
 # needed for manage.py test to find the tests automatically
 # ... although if you use django-nose, this means they get run twice :(
 from .tests import *
-from .datelines import *
+from .test_datelines import *
