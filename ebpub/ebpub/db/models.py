@@ -138,6 +138,8 @@ class Schema(models.Model):
                                         choices=FREQUENCY_CHOICES)
     intro = models.TextField(blank=True, default='')
 
+    class Meta:
+        ordering = ('name',)
 
 class SchemaFieldManager(models.Manager):
 
@@ -167,6 +169,7 @@ class SchemaField(models.Model):
 
     class Meta(object):
         unique_together = (('schema', 'real_name'),)
+        ordering = ('pretty_name',)
 
     def __unicode__(self):
         return u'%s - %s' % (self.schema, self.name)
@@ -223,7 +226,7 @@ class LocationType(models.Model):
     plural_name = models.CharField(max_length=64) # e.g., "Wards"
     scope = models.CharField(max_length=64) # e.g., "Chicago" or "U.S.A."
     slug = models.CharField(max_length=32, unique=True)
-    is_browsable = models.BooleanField() # whether this is displayed on location_type_list
+    is_browsable = models.BooleanField() # whether this is displayed on location_type_list.  XXX unused??
     is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
 
     def __unicode__(self):
@@ -234,6 +237,9 @@ class LocationType(models.Model):
 
     def natural_key(self):
         return (self.slug,)
+
+    class Meta:
+        ordering = ('name',)
 
     objects = LocationTypeManager()
 
@@ -263,6 +269,7 @@ class Location(models.Model):
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
+        ordering = ('slug',)
 
     def natural_key(self):
         return (self.slug, self.location_type.slug)
@@ -302,7 +309,7 @@ class AttributesDescriptor(object):
         if instance is None:
             raise AttributeError("%s must be accessed via instance" % self.__class__.__name__)
         if not hasattr(instance, '_attributes_cache'):
-            select_dict = field_mapping([instance.schema_id])[instance.schema_id]
+            select_dict = field_mapping([instance.schema_id]).get(instance.schema_id, {})
             instance._attributes_cache = AttributeDict(instance.id, instance.schema_id, select_dict)
         return instance._attributes_cache
 
@@ -350,6 +357,14 @@ class AttributeDict(dict):
             if attr_values:
                 self.update(attr_values[0])
             self.cached = True
+
+    def keys(self, *args, **kwargs):
+        self.__do_query()        
+        return dict.keys(self, *args, **kwargs)
+
+    def items(self, *args, **kwargs):
+        self.__do_query()        
+        return dict.items(self, *args, **kwargs)
 
     def get(self, *args, **kwargs):
         self.__do_query()
@@ -553,6 +568,9 @@ class NewsItem(models.Model):
     block = models.ForeignKey(Block, blank=True, null=True)
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
+
+    class Meta:
+        ordering = ('title',)
 
     def __unicode__(self):
         return self.title
@@ -770,6 +788,7 @@ class Lookup(models.Model):
 
     class Meta:
         unique_together = (('slug', 'schema_field'),)
+        ordering = ('slug',)
 
     def natural_key(self):
         return (self.slug, self.schema_field.schema.slug,

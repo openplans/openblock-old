@@ -30,6 +30,8 @@ import re
 # thing about it is that it includes a "CAPTURE_START" placeholder instead of
 # a capturing opening parenthesis. This lets us create two versions of the
 # regex -- STREET_NAME_CAPTURE and STREET_NAME_NOCAPTURE.
+
+
 STREET_NAME = r"""
     # Here, we define some common false positives and tell the regex to ignore them.
     (?!
@@ -68,7 +70,8 @@ STREET_NAME = r"""
             |
 
             # Or, numbered street names without a suffix ("3", "4")
-            # but with a street type.
+            # but with a street type.  (Suffix is captured later, so
+            # we use a lookahead here.)
             \d+
             (?=
                 \ +
@@ -165,7 +168,7 @@ STREET_NAME = r"""
 STREET_NAME_CAPTURE = STREET_NAME % {'CAPTURE_START': '('}
 STREET_NAME_NOCAPTURE = STREET_NAME % {'CAPTURE_START': '(?:'}
 
-ADDRESSES_RE = re.compile(r"""(?x)
+ADDRESSES_RE = r"""(?x)
     (?<!-|/|:|,|\.|\$) # These various characters are not allowed before an address/intersection.
     \b
 
@@ -292,7 +295,9 @@ ADDRESSES_RE = re.compile(r"""(?x)
             ){0,4}  # Initial-capped words
         )
     )?
-    """ % {'STREET_NAME_CAPTURE': STREET_NAME_CAPTURE, 'STREET_NAME_NOCAPTURE': STREET_NAME_NOCAPTURE})
+    """ % {'STREET_NAME_CAPTURE': STREET_NAME_CAPTURE, 'STREET_NAME_NOCAPTURE': STREET_NAME_NOCAPTURE}
+
+ADDRESSES_RE_COMPILED = re.compile(ADDRESSES_RE)
 
 def parse_addresses(text):
     """
@@ -300,7 +305,7 @@ def parse_addresses(text):
     format (address, city).
     """
     # This assumes the last parenthetical grouping in ADDRESSES_RE is the city.
-    return [(''.join(bits[:-1]), bits[-1]) for bits in ADDRESSES_RE.findall(text)]
+    return [(''.join(bits[:-1]), bits[-1]) for bits in ADDRESSES_RE_COMPILED.findall(text)]
 
 def tag_addresses(text, pre='<addr>', post='</addr>'):
     """
@@ -312,4 +317,4 @@ def tag_addresses(text, pre='<addr>', post='</addr>'):
     def _re_handle_address(m):
         bits = m.groups()
         return pre + ''.join(filter(None, bits[:-1])) + (bits[-1] and (', %s' % bits[-1]) or '') + post
-    return ADDRESSES_RE.sub(_re_handle_address, text)
+    return ADDRESSES_RE_COMPILED.sub(_re_handle_address, text)

@@ -35,9 +35,10 @@ Installation
 
 First make sure you have the :ref:`requirements` installed.
 
-Next make sure you have :ref:`installed PostGIS <postgis_localhost>`
+Next make sure you have :ref:`installed and configured PostGIS <postgis_localhost>`
 on the same system (our installer script doesn't support putting
-postgis on a remote host).
+postgis on a remote host, nor can it modify the postgres config file
+for you.)
 
 (You can skip the rest of the :doc:`setup` document; everything else
 you need will be done automatically by the install scripts.)
@@ -61,7 +62,8 @@ If it finishes successfully, you should see a message like::
 
 Now you can start the server::
 
- $ src/openblock/obdemo/obdemo/manage.py runserver
+ $ export DJANGO_SETTINGS_MODULE=obdemo.settings
+ $ django-admin.py runserver
 
 If all goes well, you should be able to visit the demo site at:
 http://localhost:8000 
@@ -105,7 +107,7 @@ Step-By-Step Demo Installation
 ==============================
 
 These instructions do basically the same things as the
-:ref:`demo_quickstart` above.
+:ref:`demo_quickstart` above, but manually.
 
 Basic Setup
 -----------
@@ -148,7 +150,11 @@ Editing Settings
 
 You'll want to edit the demo's django settings at this point,
 or at least look at it to get an idea of what can be
-configured.  obdemo doesn't come with a settings.py; it comes with a
+configured.  There is also some :doc:`configuration documentation <configuration>`
+you should look at.
+
+
+obdemo doesn't come with a settings.py; it comes with a
 ``settings.py.in`` template that you can copy and edit::
 
     $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
@@ -163,6 +169,9 @@ At minimum, you should change the values of:
 * STAFF_COOKIE_VALUE - this is used for allowing staff members to see
   some parts of the site that other users cannot, such as :doc:`types
   of news items <schemas>` that you're still working on.
+
+You'll also want to think about :ref:`base_layer_configs`.
+
 
 Database Initialization
 -----------------------
@@ -186,23 +195,22 @@ Now you're ready to initialize your database tables. You have to
 specify all configured databases even if they all use the same
 database in settings.py. The users database has to come first::
 
-    $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
-    $ ./manage.py syncdb --database=users
-    $ ./manage.py syncdb --database=metros
-    $ ./manage.py syncdb --database=default
+    $ export DJANGO_SETTINGS_MODULE=obdemo.settings
+    $ django-admin.py syncdb --database=users
+    $ django-admin.py syncdb --database=metros
+    $ django-admin.py syncdb --database=default
 
 
 
 Starting the Test Server
 ------------------------
 
-There's a manage.py script in src/obdemo/obdemo/manage.py.
-Set your DJANGO_SETTINGS_MODULE environment variable and run it,
-then visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)::
-
+Run these commands to start the test server::
 
   $ export DJANGO_SETTINGS_MODULE=obdemo.settings
-  $ ./src/obdemo/obdemo/manage.py runserver
+  $ django-admin.py runserver
+
+then visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)
 
 .. _demodata:
 

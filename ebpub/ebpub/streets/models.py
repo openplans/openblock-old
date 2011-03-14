@@ -67,7 +67,7 @@ def proper_city(block):
     return block_city
 
 class BlockManager(models.GeoManager):
-    def search(self, street, number=None, predir=None, suffix=None, postdir=None, city=None, state=None, zipcode=None, strict_number=False):
+    def search(self, street, number=None, predir=None, suffix=None, postdir=None, city=None, state=None, zipcode=None):
         """
         Searches the blocks for the given address bits. Returns a list
         of 2-tuples, (block, geocoded_pt).
@@ -79,18 +79,8 @@ class BlockManager(models.GeoManager):
             * Everything is already in all-uppercase
             * The predir and postdir have been standardized
 
-        strict_number=True means that, if a number is given, it must
-        be within a side of the street's from and to number range, and
-        that its parity (even / odd) matches that of the number range.
-
-        strict_number=False, the default, means that if a canonical
-        block is not found for this number (i.e., one that meets the
-        conditions of strict_number=True), then as long as the number
-        is within a number range, we don't enforce the parity
-        matching. This is friendlier to the user. For example, 3181
-        would match the block 3180-3188.
-
-        XXX strict_number is unused???
+        Note we don't enforce parity (even/odd) matching.
+        So 3181 would match the block 3180-3188.
         """
         filters = {'street': street.upper()}
         sided_filters = []
@@ -165,6 +155,7 @@ class Block(models.Model):
 
     class Meta:
         db_table = 'blocks'
+        ordering = ('pretty_name',)
 
     def __unicode__(self):
         return self.pretty_name
@@ -230,30 +221,35 @@ class Block(models.Model):
         Checks both the block range and the parity (even vs. odd numbers).
         """
         parity = number % 2
+        do_check_parity = True
         if self.left_from_num and self.right_from_num:
             left_parity = self.left_from_num % 2
             # If this block's left side has the same parity as the right side,
             # all bets are off -- just use the from_num and to_num.
             if self.right_to_num % 2 == left_parity or self.left_to_num % 2 == self.right_from_num % 2:
                 from_num, to_num = self.from_num, self.to_num
+                do_check_parity = False
             elif left_parity == parity:
                 from_num, to_num = self.left_from_num, self.left_to_num
             else:
                 from_num, to_num = self.right_from_num, self.right_to_num
         elif self.left_from_num:
-            from_parity, to_parity = self.left_from_num % 2, self.left_to_num % 2
             from_num, to_num = self.left_from_num, self.left_to_num
-            # If the parity is equal for from_num and to_num, make sure the
-            # parity of the number is the same.
-            if (from_parity == to_parity) and from_parity != parity:
-                return False, from_num, to_num
-        else:
-            from_parity, to_parity = self.right_from_num % 2, self.right_to_num % 2
+        elif self.right_from_num:
             from_num, to_num = self.right_from_num, self.right_to_num
+        elif self.from_num:
+            do_check_parity = False
+            from_num, to_num = self.from_num, self.to_num
+        else:
+            # Everything's null?  Give up.
+            return False, self.from_num, self.to_num
+        if do_check_parity:
             # If the parity is equal for from_num and to_num, make sure the
             # parity of the number is the same.
-            if (from_parity == to_parity) and from_parity != parity:
+            from_parity, to_parity = from_num % 2, to_num % 2
+            if (from_parity == to_parity) and (from_parity != parity):
                 return False, from_num, to_num
+
         return (from_num <= number <= to_num), from_num, to_num
 
     def _get_location(self):
@@ -288,6 +284,7 @@ class Street(models.Model):
 
     class Meta:
         db_table = 'streets'
+        ordering = ('pretty_name',)
 
     def __unicode__(self):
         return self.pretty_name
@@ -302,8 +299,12 @@ class Street(models.Model):
         return City.from_norm_name(self.city)
 
 class Misspelling(models.Model):
+    """
+    Misspelling of a location name
+    """
+    
     incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
-    correct = models.CharField(max_length=255)
+    correct = models.CharField(max_length=255, db_index=True)
 
     def __unicode__(self):
         return self.incorrect
@@ -323,8 +324,8 @@ class StreetMisspellingManager(models.Manager):
             return street_name
 
 class StreetMisspelling(models.Model):
-    incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
-    correct = models.CharField(max_length=255)
+    incorrect = models.CharField(max_length=255, unique=True, help_text="Incorrect street name in UPPERCASE, do not include a suffix, eg: MASS") # Always uppercase, single spaces
+    correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
     objects = StreetMisspellingManager()
 
     def __unicode__(self):
@@ -374,6 +375,7 @@ class BlockIntersection(models.Model):
 
     class Meta:
         unique_together = ("block", "intersecting_block")
+        ordering = ('block',)
 
     def __unicode__(self):
         return u'%s intersecting %s' % (self.block, self.intersecting_block)
@@ -435,6 +437,7 @@ class Intersection(models.Model):
     class Meta:
         db_table = 'intersections'
         unique_together = ("predir_a", "street_a", "suffix_a", "postdir_a", "predir_b", "street_b", "suffix_b", "postdir_b")
+        ordering = ('slug',)
 
     def __unicode__(self):
         return self.pretty_name

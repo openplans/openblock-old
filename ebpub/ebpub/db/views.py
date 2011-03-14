@@ -21,42 +21,41 @@ from django.conf import settings
 from django.contrib.gis.shortcuts import render_to_kml
 from django.core import urlresolvers
 from django.core.cache import cache
+from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
 from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
-from django.db.models import Q
 from django.views.decorators.cache import cache_page
+from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
+from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
+from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
+from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
-from ebpub.db.models import AggregateDay, AggregateLocation, AggregateLocationDay, AggregateFieldLookup
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
-from ebpub.metros.allmetros import get_metro
-from ebpub.utils.clustering.shortcuts import cluster_newsitems
-from ebpub.utils.clustering.json import ClusterJSON
-from ebpub.utils.dates import daterange, parse_date
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
 from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
+from ebpub.metros.allmetros import get_metro
 from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
-from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
-from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
-from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
-
+from ebpub.utils.clustering.json import ClusterJSON
+from ebpub.utils.clustering.shortcuts import cluster_newsitems
+from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import parse_pid, make_pid
 
 import datetime
 import hashlib
+import logging
 import re
 import urllib
-import logging
 
 logger = logging.getLogger('ebpub.db.views')
 
@@ -274,12 +273,12 @@ def map_popups(ni_list):
     for ni in ni_list:
         schema = ni.schema
         if current_schema != schema:
-            template_list = ['db/snippets/newsitem_list_ungrouped/%s.html' % schema.slug,
-                             'db/snippets/newsitem_list/%s.html' % schema.slug,
-                             'db/snippets/newsitem_list.html']
+            template_list = ['db/snippets/newsitem_popup_list/%s.html' % schema.slug,
+                             'db/snippets/newsitem_popup_list.html',
+                             ]
             current_template = select_template(template_list)
             current_schema = schema
-        html = current_template.render(template.Context({'schema': schema, 'newsitem_list': [ni], 'num_newsitems': 1}))
+        html = current_template.render(template.Context({'newsitem': ni, 'schema': schema, }))
         result.append([ni.id, html, schema.name.title()])
     return result
 
@@ -1399,11 +1398,16 @@ def place_detail_overview(request, *args, **kwargs):
     s_list = [s[0] for s in s_list.values()]
     populate_attributes_if_needed(all_newsitems, s_list)
     s_list = [s for s in s_list if s.allow_charting]
+
     context['schema_blocks'] = schema_blocks
     context['filtered_schema_list'] = s_list
     context['bodyclass'] = 'place-detail-overview'
-    context['bodyid'] = context.get('place_type') or ''
-
+    if context['is_block']:
+        context['bodyid'] = '%s-%s-%s' % (context['place'].street_slug,
+                                          context['place'].number(),
+                                          context['place'].dir_url_bit())
+    else:
+        context['bodyid'] = context['location'].slug
     response = eb_render(request, 'db/place_overview.html', context)
     for k, v in context['cookies_to_set'].items():
         response.set_cookie(k, v)
@@ -1415,37 +1419,6 @@ def feed_signup(request, *args, **kwargs):
     context['s_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
     return eb_render(request, 'db/feed_signup.html', context)
 
-def geo_example(request):
-    import feedparser
-    from ebdata.nlp.addresses import parse_addresses
-    from ebpub.geocoder.base import AddressGeocoder
-    
-    feed_url = 'http://www.bpdnews.com/index.xml'
-    feed = feedparser.parse(feed_url)
-    
-    geocoder = AddressGeocoder()
-    geo_entries = []
-    for entry in feed.entries:
-        addresses = parse_addresses(entry.description)
-        point = None
-        while not point:
-            for address in addresses:
-                try:
-                    location = geocoder.geocode(address[0])
-                    point = location['point']
-                    break
-                except Exception:
-                    pass
-            if not point:
-                point = -1
-        if point and point is not -1:
-            entry['point'] = point
-            geo_entries.append(entry)
-
-    return render_to_response('db/geo_example.html', {'entries': geo_entries })
-
-def geo_map_example(request):
-    return render_to_response('db/geo_map_example.html')
 
 def newsitems_geojson(request):
     """Get a list of newsitems, optionally filtered for one place ID

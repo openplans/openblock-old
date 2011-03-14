@@ -48,6 +48,8 @@ and make adjustments based on your setup::
     $ <favorite_editor> myblock/settings.py
     ...
 
+Read more about :doc:`important settings you can/should customize <configuration>`.
+
 Now, as usual with Django projects, you'll need to create and
 initialize your database(s).  If you haven't changed the default
 database settings, and if you've followed the :ref:`template_setup`

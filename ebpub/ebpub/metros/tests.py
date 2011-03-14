@@ -25,8 +25,9 @@ pt_in_chi_bbox = Point((-87.83384627077956, 41.85365447332586)) # point just wes
 pt_in_lake_mi = Point((-86.99514699540548, 41.87468001919902)) # point way out in Lake Michigan
 
 class MetroTest(TestCase):
-    fixtures = ['metros']
-    
+    fixtures = ['metros.json']
+    multi_db = True  # Need this or fixtures don't really get loaded.
+
     def test_point_in_metro(self):
         """
         Tests finding a metro with a point contained by its boundary
@@ -46,13 +47,15 @@ class MetroTest(TestCase):
         self.assertRaises(Metro.DoesNotExist, Metro.objects.containing_point, pt_in_lake_mi)
 
 class MetroViewsTest(TestCase):
-    fixtures = ['metros']
+    fixtures = ['metros.json']
+    multi_db = True  # Need this or fixtures don't really get loaded.
+    urls = 'ebpub.metros.urls'
 
     def test_lookup_metro_success(self):
         """
         Tests getting a successful JSON response from a lng/lat query
         """
-        response = self.client.get('/metros/lookup/', {'lng': pt_in_chicago.x, 'lat': pt_in_chicago.y}) 
+        response = self.client.get('/lookup/', {'lng': pt_in_chicago.x, 'lat': pt_in_chicago.y})
         self.assertContains(response, 'Chicago', status_code=200)
         self.assertEqual(response['content-type'], 'application/javascript')
 
@@ -60,12 +63,12 @@ class MetroViewsTest(TestCase):
         """
         Tests getting a 404 from a lng/lat query not quite in the metro
         """
-        response = self.client.get('/metros/lookup/', {'lng': pt_in_chi_bbox.x, 'lat': pt_in_chi_bbox.y}) 
+        response = self.client.get('/lookup/', {'lng': pt_in_chi_bbox.x, 'lat': pt_in_chi_bbox.y})
         self.assertEqual(response.status_code, 404)
 
     def test_lookup_metro_fails(self):
         """
         Tests getting a 404 from a lng/lat query not in any metro
         """
-        response = self.client.get('/metros/lookup/', {'lng': pt_in_lake_mi.x, 'lat': pt_in_lake_mi.y}) 
+        response = self.client.get('/lookup/', {'lng': pt_in_lake_mi.x, 'lat': pt_in_lake_mi.y})
         self.assertEqual(response.status_code, 404)

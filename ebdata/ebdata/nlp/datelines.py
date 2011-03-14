@@ -28,7 +28,7 @@ dateline_re = re.compile(ur"""
         (?:<[^>]*>|\s)*                                         # The start of a line
     )
     (?:\(\d\d?-\d\d?\)\s+\d\d?:\d\d\s+[PMCE][SD]T\s+)?          # Optional timestamp -- e.g., "(07-17) 13:09 PDT"
-    ([A-Z][A-Z.]*[A-Z.,](?:\s+[A-Z][A-Za-z.]*[A-Za-z.,]){0,4})  # The dateline itself
+    ([A-Z][A-Z.]*[A-Z.,](?:\s*[A-Z][A-Za-z.]*[A-Za-z.,]){0,4})  # The dateline itself
     (?:                                                         # Optional parenthetical news outlet
         \s+
         \(
@@ -37,8 +37,19 @@ dateline_re = re.compile(ur"""
         \)
     )?
     \s*                                                         # Optional space before dash
-    (?:\xa0--\xa0|--|\x97|\u2015|&\#8213;|&\#151;|&\#x97;|)     # Dash (or emdash)
+    (?:\xa0--\xa0|--|\x97|\u2014|\u2015|&\#8213;|&\#151;|&\#x97;)     # Dash (or emdash)
     """, re.MULTILINE | re.VERBOSE)
+
+# That dash/emdash regex bears some explaining as i'm guessing it was added to piecemeal:
+#
+# \xa0 =  non-breaking space in cp1252
+# \x97 = em dash in cp1252
+# \u2014 = em dash in unicode (assuming we've already decoded)
+# \u2015 = 'horizontal bar' in unicode (assuming we've already decoded)
+# &#8213; = 'horizontal bar' as HTML char ref, numeric
+# &#x2015; = 'horizontal bar' as HTML char ref, hex
+# &#151; = em dash as HTML char ref, numeric
+# &#x97; = em dash as HTML char ref, hex
 
 def guess_datelines(text):
     """

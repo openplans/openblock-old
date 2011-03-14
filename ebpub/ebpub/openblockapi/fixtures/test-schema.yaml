@@ -3,9 +3,9 @@
 - pk: 1000
   model: db.schema
   fields:
-    plural_name: test schema items
+    plural_name: Test schema items
     last_updated: 2007-12-10
-    name: test schema item
+    name: Test schema item
     has_newsitem_detail: true
     importance: 10
     uses_attributes_in_list: false
@@ -24,13 +24,13 @@
   model: db.schemafield
   fields:
     is_lookup: false
-    pretty_name_plural: varchar
+    pretty_name_plural: Varchars
     is_charted: true
     name: varchar
     display_order: 1
     is_searchable: false
     real_name: varchar01
-    pretty_name: varchat
+    pretty_name: Varchar
     is_filter: true
     display: true
     schema: 1000
@@ -40,13 +40,13 @@
   model: db.schemafield
   fields:
     is_lookup: false
-    pretty_name_plural: date
+    pretty_name_plural: Dates
     is_charted: false
     name: date
     display_order: 0
     is_searchable: false
     real_name: date01
-    pretty_name: date
+    pretty_name: Date
     is_filter: false
     display: false
     schema: 1000
@@ -56,13 +56,13 @@
   model: db.schemafield
   fields:
     is_lookup: false
-    pretty_name_plural: time
+    pretty_name_plural: Times
     is_charted: false
     name: time
     display_order: 0
     is_searchable: false
     real_name: time01
-    pretty_name: time
+    pretty_name: Time
     is_filter: false
     display: false
     schema: 1000
@@ -72,13 +72,13 @@
   model: db.schemafield
   fields:
     is_lookup: false
-    pretty_name_plural: datetime
+    pretty_name_plural: Datetimes
     is_charted: false
     name: datetime
     display_order: 0
     is_searchable: false
     real_name: datetime01
-    pretty_name: datetime
+    pretty_name: Datetime
     is_filter: false
     display: false
     schema: 1000
@@ -88,13 +88,13 @@
   model: db.schemafield
   fields:
     is_lookup: false
-    pretty_name_plural: bool
+    pretty_name_plural: Bools
     is_charted: false
     name: bool
     display_order: 0
     is_searchable: false
     real_name: bool01
-    pretty_name: bool
+    pretty_name: Bool
     is_filter: false
     display: false
     schema: 1000
@@ -104,29 +104,29 @@
   model: db.schemafield
   fields:
     is_lookup: false
-    pretty_name_plural: int
+    pretty_name_plural: Ints
     is_charted: false
     name: int
     display_order: 0
     is_searchable: false
     real_name: int01
-    pretty_name: int
+    pretty_name: Int
     is_filter: false
     display: false
     schema: 1000
 
-# lookup
+# lookup (m2m)
 - pk: 1006
   model: db.schemafield
   fields:
-    is_lookup: false
-    pretty_name_plural: lookup
+    is_lookup: true
+    pretty_name_plural: Lookups
     is_charted: false
     name: lookup
     display_order: 0
     is_searchable: false
-    real_name: int02
-    pretty_name: lookup
+    real_name: varchar02
+    pretty_name: Lookup
     is_filter: false
     display: false
     schema: 1000

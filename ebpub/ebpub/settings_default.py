@@ -42,10 +42,10 @@ TEMPLATE_DIRS = (
     os.path.join(EBPUB_DIR, 'templates'),
     os.path.join(DJANGO_DIR, 'contrib', 'gis', 'templates'),
     # django template override hack to partially override templates
-    # by referring to them with a unique path, see: 
+    # by referring to them with a unique path, see:
     # http://stackoverflow.com/questions/3967801/django-overriding-and-extending-an-app-template
     # You can use {% extends "ebpub/templates/..." %} to partially extend a template
-    os.path.dirname(EBPUB_DIR) 
+    os.path.dirname(EBPUB_DIR)
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -71,6 +71,7 @@ INSTALLED_APPS = (
     'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
+    'ebpub.openblockapi',
     'ebpub.db',
     'ebpub.geocoder',
     'ebpub.petitions',
@@ -113,6 +114,7 @@ INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
 MIDDLEWARE_CLASSES = (
+    'django.middleware.gzip.GZipMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'ebpub.accounts.middleware.UserMiddleware',
@@ -228,6 +230,17 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              EB_MEDIA_ROOT + '/styles',
                              EB_MEDIA_ROOT + '/scripts',
                              ]
+
+# Javascript map options.
+# Options for MAP_BASELAYER_TYPE are 'google' or 'wms'.
+MAP_BASELAYER_TYPE='wms'
+required_settings.append('MAP_BASELAYER_TYPE')
+
+# If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
+# and point it to your WMS server.  The default gives you hosted OpenStreetMap tiles.
+WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
+# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_MAPS_KEY.
+GOOGLE_MAPS_KEY='your API key here'
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,

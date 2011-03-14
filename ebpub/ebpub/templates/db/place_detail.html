@@ -100,7 +100,6 @@ window.onload = function() {
 	{% if is_block %}{{ place.from_num }} – {{ place.to_num }} block of {% if place.predir %}{{ place.predir }}. {% endif %}{{ place.street_pretty_name }}{% if place.postdir %} {{ place.postdir }}.{% endif %}
 	{% else %}{{ place.name }}
 	{% endif %}
-
 {% endblock header %}
 
 {% block place_content %}

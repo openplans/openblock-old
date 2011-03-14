@@ -459,10 +459,14 @@ class MixedCaseAddressParsing(AddressParsing):
     def test_abbreviation_mass(self):
         self.assertParses('It happened at 472 Mass. Ave.', [('472 Mass. Ave.', '')])
 
+
 class FalsePositives(AddressParsing):
-    # TODO: move some failures from above here.
-    
+    """These are common false positives that the parser is supposed to
+    filter out.
+    """
+
     def test_false_positive_st(self):
+        # FIXME: why do we want this result?
         self.assertParses('Copyright 2004-2007 Gothamist', [('2004-2007 Gothamist', '')])
 
     def test_associated_press(self):
@@ -473,6 +477,8 @@ class FalsePositives(AddressParsing):
 
     def test_university_of_texas2(self):
         # FIXME: this fails, although it looks like it should work.
+        # AFAICT it is matching this as an intersection: 'Of Texas'
+        # ('Of' is street name, 'Texas' is suffix'), and 'Austin'.
         self.assertParses('She attends University Of Texas at Austin.', [])
 
     def test_university_of_texas3(self):
@@ -522,10 +528,11 @@ class NumberedStreets(AddressParsing):
         self.assertParses('327 93 St.', [('327 93 St.', '')])
 
     def test_street_number_only_suffix_missing(self):
-        self.assertParses('327 E. 93', [('327 E', '')]) # TODO: This test passes but is incorrect behavior.
+        self.assertParses('327 E. 93', [('327 E. 93', '')])
 
     def test_false_positive1(self):
         self.assertParses('150 61 Year Olds', [('61 Year Olds', '')])
+
 
 class Intersections(AddressParsing):
     def test_and(self):

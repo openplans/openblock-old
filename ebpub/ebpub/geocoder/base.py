@@ -222,9 +222,9 @@ class AddressGeocoder(Geocoder):
                 state=location['state'],
                 zipcode=location['zip'],
             )
-        except Exception, e:
-            # TODO: replace with Block-specific exception
-            raise Exception("Road segment db query failed: %r" % e)
+        except:
+            # TODO: replace with Block-specific exception?
+            raise
         return [self._build_result(location, block, geocoded_pt) for block, geocoded_pt in blocks]
 
     def _build_result(self, location, block, geocoded_pt):

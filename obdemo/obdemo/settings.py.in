@@ -148,6 +148,13 @@ METRO_LIST = (
 # a fairly constrained server.
 CACHE_BACKEND = 'file:///tmp/obdemo_cache'
 
+# If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
+# and point it to your WMS server.  The default gives you hosted OpenStreetMap tiles.
+MAP_BASELAYER_TYPE='wms'
+WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
+# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_MAPS_KEY.
+GOOGLE_MAPS_KEY='your API key here'
+
 if DEBUG:
     for _name in required_settings:
         if not _name in globals():

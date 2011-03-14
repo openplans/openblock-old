@@ -165,8 +165,11 @@ def apply_patches(options):
     # by dropping them in the patches/ directory.
     patch_dir = os.path.join(options.source_dir, 'patches')
     source_dir = os.path.join(options.env_root, 'src')
+    if not os.path.exists(source_dir):
+        # we might not have anything installed yet
+        print "No src/ directory, skipping apply_patches"
+        return
     assert os.path.exists(patch_dir)
-    assert os.path.exists(source_dir)
     for patchfile in glob.glob(os.path.join(patch_dir, '*patch')):
         # Force-applying a patch more than once can be dangerous,
         # so we do a dry run first and check for problems.
@@ -301,15 +304,6 @@ def sync_all(options):
     for dbname in settings.DATABASES.keys():
         if dbname not in settings.DATABASE_SYNC_ORDER:
             sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
-    # Need workaround here for
-    # http://developer.openblockproject.org/ticket/74 because geometry
-    # columns don't exist yet at the time that Django loads an app's
-    # custom sql.  We can't just re-run all the custom sql because Django
-    # wraps it in a transaction, and some of it has already run and can't
-    # re-run without errors. So, just run the stuff we need.
-    # FIXME: how to know which database to use?
-    ebpub_dir = imp.find_module('ebpub')[1]
-    sh("django-admin.py dbshell --settings=%s < %s/db/sql/location.sql" % (settings_mod, ebpub_dir))
 
 
 @task

@@ -177,13 +177,14 @@ th, td {
 }
 hr {
     background-color: #C7BAAF;
-    border-color: -moz-use-text-color -moz-use-text-color #FFFFFF;
+    border-color: -moz-use-text-color #FFFFFF;
     border-style: none none solid;
     border-width: 0 0 1px;
     color: #C7BAAF;
     height: 2px;
     margin-bottom: 22px;
 }
+
 a:link {
     color: #007FBF;
 }
@@ -198,19 +199,13 @@ a:focus {
 }
 
 
-
-
-
-
-
-
 #globalnav {
     font-size: 14px;
     text-align: left;
 }
 #globalnav ul {
     background-color: #A3C1CC;
-display : inline-block;
+    display : inline-block;
     list-style: none outside none;
     margin: 0;
     padding: 0 0.4em;
@@ -280,22 +275,7 @@ div.popupnav {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* #################################### New Styles #################################### */
-
-
 
 body {
 background : transparent url(/styles/bg.png) top left;
@@ -307,8 +287,6 @@ a {
 color : #0069a9;
 }
 
-
-
 #container {
 background : transparent url(/styles/heading-bg.jpg) top left repeat-x;
 }
@@ -318,17 +296,11 @@ background : transparent url(/styles/heading-bg.jpg) top left repeat-x;
 	margin : 0 auto;	
 }
 
-
-
-
-
 #main {
     clear: both;
     padding: 20px 0 0 0;
 
 }
-
-
 
 #header h1 {
     font-size: 36px;
@@ -342,7 +314,6 @@ font-weight : normal;
 text-shadow: 0 1px 0 #ffffff;
 
 }
-
 
 #header h1 a {
 color : #343434;
@@ -359,14 +330,9 @@ color : #343434;
 }
 
 
-
-
-
 #globalsearch label {
 	display : none;
-	
 }
-
 
 ul#nav-breadcrumb {
 height : 34px;
@@ -374,9 +340,7 @@ clear : both;
 float : left;
 }
 
-
-ul#nav-breadcrumb, 
-#nav-breadcrumb li {
+ul#nav-breadcrumb, #nav-breadcrumb li {
 list-style-type : none;
 display : inline-block;
 padding 0;
@@ -399,13 +363,10 @@ color : #007FBF;
 }
 
 
-
-
 #nav-location {
-width : 394px;	
+width : 394px;
 float : right;
 }
-
 
 #nav-location h2 {
 margin-bottom : .5em;
@@ -417,7 +378,6 @@ color : #878787;
 list-style-type : none;
 padding : 0;
 margin : 0;
-
 }
 
 #nav-location ul li a {
@@ -431,11 +391,16 @@ border-top : 1px solid #ccc;
 background-color : #f8f6f2;
 }
 
-.subscribe-links {
+#content .subscribe-links, 
+#nav-location .subscribe-links {
 margin-top : 1em;
+float : right;
+clear : right;
+width : 394px;
 }
 
-.subscribe-links p {
+#content .subscribe-links p, 
+#nav-location .subscribe-links p {
 border-radius : 8px;
 -moz-border-radius : 8px;
 padding : .1em .6em;
@@ -458,48 +423,21 @@ color : #2C7CAE;
 text-decoration : underline
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#detailmap { 
-width: 392px; 
+#detailmap {
+width: 480px;
 height: 255px
 }
+
 
 #mapwrapper {
 margin-bottom : .5em;
 border : 1px solid #cac8c6;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 #content {
 width : 480px;
 float : left;
 }
-
 
 
 #content h2, 
@@ -509,7 +447,6 @@ font-weight : normal;
 border-bottom : 1px solid #666;
 padding-bottom : .25em;
 }
-
 
 #content h4 {
 margin : 0;
@@ -521,14 +458,10 @@ margin : 0;
 font-size : .9em;
 }
 
-
-
 #contentheader h1 {
 margin : .25em 0 .5em 0;
 font-size : 1.5em;
 }
-
-
 
 ul.nav-view {
 margin : 0;
@@ -536,7 +469,6 @@ padding : 0;
 list-style-type : none;
 display : inline-block;
 }
-
 
 ul.nav-view li {
 float : left;
@@ -546,9 +478,7 @@ padding : 4px 8px 3px 8px;
 font-size : 14px;
 }
 
-
-ul.nav-view li a,
-ul.nav-view li a:visited {
+ul.nav-view li a, ul.nav-view li a:visited {
 text-decoration : none;
 color : #aaaaaa;
 }
@@ -558,8 +488,11 @@ color : #2c7cae;
 }
 
 
-ul.nav-view li:first-child {
+ul.nav-view li.selected {
 background-color : #e1dbd6;
+}
+
+ul.nav-view li:first-child {
 color : #2c7cae;
 border-top-left-radius: 5px;
 -moz-border-radius-topleft: 5px;
@@ -569,48 +502,29 @@ border-width : 1px;
 }
 
 
-
 ul.nav-view li:last-child {
 border-top-right-radius: 5px;
 -moz-border-radius-topright: 5px;
 border-bottom-right-radius: 5px;
 -moz-border-radius-bottomright: 5px;
-
 }
-
-
 
 ul.nav-view li.selected {
 background-color : #e1dbd6;
 }
-
 
 form.select-filter {
 float : right;
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #place-detail-content .visible ul {
 list-style-type : none;
 padding : 0;
 margin : 0;
-
 }
 
-#place-detail-content .visible ul li {
+#place-detail-content .visible ul li, .newsitem {
 padding : 1em 0 0 0;
 border-top : 1px solid #e2e2e2;
 }
@@ -622,48 +536,379 @@ text-transform : none;
 font-weight : bold;
 }
 
-#place-detail-content .location {
+#place-detail-content .location, .newsitem .location {
 display : block;
 text-transform : uppercase;
 font-size : .75em;
 }
 
-#place-detail-content .title {
+#place-detail-content .title, .newsitem .title {
 display : block;
 margin-bottom : .8em;
 }
 
-#place-detail-content .title a {
+#place-detail-content .title a, .newsitem .title a {
 text-decoration : none;
 font-weight : normal;
 }
-
-
-
-
 
 #sidebar {
 float : right;
   width: 392px;
 }
 
-
-
 #sidebar .sidebar-block {
+}
 
+
+.info .date {
+  font-weight: bold;
+}
+
+
+/* #################################### Timeline ############################ */
+
+.place-detail-timeline .info .date {
+  display: none;
+}
+
+/* #################################### Overview Page #################################### */
+
+.place-detail-overview #nearby {
+display : none;
+}
+
+.place-detail-overview #content {
+width : 100%; /* 900px */
+}
+
+
+.place-detail-overview #content .module {
+width : 435px;
+float : left;
+
+}
+
+.place-detail-overview #content .odd {
+margin-right : 30px;
+}
+
+
+#content ul.tabs, #content ul.tabs li {
+list-style-type : none;
+padding : 0;
+margin : 0;
+}
+
+#content ul.tabs {
+margin-bottom : 1.5em;
+clear : both;
+display : inline-block;
+}
+
+#content ul.tabs li {
+float : left;
+border : 1px solid #c8c7c5;
+border-width : 1px 1px 1px 0; 
+background-color : #f7f5f1;
+}
+
+#content ul.tabs li.current {
+background-color : #fff;
+}
+
+#content ul.tabs li:first-child {
+color : #2c7cae;
+border-top-left-radius: 5px;
+-moz-border-radius-topleft: 5px;
+border-bottom-left-radius: 5px;
+-moz-border-radius-bottomleft: 5px;
+border-width : 1px;
+}
+
+#content ul.tabs li:last-child {
+border-top-right-radius: 5px;
+-moz-border-radius-topright: 5px;
+border-bottom-right-radius: 5px;
+-moz-border-radius-bottomright: 5px;
+
+}
+
+#content ul.tabs li a {
+text-decoration : none;
+padding : .15em .5em;
+color : #aaa;
+}
+
+#content ul.tabs li.current a {
+color : #464444;
+}
+
+
+#content ul.tabs li a:hover {
+color : #464444;
+}
+
+.newsitemlist, .newsitem {
+list-style-type : none;
+margin : 0;
+padding : auto 0;
+}
+
+.pane .module-footer a {
+margin-right : 1em;
+float : left;
+border : 1px solid #C8C7C5;
+padding : .05em .6em;
+font-size : .9em;
+border-radius : 5px;
+-moz-border-radius : 10px;
+text-decoration : none;
+background-color : #edebe6;
+color : #4d6a24;
+}
+
+.pane .module-footer a:hover {
+background-color : transparent;
+color : #589500;
+}
+
+
+.pane .module-footer {
+border-top : 1px solid #e1e1e1;
+width : 100%;
+padding-top : 1em;
+margin-bottom : 2em;
+float : left;
+}
+
+
+/* #################################### Schema Filter #################################### */
+
+.schema-filter #detailmap { 
+width: 392px;
+}
+
+.schema-filter #content {
+width : 100%;
+}
+
+.schema-filter #maintext {
+width : 480px;
+float : left;
+}
+
+.schema-filter #mapwrapper {
+float : right;
+}
+
+#schemanav {
+border-bottom : 1px solid #E2E2E2;
+margin-bottom : 2em;
+}
+
+
+#schemanav ul, 
+#schemanav li {
+margin : 0;
+padding : 0;
+list-style-type : none;
+}
+
+#schemanav li {
+padding : .4em;
+border : 1px solid blue; 
+float : left;
+margin-bottom : .5em;
+}
+
+
+#schemanav ul {
+margin-bottom : .5em;
+clear : both;
+display : inline-block;
+}
+
+#schemanav ul li {
+    -moz-border-radius: 10px 10px 10px 10px;
+    background-color: #EDEBE6;
+    border: 1px solid #C8C7C5;
+    color: #4D6A24;
+    float: left;
+    font-size: 0.9em;
+    margin-right: 1em;
+    padding: 0.05em 0.6em;
+    text-decoration: none;
+}
+
+
+#schemanav ul li a {
+text-decoration : none;
+padding : .15em .5em;
+color : #aaa;
+}
+
+#schemanav ul li a:hover {
+color : #e82100;
+}
+
+#content #schemanav h2 {
+margin-top : 1em;
+}
+
+
+#schemanav .filtergroup {
+border : 1px solid #dbdbdb;
+background-color : #EDEBE6;
+padding : .5em;
+}
+
+#schemanav .filtergroup p {
+margin : 0;
+}
+
+
+#schemanav .filtergroup h3 {
+margin-top : 0;
+}
+
+.schema-filter #maintext ul {
+margin : 0;
+}
+
+.schema-filter #maintext h3 {
+margin-top : 0;
+}
+
+
+
+/* #################################### Schema Detail #################################### */
+
+.schema-detail #content {
+width : 624px;
+}
+
+.schema-detail #content h1 {
+margin : 0;
+}
+
+.schema-detail #content h2 {
+margin : 1.5em 0 1em 0;
+}
+
+.schema-detail #content dl {
+margin : 0;
+}
+
+
+.schema-detail #schemanav {
+float : right;
+width : 250px;
 }
 
 
 
 
+.schema-detail table.datechart a:link {
+text-decoration : none;
+}
+ 
+.schema-detail table.datechart td, 
+.schema-detail table.datechart th {
+vertical-align : bottom;
+padding : 0;
+border : 1px solid #d3d3d3;
+border-width : 0 1px;
+}
+
+.schema-detail table.datechart th  {
+text-align : center;
+}
+
+/* Basic styles for date charts. For more on creating CSS charts, see: http://www.alistapart.com/articles/accessibledatavisualization/ */
+.datechart .index { 
+display: block; 
+position: relative; 
+height: 100px; 
+text-decoration: none; 
+}
+
+.datechart .bar { 
+background: #b9aca2; 
+width: 100%; 
+display: block; 
+position: absolute; 
+bottom: 0; 
+text-indent: -9999px; 
+overflow: hidden; 
+}
+
+.datechart .day { 
+width : 20px;
+}
+
+#location-neighborhoods table, 
+#location-zipcodes table {
+width : 100%;
+background-color : #F7F5F1;
+}
 
 
+.schema-detail #location-neighborhoods td.label, 
+.schema-detail #location-neighborhoods td.percent, 
+.schema-detail #location-neighborhoods td.count, 
+.schema-detail #location-zipcodes td.label, 
+.schema-detail #location-zipcodes td.percent, 
+.schema-detail #location-zipcodes td.count {
+padding : 0;
+text-align : center;
+}
+
+.schema-detail #location-neighborhoods td.label, 
+.schema-detail #location-zipcodes td.label {
+text-align : left;
+}
+
+.schema-detail #location-neighborhoods td.count, 
+.schema-detail #location-zipcodes td.count {
+border : 1px solid #C7BAAF;
+border-width : 0 1px;
+
+}
+
+.schema-detail .label {
+padding : 0;
+margin : 0;
+}
+
+.schema-detail .label a {
+text-decoration : none;
+z-index : 10;
+}
 
 
+.schema-detail .label .name {
+padding : 5px ;
+height : 10px;
+display : block;
+margin : 0;
+}
+
+.schema-detail .label .name .bar {
+background-color : #ccc;
+display : block;
+
+z-index : -10;
+margin-top : -23px;
+height : 23px;
+margin-left : -5px;
+}
 
 
-
-
+.schema-detail .count, 
+.schema-detail .percent {
+width : 10%;
+}
 
 
 

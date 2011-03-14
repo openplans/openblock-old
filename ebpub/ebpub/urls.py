@@ -38,8 +38,6 @@ else:
 
 urlpatterns += patterns('',
     url(r'^$', views.homepage, name="ebpub-homepage"),
-    (r'^geoexample/$', views.geo_example),
-    (r'^geomapexample/$', views.geo_map_example),
     (r'^search/$', views.search),
     (r'^news/$', views.schema_list),
     url(r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),
@@ -64,6 +62,7 @@ urlpatterns += patterns('',
     (r'^api/map-browser/location-types/(\d{1,9})/$', views.ajax_location_list),
     (r'^api/map-browser/locations/(\d{1,9})/$', views.ajax_location),
     (r'^api/newsitems.geojson/$', views.newsitems_geojson),
+    (r'^api/dev1/', include('ebpub.openblockapi.urls'))
 )
 
 urlpatterns += metro_patterns(

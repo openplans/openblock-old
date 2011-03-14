@@ -21,6 +21,8 @@ sudo apt-get install python2.6 \
     libxml2 libxml2-dev \
     libxslt libxslt-dev \
     libproj0 \
+    unzip \
+    wget \
     libproj-dev || exit 1
 
 sudo pip install --no-install "GDAL>=1.6,<1.7a"

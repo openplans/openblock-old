@@ -50,6 +50,13 @@ sudo -u postgres echo ok || exit 1
 # This is slightly tricky in a subshell:
 if [ "$VIRTUAL_ENV" != "" ]; then
     source $VIRTUAL_ENV/bin/activate
+    # If the old virtualenv is an old version with an old version of
+    # setuptools (eg. 0.6c9) already installed in it, it's best to nuke that
+    # because virtualenv won't upgrade it and it will cause a failure
+    # like "... has no 'check_packages' attribute"; # see bug #118
+    rm -rf $VIRTUAL_ENV/lib/python2.6/site-packages/setuptools* 2>/dev/null
+    rm -rf $VIRTUAL_ENV/bin/easy_install* 2>/dev/null
+
     deactivate
     export PATH=`echo $PATH | sed -e "s|$VIRTUAL_ENV/bin:|:|"`
 fi

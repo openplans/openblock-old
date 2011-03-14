@@ -3,9 +3,15 @@
 <!-- map.html  -->
 {% if OPENLAYERS_IMG_PATH %}
 <script type="text/javascript">
-OpenLayers.ImgPath = '{{ OPENLAYERS_IMG_PATH }}';
+OpenLayers.ImgPath = "{{ OPENLAYERS_IMG_PATH }}";
+var map_baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+var wms_url = "{{ WMS_URL }}";
 </script>
 {% endif %}
+{% ifequal MAP_BASELAYER_TYPE 'google' %} 
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{ GOOGLE_MAPS_KEY }}" type="text/javascript"></script>
+{% endifequal %}
+
 {% slimall %}
 <script type="text/javascript" src="/scripts/openblockmap.js" charset="utf-8"></script>
 {% endslimall %}

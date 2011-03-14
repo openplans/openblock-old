@@ -147,7 +147,8 @@ See the :ref:`requirements` above and make sure you have
 everything installed.
 
 Create a virtualenv that will contain the openblock software and all
-its python dependencies::
+its python dependencies.  (You probably do *not* want to do this as
+root or with sudo)::
 
     $ virtualenv openblock
     $ cd openblock
@@ -162,9 +163,16 @@ we can use as a convenient base to be sure that we run commands in the
 right directory.
 
 We'll be using ``pip`` to install some software, so make sure it's
-installed (recent versions of virtualenv do this for you)::
+installed. Recent versions of virtualenv do this for you, but
+virtualenv < 1.4.1 does not, so we need to make sure::
 
     $ easy_install pip
+    $ hash -r
+
+Note that it's *very* important that ``pip`` is installed *in the
+virtualenv*.  If you only have pip installed globally on your system,
+*it won't work* and you will get confusing build errors such as
+version conflicts, permission failures, etc.
 
 
 Installing lxml

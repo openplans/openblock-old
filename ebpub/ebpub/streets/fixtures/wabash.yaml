@@ -1,7 +1,6 @@
 - pk: 1000
   model: streets.block
   fields:
-    tlid: null
     pretty_name: 200-298 S. Wabash Ave.
     predir: S
     street: WABASH
@@ -11,15 +10,17 @@
     postdir: ''
     from_num: 200
     to_num: 298
-    zip: 60605
-    city: CHICAGO
-    state: IL
-    location: 0102000020E610000002000000564ACFF412E855C084F3A96395F044401B4CC3F011E855C04819710168F04440
+    left_zip: 60605
+    right_zip: 60605
+    left_city: CHICAGO
+    right_city: CHICAGO
+    left_state: IL
+    right_state: IL
+    geom: 0102000020E610000002000000564ACFF412E855C084F3A96395F044401B4CC3F011E855C04819710168F04440
 
 - pk: 1001
   model: streets.block
   fields:
-    tlid: null
     pretty_name: 216-298 N. Wabash Ave.
     predir: N
     street: WABASH
@@ -28,11 +29,36 @@
     suffix: AVE
     postdir: ''
     from_num: 216
-    to_num: 298
-    zip: 60611
-    city: CHICAGO
-    state: IL
-    location: 0102000020E610000002000000AD1397E315E855C007616EF772F14440A73CBA1116E855C0A2D5C9198AF14440
+    to_num: 299
+    left_from_num: 216
+    left_to_num: 298
+    right_from_num: 217
+    right_to_num: 299
+    left_zip: 60611
+    right_zip: 60611
+    left_city: CHICAGO
+    right_city: CHICAGO
+    left_state: IL
+    right_state: IL
+    geom: 0102000020E610000002000000AD1397E315E855C007616EF772F14440A73CBA1116E855C0A2D5C9198AF14440
+
+- pk: 1002
+  model: streets.block
+  fields:
+    pretty_name: Block with No Numbers on N. Wabash Ave.
+    predir: N
+    street: WABASH
+    street_slug: wabash-ave
+    street_pretty_name: Wabash Ave.
+    suffix: AVE
+    postdir: ''
+    left_zip: 60611
+    right_zip: 60611
+    left_city: CHICAGO
+    right_city: CHICAGO
+    left_state: IL
+    right_state: IL
+    geom: 0102000020E610000002000000AD1397E315E855C007616EF772F14440A73CBA1116E855C0A2D5C9198AF14440
 
 - pk: 1000
   model: streets.intersection

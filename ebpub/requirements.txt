@@ -1,4 +1,5 @@
-django>=1.2.3,<1.3a
+# Test failures in 1.2.4 or 1.2.5, see bug #119
+django==1.2.3
 
 # Not specifying GDAL version, since it depends on our platform. Rely
 # on the user (or a more sophisticated script like obadmin/pavement.py)
@@ -6,6 +7,8 @@ django>=1.2.3,<1.3a
 GDAL
 
 django-static==1.4.0
-psycopg2>=2.2
+# 2.2 is minimum version that has extensions.ISOLATION_LEVEL_AUTOCOMMIT
+psycopg2>=2.2,<2.3
 pyyaml>=3
 slimmer>=0.1.30
+mock>=0.7.0

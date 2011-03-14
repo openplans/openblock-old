@@ -31,6 +31,10 @@
  * map_center - an OpenLayers.LonLat(). If set, you also need map_zoom.
  *
  * map_zoom - zoom level. Required if you set map_center.
+ *
+ * map_baselayer_type - what to use for base layer. Either 'google' or 'wms'.
+ *
+ * wms_url - URL to use for WMS base layer, iff map_baselayer_type == 'wms.'
  */
 var map, newsitems, style, borderstyle;
 if (jQuery.browser.msie) {
@@ -60,11 +64,7 @@ function loadNewsItems() {
         var newsitems_ajax_url = "/api/newsitems.geojson/"; /* WILL CHANGE */
     };
     // Expect params to be set globally prior to calling this function.
-    var newsitem_params = {
-        pid: '',
-        schema: '',
-        newsitem: ''
-    };
+    var newsitem_params = {};
     if (typeof(newsitem) != 'undefined') {
         newsitem_params.newsitem = newsitem;
     };
@@ -78,7 +78,7 @@ function loadNewsItems() {
         projection: map.displayProjection,
         strategies: [
             new OpenLayers.Strategy.Fixed(),
-            new OpenLayers.Strategy.Cluster({'distance': 26})
+            new OpenLayers.Strategy.Cluster({"distance": 26})
             ],
         protocol: new OpenLayers.Protocol.HTTP({
             url: newsitems_ajax_url,
@@ -95,6 +95,7 @@ function loadNewsItems() {
         var clusterIdx = 0;
         var firstFeature = cluster[0];
         var featureHtml = firstFeature.attributes.popup_html;
+
         var popup = new OpenLayers.Popup.FramedCloud(
             null, feature.geometry.getBounds().getCenterLonLat(), null, featureHtml,
             {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(0, 0)},
@@ -104,31 +105,35 @@ function loadNewsItems() {
                 selectControl.unselect(feature);
             }
         );
+        // popup.contentDisplayClass = 'overridePopupContent'; // has no effect!
+        popup.contentDiv.className = "openblockFramedCloudPopupContent";
+        popup.maxSize = new OpenLayers.Size(320, 146);
         feature.popup = popup;
         map.addPopup(popup);
         if (cluster.length > 1) {
             // Add next/previous nav links to the popup.
-            var navHtml = '<span class="popupnav"><a class="popupnav prev" href="#">&larr;prev</a>&nbsp;&nbsp;<a class="popupnav next" href="#">next&rarr;</a></span>';
+            var navHtml = '<span class="popupnav"><a class="popupnav prev" href="#">&larr;prev</a>&nbsp;<span id="clusteridx">1</span>&nbsp;of&nbsp;' + cluster.length
+			  + '&nbsp;<a class="popupnav next" href="#">next&rarr;</a></span>';
             var content = popup.contentDiv;
-            // I like nav links at top and bottom for convenience.
             $(content).prepend(navHtml);
-            $(content).append(navHtml);
             popup.updateSize();
-            var prev = $(content).find('a.popupnav.prev');
-            var next = $(content).find('a.popupnav.next');
+            var prev = $(content).find("a.popupnav.prev");
+            var next = $(content).find("a.popupnav.next");
             // Clicking next or previous replaces the nav links html.
-            var replaceHtml = function(f) {
-                $(content).find('.newsitem').replaceWith(f.attributes.popup_html);
+            var replaceHtml = function(i, cluster) {
+                var f = cluster[i];
+                $(content).find(".newsitem").replaceWith(f.attributes.popup_html);
+                $(content).find("#clusteridx").text(i + 1);
             };
             prev.click(function(e) {
                 e.preventDefault();
                 clusterIdx = (clusterIdx == 0) ? cluster.length - 1 : clusterIdx - 1;
-                replaceHtml(cluster[clusterIdx]);
+                replaceHtml(clusterIdx, cluster);
             });
             next.click(function(e) {
                 e.preventDefault();
-                clusterIdx = (clusterIdx == cluster.length - 1) ? 0 : clusterIdx + 1;
-                replaceHtml(cluster[clusterIdx]);
+                clusterIdx = (clusterIdx + 1) % cluster.length;
+                replaceHtml(clusterIdx, cluster);
             });
         }
     };
@@ -174,19 +179,22 @@ function loadLocationBorder(place_type, place_slug) {
     return location;
 };
 function loadMap() {
-    map = new OpenLayers.Map('detailmap', options);
-    var osm = new OpenLayers.Layer.WMS("OpenStreetMap", "http://maps.opengeo.org/geowebcache/service/wms", {
-        layers: "openstreetmap",
-        format: "image/png",
-        bgcolor: '#A1BDC4'
+    map = new OpenLayers.Map("detailmap", options);
+    var osm = new OpenLayers.Layer.WMS("OpenStreetMap", wms_url, {
+         layers: "openstreetmap",
+         format: "image/png",
+         bgcolor: "#A1BDC4"
     }, {
-        wrapDateLine: true
+         wrapDateLine: true
+    });
+    var google = new OpenLayers.Layer.Google("Google", {
+        wrapDateLine: true, sphericalMercator: true
     });
     style = new OpenLayers.Style({
         pointRadius: "${radius}",
-        fillColor: "#edbc22",
-        fillOpacity: 0.7,
-        strokeColor: "#cc6633",
+        fillColor: "${fillColor}",
+        fillOpacity: 0.8,
+        strokeColor: "${strokeColor}",
         strokeWidth: 2,
         strokeOpacity: 0.8,
         label: "${getlabel}",
@@ -200,11 +208,35 @@ function loadMap() {
             },
             getlabel: function(feature) {
                 return feature.attributes.count;
+            },
+            strokeColor: function(feature) {
+                if (map_baselayer_type == "google") {
+                    return "#0041F4";
+                } else {
+                    return "#CC6633";
+                };
+            },
+            fillColor: function(feature) {
+                if (map_baselayer_type == "google") {
+                    return "#00A66C";
+                } else {
+                    return "#EDBC22";
+                }
             }
-        }
+       }
     });
     var newsitems = loadNewsItems();
-    map.addLayers([osm]);
+    //map.addLayers([osm]);
+    if ( map_baselayer_type == "google" ) {
+        map.addLayers([google]);
+    }
+    else if ( map_baselayer_type == "wms" ) {
+        map.addLayers([osm]);
+    }
+    else {
+        alert("Map type must be one of 'wms' or 'google', got " + map_baselayer_type);
+    };
+
     if (typeof(place_type) != "undefined" && Boolean(place_type)) {
         var locationborder = loadLocationBorder(place_type, place_slug);
         map.addLayers([locationborder]);
