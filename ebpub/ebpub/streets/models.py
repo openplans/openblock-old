@@ -266,7 +266,7 @@ class Block(models.Model):
         if self.left_state == self.right_state:
             return self.left_state
         else:
-            return get_metro()['state_abbr']
+            return get_metro()['state']
     state = property(_get_state)
 
     def _get_zip(self):
