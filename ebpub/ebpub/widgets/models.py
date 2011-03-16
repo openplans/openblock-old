@@ -49,7 +49,7 @@ class Widget(models.Model):
         if len(type_filter): 
             query = query.filter(schema__in=type_filter)
         if self.location:
-            query = query.filter(newsitemlocation=self.location)
+            query = query.filter(newsitemlocation__location=self.location)
         query = query[:self.max_items]
         return query
         
