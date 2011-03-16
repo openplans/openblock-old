@@ -53,10 +53,8 @@ class TestAPI(TestCase):
                          {'pretty_name': 'Datetime', 'type': 'datetime'})
 
     def test_jsonp(self):
-        """
-        quick test that API endpoints are respecting the jsonp query 
-        parameter.
-        """
+        # Quick test that API endpoints are respecting the jsonp query
+        # parameter.
         param = 'jsonp'
         wrapper = 'FooseBall'
         qs = '?%s=%s' % (param, wrapper)

@@ -58,7 +58,7 @@ class AutoLocationMetaclass(type):
 
             location = ' '.join(test_input)
             func = lambda self: self.assertParseContains(location, expected)
-            func.__doc__ = location
+            func.__doc__ = "generated test: %r" % location
             attrs['test_%s' % '_'.join(token_types)] = func
 
         return type.__new__(cls, name, bases, attrs)
