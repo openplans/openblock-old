@@ -2,16 +2,17 @@
 {% load i18n %}
 
 {% block after_field_sets %}
-
+{% if change %}
 <h2>Embed Code</h2>
-<textarea rows="2" cols="100">
+<textarea rows="2" cols="100" disabled="disabled">
 {{original.embed_code}}
 </textarea>
 <br/>
 <h2>Server Side Include URL</h2>
-<textarea rows="1" cols="100">
+<textarea rows="1" cols="100" disabled="disabled">
 {{original.transclude_url}}
 </textarea>
+{% endif %}
 
 {% endblock %}
 
