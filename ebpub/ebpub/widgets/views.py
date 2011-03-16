@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import Context, Template
@@ -69,6 +70,6 @@ def _template_ctx(newsitem):
 
     ctx['external_url'] = newsitem.url
     if newsitem.schema.has_newsitem_detail:
-        ctx['internal_url'] = newsitem.item_url()
+        ctx['internal_url'] = 'http://' + settings.EB_DOMAIN + newsitem.item_url()
 
     return ctx
