@@ -46,7 +46,7 @@ def _template_ctx(newsitem):
 
         attr = {
             'name': att.sf.name,
-            'title': att.sf.smart_pretty_name,
+            'title': att.sf.smart_pretty_name(),
         }
         
         vals = [x['value'] for x in att.value_list()]
