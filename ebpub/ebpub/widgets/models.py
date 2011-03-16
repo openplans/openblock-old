@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.gis.db import models
 from ebpub.db.models import NewsItem, Location, Schema
 
@@ -40,7 +41,7 @@ class Widget(models.Model):
 
     def fetch_items(self):
         return self._item_query()
-        
+
     def _item_query(self):
         # TODO integrate with other ways to search for items ?
         query = NewsItem.objects.all()
@@ -52,7 +53,13 @@ class Widget(models.Model):
             query = query.filter(newsitemlocation__location=self.location)
         query = query[:self.max_items]
         return query
-        
+
+    def embed_code(self):
+        return '<div id="%s"></div><script src="http://%s/widgets/%s.js"></script>' % (self.target_id, settings.EB_DOMAIN, self.slug)
+    
+    def transclude_url(self):
+        return "http://%s/widgets/%s" % (settings.EB_DOMAIN, self.slug)
+
 # class PinnedItem(models.Model):
 #     """
 #     """
