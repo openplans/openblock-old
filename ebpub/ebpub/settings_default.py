@@ -78,6 +78,7 @@ INSTALLED_APPS = (
     'ebpub.preferences',
     'ebpub.savedplaces',
     'ebpub.streets',
+    'ebpub.widgets',
     'django.contrib.humanize',
     'django.contrib.sessions',
     'django_static',
