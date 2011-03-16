@@ -61,6 +61,7 @@ Contents
    scraper_tutorial
    running_scrapers
    api
+   widgets
    packages/index
 
 
