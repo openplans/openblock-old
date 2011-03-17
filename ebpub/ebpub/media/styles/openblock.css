@@ -715,6 +715,10 @@ padding : 0;
 list-style-type : none;
 }
 
+#schemanav h4 {
+text-transform: none;
+}
+
 #schemanav li {
 padding : .4em;
 border : 1px solid blue; 
