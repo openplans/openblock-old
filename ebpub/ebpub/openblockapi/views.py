@@ -17,6 +17,7 @@ ATOM_CONTENT_TYPE = "application/atom+xml"
 JSON_CONTENT_TYPE = 'application/json'
 JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
 
+LOCAL_TZ = pytz.timezone(settings.TIME_ZONE)
 
 
 def APIGETResponse(request, body, **kw):
@@ -116,7 +117,7 @@ def _items_json(items):
             'title': i.title,
             'description': i.description,
             'url': i.url,
-            'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date)),
+            'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date), utc=False),
             'item_date': i.item_date,
         })
         item['properties'] = props
@@ -131,21 +132,20 @@ def _items_json(items):
     return simplejson.dumps(result, default=_serialize_unknown, indent=1)
 
 def serialize_date_or_time(obj):
-    local_tz = pytz.timezone(settings.TIME_ZONE)
     if isinstance(obj, datetime.datetime):
-        if obj.tzinfo is None:
-            obj = obj.replace(tzinfo=local_tz)  # Wait, why is this one local and others UTC?
-        return pyrfc3339.generate(obj)
+        obj = normalize_datetime(obj)
+        return pyrfc3339.generate(obj, utc=False)
     elif isinstance(obj, datetime.date):
         return obj.strftime('%Y-%m-%d')
     elif isinstance(obj, datetime.time):
         # XXX super ugly
-        if obj.tzinfo is None: 
-            obj = obj.replace(tzinfo=local_tz)
-        dd = datetime.datetime.now(local_tz)
+        if obj.tzinfo is None:
+            obj = obj.replace(tzinfo=LOCAL_TZ)
+        dd = datetime.datetime.now()
         dd = dd.replace(hour=obj.hour, minute=obj.minute,
                         second=obj.second, tzinfo=obj.tzinfo)
-        ss = pyrfc3339.generate(dd)
+        dd = normalize_datetime(dd)
+        ss = pyrfc3339.generate(dd, utc=False)
         return ss[ss.index('T') + 1:]
     else:
         return None
@@ -380,9 +380,8 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
 
 def normalize_datetime(dt):
     # XXX needs tests
-    local_tz = pytz.timezone(settings.TIME_ZONE)
     if dt.tzinfo is None:
         # Assume naive times are in local zone.
-        dt = dt.replace(tzinfo=local_tz)
-    return dt.astimezone(pytz.utc)
+        dt = dt.replace(tzinfo=LOCAL_TZ)
+    return dt.astimezone(LOCAL_TZ)
 

@@ -7,7 +7,7 @@ __all__ = ['build_item_query']
 
 
 class QueryError(object):
-    def __init__(message):
+    def __init__(self, message):
         self.message = message
 
 def build_item_query(params):
