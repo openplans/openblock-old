@@ -4,6 +4,7 @@ API tests
 import cgi
 import datetime
 import feedparser
+import pytz
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.test import TestCase
@@ -235,16 +236,15 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # filter out the first and last item by constraining
-        # the date range to the inner two items
-        local_tz = pytz.timezone(settings.TIME_ZONE)
-        startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=local_tz), accept_naive=True)
-        enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz), accept_naive=True)
-
+        # the date range to the inner two items.
+        # (Use UTC for consistency with _make_items())
+        startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=pytz.UTC))
+        enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=pytz.UTC))
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
         response = self.client.get(reverse('items_json') + qs, status=200)
         ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 2
+        self.assertEqual(len(ritems['features']), 2)
         assert self._items_exist_in_result(items[1:3], ritems)
 
         # startdate only
@@ -400,7 +400,8 @@ class TestItemSearchAPI(TestCase):
 
 def _make_items(number, schema):
     items = []
-    curdate = datetime.datetime.utcnow().replace(microsecond=0)
+    from django.conf import settings
+    curdate = datetime.datetime.utcnow().replace(microsecond=0, tzinfo=pytz.UTC)
     inc = datetime.timedelta(days=-1)
     for i in range(number):
         desc = '%s item %d' % (schema.slug, i)

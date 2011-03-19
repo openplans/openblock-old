@@ -142,7 +142,7 @@ def serialize_date_or_time(obj):
         # XXX super ugly
         if obj.tzinfo is None: 
             obj = obj.replace(tzinfo=local_tz)
-        dd = datetime.datetime.utcnow()
+        dd = datetime.datetime.now(local_tz)
         dd = dd.replace(hour=obj.hour, minute=obj.minute,
                         second=obj.second, tzinfo=obj.tzinfo)
         ss = pyrfc3339.generate(dd)
@@ -382,6 +382,7 @@ def normalize_datetime(dt):
     # XXX needs tests
     local_tz = pytz.timezone(settings.TIME_ZONE)
     if dt.tzinfo is None:
+        # Assume naive times are in local zone.
         dt = dt.replace(tzinfo=local_tz)
     return dt.astimezone(pytz.utc)
 
