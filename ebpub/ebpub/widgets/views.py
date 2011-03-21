@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response
 from django.template import Context, Template
 from django.utils import simplejson as json
 from ebpub.widgets.models import Widget
-
+import urlparse
 
 def widget_javascript(request, slug):
     try:
@@ -27,14 +27,14 @@ def widget_content(request, slug):
 
 def _render_widget(widget):
     info = {
-        'items': [_template_ctx(x) for x in widget.fetch_items()],
+        'items': [_template_ctx(x, widget) for x in widget.fetch_items()],
         'widget': widget
     }
     # TODO: cache template compilation
     t = Template(widget.template.code)
     return t.render(Context(info))
     
-def _template_ctx(newsitem):
+def _template_ctx(newsitem, widget):
     # try to make something ... reasonable for use in 
     # widget templates. 
     ctx = {
@@ -68,8 +68,23 @@ def _template_ctx(newsitem):
     ctx['item_date'] = newsitem.item_date
     ctx['location'] = newsitem.location
 
-    ctx['external_url'] = newsitem.url
+    ctx['external_url'] = _mutate_link(newsitem.url, widget)
     if newsitem.schema.has_newsitem_detail:
-        ctx['internal_url'] = 'http://' + settings.EB_DOMAIN + newsitem.item_url()
+        ctx['internal_url'] = _mutate_link('http://' + settings.EB_DOMAIN + newsitem.item_url(), widget)
 
     return ctx
+    
+def _mutate_link(url, widget): 
+    if not widget.extra_link_parameters:
+        return url 
+    
+    suffix = widget.extra_link_parameters
+    pr = list(urlparse.urlsplit(url))
+    
+    # if there is a query string already, append with &
+    if len(pr[3]):
+        pr[3] = '%s&%s' % (pr[3], suffix)
+    else: 
+        pr[3] = suffix
+        
+    return urlparse.urlunsplit(pr)
