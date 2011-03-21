@@ -66,8 +66,11 @@ def _template_ctx(newsitem, widget):
     ctx['description'] = newsitem.description
     ctx['pub_date'] = newsitem.pub_date
     ctx['item_date'] = newsitem.item_date
-    ctx['location'] = newsitem.location
-
+    ctx['location'] = {
+        'lat': newsitem.location.x,
+        'lon': newsitem.location.y,
+        'name': newsitem.location_name
+    }
     ctx['external_url'] = _mutate_link(newsitem.url, widget)
     if newsitem.schema.has_newsitem_detail:
         ctx['internal_url'] = _mutate_link('http://' + settings.EB_DOMAIN + newsitem.item_url(), widget)

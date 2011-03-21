@@ -102,7 +102,21 @@ Basic Fields
   item.external_url   if the item is hosted by an outside site, this is a link to 
                       the item.
 -------------------- ------------------------------------------------------------
+  item.pub_date       'publication' date/time must be formatted using a django 
+                      date filter, eg {{item.pub_date|date:"Y m d h i"}}.  See http://docs.djangoproject.com/en/dev/ref/templates/builtins/#std:templatefilter-date
+-------------------- ------------------------------------------------------------
+item.item_date       Date associated with item (no time) Varying meaning by type. 
+                     Must be formatted using a django date filter, eg {{item.item_date|date:"Y m d"}}.  See http://docs.djangoproject.com/en/dev/ref/templates/builtins/#std:templatefilter-date
+-------------------- ------------------------------------------------------------
   item.description    description, body text or text content of the item 
+-------------------- ------------------------------------------------------------
+  item.location.name  Text of location, address, place etc. Depending on item type 
+                      and method of determining location this may not be present or 
+                      of varying meaning.
+-------------------- ------------------------------------------------------------
+  item.location.lat   Latitude of primary Point location of item.  
+-------------------- ------------------------------------------------------------
+  item.location.lon   Longitude of primary Point location of item.  
 -------------------- ------------------------------------------------------------
 item.schema.name      the name of the type of item, eg "Restaurant Inspection"
 -------------------- ------------------------------------------------------------
