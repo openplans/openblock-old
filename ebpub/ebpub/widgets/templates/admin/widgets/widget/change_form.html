@@ -4,14 +4,14 @@
 {% block after_field_sets %}
 {% if change %}
 <h2>Embed Code</h2>
-<textarea rows="2" cols="100">
+<pre>
 {{original.embed_code}}
-</textarea>
+</pre>
 <br/>
 <h2>Server Side Include URL</h2>
-<textarea rows="1" cols="100">
+<pre>
 {{original.transclude_url}}
-</textarea>
+</pre>
 {% endif %}
 
 {% endblock %}
