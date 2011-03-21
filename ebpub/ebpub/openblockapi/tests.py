@@ -4,11 +4,29 @@ API tests
 import cgi
 import datetime
 import feedparser
+import pytz
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
+import ebpub.openblockapi.views
+
+def monkeypatch(obj, attrname, value):
+    # Decorator for temporarily replacing an object
+    # during a test, with an arbitrary value.
+    # Unlike mock.patch, this allows the value to be
+    # things other than mock.Mock objects.
+    def patch(method):
+        def patched(*args, **kw):
+            orig = getattr(obj, attrname)
+            try:
+                setattr(obj, attrname, value)
+                return method(*args, **kw)
+            finally:
+                setattr(obj, attrname, orig)
+        return patched
+    return patch
 
 class TestAPI(TestCase):
 
@@ -53,10 +71,8 @@ class TestAPI(TestCase):
                          {'pretty_name': 'Datetime', 'type': 'datetime'})
 
     def test_jsonp(self):
-        """
-        quick test that API endpoints are respecting the jsonp query 
-        parameter.
-        """
+        # Quick test that API endpoints are respecting the jsonp query
+        # parameter.
         param = 'jsonp'
         wrapper = 'FooseBall'
         qs = '?%s=%s' % (param, wrapper)
@@ -149,17 +165,18 @@ class TestItemSearchAPI(TestCase):
             assert item['openblock_type'] == u'type2'
 
 
-
+    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
+        import ebpub.openblockapi.views
         schema = Schema.objects.get(slug='test-schema')
 
         ext_vals = {
             'varchar': ('This is a varchar', 'This is a varchar'), 
             'date': (datetime.date(2001, 01, 02), '2001-01-02'),
             'time': (datetime.time(hour=10, minute=11, second=12), 
-                     '16:11:12Z'),
+                     '10:11:12-08:00'),
             'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
-                         '2001-01-02T16:11:12Z'),
+                         '2001-01-02T10:11:12-08:00'),
             'bool': (True, True),
             'int': (7, 7),
             # XXX avoiding lookups for now.
@@ -175,23 +192,25 @@ class TestItemSearchAPI(TestCase):
         response = self.client.get(reverse('items_json'), status=200)
         ritems = simplejson.loads(response.content)
 
-        assert len(ritems['features']) == len(items)
+        self.assertEqual(len(ritems['features']), len(items))
         for item in ritems['features']:
             for k, v in ext_vals.items():
-                assert item['properties'][k] == v[1]
+                self.assertEqual(item['properties'][k], v[1])
         assert self._items_exist_in_result(items, ritems)
 
 
+    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_atom(self):
         schema = Schema.objects.get(slug='test-schema')
-
+        # TODO: either de-hardcode the timezone from this test,
+        # or patch settings.TIME_ZONE.
         ext_vals = {
             'varchar': ('This is a varchar', 'This is a varchar'), 
             'date': (datetime.date(2001, 01, 02), '2001-01-02'),
             'time': (datetime.time(hour=10, minute=11, second=12), 
-                     '16:11:12Z'),
+                     '10:11:12-08:00'),
             'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
-                         '2001-01-02T16:11:12Z'),
+                         '2001-01-02T10:11:12-08:00'),
             'bool': (True, 'True'),
             'int': (7, '7'),
             # XXX avoiding lookups for now.
@@ -224,11 +243,11 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_xml_result(items, response.content)
 
 
+    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
         import pytz
         from django.conf import settings
-
         # create some items, they will have
         # dates spaced apart by one day, newest first
         schema1 = Schema.objects.get(slug='type1')
@@ -237,16 +256,16 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # filter out the first and last item by constraining
-        # the date range to the inner two items
+        # the date range to the inner two items.
+        # (Use local timezone for consistency with _make_items())
         local_tz = pytz.timezone(settings.TIME_ZONE)
-        startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=local_tz), accept_naive=True)
-        enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz), accept_naive=True)
-
+        startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=local_tz))
+        enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz))
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
         response = self.client.get(reverse('items_json') + qs, status=200)
         ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 2
+        self.assertEqual(len(ritems['features']), 2)
         assert self._items_exist_in_result(items[1:3], ritems)
 
         # startdate only
@@ -263,7 +282,7 @@ class TestItemSearchAPI(TestCase):
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
 
-
+    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_items_filter_daterange(self):
         # create some items, they will have
         # dates spaced apart by one day, newest first
@@ -402,7 +421,9 @@ class TestItemSearchAPI(TestCase):
 
 def _make_items(number, schema):
     items = []
-    curdate = datetime.datetime.utcnow().replace(microsecond=0)
+    from django.conf import settings
+    local_tz = pytz.timezone(settings.TIME_ZONE)
+    curdate = datetime.datetime.now().replace(microsecond=0, tzinfo=local_tz)
     inc = datetime.timedelta(days=-1)
     for i in range(number):
         desc = '%s item %d' % (schema.slug, i)

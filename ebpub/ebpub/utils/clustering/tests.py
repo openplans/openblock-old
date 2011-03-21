@@ -28,7 +28,7 @@ from ebpub.utils.clustering import cluster
 from ebpub.utils.clustering import sample
 from ebpub.utils.clustering import json
 
-def gen_test_points(n=50, extent=(0,0,100,100), rand_seed=None):
+def _gen_test_points(n=50, extent=(0,0,100,100), rand_seed=None):
     """
     Returns a list of n (x, y) pairs, distributed randomly throughout the extent.
     """
@@ -37,11 +37,11 @@ def gen_test_points(n=50, extent=(0,0,100,100), rand_seed=None):
     return [(random.randint(extent[0], extent[2]), random.randint(extent[1], extent[3]))
             for i in xrange(n)]
 
-def gen_test_objs(n=50, extent=(0,0,100,100), rand_seed=None):
+def _gen_test_objs(n=50, extent=(0,0,100,100), rand_seed=None):
     """
     Returns a mapping of id -> (x, y), where id is an int.
     """
-    points = gen_test_points(n=n, extent=extent, rand_seed=rand_seed)
+    points = _gen_test_points(n=n, extent=extent, rand_seed=rand_seed)
     return dict(zip(xrange(len(points)), points))
 
 def print_bunches(bunches, *args, **kwargs):
@@ -82,7 +82,7 @@ def randomize(L):
 
 def main():
     buffer = 20
-    objs = gen_test_objs(rand_seed="foo")
+    objs = _gen_test_objs(rand_seed="foo")
     bunches = timeit("cluster", cluster.buffer_cluster, objs, buffer)
     display(bunches, buffer=buffer, f=print_bunches)
 

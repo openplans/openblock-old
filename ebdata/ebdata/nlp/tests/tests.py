@@ -750,9 +750,7 @@ class CityAddressParsing(AddressParsing):
     def test_hyphen(self):
         self.assertParses('Happened at 121 Maple Street, Croton-on-Hudson', [('121 Maple Street', 'Croton-on-Hudson')])
 
-class EdgeCases(AddressParsing):
     def test_uppercase_named_street(self):
-        return
         # Not very likeyl to fix this.
         # It's possible to fix by changing
         #[A-Z]\b              # Single-letter street name (e.g., K St. in DC)

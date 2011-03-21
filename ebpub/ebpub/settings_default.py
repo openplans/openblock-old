@@ -78,6 +78,7 @@ INSTALLED_APPS = (
     'ebpub.preferences',
     'ebpub.savedplaces',
     'ebpub.streets',
+    'ebpub.widgets',
     'django.contrib.humanize',
     'django.contrib.sessions',
     'django_static',
@@ -97,6 +98,8 @@ APPS_FOR_TESTING = (
     'ebdata.textmining',
     'ebpub.metros',
     'ebpub.utils',
+    'ebpub.geocoder',
+    'ebpub.geocoder.parser',
 )
 
 APPS_NOT_FOR_TESTING = (
@@ -106,12 +109,16 @@ APPS_NOT_FOR_TESTING = (
         'django.contrib.contenttypes',
         # these tests break with some settings, see https://github.com/peterbe/django-static/issues#issue/8 and 9
         'django_static',
+        # the rest are just not of interest.
+        'django.contrib.sessions',
 )
 
 
 INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING
 
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
+
+
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',

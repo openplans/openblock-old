@@ -259,22 +259,6 @@ float : right;
 }
 
 
-
-
-.olFramedCloudPopupContent, .olPopupContent {
-    font-size: 10pt;
-}
-div li span.location {
-    display: block;
-}
-div li span.popupnav {
-    display: block;
-}
-div.popupnav {
-    clear: both;
-}
-
-
 /* #################################### New Styles #################################### */
 
 body {
@@ -565,6 +549,37 @@ float : right;
   font-weight: bold;
 }
 
+/* Popups */
+
+div li span.location {
+    display: block;
+}
+div li span.popupnav {
+    display: block;
+}
+div.popupnav {
+    clear: both;
+}
+
+.openblockFramedCloudPopupContent {
+    font-size: 12px;
+    overflow: hidden;
+    margin: 0px 6px 6px 12px;
+    padding: 0;
+}
+
+.olPopup .newsitem {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.openblockFramedCloudPopupContent .location {
+    display: inline;
+    font-size: 12px;
+    text-transform: none;
+}
+
 
 /* #################################### Timeline ############################ */
 
@@ -713,6 +728,10 @@ margin-bottom : 2em;
 margin : 0;
 padding : 0;
 list-style-type : none;
+}
+
+#schemanav h4 {
+text-transform: none;
 }
 
 #schemanav li {

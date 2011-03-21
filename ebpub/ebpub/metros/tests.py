@@ -29,21 +29,15 @@ class MetroTest(TestCase):
     multi_db = True  # Need this or fixtures don't really get loaded.
 
     def test_point_in_metro(self):
-        """
-        Tests finding a metro with a point contained by its boundary
-        """
+        # Tests finding a metro with a point contained by its boundary
         self.assertEquals(Metro.objects.containing_point(pt_in_chicago).name, 'Chicago')
 
     def test_point_in_bbox_not_in_metro(self):
-        """
-        Tests with a point in the metro's bounding box but not in its boundary
-        """
+        # Tests with a point in the metro's bounding box but not in its boundary
         self.assertRaises(Metro.DoesNotExist, Metro.objects.containing_point, pt_in_chi_bbox)
 
     def test_point_not_in_metro(self):
-        """
-        Tests with a point not in any metro
-        """
+        # Tests with a point not in any metro
         self.assertRaises(Metro.DoesNotExist, Metro.objects.containing_point, pt_in_lake_mi)
 
 class MetroViewsTest(TestCase):
@@ -52,23 +46,17 @@ class MetroViewsTest(TestCase):
     urls = 'ebpub.metros.urls'
 
     def test_lookup_metro_success(self):
-        """
-        Tests getting a successful JSON response from a lng/lat query
-        """
+        # Tests getting a successful JSON response from a lng/lat query
         response = self.client.get('/lookup/', {'lng': pt_in_chicago.x, 'lat': pt_in_chicago.y})
         self.assertContains(response, 'Chicago', status_code=200)
         self.assertEqual(response['content-type'], 'application/javascript')
 
     def test_lookup_metro_in_bbox_fails(self):
-        """
-        Tests getting a 404 from a lng/lat query not quite in the metro
-        """
+        # Tests getting a 404 from a lng/lat query not quite in the metro
         response = self.client.get('/lookup/', {'lng': pt_in_chi_bbox.x, 'lat': pt_in_chi_bbox.y})
         self.assertEqual(response.status_code, 404)
 
     def test_lookup_metro_fails(self):
-        """
-        Tests getting a 404 from a lng/lat query not in any metro
-        """
+        # Tests getting a 404 from a lng/lat query not in any metro
         response = self.client.get('/lookup/', {'lng': pt_in_lake_mi.x, 'lat': pt_in_lake_mi.y})
         self.assertEqual(response.status_code, 404)

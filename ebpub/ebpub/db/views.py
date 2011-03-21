@@ -541,8 +541,8 @@ def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
         center_y = ni.location.centroid.y
     else:
         locations_within = ()
-        center_x = settings.DEFAULT_CENTER_LON
-        center_y = settings.DEFAULT_CENTER_LAT
+        center_x = settings.DEFAULT_MAP_CENTER_LON
+        center_y = settings.DEFAULT_MAP_CENTER_LAT
 
     hide_ads = (request.COOKIES.get(HIDE_ADS_COOKIE_NAME) == 't')
 

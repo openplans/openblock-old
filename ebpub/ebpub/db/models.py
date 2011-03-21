@@ -573,7 +573,7 @@ class NewsItem(models.Model):
         ordering = ('title',)
 
     def __unicode__(self):
-        return self.title
+        return self.title or 'Untitled News Item'
 
     def item_url(self):
         return '/%s/by-date/%s/%s/%s/%s/' % (self.schema.slug, self.item_date.year, self.item_date.month, self.item_date.day, self.id)
