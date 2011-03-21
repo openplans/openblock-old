@@ -62,7 +62,8 @@ urlpatterns += patterns('',
     (r'^api/map-browser/location-types/(\d{1,9})/$', views.ajax_location_list),
     (r'^api/map-browser/locations/(\d{1,9})/$', views.ajax_location),
     (r'^api/newsitems.geojson/$', views.newsitems_geojson),
-    (r'^api/dev1/', include('ebpub.openblockapi.urls'))
+    (r'^api/dev1/', include('ebpub.openblockapi.urls')),
+    (r'^widgets/', include('ebpub.widgets.urls'))
 )
 
 urlpatterns += metro_patterns(
