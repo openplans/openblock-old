@@ -52,6 +52,7 @@ class Widget(models.Model):
             query = query.filter(schema__in=type_filter)
         if self.location:
             query = query.filter(newsitemlocation__location=self.location)
+        query = query.order_by('-item_date')
         query = query[:self.max_items]
         return query
 
