@@ -7,7 +7,7 @@ __all__ = ['build_item_query']
 
 
 class QueryError(object):
-    def __init__(message):
+    def __init__(self, message):
         self.message = message
 
 def build_item_query(params):
@@ -77,14 +77,13 @@ def _daterange_filter(query, params, state):
     handles filtering by start and end date
     paramters: startdate, enddate
     """
-
     startdate = params.get('startdate')
     if startdate is not None:
         try:
             del params['startdate']
             try:
                 startdate = datetime.datetime.strptime(startdate, '%Y-%m-%d')
-            except ValueError: 
+            except ValueError:
                 startdate = pyrfc3339.parse(startdate)
             query = query.filter(pub_date__gte=startdate)
         except ValueError:

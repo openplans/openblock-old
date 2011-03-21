@@ -65,6 +65,11 @@ Initializing the database(s) must be done in the right order::
     $ django-admin.py syncdb --database=default
 
 
+To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
+
+    $ django-admin.py createsuperuser
+    ...
+
 Starting the Test Server
 ------------------------
 
@@ -74,11 +79,6 @@ Run django's test server using your project's settings and visit http://127.0.0.
     $ django-admin.py runserver
     ...
     Development server is running at http://127.0.0.1:8000/
-
-To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
-
-    $ django-admin.py createsuperuser
-    ...
 
 You can now log into your openblock instance and visit the administrative site at http://127.0.0.1:8000/admin/
 

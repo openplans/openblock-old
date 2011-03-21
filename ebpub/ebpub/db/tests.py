@@ -20,6 +20,7 @@
 Unit tests for db app.
 """
 
+from django.core import urlresolvers
 from django.test import TestCase
 from ebpub.db.models import NewsItem, Attribute
 import datetime
@@ -28,9 +29,27 @@ class ViewTestCase(TestCase):
     "Unit tests for views.py."
     fixtures = ('crimes',)
 
+    def test_search__bad_schema(self):
+        url = urlresolvers.reverse('ebpub.db.views.search', args=['kaboom'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_search__no_query(self):
+        url = urlresolvers.reverse('ebpub.db.views.search', args=['crime'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'http://testserver/crime/')
+        response = self.client.get(url + '?type=alert')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'http://testserver/crime/')
+
     def test_search(self):
-        # response = self.client.get('')
-        pass
+        url = urlresolvers.reverse('ebpub.db.views.search', args=['crime'])
+        response = self.client.get(url + '?q=228 S. Wabash Ave.')
+        self.assertEqual(response.status_code, 200)
+        assert 'location not found' in response.content.lower()
+        # TODO: load a fixture with some locations and some news?
+
 
     def test_newsitem_detail(self):
         # response = self.client.get('')
@@ -60,9 +79,14 @@ class ViewTestCase(TestCase):
         # response = self.client.get('')
         pass
 
+class TestSchemaFilterView(TestCase):
+
+    fixtures = ('crimes',)
+
     def test_filter_choices(self):
-        # response = self.client.get('')
-        pass
+        url = urlresolvers.reverse('schema-filter', args=['crime', ''])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
     def test_filter_detail(self):
         # response = self.client.get('')
