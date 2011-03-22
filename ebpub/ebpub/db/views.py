@@ -752,7 +752,8 @@ def _schema_filter_normalize_url(request):
     # Get existing filter args from the URL.
     view, args, kwargs = urlresolvers.resolve(request.path)
     schemaslug, filter_args = args
-    filter_args = filter_args.rstrip('/')
+
+    filter_args = (filter_args or '').rstrip('/')
     new_filter_args = ''
 
     # Build new filter args.
@@ -821,7 +822,6 @@ def schema_filter(request, slug, args_from_url):
     URL (date, location, or values of SchemaFields).
     """
     view, view_args, view_kwargs = urlresolvers.resolve(request.path)
-
     new_url = _schema_filter_normalize_url(request)
     if new_url is not None:
         return HttpResponseRedirect(new_url)
@@ -874,7 +874,6 @@ def schema_filter(request, slug, args_from_url):
 
     filters = SortedDict()
     date_filter_applied = location_filter_applied = False
-
     while urlargs:
         argname, argvalues = urlargs.pop(0)
 
