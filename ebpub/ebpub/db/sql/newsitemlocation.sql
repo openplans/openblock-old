@@ -35,14 +35,6 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
                     END IF; --
                 END IF; --
             END IF; --
-            -- Update "Unknown" locations
-            INSERT INTO db_newsitemlocation (news_item_id, location_id)
-            SELECT NEW.id AS news_item_id, (SELECT id FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown') AS location_id
-            FROM db_locationtype
-            WHERE NOT EXISTS (SELECT 1 FROM db_newsitemlocation WHERE news_item_id=NEW.id)
-            AND db_locationtype.is_significant = true
-	    AND EXISTS (SELECT 1 FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown')
-	    ; --
         ELSIF (TG_OP = 'INSERT') THEN
             -- See the above comment for why this statement isn't combined into
             -- the previous one.
@@ -61,14 +53,6 @@ CREATE OR REPLACE FUNCTION update_newsitem_location() RETURNS TRIGGER AS $locati
                     SELECT NEW.id, id FROM db_location WHERE intersecting_collection(NEW.location, db_location.location); --
                 END IF; --
             END IF; --
-            -- Update "Unknown" locations
-            INSERT INTO db_newsitemlocation (news_item_id, location_id)
-            SELECT NEW.id AS news_item_id, (SELECT id FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown') AS location_id
-            FROM db_locationtype
-            WHERE NOT EXISTS (SELECT 1 FROM db_newsitemlocation WHERE news_item_id=NEW.id)
-            AND db_locationtype.is_significant = true
-	    AND EXISTS (SELECT 1 FROM db_location WHERE location_type_id=db_locationtype.id AND slug='unknown')
-	    ; --
         ELSIF (TG_OP = 'DELETE') THEN
             DELETE FROM db_newsitemlocation WHERE news_item_id = OLD.id; --
             RETURN OLD; --
