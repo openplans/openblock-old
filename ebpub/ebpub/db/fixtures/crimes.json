@@ -360,7 +360,7 @@
    "is_public": true,
    "can_collapse": false,
    "has_newsitem_detail": false,
-   "allow_charting": false,
+   "allow_charting": true,
    "uses_attributes_in_list": false,
    "number_in_overview": 5,
    "is_special_report": false
