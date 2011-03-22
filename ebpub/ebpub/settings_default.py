@@ -120,8 +120,8 @@ INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING + ('south',)
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
 # South - database migration config
-SKIP_SOUTH_TESTS=True
-SOUTH_TESTS_MIGRATE = False
+SKIP_SOUTH_TESTS = True
+SOUTH_TESTS_MIGRATE = True
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
