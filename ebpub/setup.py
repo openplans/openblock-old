@@ -42,6 +42,7 @@ setup(
     "slimmer",  # used by django-static.
     "pyrfc3339",
     "mock",
+    "South",
     ],
     dependency_links=[
     ],
