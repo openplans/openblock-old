@@ -114,10 +114,14 @@ class TestSchemaFilterView(TestCase):
         self.assertContains(response, 'Remove this filter')
 
 
-
     def test_filter_detail_month(self):
-        # response = self.client.get('')
-        pass
+        url = filter_reverse('crime', [('by-date', ('2006-11-01', '2006-11-30'))])
+        response = self.client.get(url)
+        self.assertContains(response, 'Clear')
+        self.assertNotContains(response, "HM609859")
+        self.assertContains(response, "HM694545")
+        self.assertContains(response, "HM696584")
+
 
     def test_filter_detail_day(self):
         # response = self.client.get('')
