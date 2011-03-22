@@ -1,6 +1,3 @@
-ALTER TABLE db_location ALTER COLUMN location_type_id SET STATISTICS 5;
-ALTER TABLE db_location ALTER COLUMN location SET STATISTICS 75;
-
 -- A wrapper function for ST_Intersects() that can deal with geometries of 'GeometryCollection' type.
 
 -- WARNING, it is MUCH slower than ST_Intersects() due to use of

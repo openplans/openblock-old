@@ -1,1 +1,0 @@
-ALTER TABLE db_lookup ALTER COLUMN schema_field_id SET STATISTICS 5;

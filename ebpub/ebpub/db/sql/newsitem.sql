@@ -27,6 +27,3 @@ CREATE INDEX db_attribute_int04 ON db_attribute (int04) WHERE int04 IS NOT NULL;
 CREATE INDEX db_attribute_int05 ON db_attribute (int05) WHERE int05 IS NOT NULL;
 CREATE INDEX db_attribute_int06 ON db_attribute (int06) WHERE int06 IS NOT NULL;
 CREATE INDEX db_attribute_int07 ON db_attribute (int07) WHERE int07 IS NOT NULL;
-
-ALTER TABLE db_newsitem ALTER COLUMN schema_id SET STATISTICS 5;
-ALTER TABLE db_newsitem ALTER COLUMN item_date SET STATISTICS 75;
