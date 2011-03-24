@@ -29,6 +29,7 @@ from django.core.serializers import base
 
 ####################################################################
 # Support for "natural keys" in fixtures.
+# See http://code.djangoproject.com/ticket/13252
 ####################################################################
 
 def build_instance(Model, data, db):
