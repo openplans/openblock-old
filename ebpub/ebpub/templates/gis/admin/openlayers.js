@@ -23,6 +23,9 @@
   return {{ module }}.wkt_f.read(wkt);
 };
 {{ module }}.write_wkt = function(feat){
+  // XXX FIXME somehow, on modifying an existing location,
+  // feat.geometry.components is an empty array XXX
+  // XXX check if that was true before my uncomitted changes, or always, or what
   if (({{ module }}.is_collection) && (feat.geometry.components != undefined) ){
     {{ module }}.num_geom = feat.geometry.components.length;
   } else {
