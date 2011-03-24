@@ -39,7 +39,7 @@
   if ({{ module }}.is_collection){
     var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.{{ geom_type }}());
     for (var i = 0; i < {{ module }}.layers.vector.features.length; i++){
-      feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
+      feat.geometry.addComponents({{ module }}.layers.vector.features[i].geometry.components);
     }
     {{ module }}.write_wkt(feat);
   } else {
@@ -62,7 +62,7 @@
       // vector layer so we only increment to the `num_geom` value.
       var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.{{ geom_type }}());
       for (var i = 0; i < {{ module }}.num_geom; i++){
-	feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
+	feat.geometry.addComponents({{ module }}.layers.vector.features[i].geometry.components);
       }
       {{ module }}.write_wkt(feat);
     }
