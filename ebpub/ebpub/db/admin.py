@@ -19,10 +19,13 @@
 from django.contrib.gis import admin
 from ebpub.db.forms import LocationForm
 from ebpub.db.forms import NewsItemForm
-from ebpub.db.models import Attribute, Location, LocationType, NewsItem
-from ebpub.db.models import Schema, SchemaField
+from ebpub.db.models import Attribute
+from ebpub.db.models import Location
+from ebpub.db.models import LocationType
 from ebpub.db.models import Lookup
-
+from ebpub.db.models import NewsItem
+from ebpub.db.models import Schema
+from ebpub.db.models import SchemaField
 from ebpub.geoadmin import OSMModelAdmin
 
 class AttributeInline(admin.StackedInline):
@@ -41,14 +44,12 @@ class NewsItemAdmin(OSMModelAdmin):
     search_fields = ('title', 'description',)
     form = NewsItemForm
 
-
 class LocationTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_browsable', 'is_significant')
     list_filter = ('is_browsable', 'is_significant')
 
 class LocationAdmin(OSMModelAdmin):
     form = LocationForm
-
     list_filter = ('location_type', 'city', 'is_public',)
     list_display = ('name', 'location_type', 'creation_date', 'area')
     search_fields = ('name',)
@@ -75,7 +76,6 @@ class LookupAdmin(admin.ModelAdmin):
 
 admin.site.register(Schema, SchemaAdmin)
 admin.site.register(SchemaField, SchemaFieldAdmin)
-#admin.site.register(Attribute, AttributeAdmin)
 admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(LocationType, LocationTypeAdmin)
 admin.site.register(Location, LocationAdmin)
