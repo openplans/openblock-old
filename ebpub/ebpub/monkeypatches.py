@@ -392,21 +392,6 @@ def endElement(self, name):
     self._write('</%s>\n' % name)
 
 
-####################################################################
-# Patch django.test.testcases to not blow up if a connection's
-# settings_dict lacks the SUPPORTS_TRANSACTIONS key.
-# This started failing in django 1.2.4 & 1.2.5, don't know what changed.
-####################################################################
-
-def connections_support_transactions():
-    """
-    Returns True if all connections support transactions.
-    """
-    for conn in connections.all():
-        if not conn.settings_dict.get('SUPPORTS_TRANSACTIONS', False):
-            return False
-    return True
-
 
 ####################################################################
 # End of patches.
@@ -449,8 +434,4 @@ def patch_once():
     from django.utils import xmlutils
     xmlutils.SimplerXMLGenerator.endElement = endElement
 
-    ###################################################
-    # transaction support test
-    from django.test import testcases
-    testcases.connections_support_transactions = connections_support_transactions
     _PATCHED = True
