@@ -23,6 +23,9 @@
   return {{ module }}.wkt_f.read(wkt);
 };
 {{ module }}.write_wkt = function(feat){
+  // XXX FIXME somehow, on modifying an existing location,
+  // feat.geometry.components is an empty array XXX
+  // XXX check if that was true before my uncomitted changes, or always, or what
   if (({{ module }}.is_collection) && (feat.geometry.components != undefined) ){
     {{ module }}.num_geom = feat.geometry.components.length;
   } else {
@@ -36,7 +39,7 @@
   if ({{ module }}.is_collection){
     var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.{{ geom_type }}());
     for (var i = 0; i < {{ module }}.layers.vector.features.length; i++){
-      feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
+      feat.geometry.addComponents({{ module }}.layers.vector.features[i].geometry.components);
     }
     {{ module }}.write_wkt(feat);
   } else {
@@ -59,7 +62,7 @@
       // vector layer so we only increment to the `num_geom` value.
       var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.{{ geom_type }}());
       for (var i = 0; i < {{ module }}.num_geom; i++){
-	feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
+	feat.geometry.addComponents({{ module }}.layers.vector.features[i].geometry.components);
       }
       {{ module }}.write_wkt(feat);
     }
