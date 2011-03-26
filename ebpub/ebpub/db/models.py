@@ -246,7 +246,7 @@ class LocationType(models.Model):
 
 class LocationManager(models.GeoManager):
     def get_by_natural_key(self, slug, location_type_slug):
-        return self.get(slug=slug, location_type__slug=slug)
+        return self.get(slug=slug, location_type__slug=location_type_slug)
 
 class Location(models.Model):
     name = models.CharField(max_length=255) # e.g., "35th Ward"
