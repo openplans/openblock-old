@@ -369,8 +369,6 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
         handler.addQuickElement('openblock:type', item['schema_slug'])
 
         # TODO: item_date in custom namespace
-
-        # TODO: extended attributes.
         handler.startElement(u'openblock:attributes', {})
         for key, val in item['attributes'].items():
             val = serialize_date_or_time(val) or val

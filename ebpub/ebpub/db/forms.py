@@ -21,7 +21,7 @@ from django.forms import ModelForm
 from django.contrib.gis.geos import MultiPolygon
 
 
-def clean_location_avoid_geometrycolletions(self):
+def clean_location_avoid_geometrycollections(self):
     # Workaround for bug #95: if we get a GeometryCollection,
     # save it instead as a MultiPolygon, because PostGIS doesn't support
     # using Collections for anything useful like
@@ -45,11 +45,11 @@ class LocationForm(ModelForm):
     class Meta:
         model = models.Location
 
-    clean_location = clean_location_avoid_geometrycolletions
+    clean_location = clean_location_avoid_geometrycollections
 
 
 class NewsItemForm(ModelForm):
     class Meta:
         model = models.NewsItem
 
-    clean_location = clean_location_avoid_geometrycolletions
+    clean_location = clean_location_avoid_geometrycollections

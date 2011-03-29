@@ -29,6 +29,7 @@ from django.core.serializers import base
 
 ####################################################################
 # Support for "natural keys" in fixtures.
+# See http://code.djangoproject.com/ticket/13252
 ####################################################################
 
 def build_instance(Model, data, db):
@@ -390,9 +391,12 @@ def handle_noargs(self, **options):
 def endElement(self, name):
     self._write('</%s>\n' % name)
 
+
+
 ####################################################################
 # End of patches.
 ####################################################################
+
 
 _PATCHED = False
 def patch_once():

@@ -167,7 +167,6 @@ class TestItemSearchAPI(TestCase):
 
     @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
-        import ebpub.openblockapi.views
         schema = Schema.objects.get(slug='test-schema')
 
         ext_vals = {
