@@ -298,11 +298,16 @@ def sync_all(options):
     """
     settings_mod = "%s.settings" % options.app
     settings = get_app_settings(options)
-    for dbname in settings.DATABASE_SYNC_ORDER:
+
+    sync_order = []
+    if hasattr(settings, 'DATABASE_SYNC_ORDER'):
+        sync_order = settings.DATABASE_SYNC_ORDER
+
+    for dbname in sync_order:
         sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
     for dbname in settings.DATABASES.keys():
-        if dbname not in settings.DATABASE_SYNC_ORDER:
+        if dbname not in sync_order:
             sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
 

@@ -18,32 +18,7 @@ TEMPLATE_DIRS = (os.path.join(PROJECT_DIR, 'templates'), ) + TEMPLATE_DIRS
 ROOT_URLCONF = '${project}.urls'
 
 
-# Multi-database configuration as per
-# http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
-
 DATABASES = {
-    'users': {
-        'NAME': 'openblock_${project}',
-        'USER': 'openblock',
-        'PASSWORD': 'openblock',
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'OPTIONS': {},
-        'HOST': '',
-        'PORT': '',
-        'TEST_NAME': 'test_openblock_users'
-        'TEST_DEPENDENCIES': [],
-    },
-    'metros': {
-        'NAME': 'openblock_${project}',
-        'USER': 'openblock',
-        'PASSWORD': 'openblock',
-        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'OPTIONS': {},
-        'HOST': '',
-        'PORT': '',
-        'TEST_NAME': 'test_openblock_metros'
-        'TEST_DEPENDENCIES': ['users'],
-    },
     'default': {
         'NAME': 'openblock_${project}',
         'USER': 'openblock',
@@ -56,16 +31,6 @@ DATABASES = {
         'TEST_DEPENDENCIES': ['users', 'metros'],
     },
 }
-DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
-DATABASE_ROUTES = {
-    # contenttypes and auth.* have to go in the same db as accounts.User.
-    # django ticket #12767
-    'users': ['accounts.User', 'auth.*', 'contenttypes.*'],
-    'metros': ['metros.*']
-}
-
-# Hack to ensure that `oblock sync_all` sets up databases in the right order.
-DATABASE_SYNC_ORDER = ['users', 'metros', 'default']
 
 
 #########################
