@@ -40,7 +40,7 @@ class DatabaseExtensionsTestCase(TestCase):
         settings.DEBUG = True
 
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         self.assertEquals(ni.attributes['crime_date'], datetime.date(2006, 9, 19))
         self.assertEquals(ni.attributes['crime_time'], None)
         self.assertEquals(len(connection.queries), 3)
@@ -61,7 +61,7 @@ class DatabaseExtensionsTestCase(TestCase):
         # attribute. As soon as `attributes` is assigned-to, the UPDATE query
         # is executed in the database.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         ni.attributes = dict(ni.attributes, case_number=u'Hello')
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
@@ -109,7 +109,7 @@ class DatabaseExtensionsTestCase(TestCase):
         # Setting a single attribute will result in an immediate query setting
         # just that attribute.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         ni.attributes['case_number'] = u'Hello'
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
@@ -122,7 +122,7 @@ class DatabaseExtensionsTestCase(TestCase):
     def testSetSingleAttribute3(self):
         # Setting a single attribute will result in the value being cached.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         ni.attributes['case_number'] = u'Hello'
         self.assertEquals(ni.attributes['case_number'], u'Hello')
 

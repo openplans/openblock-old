@@ -92,21 +92,20 @@ class TestSchemaFilterView(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',)
 
-
-    def test_filter_no_args(self):
+    def test_filter_by_no_args(self):
         url = filter_reverse('crime', [])
         response = self.client.get(url)
         self.assertContains(response, 'choose a location')
         self.assertContains(response, 'id="date-filtergroup"')
 
-    def test_filter_location_choices(self):
+    def test_filter_by_location_choices(self):
         url = filter_reverse('crime', [('locations', 'zipcodes')])
         response = self.client.get(url)
         self.assertContains(response, 'Select ZIP Code')
         self.assertContains(response, 'Zip 1')
         self.assertContains(response, 'Zip 2')
 
-    def test_filter_location_detail(self):
+    def test_filter_by_location_detail(self):
         url = filter_reverse('crime', [('locations', ('zipcodes', 'zip-1'))])
         response = self.client.get(url)
         self.assertContains(response, 'Zip 1')
@@ -114,15 +113,41 @@ class TestSchemaFilterView(TestCase):
         self.assertContains(response, 'Remove this filter')
 
 
-    def test_filter_detail_month(self):
+    def test_filter_by_daterange(self):
         url = filter_reverse('crime', [('by-date', ('2006-11-01', '2006-11-30'))])
         response = self.client.get(url)
         self.assertContains(response, 'Clear')
-        self.assertNotContains(response, "HM609859")
-        self.assertContains(response, "HM694545")
-        self.assertContains(response, "HM696584")
+        self.assertNotContains(response, "crime title 1")
+        self.assertContains(response, "crime title 2")
+        self.assertContains(response, "crime title 3")
 
 
-    def test_filter_detail_day(self):
-        # response = self.client.get('')
-        pass
+    def test_filter_by_day(self):
+        url = filter_reverse('crime', [('by-date', ('2006-09-26', '2006-09-26'))])
+        response = self.client.get(url)
+        self.assertContains(response, "crime title 1")
+        self.assertNotContains(response, "crime title 2")
+        self.assertNotContains(response, "crime title 3")
+
+
+    def test_filter_by_attributes(self):
+        url = filter_reverse('crime', [('by-status', ('status 9-19'))])
+        response = self.client.get(url)
+        self.assertEqual(len(response.context['newsitem_list']), 1)
+        self.assertContains(response, "crime title 1")
+        self.assertNotContains(response, "crime title 2")
+        self.assertNotContains(response, "crime title 3")
+
+    def test_filter_by_attributes__bad_value(self):
+        url = filter_reverse('crime', [('by-status', ('bogus'))])
+        response = self.client.get(url)
+        self.assertNotContains(response, "crime title ")
+
+
+    def test_filter_by_street(self):
+        url = filter_reverse('crime', [('streets', ('bogus'))])
+        response = self.client.get(url)
+        self.assertNotContains(response, "crime title ")
+
+
+

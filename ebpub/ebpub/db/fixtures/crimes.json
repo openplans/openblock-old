@@ -4,7 +4,7 @@
   "model": "db.newsitem",
   "fields": {
    "schema": 1,
-   "title": "HM609859",
+   "title": "crime title 1",
    "description": "Crime type 97 in location 66.",
    "url": "",
    "pub_date": "2006-09-26 00:00:00",
@@ -18,7 +18,7 @@
   "model": "db.newsitem",
   "fields": {
    "schema": 1,
-   "title": "HM694545",
+   "title": "crime title 2",
    "description": "Crime type 58 in location 77.",
    "url": "",
    "pub_date": "2006-11-08 00:00:00",
@@ -32,7 +32,7 @@
   "model": "db.newsitem",
   "fields": {
    "schema": 1,
-   "title": "HM696584",
+   "title": "crime title 3",
    "description": "Crime type 266 in location 32.",
    "url": "",
    "pub_date": "2006-11-08 00:00:00",
@@ -47,8 +47,8 @@
   "fields": {
    "news_item": 1,
    "schema": 1,
-   "varchar01": "HM609859",
-   "varchar02": "",
+   "varchar01": "case number 1",
+   "varchar02": "status 9-19",
    "varchar03": null,
    "varchar04": null,
    "varchar05": null,
@@ -81,8 +81,8 @@
   "fields": {
    "news_item": 2,
    "schema": 1,
-   "varchar01": "HM694545",
-   "varchar02": "",
+   "varchar01": "case number 2",
+   "varchar02": "status 11-01",
    "varchar03": null,
    "varchar04": null,
    "varchar05": null,
@@ -115,8 +115,8 @@
   "fields": {
    "news_item": 3,
    "schema": 1,
-   "varchar01": "HM696584",
-   "varchar02": "",
+   "varchar01": "case number 3",
+   "varchar02": "status 11-01b",
    "varchar03": null,
    "varchar04": null,
    "varchar05": null,
@@ -341,7 +341,7 @@
    "pretty_name_plural": "Statuses",
    "display": false,
    "is_lookup": false,
-   "is_filter": false,
+   "is_filter": true,
    "is_charted": false,
    "is_searchable": false,
    "display_order": 0
