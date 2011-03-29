@@ -23,14 +23,16 @@
   return {{ module }}.wkt_f.read(wkt);
 };
 {{ module }}.write_wkt = function(feat){
-  // XXX FIXME somehow, on modifying an existing location,
-  // feat.geometry.components is an empty array XXX
-  // XXX check if that was true before my uncomitted changes, or always, or what
   if (({{ module }}.is_collection) && (feat.geometry.components != undefined) ){
     {{ module }}.num_geom = feat.geometry.components.length;
   } else {
     {{ module }}.num_geom = 1;
   };
+  // XXX FIXME when saving a feature that's a GeometryCollection,
+  // either on edit or on initial creation,
+  // this sets the wkt blank with no points, like GEOMETRY( ),
+  // which gives a GEOS validation error from the python side.
+  // see openlayers bug http://trac.osgeo.org/openlayers/ticket/2240
   document.getElementById('{{ id }}').value = {{ module }}.get_ewkt(feat);
 };
 {{ module }}.add_wkt = function(event){
