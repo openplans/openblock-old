@@ -28,6 +28,7 @@ DATABASES = {
         'HOST': '',
         'PORT': '',
         'TEST_NAME': 'test_openblock_users'
+        'TEST_DEPENDENCIES': [],
     },
     'metros': {
         'NAME': 'openblock',
@@ -38,6 +39,7 @@ DATABASES = {
         'HOST': '',
         'PORT': '',
         'TEST_NAME': 'test_openblock_metros'
+        'TEST_DEPENDENCIES': ['users'],
     },
     'default': {
         'NAME': 'openblock',
@@ -48,6 +50,7 @@ DATABASES = {
         'HOST': '',
         'PORT': '',
         'TEST_NAME': 'test_openblock'
+        'TEST_DEPENDENCIES': ['users', 'metros'],
     },
 }
 DATABASE_ROUTERS = ['ebpub.utils.multidb.PerModelDBRouter']
