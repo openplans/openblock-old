@@ -78,6 +78,8 @@ class ViewTestCase(TestCase):
         pass
 
 def filter_reverse(slug, args):
+    # XXX This should probably turn into something real,
+    # not just a test helper.
     for i, a  in enumerate(args):
         if isinstance(a, tuple):
             args[i] = a = list(a)
@@ -123,6 +125,22 @@ class TestSchemaFilterView(TestCase):
         self.assertContains(response, "crime title 2")
         self.assertContains(response, "crime title 3")
 
+    def test_filter__only_one_date_allowed(self):
+        url = filter_reverse('crime',
+                             [('by-date', ('2006-11-01', '2006-11-30')),
+                              ('by-pub-date', ('2006-11-01', '2006-11-30'))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+    def test_filter__invalid_daterange(self):
+        url = filter_reverse('crime', [('by-date', ())])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        url = filter_reverse('crime', [('by-date', ('whoops', 'ouchie'))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
 
     def test_filter_by_day(self):
         url = filter_reverse('crime', [('by-date', ('2006-09-26', '2006-09-26'))])
@@ -140,9 +158,15 @@ class TestSchemaFilterView(TestCase):
         self.assertNotContains(response, "crime title 2")
         self.assertNotContains(response, "crime title 3")
 
+    def test_filter_by_attributes__bad_attr(self):
+        url = filter_reverse('crime', [('by-bogosity', ('anything'))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
     def test_filter_by_attributes__bad_value(self):
         url = filter_reverse('crime', [('by-status', ('bogus'))])
         response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "crime title ")
 
     def test_filter_by_street__missing_street(self):
@@ -169,16 +193,22 @@ class TestSchemaFilterView(TestCase):
         self.assert_(response['location'].endswith(fixed_url))
 
     def test_filter_by_block(self):
-        url = filter_reverse('crime', [('streets',
-                                        ('wabash-ave', '216-299n', '8-blocks'))])
+        url = filter_reverse('crime', [('streets', ('wabash-ave', '216-299n', '8-blocks'))])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_filter__only_one_location_allowed(self):
-        # XXX use locations that work
+        # XXX use a real location
         url = filter_reverse('crime', [('streets', ('wabash-ave', '216-299n', '8')),
                                        ('locations', ('anything',)),
                                        ])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
+    def test_filter__by_lookup_attr(self):
+        # XXX todo
+        pass
+
+    def test_filter__by_boolean_attr(self):
+        # XXX todo
+        pass
