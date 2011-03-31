@@ -90,7 +90,9 @@ def filter_reverse(slug, args):
 
 class TestSchemaFilterView(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',)
+    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
+                'wabash.yaml',
+                )
 
     def test_filter_by_no_args(self):
         url = filter_reverse('crime', [])
@@ -143,11 +145,40 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertNotContains(response, "crime title ")
 
-
-    def test_filter_by_street(self):
-        url = filter_reverse('crime', [('streets', ('bogus'))])
+    def test_filter_by_street__missing_street(self):
+        url = filter_reverse('crime', [('streets', ())])
         response = self.client.get(url)
-        self.assertNotContains(response, "crime title ")
+        self.assertEqual(response.status_code, 404)
 
+    def test_filter_by_street__missing_block(self):
+        url = filter_reverse('crime', [('streets', ('wabash-ave',))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
+    def test_filter_by_street__bad_block(self):
+        url = filter_reverse('crime', [('streets', ('bogus',))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    def test_filter_by_block__no_radius(self):
+        url = filter_reverse('crime', [('streets', ('wabash-ave', '216-299n'))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        fixed_url = filter_reverse('crime', [('streets',
+                                              ('wabash-ave', '216-299n', '8-blocks'))])
+        self.assert_(response['location'].endswith(fixed_url))
+
+    def test_filter_by_block(self):
+        url = filter_reverse('crime', [('streets',
+                                        ('wabash-ave', '216-299n', '8-blocks'))])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+    def test_filter__only_one_location_allowed(self):
+        # XXX use locations that work
+        url = filter_reverse('crime', [('streets', ('wabash-ave', '216-299n', '8')),
+                                       ('locations', ('anything',)),
+                                       ])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 

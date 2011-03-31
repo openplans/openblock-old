@@ -63,7 +63,16 @@ logger = logging.getLogger('ebpub.db.views')
 # HELPER FUNCTIONS (NOT VIEWS) #
 ################################
 
-radius_url = lambda radius: '%s-block%s' % (radius, radius != '1' and 's' or '')
+def radius_urlfragment(radius):
+    # XXX this should be done consistently with other filter url generation. #69
+    return '%s-block%s' % (radius, radius != '1' and 's' or '')
+
+def radius_url(url, radius):
+    """add a block radius to the url.
+    url is assumed to already end in a path segment that specifies a block.
+    """
+    # XXX this should be done consistently with other filter url generation. #69
+    return '%s,%s/' % (url.rstrip('/'), radius_urlfragment(radius))
 
 def has_staff_cookie(request):
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
@@ -328,7 +337,7 @@ def ajax_place_lookup_chart(request):
     if isinstance(place, Block):
         search_buffer = make_search_buffer(place.location.centroid, block_radius)
         qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url += radius_url(block_radius) + '/'
+        filter_url = radius_url(url, block_radius)
     else:
         qs = qs.filter(newsitemlocation__location__id=place.id)
     total_count = qs.count()
@@ -354,7 +363,7 @@ def ajax_place_date_chart(request):
     if isinstance(place, Block):
         search_buffer = make_search_buffer(place.location.centroid, block_radius)
         qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url += radius_url(block_radius) + '/'
+        filter_url = radius_url(filter_url, block_radius)
     else:
         qs = qs.filter(newsitemlocation__location__id=place.id)
     # TODO: Ignore future dates
@@ -792,7 +801,7 @@ def _schema_filter_normalize_url(request):
                 'address_choices': address_choices,
                 'address': address,
                 'radius': block_radius,
-                'radius_url': radius_url(block_radius),
+                'radius_url': radius_urlfragment(block_radius),
             })
     if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
         try:
@@ -987,7 +996,7 @@ def schema_filter(request, slug, args_from_url):
                 block_radius = argvalues.pop(0)
             except IndexError:
                 xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')  # XXX Does that work when there are multiple filters and block isn't the last?? #69
+                return HttpResponseRedirect(radius_url(request.path, block_radius))  # XXX Does that work when there are multiple filters and block isn't the last?? #69
             m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
             if not m:
                 raise Http404('Invalid block URL')
@@ -1006,7 +1015,7 @@ def schema_filter(request, slug, args_from_url):
                 'value': value,
                 'url': 'streets=%s,%s,%s' % (block.street_slug, 
                                              '%d-%d' % (block.from_num, block.to_num), 
-                                             radius_url(block_radius)),
+                                             radius_urlfragment(block_radius)),
                 'location_name': block.pretty_name,
                 'location_object': block,
             }
