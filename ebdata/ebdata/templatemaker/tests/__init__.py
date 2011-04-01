@@ -16,3 +16,19 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from django.conf import settings
+
+# Needed so `manage.py test` can find these tests.
+# Won't have the django-nose run-tests-twice problem unless
+# these modules are named test*.py
+
+#from .articletext import *
+from .brain import *
+from .clean import *
+from .hole import *
+from .htmlutils import *
+from .listdiff import *
+from .sst import *
+from .template import *
+from .textlist import *
+from .webmining import *

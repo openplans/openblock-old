@@ -58,11 +58,16 @@ multispace_re = re.compile(r'\s\s+')
 
 def norm_dict_space(d, *keys):
     """
+    Replaces 2 or more spaces with a single space, in dict values,
+    and strips leading/trailing space.
+    (Keys are not changed.)
+
     >>> d = {'name': '  john  smith ',
+    ...      'address': '  123  main st ',
     ...      ' address': ' 123  main st'}
     >>> norm_dict_space(d, 'name', 'address')
-    >>> d
-    {'name': 'john smith', 'address': '123 main st'}
+    >>> sorted(d.items())
+    [(' address', ' 123  main st'), ('address', '123 main st'), ('name', 'john smith')]
     """
     for key in keys:
         d[key] = multispace_re.sub(' ', d[key]).strip()
