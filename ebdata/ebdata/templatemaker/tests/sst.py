@@ -555,6 +555,7 @@ class TemplateExtractionTestCaseAlgorithm1(unittest.TestCase):
         )
 
     def test_multitaghole3(self):
+        # This one fails.  Bug? Wrong expectations of output? No idea. - PW
         self.assertExtracts(
             ['<div><p>Yes</p><p>No</p> Tail</div>',
              '<div><p>Yes</p><p>No</p><p>Maybe</p> Tail</div>'],

@@ -355,7 +355,10 @@ class ExtractWithHoleAtEnd(TemplatemakerExtractTestCase):
 
 class Initialization(unittest.TestCase):
     def test_string(self):
-        t = Template(brain='Y2NvcHlfcmVnCl9yZWNvbnN0cnVjdG9yCnAxCihjZXZlcnlibG9jay50ZW1wbGF0ZW1ha2VyLmJy\nYWluCkJyYWluCnAyCmNfX2J1aWx0aW5fXwpsaXN0CnAzCihscDQKZzEKKGNldmVyeWJsb2NrLnRl\nbXBsYXRlbWFrZXIuaG9sZQpIb2xlCnA1CmNfX2J1aWx0aW5fXwpvYmplY3QKcDYKTnRScDcKYVMn\nYWJjJwpwOAphZzEKKGc1Cmc2Ck50UnA5CmF0UnAxMAou\n')
+        # If this fails due to eg. module renaming, you can recreate
+        # correct output like: Brain([Hole(), 'abc', Hole()]).serialize()
+        serialized = 'gAJjZWJkYXRhLnRlbXBsYXRlbWFrZXIuYnJhaW4KQnJhaW4KcQEpgXECKGNlYmRhdGEudGVtcGxh\ndGVtYWtlci5ob2xlCkhvbGUKcQMpgXEEfXEFYlUDYWJjcQZoAymBcQd9cQhiZX1xCWIu\n'
+        t = Template(serialized)
         self.assertEqual(t.brain, [Hole(), 'abc', Hole()])
 
     def test_brain(self):

@@ -16,9 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.conf import settings
-if not settings.TEST_RUNNER.count('Nose'):
-    # Needed so `manage.py test` can find these tests.
-    # But it tricks Nose into running the tests twice.
-    from .parser import *
-    from .geocoder import *
+# Needed so the stock test runner can find these tests.
+# But watch out for files named test*py - this tricks django-noseinto loading those twice.
+from .parser import *
+from .geocoder import *

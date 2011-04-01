@@ -20,6 +20,11 @@ from listdiff import Hole # relative import
 import re
 
 class Brain(list):
+
+    # This would have been a good place for a docstring
+    # mentioning something about what the heck a Brain is for.
+    # Thanks guys.
+
     def _each_member(self):
         for s in self:
             yield isinstance(s, Hole), s
