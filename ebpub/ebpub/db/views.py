@@ -84,6 +84,9 @@ def get_schema_manager(request):
         return Schema.public_objects
 
 def block_radius_value(request):
+    """
+    Get block radius from either query string or cookie, or default.
+    """
     # Returns a tuple of (xy_radius, block_radius, cookies_to_set).
     if 'radius' in request.GET and request.GET['radius'] in BLOCK_RADIUS_CHOICES:
         block_radius = request.GET['radius']
@@ -743,9 +746,18 @@ def schema_about(request, slug):
     context['breadcrumbs'] = breadcrumbs.schema_about(context)
     return eb_render(request, 'db/schema_about.html', context)
 
+class BadAddressException(Exception):
+    def __init__(self, address, block_radius, address_choices, message=None):
+        self.address = address
+        self.block_radius = block_radius
+        self.address_choices = address_choices
+        self.message = message
 
 def _schema_filter_normalize_url(request):
     """Returns a new URL, or None if the original URL is OK.
+
+    Raises BadAddressException if the request contains an address
+    that we fail to geocode.
     """
     # Due to the way our custom filter UI works, address, date and
     # text searches sometimes come in a query string instead of in the
@@ -773,10 +785,11 @@ def _schema_filter_normalize_url(request):
         result = None
         try:
             result = SmartGeocoder().geocode(address)
-        except AmbiguousResult, e:
-            address_choices = e.choices
         except (GeocodingException, ParsingError):
-            address_choices = ()
+            raise BadAddressException(address, block_radius, address_choices=())
+        except AmbiguousResult, e:
+            raise BadAddressException(address, block_radius, address_choices=e.address_choices)
+
         if result:
             if result['block']:
                 block = result['block']
@@ -793,16 +806,17 @@ def _schema_filter_normalize_url(request):
             else:
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
             # TODO: factor out URL param format. #69
+            address_range = '%d-%d' % (block.from_num, block.to_num)
+            if block.predir:
+                address_range += block.predir
+            if block.postdir:
+                address_range += '-' + block.postdir
+            address_range = address_range.lower()
             new_filter_args = '%sstreets=%s' % (new_filter_args, ','.join(
-                    [block.street_slug, '%d-%d' % (block.from_num, block.to_num),
-                    block_radius]))
+                    [block.street_slug, address_range, block_radius]))
         else:
-            return eb_render(request, 'db/filter_bad_address.html', {
-                'address_choices': address_choices,
-                'address': address,
-                'radius': block_radius,
-                'radius_url': radius_urlfragment(block_radius),
-            })
+            raise Exception("should never get here?")
+
     if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
         try:
             start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
@@ -822,7 +836,13 @@ def _schema_filter_normalize_url(request):
         return None
 
     # TODO: factor out URL param format. #69
-    filter_args = '%s;%s' % (filter_args, new_filter_args)
+    if filter_args == 'filter':
+        filter_args = '%s/%s' % (filter_args, new_filter_args)
+    elif filter_args:
+        filter_args = '%s;%s' % (filter_args, new_filter_args)
+    else:
+        filter_args = new_filter_args
+
     return urlresolvers.reverse(view, args=[schemaslug, filter_args], kwargs=kwargs)
 
 def schema_filter(request, slug, args_from_url):
@@ -831,7 +851,15 @@ def schema_filter(request, slug, args_from_url):
     URL (date, location, or values of SchemaFields).
     """
     view, view_args, view_kwargs = urlresolvers.resolve(request.path)
-    new_url = _schema_filter_normalize_url(request)
+    try:
+        new_url = _schema_filter_normalize_url(request)
+    except BadAddressException, e:
+        return eb_render(request, 'db/filter_bad_address.html', {
+                'address_choices': e.address_choices,
+                'address': e.address,
+                'radius': e.block_radius,
+                'radius_url': radius_urlfragment(e.block_radius),
+                })
     if new_url is not None:
         return HttpResponseRedirect(new_url)
 

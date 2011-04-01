@@ -23,6 +23,12 @@ Unit tests for db.views.
 from django.core import urlresolvers
 from django.test import TestCase
 
+# Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
+from .client import RequestFactory
+
+import mock
+
+
 class ViewTestCase(TestCase):
     "Unit tests for views.py."
     fixtures = ('crimes',)
@@ -78,6 +84,7 @@ class ViewTestCase(TestCase):
         pass
 
 def filter_reverse(slug, args):
+    # Generate a reverse schema_filter URL.
     # XXX This should probably turn into something real,
     # not just a test helper.
     for i, a  in enumerate(args):
@@ -212,3 +219,42 @@ class TestSchemaFilterView(TestCase):
     def test_filter__by_boolean_attr(self):
         # XXX todo
         pass
+
+    def test_normalize_filter_url__ok(self):
+        from ebpub.db.views import _schema_filter_normalize_url
+        url = filter_reverse('crime', [('streets', ('wabash-ave', '216-299n', '8')),])
+        request = RequestFactory().get(url)
+        self.assertEqual(None, _schema_filter_normalize_url(request))
+
+    def test_normalize_filter_url__bad_address(self):
+        from ebpub.db.views import _schema_filter_normalize_url
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?address=123+nowhere+at+all&radius=8'
+
+        request = RequestFactory().get(url)
+        from ebpub.db.views import BadAddressException
+        self.assertRaises(BadAddressException,
+                          _schema_filter_normalize_url, request)
+
+    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    def test_normalize_filter_url__redirect_querystring(self, mock_geocode):
+        from ebpub.streets.models import Block
+        block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+        mock_geocode.return_value = {
+            'city': block.left_city.title(),
+            'zip': block.left_zip,
+            'point': block.geom.centroid,
+            'state': block.left_state,
+            'intersection_id': None,
+            'address': u'216 N Wabash Ave',
+            'intersection': None,
+            'block': block,
+            }
+        from ebpub.db.views import _schema_filter_normalize_url
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?address=216+n+wabash+st&radius=8'
+
+        expected_url = filter_reverse('crime', [('streets', ('wabash-ave', '216-299n', '8')),])
+        request = RequestFactory().get(url)
+        normalized_url = _schema_filter_normalize_url(request)
+        self.assertEqual(expected_url, normalized_url)
