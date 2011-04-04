@@ -22,7 +22,10 @@ from django.contrib.gis.shortcuts import render_to_kml
 from django.core import urlresolvers
 from django.core.cache import cache
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
+from django.http import Http404
+from django.http import HttpResponse
+from django.http import HttpResponseBadRequest
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
 from django.utils import dateformat, simplejson
@@ -753,6 +756,9 @@ class BadAddressException(Exception):
         self.address_choices = address_choices
         self.message = message
 
+class BadDateException(Exception):
+    pass
+
 def _schema_filter_normalize_url(request):
     """Returns a new URL, or None if the original URL is OK.
 
@@ -821,11 +827,11 @@ def _schema_filter_normalize_url(request):
         try:
             start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
             end_date = parse_date(request.GET['end_date'], '%m/%d/%Y')
-        except ValueError:
-            return '../'
+        except ValueError, e:
+            raise BadDateException(str(e))
         if start_date.year < 1900 or end_date.year < 1900:
             # This prevents strftime from throwing a ValueError.
-            raise Http404('Dates before 1900 are not supported.')
+            raise BadDateException('Dates before 1900 are not supported.')
 
         # TODO: factor out URL param format. #69
         new_filter_args = '%sby-date=%s,%s' % (new_filter_args, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
@@ -860,6 +866,9 @@ def schema_filter(request, slug, args_from_url):
                 'radius': e.block_radius,
                 'radius_url': radius_urlfragment(e.block_radius),
                 })
+    except BadDateException, e:
+        return HttpResponseBadRequest('<h1>%s</h1>' % str(e))
+
     if new_url is not None:
         return HttpResponseRedirect(new_url)
 
@@ -903,7 +912,7 @@ def schema_filter(request, slug, args_from_url):
             try:
                 argname, argvalues = param.split('=', 1)
             except ValueError:
-                raise Http404('Invalid filter parameter %r, no equals sign' % param)
+                return HttpResponseBadRequest('<h1>Invalid filter parameter %r, no equals sign</h1>' % param)
             argname = argname.strip()
             argvalues = [v.strip() for v in argvalues.split(',')]
             if argname:
@@ -917,13 +926,14 @@ def schema_filter(request, slug, args_from_url):
         # Date range
         if argname == 'by-date' or argname == 'by-pub-date':
             if date_filter_applied:
-                raise Http404('Only one date filter can be applied')
+                return HttpResponseBadRequest(
+                    '<h1>Only one date filter can be applied</h1>')
             try:
                 start_date, end_date = argvalues
                 start_date = datetime.date(*map(int, start_date.split('-')))
                 end_date = datetime.date(*map(int, end_date.split('-')))
             except (IndexError, ValueError, TypeError):
-                raise Http404('Missing or invalid date range')
+                return HttpResponseBadRequest('<h1>Missing or invalid date range</h1>')
             if argname == 'by-date':
                 date_field_name = 'item_date'
                 label = s.date_name
@@ -1010,7 +1020,8 @@ def schema_filter(request, slug, args_from_url):
         # Street/address
         elif argname.startswith('streets'):
             if location_filter_applied:
-                raise Http404('Only one location filter can be applied')
+                return HttpResponseBadRequest(
+                    '<h1>Only one location filter can be applied</h1>')
             try:
                 if get_metro()['multiple_cities']:
                     city_slug = argvalues.pop(0)
@@ -1050,10 +1061,11 @@ def schema_filter(request, slug, args_from_url):
             location_filter_applied = True
         # END OF STREETS/BLOCK FILTERING
 
-        # Location
+        # Location filtering
         elif argname.startswith('locations'):
             if location_filter_applied:
-                raise Http404('Only one location filter can be applied')
+                return HttpResponseBadRequest(
+                    '<h1>Only one location filter can be applied</h1>')
             if not argvalues:
                 raise Http404()
             location_type_slug = argvalues.pop(0)
