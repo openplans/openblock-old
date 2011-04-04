@@ -16,7 +16,11 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ebpub.utils.geodjango import iterfeatures, getfield, itergeoms, linemerge
+# TODO: most of these don't exist in utils.geodjango?
+# Or anywhere?  Does nothing use this code at all?  Looks like not.
+#from ebpub.utils.geodjango import iterfeatures, getfield, itergeoms, linemerge
+from ebpub.utils.geodjango import line_merge
+
 from collections import defaultdict
 import ogr
 
@@ -110,7 +114,7 @@ class Reducer(object):
         # Create the new features
         for key_fields, geom_list in reduced.items():
             # Sew together adjacent LineStrings
-            merged_geom = linemerge(geom_list)
+            merged_geom = line_merge(geom_list)
             subgeom_count = merged_geom.GetGeometryCount()
             if DEBUG:
                 print "Outputting %r with %s separate lines" % (key_fields[0], subgeom_count and subgeom_count or 1)
