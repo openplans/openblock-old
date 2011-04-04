@@ -250,7 +250,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "name": "beat_id",
+   "name": "beat",
    "real_name": "int02",
    "pretty_name": "Beat",
    "pretty_name_plural": "Beats",
@@ -365,5 +365,19 @@
    "number_in_overview": 5,
    "is_special_report": false
   }
+ },
+ {
+  "fields": {
+   "description": "A police beat.",
+   "code": "214",
+   "schema_field": 7,
+   "name": "Police Beat 214",
+   "slug": "beat-214"
+  },
+  "model": "db.lookup",
+  "pk": 214
  }
+
 ]
+
+

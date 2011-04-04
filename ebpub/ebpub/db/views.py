@@ -958,11 +958,13 @@ def schema_filter(request, slug, args_from_url):
 
         # Attribute filtering
         elif argname.startswith('by-'):
+
             sf_slug = argname[3:]
             try:
                 # Pop it so that we can't get subsequent lookups for this SchemaField.
                 sf = filter_sf_dict.pop(sf_slug)
             except KeyError:
+                # XXX this will be a confusing error if we already popped it.
                 raise Http404('Invalid SchemaField slug')
             # Lookup filtering
             if sf.is_lookup:

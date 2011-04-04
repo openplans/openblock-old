@@ -240,8 +240,20 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Zip 1')
 
+    def test_filter__by_bad_lookup_attr(self):
+        url = filter_reverse('crime', [('by-fleezleglop', '214', ),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
     def test_filter__by_lookup_attr(self):
-        # XXX todo
+        url = filter_reverse('crime', [('by-beat', 'beat-214', ),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Police Beat 214')
+
+    def test_filter__by_m2m_lookup_attr(self):
+        # XXX todo.
+        # I don't think there are any m2m lookups in crimes.json yet
         pass
 
     def test_filter__by_boolean_attr(self):
@@ -253,6 +265,11 @@ class TestSchemaFilterView(TestCase):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])
         request = RequestFactory().get(url)
         self.assertEqual(None, _schema_filter_normalize_url(request))
+
+
+    def test_normalize_filter_url__intersection(self):
+        # XXX todo
+        pass
 
     def test_normalize_filter_url__bad_address(self):
         from ebpub.db.views import _schema_filter_normalize_url
