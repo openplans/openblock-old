@@ -27,8 +27,10 @@ class ProgressBar(object):
     12% [====                ]
 
     >>> pbar = ProgressBar(0, 99)
-    >>> pbar(0)
-    >>> pbar(1) # &c.
+    >>> pbar(0)  #               doctest: +ELLIPSIS
+     0% [   ... ]
+    >>> pbar(1)  # ...etc.       doctest: +ELLIPSIS 
+    ... [ ... ]
     """
     def __init__(self, min_val, max_val, width=40, stdout=None):
         self.min_val = min_val
@@ -67,8 +69,10 @@ class TimedProgressBar(ProgressBar):
 
     >>> pbar = TimedProgressBar(0, 99)
     >>> pbar.start()
-    >>> pbar(0)
-    >>> pbar(1) # &c.
+    >>> pbar(0)   # doctest: +ELLIPSIS
+    ETA 00:00:00  ... ] (0.0/sec)
+    >>> pbar(1) # &c.   doctest: +ELLIPSIS
+    ETA 00:00:00  ... ] (0.0/sec)
     """
     def __init__(self, min_val, max_val, show_rate=True, width=40, stdout=None):
         ProgressBar.__init__(self, min_val, max_val, width, stdout)
