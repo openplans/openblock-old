@@ -107,7 +107,9 @@ def lookup(path):
     to the resource relative to the static media root, i.e., how it
     would be used in a reference in the HTML:
 
-    >>> lookup('/scripts/maps.js')
+    >>> lookup('no-such-file')
+    ''
+    >>> lookup('/scripts/maps.js')  #  doctest: +SKIP
     u'63fb5fa1cbdebb778b7396a522b9191a'
     """
     key = cache_key(path)
