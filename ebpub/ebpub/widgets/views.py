@@ -33,10 +33,10 @@ def _render_widget(widget):
     # TODO: cache template compilation
     t = Template(widget.template.code)
     return t.render(Context(info))
-    
-def _template_ctx(newsitem, widget):
+
+def template_context_for_item(newsitem):
     # try to make something ... reasonable for use in 
-    # widget templates. 
+    # templates. 
     ctx = {
         'attributes': [],
         'attributes_by_name': {},
@@ -66,15 +66,24 @@ def _template_ctx(newsitem, widget):
     ctx['description'] = newsitem.description
     ctx['pub_date'] = newsitem.pub_date
     ctx['item_date'] = newsitem.item_date
-    ctx['location'] = {
-        'lat': newsitem.location.x,
-        'lon': newsitem.location.y,
-        'name': newsitem.location_name
-    }
+    ctx['location'] = {}
+    if newsitem.location: 
+        ctx['location']['lat'] = newsitem.location.x,
+        ctx['location']['lon'] = newsitem.location.y
+    ctx['location']['name'] = newsitem.location_name
+
+    ctx['external_url'] =  newsitem.url
+    if newsitem.schema.has_newsitem_detail:
+        ctx['internal_url'] = 'http://' + settings.EB_DOMAIN + newsitem.item_url()
+
+    return ctx
+
+def _template_ctx(newsitem, widget):
+    ctx = template_context_for_item(newsitem)
+    # now to extra widgety-stuff
     ctx['external_url'] = _mutate_link(newsitem.url, widget)
     if newsitem.schema.has_newsitem_detail:
         ctx['internal_url'] = _mutate_link('http://' + settings.EB_DOMAIN + newsitem.item_url(), widget)
-
     return ctx
     
 def _mutate_link(url, widget): 
