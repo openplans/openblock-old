@@ -94,7 +94,9 @@ class Scraper(NewsItemListDetailScraper):
         record['location'] = smart_title(record['location'].strip())
         record['date'] = parse_date(record['date'].strip(), '%Y-%m-%d')
         if (record['name'].upper(), record['location'].upper()) in BUSINESS_NAMES_TO_IGNORE:
-            raise SkipRecord('Skipping %s' % record['name'])
+            raise SkipRecord('Skipping %s (explicitly ignored)' % record['name'])
+        if (record['location'] == ''):
+            raise SkipRecord('Skipping %s (no location)' % record['name'])
         return record
 
     def existing_record(self, list_record):
