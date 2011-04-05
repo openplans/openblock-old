@@ -30,7 +30,7 @@ from ebpub.db.views import BadAddressException
 from client import RequestFactory
 
 import mock
-
+import urllib
 
 class ViewTestCase(TestCase):
     "Unit tests for views.py."
@@ -96,7 +96,7 @@ def filter_reverse(slug, args):
             if len(a) > 1:
                 name = a[0]
                 values = ','.join(a[1:])
-                args[i] = '%s=%s' % (name, values)
+                args[i] = urllib.quote('%s=%s' % (name, values))
             else:
                 raise ValueError("param %s has no values" % a[0])
         else:
@@ -209,7 +209,7 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 302)
         fixed_url = filter_reverse('crime', [
                 ('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
-        self.assert_(response['location'].endswith(fixed_url))
+        self.assert_(response['location'].endswith(urllib.unquote(fixed_url)))
 
     def test_filter_by_block(self):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
@@ -382,3 +382,11 @@ class TestNormalizeSchemaFilterView(TestCase):
         expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
         self.assertEqual(result, expected)
 
+
+    def test_normalize_filter_url__textsearch_query(self):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?textsearch=foo&q=hello+goodbye'
+        request = RequestFactory().get(url)
+        result = _schema_filter_normalize_url(request)
+        expected = filter_reverse('crime', [('by-foo', 'hello goodbye')])
+        self.assertEqual(result, expected)

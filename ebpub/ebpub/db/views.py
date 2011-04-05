@@ -838,7 +838,7 @@ def _schema_filter_normalize_url(request):
         new_filter_args = '%sby-date=%s,%s' % (new_filter_args, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
     if request.GET.get('textsearch', '').strip() and request.GET.get('q', '').strip():
         # TODO: factor out URL param format. #69
-        new_filter_args = '%sby-%s=%s' % (new_filter_args, request.GET['textsearch'], urllib.quote(request.GET['q']))
+        new_filter_args = '%sby-%s=%s' % (new_filter_args, request.GET['textsearch'], request.GET['q'])
     if not new_filter_args:
         return None
 
@@ -849,7 +849,7 @@ def _schema_filter_normalize_url(request):
         filter_args = '%s;%s' % (filter_args, new_filter_args)
     else:
         filter_args = new_filter_args
-
+    filter_args = urllib.quote(filter_args)
     return urlresolvers.reverse(view, args=[schemaslug, filter_args], kwargs=kwargs)
 
 def schema_filter(request, slug, args_from_url):
