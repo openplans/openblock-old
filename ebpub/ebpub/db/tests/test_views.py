@@ -99,7 +99,9 @@ def filter_reverse(slug, args):
                 values = ','.join(a[1:])
                 args[i] = '%s=%s' % (name, values)
             else:
-                raise ValueError("param %s has no values" % a[0])
+                # This is allowed eg. for showing a list of available
+                # Blocks, or Lookup values, etc.
+                args[i] = a[0]
         else:
             assert isinstance(a, basestring)
     argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
@@ -143,8 +145,49 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template[0].name, 'db/filter_bad_address.html')
 
+    @mock.patch('ebpub.db.views._schema_filter_normalize_url')
+    def test_filter__normalized_redirect(self, mock_normalize):
+        mock_normalize.return_value = 'http://example.com/whee'
+        url = filter_reverse('crime', [('by-foo', 'bar')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'], 'http://example.com/whee')
+
+    def test_filter__charting_disallowed_redirect(self):
+        # could make a different fixture, but, meh.
+        from ebpub.db import models
+        crime = models.Schema.objects.get(slug='crime')
+        crime.allow_charting = False
+        crime.save()
+        url = filter_reverse('crime', [('by-foo', 'bar')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response['location'], 'http://testserver/crime/')
+
+    @mock.patch('ebpub.db.views._schema_filter_normalize_url')
+    def test_filter_bad_date(self, mock_normalize):
+        from ebpub.db.views import BadDateException
+        mock_normalize.side_effect = BadDateException("oh no")
+        url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+
+    def test_filter__bad_params(self):
+        url = filter_reverse('crime', [('by-foo', 'bar')])
+        url = url.replace(urllib.quote('='), 'X')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 400)
+
     def test_filter_by_daterange(self):
         url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
+        response = self.client.get(url)
+        self.assertContains(response, 'Clear')
+        self.assertNotContains(response, "crime title 1")
+        self.assertContains(response, "crime title 2")
+        self.assertContains(response, "crime title 3")
+
+    def test_filter_by_pubdate_daterange(self):
+        url = filter_reverse('crime', [('by-pub-date', '2006-11-01', '2006-11-30')])
         response = self.client.get(url)
         self.assertContains(response, 'Clear')
         self.assertNotContains(response, "crime title 1")
@@ -264,12 +307,19 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Police Beat 214')
 
+    def test_filter__by_lookup__not_specified(self):
+        url = filter_reverse('crime', [('by-beat', ''),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template[0].name, 'db/filter_lookup_list.html')
+
+
     def test_filter__by_m2m_lookup_attr(self):
         # XXX todo.
         # I don't think there are any m2m lookups in crimes.json yet
         pass
 
-    def test_filter__by_boolean_attr(self):
+    def test_filter__by_boolean_attr__true(self):
         url = filter_reverse('crime', [('by-arrests', 'yes',),])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -277,12 +327,28 @@ class TestSchemaFilterView(TestCase):
         self.assertNotContains(response, 'crime title 1')
         self.assertNotContains(response, 'crime title 3')
 
+    def test_filter__by_boolean_attr__false(self):
         url = filter_reverse('crime', [('by-arrests', 'no',),])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'crime title 2')
         self.assertContains(response, 'crime title 1')
         self.assertContains(response, 'crime title 3')
+
+    def test_filter__by_boolean__invalid(self):
+        url = filter_reverse('crime', [('by-arrests', 'yes', 'no'),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        url = filter_reverse('crime', [('by-arrests', 'maybe'),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+
+    def test_filter__by_boolean__unspecified(self):
+        url = filter_reverse('crime', [('by-arrests', '')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template[0].name, 'db/filter_lookup_list.html')
 
 
 class TestNormalizeSchemaFilterView(TestCase):

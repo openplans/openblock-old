@@ -910,8 +910,6 @@ def schema_filter(request, slug, args_from_url):
     urlargs = []
     if args_from_url and args_from_url != 'filter':
         for param in args_from_url.split(';'):
-            if not param:
-                continue
             try:
                 argname, argvalues = param.split('=', 1)
             except ValueError:
@@ -925,7 +923,7 @@ def schema_filter(request, slug, args_from_url):
     date_filter_applied = location_filter_applied = False
     while urlargs:
         argname, argvalues = urlargs.pop(0)
-
+        argvalues = [v for v in argvalues if v]
         # Date range
         if argname == 'by-date' or argname == 'by-pub-date':
             if date_filter_applied:
