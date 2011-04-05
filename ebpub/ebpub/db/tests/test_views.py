@@ -286,10 +286,21 @@ class TestNormalizeSchemaFilterView(TestCase):
         request = RequestFactory().get(url)
         self.assertEqual(None, _schema_filter_normalize_url(request))
 
+    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    def test_normalize_filter_url__intersection(self, mock_geocode):
+        from ebpub.streets.models import Block, Intersection, BlockIntersection
+        intersection = mock.Mock(spec=Intersection)
+        blockintersection = mock.Mock(spec=BlockIntersection)
+        blockintersection.block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+        intersection.blockintersection_set.all.return_value = [blockintersection]
+        mock_geocode.return_value = {'intersection': intersection,
+                                     'block': None}
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+        request = RequestFactory().get(url)
+        result = _schema_filter_normalize_url(request)
+        expected = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])
+        self.assertEqual(result, expected)
 
-    def test_normalize_filter_url__intersection(self):
-        # XXX todo
-        pass
 
     def test_normalize_filter_url__bad_address(self):
         from ebpub.db.views import _schema_filter_normalize_url
