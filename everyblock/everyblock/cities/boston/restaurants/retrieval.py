@@ -117,7 +117,12 @@ class RestaurantScraper(NewsItemListDetailScraper):
 
         result = self.get_or_create_lookup('result', list_record['result'], list_record['result'])
         violation_lookups = [self.get_or_create_lookup('violation', v['description'], v['code'], make_text_slug=False) for v in detail_record['violation_list']]
+
         violation_lookup_text = ','.join([str(v.id) for v in violation_lookups])
+        if len(violation_lookup_text) > 255: 
+            violation_lookup_text = violation_lookup_text[0:255]
+            violation_lookup_text = violation_lookup_text[0:violation_lookup_text.rindex(',')]
+            self.logger.error('Restaurant %r had too many violations to store, skipping some!', list_record['restaurant_name'])
 
         # There's a bunch of data about every particular violation, and we
         # store it as a JSON object. Here, we create the JSON object.
@@ -134,14 +139,18 @@ class RestaurantScraper(NewsItemListDetailScraper):
             'violation': violation_lookup_text,
             'details': violations_json,
         }
-        self.create_newsitem(
-            attributes,
-            title=title,
-            url=detail_url(list_record['inspection_id']),
-            item_date=list_record['inspection_date'],
-            location_name=list_record['address'],
-        )
-
+        try: 
+            self.create_newsitem(
+                attributes,
+                title=title,
+                url=detail_url(list_record['inspection_id']),
+                item_date=list_record['inspection_date'],
+                location_name=list_record['address'],
+            )
+        except:
+            import traceback;
+            self.logger.error("Error storing inspection for %s: %s" % (list_record.get('restaurant_name', 'Unknown'), traceback.format_exc()) 
+            
 if __name__ == "__main__":
     from ebdata.retrieval import log_debug
     RestaurantScraper().update()

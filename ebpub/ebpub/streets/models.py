@@ -333,11 +333,10 @@ class StreetMisspelling(models.Model):
 
 # A generic place, like "Millennium Park" or "Sears Tower"
 class Place(models.Model):
-    # XXX Is this actually used for anything? doesn't look like it?
     pretty_name = models.CharField(max_length=255)
-    normalized_name = models.CharField(max_length=255) # Always uppercase, single spaces
+    normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
     address = models.CharField(max_length=255, blank=True)
-    location = models.GeometryField()
+    location = models.PointField()
     objects = models.GeoManager()
 
     def __unicode__(self):
