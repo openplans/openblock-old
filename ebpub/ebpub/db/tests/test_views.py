@@ -204,25 +204,25 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_filter_by_block__no_radius(self):
-        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n')])
+        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
         fixed_url = filter_reverse('crime', [
-                ('streets', 'wabash-ave', '216-299n', '8-blocks')])
+                ('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
         self.assert_(response['location'].endswith(fixed_url))
 
     def test_filter_by_block(self):
-        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8-blocks')])
+        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
     def test_filter__only_one_location_allowed(self):
-        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),
+        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),
                                        ('locations', 'zipcodes', 'zip-1'),
                                        ])
         response = self.client.get(url)
         url = filter_reverse('crime', [('locations', 'zipcodes', 'zip-1'),
-                                       ('streets', 'wabash-ave', '216-299n', '8')
+                                       ('streets', 'wabash-ave', '216-299n-s', '8')
                                        ])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 400)
@@ -297,7 +297,7 @@ class TestNormalizeSchemaFilterView(TestCase):
                                      'block': None}
         request = RequestFactory().get(url)
         result = _schema_filter_normalize_url(request)
-        expected = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])
+        expected = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),])
 
         self.assertEqual(result, expected)
 
@@ -339,7 +339,7 @@ class TestNormalizeSchemaFilterView(TestCase):
         self.assertRaises(BadAddressException, _schema_filter_normalize_url, request)
 
     @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
-    def test_normalize_filter_url__redirect_querystring(self, mock_geocode):
+    def test_normalize_filter_url__address_query(self, mock_geocode):
         from ebpub.streets.models import Block
         block = Block.objects.get(street_slug='wabash-ave', from_num=216)
         mock_geocode.return_value = {
@@ -356,19 +356,29 @@ class TestNormalizeSchemaFilterView(TestCase):
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
         url += '?address=216+n+wabash+st&radius=8'
 
-        expected_url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])
+        expected_url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),])
         request = RequestFactory().get(url)
         normalized_url = _schema_filter_normalize_url(request)
         self.assertEqual(expected_url, normalized_url)
 
     def test_normalize_filter_url__bad_dates(self):
+        from ebpub.db.views import BadDateException
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-        response = self.client.get(url + '?start_date=12/31/1899&end_date=01/01/2011')
-        self.assertEqual(response.status_code, 400)
+        request = RequestFactory().get(url + '?start_date=12/31/1899&end_date=01/01/2011')
+        self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
 
-        response = self.client.get(url + '?start_date=01/01/2011&end_date=12/31/1899')
-        self.assertEqual(response.status_code, 400)
+        request = RequestFactory().get(url + '?start_date=01/01/2011&end_date=12/31/1899')
+        self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
 
-        response = self.client.get(url + '?start_date=Whoops&end_date=Bzorch')
-        self.assertEqual(response.status_code, 400)
+        request = RequestFactory().get(url + '?start_date=Whoops&end_date=Bzorch')
+        self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+
+
+    def test_normalize_filter_url__date_query(self):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?start_date=12/01/2010&end_date=01/01/2011'
+        request = RequestFactory().get(url)
+        result = _schema_filter_normalize_url(request)
+        expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
+        self.assertEqual(result, expected)
 
