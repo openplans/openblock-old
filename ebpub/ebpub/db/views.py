@@ -808,8 +808,10 @@ def _schema_filter_normalize_url(request):
                     # same blockintersection_set query, so it would
                     # raise an IndexError here if there was no
                     # matching block.  Preserving that behavior.
+                    # XXX should this be BadAddressException?
                     raise
             else:
+                # XXX todo: should this be BadAddressException?
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
             # TODO: factor out URL param format. #69
             address_range = '%d-%d' % (block.from_num, block.to_num)

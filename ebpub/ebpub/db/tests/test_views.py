@@ -277,8 +277,7 @@ class TestSchemaFilterView(TestCase):
 
 class TestNormalizeSchemaFilterView(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
-                'wabash.yaml',
+    fixtures = ('test-locationtypes.json', 'test-locations.json', 'wabash.yaml',
                 )
 
     def test_normalize_filter_url__ok(self):
@@ -288,6 +287,7 @@ class TestNormalizeSchemaFilterView(TestCase):
 
     @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
     def test_normalize_filter_url__intersection(self, mock_geocode):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
         from ebpub.streets.models import Block, Intersection, BlockIntersection
         intersection = mock.Mock(spec=Intersection)
         blockintersection = mock.Mock(spec=BlockIntersection)
@@ -295,11 +295,28 @@ class TestNormalizeSchemaFilterView(TestCase):
         intersection.blockintersection_set.all.return_value = [blockintersection]
         mock_geocode.return_value = {'intersection': intersection,
                                      'block': None}
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
         request = RequestFactory().get(url)
         result = _schema_filter_normalize_url(request)
         expected = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])
+
         self.assertEqual(result, expected)
+
+    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    def test_normalize_filter_url__bad_intersection(self, mock_geocode):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+        from ebpub.streets.models import Block, Intersection, BlockIntersection
+        intersection = mock.Mock(spec=Intersection)
+        blockintersection = mock.Mock(spec=BlockIntersection)
+        blockintersection.block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+        mock_geocode.return_value = {'intersection': intersection,
+                                     'block': None}
+        # Empty intersection list.
+        intersection.blockintersection_set.all.return_value = []
+        request = RequestFactory().get(url)
+        self.assertRaises(IndexError, _schema_filter_normalize_url, request)
+        # Or, no block or intersection at all.
+        mock_geocode.return_value = {'intersection': None, 'block': None}
+        self.assertRaises(NotImplementedError, _schema_filter_normalize_url, request)
 
 
     def test_normalize_filter_url__bad_address(self):
