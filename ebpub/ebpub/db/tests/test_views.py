@@ -31,6 +31,7 @@ from client import RequestFactory
 
 import mock
 import urllib
+import posixpath
 
 class ViewTestCase(TestCase):
     "Unit tests for views.py."
@@ -102,8 +103,11 @@ def filter_reverse(slug, args):
         else:
             assert isinstance(a, basestring)
     argstring = ';'.join(args) #['%s=%s' % (k, v) for (k, v) in args])
-    url = urlresolvers.reverse('ebpub-schema-filter', args=[slug, 'filter'])
-    url = '%s%s/' % (url, argstring)
+    url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
+    url = '%s/%s/' % (url, argstring)
+    # Normalize duplicate slashes, dots, and the like.
+    url = posixpath.normpath(url) + '/'
+    print "\n" + url
     return url
 
 class TestSchemaFilterView(TestCase):

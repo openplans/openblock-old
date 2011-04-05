@@ -843,12 +843,14 @@ def _schema_filter_normalize_url(request):
         return None
 
     # TODO: factor out URL param format. #69
-    if filter_args == 'filter':
-        filter_args = '%s/%s' % (filter_args, new_filter_args)
-    elif filter_args:
+    if filter_args.startswith('filter'):
+        # Normalize to NOT include 'filter/'. I guess.
+        filter_args = filter_args[6:]
+    filter_args = filter_args.lstrip('/')
+    if filter_args:
         filter_args = '%s;%s' % (filter_args, new_filter_args)
     else:
-        filter_args = new_filter_args
+        filter_args =  new_filter_args
     filter_args = urllib.quote(filter_args)
     return urlresolvers.reverse(view, args=[schemaslug, filter_args], kwargs=kwargs)
 
