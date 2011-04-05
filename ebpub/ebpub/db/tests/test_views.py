@@ -97,17 +97,16 @@ def filter_reverse(slug, args):
             if len(a) > 1:
                 name = a[0]
                 values = ','.join(a[1:])
-                args[i] = urllib.quote('%s=%s' % (name, values))
+                args[i] = '%s=%s' % (name, values)
             else:
                 raise ValueError("param %s has no values" % a[0])
         else:
             assert isinstance(a, basestring)
-    argstring = ';'.join(args) #['%s=%s' % (k, v) for (k, v) in args])
+    argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
     url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
     url = '%s/%s/' % (url, argstring)
     # Normalize duplicate slashes, dots, and the like.
     url = posixpath.normpath(url) + '/'
-    print "\n" + url
     return url
 
 class TestSchemaFilterView(TestCase):
@@ -136,6 +135,13 @@ class TestSchemaFilterView(TestCase):
         self.assertNotContains(response, 'Zip 2')
         self.assertContains(response, 'Remove this filter')
 
+    @mock.patch('ebpub.db.views._schema_filter_normalize_url')
+    def test_filter_by_bad_address(self, mock_normalize):
+        mock_normalize.side_effect = BadAddressException('123 somewhere', 3, ['foo', 'bar'])
+        url = filter_reverse('crime', [('by-foo', 'bar')]) + '?address=foofoo'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.template[0].name, 'db/filter_bad_address.html')
 
     def test_filter_by_daterange(self):
         url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
@@ -393,4 +399,13 @@ class TestNormalizeSchemaFilterView(TestCase):
         request = RequestFactory().get(url)
         result = _schema_filter_normalize_url(request)
         expected = filter_reverse('crime', [('by-foo', 'hello goodbye')])
+        self.assertEqual(result, expected)
+
+    def test_normalize_filter_url__both_args_and_query(self):
+        url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
+        url += '?textsearch=foo&q=bar'
+        request = RequestFactory().get(url)
+        result = _schema_filter_normalize_url(request)
+        expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
+                                            ('by-foo', 'bar')])
         self.assertEqual(result, expected)
