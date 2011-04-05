@@ -97,7 +97,7 @@
    "datetime02": null,
    "datetime03": null,
    "datetime04": null,
-   "bool01": false,
+   "bool01": true,
    "bool02": false,
    "bool03": true,
    "bool04": null,
@@ -205,7 +205,7 @@
    "pretty_name_plural": "Arrests",
    "display": true,
    "is_lookup": false,
-   "is_filter": false,
+   "is_filter": true,
    "is_charted": false,
    "is_searchable": false,
    "display_order": 4
@@ -377,7 +377,6 @@
   "model": "db.lookup",
   "pk": 214
  }
-
 ]
 
 

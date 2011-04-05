@@ -791,10 +791,10 @@ def _schema_filter_normalize_url(request):
         result = None
         try:
             result = SmartGeocoder().geocode(address)
+        except AmbiguousResult, e:
+            raise BadAddressException(address, block_radius, address_choices=e.choices)
         except (GeocodingException, ParsingError):
             raise BadAddressException(address, block_radius, address_choices=())
-        except AmbiguousResult, e:
-            raise BadAddressException(address, block_radius, address_choices=e.address_choices)
 
         if result:
             if result['block']:
@@ -958,7 +958,6 @@ def schema_filter(request, slug, args_from_url):
 
         # Attribute filtering
         elif argname.startswith('by-'):
-
             sf_slug = argname[3:]
             try:
                 # Pop it so that we can't get subsequent lookups for this SchemaField.
@@ -991,15 +990,16 @@ def schema_filter(request, slug, args_from_url):
                 if len(argvalues) > 1:
                     raise Http404("Invalid boolean arg %r" % ','.join(argvalues))
                 elif len(argvalues) == 1:
-                    boolslug = argvalues[1]
+                    boolslug = argvalues[0]
                     try:
                         real_val = {'yes': True, 'no': False, 'na': None}[boolslug]
                     except KeyError:
-                        raise Http404('Invalid boolean field URL')
+                        raise Http404('Invalid boolean value %r' % boolslug)
                     qs = qs.by_attribute(sf, real_val)
                     value = {True: 'Yes', False: 'No', None: 'N/A'}[real_val]
                     filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s=%s' % (sf.slug, boolslug)}
                 else:
+                    # No args.
                     filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
                     context.update({
                         'schema': s,

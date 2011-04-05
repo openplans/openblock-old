@@ -23,8 +23,11 @@ Unit tests for db.views.
 from django.core import urlresolvers
 from django.test import TestCase
 
+from ebpub.db.views import _schema_filter_normalize_url
+from ebpub.db.views import BadAddressException
+
 # Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
-from .client import RequestFactory
+from client import RequestFactory
 
 import mock
 
@@ -257,11 +260,28 @@ class TestSchemaFilterView(TestCase):
         pass
 
     def test_filter__by_boolean_attr(self):
-        # XXX todo
-        pass
+        url = filter_reverse('crime', [('by-arrests', 'yes',),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'crime title 2')
+        self.assertNotContains(response, 'crime title 1')
+        self.assertNotContains(response, 'crime title 3')
+
+        url = filter_reverse('crime', [('by-arrests', 'no',),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'crime title 2')
+        self.assertContains(response, 'crime title 1')
+        self.assertContains(response, 'crime title 3')
+
+
+class TestNormalizeSchemaFilterView(TestCase):
+
+    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
+                'wabash.yaml',
+                )
 
     def test_normalize_filter_url__ok(self):
-        from ebpub.db.views import _schema_filter_normalize_url
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])
         request = RequestFactory().get(url)
         self.assertEqual(None, _schema_filter_normalize_url(request))
@@ -277,9 +297,18 @@ class TestSchemaFilterView(TestCase):
         url += '?address=123+nowhere+at+all&radius=8'
 
         request = RequestFactory().get(url)
-        from ebpub.db.views import BadAddressException
         self.assertRaises(BadAddressException,
                           _schema_filter_normalize_url, request)
+
+
+    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    def test_normalize_filter_url__ambiguous_address(self, mock_geocode):
+        from ebpub.geocoder import AmbiguousResult
+        mock_geocode.side_effect = AmbiguousResult(['foo', 'bar'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?address=anything' # doesn't matter because of mock_geocode
+        request = RequestFactory().get(url)
+        self.assertRaises(BadAddressException, _schema_filter_normalize_url, request)
 
     @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
     def test_normalize_filter_url__redirect_querystring(self, mock_geocode):
@@ -314,3 +343,4 @@ class TestSchemaFilterView(TestCase):
 
         response = self.client.get(url + '?start_date=Whoops&end_date=Bzorch')
         self.assertEqual(response.status_code, 400)
+
