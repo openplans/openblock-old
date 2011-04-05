@@ -415,7 +415,7 @@ def ajax_location(request, loc_id):
 
 
 def homepage(request):
-    """A slimmed-down version of ebpub.db.views.homepage.
+    """Front page of the default OpenBlock theme.
     """
 
     end_date = today()
