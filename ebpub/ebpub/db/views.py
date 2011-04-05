@@ -796,34 +796,33 @@ def _schema_filter_normalize_url(request):
         except (GeocodingException, ParsingError):
             raise BadAddressException(address, block_radius, address_choices=())
 
-        if result:
-            if result['block']:
-                block = result['block']
-            elif result['intersection']:
-                try:
-                    block = result['intersection'].blockintersection_set.all()[0].block
-                except IndexError:
-                    # XXX Not sure this was deliberate, but we used to
-                    # call intersection.url() here, which does that
-                    # same blockintersection_set query, so it would
-                    # raise an IndexError here if there was no
-                    # matching block.  Preserving that behavior.
-                    # XXX should this be BadAddressException?
-                    raise
-            else:
-                # XXX todo: should this be BadAddressException?
-                raise NotImplementedError('Reached invalid geocoding type: %r' % result)
-            # TODO: factor out URL param format. #69
-            address_range = '%d-%d' % (block.from_num, block.to_num)
-            if block.predir:
-                address_range += block.predir
-            if block.postdir:
-                address_range += '-' + block.postdir
-            address_range = address_range.lower()
-            new_filter_args = '%sstreets=%s' % (new_filter_args, ','.join(
-                    [block.street_slug, address_range, block_radius]))
+        assert result
+        if result['block']:
+            block = result['block']
+        elif result['intersection']:
+            try:
+                block = result['intersection'].blockintersection_set.all()[0].block
+            except IndexError:
+                # XXX Not sure this was deliberate, but we used to
+                # call intersection.url() here, which does that
+                # same blockintersection_set query, so it would
+                # raise an IndexError here if there was no
+                # matching block.  Preserving that behavior.
+                # XXX should this be BadAddressException?
+                raise
         else:
-            raise Exception("should never get here?")
+            # XXX todo: should this be BadAddressException?
+            raise NotImplementedError('Reached invalid geocoding type: %r' % result)
+        # TODO: factor out URL param format. #69
+        address_range = '%d-%d' % (block.from_num, block.to_num)
+        if block.predir:
+            address_range += block.predir
+        if block.postdir:
+            address_range += '-' + block.postdir
+        address_range = address_range.lower()
+        new_filter_args = '%sstreets=%s' % (new_filter_args, ','.join(
+                [block.street_slug, address_range, block_radius]))
+    # End of address handling.
 
     if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
         try:
