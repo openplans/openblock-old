@@ -105,6 +105,8 @@ def filter_reverse(slug, args):
         else:
             assert isinstance(a, basestring)
     argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
+    if not argstring:
+        argstring = 'filter'
     url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
     url = '%s/%s/' % (url, argstring)
     # Normalize duplicate slashes, dots, and the like.
@@ -377,9 +379,17 @@ class TestSchemaFilterView(TestCase):
             self.assertEqual(lookup_info['has_more'], True)
 
     def test_filter__pagination__invalid_page(self):
-        url = filter_reverse('crime', [('by-foo', 'bar')]) + '?page=oops'
+        url = filter_reverse('crime', []) + '?page=oops'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+    def test_filter__pagination__empty_page(self):
+        # XXX TODO lines 1158
+        pass
+
+    def test_filter__pagination__has_more(self):
+        # XXX TODO lines 1160-61
+
 
 class TestNormalizeSchemaFilterView(TestCase):
 
