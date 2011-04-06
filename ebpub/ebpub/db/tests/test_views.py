@@ -389,7 +389,7 @@ class TestSchemaFilterView(TestCase):
 
     def test_filter__pagination__has_more(self):
         # XXX TODO lines 1160-61
-
+        pass
 
 class TestNormalizeSchemaFilterView(TestCase):
 
