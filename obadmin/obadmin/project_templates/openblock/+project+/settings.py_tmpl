@@ -27,8 +27,7 @@ DATABASES = {
         'OPTIONS': {},
         'HOST': '',
         'PORT': '',
-        'TEST_NAME': 'test_openblock'
-        'TEST_DEPENDENCIES': ['users', 'metros'],
+        'TEST_NAME': 'test_openblock',
     },
 }
 
