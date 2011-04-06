@@ -308,11 +308,11 @@ def sync_all(options):
         sync_order = settings.DATABASE_SYNC_ORDER
 
     for dbname in sync_order:
-        sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
+        sh("django-admin.py syncdb --migrate --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
     for dbname in settings.DATABASES.keys():
         if dbname not in sync_order:
-            sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
+            sh("django-admin.py syncdb --migrate --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
 
 @task
