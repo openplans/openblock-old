@@ -343,7 +343,7 @@
    "is_lookup": false,
    "is_filter": true,
    "is_charted": false,
-   "is_searchable": false,
+   "is_searchable": true,
    "display_order": 0
   }
  },

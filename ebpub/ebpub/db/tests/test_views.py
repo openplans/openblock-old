@@ -222,13 +222,19 @@ class TestSchemaFilterView(TestCase):
         self.assertNotContains(response, "crime title 3")
 
 
-    def test_filter_by_attributes(self):
+    def test_filter_by_attributes__text(self):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
         response = self.client.get(url)
         self.assertEqual(len(response.context['newsitem_list']), 1)
         self.assertContains(response, "crime title 1")
         self.assertNotContains(response, "crime title 2")
         self.assertNotContains(response, "crime title 3")
+
+
+    def test_filter_by_attributes__text__empty(self):
+        url = filter_reverse('crime', [('by-status', '')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
     def test_filter_by_attributes__bad_attr(self):
         url = filter_reverse('crime', [('by-bogosity', 'anything')])
@@ -255,6 +261,11 @@ class TestSchemaFilterView(TestCase):
         url = filter_reverse('crime', [('streets', 'bogus',)])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
+
+        url = filter_reverse('crime', [('streets', 'bogus street', 'bogus block', '8-blocks')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
 
     def test_filter_by_block__no_radius(self):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s')])
@@ -313,7 +324,6 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template[0].name, 'db/filter_lookup_list.html')
 
-
     def test_filter__by_m2m_lookup_attr(self):
         # XXX todo.
         # I don't think there are any m2m lookups in crimes.json yet
@@ -350,6 +360,21 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template[0].name, 'db/filter_lookup_list.html')
 
+    def test_filter__invalid_argname(self):
+        url = filter_reverse('crime', [('bogus-key', 'bogus-value')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch('ebpub.db.models.AggregateFieldLookup.objects.filter')
+    def test_filter__has_more(self, mock_aggr):
+        mock_aggr().select_related().order_by.return_value = [mock.Mock()] * 100
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        lookup_list = response.context['lookup_list']
+        self.assert_(lookup_list)
+        for lookup_info in lookup_list:
+            self.assertEqual(lookup_info['has_more'], True)
 
 class TestNormalizeSchemaFilterView(TestCase):
 

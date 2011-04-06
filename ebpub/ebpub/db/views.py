@@ -646,6 +646,7 @@ def schema_detail(request, slug):
 
         # Populate schemafield_list and lookup_list.
         schemafield_list = list(s.schemafield_set.filter(is_filter=True).order_by('display_order'))
+        # XXX this duplicates part of schema_filter()
         LOOKUP_MIN_DISPLAYED = 7
         LOOKUP_BUFFER = 4
         lookup_list = []
