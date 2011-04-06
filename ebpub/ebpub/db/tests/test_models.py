@@ -93,7 +93,7 @@ class DatabaseExtensionsTestCase(TestCase):
         ni.attributes = {u'arrests': False}
         ni = NewsItem.objects.get(id=1)
         self.assertEquals(ni.attributes['arrests'], False)
-        self.assertEquals(ni.attributes['beat_id'], None)
+        self.assertEquals(ni.attributes['beat'], None)
         self.assertEquals(ni.attributes['block_id'], None)
         self.assertEquals(ni.attributes['case_number'], None)
         self.assertEquals(ni.attributes['crime_date'], None)
