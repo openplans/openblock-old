@@ -376,6 +376,11 @@ class TestSchemaFilterView(TestCase):
         for lookup_info in lookup_list:
             self.assertEqual(lookup_info['has_more'], True)
 
+    def test_filter__pagination__invalid_page(self):
+        url = filter_reverse('crime', [('by-foo', 'bar')]) + '?page=oops'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
 class TestNormalizeSchemaFilterView(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json', 'wabash.yaml',
