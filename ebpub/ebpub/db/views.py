@@ -898,7 +898,6 @@ def schema_filter(request, slug, args_from_url):
     start_date = s.min_date
     end_date = today()
     qs = NewsItem.objects.filter(schema__id=s.id, item_date__lte=end_date).order_by('-item_date')
-
     lookup_descriptions = []
 
     # Break apart the URL to determine what filters to apply.
@@ -1043,6 +1042,7 @@ def schema_filter(request, slug, args_from_url):
             m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
             if not m:
                 raise Http404('Invalid block URL')
+
             context.update(get_place_info_for_request(
                     request, city_slug, street_slug, *m.groups(),
                     place_type='block', newsitem_qs=qs))

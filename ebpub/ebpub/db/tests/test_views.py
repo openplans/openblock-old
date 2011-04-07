@@ -28,10 +28,11 @@ from ebpub.db.views import BadAddressException
 
 # Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
 from client import RequestFactory
-
+from client import mock_with_attributes
 import mock
 import urllib
 import posixpath
+
 
 class ViewTestCase(TestCase):
     "Unit tests for views.py."
@@ -282,6 +283,24 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
+    @mock.patch('ebpub.db.views.get_metro')
+    @mock.patch('ebpub.db.views.get_place_info_for_request')
+    def test_filter_by_block__multicity(self, mock_get_place_info, mock_get_metro):
+        def _mock_get_place_info(request, *args, **kwargs):
+            block = mock_with_attributes(
+                dict(from_num=99, to_num=100, street_slug='something',
+                     pretty_name='99-100 somethign st'))
+            return {'newsitem_qs': kwargs['newsitem_qs'],
+                    'place': block,
+                    'is_block': True,}
+
+        mock_get_place_info.side_effect = _mock_get_place_info
+        mock_get_metro.return_value = {'multiple_cities': True}
+        url = filter_reverse('crime', [('streets', 'boston', 'wabash-ave', '216-299n-s', '8-blocks')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Boston')
+
     def test_filter__only_one_location_allowed(self):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),
                                        ('locations', 'zipcodes', 'zip-1'),
@@ -379,17 +398,29 @@ class TestSchemaFilterView(TestCase):
             self.assertEqual(lookup_info['has_more'], True)
 
     def test_filter__pagination__invalid_page(self):
-        url = filter_reverse('crime', []) + '?page=oops'
+        url = filter_reverse('crime', [('by-status', 'status 9-19')])
+        url += '?page=oops'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
     def test_filter__pagination__empty_page(self):
-        # XXX TODO lines 1158
-        pass
+        url = filter_reverse('crime', [('by-status', 'status 9-19')])
+        url += '?page=99'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
 
-    def test_filter__pagination__has_more(self):
-        # XXX TODO lines 1160-61
-        pass
+    @mock.patch('ebpub.db.views.cluster_newsitems')
+    @mock.patch('ebpub.db.models.NewsItemQuerySet.text_search')
+    def test_filter__pagination__has_more(self, mock_search, mock_cluster):
+        url = filter_reverse('crime', [('by-status', 'status 9-19')])
+        url += '?page=2'
+        mock_search.return_value = [mock.Mock()] * 100
+        mock_cluster.return_value = {}
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['has_next'], True)
+        self.assertEqual(response.context['has_previous'], True)
+
 
 class TestNormalizeSchemaFilterView(TestCase):
 

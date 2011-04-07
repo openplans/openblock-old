@@ -6,6 +6,16 @@ well, not until http://code.djangoproject.com/ticket/15736 is fixed.
 """
 
 from django.test.client import *
+import mock
+
+def mock_with_attributes(attrs, *args, **kwargs):
+    """A convenience constructor to avoid needing a separate line for
+    each attribute you want to set on the mock instance.
+    """
+    _mock = mock.Mock(*args, **kwargs)
+    for k, v in attrs.items():
+        setattr(_mock, k, v)
+    return _mock
 
 class RequestFactory(object):
     """
