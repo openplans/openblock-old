@@ -883,6 +883,7 @@ def schema_filter(request, slug, args_from_url):
     context = {
         'bodyclass': 'schema-filter',
         'bodyid': s.slug,
+        'schema': s,
         }
     # Breadcrumbs. We can assign this early because it's a generator,
     # so it'll get the full context no matter what.
@@ -978,7 +979,6 @@ def schema_filter(request, slug, args_from_url):
                     lookup_list = Lookup.objects.filter(schema_field__id=sf.id).order_by('name')
                     filters['lookup'] = {'name': 'lookup', 'label': None, 'value': 'By ' + sf.pretty_name, 'url': None}
                     context.update({
-                        'schema': s,
                         'filters': filters,
                         'lookup_type': sf.pretty_name,
                         'lookup_type_slug': sf.slug,
@@ -1003,7 +1003,6 @@ def schema_filter(request, slug, args_from_url):
                     # No args.
                     filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
                     context.update({
-                        'schema': s,
                         'filters': filters,
                         'filter_argname': argname,
                         'lookup_type': u'whether they ' + sf.pretty_name_plural,
@@ -1070,44 +1069,25 @@ def schema_filter(request, slug, args_from_url):
             if location_filter_applied:
                 return HttpResponseBadRequest(
                     '<h1>Only one location filter can be applied</h1>')
-            if not argvalues:
-                raise Http404()
-            location_type_slug = argvalues.pop(0)
-            if argvalues:
-                loc_name = argvalues.pop(0)
-                context.update(get_place_info_for_request(
-                        request, location_type_slug, loc_name,
-                        place_type='location', newsitem_qs=qs))
-                loc = context['place']
-                #loc = url_to_location(location_type_slug, argvalues.pop())
-                #qs = qs.filter(newsitemlocation__location__id=loc.id)
-                #qs = qs.filter(location__bboverlaps=loc.location.envelope)
-                qs = context['newsitem_qs']
-                filters['location'] = {
-                    'name': 'location',
-                    'label': loc.location_type.name,
-                    'short_value': loc.name,
-                    'value': loc.name,
-                    'url': 'locations=%s,%s' % (location_type_slug, loc.slug),
-                    'location_name': loc.name,
-                    'location_object': loc,
-                }
-                location_filter_applied = True
-            else: # List of available locations for this location type.
-                lookup_list = Location.objects.filter(location_type__slug=location_type_slug, is_public=True).order_by('display_order')
-                if not lookup_list:
-                    raise Http404()
-                location_type = lookup_list[0].location_type
-                filters['location'] = {'name': 'location', 'label': None, 'value': 'By ' + location_type.name, 'url': None}
+            from ebpub.db.schemafilters import LocationFilter, FilterError
+            try:
+                locfilter = LocationFilter(request, context, qs, *argvalues)
+                more_needed = locfilter.more_info_needed()
+            except FilterError, e:
+                raise Http404(str(e))
+            if more_needed:
+                # List of available locations for this location type.
+                context.update(more_needed)
                 context.update({
-                    'schema': s,
                     'filters': filters,
-                    'lookup_type': location_type.name,
-                    'lookup_type_slug': location_type.slug,
-                    'lookup_list': lookup_list,
                     'filter_argname': argname,
-                })
+                    })
                 return eb_render(request, 'db/filter_lookup_list.html', context)
+
+            locfilter.apply()
+            qs = context['newsitem_qs']
+            filters['location'] = locfilter
+            location_filter_applied = True
 
         else:
             raise Http404('Invalid filter type')
@@ -1177,7 +1157,6 @@ def schema_filter(request, slug, args_from_url):
                 })
 
     context.update({
-        'schema': s,
         'newsitem_list': ni_list,
 
         # Pagination stuff

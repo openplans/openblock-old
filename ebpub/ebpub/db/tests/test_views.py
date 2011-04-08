@@ -114,6 +114,43 @@ def filter_reverse(slug, args):
     url = posixpath.normpath(url) + '/'
     return url
 
+class TestSchemaFilters(TestCase):
+
+    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
+                'wabash.yaml',
+                )
+
+    def _make_filter(self, typeslug=None, loc=None):
+        from ebpub.db import models
+        crime = models.Schema.objects.get(slug='crime')
+        from ebpub.db.schemafilters import LocationFilter
+        reverse_args = ['locations']
+        if typeslug is not None:
+            reverse_args.append(typeslug)
+            if loc is not None:
+                reverse_args.append(loc)
+        url = filter_reverse('crime', [reverse_args])
+        req = RequestFactory().get(url)
+        context = {'schema': crime}
+        filt = LocationFilter(req, context, None, *reverse_args[1:])
+        return filt
+
+    def test_filter__errors(self):
+        from ebpub.db.schemafilters import FilterError
+        self.assertRaises(FilterError, self._make_filter)
+
+    def test_filter_by_location_choices(self):
+        filt = self._make_filter('zipcodes')
+        more_needed = filt.more_info_needed()
+        self.assertEqual(more_needed['lookup_type'], u'ZIP Code')
+        self.assertEqual(more_needed['lookup_type_slug'], 'zipcodes')
+        self.assert_(len(more_needed['lookup_list']) > 0)
+
+    def test_filter_by_location_detail(self):
+        filt = self._make_filter('zipcodes', 'zip-1')
+        self.assertEqual(filt.more_info_needed(), {})
+
+
 class TestSchemaFilterView(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
