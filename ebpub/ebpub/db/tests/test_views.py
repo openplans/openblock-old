@@ -191,6 +191,34 @@ class TestBlockFilter(TestCase):
         self.assertEqual(filt.more_info_needed(), {})
         # TODO: test apply()
 
+
+class TestDateFilter(TestCase):
+
+    fixtures = ('test-locationtypes.json', 'test-locations.json',
+                )
+
+    def _make_filter(self, *url_args):
+        crime = mock.Mock()
+        from ebpub.db.schemafilters import DateFilter
+        url = filter_reverse('crime', [url_args])
+        req = RequestFactory().get(url)
+        context = {'schema': crime}
+        filt = DateFilter(req, context, None, *url_args[1:])
+        return filt
+
+    def test_filter__errors(self):
+        from ebpub.db.schemafilters import FilterError
+        self.assertRaises(FilterError, self._make_filter, '')
+        self.assertRaises(FilterError, self._make_filter, 'by-date')
+        self.assertRaises(FilterError, self._make_filter, 'by-date', 'bogus')
+        self.assertRaises(FilterError, self._make_filter, 'by-date', 'bogus', 'bogus')
+        self.assertRaises(FilterError, self._make_filter, 'by-date', '2011-04-07')
+
+    def test_filter__ok(self):
+        filt = self._make_filter('by-date', '2011-04-07', '2011-04-08')
+        self.assertEqual(filt.more_info_needed(), {})
+        # TODO: test apply()
+
 class TestSchemaFilterView(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
