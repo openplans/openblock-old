@@ -114,15 +114,14 @@ def filter_reverse(slug, args):
     url = posixpath.normpath(url) + '/'
     return url
 
-class TestSchemaFilters(TestCase):
+class TestLocationFilter(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
-                'wabash.yaml',
+    fixtures = ('test-locationtypes.json', 'test-locations.json',
                 )
 
     def _make_filter(self, typeslug=None, loc=None):
         from ebpub.db import models
-        crime = models.Schema.objects.get(slug='crime')
+        crime = mock.Mock(spec=models.Schema)
         from ebpub.db.schemafilters import LocationFilter
         reverse_args = ['locations']
         if typeslug is not None:
@@ -149,7 +148,48 @@ class TestSchemaFilters(TestCase):
     def test_filter_by_location_detail(self):
         filt = self._make_filter('zipcodes', 'zip-1')
         self.assertEqual(filt.more_info_needed(), {})
+        # TODO: test apply()
 
+class TestBlockFilter(TestCase):
+
+    fixtures = ('test-locationtypes.json', 'test-locations.json',
+                #'wabash.yaml',
+                )
+
+    def _make_filter(self, street_slug=None, block_range=None, block_radius=None):
+        from ebpub.db import models
+        crime = mock.Mock(spec=models.Schema)
+        from ebpub.db.schemafilters import BlockFilter
+        reverse_args = ['streets']
+        if street_slug is not None:
+            reverse_args.append(street_slug)
+            if block_range is not None:
+                reverse_args.append(block_range)
+                if block_radius is not None:
+                    reverse_args.append(block_radius)
+        url = filter_reverse('crime', [reverse_args])
+        req = RequestFactory().get(url)
+        context = {'schema': crime}
+        filt = BlockFilter(req, context, None, *reverse_args[1:])
+        return filt
+
+    def test_filter__errors(self):
+        from ebpub.db.schemafilters import FilterError
+        self.assertRaises(FilterError, self._make_filter)
+        self.assertRaises(FilterError, self._make_filter, '')
+        self.assertRaises(FilterError, self._make_filter, 'wabash-ave')
+        self.assertRaises(FilterError, self._make_filter, 'wabash-ave', '200-298s')
+        try:
+            # Re-testing that last one so we can inspect the exception.
+            self._make_filter('wabash-ave', '200-298s')
+        except FilterError, e:
+            import urllib
+            self.assertEqual(urllib.quote(e.url), filter_reverse('crime', [('streets', 'wabash-ave', '200-298s', '8-blocks')]))
+
+    def test_filter__ok(self):
+        filt = self._make_filter('wabash-ave', '200-298s', '8-blocks')
+        self.assertEqual(filt.more_info_needed(), {})
+        # TODO: test apply()
 
 class TestSchemaFilterView(TestCase):
 

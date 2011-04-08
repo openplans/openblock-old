@@ -253,7 +253,6 @@ class BlockFilter(LocationFilter):
         except IndexError:
             from ebpub.db.views import block_radius_value
             xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-            # XXX should not redirect here, let the view do it.
             from ebpub.db.views import radius_url
             raise FilterError('missing radius', url=radius_url(request.path, block_radius))
         m = re.search('^%s$' % constants.BLOCK_URL_REGEX, self.block_range)
