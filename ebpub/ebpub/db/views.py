@@ -24,7 +24,6 @@ from django.core.cache import cache
 from django.db.models import Q
 from django.http import Http404
 from django.http import HttpResponse
-from django.http import HttpResponseBadRequest
 from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
@@ -822,7 +821,7 @@ def schema_filter(request, slug, args_from_url):
                 'radius_url': radius_urlfragment(e.block_radius),
                 })
     except BadDateException, e:
-        return HttpResponseBadRequest('<h1>%s</h1>' % str(e))
+        raise Http404('<h1>%s</h1>' % str(e))
 
     if new_url is not None:
         return HttpResponseRedirect(new_url)
@@ -865,7 +864,7 @@ def schema_filter(request, slug, args_from_url):
             try:
                 argname, argvalues = param.split('=', 1)
             except ValueError:
-                return HttpResponseBadRequest('<h1>Invalid filter parameter %r, no equals sign</h1>' % param)
+                raise Http404('<h1>Invalid filter parameter %r, no equals sign</h1>' % param)
             argname = argname.strip()
             argvalues = [v.strip() for v in argvalues.split(',')]
             if argname:
@@ -879,33 +878,19 @@ def schema_filter(request, slug, args_from_url):
         # Date range
         if argname == 'by-date' or argname == 'by-pub-date':
             if date_filter_applied:
-                return HttpResponseBadRequest(
-                    '<h1>Only one date filter can be applied</h1>')
+                raise Http404('<h1>Only one date filter can be applied</h1>')
+            from ebpub.db.schemafilters import DateFilter, PubDateFilter
             try:
-                start_date, end_date = argvalues
-                start_date = datetime.date(*map(int, start_date.split('-')))
-                end_date = datetime.date(*map(int, end_date.split('-')))
-            except (IndexError, ValueError, TypeError):
-                return HttpResponseBadRequest('<h1>Missing or invalid date range</h1>')
-            if argname == 'by-date':
-                date_field_name = 'item_date'
-                label = s.date_name
-            else:
-                date_field_name = 'pub_date'
-                label = 'date published'
-            gte_kwarg = '%s__gte' % date_field_name
-            lt_kwarg = '%s__lt' % date_field_name
-            kwargs = {
-                gte_kwarg: start_date,
-                lt_kwarg: end_date+datetime.timedelta(days=1)
-            }
-            qs = qs.filter(**kwargs)
-            if start_date == end_date:
-                value = dateformat.format(start_date, 'N j, Y')
-            else:
-                value = u'%s \u2013 %s' % (dateformat.format(start_date, 'N j, Y'), dateformat.format(end_date, 'N j, Y'))
-
-            filters['date'] = {'name': 'date', 'label': label, 'short_value': value, 'value': value, 'url': '%s=%s,%s' % (argname, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))}
+                if argname == 'by-date':
+                    datefilter = DateFilter(request, context, qs, *argvalues)
+                else:
+                    datefilter = PubDateFilter(request, context, qs, *argvalues)
+                datefilter.more_info_needed()
+            except FilterError, e:
+                raise Http404(str(e))
+            datefilter.apply()
+            qs = datefilter.qs
+            filters['date'] = datefilter
             date_filter_applied = True
         # END OF DATE FILTERING
 
@@ -973,8 +958,7 @@ def schema_filter(request, slug, args_from_url):
         # Street/address
         elif argname.startswith('streets'):
             if location_filter_applied:
-                return HttpResponseBadRequest(
-                    '<h1>Only one location filter can be applied</h1>')
+                raise Http404('<h1>Only one location filter can be applied</h1>')
             from ebpub.db.schemafilters import BlockFilter
             try:
                 blockfilter = BlockFilter(request, context, qs, *argvalues)
@@ -994,8 +978,7 @@ def schema_filter(request, slug, args_from_url):
         # Location filtering
         elif argname.startswith('locations'):
             if location_filter_applied:
-                return HttpResponseBadRequest(
-                    '<h1>Only one location filter can be applied</h1>')
+                raise Http404('<h1>Only one location filter can be applied</h1>')
             from ebpub.db.schemafilters import LocationFilter
             try:
                 locfilter = LocationFilter(request, context, qs, *argvalues)

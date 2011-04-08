@@ -250,13 +250,13 @@ class TestSchemaFilterView(TestCase):
         mock_normalize.side_effect = BadDateException("oh no")
         url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     def test_filter__bad_params(self):
         url = filter_reverse('crime', [('by-foo', 'bar')])
         url = url.replace(urllib.quote('='), 'X')
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     def test_filter_by_daterange(self):
         url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
@@ -279,19 +279,19 @@ class TestSchemaFilterView(TestCase):
                              [('by-date', '2006-11-01', '2006-11-30'),
                               ('by-pub-date', '2006-11-01', '2006-11-30')])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_filter__invalid_daterange(self):
         url = filter_reverse('crime', [('by-date', '')])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
         url = filter_reverse('crime', [('by-date', 'whoops', 'ouchie')])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
         url = filter_reverse('crime', [('by-date', '2006-11-30', 'ouchie')])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_filter_by_day(self):
@@ -387,7 +387,7 @@ class TestSchemaFilterView(TestCase):
                                        ('streets', 'wabash-ave', '216-299n-s', '8')
                                        ])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 404)
 
     def test_filter__by_location__unknown(self):
         url = filter_reverse('crime', [('locations', 'anything')])

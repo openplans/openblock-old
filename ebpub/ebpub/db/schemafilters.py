@@ -112,7 +112,9 @@ from django.http import HttpResponseRedirect
 from ebpub.db import constants
 from ebpub.db import models
 from ebpub.db.utils import get_place_info_for_request
+import datetime
 import re
+from django.utils import dateformat
 
 # STRAW MAN DESIGN FOLLOWS
 
@@ -232,7 +234,7 @@ class LocationFilter(SchemaFilter):
 from ebpub.metros.allmetros import get_metro
 
 
-class BlockFilter(LocationFilter):
+class BlockFilter(SchemaFilter):
 
     name = 'location'
 
@@ -286,7 +288,61 @@ class BlockFilter(LocationFilter):
         self.location_name = block.pretty_name
         self.location_object = block
 
-class DuplicateFilter(FilterError):
+class DateFilter(SchemaFilter):
+
+    name = 'date'
+    date_field_name = 'item_date'
+    argname = 'by-date'  # XXX this doesn't feel like it belongs here.
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        args = list(args)
+        self.label = context['schema'].date_name
+        gte_kwarg = '%s__gte' % self.date_field_name
+        lt_kwarg = '%s__lt' % self.date_field_name
+        try:
+            start_date, end_date = args
+            self.start_date = datetime.date(*map(int, start_date.split('-')))
+            self.end_date = datetime.date(*map(int, end_date.split('-')))
+        except (IndexError, ValueError, TypeError):
+            raise FilterError("Missing or invalid date range")
+
+        self.kwargs = {
+            gte_kwarg: self.start_date,
+            lt_kwarg: self.end_date+datetime.timedelta(days=1)
+            }
+
+    def more_info_needed(self):
+        # Filtering UI does not provide a page for selecting a block.
+        return {}
+
+    def apply(self):
+        """ filtering by Date """
+        self.qs = self.qs.filter(**self.kwargs)
+        if self.start_date == self.end_date:
+            value = dateformat.format(self.start_date, 'N j, Y')
+        else:
+            value = u'%s \u2013 %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
+
+
+        self.value = value
+        self.short_value = value
+        self.url = '%s=%s,%s' % (self.argname,
+                                 self.start_date.strftime('%Y-%m-%d'), 
+                                 self.end_date.strftime('%Y-%m-%d'))
+
+
+class PubDateFilter(DateFilter):
+
+    argname = 'by-pub-date'
+    date_field_name = 'pub_date'
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        DateFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.label = 'date published'
+
+
+class DuplicateFilterError(FilterError):
     pass
 
 from django.utils.datastructures import SortedDict
@@ -297,7 +353,7 @@ class SchemaFilterChain(SortedDict):
         stores a SchemaFilter.
         """
         if self.has_key(key):
-            raise DuplicateFilter(key)
+            raise DuplicateFilterError(key)
         SortedDict.__setitem__(self, key, value)
 
     def normalized_clone(self):
