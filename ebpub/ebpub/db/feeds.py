@@ -18,13 +18,12 @@
 
 from django.contrib.syndication.feeds import Feed
 from django.contrib.syndication.views import feed as django_feed_view
-from django.http import Http404, HttpResponsePermanentRedirect
-from django.utils import simplejson
+from django.http import Http404
 from django.utils.feedgenerator import Rss201rev2Feed
 from ebpub.db.constants import BLOCK_URL_REGEX
 from ebpub.db.models import NewsItem, Location
 from ebpub.db.utils import populate_attributes_if_needed, today
-from ebpub.db.views import make_search_buffer, url_to_block, BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
+from ebpub.db.utils import make_search_buffer, url_to_block, BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.metros.allmetros import get_metro
 from ebpub.streets.models import Block
 import datetime

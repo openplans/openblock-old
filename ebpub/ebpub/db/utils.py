@@ -17,6 +17,19 @@
 #
 
 from django.conf import settings
+from django.db.models import Q
+from django.http import Http404
+from django.shortcuts import get_object_or_404
+from ebpub.db.models import NewsItem
+from ebpub.db.models import Location
+from ebpub.streets.models import Block
+from ebpub.streets.models import City
+from ebpub.metros.allmetros import get_metro
+from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
+from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
+from ebpub.utils.view_utils import make_pid
+from ebpub.savedplaces.models import SavedPlace
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
 import datetime
 
 def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
@@ -155,3 +168,136 @@ def today():
     if settings.EB_TODAY_OVERRIDE:
         return settings.EB_TODAY_OVERRIDE
     return datetime.date.today()
+
+def get_place_info_for_request(request, *args, **kwargs):
+    """
+    A utility function that abstracts getting commonly used
+    location-related information: a place, its type, a queryset of
+    intersecting NewsItems, a bbox, nearby locations, etc.
+    """
+    info = dict(bbox=None,
+                nearby_locations=[],
+                location=None,
+                place_type=None,
+                is_block=False,
+                block_radius=None,
+                is_saved=False,
+                pid='',
+                #place_wkt = '', # Unused?
+                cookies_to_set={},
+                )
+
+    saved_place_lookup={}
+
+    newsitem_qs = kwargs.get('newsitem_qs')
+    if newsitem_qs is None:
+        newsitem_qs = NewsItem.objects.all()
+
+    info['place'] = place = url_to_place(*args, **kwargs)
+
+    nearby = Location.objects.filter(location_type__is_significant=True)
+    nearby = nearby.select_related().exclude(id=place.id)
+    nearby = nearby.order_by('location_type__id', 'name')
+
+    if place.location is None:
+        # No geometry.
+        info['bbox'] = get_metro()['extent']
+        saved_place_lookup = {'location__id': place.id}
+        info['newsitem_qs'] = newsitem_qs.filter(
+            newsitemlocation__location__id=place.id)
+        info['place_type'] = place.location_type.slug
+    elif isinstance(place, Block):
+        info['is_block'] = True
+        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+        search_buf = make_search_buffer(place.location.centroid, block_radius)
+        info['nearby_locations'] = nearby.filter(
+                                    location__bboverlaps=search_buf
+                                    )
+        info['bbox'] = search_buf.extent
+        saved_place_lookup = {'block__id': place.id}
+        info['block_radius'] = block_radius
+        info['cookies_to_set'] = cookies_to_set
+        info['newsitem_qs'] = newsitem_qs.filter(
+            location__bboverlaps=search_buf)
+        info['pid'] = make_pid(place, block_radius)
+        info['place_type'] = 'block'
+    else:
+        # If the location is a point, or very small, we want to expand
+        # the area we care about via make_search_buffer().  But if
+        # it's not, we probably want the extent of its geometry.
+        # Let's just take the union to cover both cases.
+        info['location'] = place
+        info['place_type'] = place.location_type.slug
+        saved_place_lookup = {'location__id': place.id}
+        search_buf = make_search_buffer(place.location.centroid, 3)
+        search_buf = search_buf.union(place.location)
+        info['bbox'] = search_buf.extent
+        nearby = nearby.filter(location__bboverlaps=search_buf)
+        info['nearby_locations'] = nearby.exclude(id=place.id)
+        info['newsitem_qs'] = newsitem_qs.filter(
+            newsitemlocation__location__id=place.id)
+        # TODO: place_wkt is unused? preserved from the old generic_place_page()
+        #info['place_wkt'] = place.location.simplify(tolerance=0.001,
+        #                                            preserve_topology=True)
+        info['pid'] = make_pid(place)
+
+    # Determine whether this is a saved place.
+    if not request.user.is_anonymous():
+        saved_place_lookup['user_id'] = request.user.id # TODO: request.user.id should not do a DB lookup
+        info['is_saved'] = SavedPlace.objects.filter(**saved_place_lookup).count()
+
+    return info
+
+def url_to_place(*args, **kwargs):
+    # Given args and kwargs captured from the URL, returns the place.
+    # This relies on "place_type" being provided in the URLpattern.
+    parse_func = kwargs['place_type'] == 'block' and url_to_block or url_to_location
+    return parse_func(*args)
+
+def url_to_block(city_slug, street_slug, from_num, to_num, predir, postdir):
+    params = {
+        'street_slug': street_slug,
+        'predir': (predir and predir.upper() or ''),
+        'postdir': (postdir and postdir.upper() or ''),
+        'from_num': int(from_num),
+        'to_num': int(to_num),
+    }
+    if city_slug:
+        city = City.from_slug(city_slug).norm_name
+        city_filter = Q(left_city=city) | Q(right_city=city)
+    else:
+        city_filter = Q()
+    b_list = list(Block.objects.filter(city_filter, **params))
+
+    if not b_list:
+        raise Http404()
+
+    return b_list[0]
+
+def url_to_location(type_slug, slug):
+    return get_object_or_404(Location.objects.select_related(), location_type__slug=type_slug, slug=slug)
+
+
+def block_radius_value(request):
+    """
+    Get block radius from either query string or cookie, or default.
+    """
+    # Returns a tuple of (xy_radius, block_radius, cookies_to_set).
+    if 'radius' in request.GET and request.GET['radius'] in BLOCK_RADIUS_CHOICES:
+        block_radius = request.GET['radius']
+        cookies_to_set = {BLOCK_RADIUS_COOKIE_NAME: block_radius}
+    else:
+        if request.COOKIES.get(BLOCK_RADIUS_COOKIE_NAME) in BLOCK_RADIUS_CHOICES:
+            block_radius = request.COOKIES[BLOCK_RADIUS_COOKIE_NAME]
+        else:
+            block_radius = BLOCK_RADIUS_DEFAULT
+        cookies_to_set = {}
+    return BLOCK_RADIUS_CHOICES[block_radius], block_radius, cookies_to_set
+
+def make_search_buffer(geom, block_radius):
+    """
+    Returns a polygon of a buffer around a block's centroid. `geom'
+    should be the centroid of the block. `block_radius' is number of
+    blocks.
+    """
+    return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope

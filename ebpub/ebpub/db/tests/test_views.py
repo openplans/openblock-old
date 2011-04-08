@@ -320,8 +320,8 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    @mock.patch('ebpub.db.views.get_metro')
-    @mock.patch('ebpub.db.views.get_place_info_for_request')
+    @mock.patch('ebpub.db.schemafilters.get_metro')
+    @mock.patch('ebpub.db.schemafilters.get_place_info_for_request')
     def test_filter_by_block__multicity(self, mock_get_place_info, mock_get_metro):
         def _mock_get_place_info(request, *args, **kwargs):
             block = mock_with_attributes(

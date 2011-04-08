@@ -32,27 +32,29 @@ from django.utils import dateformat, simplejson
 from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_page
-from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
-from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
 from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
+from ebpub.db.schemafilters import FilterError
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
+from ebpub.db.utils import make_search_buffer
+from ebpub.db.utils import block_radius_value
+from ebpub.db.utils import url_to_place
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
+from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
 from ebpub.metros.allmetros import get_metro
 from ebpub.preferences.models import HiddenSchema
-from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
-from ebpub.utils.view_utils import parse_pid, make_pid
+from ebpub.utils.view_utils import parse_pid
 
 import datetime
 import hashlib
@@ -86,21 +88,6 @@ def get_schema_manager(request):
     else:
         return Schema.public_objects
 
-def block_radius_value(request):
-    """
-    Get block radius from either query string or cookie, or default.
-    """
-    # Returns a tuple of (xy_radius, block_radius, cookies_to_set).
-    if 'radius' in request.GET and request.GET['radius'] in BLOCK_RADIUS_CHOICES:
-        block_radius = request.GET['radius']
-        cookies_to_set = {BLOCK_RADIUS_COOKIE_NAME: block_radius}
-    else:
-        if request.COOKIES.get(BLOCK_RADIUS_COOKIE_NAME) in BLOCK_RADIUS_CHOICES:
-            block_radius = request.COOKIES[BLOCK_RADIUS_COOKIE_NAME]
-        else:
-            block_radius = BLOCK_RADIUS_DEFAULT
-        cookies_to_set = {}
-    return BLOCK_RADIUS_CHOICES[block_radius], block_radius, cookies_to_set
 
 def get_date_chart_agg_model(schemas, start_date, end_date, agg_model, kwargs=None):
     kwargs = kwargs or {}
@@ -145,35 +132,6 @@ def get_date_chart(schemas, start_date, end_date, counts):
             })
     return result
 
-def url_to_place(*args, **kwargs):
-    # Given args and kwargs captured from the URL, returns the place.
-    # This relies on "place_type" being provided in the URLpattern.
-    parse_func = kwargs['place_type'] == 'block' and url_to_block or url_to_location
-    return parse_func(*args)
-
-def url_to_block(city_slug, street_slug, from_num, to_num, predir, postdir):
-    params = {
-        'street_slug': street_slug,
-        'predir': (predir and predir.upper() or ''),
-        'postdir': (postdir and postdir.upper() or ''),
-        'from_num': int(from_num),
-        'to_num': int(to_num),
-    }
-    if city_slug:
-        city = City.from_slug(city_slug).norm_name
-        city_filter = Q(left_city=city) | Q(right_city=city)
-    else:
-        city_filter = Q()
-    b_list = list(Block.objects.filter(city_filter, **params))
-
-    if not b_list:
-        raise Http404()
-
-    return b_list[0]
-
-def url_to_location(type_slug, slug):
-    return get_object_or_404(Location.objects.select_related(), location_type__slug=type_slug, slug=slug)
-
 
 def has_clusters(cluster_dict):
     """
@@ -198,13 +156,6 @@ def block_bbox(block, radius):
     env = ogr.CreateGeometryFromWkt(block.wkt).Buffer(radius).GetEnvelope()
     return (env[0], env[2], env[1], env[3])
 
-def make_search_buffer(geom, block_radius):
-    """
-    Returns a polygon of a buffer around a block's centroid. `geom'
-    should be the centroid of the block. `block_radius' is number of
-    blocks.
-    """
-    return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope
 
 ##############
 # AJAX VIEWS #
@@ -343,7 +294,7 @@ def ajax_place_lookup_chart(request):
     if isinstance(place, Block):
         search_buffer = make_search_buffer(place.location.centroid, block_radius)
         qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url = radius_url(url, block_radius)
+        filter_url = radius_url(filter_url, block_radius)
     else:
         qs = qs.filter(newsitemlocation__location__id=place.id)
     total_count = qs.count()
@@ -1024,43 +975,19 @@ def schema_filter(request, slug, args_from_url):
             if location_filter_applied:
                 return HttpResponseBadRequest(
                     '<h1>Only one location filter can be applied</h1>')
+            from ebpub.db.schemafilters import BlockFilter
             try:
-                if get_metro()['multiple_cities']:
-                    city_slug = argvalues.pop(0)
-                else:
-                    city_slug = ''
-                street_slug = argvalues.pop(0)
-                block_range = argvalues.pop(0)
-            except IndexError:
-                raise Http404()
-            try:
-                block_radius = argvalues.pop(0)
-            except IndexError:
-                xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                return HttpResponseRedirect(radius_url(request.path, block_radius))  # XXX Does that work when there are multiple filters and block isn't the last?? #69
-            m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
-            if not m:
-                raise Http404('Invalid block URL')
+                blockfilter = BlockFilter(request, context, qs, *argvalues)
+                more_needed = blockfilter.more_info_needed()
+            except FilterError, e:
+                if e.url is not None:
+                    return HttpResponseRedirect(e.url)
+                raise Http404(str(e))
 
-            context.update(get_place_info_for_request(
-                    request, city_slug, street_slug, *m.groups(),
-                    place_type='block', newsitem_qs=qs))
-
-            block = context['place']
+            blockfilter.apply()
             qs = context['newsitem_qs']
-            value = '%s block%s around %s' % (block_radius, (block_radius != '1' and 's' or ''), block.pretty_name)
 
-            filters['location'] = {
-                'name': 'location',
-                'label': 'Area',
-                'short_value': value,
-                'value': value,
-                'url': 'streets=%s,%s,%s' % (block.street_slug, 
-                                             '%d-%d' % (block.from_num, block.to_num), 
-                                             radius_urlfragment(block_radius)),
-                'location_name': block.pretty_name,
-                'location_object': block,
-            }
+            filters['location'] = blockfilter
             location_filter_applied = True
         # END OF STREETS/BLOCK FILTERING
 
@@ -1069,7 +996,7 @@ def schema_filter(request, slug, args_from_url):
             if location_filter_applied:
                 return HttpResponseBadRequest(
                     '<h1>Only one location filter can be applied</h1>')
-            from ebpub.db.schemafilters import LocationFilter, FilterError
+            from ebpub.db.schemafilters import LocationFilter
             try:
                 locfilter = LocationFilter(request, context, qs, *argvalues)
                 more_needed = locfilter.more_info_needed()
@@ -1240,85 +1167,6 @@ def block_list(request, city_slug, street_slug):
     context['breadcrumbs'] = breadcrumbs.block_list(context)
     return eb_render(request, 'db/block_list.html', context)
 
-
-def get_place_info_for_request(request, *args, **kwargs):
-    """
-    A utility function that abstracts getting commonly used
-    location-related information: a place, its type, a queryset of
-    intersecting NewsItems, a bbox, nearby locations, etc.
-    """
-    info = dict(bbox=None,
-                nearby_locations=[],
-                location=None,
-                place_type=None,
-                is_block=False,
-                block_radius=None,
-                is_saved=False,
-                pid='',
-                #place_wkt = '', # Unused?
-                cookies_to_set={},
-                )
-
-    saved_place_lookup={}
-
-    newsitem_qs = kwargs.get('newsitem_qs')
-    if newsitem_qs is None:
-        newsitem_qs = NewsItem.objects.all()
-
-    info['place'] = place = url_to_place(*args, **kwargs)
-
-    nearby = Location.objects.filter(location_type__is_significant=True)
-    nearby = nearby.select_related().exclude(id=place.id)
-    nearby = nearby.order_by('location_type__id', 'name')
-
-    if place.location is None:
-        # No geometry.
-        info['bbox'] = get_metro()['extent']
-        saved_place_lookup = {'location__id': place.id}
-        info['newsitem_qs'] = newsitem_qs.filter(
-            newsitemlocation__location__id=place.id)
-        info['place_type'] = place.location_type.slug
-    elif isinstance(place, Block):
-        info['is_block'] = True
-        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-        search_buf = make_search_buffer(place.location.centroid, block_radius)
-        info['nearby_locations'] = nearby.filter(
-                                    location__bboverlaps=search_buf
-                                    )
-        info['bbox'] = search_buf.extent
-        saved_place_lookup = {'block__id': place.id}
-        info['block_radius'] = block_radius
-        info['cookies_to_set'] = cookies_to_set
-        info['newsitem_qs'] = newsitem_qs.filter(
-            location__bboverlaps=search_buf)
-        info['pid'] = make_pid(place, block_radius)
-        info['place_type'] = 'block'
-    else:
-        # If the location is a point, or very small, we want to expand
-        # the area we care about via make_search_buffer().  But if
-        # it's not, we probably want the extent of its geometry.
-        # Let's just take the union to cover both cases.
-        info['location'] = place
-        info['place_type'] = place.location_type.slug
-        saved_place_lookup = {'location__id': place.id}
-        search_buf = make_search_buffer(place.location.centroid, 3)
-        search_buf = search_buf.union(place.location)
-        info['bbox'] = search_buf.extent
-        nearby = nearby.filter(location__bboverlaps=search_buf)
-        info['nearby_locations'] = nearby.exclude(id=place.id)
-        info['newsitem_qs'] = newsitem_qs.filter(
-            newsitemlocation__location__id=place.id)
-        # TODO: place_wkt is unused? preserved from the old generic_place_page()
-        #info['place_wkt'] = place.location.simplify(tolerance=0.001,
-        #                                            preserve_topology=True)
-        info['pid'] = make_pid(place)
-
-    # Determine whether this is a saved place.
-    if not request.user.is_anonymous():
-        saved_place_lookup['user_id'] = request.user.id # TODO: request.user.id should not do a DB lookup
-        info['is_saved'] = SavedPlace.objects.filter(**saved_place_lookup).count()
-
-    return info
 
 
 def place_detail_timeline(request, *args, **kwargs):

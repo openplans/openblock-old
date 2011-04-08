@@ -107,9 +107,12 @@ gets "applied":
 """
 
 
-from django.http import Http404
+#from django.http import Http404
+from django.http import HttpResponseRedirect
+from ebpub.db import constants
 from ebpub.db import models
-from ebpub.db.views import get_place_info_for_request
+from ebpub.db.utils import get_place_info_for_request
+import re
 
 # STRAW MAN DESIGN FOLLOWS
 
@@ -171,11 +174,13 @@ class SchemaFilter(object):
 
 
 class FilterError(Exception):
-    pass
+    def __init__(self, msg, url=None):
+        self.msg = msg
+        self.url = url
 
 class LocationFilter(SchemaFilter):
 
-    name = 'location'
+    name = 'location'  # XXX deprecate this? used by eb_filter template tag
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -189,6 +194,7 @@ class LocationFilter(SchemaFilter):
             self._got_args = False
 
     def more_info_needed(self):
+        # List of available locations for this location type.
         if self._got_args:
             return {}
         else:
@@ -223,11 +229,66 @@ class LocationFilter(SchemaFilter):
         self.location_name = loc.name
         self.location_object = loc
 
+from ebpub.metros.allmetros import get_metro
 
 
 class BlockFilter(LocationFilter):
+
+    name = 'location'
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        args = list(args)
+        try:
+            if get_metro()['multiple_cities']:
+                self.city_slug = args.pop(0)
+            else:
+                self.city_slug = ''
+            self.street_slug = args.pop(0)
+            self.block_range = args.pop(0)
+        except IndexError:
+            raise FilterError("not enough args")
+        try:
+            self.block_radius = args.pop(0)
+        except IndexError:
+            from ebpub.db.views import block_radius_value
+            xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+            # XXX should not redirect here, let the view do it.
+            from ebpub.db.views import radius_url
+            raise FilterError('missing radius', url=radius_url(request.path, block_radius))
+        m = re.search('^%s$' % constants.BLOCK_URL_REGEX, self.block_range)
+        if not m:
+            raise FilterError('Invalid block URL: %r' % self.block_range)
+        self.url_to_block_args = m.groups()
+
+
+    def more_info_needed(self):
+        # Filtering UI does not provide a page for selecting a block.
+        return {}
+
     def apply(self):
         """ filtering by Block """
+
+        self.context.update(get_place_info_for_request(
+                self.request, self.city_slug, self.street_slug,
+                *self.url_to_block_args,
+                place_type='block', newsitem_qs=self.qs))
+
+        block = self.context['place']
+        value = '%s block%s around %s' % (self.block_radius, (self.block_radius != '1' and 's' or ''), block.pretty_name)
+
+        self.label = 'Area'
+        self.short_value = value
+        self.value = value
+        from ebpub.db.views import radius_urlfragment
+        self.url = 'streets=%s,%s,%s' % (block.street_slug,
+                                         '%d-%d' % (block.from_num, block.to_num), 
+                                         radius_urlfragment(self.block_radius))
+        self.location_name = block.pretty_name
+        self.location_object = block
+
+class DuplicateFilter(FilterError):
+    pass
 
 from django.utils.datastructures import SortedDict
 class SchemaFilterChain(SortedDict):
@@ -236,9 +297,9 @@ class SchemaFilterChain(SortedDict):
         """
         stores a SchemaFilter.
         """
-        if isinstance(value, LocationFilter) and self.has_location_filter:
-            raise DuplicateFilter()
-        # etc.
+        if self.has_key(key):
+            raise DuplicateFilter(key)
+        SortedDict.__setitem__(self, key, value)
 
     def normalized_clone(self):
         """
@@ -246,3 +307,6 @@ class SchemaFilterChain(SortedDict):
         """
         items = self._normalize_order_of_items(self.items())
         return SchemaFilterChain(items)
+
+    def _normalize_order_of_items(self, items):
+        raise NotImplementedError
