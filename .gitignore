@@ -35,3 +35,4 @@ docs/_build
 .coverage
 .noseids
 .ropeproject
+*,cover
