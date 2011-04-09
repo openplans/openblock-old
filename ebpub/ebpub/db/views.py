@@ -27,7 +27,7 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
-from django.utils import dateformat, simplejson
+from django.utils import simplejson
 from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_page
@@ -885,7 +885,7 @@ def schema_filter(request, slug, args_from_url):
                     datefilter = DateFilter(request, context, qs, *argvalues)
                 else:
                     datefilter = PubDateFilter(request, context, qs, *argvalues)
-                datefilter.more_info_needed()
+                datefilter.more_info_needed()  # Not used for dates?
             except FilterError, e:
                 raise Http404(str(e))
             datefilter.apply()
@@ -924,28 +924,21 @@ def schema_filter(request, slug, args_from_url):
                     return eb_render(request, 'db/filter_lookup_list.html', context)
             # Boolean attr filtering.
             elif sf.is_type('bool'):
-                if len(argvalues) > 1:
-                    raise Http404("Invalid boolean arg %r" % ','.join(argvalues))
-                elif len(argvalues) == 1:
-                    boolslug = argvalues[0]
-                    try:
-                        real_val = {'yes': True, 'no': False, 'na': None}[boolslug]
-                    except KeyError:
-                        raise Http404('Invalid boolean value %r' % boolslug)
-                    qs = qs.by_attribute(sf, real_val)
-                    value = {True: 'Yes', False: 'No', None: 'N/A'}[real_val]
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s=%s' % (sf.slug, boolslug)}
-                else:
-                    # No args.
-                    filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
-                    context.update({
-                        'filters': filters,
-                        'filter_argname': argname,
-                        'lookup_type': u'whether they ' + sf.pretty_name_plural,
-                        'lookup_type_slug': sf.slug,
-                        'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
-                    })
+                from ebpub.db.schemafilters import BoolFilter
+                try:
+                    boolfilter = BoolFilter(request, context, qs, *argvalues,
+                                            schemafield=sf)
+                    more_needed = boolfilter.more_info_needed()
+                except FilterError, e:
+                    raise Http404(str(e))
+                if more_needed:
+                    context.update(more_needed)
+                    filters['lookup'] = boolfilter
+                    context['filters'] = filters  # XXX already there?
                     return eb_render(request, 'db/filter_lookup_list.html', context)
+                boolfilter.apply()
+                qs = boolfilter.qs
+
             # Text-search attribute filter.
             else:
                 if not argvalues:

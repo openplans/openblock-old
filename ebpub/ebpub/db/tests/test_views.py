@@ -219,6 +219,39 @@ class TestDateFilter(TestCase):
         self.assertEqual(filt.more_info_needed(), {})
         # TODO: test apply()
 
+
+class TestBoolFilter(TestCase):
+
+    fixtures = ('crimes.json',)
+
+    def _make_filter(self, *url_args):
+        crime = mock.Mock()
+        from ebpub.db.schemafilters import BoolFilter
+        from ebpub.db import models
+        url = filter_reverse('crime', [url_args])
+        req = RequestFactory().get(url)
+        context = {'schema': crime}
+        sf_slug = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf = models.SchemaField.objects.get(name=sf_slug)
+        filt = BoolFilter(req, context, None, *url_args[1:], schemafield=sf)
+        return filt
+
+    def test_filter__errors(self):
+        from ebpub.db.schemafilters import FilterError
+        self.assertRaises(FilterError, self._make_filter, 'by-arrests', 'maybe')
+        self.assertRaises(FilterError, self._make_filter, 'by-arrests', 'maybe', 'no')
+
+    def test_filter__ok(self):
+        filt = self._make_filter('by-arrests', 'no')
+        self.assertEqual(filt.more_info_needed(), {})
+        # TODO: test apply()
+
+    def test_filter__more_needed(self):
+        filt = self._make_filter('by-arrests')
+        more_needed = filt.more_info_needed()
+        self.assertEqual(more_needed['lookup_type_slug'], 'arrests')
+
+
 class TestSchemaFilterView(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',

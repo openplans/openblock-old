@@ -180,6 +180,48 @@ class FilterError(Exception):
         self.msg = msg
         self.url = url
 
+class BoolFilter(SchemaFilter):
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.schemafield = kwargs['schemafield']
+        self.name = self.schemafield.name  # XXX
+        self.label = None
+        self.argname = 'by-%s' % self.schemafield.name
+        self.url = None
+        if len(args) > 1:
+            raise FilterError("Invalid boolean arg %r" % ','.join(args))
+        elif len(args) == 1:
+            self.boolslug = args[0]
+            try:
+                self.real_val = {'yes': True, 'no': False, 'na': None}[self.boolslug]
+            except KeyError:
+                raise FilterError('Invalid boolean value %r' % self.boolslug)
+            self._got_args = True
+        else:
+            # No args.
+            self.value = u'By whether they %s' % self.schemafield.pretty_name_plural
+            self._got_args = False
+
+    def more_info_needed(self):
+        if self._got_args:
+            return {}
+        return {
+            'filter_argname': self.argname,
+            'lookup_type': self.value[3:],
+            'lookup_type_slug': self.schemafield.slug,
+            'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
+            }
+
+
+    def apply(self):
+        self.qs = self.qs.by_attribute(self.schemafield, self.real_val)
+        self.label = self.schemafield.pretty_name
+        self.short_value = {True: 'Yes', False: 'No', None: 'N/A'}[self.real_val]
+        self.value = u'%s%s: %s' % (self.label[0].upper(), self.label[1:], self.short_value)
+        self.url = 'by-%s=%s' % (self.schemafield.slug, self.boolslug)
+
+
 class LocationFilter(SchemaFilter):
 
     name = 'location'  # XXX deprecate this? used by eb_filter template tag
