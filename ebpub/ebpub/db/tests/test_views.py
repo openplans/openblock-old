@@ -252,6 +252,33 @@ class TestBoolFilter(TestCase):
         self.assertEqual(more_needed['lookup_type_slug'], 'arrests')
 
 
+class TestTextFilter(TestCase):
+
+    fixtures = ('crimes.json',)
+
+    def _make_filter(self, *url_args):
+        crime = mock.Mock()
+        from ebpub.db.schemafilters import TextSearchFilter
+        from ebpub.db import models
+        url = filter_reverse('crime', [url_args])
+        req = RequestFactory().get(url)
+        context = {'schema': crime}
+        sf_slug = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf = models.SchemaField.objects.get(name=sf_slug)
+        self.mock_qs = mock.Mock()
+        filt = TextSearchFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
+        return filt
+
+    def test_filter__errors(self):
+        from ebpub.db.schemafilters import FilterError
+        self.assertRaises(FilterError, self._make_filter, 'by-status')
+
+    def test_filter__ok(self):
+        filt = self._make_filter('by-status', 'status 9-19')
+        self.assertEqual(filt.more_info_needed(), {})
+        filt.apply()
+        self.assertEqual(self.mock_qs.text_search.call_count, 1)
+
 class TestSchemaFilterView(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',

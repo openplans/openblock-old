@@ -180,15 +180,38 @@ class FilterError(Exception):
         self.msg = msg
         self.url = url
 
-class BoolFilter(SchemaFilter):
+
+class AttributeFilter(SchemaFilter):
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
         self.name = self.schemafield.name  # XXX
-        self.label = None
         self.argname = 'by-%s' % self.schemafield.name
         self.url = None
+
+class TextSearchFilter(AttributeFilter):
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.label = self.schemafield.pretty_name
+        if not args:
+            raise FilterError('Text search lookup requires search params')
+        self.query = ', '.join(args)
+        self.short_value = self.query
+        self.value = self.query
+        self.url = 'by-%s=%s' % (self.schemafield.slug, self.query)
+
+    def apply(self):
+        self.qs = self.qs.text_search(self.schemafield, self.query)
+
+    def more_info_needed(self):
+        return {}
+
+class BoolFilter(AttributeFilter):
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.label = None
         if len(args) > 1:
             raise FilterError("Invalid boolean arg %r" % ','.join(args))
         elif len(args) == 1:

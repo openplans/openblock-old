@@ -941,11 +941,15 @@ def schema_filter(request, slug, args_from_url):
 
             # Text-search attribute filter.
             else:
-                if not argvalues:
-                    raise Http404('Text search lookup requires search params')
-                query = ', '.join(argvalues)
-                qs = qs.text_search(sf, query)
-                filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': query, 'value': query, 'url': 'by-%s=%s' % (sf.slug, query)}
+                from ebpub.db.schemafilters import TextSearchFilter
+                try:
+                    textfilter = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
+                    filters[sf.name] = textfilter
+                except FilterError, e:
+                    raise Http404(str(e))
+                textfilter.apply()
+                qs = textfilter.qs
+
         # END OF ATTRIBUTE FILTERING
 
         # Street/address
