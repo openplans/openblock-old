@@ -186,7 +186,13 @@ it has one. For example, on ubuntu::
 
     $ sudo apt-get install python-lxml
 
+(Note that if you want to take this approach, you *must not* run virtualenv
+with the ``--no-site-packages`` option, as that will prevent your
+virtualenv from being able to use this package.)
+
 If that works, you can skip to :ref:`gdal`.
+
+
 
 The slightly harder way
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,6 +222,10 @@ provides a ready-made python GDAL package. For example, on Ubuntu,
 this will work::
 
    $ sudo apt-get install python-gdal
+
+(Note that if you want to take this approach, you *must not* run virtualenv
+with the ``--no-site-packages`` option, as that will prevent your
+virtualenv from being able to use this package.)
 
 If that works, you can skip to :ref:`next steps <postinstall>`.
 
