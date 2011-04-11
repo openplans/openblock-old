@@ -120,7 +120,7 @@ from django.utils import dateformat
 
 # In ebpub.db.views, example usage would look like:
 def schema_filter(request, *args, **kw):  # pragma: no cover
-    filterchain = FilterChain(request, *args, **kw)
+    filterchain = SchemaFilterChain.from_request(request, *args, **kw)
     normalized_url = normalize_url_with_filters(request, filterchain)
     if normalized_url != request.get_full_path():
         return HttpResponseRedirect(normalized_url)
@@ -465,8 +465,9 @@ class SchemaFilterChain(SortedDict):
         """
         Return a copy of self with keys in optimal order.
         """
-        items = self._normalize_order_of_items(self.items())
+        items = self._sorted_items()
         return SchemaFilterChain(items)
 
-    def _normalize_order_of_items(self, items):
-        raise NotImplementedError
+    def _sorted_items(self):
+        items = self.items()
+        return sorted(items, key=lambda item: item[1]._sort_key)

@@ -30,6 +30,7 @@ from ebpub.db.schemafilters import FilterError
 from ebpub.db.views import filter_reverse
 from ebpub.db import models
 import mock
+import random
 
 
 class TestSchemaFilter(TestCase):
@@ -300,4 +301,49 @@ class TestTextFilter(TestCase):
         self.assertEqual(filt.more_info_needed(), {})
         filt.apply()
         self.assertEqual(self.mock_qs.text_search.call_count, 1)
+
+
+class TestSchemaFilterChain(TestCase):
+
+    def test_empty(self):
+        from ebpub.db.schemafilters import SchemaFilterChain
+        chain = SchemaFilterChain()
+        self.assertEqual(chain.items(), [])
+
+    def test_ordering(self):
+        from ebpub.db.schemafilters import SchemaFilterChain
+        chain = SchemaFilterChain()
+        args = range(10)
+        random.shuffle(args)
+        for i in args:
+            chain[i] = i
+        self.assertEqual(chain.items(), [(i, i) for i in args])
+        self.assertEqual(chain.keys(), args)
+
+    def test_no_duplicates(self):
+        from ebpub.db.schemafilters import SchemaFilterChain
+        from ebpub.db.schemafilters import DuplicateFilterError
+        chain = SchemaFilterChain()
+        chain['foo'] = 'bar'
+        self.assertRaises(DuplicateFilterError, chain.__setitem__, 'foo', 'bar')
+
+
+    def test_normalized_ordering(self):
+        from ebpub.db.schemafilters import SchemaFilterChain
+        class Dummy(object):
+            def __init__(self, sortkey):
+                self._sort_key = sortkey
+
+        dummies = [Dummy(i) for i in range(10)]
+        random.shuffle(dummies)
+        chain = SchemaFilterChain()
+        for i in range(10):
+            chain[i] = dummies[i]
+
+        self.assertNotEqual(range(10),
+                            [v._sort_key for v in chain.values()])
+
+        normalized = chain.normalized_clone()
+        self.assertEqual(range(10),
+                         [v._sort_key for v in normalized.values()])
 
