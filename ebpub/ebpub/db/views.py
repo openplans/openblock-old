@@ -839,7 +839,6 @@ def schema_filter(request, slug, args_from_url):
     List NewsItems for one schema, filtered by various criteria in the
     URL (date, location, or values of SchemaFields).
     """
-    view, view_args, view_kwargs = urlresolvers.resolve(request.path)
     try:
         new_url = _schema_filter_normalize_url(request)
     except BadAddressException, e:
