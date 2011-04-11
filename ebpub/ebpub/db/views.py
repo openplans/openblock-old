@@ -58,6 +58,7 @@ from ebpub.utils.view_utils import parse_pid
 import datetime
 import hashlib
 import logging
+import posixpath
 import re
 import urllib
 
@@ -804,6 +805,32 @@ def _schema_filter_normalize_url(request):
         filter_args =  new_filter_args
     filter_args = urllib.quote(filter_args)
     return urlresolvers.reverse(view, args=[schemaslug, filter_args], kwargs=kwargs)
+
+def filter_reverse(slug, args):
+    """Generate a reverse schema_filter URL.
+    """
+    for i, a  in enumerate(args):
+        if isinstance(a, tuple) or isinstance(a, list):
+            # The first item is the arg name, the rest are arg values.
+            if len(a) > 1:
+                name = a[0]
+                values = ','.join(a[1:])
+                args[i] = '%s=%s' % (name, values)
+            else:
+                # This is allowed eg. for showing a list of available
+                # Blocks, or Lookup values, etc.
+                args[i] = a[0]
+        else:
+            assert isinstance(a, basestring)
+    argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
+    if not argstring:
+        argstring = 'filter'
+    url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
+    url = '%s/%s/' % (url, argstring)
+    # Normalize duplicate slashes, dots, and the like.
+    url = posixpath.normpath(url) + '/'
+    return url
+
 
 def schema_filter(request, slug, args_from_url):
     """

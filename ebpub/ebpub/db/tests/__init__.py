@@ -22,3 +22,4 @@ if not settings.TEST_RUNNER.count('Nose'):
     # But it tricks Nose into running the tests twice.
     from .test_views import *
     from .test_models import *
+    from .test_schemafilters import *
