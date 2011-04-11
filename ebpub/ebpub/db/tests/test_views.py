@@ -253,26 +253,9 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
 
-    @mock.patch('ebpub.db.schemafilters.get_metro')
-    @mock.patch('ebpub.db.schemafilters.get_place_info_for_request')
-    def test_filter_by_block__multicity(self, mock_get_place_info, mock_get_metro):
-        def _mock_get_place_info(request, *args, **kwargs):
-            block = mock_with_attributes(
-                dict(from_num=99, to_num=100, street_slug='something',
-                     pretty_name='99-100 somethign st'))
-            return {'newsitem_qs': kwargs['newsitem_qs'],
-                    'place': block,
-                    'is_block': True,}
-
-        mock_get_place_info.side_effect = _mock_get_place_info
-        mock_get_metro.return_value = {'multiple_cities': True}
-        url = filter_reverse('crime', [('streets', 'boston', 'wabash-ave', '216-299n-s', '8-blocks')])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Boston')
 
     def test_filter__only_one_location_allowed(self):
-        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),
+        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),
                                        ('locations', 'zipcodes', 'zip-1'),
                                        ])
         response = self.client.get(url)

@@ -119,7 +119,7 @@ from django.utils import dateformat
 # STRAW MAN DESIGN FOLLOWS
 
 # In ebpub.db.views, example usage would look like:
-def schema_filter(request, *args, **kw):
+def schema_filter(request, *args, **kw):  # pragma: no cover
     filterchain = FilterChain(request, *args, **kw)
     normalized_url = normalize_url_with_filters(request, filterchain)
     if normalized_url != request.get_full_path():
@@ -151,7 +151,7 @@ class SchemaFilter(object):
         """mutate the queryset, and any other state that needs sharing
         with others.
         """
-        raise NotImplementedError
+        raise NotImplementedError # pragma: no cover
 
     def more_info_needed(self):
         """
@@ -160,7 +160,7 @@ class SchemaFilter(object):
         dict of stuff for putting in a template context.
         ... or maybe something more generic across both REST and UI views
         """
-        return None
+        raise NotImplementedError  # pragma: no cover
 
     def get(self, key, default=None):
         # Emulate a dict to make legacy code in ebpub.db.breadcrumbs happy
@@ -388,7 +388,7 @@ class BlockFilter(SchemaFilter):
         self.value = value
         from ebpub.db.views import radius_urlfragment
         self.url = 'streets=%s,%s,%s' % (block.street_slug,
-                                         '%d-%d' % (block.from_num, block.to_num), 
+                                         '%d-%d' % (block.from_num, block.to_num),
                                          radius_urlfragment(self.block_radius))
         self.location_name = block.pretty_name
         self.location_object = block

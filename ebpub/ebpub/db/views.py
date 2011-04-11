@@ -70,14 +70,16 @@ logger = logging.getLogger('ebpub.db.views')
 
 def radius_urlfragment(radius):
     # XXX this should be done consistently with other filter url generation. #69
-    return '%s-block%s' % (radius, radius != '1' and 's' or '')
+    radius = unicode(radius)
+    return u'%s-block%s' % (radius, radius != '1' and 's' or '')
 
 def radius_url(url, radius):
     """add a block radius to the url.
     url is assumed to already end in a path segment that specifies a block.
     """
     # XXX this should be done consistently with other filter url generation. #69
-    return '%s,%s/' % (url.rstrip('/'), radius_urlfragment(radius))
+    radius = unicode(radius)
+    return u'%s,%s/' % (url.rstrip('/'), radius_urlfragment(radius))
 
 def has_staff_cookie(request):
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
