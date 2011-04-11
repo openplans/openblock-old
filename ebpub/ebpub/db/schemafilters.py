@@ -180,15 +180,20 @@ class FilterError(Exception):
         self.msg = msg
         self.url = url
 
+    def __str__(self):
+        return repr(self.msg)
 
 class AttributeFilter(SchemaFilter):
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
-        self.name = self.schemafield.name  # XXX
+        self.name = self.schemafield.name
         self.argname = 'by-%s' % self.schemafield.name
         self.url = None
+        self.value = self.short_value = ''
+        self.label = self.schemafield.pretty_name
+
 
 class TextSearchFilter(AttributeFilter):
     def __init__(self, request, context, queryset, *args, **kwargs):
@@ -245,9 +250,44 @@ class BoolFilter(AttributeFilter):
         self.url = 'by-%s=%s' % (self.schemafield.slug, self.boolslug)
 
 
+class LookupFilter(AttributeFilter):
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        try:
+            slug = args[0]
+            self._got_args = True
+        except IndexError:
+            self._got_args = False
+        if self._got_args:
+            try:
+                self.look = models.Lookup.objects.get(
+                    schema_field__id=self.schemafield.id, slug=slug)
+            except models.Lookup.DoesNotExist:
+                raise FilterError("No such lookup %r" % slug)
+            self.value = self.look.name
+            self.short_value = self.value
+            self.url = 'by-%s=%s' % (self.schemafield.slug, slug)
+
+    def more_info_needed(self):
+        if self._got_args:
+            return {}
+        lookup_list = models.Lookup.objects.filter(schema_field__id=self.schemafield.id).order_by('name')
+        return {
+            'lookup_type': self.schemafield.pretty_name,
+            'lookup_type_slug': self.schemafield.slug,
+            'filter_argname': self.argname,
+            'lookup_list': lookup_list,
+        }
+
+    def apply(self):
+        self.qs = self.qs.by_attribute(self.schemafield, self.look.id)
+
+
 class LocationFilter(SchemaFilter):
 
     name = 'location'  # XXX deprecate this? used by eb_filter template tag
+    argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -273,7 +313,7 @@ class LocationFilter(SchemaFilter):
                 'lookup_type': location_type.name,
                 'lookup_type_slug': self.location_type_slug,
                 'lookup_list': lookup_list,
-                # XXX 'filter_argname': argname,
+                'filter_argname': self.argname,
                 }
 
 

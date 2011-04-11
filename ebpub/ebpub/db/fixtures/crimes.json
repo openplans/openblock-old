@@ -375,7 +375,18 @@
    "slug": "beat-214"
   },
   "model": "db.lookup",
-  "pk": 214
+  "pk": 1000
+ },
+ {
+  "fields": {
+   "description": "A police beat.",
+   "code": "64",
+   "schema_field": 7,
+   "name": "Police Beat 64",
+   "slug": "beat-64"
+  },
+  "model": "db.lookup",
+  "pk": 1001
  }
 ]
 

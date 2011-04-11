@@ -252,6 +252,42 @@ class TestBoolFilter(TestCase):
         self.assertEqual(more_needed['lookup_type_slug'], 'arrests')
 
 
+class TestLookupFilter(TestCase):
+
+    fixtures = ('crimes.json',)
+
+    def _make_filter(self, *url_args):
+        crime = mock.Mock()
+        from ebpub.db.schemafilters import LookupFilter
+        from ebpub.db import models
+        url = filter_reverse('crime', [url_args])
+        req = RequestFactory().get(url)
+        context = {'schema': crime}
+        sf_slug = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf = models.SchemaField.objects.get(name=sf_slug)
+        filt = LookupFilter(req, context, None, *url_args[1:], schemafield=sf)
+        return filt
+
+    def test_filter__errors(self):
+        from ebpub.db.schemafilters import FilterError
+        #self.assertRaises(FilterError, self._make_filter, 'by-beat', )
+        self.assertRaises(FilterError, self._make_filter, 'by-beat', 'whoops')
+
+    def test_filter__more_needed(self):
+        filt = self._make_filter('by-beat')
+        more_needed = filt.more_info_needed()
+        self.assert_(more_needed)
+        self.assertEqual(more_needed['lookup_type'], 'Beat')
+        self.assertEqual(more_needed['lookup_type_slug'], 'beat')
+        self.assertEqual(len(more_needed['lookup_list']), 2)
+
+
+    def test_filter__ok(self):
+        filt = self._make_filter('by-beat', 'beat-214', )
+        self.assertEqual(filt.more_info_needed(), {})
+        # TODO: test apply()
+
+
 class TestTextFilter(TestCase):
 
     fixtures = ('crimes.json',)

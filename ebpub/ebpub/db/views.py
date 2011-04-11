@@ -905,23 +905,22 @@ def schema_filter(request, slug, args_from_url):
                 raise Http404('Invalid SchemaField slug')
             # Lookup filtering
             if sf.is_lookup:
-                if argvalues:
-                    look = get_object_or_404(Lookup, schema_field__id=sf.id, slug=argvalues.pop(0))
-                    qs = qs.by_attribute(sf, look.id)
-                    if look.description:
-                        lookup_descriptions.append(look)
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': look.name, 'value': look.name, 'url': 'by-%s=%s' % (sf.slug, look.slug)}
-                else: # List of available lookups.
-                    lookup_list = Lookup.objects.filter(schema_field__id=sf.id).order_by('name')
-                    filters['lookup'] = {'name': 'lookup', 'label': None, 'value': 'By ' + sf.pretty_name, 'url': None}
-                    context.update({
-                        'filters': filters,
-                        'lookup_type': sf.pretty_name,
-                        'lookup_type_slug': sf.slug,
-                        'filter_argname': argname,
-                        'lookup_list': lookup_list,
-                    })
+                from ebpub.db.schemafilters import LookupFilter
+                try:
+                    lookup_filter = LookupFilter(request, context, qs, *argvalues,
+                                                 schemafield=sf)
+                    more_needed = lookup_filter.more_info_needed()
+                except FilterError, e:
+                    raise Http404(str(e))
+                if more_needed:
+                    context.update(more_needed)
+                    filters['lookup'] = lookup_filter
+                    context['filters'] = filters  # XXX already there?
                     return eb_render(request, 'db/filter_lookup_list.html', context)
+                lookup_filter.apply()
+                qs = lookup_filter.qs
+                lookup_descriptions.append(lookup_filter.look)
+
             # Boolean attr filtering.
             elif sf.is_type('bool'):
                 from ebpub.db.schemafilters import BoolFilter
