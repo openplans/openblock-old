@@ -224,7 +224,7 @@ class LocationFilter(SchemaFilter):
 
     _sort_value = 200.0
 
-    name = 'location'  # XXX deprecate this? used by eb_filter template tag
+    name = 'location'  # XXX deprecate this? used by eb_filter template tags
     argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
@@ -405,6 +405,7 @@ class SchemaFilterChain(SortedDict):
             # so it will raise error on dupes.
             self.update(data)
         self.lookup_descriptions = []
+        self.schema = None
 
     def __setitem__(self, key, value):
         """
@@ -436,7 +437,7 @@ class SchemaFilterChain(SortedDict):
         argstring = argstring.replace('+', ' ')
         args = []
         chain = klass()
-        context['filters'] = chain
+        chain.schema = context['schema']
 
         if argstring and argstring != 'filter':
             for arg in argstring.split(';'):
@@ -530,12 +531,16 @@ class SchemaFilterChain(SortedDict):
             queryset = filt.qs
         return queryset
 
+    def copy(self):
+        # Overriding because dict.copy() re-inits attributes.
+        import copy
+        return copy.copy(self)
+
     def normalized_clone(self):
         """
         Return a copy of self with keys in optimal order.
         """
-        import copy
-        clone = copy.copy(self)
+        clone = self.copy()
         clone.clear()
         clone.update(self._sorted_items())
         return clone

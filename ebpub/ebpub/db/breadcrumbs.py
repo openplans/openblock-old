@@ -77,12 +77,13 @@ def schema_filter(context):
     # TODO: refactor this to use SchemaFilterChain?
     crumbs = schema_detail(context)
     url = crumbs[-1][1]
-    for sf in context.get('filterchain', {}).values():
-        label = (sf.get('short_value') or sf.get('value', '')).title()
-        if sf.get('url') is not None:
-            url = url + sf['url'] + '/'
-        if label and url:
-            crumbs.append((label, url))
+    for sf in context.get('filter', {}).values():
+        label = getattr(sf, 'short_value', '') or getattr(sf, 'value', '')
+        label = label.title()
+        if label:
+            if getattr(sf, 'url', None) is not None:
+                url = url + sf.url + '/'
+                crumbs.append((label, url))
     # This one's a generator because we want to evaluate it lazily,
     # and django's 'for' template tag doesn't accept callables.
     for crumb in crumbs:

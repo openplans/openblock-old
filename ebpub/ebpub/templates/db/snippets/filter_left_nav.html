@@ -14,7 +14,7 @@ start_date, end_date, lookup_list, search_list, search_url
 		<li class="filter changed">
 			<span class="filter-label">{{ filter.label|capfirst }}:</span>
 			<strong class="filter-value">{{ filter.short_value }}</strong>
-			<a class="filter-clear" href="{% filter_url schema filters -filter.name %}" title="Remove this filter" rel="nofollow">Clear</a>
+			<a class="filter-clear" href="{% filter_url filters -filter.name %}" title="Remove this filter" rel="nofollow">Clear</a>
 		</li>
 		{% endfor %}
 	</ul>
