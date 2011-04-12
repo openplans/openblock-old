@@ -31,14 +31,12 @@ Chain of filters needs to support:
      This will need profiling with lots of test data.
 
   6. SEO and CACHEABILITY: Redirect to a normalized form of the URL
-     for better cacheability.
-
-     ... handle this in external code
+     for better cacheability. - DONE but needs refactoring
 
 
   7. copy() a filter chain - useful for making mutated variations,
      which could be used with our reverse() to create "remove
-     this filter" links in the UI.
+     this filter" links in the UI. - DONE
 
   8. get a list of breadcrumb links for the whole chain.
 
@@ -50,58 +48,6 @@ Chain of filters needs to support:
 
      this could be done by external code: it's not really
      core to filtering and is irrelevant in eg. the REST API views.
-
-
-Currently, each 'filter' *as seen by templates* is a dict with keys like:
-
-  {'name': 'date',
-   'label': schema.date_name,
-   'short_value': ...,
-   'value': dateformat.format(start_date, 'N j, Y'),
-   'url':  XXX fragment of url path, like '/filter/arg1/arg2/' in the original version or '/filter=arg1,arg2/' in my alternate version.
-   'location_name': XXX string, only used when name='location',
-   'location_object': XXX a Block or Location,
-   }
-
-... but since django templates don't distinguish between attrs and
-items, there's no reason a filter couldn't be an object with those
-attributes/properties too.  And some of that may only be needed by the
-breadcrumb template tag, which should go away (see above).
-
----------------------------------------------------
-
-Things that can happen in current schema_filter() view when a filter
-gets "applied":
-
-  * an existing queryset might get modified in various ways:
-     qs = qs.filter(**kwargs)  # date
-     qs = qs.by_attribute(schemafield, lookup.id)  # Lookup
-     qs = qs.by_attribute(schemafield, True|False|None)  # Boolean Lookup
-     qs = qs.text_search(schemafield, query)  # Text search Lookup
-
-  * might redirect to a better view (eg. adding a default block radius)
-
-     ... this isn't really the responsibility of the filter,
-     maybe could be handled as part of url normalization
-
-  * if there are no args to this filter, and it requires some,
-    immediately *return* (not redirect) filter_lookup_list.html with a list of
-    possible values ('lookup_list')
-
-    ... maybe could handle this in external code, just after url
-    normalization?  not sure since the specific filter may need to be
-    intimately aware of what needs to happen here.
-
-    example: http://demo.openblockproject.org/local-news/locations/zipcodes/ allows you to select a zip code
-
-  * template context may have some new stuff added.
-
-  * a callback might get called (mainly context.update(get_place_info_for_request()), used when filtering by block or location.
-    ... this might also mutate the queryset, in context['newsitem_qs']
-
-
-  * 404 if filter type is invalid.
-
 
 """
 
