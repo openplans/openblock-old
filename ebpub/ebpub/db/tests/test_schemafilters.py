@@ -69,7 +69,7 @@ class TestLocationFilter(TestCase):
 
     def test_filter_by_location_choices(self):
         filt = self._make_filter('zipcodes')
-        more_needed = filt.more_info_needed()
+        more_needed = filt.validate()
         self.assertEqual(more_needed['lookup_type'], u'ZIP Code')
         self.assertEqual(more_needed['lookup_type_slug'], 'zipcodes')
         self.assert_(len(more_needed['lookup_list']) > 0)
@@ -78,9 +78,9 @@ class TestLocationFilter(TestCase):
     def test_filter_by_location__no_locations(self, mock_location_query):
         mock_location_query.return_value.order_by.return_value = []
         filt = self._make_filter('zipcodes')
-        self.assertRaises(FilterError, filt.more_info_needed)
+        self.assertRaises(FilterError, filt.validate)
         try:
-            filt.more_info_needed()
+            filt.validate()
         except FilterError, e:
             self.assertEqual(str(e), "'empty lookup list'")
 
@@ -89,7 +89,7 @@ class TestLocationFilter(TestCase):
         # more things to make it more isolated unit test?
         filt = self._make_filter('zipcodes', 'zip-1')
         filt.request.user= mock_with_attributes({'is_anonymous': lambda: True})
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         expected_loc = models.Location.objects.get(slug='zip-1')
         self.assertEqual(filt.context['place'], expected_loc)
@@ -141,7 +141,7 @@ class TestBlockFilter(TestCase):
         mock_get_place_info.side_effect = _mock_get_place_info
         mock_get_metro.return_value = {'multiple_cities': True}
         filt = self._make_filter('boston', 'wabash-ave', '216-299n-s', '8')
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(filt.location_object.from_num, 99)
         self.assertEqual(filt.location_object.to_num, 100)
@@ -171,7 +171,7 @@ class TestDateFilter(TestCase):
 
     def test_filter__ok(self):
         filt = self._make_filter('by-date', '2006-11-08', '2006-11-09')
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(filt.value, u'Nov. 8, 2006 \u2013 Nov. 9, 2006')
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt.kwargs))
@@ -179,7 +179,7 @@ class TestDateFilter(TestCase):
 
     def test_filter__ok__one_day(self):
         filt = self._make_filter('by-date', '2006-11-08', '2006-11-08')
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(filt.value, u'Nov. 8, 2006')
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt.kwargs))
@@ -189,7 +189,7 @@ class TestDateFilter(TestCase):
         from ebpub.db.schemafilters import PubDateFilter
         filt2 = PubDateFilter(filt.request, filt.context, filt.qs,
                               '2006-11-08', '2006-11-09')
-        self.assertEqual(filt2.more_info_needed(), {})
+        self.assertEqual(filt2.validate(), {})
         filt2.apply()
         self.assertEqual(filt2.argname, 'by-pub-date')
         self.assertEqual(filt2.date_field_name, 'pub_date')
@@ -219,7 +219,7 @@ class TestBoolFilter(TestCase):
 
     def test_filter__ok(self):
         filt = self._make_filter('by-arrests', 'no')
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(self.mock_qs.by_attribute.call_args,
                          ((filt.schemafield, False), {}))
@@ -229,7 +229,7 @@ class TestBoolFilter(TestCase):
 
     def test_filter__more_needed(self):
         filt = self._make_filter('by-arrests')
-        more_needed = filt.more_info_needed()
+        more_needed = filt.validate()
         self.assertEqual(more_needed['lookup_type_slug'], 'arrests')
 
 
@@ -258,7 +258,7 @@ class TestLookupFilter(TestCase):
 
     def test_filter__more_needed(self):
         filt = self._make_filter('by-beat')
-        more_needed = filt.more_info_needed()
+        more_needed = filt.validate()
         self.assert_(more_needed)
         self.assertEqual(more_needed['lookup_type'], 'Beat')
         self.assertEqual(more_needed['lookup_type_slug'], 'beat')
@@ -267,7 +267,7 @@ class TestLookupFilter(TestCase):
     def test_filter__ok(self):
         filt = self._make_filter('by-beat', 'beat-214', )
         filt = self._make_filter('by-beat', 'beat-214', )
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(filt.look.id, 1000)
         self.assertEqual(self.mock_qs.by_attribute.call_args,
@@ -298,7 +298,7 @@ class TestTextFilter(TestCase):
 
     def test_filter__ok(self):
         filt = self._make_filter('by-status', 'status 9-19')
-        self.assertEqual(filt.more_info_needed(), {})
+        self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(self.mock_qs.text_search.call_count, 1)
 

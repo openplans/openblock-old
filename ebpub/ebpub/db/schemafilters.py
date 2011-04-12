@@ -129,12 +129,14 @@ class SchemaFilter(object):
         """
         raise NotImplementedError # pragma: no cover
 
-    def more_info_needed(self):
+    def validate(self):
         """
         If we didn't get enough info from the args, eg. it's a
         Location filter but no location was specified, then return a
         dict of stuff for putting in a template context.
-        ... or maybe something more generic across both REST and UI views
+
+        ... or maybe should be something more generic across both REST
+        and UI views
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -193,7 +195,7 @@ class TextSearchFilter(AttributeFilter):
     def apply(self):
         self.qs = self.qs.text_search(self.schemafield, self.query)
 
-    def more_info_needed(self):
+    def validate(self):
         return {}
 
 class BoolFilter(AttributeFilter):
@@ -215,7 +217,7 @@ class BoolFilter(AttributeFilter):
             self.value = u'By whether they %s' % self.schemafield.pretty_name_plural
             self._got_args = False
 
-    def more_info_needed(self):
+    def validate(self):
         if self._got_args:
             return {}
         return {
@@ -254,7 +256,7 @@ class LookupFilter(AttributeFilter):
             self.short_value = self.value
             self.url = 'by-%s=%s' % (self.schemafield.slug, slug)
 
-    def more_info_needed(self):
+    def validate(self):
         if self._got_args:
             return {}
         lookup_list = models.Lookup.objects.filter(schema_field__id=self.schemafield.id).order_by('name')
@@ -285,7 +287,7 @@ class LocationFilter(SchemaFilter):
         except IndexError:
             self._got_args = False
 
-    def more_info_needed(self):
+    def validate(self):
         # List of available locations for this location type.
         if self._got_args:
             return {}
@@ -353,7 +355,7 @@ class BlockFilter(SchemaFilter):
         self.url_to_block_args = m.groups()
 
 
-    def more_info_needed(self):
+    def validate(self):
         # Filtering UI does not provide a page for selecting a block.
         return {}
 
@@ -414,7 +416,7 @@ class DateFilter(SchemaFilter):
 
 
 
-    def more_info_needed(self):
+    def validate(self):
         # Filtering UI does not provide a page for selecting a block.
         return {}
 
@@ -535,12 +537,12 @@ class SchemaFilterChain(SortedDict):
     def validate(self):
         """Check whether any of the filters were requested without
         a required value.  If so, return info about what's needed,
-        as a dict.
+        as a dict.  Stops on the first one that returns anything.
 
         Can raise FilterError.
         """
         for filt in self.values():
-            more_needed = filt.more_info_needed()
+            more_needed = filt.validate()
             if more_needed:
                 return more_needed
         return {}
