@@ -7,9 +7,9 @@ Use cases:
   2. Generate reverse urls, complete with query string (if we use them),
      given one or more filters.
 
-     a. For schema_filter() html view
+     a. For schema_filter() html view - TODO
 
-     b. For REST API view
+     b. For REST API view  - TODO
 
 
 Chain of filters needs to support:
@@ -25,14 +25,15 @@ Chain of filters needs to support:
      handle however they like. - DONE
 
   5. OPTIMIZATION: normalize the order of filters by increasing
-     expense - DONE, except for the hard part of testing which order
+     expense - DONE
+
+     TODO: ... except for the hard part of testing which order
      is actualy optimal.  Currently guessing it to be: schema, date,
      non-lookup attrs, block/location, lookup attrs, text search.
      This will need profiling with lots of test data.
 
   6. SEO and CACHEABILITY: Redirect to a normalized form of the URL
      for better cacheability. - DONE but needs refactoring
-
 
   7. copy() a filter chain - useful for making mutated variations,
      which could be used with our reverse() to create "remove
@@ -404,22 +405,30 @@ from django.utils.datastructures import SortedDict
 class SchemaFilterChain(SortedDict):
 
     def __init__(self, data=None):
-        if isinstance(data, list) or isinstance(data, tuple):
-            SortedDict.__init__(self, None)
-            for key, val in data:
-                # We iterate here to force our __setitem__ to get called
-                # so it will raise error on dupes.
-                self[key] = val
-        else:
-            SortedDict.__init__(self, data)
+        SortedDict.__init__(self, data=None)
+        if data is not None:
+            # We do this to force our __setitem__ to get called
+            # so it will raise error on dupes.
+            self.update(data)
+        self.lookup_descriptions = []
 
     def __setitem__(self, key, value):
         """
-        stores a SchemaFilter.
+        stores a SchemaFilter, and raises DuplicateFilterError if the
+        key exists.
         """
         if self.has_key(key):
             raise DuplicateFilterError(key)
         SortedDict.__setitem__(self, key, value)
+
+    def update(self, dict_):
+        # Need this until http://code.djangoproject.com/ticket/15812
+        # gets accepted & released.
+        if getattr(dict_, 'iteritems', None) is not None:
+            dict_ = dict_.iteritems()
+        for k, v in dict_:
+            # This works for tuples, lists, and other iterators too.
+            self[k] = v
 
     @classmethod
     def from_request(klass, request, context, argstring, filter_sf_dict):
@@ -477,25 +486,21 @@ class SchemaFilterChain(SortedDict):
 
                 # Boolean attr filtering.
                 elif sf.is_type('bool'):
-                    chain['lookup'] = BoolFilter(request, context, qs,
-                                                 *argvalues, schemafield=sf)  # XXX only one lookup??
+                    chain[sf.name] = BoolFilter(request, context, qs,
+                                                *argvalues, schemafield=sf)
 
                 # Text-search attribute filter.
                 else:
-                    textfilter = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
-                    chain[sf.name] = textfilter
+                    chain[sf.name] = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
 
             # END OF ATTRIBUTE FILTERING
 
             # Street/address
             elif argname.startswith('streets'):
-                blockfilter = BlockFilter(request, context, qs, *argvalues)
-                chain['location'] = blockfilter
-
+                chain['location'] = BlockFilter(request, context, qs, *argvalues)
             # Location filtering
             elif argname.startswith('locations'):
-                locfilter = LocationFilter(request, context, qs, *argvalues)
-                chain['location'] = locfilter
+                chain['location'] = LocationFilter(request, context, qs, *argvalues)
 
             else:
                 raise FilterError('Invalid filter type')
@@ -515,8 +520,8 @@ class SchemaFilterChain(SortedDict):
                 if filt.argname.startswith('by-'):
                     # Somewhere in filter_lookup_list.html, it needs this
                     # filter to show up as 'lookup' rather than its usual name.
-                    self['lookup'] = filt
                     del self[key]
+                    self['lookup'] = filt
                 return more_needed
         return {}
 
@@ -535,8 +540,11 @@ class SchemaFilterChain(SortedDict):
         """
         Return a copy of self with keys in optimal order.
         """
-        items = self._sorted_items()
-        return SchemaFilterChain(items)
+        import copy
+        clone = copy.copy(self)
+        clone.clear()
+        clone.update(self._sorted_items())
+        return clone
 
     def _sorted_items(self):
         items = self.items()

@@ -884,20 +884,20 @@ def schema_filter(request, slug, args_from_url):
 
     try:
         filterchain = SchemaFilterChain.from_request(request, context, args_from_url, filter_sf_dict)
+        filterchain = filterchain.normalized_clone()  # Optimal filter order.
         filters_need_more = filterchain.validate()
-        #context['filters'] = filterchain  # XXX needed?
     except FilterError, e:
         if getattr(e, 'url', None) is not None:
             return HttpResponseRedirect(e.url)
         raise Http404(str(e))
+
+    context['filters'] = filterchain
 
     if filters_need_more:
         # Show a page to select the unspecified value.
         context.update(filters_need_more)
 
         return eb_render(request, 'db/filter_lookup_list.html', context)
-
-    filters = filterchain  #SortedDict() # XXX re-use the chain for the template's dict of filters?
 
     qs = filterchain.apply(qs)
 
@@ -983,7 +983,6 @@ def schema_filter(request, slug, args_from_url):
         'boolean_lookup_list': boolean_lookup_list,
         'search_list': search_list,
         'location_type_list': location_type_list,
-        'filters': filters,
         'date_filter_applied': filterchain.has_key('date'),
         'location_filter_applied': filterchain.has_key('location'),
         'lookup_descriptions': filterchain.lookup_descriptions,
