@@ -2,7 +2,7 @@
 Use cases:
 
   1. Generate a chain of filters, given view arguments and/or query
-     string.
+     string.  - DONE
 
   2. Generate reverse urls, complete with query string (if we use them),
      given one or more filters.
@@ -14,22 +14,21 @@ Use cases:
 
 Chain of filters needs to support:
 
-  1. Add a filter to the chain, by name.
+  1. Add a filter to the chain, by name. - DONE
 
-  2. Remove a filter from the chain, by name
+  2. Remove a filter from the chain, by name  - DONE
 
-  3. get a filter from the chain, by name
+  3. get a filter from the chain, by name - DONE
 
   4. raise Http404() if conflicting filters are added (eg. two date
      filters) - or raise a custom exception which wrapper views can
-     handle however they like.
+     handle however they like. - DONE
 
-  5. OPTIMIZATION: normalize the order of filters by
-     increasing expense
-
-     ... which I guess to be something like: schema, date, non-lookup
-     attrs, block/location, lookup attrs, text search. This would need
-     profiling with lots of test data.
+  5. OPTIMIZATION: normalize the order of filters by increasing
+     expense - DONE, except for the hard part of testing which order
+     is actualy optimal.  Currently guessing it to be: schema, date,
+     non-lookup attrs, block/location, lookup attrs, text search.
+     This will need profiling with lots of test data.
 
   6. SEO and CACHEABILITY: Redirect to a normalized form of the URL
      for better cacheability.
@@ -118,6 +117,9 @@ import urllib
 
 
 class SchemaFilter(object):
+
+    _sort_value = 100.0
+
     def __init__(self, request, context, queryset=None, *args, **kw):
         self.qs = queryset
         self.context = context
@@ -182,6 +184,8 @@ class TextSearchFilter(AttributeFilter):
     """Does a text search on values of the given attribute.
     """
 
+    _sort_value = 1000.0
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.label = self.schemafield.pretty_name
@@ -199,6 +203,8 @@ class TextSearchFilter(AttributeFilter):
         return {}
 
 class BoolFilter(AttributeFilter):
+
+    _sort_value = 100.0
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -238,6 +244,8 @@ class BoolFilter(AttributeFilter):
 
 class LookupFilter(AttributeFilter):
 
+    _sort_value = 900.0
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
         try:
@@ -272,6 +280,8 @@ class LookupFilter(AttributeFilter):
 
 
 class LocationFilter(SchemaFilter):
+
+    _sort_value = 200.0
 
     name = 'location'  # XXX deprecate this? used by eb_filter template tag
     argname = 'locations'
@@ -330,6 +340,8 @@ class BlockFilter(SchemaFilter):
 
     name = 'location'
 
+    _sort_value = 200.0
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         args = list(args)
@@ -386,6 +398,8 @@ class DateFilter(SchemaFilter):
     date_field_name = 'item_date'
     argname = 'by-date'  # XXX this doesn't feel like it belongs here.
 
+    _sort_value = 1.0
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         args = list(args)
@@ -430,6 +444,8 @@ class PubDateFilter(DateFilter):
     argname = 'by-pub-date'
     date_field_name = 'pub_date'
 
+    _sort_value = 1.0
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         DateFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.label = 'date published'
@@ -441,9 +457,15 @@ class DuplicateFilterError(FilterError):
 from django.utils.datastructures import SortedDict
 class SchemaFilterChain(SortedDict):
 
-    def __init__(self, *args, **kwargs):
-        SortedDict.__init__(self, *args, **kwargs)
-        self.lookup_descriptions = []
+    def __init__(self, data=None):
+        if isinstance(data, list) or isinstance(data, tuple):
+            SortedDict.__init__(self, None)
+            for key, val in data:
+                # We iterate here to force our __setitem__ to get called
+                # so it will raise error on dupes.
+                self[key] = val
+        else:
+            SortedDict.__init__(self, data)
 
     def __setitem__(self, key, value):
         """
@@ -503,7 +525,7 @@ class SchemaFilterChain(SortedDict):
                 if sf.is_lookup:
                     lookup_filter = LookupFilter(request, context, qs, *argvalues,
                                                  schemafield=sf)
-                    chain['lookup'] = lookup_filter  # XXX can't we have multiple??
+                    chain[sf.name] = lookup_filter
                     if lookup_filter.look is not None:
                         chain.lookup_descriptions.append(lookup_filter.look)
 
@@ -541,9 +563,14 @@ class SchemaFilterChain(SortedDict):
 
         Can raise FilterError.
         """
-        for filt in self.values():
+        for key, filt in self.items():
             more_needed = filt.validate()
             if more_needed:
+                if filt.argname.startswith('by-'):
+                    # Somewhere in filter_lookup_list.html, it needs this
+                    # filter to show up as 'lookup' rather than its usual name.
+                    self['lookup'] = filt
+                    del self[key]
                 return more_needed
         return {}
 
@@ -567,4 +594,4 @@ class SchemaFilterChain(SortedDict):
 
     def _sorted_items(self):
         items = self.items()
-        return sorted(items, key=lambda item: item[1]._sort_key)
+        return sorted(items, key=lambda item: item[1]._sort_value)

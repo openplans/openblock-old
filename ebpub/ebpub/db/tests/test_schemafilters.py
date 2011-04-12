@@ -320,19 +320,21 @@ class TestSchemaFilterChain(TestCase):
         self.assertEqual(chain.items(), [(i, i) for i in args])
         self.assertEqual(chain.keys(), args)
 
+
     def test_no_duplicates(self):
         from ebpub.db.schemafilters import SchemaFilterChain
         from ebpub.db.schemafilters import DuplicateFilterError
+        self.assertRaises(DuplicateFilterError, SchemaFilterChain,
+                          (('foo', 'bar'), ('foo', 'bar2')))
         chain = SchemaFilterChain()
         chain['foo'] = 'bar'
         self.assertRaises(DuplicateFilterError, chain.__setitem__, 'foo', 'bar')
 
-
-    def test_normalized_ordering(self):
+    def test_normalized_clone(self):
         from ebpub.db.schemafilters import SchemaFilterChain
         class Dummy(object):
-            def __init__(self, sortkey):
-                self._sort_key = sortkey
+            def __init__(self, sort_value):
+                self._sort_value = sort_value
 
         dummies = [Dummy(i) for i in range(10)]
         random.shuffle(dummies)
@@ -341,9 +343,33 @@ class TestSchemaFilterChain(TestCase):
             chain[i] = dummies[i]
 
         self.assertNotEqual(range(10),
-                            [v._sort_key for v in chain.values()])
+                            [v._sort_value for v in chain.values()])
 
         normalized = chain.normalized_clone()
         self.assertEqual(range(10),
-                         [v._sort_key for v in normalized.values()])
+                         [v._sort_value for v in normalized.values()])
 
+
+    def test_normalized_clone__real_filters(self):
+        from ebpub.db.schemafilters import SchemaFilterChain
+        req = mock.Mock()
+        qs = mock.Mock()
+        schema = mock.Mock()
+        context = {'newsitem_qs': qs, 'schema': schema}
+        from ebpub.db.schemafilters import TextSearchFilter, BoolFilter
+        from ebpub.db.schemafilters import LookupFilter, LocationFilter
+        from ebpub.db.schemafilters import DateFilter
+        all_filters = [
+            TextSearchFilter(req, context, qs, 'hi',
+                             schemafield=mock_with_attributes({'name': 'mock text sf'})),
+            BoolFilter(req, context, qs, 'yes',
+                       schemafield=mock_with_attributes({'name': 'mock bool sf'})),
+            LookupFilter(req, context, qs,
+                         schemafield=mock_with_attributes({'name': 'mock lookup sf'})),
+            LocationFilter(req, context, qs, 'zipcodes'),
+            DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
+            ]
+        chain = SchemaFilterChain([(item.name, item) for item in all_filters])
+        ordered_chain = chain.normalized_clone()
+        self.assertEqual(ordered_chain.keys(),
+                         ['date', 'mock bool sf', 'location', 'mock lookup sf', 'mock text sf'])
