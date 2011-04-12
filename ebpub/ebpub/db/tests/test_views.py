@@ -327,7 +327,6 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-
     def test_filter__by_boolean__unspecified(self):
         url = filter_reverse('crime', [('by-arrests', '')])
         response = self.client.get(url)

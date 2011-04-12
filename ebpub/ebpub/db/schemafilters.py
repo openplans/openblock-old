@@ -41,14 +41,8 @@ Chain of filters needs to support:
 
   8. get a list of breadcrumb links for the whole chain.
 
-     it's still debatable whether breadcrumbs make sense here at all.
-
-     if they do, this would replace
-     templatetags.eb_filter.filter_breadcrumb_link() which by
-     comparison takes too many params and is called N times.
-
-     this could be done by external code: it's not really
-     core to filtering and is irrelevant in eg. the REST API views.
+     DONE - this is currently in ebpub.db.breadcrumbs;
+     might need some more attention.
 
 """
 
