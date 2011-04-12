@@ -107,38 +107,14 @@ gets "applied":
 """
 
 
-#from django.http import Http404
-from django.http import HttpResponseRedirect
+from django.utils import dateformat
 from ebpub.db import constants
 from ebpub.db import models
 from ebpub.db.utils import get_place_info_for_request
+
 import datetime
 import re
-from django.utils import dateformat
-
-# STRAW MAN DESIGN FOLLOWS
-
-# In ebpub.db.views, example usage would look like:
-def schema_filter(request, *args, **kw):  # pragma: no cover
-    filterchain = SchemaFilterChain.from_request(request, *args, **kw)
-    normalized_url = normalize_url_with_filters(request, filterchain)
-    if normalized_url != request.get_full_path():
-        return HttpResponseRedirect(normalized_url)
-
-    context = {}
-    qs = NewsItem.objects.all()
-    for sfilter in filterchain:
-        info_needed = filterchain.more_info_needed()
-        if info_needed:
-            context.update(info_needed)
-            return eb_render(request, 'db/filter_lookup_list.html', context)
-        qs = sfilter.apply(qs)
-
-    # ... now post-filtering stuff, currently starting at:
-    LOOKUP_MIN_DISPLAYED = 7
-    # ... etc.
-    return eb_render(request, 'db/filter.html', context)
-
+import urllib
 
 
 class SchemaFilter(object):
@@ -185,6 +161,10 @@ class FilterError(Exception):
 
 class AttributeFilter(SchemaFilter):
 
+    """base class for more specific types of attribute filters
+    (LookupFilter, TextSearchFilter, etc).
+    """
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
@@ -196,6 +176,10 @@ class AttributeFilter(SchemaFilter):
 
 
 class TextSearchFilter(AttributeFilter):
+
+    """Does a text search on values of the given attribute.
+    """
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.label = self.schemafield.pretty_name
@@ -259,6 +243,7 @@ class LookupFilter(AttributeFilter):
             self._got_args = True
         except IndexError:
             self._got_args = False
+            self.look = None
         if self._got_args:
             try:
                 self.look = models.Lookup.objects.get(
@@ -417,6 +402,18 @@ class DateFilter(SchemaFilter):
             lt_kwarg: self.end_date+datetime.timedelta(days=1)
             }
 
+        if self.start_date == self.end_date:
+            self.value = dateformat.format(self.start_date, 'N j, Y')
+        else:
+            self.value = u'%s \u2013 %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
+
+        self.short_value = self.value
+        self.url = '%s=%s,%s' % (self.argname,
+                                 self.start_date.strftime('%Y-%m-%d'),
+                                 self.end_date.strftime('%Y-%m-%d'))
+
+
+
     def more_info_needed(self):
         # Filtering UI does not provide a page for selecting a block.
         return {}
@@ -424,17 +421,6 @@ class DateFilter(SchemaFilter):
     def apply(self):
         """ filtering by Date """
         self.qs = self.qs.filter(**self.kwargs)
-        if self.start_date == self.end_date:
-            value = dateformat.format(self.start_date, 'N j, Y')
-        else:
-            value = u'%s \u2013 %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
-
-
-        self.value = value
-        self.short_value = value
-        self.url = '%s=%s,%s' % (self.argname,
-                                 self.start_date.strftime('%Y-%m-%d'), 
-                                 self.end_date.strftime('%Y-%m-%d'))
 
 
 class PubDateFilter(DateFilter):
@@ -453,6 +439,10 @@ class DuplicateFilterError(FilterError):
 from django.utils.datastructures import SortedDict
 class SchemaFilterChain(SortedDict):
 
+    def __init__(self, *args, **kwargs):
+        SortedDict.__init__(self, *args, **kwargs)
+        self.lookup_descriptions = []
+
     def __setitem__(self, key, value):
         """
         stores a SchemaFilter.
@@ -460,6 +450,111 @@ class SchemaFilterChain(SortedDict):
         if self.has_key(key):
             raise DuplicateFilterError(key)
         SortedDict.__setitem__(self, key, value)
+
+    @classmethod
+    def from_request(klass, request, context, argstring, filter_sf_dict):
+        """Alternate constructor that populates the list of filters
+        based on parameters.
+
+        argstring is a string describing the filters (or None, in the case of
+        "/filter/").
+        """
+        argstring = urllib.unquote((argstring or '').rstrip('/'))
+        argstring = argstring.replace('+', ' ')
+        args = []
+        chain = klass()
+        context['filters'] = chain
+
+        if argstring and argstring != 'filter':
+            for arg in argstring.split(';'):
+                try:
+                    argname, argvalues = arg.split('=', 1)
+                except ValueError:
+                    raise FilterError('Invalid filter parameter %r, no equals sign' % arg)
+                argname = argname.strip()
+                argvalues = [v.strip() for v in argvalues.split(',')]
+                if argname:
+                    args.append((argname, argvalues))
+        else:
+            # No filters specified. Do nothing?
+            pass
+
+        qs = context['newsitem_qs']
+        while args:
+            argname, argvalues = args.pop(0)
+            argvalues = [v for v in argvalues if v]
+            # Date range
+            if argname == 'by-date':
+                chain['date'] = DateFilter(request, context, qs, *argvalues)
+            elif argname == 'by-pub-date':
+                chain['date'] = PubDateFilter(request, context, qs, *argvalues)
+
+            # Attribute filtering
+            elif argname.startswith('by-'):
+                sf_slug = argname[3:]
+                try:
+                    sf = filter_sf_dict.pop(sf_slug)
+                except KeyError:
+                    # XXX this will be a confusing error if we already popped it.
+                    raise FilterError('Invalid SchemaField slug')
+                # Lookup filtering
+                if sf.is_lookup:
+                    lookup_filter = LookupFilter(request, context, qs, *argvalues,
+                                                 schemafield=sf)
+                    chain['lookup'] = lookup_filter  # XXX can't we have multiple??
+                    if lookup_filter.look is not None:
+                        chain.lookup_descriptions.append(lookup_filter.look)
+
+                # Boolean attr filtering.
+                elif sf.is_type('bool'):
+                    chain['lookup'] = BoolFilter(request, context, qs,
+                                                 *argvalues, schemafield=sf)  # XXX only one lookup??
+
+                # Text-search attribute filter.
+                else:
+                    textfilter = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
+                    chain[sf.name] = textfilter
+
+            # END OF ATTRIBUTE FILTERING
+
+            # Street/address
+            elif argname.startswith('streets'):
+                blockfilter = BlockFilter(request, context, qs, *argvalues)
+                chain['location'] = blockfilter
+
+            # Location filtering
+            elif argname.startswith('locations'):
+                locfilter = LocationFilter(request, context, qs, *argvalues)
+                chain['location'] = locfilter
+
+            else:
+                raise FilterError('Invalid filter type')
+
+        return chain
+
+    def validate(self):
+        """Check whether any of the filters were requested without
+        a required value.  If so, return info about what's needed,
+        as a dict.
+
+        Can raise FilterError.
+        """
+        for filt in self.values():
+            more_needed = filt.more_info_needed()
+            if more_needed:
+                return more_needed
+        return {}
+
+    def apply(self, queryset):
+        """
+        Applies each filter in the chain.
+        """
+        for key, filt in self.items():
+            # XXX this seems odd. filt.apply() should return the qs?
+            filt.qs = queryset
+            filt.apply()
+            queryset = filt.qs
+        return queryset
 
     def normalized_clone(self):
         """

@@ -76,16 +76,17 @@ def schema_about(context):
 def schema_filter(context):
     # TODO: get this into all the other returns in schema_filter().
     # Might be easiest to make it lazy by assigning
-    # context['breadcrumbs'] = lambda:
-    # schema_filter(context) just once early on, and then
+    # context['breadcrumbs'] = lambda: schema_filter(context)
+    # just once early on, and then
     # just make sure all the returns have adequate context?
     crumbs = schema_detail(context)
     url = crumbs[-1][1]
     for sf in context.get('filters', {}).values():
-        label = (sf.get('short_value') or sf['value']).title()
+        label = (sf.get('short_value') or sf.get('value', '')).title()
         if sf.get('url') is not None:
             url = url + sf['url'] + '/'
-        crumbs.append((label, url))
+        if label and url:
+            crumbs.append((label, url))
     # This one's a generator because we want to evaluate it lazily,
     # and django's 'for' template tag doesn't accept callables.
     for crumb in crumbs:

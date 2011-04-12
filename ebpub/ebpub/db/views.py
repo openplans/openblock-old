@@ -877,154 +877,29 @@ def schema_filter(request, slug, args_from_url):
     start_date = s.min_date
     end_date = today()
     qs = NewsItem.objects.filter(schema__id=s.id, item_date__lte=end_date).order_by('-item_date')
-    lookup_descriptions = []
+    context['newsitem_qs'] = qs
 
     # Break apart the URL to determine what filters to apply.
-    # TODO: Refactor this into helpers or separate views. See #112
-    #
-    # urlargs is a string describing the filters (or None, in the case of
-    # "/filter/"). Cycle through them to see which ones are valid.
-    args_from_url = urllib.unquote((args_from_url or '').rstrip('/'))
-    args_from_url = args_from_url.replace('+', ' ')
-    urlargs = []
-    if args_from_url and args_from_url != 'filter':
-        for param in args_from_url.split(';'):
-            try:
-                argname, argvalues = param.split('=', 1)
-            except ValueError:
-                raise Http404('<h1>Invalid filter parameter %r, no equals sign</h1>' % param)
-            argname = argname.strip()
-            argvalues = [v.strip() for v in argvalues.split(',')]
-            if argname:
-                urlargs.append((argname, argvalues))
+    from ebpub.db.schemafilters import SchemaFilterChain
 
-    filters = SortedDict()
-    date_filter_applied = location_filter_applied = False
-    while urlargs:
-        argname, argvalues = urlargs.pop(0)
-        argvalues = [v for v in argvalues if v]
-        # Date range
-        if argname == 'by-date' or argname == 'by-pub-date':
-            if date_filter_applied:
-                raise Http404('<h1>Only one date filter can be applied</h1>')
-            from ebpub.db.schemafilters import DateFilter, PubDateFilter
-            try:
-                if argname == 'by-date':
-                    datefilter = DateFilter(request, context, qs, *argvalues)
-                else:
-                    datefilter = PubDateFilter(request, context, qs, *argvalues)
-                datefilter.more_info_needed()  # Not used for dates?
-            except FilterError, e:
-                raise Http404(str(e))
-            datefilter.apply()
-            qs = datefilter.qs
-            filters['date'] = datefilter
-            date_filter_applied = True
-        # END OF DATE FILTERING
+    try:
+        filterchain = SchemaFilterChain.from_request(request, context, args_from_url, filter_sf_dict)
+        filters_need_more = filterchain.validate()
+        #context['filters'] = filterchain  # XXX needed?
+    except FilterError, e:
+        if getattr(e, 'url', None) is not None:
+            return HttpResponseRedirect(e.url)
+        raise Http404(str(e))
 
-        # Attribute filtering
-        elif argname.startswith('by-'):
-            sf_slug = argname[3:]
-            try:
-                # Pop it so that we can't get subsequent lookups for this SchemaField.
-                sf = filter_sf_dict.pop(sf_slug)
-            except KeyError:
-                # XXX this will be a confusing error if we already popped it.
-                raise Http404('Invalid SchemaField slug')
-            # Lookup filtering
-            if sf.is_lookup:
-                from ebpub.db.schemafilters import LookupFilter
-                try:
-                    lookup_filter = LookupFilter(request, context, qs, *argvalues,
-                                                 schemafield=sf)
-                    more_needed = lookup_filter.more_info_needed()
-                except FilterError, e:
-                    raise Http404(str(e))
-                if more_needed:
-                    context.update(more_needed)
-                    filters['lookup'] = lookup_filter
-                    context['filters'] = filters  # XXX already there?
-                    return eb_render(request, 'db/filter_lookup_list.html', context)
-                lookup_filter.apply()
-                qs = lookup_filter.qs
-                lookup_descriptions.append(lookup_filter.look)
+    if filters_need_more:
+        # Show a page to select the unspecified value.
+        context.update(filters_need_more)
 
-            # Boolean attr filtering.
-            elif sf.is_type('bool'):
-                from ebpub.db.schemafilters import BoolFilter
-                try:
-                    boolfilter = BoolFilter(request, context, qs, *argvalues,
-                                            schemafield=sf)
-                    more_needed = boolfilter.more_info_needed()
-                except FilterError, e:
-                    raise Http404(str(e))
-                if more_needed:
-                    context.update(more_needed)
-                    filters['lookup'] = boolfilter
-                    context['filters'] = filters  # XXX already there?
-                    return eb_render(request, 'db/filter_lookup_list.html', context)
-                boolfilter.apply()
-                qs = boolfilter.qs
+        return eb_render(request, 'db/filter_lookup_list.html', context)
 
-            # Text-search attribute filter.
-            else:
-                from ebpub.db.schemafilters import TextSearchFilter
-                try:
-                    textfilter = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
-                    filters[sf.name] = textfilter
-                except FilterError, e:
-                    raise Http404(str(e))
-                textfilter.apply()
-                qs = textfilter.qs
+    filters = filterchain  #SortedDict() # XXX re-use the chain for the template's dict of filters?
 
-        # END OF ATTRIBUTE FILTERING
-
-        # Street/address
-        elif argname.startswith('streets'):
-            if location_filter_applied:
-                raise Http404('<h1>Only one location filter can be applied</h1>')
-            from ebpub.db.schemafilters import BlockFilter
-            try:
-                blockfilter = BlockFilter(request, context, qs, *argvalues)
-                more_needed = blockfilter.more_info_needed()
-            except FilterError, e:
-                if e.url is not None:
-                    return HttpResponseRedirect(e.url)
-                raise Http404(str(e))
-
-            blockfilter.apply()
-            qs = context['newsitem_qs']
-
-            filters['location'] = blockfilter
-            location_filter_applied = True
-        # END OF STREETS/BLOCK FILTERING
-
-        # Location filtering
-        elif argname.startswith('locations'):
-            if location_filter_applied:
-                raise Http404('<h1>Only one location filter can be applied</h1>')
-            from ebpub.db.schemafilters import LocationFilter
-            try:
-                locfilter = LocationFilter(request, context, qs, *argvalues)
-                more_needed = locfilter.more_info_needed()
-            except FilterError, e:
-                raise Http404(str(e))
-            if more_needed:
-                # List of available locations for this location type.
-                context.update(more_needed)
-                context.update({
-                    'filters': filters,
-                    'filter_argname': argname,
-                    })
-                return eb_render(request, 'db/filter_lookup_list.html', context)
-
-            locfilter.apply()
-            qs = context['newsitem_qs']
-            filters['location'] = locfilter
-            location_filter_applied = True
-
-        else:
-            raise Http404('Invalid filter type')
+    qs = filterchain.apply(qs)
 
     #########################################################################
     # END OF FILTER LOOP
@@ -1052,7 +927,7 @@ def schema_filter(request, slug, args_from_url):
             lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
-    if location_filter_applied:
+    if 'location' in filterchain:
         location_type_list = []
     else:
         location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
@@ -1109,9 +984,9 @@ def schema_filter(request, slug, args_from_url):
         'search_list': search_list,
         'location_type_list': location_type_list,
         'filters': filters,
-        'date_filter_applied': date_filter_applied,
-        'location_filter_applied': location_filter_applied,
-        'lookup_descriptions': lookup_descriptions,
+        'date_filter_applied': filterchain.has_key('date'),
+        'location_filter_applied': filterchain.has_key('location'),
+        'lookup_descriptions': filterchain.lookup_descriptions,
         'start_date': start_date,
         'end_date': end_date,
     })
