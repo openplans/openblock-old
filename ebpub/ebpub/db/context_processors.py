@@ -28,4 +28,5 @@ def urls(request):
             'MAP_BASELAYER_TYPE': settings.MAP_BASELAYER_TYPE,
             'GOOGLE_MAPS_KEY': getattr(settings, 'GOOGLE_MAPS_KEY', '') or '',
             'WMS_URL': getattr(settings, 'WMS_URL', '') or '',
+            'JQUERY_URL': settings.JQUERY_URL,
             }
