@@ -228,6 +228,10 @@ OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
 #OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
 
+# For local development you might try this:
+#JQUERY_URL = '/media/js/jquery.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'
+
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme
 # This supercedes the everyblock-specific template tags in
