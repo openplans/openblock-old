@@ -1,6 +1,6 @@
 {# This snippet requires these variables: schema, lookup, total_count, filter_url #}
 
-{% load humanize %}
+{% load humanize eb_filter %}
 
 <p>The <strong>top {{ lookup.top_values|length }} {{ lookup.sf.pretty_name_plural }}</strong> around this area since <strong>{{ schema.min_date|date:"F j, Y" }}</strong>, are:</p>
 

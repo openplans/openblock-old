@@ -193,7 +193,10 @@ def get_place_info_for_request(request, *args, **kwargs):
     if newsitem_qs is None:
         newsitem_qs = NewsItem.objects.all()
 
-    info['place'] = place = url_to_place(*args, **kwargs)
+    if 'place' in kwargs:
+        info['place'] = place = kwargs['place']
+    else:
+        info['place'] = place = url_to_place(*args, **kwargs)
 
     nearby = Location.objects.filter(location_type__is_significant=True)
     nearby = nearby.select_related().exclude(id=place.id)

@@ -40,8 +40,7 @@ start_date, end_date, lookup_list, search_list, search_url
 		<h4>Or choose a location:</h4>
 		<ul>
 			{% for location_type in location_type_list %}
-			<!-- TODO: factor out URL generation. #69  -->
-			<li><a href="locations={{ location_type.slug }}/" rel="nofollow">{{ location_type.plural_name|capfirst }}&hellip;</a></li>
+			<li><a href="{% filter_url filters +'location' location_type %}" rel="nofollow">{{ location_type.plural_name|capfirst }}&hellip;</a></li>
 			{% endfor %}
 		</ul>
 	</div><!--/ .filtergroup#location-filtergroup -->
@@ -64,9 +63,10 @@ start_date, end_date, lookup_list, search_list, search_url
 			<h3>{{ schemafield.sf.pretty_name|capfirst }}</h3>
 			<ul>
 				{% for value in schemafield.top_values %}
-					<li><a href="by-{{ schemafield.sf.slug }}/{{ value.lookup.slug }}/" rel="nofollow">{{ value.lookup.name }}</a></li>
+					<li><a href="{% filter_url filters +schemafield.sf.slug value.lookup %}" rel="nofollow">{{ value.lookup.name }}</a></li>
+
 				{% endfor %}
-				{% if schemafield.has_more %}<li class="more"><a href="by-{{ schemafield.sf.slug }}/" rel="nofollow">See all&hellip;</a></li>{% endif %}
+				{% if schemafield.has_more %}<li class="more"><a href="{% filter_url filters +schemafield.sf %}" rel="nofollow">See all&hellip;</a></li>{% endif %}
 			</ul>
 		</div>
 	{% endfor %}

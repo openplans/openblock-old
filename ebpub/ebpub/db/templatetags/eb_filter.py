@@ -24,60 +24,91 @@ from django import template
 
 register = template.Library()
 
-def filter_breadcrumb_link(schema, filters, filter_):
-    """
-    {% filter_breadcrumb_link filters filter %}
-    """
-    output = []
-    for f in filters:
-        output.append(f.url)
-        if f == filter_:
-            break
-    # TODO: factor out URL generation. #69
-    return '%s%s/' % (schema.url(), '/'.join(output))
-register.simple_tag(filter_breadcrumb_link)
-
 class FilterUrlNode(template.Node):
-    def __init__(self, filterchain_var, removals):
+    def __init__(self, filterchain_var, additions, removals, clear=False):
         self.filterchain_var = template.Variable(filterchain_var)
-        self.removals = [template.Variable(a) for a in removals]
-
-    def render(self, context):
-        # Note that we do a copy() here so that we don't edit the dict in place.
-        filterchain = self.filterchain_var.resolve(context).copy()
-        schema = filterchain.schema
-        for key in self.removals:
-            try:
-                del filterchain[key.resolve(context)]
-            except KeyError:
-                pass
-        # TODO: factor out URL generation. #69
-        urls = [d['url'] for d in filterchain.values()]
-        if urls:
-            return '%s%s/' % (schema.url(), ';'.join(urls))
+        self.clear = clear
+        if clear:
+            self.removals = []
         else:
-            return '%sfilter/' % schema.url()
+            self.removals = [template.Variable(r) for r in removals]
+        self.additions = []
+        for key, values in additions:
+            self.additions.append((template.Variable(key),
+                                   [template.Variable(v) for v in values]))
+    def render(self, context):
+        filterchain = self.filterchain_var.resolve(context)
+        removals = [r.resolve(context) for r in self.removals]
+        if self.clear:
+            filterchain = filterchain.copy()
+            filterchain.clear()
+        additions = []
+        for key, values in self.additions:
+            key = key.resolve(context)
+            additions.append((key, [v.resolve(context) for v in values]))
+        schema = filterchain.schema
+        # XXX shouldn't the filterchain know about this base URL?
+        return filterchain.make_url(additions=additions, removals=removals, base_url=schema.url() + 'filter/')
 
 def do_filter_url(parser, token):
     """
+    Outputs a URL based on the filter chain, with optional
+    additions/removals of filters.
+
     {% filter_url filter_chain %}
+
+    To remove a SchemaFilter from the url, specify the key with a leading "-".
+
     {% filter_url filter_chain -key_to_remove %}
     {% filter_url filter_chain -"key_to_remove" %}
+    {% filter_url filter_chain -key1 -key2 ... %}
 
-    Outputs a string like '/filter1=foo;filter2=bar/' (with a trailing slash but
-    not a leading slash).   TODO: update this if format changes
+    To add SchemaFilters to the url, specify the key with a leading "+",
+    followed by args to use for constructing a SchemaFilter.
+
+    {% filter_url filter_chain +"key" value %}
+    {% filter_url filter_chain +key value1 value 2 ... %}
+    {% filter_url filter_chain +key1 "arg1a" "arg1b" +key2 "arg2a" ... %}
+
+    You can even mix and match additions and removals:
+
+    {% filter_url filter_chain -key1 +key2 arg2 -key3 +key4 arg4 ... %}
     """
     bits = token.split_contents()
     additions, removals = [], []
-    filterchain_var = bits[1]
-    stack = bits[:1:-1]
+    try:
+        filterchain_var = bits[1]
+    except IndexError:
+        raise template.TemplateSyntaxError('Missing required filterchain argument')
     # TODO: This probably fails for removals of hard-coded strings that contain spaces.
-    while stack:
-        bit = stack.pop()
+    bits = bits[2:]
+    clear = False
+    while bits:
+        bit = bits.pop(0)
         if bit.startswith('-'):
-            removals.append(bit[1:])
+            key = bit[1:]
+            if not len(key):
+                raise template.TemplateSyntaxError('Invalid argument: %r' % bit)
+            if key == 'all':
+                removals = []
+                clear=True
+            else:
+                removals.append(key)
+        elif bit.startswith('+'):
+            key = bit[1:]
+            if not len(key):
+                raise template.TemplateSyntaxError('Invalid argument: %r' % bit)
+            values = []
+            while bits:
+                # Consume all remaining args until the next addition/removal.
+                if bits[0][0] in ('+', '-'):
+                    break
+                values.append(bits.pop(0))
+            # if not len(values):
+            #     raise template.TemplateSyntaxError('Invalid argument: %r' % bit)
+            additions.append((key, values))
         else:
             raise template.TemplateSyntaxError('Invalid argument: %r' % bit)
-    return FilterUrlNode(filterchain_var, removals)
+    return FilterUrlNode(filterchain_var, additions, removals, clear=clear)
 
 register.tag('filter_url', do_filter_url)

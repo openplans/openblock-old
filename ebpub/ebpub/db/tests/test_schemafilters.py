@@ -173,7 +173,7 @@ class TestDateFilter(TestCase):
         filt = self._make_filter('by-date', '2006-11-08', '2006-11-09')
         self.assertEqual(filt.validate(), {})
         filt.apply()
-        self.assertEqual(filt.value, u'Nov. 8, 2006 \u2013 Nov. 9, 2006')
+        self.assertEqual(filt.value, u'Nov. 8, 2006 - Nov. 9, 2006')
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt.kwargs))
 
 
@@ -320,6 +320,28 @@ class TestSchemaFilterChain(TestCase):
         self.assertEqual(chain.items(), [(i, i) for i in args])
         self.assertEqual(chain.keys(), args)
 
+    def test_copy_and_mutate(self):
+        from ebpub.db.schemafilters import SchemaFilterChain
+        chain = SchemaFilterChain()
+        chain.lookup_descriptions.append(1)
+        chain['foo'] = 'bar'
+        chain['qux'] = 'whee'
+        clone = chain.copy()
+        # Attributes are copied...
+        self.assertEqual(clone.lookup_descriptions, [1])
+        clone.lookup_descriptions.pop()
+        # ... and mutating them doesn't affect the original.
+        self.assertEqual(chain.lookup_descriptions, [1])
+        # Likewise, items are copied, and mutating doesn't affect the copy.
+        self.assertEqual(clone['foo'], 'bar')
+        del chain['foo']
+        self.assertEqual(clone['foo'], 'bar')
+        del clone['qux']
+        self.assertEqual(chain['qux'], 'whee')
+        # Likewise, clearing.
+        clone.clear()
+        self.assertEqual(clone.items(), [])
+        self.assertEqual(chain['qux'], 'whee')
 
     def test_no_duplicates(self):
         from ebpub.db.schemafilters import SchemaFilterChain

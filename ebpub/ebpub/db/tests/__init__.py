@@ -23,3 +23,4 @@ if not settings.TEST_RUNNER.count('Nose'):
     from .test_views import *
     from .test_models import *
     from .test_schemafilters import *
+    from .test_templatetags import *

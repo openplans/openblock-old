@@ -37,6 +37,7 @@ from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
 from ebpub.db.schemafilters import FilterError
+from ebpub.db.schemafilters import SchemaFilterChain
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.db.utils import make_search_buffer
 from ebpub.db.utils import block_radius_value
@@ -334,6 +335,7 @@ def ajax_place_date_chart(request):
         'schema': s,
         'date_chart': date_chart,
         'filter_url': filter_url,
+        'filters': SchemaFilterChain(schema=s),
     })
 
 def ajax_location_type_list(request):
@@ -651,6 +653,10 @@ def schema_detail(request, slug):
     # schema IDs for schemas whose intro text should *not* be displayed.
     hide_intro = str(s.id) in request.COOKIES.get(HIDE_SCHEMA_INTRO_COOKIE_NAME, '').split(',')
 
+    # XXX do we really need this here? can the template tags
+    # just create an empty one if it doesn't exist?
+    filterchain = SchemaFilterChain(schema=s)
+
     context = {
         'schema': s,
         'schemafield_list': schemafield_list,
@@ -668,6 +674,7 @@ def schema_detail(request, slug):
         'end_date': today(),
         'bodyclass': 'schema-detail',
         'bodyid': slug,
+        'filters': filterchain,
     }
     context['breadcrumbs'] = breadcrumbs.schema_detail(context)
     return eb_render(request, templates_to_try, context)
@@ -1168,6 +1175,7 @@ def place_detail_overview(request, *args, **kwargs):
                                           context['place'].dir_url_bit())
     else:
         context['bodyid'] = context['location'].slug
+
     response = eb_render(request, 'db/place_overview.html', context)
     for k, v in context['cookies_to_set'].items():
         response.set_cookie(k, v)

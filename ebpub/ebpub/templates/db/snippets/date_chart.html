@@ -1,6 +1,6 @@
-{# This snippet requires these variables: date_chart, schema, filter_url #}
+{# This snippet requires these variables: date_chart, schema, filters #}
 
-{% load eb dateutils humanize %}
+{% load eb dateutils humanize eb_filter %}
 
 <style type="text/css" media="screen">
 	/* Basic styles for date charts. For more on creating CSS charts, see: http://www.alistapart.com/articles/accessibledatavisualization/ */
@@ -16,9 +16,7 @@
 	<tr>
 		{% for date in date_chart.dates %}
 			<td class="day">
-				<!-- TODO factor our URL generation #69 -->
-				<!-- TODO also, conflict: filter_url is also a template tag name -->
-				<a href="{{ schema.url }}{{ filter_url }}by-date/{{ date.date.year }}-{{ date.date.month }}-{{ date.date.day }},{{ date.date.year }}-{{ date.date.month }}-{{ date.date.day }}/" class="index" title="{{ date.date|date:"l, F j, Y" }}: {{ date.count|intcomma }} {% schema_plural_name schema date.count %}">
+				<a href="{% filter_url filters +'date' date.date %}" class="index" title="{{ date.date|date:'l, F j, Y' }}: {{ date.count|intcomma }} {% schema_plural_name schema date.count %}">
 					{% if date.count %}
 						<span class="bar" style="height: {% widthratio date.count date_chart.max_count 100 %}%">{{ date.count }}</span>
 					{% else %}
@@ -32,8 +30,7 @@
 		{% for date in date_chart.dates %}
 			<th scope="col" axis="day">
 				{% if date.count %}
-					<!-- TODO factor out URL generation #69 -->
-					<a href="{{ schema.url }}{{ filter_url }}by-date/{{ date.date.year }}-{{ date.date.month }}-{{ date.date.day }},{{ date.date.year }}-{{ date.date.month }}-{{ date.date.day }}/" title="{{ date.date|date:"l, F j, Y" }}: {{ date.count|intcomma }} {% schema_plural_name schema date.count %}">
+					<a href="{% filter_url filters +'date' date.date %}">
 						<strong class="label">{{ date.date.day }}</strong>
 					</a>
 				{% else %}
@@ -48,8 +45,7 @@
 				{% if forloop.first and month.list|length|lessthan:"4" %}
 					{# Don't display month name, because there's not enough space. #}
 				{% else %}
-					<!-- TODO factor out URL generation #69 -->
-					<a href="{{ schema.url }}{{ filter_url }}by-date/{{ month.list.0.date.year }}-{{ month.list.0.date.month }}-1,{{ month.list.0.date.year }}-{{ month.list.0.date.month }}-{{ month.list.0.date|days_in_month }}/">
+					<a href="{% filter_url filters +'date' month.list.0.date 'month' %}">
 					{% if forloop.last and month.list|length|lessthan:"4" %}
 						{# Display abbreviated month name #}
 						{{ month.list.0.date|date:"N" }}

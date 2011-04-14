@@ -55,7 +55,9 @@ from ebpub.db.utils import get_place_info_for_request
 import datetime
 import re
 import urllib
+import logging
 
+logger = logging.getLogger('ebpub.db.schemafilters')
 
 class SchemaFilter(object):
 
@@ -115,7 +117,7 @@ class AttributeFilter(SchemaFilter):
         self.schemafield = kwargs['schemafield']
         self.name = self.schemafield.name
         self.argname = 'by-%s' % self.schemafield.name
-        self.url = None
+        self.url = 'by-%s=' % self.schemafield.slug
         self.value = self.short_value = ''
         self.label = self.schemafield.pretty_name
 
@@ -196,11 +198,15 @@ class LookupFilter(AttributeFilter):
             self._got_args = False
             self.look = None
         if self._got_args:
-            try:
-                self.look = models.Lookup.objects.get(
-                    schema_field__id=self.schemafield.id, slug=slug)
-            except models.Lookup.DoesNotExist:
-                raise FilterError("No such lookup %r" % slug)
+            if isinstance(slug, models.Lookup):
+                self.look = slug
+                slug = self.look.slug
+            else:
+                try:
+                    self.look = models.Lookup.objects.get(
+                        schema_field__id=self.schemafield.id, slug=slug)
+                except models.Lookup.DoesNotExist:
+                    raise FilterError("No such lookup %r" % slug)
             self.value = self.look.name
             self.short_value = self.value
             self.url = 'by-%s=%s' % (self.schemafield.slug, slug)
@@ -228,15 +234,39 @@ class LocationFilter(SchemaFilter):
     argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
+        # XXX TODO: allow passing a Location rather than a slug?
+        # Useful for generating links from a list of Locations.
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
-        if not args:
-            raise FilterError("not enough args")
-        self.location_type_slug = args[0]
-        try:
-            self.loc_name = args[1]
+        self.location_object = None
+        if 'location' in kwargs:
+            self._update_location(kwargs['location'])
             self._got_args = True
-        except IndexError:
-            self._got_args = False
+        else:
+            if 'location_type' in kwargs:
+                self.location_type = kwargs['location_type']
+                self.location_type_slug = self.location_type.slug
+            else:
+                if not args:
+                    raise FilterError("not enough args")
+                self.location_type_slug = args[0]
+            self.url = 'locations=%s' % self.location_type_slug
+            self.value = 'Choose %s' % self.location_type_slug.title()
+            try:
+                self.location_slug = args[1]
+                self._got_args = True
+            except IndexError:
+                self._got_args = False
+
+    def _update_location(self, loc):
+        self.location_slug = loc.slug
+        self.location_type = loc.location_type
+        self.location_type_slug = loc.location_type.slug
+        self.label = loc.location_type.name
+        self.short_value = loc.name
+        self.value = loc.name
+        self.url = 'locations=%s,%s' % (self.location_type_slug, self.location_slug)
+        self.location_name = loc.name
+        self.location_object = loc
 
     def validate(self):
         # List of available locations for this location type.
@@ -259,20 +289,18 @@ class LocationFilter(SchemaFilter):
         """
         filtering by Location
         """
-        self.context.update(get_place_info_for_request(
-                self.request, self.location_type_slug, self.loc_name,
+        if self.location_object is not None:
+            self.context.update(get_place_info_for_request(
+                self.request, self.location_type_slug, self.location_slug,
+                place=self.location_object,
+                place_type='location', newsitem_qs=self.qs))
+        else:
+            self.context.update(get_place_info_for_request(
+                self.request, self.location_type_slug, self.location_slug,
                 place_type='location', newsitem_qs=self.qs))
         loc = self.context['place']
-        #loc = url_to_location(location_type_slug, argvalues.pop())
-        #qs = qs.filter(newsitemlocation__location__id=loc.id)
-        #qs = qs.filter(location__bboverlaps=loc.location.envelope)
+        self._update_location(loc)
         self.qs = self.context['newsitem_qs']
-        self.label = loc.location_type.name
-        self.short_value = loc.name
-        self.value = loc.name
-        self.url = 'locations=%s,%s' % (self.location_type_slug, loc.slug)
-        self.location_name = loc.name
-        self.location_object = loc
 
 from ebpub.metros.allmetros import get_metro
 
@@ -344,13 +372,18 @@ class DateFilter(SchemaFilter):
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         args = list(args)
-        self.label = context['schema'].date_name
+        schema = kwargs.get('schema', None) or context['schema']
+        self.label = schema.date_name
         gte_kwarg = '%s__gte' % self.date_field_name
         lt_kwarg = '%s__lt' % self.date_field_name
         try:
             start_date, end_date = args
-            self.start_date = datetime.date(*map(int, start_date.split('-')))
-            self.end_date = datetime.date(*map(int, end_date.split('-')))
+            if isinstance(start_date, basestring):
+                start_date = datetime.date(*map(int, start_date.split('-')))
+            self.start_date = start_date
+            if isinstance(end_date, basestring):
+                end_date = datetime.date(*map(int, end_date.split('-')))
+            self.end_date = end_date
         except (IndexError, ValueError, TypeError):
             raise FilterError("Missing or invalid date range")
 
@@ -362,7 +395,7 @@ class DateFilter(SchemaFilter):
         if self.start_date == self.end_date:
             self.value = dateformat.format(self.start_date, 'N j, Y')
         else:
-            self.value = u'%s \u2013 %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
+            self.value = u'%s - %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
 
         self.short_value = self.value
         self.url = '%s=%s,%s' % (self.argname,
@@ -398,14 +431,17 @@ class DuplicateFilterError(FilterError):
 from django.utils.datastructures import SortedDict
 class SchemaFilterChain(SortedDict):
 
-    def __init__(self, data=None):
+    def __repr__(self):
+        return u'SchemaFilterChain(%s)' % SortedDict.__repr__(self)
+
+    def __init__(self, data=None, schema=None):
         SortedDict.__init__(self, data=None)
         if data is not None:
             # We do this to force our __setitem__ to get called
             # so it will raise error on dupes.
             self.update(data)
         self.lookup_descriptions = []
-        self.schema = None
+        self.schema = schema
 
     def __setitem__(self, key, value):
         """
@@ -436,8 +472,7 @@ class SchemaFilterChain(SortedDict):
         argstring = urllib.unquote((argstring or '').rstrip('/'))
         argstring = argstring.replace('+', ' ')
         args = []
-        chain = klass()
-        chain.schema = context['schema']
+        chain = klass(schema=context['schema'])
 
         if argstring and argstring != 'filter':
             for arg in argstring.split(';'):
@@ -512,11 +547,11 @@ class SchemaFilterChain(SortedDict):
         for key, filt in self.items():
             more_needed = filt.validate()
             if more_needed:
-                if filt.argname.startswith('by-'):
-                    # Somewhere in filter_lookup_list.html, it needs this
-                    # filter to show up as 'lookup' rather than its usual name.
-                    del self[key]
-                    self['lookup'] = filt
+                # if filt.argname.startswith('by-'):
+                #     # Somewhere in filter_lookup_list.html, it needs this
+                #     # filter to show up as 'lookup' rather than its usual name.
+                #     del self[key]
+                #     self['lookup'] = filt
                 return more_needed
         return {}
 
@@ -532,9 +567,12 @@ class SchemaFilterChain(SortedDict):
         return queryset
 
     def copy(self):
-        # Overriding because dict.copy() re-inits attributes.
-        import copy
-        return copy.copy(self)
+        # Overriding because default dict.copy() re-inits attributes,
+        # and we want copies to be independently mutable.
+        clone = self.__class__(schema=self.schema)
+        clone.update(self)
+        clone.lookup_descriptions = self.lookup_descriptions[:]
+        return clone
 
     def normalized_clone(self):
         """
@@ -548,3 +586,104 @@ class SchemaFilterChain(SortedDict):
     def _sorted_items(self):
         items = self.items()
         return sorted(items, key=lambda item: item[1]._sort_value)
+
+
+    def make_breadcrumbs(self, additions=(), removals=(), stop_at=None, 
+                         base_url=''):
+        """
+        Returns a list of (label, URL) pairs suitable for making
+        breadcrumbs.
+
+        If ``base_url`` is passed, URLs generated will be relative to
+        that; otherwise they will just be relative URLs.
+
+        If ``stop_at`` is passed, the key specified will be the last
+        one used for the breadcrumb list.
+
+        If ``removals`` is passed, the specified filter keys will be
+        excluded from the breadcrumb list.
+
+        If ``additions`` is passed, the specified (key, SchemaFilter)
+        pairs will be added to the end of the breadcrumb list.
+
+        (In some cases, you can pass (key, [args]) and it will figure
+        out what kind of SchemaFilter to create.  TODO: document
+        this!!)
+
+        """
+        # TODO: Can this leverage filter_reverse()? Or vice-versa?
+        filter_params = []
+        clone = self.copy()
+        for key in removals:
+            try:
+                del clone[key]
+            except KeyError:
+                logger.warn("can't delete nonexistent key %s" % key)
+
+        for key, values in additions:
+            if isinstance(key, models.SchemaField):
+                if not values or values == ['']:
+                    # URL for the page that allows selecting them.
+                    val = AttributeFilter(None, {}, None, schemafield=key)
+                    key = key.slug
+                    clone[key] = val
+                    continue
+            if not values:
+                raise FilterError("no values passed for arg %s" % key)
+            if isinstance(values[0], models.Location):
+                val = LocationFilter(None, {}, None, location=values[0])
+                key = val.name
+            elif isinstance(values[0], models.LocationType):
+                val = LocationFilter(None, {}, None, location_type=values[0])
+                key = val.name
+            elif isinstance(values[0], models.Lookup):
+                val = LookupFilter(None, {}, None, values[0],
+                                   schemafield=values[0].schema_field)
+            elif isinstance(values[0], datetime.date):
+                if len(values) == 1:
+                    # start and end are the same date.
+                    values.append(values[0])
+                if values[1] == 'month':
+                    # TODO: document this!!
+                    import calendar
+                    start, end = calendar.monthrange(values[0].year, values[0].month)
+                    values[0] = values[0].replace(day=start)
+                    values[1] = values[0].replace(day=end)
+                val = DateFilter(None, {}, None, *values, schema=self.schema)
+            else:
+                # Do we have any use for other args?
+                val = values[0]
+
+            # If there was already a Filter by this name but it
+            # didn't have args, replace it.
+            if key in clone and clone[key]._got_args == False:
+                del clone[key]
+            clone[key] = val
+        crumbs = []
+        for key, filt in clone.items():
+            label = getattr(filt, 'short_value', '') or getattr(filt, 'value', '') or getattr(filt, 'label', '')
+            label = label.title()
+            if label and getattr(filt, 'url', None) is not None:
+                filter_params.append(filt.url)
+                crumbs.append((label, base_url + ';'.join(filter_params)  + '/'))
+            if key == stop_at:
+                break
+        return crumbs
+
+    def make_urls(self, additions=(), removals=(), stop_at=None, base_url=''):
+        """
+        Just like ``make_breadcrumbs`` but only URLs are included in
+        the output.
+        """
+        crumbs = self.make_breadcrumbs(additions, removals, stop_at, base_url)
+        return [crumb[1] for crumb in crumbs]
+
+    def make_url(self, additions=(), removals=(), stop_at=None, base_url=''):
+        """
+        Makes one URL representing all the filters of this filter chain.
+        """
+        crumbs = self.make_breadcrumbs(additions, removals, stop_at, base_url)
+        if crumbs:
+            return crumbs[-1][1]
+        else:
+            return base_url

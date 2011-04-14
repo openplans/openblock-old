@@ -1,6 +1,6 @@
 {% extends "base_place.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
-{% load eb %}
+{% load eb eb_filter %}
 
 {% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% endblock title %}
 
@@ -123,7 +123,7 @@ $j(document).ready(function() {
 						</ul>
 						<p class="module-footer">
 							{% if schema.schema.allow_charting %}
-							<a class="search" href="{{ schema.schema.url }}{{ place.url|slice:"1:" }}">More nearby</a>
+							<a class="search" href="{% filter_url +'location' place %}">More nearby</a>
 							{% endif %}
 							<a class="date" href="{{ schema.schema.url }}">Citywide overview</a>
 							<a class="help" href="{{ schema.schema.url }}about/">About</a>
