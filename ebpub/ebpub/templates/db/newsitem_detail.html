@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load eb humanize mapping %}
+{% load eb humanize mapping eb_filter %}
 
 {% block title %}{{ newsitem.title }} | {{ newsitem.schema.plural_name|capfirst }}{% endblock %}
 
@@ -91,7 +91,7 @@
 				<h2>Other {{ newsitem.schema.plural_name }} nearby</h2>
 				<ul>
 					{% for location in locations_within %}
-					<li><a href="/{{ newsitem.schema.slug }}{{ location.url }}">{{ location.name }}</a></li>
+					<li><a href="/{% filter_url newsitem.schema +'location' location %}">{{ location.name }}</a></li>
 					{% endfor %}
 					<li><a href="{{ newsitem.schema.url }}">More {{ newsitem.schema.plural_name }} in {% METRO_NAME %}</a></li>
 				</ul>
