@@ -55,9 +55,15 @@ class ViewTestCase(TestCase):
         # TODO: load a fixture with some locations and some news?
 
 
-    def test_newsitem_detail(self):
-        # response = self.client.get('')
-        pass
+    @mock.patch('ebpub.db.views.NewsItem.location_url')
+    def test_newsitem_detail(self, mock_location_url):
+        mock_location_url.return_value = 'http://X'
+        url = urlresolvers.reverse('ebpub.db.views.newsitem_detail',
+                                   args=['crime', 1])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'crime title 1')
+        self.assertContains(response, 'http://X')
 
     def test_location_redirect(self):
         # redirect to neighborhoods by default

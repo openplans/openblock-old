@@ -18,6 +18,7 @@
 
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
+from django.core import urlresolvers
 from django.db import connection, transaction
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
@@ -576,7 +577,7 @@ class NewsItem(models.Model):
         return self.title or 'Untitled News Item'
 
     def item_url(self):
-        return '/%s/by-date/%s/%s/%s/%s/' % (self.schema.slug, self.item_date.year, self.item_date.month, self.item_date.day, self.id)
+        return urlresolvers.reverse('ebpub-newsitem-detail', args=[self.schema.slug, self.id], kwargs={})
 
     def item_url_with_domain(self):
         from django.conf import settings

@@ -16,7 +16,6 @@
 		{% for source in sources %}
 		   {% if source.strip %}
 		   <p><a href="{{ source.strip|safe }}">
-		   {{ source.strip|safe }}
 		   </a></p>
 		   {% endif %}
 		{% endfor %}
@@ -24,7 +23,7 @@
 	{% endif %}
 
 	{% if schema.grab_bag_headline and schema.grab_bag %}
-		<h2>{{ schema.grab_bag_headline|safe }}</h2>
+		<h2>{{ schema.grab_bag_headline|safe }} eee</h2>
 		{{ schema.grab_bag|safe|linebreaks }}
 	{% endif %}
 

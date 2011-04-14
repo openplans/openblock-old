@@ -93,7 +93,7 @@ urlpatterns += patterns(
     (r'^([-\w]{4,32})/search/$', views.search),
     (r'^([-\w]{4,32})/petition/$', petition_views.form_view, {'is_schema': True}),
     (r'^([-\w]{4,32})/petition/thanks/$', petition_views.form_thanks, {'is_schema': True}),
-    (r'^([-\w]{4,32})/by-date/(\d{4})/(\d\d?)/(\d\d?)/(\d{1,8})/$', views.newsitem_detail),
+    url(r'^([-\w]{4,32})/detail/(\d{1,8})/$', views.newsitem_detail, name='ebpub-newsitem-detail'),
     url(r'^([-\w]{4,32})/(?:filter/)?([^/].*)?/$', views.schema_filter,
         name='ebpub-schema-filter'),
 )

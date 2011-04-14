@@ -269,7 +269,7 @@ class TestLookupFilter(TestCase):
         filt = self._make_filter('by-beat', 'beat-214', )
         self.assertEqual(filt.validate(), {})
         filt.apply()
-        self.assertEqual(filt.look.id, 1000)
+        self.assertEqual(filt.look.id, 214)
         self.assertEqual(self.mock_qs.by_attribute.call_args,
                          ((filt.schemafield, filt.look.id), {}))
         self.assertEqual(filt.value, 'Police Beat 214')

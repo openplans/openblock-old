@@ -359,7 +359,7 @@
    "importance": 10,
    "is_public": true,
    "can_collapse": false,
-   "has_newsitem_detail": false,
+   "has_newsitem_detail": true,
    "allow_charting": true,
    "uses_attributes_in_list": false,
    "number_in_overview": 5,
@@ -375,7 +375,7 @@
    "slug": "beat-214"
   },
   "model": "db.lookup",
-  "pk": 1000
+  "pk": 214
  },
  {
   "fields": {
@@ -386,8 +386,28 @@
    "slug": "beat-64"
   },
   "model": "db.lookup",
-  "pk": 1001
+  "pk": 64
+ },
+ {
+  "fields": {
+   "description": "A crime type.",
+   "code": "97",
+   "schema_field": 8,
+   "name": "Crime Type 97",
+   "slug": "crime-type-97"
+  },
+  "model": "db.lookup",
+  "pk": 97
+ },
+ {
+  "fields": {
+   "description": "Location 66.",
+   "code": "66",
+   "schema_field": 9,
+   "name": "Location 66",
+   "slug": "location-66"
+  },
+  "model": "db.lookup",
+  "pk": 66
  }
 ]
-
-

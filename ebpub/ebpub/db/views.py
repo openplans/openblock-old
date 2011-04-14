@@ -484,15 +484,9 @@ def search(request, schema_slug=''):
     lt_list = LocationType.objects.filter(is_significant=True).order_by('name')
     return eb_render(request, 'db/search_error.html', {'query': q, 'locationtype_list': lt_list})
 
-def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
-    try:
-        date = datetime.date(int(year), int(month), int(day))
-    except ValueError:
-        raise Http404('Invalid day')
-    ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id)
-
-    if ni.schema.slug != schema_slug or ni.item_date != date:
-        raise Http404
+def newsitem_detail(request, schema_slug, newsitem_id):
+    ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id,
+                           schema__slug=schema_slug)
     if not ni.schema.is_public and not has_staff_cookie(request):
         raise Http404('Not public')
 
