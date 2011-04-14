@@ -21,6 +21,8 @@ Template tags for the custom filter.
 """
 
 from django import template
+from ebpub.db.models import Schema
+from ebpub.db.schemafilters import SchemaFilterChain
 
 register = template.Library()
 
@@ -38,6 +40,14 @@ class FilterUrlNode(template.Node):
                                    [template.Variable(v) for v in values]))
     def render(self, context):
         filterchain = self.filterchain_var.resolve(context)
+        if isinstance(filterchain, SchemaFilterChain):
+            schema = filterchain.schema
+        elif isinstance(filterchain, Schema):
+            schema = filterchain
+            filterchain = SchemaFilterChain(schema=schema)
+        else:
+            raise template.TemplateSyntaxError(
+                "%r is neither a SchemaFilterChain nor a Schema" % filterchain)
         removals = [r.resolve(context) for r in self.removals]
         if self.clear:
             filterchain = filterchain.copy()
@@ -53,9 +63,11 @@ class FilterUrlNode(template.Node):
 def do_filter_url(parser, token):
     """
     Outputs a URL based on the filter chain, with optional
-    additions/removals of filters.
+    additions/removals of filters.  The first argument is required
+    and can be either an existing SchemaFilterChain or a Schema.
 
     {% filter_url filter_chain %}
+    {% filter_url schema %}
 
     To remove a SchemaFilter from the url, specify the key with a leading "-".
 

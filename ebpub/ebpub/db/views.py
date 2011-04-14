@@ -335,7 +335,6 @@ def ajax_place_date_chart(request):
         'schema': s,
         'date_chart': date_chart,
         'filter_url': filter_url,
-        'filters': SchemaFilterChain(schema=s),
     })
 
 def ajax_location_type_list(request):
@@ -653,10 +652,6 @@ def schema_detail(request, slug):
     # schema IDs for schemas whose intro text should *not* be displayed.
     hide_intro = str(s.id) in request.COOKIES.get(HIDE_SCHEMA_INTRO_COOKIE_NAME, '').split(',')
 
-    # XXX do we really need this here? can the template tags
-    # just create an empty one if it doesn't exist?
-    filterchain = SchemaFilterChain(schema=s)
-
     context = {
         'schema': s,
         'schemafield_list': schemafield_list,
@@ -674,7 +669,7 @@ def schema_detail(request, slug):
         'end_date': today(),
         'bodyclass': 'schema-detail',
         'bodyid': slug,
-        'filters': filterchain,
+        'filters': SchemaFilterChain(schema=s),
     }
     context['breadcrumbs'] = breadcrumbs.schema_detail(context)
     return eb_render(request, templates_to_try, context)
@@ -887,8 +882,6 @@ def schema_filter(request, slug, args_from_url):
     context['newsitem_qs'] = qs
 
     # Break apart the URL to determine what filters to apply.
-    from ebpub.db.schemafilters import SchemaFilterChain
-
     try:
         filterchain = SchemaFilterChain.from_request(request, context, args_from_url, filter_sf_dict)
         filterchain = filterchain.normalized_clone()  # Optimal filter order.
@@ -1175,7 +1168,6 @@ def place_detail_overview(request, *args, **kwargs):
                                           context['place'].dir_url_bit())
     else:
         context['bodyid'] = context['location'].slug
-
     response = eb_render(request, 'db/place_overview.html', context)
     for k, v in context['cookies_to_set'].items():
         response.set_cookie(k, v)

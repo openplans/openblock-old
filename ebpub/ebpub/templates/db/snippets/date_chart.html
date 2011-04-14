@@ -1,4 +1,4 @@
-{# This snippet requires these variables: date_chart, schema, filters #}
+{# This snippet requires these variables: date_chart, schema #}
 
 {% load eb dateutils humanize eb_filter %}
 
@@ -16,7 +16,7 @@
 	<tr>
 		{% for date in date_chart.dates %}
 			<td class="day">
-				<a href="{% filter_url filters +'date' date.date %}" class="index" title="{{ date.date|date:'l, F j, Y' }}: {{ date.count|intcomma }} {% schema_plural_name schema date.count %}">
+				<a href="{% filter_url schema +'date' date.date %}" class="index" title="{{ date.date|date:'l, F j, Y' }}: {{ date.count|intcomma }} {% schema_plural_name schema date.count %}">
 					{% if date.count %}
 						<span class="bar" style="height: {% widthratio date.count date_chart.max_count 100 %}%">{{ date.count }}</span>
 					{% else %}
@@ -30,7 +30,7 @@
 		{% for date in date_chart.dates %}
 			<th scope="col" axis="day">
 				{% if date.count %}
-					<a href="{% filter_url filters +'date' date.date %}">
+					<a href="{% filter_url schema +'date' date.date %}">
 						<strong class="label">{{ date.date.day }}</strong>
 					</a>
 				{% else %}
@@ -45,7 +45,7 @@
 				{% if forloop.first and month.list|length|lessthan:"4" %}
 					{# Don't display month name, because there's not enough space. #}
 				{% else %}
-					<a href="{% filter_url filters +'date' month.list.0.date 'month' %}">
+					<a href="{% filter_url schema +'date' month.list.0.date 'month' %}">
 					{% if forloop.last and month.list|length|lessthan:"4" %}
 						{# Display abbreviated month name #}
 						{{ month.list.0.date|date:"N" }}

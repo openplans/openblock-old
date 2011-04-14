@@ -114,9 +114,12 @@ class TestDoFilterUrl(unittest.TestCase):
                          [Variable('foo'), Variable('baz')])
 
     def test_render(self):
-        mock_chain = mock.Mock()
+        from ebpub.db.schemafilters import SchemaFilterChain
+        mock_chain = mock.Mock(spec=SchemaFilterChain)
+        mock_chain.schema = mock.Mock()
         mock_chain.make_url.return_value = 'ok'
         mock_chain.schema.url.return_value = 'http://X/'
+
         context = {'filterchain': mock_chain,
                    'add1': 'X', 'add2': 'Y', 'remove1': 'Z'}
         node = eb_filter.FilterUrlNode('filterchain',
