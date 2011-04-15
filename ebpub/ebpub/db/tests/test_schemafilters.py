@@ -26,8 +26,8 @@ Unit tests for db.views.
 from client import RequestFactory
 from client import mock_with_attributes
 from django.test import TestCase
+from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.schemafilters import FilterError
-from ebpub.db.views import filter_reverse
 from ebpub.db import models
 import mock
 import random
@@ -271,7 +271,7 @@ class TestLookupFilter(TestCase):
         filt.apply()
         self.assertEqual(filt.look.id, 214)
         self.assertEqual(self.mock_qs.by_attribute.call_args,
-                         ((filt.schemafield, filt.look.id), {}))
+                         ((filt.schemafield, filt.look), {'is_lookup': True}))
         self.assertEqual(filt.value, 'Police Beat 214')
         self.assertEqual(filt.short_value, 'Police Beat 214')
         self.assertEqual(filt.label, 'Beat')
@@ -324,13 +324,15 @@ class TestSchemaFilterChain(TestCase):
         from ebpub.db.schemafilters import SchemaFilterChain
         chain = SchemaFilterChain()
         chain.lookup_descriptions.append(1)
+        chain.base_url = 'http://xyz'
         chain['foo'] = 'bar'
         chain['qux'] = 'whee'
         clone = chain.copy()
         # Attributes are copied...
         self.assertEqual(clone.lookup_descriptions, [1])
-        clone.lookup_descriptions.pop()
+        self.assertEqual(clone.base_url, chain.base_url)
         # ... and mutating them doesn't affect the original.
+        clone.lookup_descriptions.pop()
         self.assertEqual(chain.lookup_descriptions, [1])
         # Likewise, items are copied, and mutating doesn't affect the copy.
         self.assertEqual(clone['foo'], 'bar')

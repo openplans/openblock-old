@@ -48,6 +48,7 @@ Chain of filters needs to support:
 
 
 from django.utils import dateformat
+from django.utils.datastructures import SortedDict
 from ebpub.db import constants
 from ebpub.db import models
 from ebpub.db.utils import get_place_info_for_request
@@ -67,6 +68,7 @@ class SchemaFilter(object):
         self.qs = queryset
         self.context = context
         self.request = request
+        self._got_args = False
 
     def apply(self):
         """mutate the queryset, and any other state that needs sharing
@@ -112,6 +114,8 @@ class AttributeFilter(SchemaFilter):
     (LookupFilter, TextSearchFilter, etc).
     """
 
+    _sort_value = 101.0
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
@@ -120,6 +124,23 @@ class AttributeFilter(SchemaFilter):
         self.url = 'by-%s=' % self.schemafield.slug
         self.value = self.short_value = ''
         self.label = self.schemafield.pretty_name
+        if args:
+            # This should work for int and varchar fields. (TODO: UNTESTED)
+            self.att_value = args[0]
+            self._got_args = True
+            if isinstance(self.att_value, datetime.date):
+                str_att_value = self.att_value.strftime('%Y-%m-%d')
+            elif isinstance(self.att_value, datetime.time):
+                str_att_value = self.att_value.strftime('%H:%M:%S')
+            elif isinstance(self.att_value, datetime.datetime):
+                # Zone??
+                str_att_value = self.att_value.strftime('%Y-%m-%dT%H:%M:%S')
+            else:
+                str_att_value = str(self.att_value)
+            self.url += str_att_value
+
+    def apply(self):
+        self.qs = self.qs.by_attribute(self.schemafield, self.att_value)
 
 
 class TextSearchFilter(AttributeFilter):
@@ -151,15 +172,14 @@ class BoolFilter(AttributeFilter):
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
-        self.label = None
         if len(args) > 1:
             raise FilterError("Invalid boolean arg %r" % ','.join(args))
         elif len(args) == 1:
             self.boolslug = args[0]
-            try:
-                self.real_val = {'yes': True, 'no': False, 'na': None}[self.boolslug]
-            except KeyError:
+            self.real_val = {'yes': True, 'no': False, 'na': None}.get(self.boolslug, self.boolslug)
+            if self.real_val not in (True, False, None):
                 raise FilterError('Invalid boolean value %r' % self.boolslug)
+            self.url = 'by-%s=%s' % (self.schemafield.slug, self.boolslug)
             self._got_args = True
         else:
             # No args.
@@ -179,10 +199,8 @@ class BoolFilter(AttributeFilter):
 
     def apply(self):
         self.qs = self.qs.by_attribute(self.schemafield, self.real_val)
-        self.label = self.schemafield.pretty_name
         self.short_value = {True: 'Yes', False: 'No', None: 'N/A'}[self.real_val]
         self.value = u'%s%s: %s' % (self.label[0].upper(), self.label[1:], self.short_value)
-        self.url = 'by-%s=%s' % (self.schemafield.slug, self.boolslug)
 
 
 class LookupFilter(AttributeFilter):
@@ -223,7 +241,7 @@ class LookupFilter(AttributeFilter):
         }
 
     def apply(self):
-        self.qs = self.qs.by_attribute(self.schemafield, self.look.id)
+        self.qs = self.qs.by_attribute(self.schemafield, self.look, is_lookup=True)
 
 
 class LocationFilter(SchemaFilter):
@@ -428,8 +446,9 @@ class PubDateFilter(DateFilter):
 class DuplicateFilterError(FilterError):
     pass
 
-from django.utils.datastructures import SortedDict
 class SchemaFilterChain(SortedDict):
+
+    base_url = ''
 
     def __repr__(self):
         return u'SchemaFilterChain(%s)' % SortedDict.__repr__(self)
@@ -572,6 +591,7 @@ class SchemaFilterChain(SortedDict):
         clone = self.__class__(schema=self.schema)
         clone.update(self)
         clone.lookup_descriptions = self.lookup_descriptions[:]
+        clone.base_url = self.base_url
         return clone
 
     def normalized_clone(self):
@@ -587,15 +607,89 @@ class SchemaFilterChain(SortedDict):
         items = self.items()
         return sorted(items, key=lambda item: item[1]._sort_value)
 
+    def replace(self, key, *values):
+        """Same as self.add(), but instead of raising DuplicateFilterError
+        on existing keys, replaces them.
+        """
+        if key in self:
+            del self[key]
+        return self.add(key, *values, _replace=True)
+
+    def add(self, key, *values, **kwargs):
+        """Given a string or SchemaField key,
+        construct an appropriate SchemaFilter with the values as arguments,
+        and save it as self[key].
+
+        Also for convenience, returns self.
+        """
+
+        # TODO: this seems awfully redundant with .from_request().
+
+        # Unfortunately there's no way to provide a single default arg
+        # at the same time as accepting arbitrary *values.
+        _replace = kwargs.pop('_replace', False)
+        if kwargs:
+            raise TypeError("unexpected keyword args %s" % kwargs.keys())
+
+        values = list(values)
+        if isinstance(key, models.SchemaField):
+            if not values or values == ['']:
+                # URL for the page that allows selecting them.
+                val = AttributeFilter(None, {}, None, schemafield=key)
+                key = key.slug
+                if _replace and key in self:
+                    del self[key]
+                self[key] = val
+                return self
+            if key.is_lookup:
+                values = [LookupFilter(None, {}, None, schemafield=key, *values)]
+            elif key.is_type('bool'):
+                values = [BoolFilter(None, {}, None, schemafield=key, *values)]
+            elif key.is_searchable:
+                values = [TextSearchFilter(None, {}, None, schemafield=key, *values)]
+            else:
+                # Ints, varchars, dates, times, and datetimes.
+                values = [AttributeFilter(None, {}, None, schemafield=key, *values)]
+            key = key.slug
+        if not values:
+            raise FilterError("no values passed for arg %s" % key)
+        if isinstance(values[0], models.Location):
+            val = LocationFilter(None, {}, None, location=values[0])
+            key = val.name
+        elif isinstance(values[0], models.LocationType):
+            val = LocationFilter(None, {}, None, location_type=values[0])
+            key = val.name
+        elif isinstance(values[0], models.Lookup):
+            val = LookupFilter(None, {}, None, values[0],
+                               schemafield=values[0].schema_field)
+        elif isinstance(values[0], datetime.date):
+            if len(values) == 1:
+                # start and end are the same date.
+                values.append(values[0])
+            if values[1] == 'month':
+                # TODO: document this!!
+                import calendar
+                start, end = calendar.monthrange(values[0].year, values[0].month)
+                values[0] = values[0].replace(day=start)
+                values[1] = values[0].replace(day=end)
+            val = DateFilter(None, {}, None, *values, schema=self.schema)
+        else:
+            # TODO: when does this ever happen?
+            val = values[0]
+        if _replace and key in self:
+            del self[key]
+        self[key] = val
+        return self
 
     def make_breadcrumbs(self, additions=(), removals=(), stop_at=None, 
-                         base_url=''):
+                         base_url=None):
         """
         Returns a list of (label, URL) pairs suitable for making
         breadcrumbs.
 
-        If ``base_url`` is passed, URLs generated will be relative to
-        that; otherwise they will just be relative URLs.
+        If ``base_url`` is passed, URLs generated will be include that
+        that; otherwise fall back to self.base_url; otherwise they
+        will just be relative URLs.
 
         If ``stop_at`` is passed, the key specified will be the last
         one used for the breadcrumb list.
@@ -611,7 +705,9 @@ class SchemaFilterChain(SortedDict):
         this!!)
 
         """
-        # TODO: Can this leverage filter_reverse()? Or vice-versa?
+        if base_url is None:
+            base_url = self.base_url or ''
+        # TODO: Can filter_reverse leverage this? Or vice-versa?
         filter_params = []
         clone = self.copy()
         for key in removals:
@@ -621,44 +717,7 @@ class SchemaFilterChain(SortedDict):
                 logger.warn("can't delete nonexistent key %s" % key)
 
         for key, values in additions:
-            if isinstance(key, models.SchemaField):
-                if not values or values == ['']:
-                    # URL for the page that allows selecting them.
-                    val = AttributeFilter(None, {}, None, schemafield=key)
-                    key = key.slug
-                    clone[key] = val
-                    continue
-            if not values:
-                raise FilterError("no values passed for arg %s" % key)
-            if isinstance(values[0], models.Location):
-                val = LocationFilter(None, {}, None, location=values[0])
-                key = val.name
-            elif isinstance(values[0], models.LocationType):
-                val = LocationFilter(None, {}, None, location_type=values[0])
-                key = val.name
-            elif isinstance(values[0], models.Lookup):
-                val = LookupFilter(None, {}, None, values[0],
-                                   schemafield=values[0].schema_field)
-            elif isinstance(values[0], datetime.date):
-                if len(values) == 1:
-                    # start and end are the same date.
-                    values.append(values[0])
-                if values[1] == 'month':
-                    # TODO: document this!!
-                    import calendar
-                    start, end = calendar.monthrange(values[0].year, values[0].month)
-                    values[0] = values[0].replace(day=start)
-                    values[1] = values[0].replace(day=end)
-                val = DateFilter(None, {}, None, *values, schema=self.schema)
-            else:
-                # Do we have any use for other args?
-                val = values[0]
-
-            # If there was already a Filter by this name but it
-            # didn't have args, replace it.
-            if key in clone and clone[key]._got_args == False:
-                del clone[key]
-            clone[key] = val
+            self.replace(key, *values)
         crumbs = []
         for key, filt in clone.items():
             label = getattr(filt, 'short_value', '') or getattr(filt, 'value', '') or getattr(filt, 'label', '')
@@ -670,7 +729,7 @@ class SchemaFilterChain(SortedDict):
                 break
         return crumbs
 
-    def make_urls(self, additions=(), removals=(), stop_at=None, base_url=''):
+    def make_urls(self, additions=(), removals=(), stop_at=None, base_url=None):
         """
         Just like ``make_breadcrumbs`` but only URLs are included in
         the output.
@@ -678,7 +737,7 @@ class SchemaFilterChain(SortedDict):
         crumbs = self.make_breadcrumbs(additions, removals, stop_at, base_url)
         return [crumb[1] for crumb in crumbs]
 
-    def make_url(self, additions=(), removals=(), stop_at=None, base_url=''):
+    def make_url(self, additions=(), removals=(), stop_at=None, base_url=None):
         """
         Makes one URL representing all the filters of this filter chain.
         """

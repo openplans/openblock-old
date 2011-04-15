@@ -20,8 +20,10 @@ from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
 from django.db import connection, transaction
+from ebpub.db.urlresolvers import filter_reverse
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
+
 import datetime
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
@@ -611,6 +613,7 @@ class NewsItem(models.Model):
             return []
         return [AttributeForTemplate(f, attribute_row) for f in fields]
 
+
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
@@ -645,13 +648,14 @@ class AttributeForTemplate(object):
         urls = [None]
         descriptions = [None]
         if self.is_filter:
-            # TODO: factor out URL generation. #69
+            from ebpub.db.schemafilters import SchemaFilterChain
+            chain = SchemaFilterChain(schema=self.sf.schema)
+            chain.base_url = self.sf.schema.url()
             if self.is_lookup:
-                urls = [look and '/%s/by-%s/%s/' % (self.schema_slug, self.sf.slug, look.slug) or None for look in self.values]
-            elif isinstance(self.raw_value, datetime.date):
-                urls = ['/%s/by-%s/%s/%s/%s/' % (self.schema_slug, self.sf.slug, self.raw_value.year, self.raw_value.month, self.raw_value.day)]
-            elif self.raw_value in (True, False, None):
-                urls = ['/%s/by-%s/%s/' % (self.schema_slug, self.sf.slug, {True: 'yes', False: 'no', None: 'na'}[self.raw_value])]
+                urls = [chain.replace(self.sf, look).make_url() if look else None
+                        for look in self.values]
+            else:
+                urls = [chain.replace(self.sf, self.raw_value).make_url()]
         if self.is_lookup:
             values = [val and val.name or 'None' for val in self.values]
             descriptions = [val and val.description or None for val in self.values]

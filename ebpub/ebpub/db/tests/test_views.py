@@ -18,13 +18,12 @@ Unit tests for db.views.
 from django.core import urlresolvers
 from django.test import TestCase
 
+from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.views import _schema_filter_normalize_url
-from ebpub.db.views import filter_reverse
 from ebpub.db.views import BadAddressException
 
 # Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
 from client import RequestFactory
-from client import mock_with_attributes
 import mock
 import urllib
 
