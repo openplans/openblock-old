@@ -36,3 +36,4 @@ docs/_build
 .noseids
 .ropeproject
 *,cover
+cover
