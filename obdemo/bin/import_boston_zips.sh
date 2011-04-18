@@ -50,7 +50,7 @@ if [ $? -ne 0 ]; then
     die "Could not download $ZIP_URL"
 fi
 
-unzip -o "$ZIP_FOLDER/$ZIP_FILE"
+unzip -o "$ZIP_FOLDER/$ZIP_FILE" || die "failed to unzip $ZIP_FOLDER/$ZIP_FILE
 
 echo Importing zip codes...
 $ZIP_IMPORTER $ZIP_FOLDER || die
