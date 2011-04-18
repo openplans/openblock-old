@@ -350,6 +350,31 @@ class Place(models.Model):
             self.normalized_name = normalize(self.pretty_name)
         super(Place, self).save()
 
+
+class PlaceMisspellingManager(models.Manager):
+    def make_correction(self, place_name):
+        """
+        Returns the 'correct' or canonical spelling of the given place name. 
+        If the given place name is already correctly spelled, then it's returned as-is.
+        """
+        try:
+            return self.get(incorrect=place_name).correct
+        except self.model.DoesNotExist:
+            return place_name
+
+class PlaceMisspelling(models.Model):
+    """
+    represents a synonym for a place (point of interest) 
+    here incorrect/correct can be taken to mean 
+    synonym/canonical
+    """
+    incorrect = models.CharField(max_length=255, unique=True)
+    correct = models.CharField(max_length=255)
+    objects = PlaceMisspellingManager()
+
+    def __unicode__(self):
+        return self.incorrect
+
 class City(object):
     def __init__(self, name, slug, norm_name):
         self.name, self.slug, self.norm_name = name, slug, norm_name
