@@ -20,6 +20,7 @@ from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
 from django.db.models import Q
+from ebpub.geocoder.parser.parsing import normalize
 from ebpub.metros.allmetros import get_metro
 import operator
 import re
@@ -300,7 +301,9 @@ class Street(models.Model):
 
 class Misspelling(models.Model):
     """
-    Misspelling of a location name
+    A generalized mapping between two normalized forms used in some 
+    places to track general misspellings. Use LocationSynonym, PlaceSynonym and
+    StreetMisspelling to represent specific types of "misspellings"
     """
     
     incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
@@ -346,34 +349,39 @@ class Place(models.Model):
 
     def save(self):
         if not self.normalized_name:
-            from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(Place, self).save()
 
 
-class PlaceMisspellingManager(models.Manager):
-    def make_correction(self, place_name):
+class PlaceSynonymManager(models.Manager):
+    def get_canonical(self, name):
         """
         Returns the 'correct' or canonical spelling of the given place name. 
         If the given place name is already correctly spelled, then it's returned as-is.
-        """
+        """        
         try:
-            return self.get(incorrect=place_name).correct
+            normalized_name = normalize(name)
+            return self.get(normalized_name=normalized_name).place.normalized_name
         except self.model.DoesNotExist:
-            return place_name
+            return normalized_name
 
-class PlaceMisspelling(models.Model):
+
+class PlaceSynonym(models.Model):
     """
-    represents a synonym for a place (point of interest) 
-    here incorrect/correct can be taken to mean 
-    synonym/canonical
+    represents a synonym for a Place (point of interest)
     """
-    incorrect = models.CharField(max_length=255, unique=True)
-    correct = models.CharField(max_length=255)
-    objects = PlaceMisspellingManager()
+    pretty_name = models.CharField(max_length=255)
+    normalized_name = models.CharField(max_length=255, db_index=True)
+    place = models.ForeignKey(Place)
+    objects = PlaceSynonymManager()
+
+    def save(self):
+        if not self.normalized_name:
+            self.normalized_name = normalize(self.pretty_name)
+        super(PlaceSynonym, self).save()
 
     def __unicode__(self):
-        return self.incorrect
+        return self.pretty_name
 
 class City(object):
     def __init__(self, name, slug, norm_name):

@@ -21,6 +21,7 @@ from ebpub.db.forms import LocationForm
 from ebpub.db.forms import NewsItemForm
 from ebpub.db.models import Attribute
 from ebpub.db.models import Location
+from ebpub.db.models import LocationSynonym
 from ebpub.db.models import LocationType
 from ebpub.db.models import Lookup
 from ebpub.db.models import NewsItem
@@ -74,9 +75,14 @@ class LookupAdmin(admin.ModelAdmin):
     list_display = ('name', 'schema_field')
     search_fields = ('description', 'name', 'code')
 
+class LocationSynonymAdmin(OSMModelAdmin):
+    list_display = ('pretty_name', 'location')
+    search_fields = ('pretty_name', 'location')
+
 admin.site.register(Schema, SchemaAdmin)
 admin.site.register(SchemaField, SchemaFieldAdmin)
 admin.site.register(NewsItem, NewsItemAdmin)
 admin.site.register(LocationType, LocationTypeAdmin)
 admin.site.register(Location, LocationAdmin)
+admin.site.register(LocationSynonym, LocationSynonymAdmin)
 admin.site.register(Lookup, LookupAdmin)
