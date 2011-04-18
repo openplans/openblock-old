@@ -20,7 +20,6 @@ from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
 from django.db.models import Q
-from ebpub.geocoder.parser.parsing import normalize
 from ebpub.metros.allmetros import get_metro
 import operator
 import re
@@ -349,6 +348,7 @@ class Place(models.Model):
 
     def save(self):
         if not self.normalized_name:
+            from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(Place, self).save()
 
@@ -360,6 +360,7 @@ class PlaceSynonymManager(models.Manager):
         If the given place name is already correctly spelled, then it's returned as-is.
         """        
         try:
+            from ebpub.geocoder.parser.parsing import normalize
             normalized_name = normalize(name)
             return self.get(normalized_name=normalized_name).place.normalized_name
         except self.model.DoesNotExist:
@@ -377,6 +378,7 @@ class PlaceSynonym(models.Model):
 
     def save(self):
         if not self.normalized_name:
+            from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(PlaceSynonym, self).save()
 
