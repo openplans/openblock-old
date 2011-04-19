@@ -198,3 +198,15 @@ class DatabaseExtensionsTestCase(TestCase):
         ni.attributes['case_number'] = u'Hello'
         self.assertEquals(ni.attributes['case_number'], u'Hello')
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
+
+    def test_top_lookups__int(self):
+        from ebpub.db.models import SchemaField
+        sf = SchemaField.objects.get(name='beat')
+        qs = NewsItem.objects.all()
+        top_lookups = list(qs.top_lookups(sf, 2))
+        self.assertEqual(len(top_lookups), 2)
+        self.assertEqual(top_lookups[0]['count'], 2)
+        self.assertEqual(top_lookups[0]['lookup'].slug, u'beat-64')
+        self.assertEqual(top_lookups[1]['count'], 1)
+        self.assertEqual(top_lookups[1]['lookup'].slug, u'beat-214')
+
