@@ -4,7 +4,7 @@
   "model": "db.newsitem",
   "fields": {
    "schema": 1,
-   "title": "HM609859",
+   "title": "case number 1",
    "description": "Crime type 97 in location 66.",
    "url": "",
    "pub_date": "2006-09-26 00:00:00",
@@ -18,7 +18,7 @@
   "model": "db.newsitem",
   "fields": {
    "schema": 1,
-   "title": "HM694545",
+   "title": "crime title 2",
    "description": "Crime type 58 in location 77.",
    "url": "",
    "pub_date": "2006-11-08 00:00:00",
@@ -32,7 +32,7 @@
   "model": "db.newsitem",
   "fields": {
    "schema": 1,
-   "title": "HM696584",
+   "title": "crime title 3",
    "description": "Crime type 266 in location 32.",
    "url": "",
    "pub_date": "2006-11-08 00:00:00",
@@ -47,10 +47,10 @@
   "fields": {
    "news_item": 1,
    "schema": 1,
-   "varchar01": "HM609859",
+   "varchar01": "case number 1",
    "varchar02": "",
    "varchar03": null,
-   "varchar04": null,
+   "varchar04": "71,72,73",
    "varchar05": null,
    "date01": "2006-09-19",
    "date02": null,
@@ -81,10 +81,10 @@
   "fields": {
    "news_item": 2,
    "schema": 1,
-   "varchar01": "HM694545",
+   "varchar01": "crime title 2",
    "varchar02": "",
    "varchar03": null,
-   "varchar04": null,
+   "varchar04": "71,72",
    "varchar05": null,
    "date01": "2006-11-01",
    "date02": null,
@@ -115,10 +115,10 @@
   "fields": {
    "news_item": 3,
    "schema": 1,
-   "varchar01": "HM696584",
+   "varchar01": "crime title 3",
    "varchar02": "",
    "varchar03": null,
-   "varchar04": null,
+   "varchar04": "71",
    "varchar05": null,
    "date01": "2006-11-01",
    "date02": null,
@@ -137,7 +137,7 @@
    "bool04": null,
    "bool05": null,
    "int01": 17286,
-   "int02": 5,
+   "int02": 64,
    "int03": 266,
    "int04": 32,
    "int05": null
@@ -205,7 +205,7 @@
    "pretty_name_plural": "Arrests",
    "display": true,
    "is_lookup": false,
-   "is_filter": false,
+   "is_filter": true,
    "is_charted": false,
    "is_searchable": false,
    "display_order": 4
@@ -250,7 +250,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "name": "beat_id",
+   "name": "beat",
    "real_name": "int02",
    "pretty_name": "Beat",
    "pretty_name_plural": "Beats",
@@ -348,6 +348,23 @@
   }
  },
  {
+  "pk": "13",
+  "model": "db.schemafield",
+  "fields": {
+   "schema": 1,
+   "name": "tags many-to-many",
+   "real_name": "varchar04",
+   "pretty_name": "Tag",
+   "pretty_name_plural": "Tags",
+   "display": false,
+   "is_lookup": true,
+   "is_filter": true,
+   "is_charted": false,
+   "is_searchable": true,
+   "display_order": 0
+  }
+ },
+ {
   "pk": "1",
   "model": "db.schema",
   "fields": {
@@ -365,5 +382,82 @@
    "number_in_overview": 5,
    "is_special_report": false
   }
+ },
+ {
+  "fields": {
+   "description": "A police beat.",
+   "code": "214",
+   "schema_field": 7,
+   "name": "Police Beat 214",
+   "slug": "beat-214"
+  },
+  "model": "db.lookup",
+  "pk": 214
+ },
+ {
+  "fields": {
+   "description": "A police beat.",
+   "code": "64",
+   "schema_field": 7,
+   "name": "Police Beat 64",
+   "slug": "beat-64"
+  },
+  "model": "db.lookup",
+  "pk": 64
+ },
+ {
+  "fields": {
+   "description": "A crime type.",
+   "code": "97",
+   "schema_field": 8,
+   "name": "Crime Type 97",
+   "slug": "crime-type-97"
+  },
+  "model": "db.lookup",
+  "pk": 97
+ },
+ {
+  "fields": {
+   "description": "Location 66.",
+   "code": "66",
+   "schema_field": 9,
+   "name": "Location 66",
+   "slug": "location-66"
+  },
+  "model": "db.lookup",
+  "pk": 66
+ },
+ {
+  "fields": {
+   "description": "Tag 1",
+   "code": "1",
+   "schema_field": 13,
+   "name": "Tag 1",
+   "slug": "tag-1"
+  },
+  "model": "db.lookup",
+  "pk": 71
+ },
+ {
+  "fields": {
+   "description": "Tag 2",
+   "code": "2",
+   "schema_field": 13,
+   "name": "Tag 2",
+   "slug": "tag-2"
+  },
+  "model": "db.lookup",
+  "pk": 72
+ },
+ {
+  "fields": {
+   "description": "Tag 3",
+   "code": "3",
+   "schema_field": 13,
+   "name": "Tag 3",
+   "slug": "tag-3"
+  },
+  "model": "db.lookup",
+  "pk": 73
  }
 ]

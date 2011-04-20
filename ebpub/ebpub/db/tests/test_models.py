@@ -17,92 +17,16 @@
 #
 
 """
-Unit tests for db app.
+Unit tests for db.models.
 """
 
-from django.core import urlresolvers
 from django.test import TestCase
 from ebpub.db.models import NewsItem, Attribute
 import datetime
 
-class ViewTestCase(TestCase):
-    "Unit tests for views.py."
-    fixtures = ('crimes',)
-
-    def test_search__bad_schema(self):
-        url = urlresolvers.reverse('ebpub.db.views.search', args=['kaboom'])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
-    def test_search__no_query(self):
-        url = urlresolvers.reverse('ebpub.db.views.search', args=['crime'])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], 'http://testserver/crime/')
-        response = self.client.get(url + '?type=alert')
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['location'], 'http://testserver/crime/')
-
-    def test_search(self):
-        url = urlresolvers.reverse('ebpub.db.views.search', args=['crime'])
-        response = self.client.get(url + '?q=228 S. Wabash Ave.')
-        self.assertEqual(response.status_code, 200)
-        assert 'location not found' in response.content.lower()
-        # TODO: load a fixture with some locations and some news?
-
-
-    def test_newsitem_detail(self):
-        # response = self.client.get('')
-        pass
-
-    def test_location_redirect(self):
-        # redirect to neighborhoods by default
-        response = self.client.get('/locations/')
-        self.assertEqual(response.status_code, 301)
-        self.assertEqual(response['Location'], 'http://testserver/locations/neighborhoods/')
-
-    def test_location_type_detail(self):
-        # response = self.client.get('')
-        pass
-
-    def test_location_detail(self):
-        # response = self.client.get('')
-        pass
-
-    def test_schema_detail(self):
-        response = self.client.get('/crime/')
-        self.assertEqual(response.status_code, 200)
-        response = self.client.get('/nonexistent/')
-        self.assertEqual(response.status_code, 404)
-
-    def test_schema_xy_detail(self):
-        # response = self.client.get('')
-        pass
-
-class TestSchemaFilterView(TestCase):
-
-    fixtures = ('crimes',)
-
-    def test_filter_choices(self):
-        url = urlresolvers.reverse('schema-filter', args=['crime', ''])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-
-    def test_filter_detail(self):
-        # response = self.client.get('')
-        pass
-
-    def test_filter_detail_month(self):
-        # response = self.client.get('')
-        pass
-
-    def test_filter_detail_day(self):
-        # response = self.client.get('')
-        pass
-
 class DatabaseExtensionsTestCase(TestCase):
     "Unit tests for the custom ORM stuff in models.py."
-    fixtures = ('crimes',)
+    fixtures = ('crimes.json',)
 
     def testAttributesLazilyLoaded(self):
         # Attributes are retrieved lazily the first time you access the
@@ -116,7 +40,7 @@ class DatabaseExtensionsTestCase(TestCase):
         settings.DEBUG = True
 
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         self.assertEquals(ni.attributes['crime_date'], datetime.date(2006, 9, 19))
         self.assertEquals(ni.attributes['crime_time'], None)
         self.assertEquals(len(connection.queries), 3)
@@ -137,7 +61,7 @@ class DatabaseExtensionsTestCase(TestCase):
         # attribute. As soon as `attributes` is assigned-to, the UPDATE query
         # is executed in the database.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         ni.attributes = dict(ni.attributes, case_number=u'Hello')
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
@@ -146,7 +70,7 @@ class DatabaseExtensionsTestCase(TestCase):
         ni = NewsItem.objects.get(id=1)
         ni.attributes = {
             u'arrests': False,
-            u'beat_id': 214,
+            u'beat': 214,
             u'block_id': 25916,
             u'case_number': u'Hello',
             u'crime_date': datetime.date(2006, 9, 19),
@@ -169,7 +93,7 @@ class DatabaseExtensionsTestCase(TestCase):
         ni.attributes = {u'arrests': False}
         ni = NewsItem.objects.get(id=1)
         self.assertEquals(ni.attributes['arrests'], False)
-        self.assertEquals(ni.attributes['beat_id'], None)
+        self.assertEquals(ni.attributes['beat'], None)
         self.assertEquals(ni.attributes['block_id'], None)
         self.assertEquals(ni.attributes['case_number'], None)
         self.assertEquals(ni.attributes['crime_date'], None)
@@ -185,7 +109,7 @@ class DatabaseExtensionsTestCase(TestCase):
         # Setting a single attribute will result in an immediate query setting
         # just that attribute.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         ni.attributes['case_number'] = u'Hello'
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
@@ -198,7 +122,7 @@ class DatabaseExtensionsTestCase(TestCase):
     def testSetSingleAttribute3(self):
         # Setting a single attribute will result in the value being cached.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'HM609859')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
         ni.attributes['case_number'] = u'Hello'
         self.assertEquals(ni.attributes['case_number'], u'Hello')
 
@@ -243,7 +167,7 @@ class DatabaseExtensionsTestCase(TestCase):
         ni = NewsItem.objects.get(id=1)
         ni.attributes = {
             u'arrests': False,
-            u'beat_id': 214,
+            u'beat': 214,
             u'block_id': 25916,
             u'case_number': u'Hello',
             u'crime_date': datetime.date(2006, 9, 19),
@@ -274,3 +198,28 @@ class DatabaseExtensionsTestCase(TestCase):
         ni.attributes['case_number'] = u'Hello'
         self.assertEquals(ni.attributes['case_number'], u'Hello')
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
+
+    def test_top_lookups__int(self):
+        from ebpub.db.models import SchemaField
+        sf = SchemaField.objects.get(name='beat')
+        qs = NewsItem.objects.all()
+        top_lookups = list(qs.top_lookups(sf, 2))
+        self.assertEqual(len(top_lookups), 2)
+        self.assertEqual(top_lookups[0]['count'], 2)
+        self.assertEqual(top_lookups[0]['lookup'].slug, u'beat-64')
+        self.assertEqual(top_lookups[1]['count'], 1)
+        self.assertEqual(top_lookups[1]['lookup'].slug, u'beat-214')
+
+    def test_top_lookups__m2m(self):
+        from ebpub.db.models import SchemaField
+        sf = SchemaField.objects.get(name='tags many-to-many')
+        # from ebpub.db.bin.update_aggregates import update_aggregates
+        # update_aggregates(sf.schema.id)
+        qs = NewsItem.objects.all()
+        top_lookups = list(qs.top_lookups(sf, 2))
+        self.assertEqual(len(top_lookups), 2)
+        self.assertEqual(top_lookups[0]['count'], 3)
+        self.assertEqual(top_lookups[0]['lookup'].slug, u'tag-1')
+        self.assertEqual(top_lookups[1]['count'], 2)
+        self.assertEqual(top_lookups[1]['lookup'].slug, u'tag-2')
+
