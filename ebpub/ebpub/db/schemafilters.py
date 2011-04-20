@@ -457,11 +457,11 @@ class SchemaFilterChain(SortedDict):
     def __repr__(self):
         return u'SchemaFilterChain(%s)' % SortedDict.__repr__(self)
 
-    def __init__(self, data=None, schema=None):
+    def __init__(self, data=None, request=None, context=None, queryset=None, schema=None):
         SortedDict.__init__(self, data=None)
-        self.request = None
-        self.context = {}
-        self.qs = None
+        self.request = request
+        self.context = context if context is not None else {}
+        self.qs = queryset
         if data is not None:
             # We do this to force our __setitem__ to get called
             # so it will raise error on dupes.
