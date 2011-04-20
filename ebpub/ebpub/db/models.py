@@ -424,6 +424,7 @@ class AttributeDict(dict):
         dict.__setitem__(self, name, value)
 
 class NewsItemQuerySet(models.query.GeoQuerySet):
+
     def prepare_attribute_qs(self):
         clone = self._clone()
         if 'db_attribute' not in clone.query.extra_tables:
@@ -497,7 +498,14 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         """
         real_name = "db_attribute." + str(schema_field.real_name)
         if schema_field.is_many_to_many_lookup():
-            clone = self.prepare_attribute_qs().filter(schema__id=schema_field.schema_id)
+            # First prepare a subquery to get a *single* count of
+            # attribute rows that match each relevant m2m lookup
+            # value.  It's very important to get a single row here or
+            # else we get a DataBaseError with "more than one row
+            # returned by a subquery used as an expression". (Bug #146)
+            clone = self.prepare_attribute_qs()
+            clone = clone.filter(schema__id=schema_field.schema_id)
+            # This is a regex search for the lookup id.
             clone = clone.extra(where=[real_name + " ~ ('[[:<:]]' || db_lookup.id || '[[:>:]]')"])
             # We want to count the current queryset and get a single
             # row for injecting into the subsequent Lookup query, but
@@ -507,16 +515,32 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
             # `values()' on a field that we're already filtering by,
             # in this case, schema, as essentially a harmless identify
             # function.
-            clone = clone.values('schema').annotate(count=Count('schema'))
+            # See http://docs.djangoproject.com/en/dev/topics/db/aggregation/#values
+            clone = clone.values('schema')
+
+            # Fix #146: Having any `ORDER BY foo` in this subquery causes
+            # Django to also add a `GROUP BY foo`, which potentially
+            # returns multiple rows. So, remove the ordering.
+            clone = clone.order_by()
+            clone = clone.annotate(count=Count('schema'))
+            # Unusual: We don't run the clone query, we just stuff its SQL
+            # into our Lookup qs.
             qs = Lookup.objects.filter(schema_field__id=schema_field.id)
             qs = qs.extra(select={'lookup_id': 'id', 'item_count': clone.values('count').query})
         else:
+            # Counts of attribute rows matching each relevant Lookup.
+            # Much easier when is_many_to_many_lookup == False :-)
             qs = self.prepare_attribute_qs().extra(select={'lookup_id': real_name})
             qs.query.group_by = [real_name]
             qs = qs.values('lookup_id').annotate(item_count=Count('id'))
-        ids_and_counts = [(v['lookup_id'], v['item_count']) for v in qs.values('lookup_id', 'item_count').order_by('-item_count') if v['item_count']][:count]
+
+        qs = qs.values('lookup_id', 'item_count').order_by('-item_count')
+        ids_and_counts = [(v['lookup_id'], v['item_count']) for v in qs
+                          if v['item_count']]
+        ids_and_counts = ids_and_counts[:count]
         lookup_objs = Lookup.objects.in_bulk([i[0] for i in ids_and_counts])
-        return [{'lookup': lookup_objs[i[0]], 'count': i[1]} for i in ids_and_counts]
+        return [{'lookup': lookup_objs[i[0]], 'count': i[1]} for i in ids_and_counts
+                if not None in i]
 
     def text_search(self, schema_field, query):
         """
