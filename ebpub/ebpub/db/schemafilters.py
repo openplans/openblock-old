@@ -53,6 +53,8 @@ from ebpub.db import constants
 from ebpub.db import models
 from ebpub.db.utils import get_place_info_for_request
 
+import ebpub.streets.models
+
 import datetime
 import re
 import urllib
@@ -307,6 +309,8 @@ class LocationFilter(SchemaFilter):
         """
         filtering by Location
         """
+        # TODO: get_place_info_for_request probably does way more than we need here,
+        # and without it we could maybe ditch some of from_request's args.
         if self.location_object is not None:
             self.context.update(get_place_info_for_request(
                 self.request, self.location_type_slug, self.location_slug,
@@ -360,7 +364,8 @@ class BlockFilter(SchemaFilter):
 
     def apply(self):
         """ filtering by Block """
-
+        # TODO: get_place_info_for_request probably does way more than we need here,
+        # and without it we could maybe ditch some of from_request's args.
         self.context.update(get_place_info_for_request(
                 self.request, self.city_slug, self.street_slug,
                 *self.url_to_block_args,
@@ -449,12 +454,14 @@ class DuplicateFilterError(FilterError):
 class SchemaFilterChain(SortedDict):
 
     base_url = ''
-
     def __repr__(self):
         return u'SchemaFilterChain(%s)' % SortedDict.__repr__(self)
 
     def __init__(self, data=None, schema=None):
         SortedDict.__init__(self, data=None)
+        self.request = None
+        self.context = {}
+        self.qs = None
         if data is not None:
             # We do this to force our __setitem__ to get called
             # so it will raise error on dupes.
@@ -635,32 +642,35 @@ class SchemaFilterChain(SortedDict):
         if isinstance(key, models.SchemaField):
             if not values or values == ['']:
                 # URL for the page that allows selecting them.
-                val = AttributeFilter(None, {}, None, schemafield=key)
+                val = AttributeFilter(self.request, self.context, self.qs, schemafield=key)
                 key = key.slug
                 if _replace and key in self:
                     del self[key]
                 self[key] = val
                 return self
             if key.is_lookup:
-                values = [LookupFilter(None, {}, None, schemafield=key, *values)]
+                values = [LookupFilter(self.request, self.context, self.qs, schemafield=key, *values)]
             elif key.is_type('bool'):
-                values = [BoolFilter(None, {}, None, schemafield=key, *values)]
+                values = [BoolFilter(self.request, self.context, self.qs, schemafield=key, *values)]
             elif key.is_searchable:
-                values = [TextSearchFilter(None, {}, None, schemafield=key, *values)]
+                values = [TextSearchFilter(self.request, self.context, self.qs, schemafield=key, *values)]
             else:
                 # Ints, varchars, dates, times, and datetimes.
-                values = [AttributeFilter(None, {}, None, schemafield=key, *values)]
+                values = [AttributeFilter(self.request, self.context, self.qs, schemafield=key, *values)]
             key = key.slug
         if not values:
             raise FilterError("no values passed for arg %s" % key)
         if isinstance(values[0], models.Location):
-            val = LocationFilter(None, {}, None, location=values[0])
+            val = LocationFilter(self.request, self.context, self.qs, location=values[0])
+            key = val.name
+        elif isinstance(values[0], ebpub.streets.models.Block):
+            val = BlockFilter(self.request, self.context, self.qs, location=values[0])
             key = val.name
         elif isinstance(values[0], models.LocationType):
-            val = LocationFilter(None, {}, None, location_type=values[0])
+            val = LocationFilter(self.request, self.context, self.qs, location_type=values[0])
             key = val.name
         elif isinstance(values[0], models.Lookup):
-            val = LookupFilter(None, {}, None, values[0],
+            val = LookupFilter(self.request, self.context, self.qs, values[0],
                                schemafield=values[0].schema_field)
         elif isinstance(values[0], datetime.date):
             if len(values) == 1:
@@ -672,7 +682,7 @@ class SchemaFilterChain(SortedDict):
                 start, end = calendar.monthrange(values[0].year, values[0].month)
                 values[0] = values[0].replace(day=start)
                 values[1] = values[0].replace(day=end)
-            val = DateFilter(None, {}, None, *values, schema=self.schema)
+            val = DateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
         else:
             # TODO: when does this ever happen?
             val = values[0]
@@ -717,7 +727,7 @@ class SchemaFilterChain(SortedDict):
                 logger.warn("can't delete nonexistent key %s" % key)
 
         for key, values in additions:
-            self.replace(key, *values)
+            clone.replace(key, *values)
         crumbs = []
         for key, filt in clone.items():
             label = getattr(filt, 'short_value', '') or getattr(filt, 'value', '') or getattr(filt, 'label', '')
