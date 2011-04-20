@@ -1,7 +1,32 @@
 [
   {
-    "fields": {}, 
-    "model": "db.schema_deferred_grab_bag_grab_bag_headline_intro_short_description_short_source_source_summary_update_frequency"
+    "fields": {
+      "last_updated": "2011-04-12", 
+      "intro": "", 
+      "update_frequency": "", 
+      "has_newsitem_detail": true, 
+      "grab_bag_headline": "", 
+      "short_source": "", 
+      "slug": "open311-service-requests", 
+      "source": "", 
+      "date_name": "Date", 
+      "short_description": "", 
+      "grab_bag": "", 
+      "is_special_report": false, 
+      "importance": 0, 
+      "min_date": "2008-01-01", 
+      "allow_charting": false, 
+      "indefinite_article": "an", 
+      "is_public": true, 
+      "number_in_overview": 5, 
+      "date_name_plural": "Dates", 
+      "plural_name": "Open311 Service Requests", 
+      "name": "Open311 Service Request", 
+      "uses_attributes_in_list": false, 
+      "summary": "", 
+      "can_collapse": false
+    }, 
+    "model": "db.schema"
   }, 
   {
     "fields": {
