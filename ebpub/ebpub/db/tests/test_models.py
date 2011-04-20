@@ -26,7 +26,7 @@ import datetime
 
 class DatabaseExtensionsTestCase(TestCase):
     "Unit tests for the custom ORM stuff in models.py."
-    fixtures = ('crimes',)
+    fixtures = ('crimes.json',)
 
     def testAttributesLazilyLoaded(self):
         # Attributes are retrieved lazily the first time you access the
@@ -209,4 +209,17 @@ class DatabaseExtensionsTestCase(TestCase):
         self.assertEqual(top_lookups[0]['lookup'].slug, u'beat-64')
         self.assertEqual(top_lookups[1]['count'], 1)
         self.assertEqual(top_lookups[1]['lookup'].slug, u'beat-214')
+
+    def test_top_lookups__m2m(self):
+        from ebpub.db.models import SchemaField
+        sf = SchemaField.objects.get(name='tags many-to-many')
+        # from ebpub.db.bin.update_aggregates import update_aggregates
+        # update_aggregates(sf.schema.id)
+        qs = NewsItem.objects.all()
+        top_lookups = list(qs.top_lookups(sf, 2))
+        self.assertEqual(len(top_lookups), 2)
+        self.assertEqual(top_lookups[0]['count'], 3)
+        self.assertEqual(top_lookups[0]['lookup'].slug, u'tag-1')
+        self.assertEqual(top_lookups[1]['count'], 2)
+        self.assertEqual(top_lookups[1]['lookup'].slug, u'tag-2')
 

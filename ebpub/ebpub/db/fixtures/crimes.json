@@ -50,7 +50,7 @@
    "varchar01": "case number 1",
    "varchar02": "status 9-19",
    "varchar03": null,
-   "varchar04": null,
+   "varchar04": "71,72,73",
    "varchar05": null,
    "date01": "2006-09-19",
    "date02": null,
@@ -84,7 +84,7 @@
    "varchar01": "case number 2",
    "varchar02": "status 11-01",
    "varchar03": null,
-   "varchar04": null,
+   "varchar04": "71,72",
    "varchar05": null,
    "date01": "2006-11-01",
    "date02": null,
@@ -118,7 +118,7 @@
    "varchar01": "case number 3",
    "varchar02": "status 11-01b",
    "varchar03": null,
-   "varchar04": null,
+   "varchar04": "71",
    "varchar05": null,
    "date01": "2006-11-01",
    "date02": null,
@@ -137,7 +137,7 @@
    "bool04": null,
    "bool05": null,
    "int01": 17286,
-   "int02": 5,
+   "int02": 64,
    "int03": 266,
    "int04": 32,
    "int05": null
@@ -348,6 +348,23 @@
   }
  },
  {
+  "pk": "13",
+  "model": "db.schemafield",
+  "fields": {
+   "schema": 1,
+   "name": "tags many-to-many",
+   "real_name": "varchar04",
+   "pretty_name": "Tag",
+   "pretty_name_plural": "Tags",
+   "display": false,
+   "is_lookup": true,
+   "is_filter": true,
+   "is_charted": false,
+   "is_searchable": true,
+   "display_order": 0
+  }
+ },
+ {
   "pk": "1",
   "model": "db.schema",
   "fields": {
@@ -409,5 +426,38 @@
   },
   "model": "db.lookup",
   "pk": 66
+ },
+ {
+  "fields": {
+   "description": "Tag 1",
+   "code": "1",
+   "schema_field": 13,
+   "name": "Tag 1",
+   "slug": "tag-1"
+  },
+  "model": "db.lookup",
+  "pk": 71
+ },
+ {
+  "fields": {
+   "description": "Tag 2",
+   "code": "2",
+   "schema_field": 13,
+   "name": "Tag 2",
+   "slug": "tag-2"
+  },
+  "model": "db.lookup",
+  "pk": 72
+ },
+ {
+  "fields": {
+   "description": "Tag 3",
+   "code": "3",
+   "schema_field": 13,
+   "name": "Tag 3",
+   "slug": "tag-3"
+  },
+  "model": "db.lookup",
+  "pk": 73
  }
 ]
