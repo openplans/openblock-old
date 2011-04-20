@@ -67,6 +67,24 @@
   {
     "fields": {
       "is_lookup": false, 
+      "pretty_name_plural": "Media URLs", 
+      "is_charted": false, 
+      "name": "media_url", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar04", 
+      "pretty_name": "Media URL", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
       "pretty_name_plural": "Request IDs", 
       "is_charted": false, 
       "name": "service_request_id", 
@@ -202,24 +220,6 @@
       "pretty_name": "Status Notes", 
       "is_filter": false, 
       "display": true, 
-      "schema": [
-        "open311-service-requests"
-      ]
-    }, 
-    "model": "db.schemafield"
-  }, 
-  {
-    "fields": {
-      "is_lookup": false, 
-      "pretty_name_plural": "Zipcodes", 
-      "is_charted": false, 
-      "name": "zipcode", 
-      "display_order": 10, 
-      "is_searchable": false, 
-      "real_name": "varchar04", 
-      "pretty_name": "Zipcode", 
-      "is_filter": false, 
-      "display": false, 
       "schema": [
         "open311-service-requests"
       ]

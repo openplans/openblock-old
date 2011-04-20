@@ -133,7 +133,7 @@ class GeoReportV2Scraper(object):
             log.warning("Filling in current time for pub_date on item with no requested_datetime (%s)" % service_request_id)
         ni.item_date = datetime.date(ni.pub_date.year, ni.pub_date.month, ni.pub_date.day)
         
-        # try to pull the 'media' url out into url 
+        # try to pull the 'media' url out into url, for lack of a better one currently
         ni.url = self._get_request_field(sreq, 'media_url')
         ni.save()
 
@@ -141,7 +141,7 @@ class GeoReportV2Scraper(object):
 
         # varchar / text fields
         for fieldname in ('request_id', 'service_code', 'address_id',
-                          'zipcode', 'status_notes', 'service_notice'):
+                          'media_url', 'status_notes', 'service_notice'):
 
             val = self._get_request_field(sreq, fieldname)
             if val != '':
