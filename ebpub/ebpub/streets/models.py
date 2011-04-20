@@ -300,7 +300,9 @@ class Street(models.Model):
 
 class Misspelling(models.Model):
     """
-    Misspelling of a location name
+    A generalized mapping between two normalized forms used in some 
+    places to track general misspellings. Use LocationSynonym, PlaceSynonym and
+    StreetMisspelling to represent specific types of "misspellings"
     """
     
     incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
@@ -349,6 +351,39 @@ class Place(models.Model):
             from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(Place, self).save()
+
+
+class PlaceSynonymManager(models.Manager):
+    def get_canonical(self, name):
+        """
+        Returns the 'correct' or canonical spelling of the given place name. 
+        If the given place name is already correctly spelled, then it's returned as-is.
+        """        
+        try:
+            from ebpub.geocoder.parser.parsing import normalize
+            normalized_name = normalize(name)
+            return self.get(normalized_name=normalized_name).place.normalized_name
+        except self.model.DoesNotExist:
+            return normalized_name
+
+
+class PlaceSynonym(models.Model):
+    """
+    represents a synonym for a Place (point of interest)
+    """
+    pretty_name = models.CharField(max_length=255)
+    normalized_name = models.CharField(max_length=255, db_index=True)
+    place = models.ForeignKey(Place)
+    objects = PlaceSynonymManager()
+
+    def save(self):
+        if not self.normalized_name:
+            from ebpub.geocoder.parser.parsing import normalize
+            self.normalized_name = normalize(self.pretty_name)
+        super(PlaceSynonym, self).save()
+
+    def __unicode__(self):
+        return self.pretty_name
 
 class City(object):
     def __init__(self, name, slug, norm_name):

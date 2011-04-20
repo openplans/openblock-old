@@ -16,10 +16,10 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ebpub.db.models import Location
+from ebpub.db.models import Location, LocationSynonym
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet
 from ebpub.geocoder.parser.parsing import normalize
-from ebpub.streets.models import Misspelling, Place
+from ebpub.streets.models import Place, PlaceSynonym
 
 def full_geocode(query, search_places=True):
     """
@@ -44,19 +44,10 @@ def full_geocode(query, search_places=True):
 
     If ambiguous is True, result will be a list of objects.
     """
-    query = normalize(query)
-
-    # First, try correcting the spelling ("LAKEVIEW" -> "LAKE VIEW").
-    try:
-        miss = Misspelling.objects.get(incorrect=query)
-    except Misspelling.DoesNotExist:
-        pass
-    else:
-        query = miss.correct
-
     # Search the Location table.
     try:
-        loc = Location.objects.get(normalized_name=query)
+        canonical_loc = LocationSynonym.objects.get_canonical(query)
+        loc = Location.objects.get(normalized_name=canonical_loc)
     except Location.DoesNotExist:
         pass
     else:
@@ -64,7 +55,8 @@ def full_geocode(query, search_places=True):
 
     # Search the Place table, for stuff like "Sears Tower".
     if search_places:
-        places = Place.objects.filter(normalized_name=query)
+        canonical_place = PlaceSynonym.objects.get_canonical(query)
+        places = Place.objects.filter(normalized_name=canonical_place)
         if len(places) == 1:
             return {'type': 'place', 'result': places[0], 'ambiguous': False}
         elif len(places) > 1:
