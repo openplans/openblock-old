@@ -175,6 +175,7 @@ def get_place_info_for_request(request, *args, **kwargs):
     location-related information: a place, its type, a queryset of
     intersecting NewsItems, a bbox, nearby locations, etc.
     """
+    #raise DeprecationWarning('this should die')
     info = dict(bbox=None,
                 nearby_locations=[],
                 location=None,

@@ -51,14 +51,22 @@ from django.utils import dateformat
 from django.utils.datastructures import SortedDict
 from ebpub.db import constants
 from ebpub.db import models
-from ebpub.db.utils import get_place_info_for_request
+from ebpub.db.utils import block_radius_value
+from ebpub.db.utils import make_search_buffer
+from ebpub.db.utils import url_to_block
+from ebpub.db.utils import url_to_location
+from ebpub.metros.allmetros import get_metro
+from ebpub.utils.view_utils import parse_pid
+from ebpub.utils.view_utils import radius_from_urlfragment
+from ebpub.utils.view_utils import radius_url
+from ebpub.utils.view_utils import radius_urlfragment
 
-import ebpub.streets.models
-
+import calendar
 import datetime
+import ebpub.streets.models
+import logging
 import re
 import urllib
-import logging
 
 logger = logging.getLogger('ebpub.db.schemafilters')
 
@@ -67,7 +75,7 @@ class SchemaFilter(object):
     _sort_value = 100.0
 
     def __init__(self, request, context, queryset=None, *args, **kw):
-        self.qs = queryset
+        self.qs = queryset if (queryset is not None) else models.NewsItem.objects.all()
         self.context = context
         self.request = request
         self._got_args = False
@@ -87,6 +95,8 @@ class SchemaFilter(object):
         ... or maybe should be something more generic across both REST
         and UI views
         """
+        # TODO: Maybe split this into .get_extra_context() -> dict
+        # and .needs_more_info() -> bool
         raise NotImplementedError  # pragma: no cover
 
     def get(self, key, default=None):
@@ -254,8 +264,6 @@ class LocationFilter(SchemaFilter):
     argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
-        # XXX TODO: allow passing a Location rather than a slug?
-        # Useful for generating links from a list of Locations.
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.location_object = None
         if 'location' in kwargs:
@@ -309,22 +317,12 @@ class LocationFilter(SchemaFilter):
         """
         filtering by Location
         """
-        # TODO: get_place_info_for_request probably does way more than we need here,
-        # and without it we could maybe ditch some of from_request's args.
         if self.location_object is not None:
-            self.context.update(get_place_info_for_request(
-                self.request, self.location_type_slug, self.location_slug,
-                place=self.location_object,
-                place_type='location', newsitem_qs=self.qs))
+            loc = self.location_object
         else:
-            self.context.update(get_place_info_for_request(
-                self.request, self.location_type_slug, self.location_slug,
-                place_type='location', newsitem_qs=self.qs))
-        loc = self.context['place']
+            loc = url_to_location(self.location_type_slug, self.location_slug)
+        self.qs = self.qs.filter(newsitemlocation__location__id=loc.id)
         self._update_location(loc)
-        self.qs = self.context['newsitem_qs']
-
-from ebpub.metros.allmetros import get_metro
 
 
 class BlockFilter(SchemaFilter):
@@ -333,29 +331,58 @@ class BlockFilter(SchemaFilter):
 
     _sort_value = 200.0
 
+    def _update_block(self, block):
+        self.location_object = self.context['place'] = block
+        self.city_slug = block.city  # XXX is that a slug?
+        self.street_slug = block.street_slug
+        self.block_range = block.number() + block.dir_url_bit()
+        self.label = 'Area'
+        # Assume we already have self.block_radius.
+        value = '%s block%s around %s' % (self.block_radius, (self.block_radius != '1' and 's' or ''), block.pretty_name)
+        self.short_value = value
+        self.value = value
+        self.url = 'streets=%s,%s,%s' % (block.street_slug,
+                                         '%d-%d' % (block.from_num, block.to_num),
+                                         radius_urlfragment(self.block_radius))
+        self.location_name = block.pretty_name
+
+
     def __init__(self, request, context, queryset, *args, **kwargs):
         SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.location_object = None
         args = list(args)
+
+        if 'block' not in kwargs:
+            # We do this first so we consume the right number of args
+            # before getting to block_radius.
+            try:
+                if get_metro()['multiple_cities']:
+                    self.city_slug = args.pop(0)
+                else:
+                    self.city_slug = ''
+                self.street_slug = args.pop(0)
+                self.block_range = args.pop(0)
+            except IndexError:
+                raise FilterError("not enough args")
+
         try:
-            if get_metro()['multiple_cities']:
-                self.city_slug = args.pop(0)
-            else:
-                self.city_slug = ''
-            self.street_slug = args.pop(0)
-            self.block_range = args.pop(0)
+            self.block_radius = radius_from_urlfragment(args.pop(0))
+        except (TypeError, ValueError):
+            raise FilterError('bad radius %r' % self.block_radius)
         except IndexError:
-            raise FilterError("not enough args")
-        try:
-            self.block_radius = args.pop(0)
-        except IndexError:
-            from ebpub.db.views import block_radius_value
             xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-            from ebpub.db.views import radius_url
             raise FilterError('missing radius', url=radius_url(request.path, block_radius))
+
+        if 'block' in kwargs:
+            # needs block_radius to already be there.
+            self._update_block(kwargs['block'])
+
         m = re.search('^%s$' % constants.BLOCK_URL_REGEX, self.block_range)
         if not m:
             raise FilterError('Invalid block URL: %r' % self.block_range)
         self.url_to_block_args = m.groups()
+        self._got_args = True
+
 
 
     def validate(self):
@@ -363,26 +390,32 @@ class BlockFilter(SchemaFilter):
         return {}
 
     def apply(self):
-        """ filtering by Block """
-        # TODO: get_place_info_for_request probably does way more than we need here,
-        # and without it we could maybe ditch some of from_request's args.
-        self.context.update(get_place_info_for_request(
-                self.request, self.city_slug, self.street_slug,
-                *self.url_to_block_args,
-                place_type='block', newsitem_qs=self.qs))
+        """filtering by Block.
 
-        block = self.context['place']
-        value = '%s block%s around %s' % (self.block_radius, (self.block_radius != '1' and 's' or ''), block.pretty_name)
+        XXX TODO: get_place_info_for_request probably does way more than we need here,
+        and without it we could maybe ditch some of from_request's args.
 
-        self.label = 'Area'
-        self.short_value = value
-        self.value = value
-        from ebpub.db.views import radius_urlfragment
-        self.url = 'streets=%s,%s,%s' % (block.street_slug,
-                                         '%d-%d' % (block.from_num, block.to_num),
-                                         radius_urlfragment(self.block_radius))
-        self.location_name = block.pretty_name
-        self.location_object = block
+        XXX LEFT OFF killing get_place_info_for_request.
+        Need to check whether all the extra stuff done by get_place_info_for_request()
+        is needed in schema_filter, eg. nearby locations.
+        What other views really need the nearby locations?
+        Could that be moved out of get_place_info_for_request() and
+        into a method like eg. SchemaFilterChain.nearby() that only
+        gets called in views that need it?
+
+        XXX TODO: see if all uses of get_place_info_for_request() can be
+        replaced by eg. SchemaFilterChain.add_by_place_id(PID) or something.
+        """
+        if self.location_object is not None:
+            block = self.location_object
+        else:
+            block = url_to_block(self.city_slug, self.street_slug,
+                                 *self.url_to_block_args)
+            self._update_block(block)
+        search_buf = make_search_buffer(block.location.centroid, self.block_radius)
+        self.qs = self.qs.filter(location__bboverlaps=search_buf)
+        return self.qs
+
 
 class DateFilter(SchemaFilter):
 
@@ -495,6 +528,8 @@ class SchemaFilterChain(SortedDict):
         argstring is a string describing the filters (or None, in the case of
         "/filter/").
         """
+        # TODO: can we remove some args now that we're not using
+        # get_place_info_for_request?
         argstring = urllib.unquote((argstring or '').rstrip('/'))
         argstring = argstring.replace('+', ' ')
         args = []
@@ -573,21 +608,17 @@ class SchemaFilterChain(SortedDict):
         for key, filt in self.items():
             more_needed = filt.validate()
             if more_needed:
-                # if filt.argname.startswith('by-'):
-                #     # Somewhere in filter_lookup_list.html, it needs this
-                #     # filter to show up as 'lookup' rather than its usual name.
-                #     del self[key]
-                #     self['lookup'] = filt
                 return more_needed
         return {}
 
-    def apply(self, queryset):
+    def apply(self, queryset=None):
         """
         Applies each filter in the chain.
         """
         for key, filt in self.items():
-            # XXX this seems odd. filt.apply() should return the qs?
-            filt.qs = queryset
+            # TODO: this seems odd. filt.apply() should return the qs?
+            if queryset is not None:
+                filt.qs = queryset
             filt.apply()
             queryset = filt.qs
         return queryset
@@ -628,9 +659,15 @@ class SchemaFilterChain(SortedDict):
         and save it as self[key].
 
         Also for convenience, returns self.
+
         """
 
         # TODO: this seems awfully redundant with .from_request().
+
+        # TODO: is this too complex, accepting strings, objects, and
+        # arbitrary *values?
+        # The isinstance(key, models.SchemaField) clause seems like
+        # a good target for moving to a separate API?
 
         # Unfortunately there's no way to provide a single default arg
         # at the same time as accepting arbitrary *values.
@@ -664,10 +701,11 @@ class SchemaFilterChain(SortedDict):
             val = LocationFilter(self.request, self.context, self.qs, location=values[0])
             key = val.name
         elif isinstance(values[0], ebpub.streets.models.Block):
-            val = BlockFilter(self.request, self.context, self.qs, location=values[0])
+            block = values.pop(0)
+            val = BlockFilter(self.request, self.context, self.qs, *values, block=block)
             key = val.name
         elif isinstance(values[0], models.LocationType):
-            val = LocationFilter(self.request, self.context, self.qs, location_type=values[0])
+            val = LocationFilter(self.request, self.context, self.qs, *values[1:], location_type=values[0])
             key = val.name
         elif isinstance(values[0], models.Lookup):
             val = LookupFilter(self.request, self.context, self.qs, values[0],
@@ -678,7 +716,6 @@ class SchemaFilterChain(SortedDict):
                 values.append(values[0])
             if values[1] == 'month':
                 # TODO: document this!!
-                import calendar
                 start, end = calendar.monthrange(values[0].year, values[0].month)
                 values[0] = values[0].replace(day=start)
                 values[1] = values[0].replace(day=end)
@@ -756,3 +793,16 @@ class SchemaFilterChain(SortedDict):
             return crumbs[-1][1]
         else:
             return base_url
+
+    def add_by_place_id(self, pid):
+        """
+        ``pid`` is a place id string as used by parse_pid and make_pid,
+        identifying a location or block (and if a block, a radius).
+        """
+        place, block_radius, xy_radius = parse_pid(pid)
+        if isinstance(place, models.Block):
+            self['location'] = BlockFilter(self.request, self.context, self.qs,
+                                           block_radius, block=place)
+        else:
+            self['location'] = LocationFilter(self.request, self.context, self.qs,
+                                              location=place)

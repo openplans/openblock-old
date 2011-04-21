@@ -92,7 +92,7 @@ class TestLocationFilter(TestCase):
         self.assertEqual(filt.validate(), {})
         filt.apply()
         expected_loc = models.Location.objects.get(slug='zip-1')
-        self.assertEqual(filt.context['place'], expected_loc)
+        self.assertEqual(filt.location_object, expected_loc)
 
 
 class TestBlockFilter(TestCase):
@@ -124,23 +124,26 @@ class TestBlockFilter(TestCase):
             self._make_filter('wabash-ave', '200-298s')
         except FilterError, e:
             import urllib
-            self.assertEqual(urllib.quote(e.url), filter_reverse('crime', [('streets', 'wabash-ave', '200-298s', '8-blocks')]))
+            self.assertEqual(e.url and urllib.quote(e.url),
+                             filter_reverse('crime', [('streets', 'wabash-ave', '200-298s', '8-blocks')]))
 
 
     @mock.patch('ebpub.db.schemafilters.get_metro')
-    @mock.patch('ebpub.db.schemafilters.get_place_info_for_request')
-    def test_filter__ok(self, mock_get_place_info, mock_get_metro): 
-        def _mock_get_place_info(request, *args, **kwargs):
-            block = mock_with_attributes(
-                dict(from_num=99, to_num=100, street_slug='something',
-                     pretty_name='99-100 something st'))
-            return {'newsitem_qs': kwargs['newsitem_qs'],
-                    'place': block,
-                    'is_block': True,}
+    @mock.patch('ebpub.db.schemafilters.url_to_block')
+    def test_filter__ok(self, mock_url_to_block, mock_get_metro):
+        def _mock_url_to_block(request, *args, **kwargs):
+            from django.contrib.gis.geos import Point
+            block = mock_with_attributes(dict(
+                    from_num=99, to_num=100, street_slug='something',
+                    pretty_name='99-100 something st',
+                    location=Point(60.0, 60.0)))
+            block.number.return_value = '99-100'
+            block.dir_url_bit.return_value = ''
+            return block
 
-        mock_get_place_info.side_effect = _mock_get_place_info
+        mock_url_to_block.side_effect = _mock_url_to_block
         mock_get_metro.return_value = {'multiple_cities': True}
-        filt = self._make_filter('boston', 'wabash-ave', '216-299n-s', '8')
+        filt = self._make_filter('boston', 'wabash-ave', '216-299n-s', '8-blocks')
         self.assertEqual(filt.validate(), {})
         filt.apply()
         self.assertEqual(filt.location_object.from_num, 99)

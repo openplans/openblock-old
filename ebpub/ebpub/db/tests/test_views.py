@@ -70,23 +70,54 @@ class ViewTestCase(TestCase):
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response['Location'], 'http://testserver/locations/neighborhoods/')
 
-    def test_location_type_detail(self):
-        # response = self.client.get('')
-        pass
-
-    def test_location_detail(self):
-        # response = self.client.get('')
-        pass
-
     def test_schema_detail(self):
         response = self.client.get('/crime/')
         self.assertEqual(response.status_code, 200)
+        # TODO: more than a smoke test!
+
+    def test_schema_detail__notfound(self):
         response = self.client.get('/nonexistent/')
         self.assertEqual(response.status_code, 404)
 
-    def test_schema_xy_detail(self):
-        # response = self.client.get('')
-        pass
+
+class LocationDetailTestCase(TestCase):
+    fixtures = ('crimes', 'test-locationtypes.json', 'test-locations.json')
+
+    def test_location_type_detail(self):
+        url = urlresolvers.reverse('ebpub-loc-type-detail', args=['zipcodes'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # TODO: more than a smoke test!
+
+    def test_location_timeline(self):
+        url = urlresolvers.reverse('ebpub-place-timeline',
+                                   args=['zipcodes', 'zip-1'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # TODO: more than a smoke test!
+
+    def test_location_overview(self):
+        url = urlresolvers.reverse('ebpub-place-overview',
+                                   args=['zipcodes', 'zip-1'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # TODO: more than a smoke test!
+
+
+class TestAjaxViews(TestCase):
+    fixtures = ('crimes.json', 'wabash.yaml', 'test-locationtypes.json',
+                'test-locations.json')
+
+    @mock.patch('ebpub.streets.models.proper_city')
+    def test_ajax_place_lookup_chart__location(self, mock_proper_city):
+        mock_proper_city.return_value = 'chicago'
+        url = urlresolvers.reverse('place-lookup-chart')
+        url += '?sf=13&pid=b:1000.8'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        # XXX TODO: test other stuff
+
+
 
 
 class TestSchemaFilterView(TestCase):
@@ -253,11 +284,13 @@ class TestSchemaFilterView(TestCase):
                 ('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
         self.assert_(response['location'].endswith(urllib.unquote(fixed_url)))
 
-    def test_filter_by_block(self):
+    @mock.patch('ebpub.streets.models.proper_city')
+    def test_filter_by_block(self, mock_proper_city):
+        mock_proper_city.return_value = 'chicago'
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-
+        # TODO: more assertions
 
     def test_filter__only_one_location_allowed(self):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),
@@ -503,3 +536,4 @@ class TestNormalizeSchemaFilterView(TestCase):
         expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
                                             ('by-foo', 'bar')])
         self.assertEqual(result, expected)
+

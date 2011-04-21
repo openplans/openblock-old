@@ -35,7 +35,7 @@ from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
-from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
+from ebpub.db.models import NewsItem, Schema, SchemaField, LocationType, Location, SearchSpecialCase
 from ebpub.db.schemafilters import FilterError
 from ebpub.db.schemafilters import SchemaFilterChain
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
@@ -55,11 +55,12 @@ from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import parse_pid
+from ebpub.utils.view_utils import radius_url
+from ebpub.utils.view_utils import radius_urlfragment
 
 import datetime
 import hashlib
 import logging
-import posixpath
 import re
 import urllib
 
@@ -69,18 +70,6 @@ logger = logging.getLogger('ebpub.db.views')
 # HELPER FUNCTIONS (NOT VIEWS) #
 ################################
 
-def radius_urlfragment(radius):
-    # XXX this should be done consistently with other filter url generation. #69
-    radius = unicode(radius)
-    return u'%s-block%s' % (radius, radius != '1' and 's' or '')
-
-def radius_url(url, radius):
-    """add a block radius to the url.
-    url is assumed to already end in a path segment that specifies a block.
-    """
-    # XXX this should be done consistently with other filter url generation. #69
-    radius = unicode(radius)
-    return u'%s,%s/' % (url.rstrip('/'), radius_urlfragment(radius))
 
 def has_staff_cookie(request):
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
@@ -285,28 +274,22 @@ def ajax_place_newsitems(request):
 
 def ajax_place_lookup_chart(request):
     """
-    JSON -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
+    Returns HTML fragment -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
     """
     try:
         sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
-    qs = NewsItem.objects.filter(schema__id=sf.schema.id)
-    filter_url = place.url()[1:]
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url = radius_url(filter_url, block_radius)
-    else:
-        qs = qs.filter(newsitemlocation__location__id=place.id)
+    filters = SchemaFilterChain(request=request, schema=sf.schema)
+    filters.add_by_place_id(request.GET.get('pid', ''))
+    qs = filters.apply()
     total_count = qs.count()
     top_values = qs.top_lookups(sf, 10)
     return render_to_response('db/snippets/lookup_chart.html', {
         'lookup': {'sf': sf, 'top_values': top_values},
         'total_count': total_count,
         'schema': sf.schema,
-        'filter_url': filter_url,
+        'filters': filters,
     })
 
 def ajax_place_date_chart(request):
