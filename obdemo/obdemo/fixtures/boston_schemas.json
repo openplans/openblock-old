@@ -255,7 +255,7 @@
       "is_searchable": true,
       "real_name": "varchar01",
       "pretty_name": "Restaurant Name",
-      "is_filter": true,
+      "is_filter": false,
       "display": true,
       "schema": [
         "restaurant-inspections"
