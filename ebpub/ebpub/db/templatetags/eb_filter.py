@@ -22,7 +22,7 @@ Template tags for the custom filter.
 
 from django import template
 from ebpub.db.models import Schema
-from ebpub.db.schemafilters import SchemaFilterChain
+from ebpub.db.schemafilters import FilterChain
 
 register = template.Library()
 
@@ -30,24 +30,34 @@ class FilterUrlNode(template.Node):
     def __init__(self, filterchain_var, additions, removals, clear=False):
         self.filterchain_var = template.Variable(filterchain_var)
         self.clear = clear
+        # Additions and removals are tuples to make sure we
+        # don't do anything non-threadsafe with them during render().
+        # http://docs.djangoproject.com/en/dev/howto/custom-template-tags/#thread-safety-considerations
         if clear:
-            self.removals = []
+            self.removals = ()
         else:
-            self.removals = [template.Variable(r) for r in removals]
+            self.removals = tuple(template.Variable(r) for r in removals)
         self.additions = []
         for key, values in additions:
             self.additions.append((template.Variable(key),
-                                   [template.Variable(v) for v in values]))
+                                   tuple(template.Variable(v) for v in values),
+                                   ))
+        self.additions = tuple(self.additions)
+
     def render(self, context):
         filterchain = self.filterchain_var.resolve(context)
-        if isinstance(filterchain, SchemaFilterChain):
+        if isinstance(filterchain, FilterChain):
             schema = filterchain.schema
         elif isinstance(filterchain, Schema):
             schema = filterchain
-            filterchain = SchemaFilterChain(schema=schema)
+            # Note, context['request'] only works if
+            # django.core.context_processors.request is enabled in
+            # TEMPLATE_CONTEXT_PROCESSORS.
+            filterchain = FilterChain(context=context, request=context['request'],
+                                      schema=schema)
         else:
             raise template.TemplateSyntaxError(
-                "%r is neither a SchemaFilterChain nor a Schema" % filterchain)
+                "%r is neither a FilterChain nor a Schema" % filterchain)
         removals = [r.resolve(context) for r in self.removals]
         if self.clear:
             filterchain = filterchain.copy()
@@ -57,26 +67,26 @@ class FilterUrlNode(template.Node):
             key = key.resolve(context)
             additions.append((key, [v.resolve(context) for v in values]))
         schema = filterchain.schema
-        # XXX shouldn't the filterchain know about this base URL?
+        # TODO: shouldn't the filterchain know about this base URL?
         return filterchain.make_url(additions=additions, removals=removals, base_url=schema.url() + 'filter/')
 
 def do_filter_url(parser, token):
     """
     Outputs a URL based on the filter chain, with optional
     additions/removals of filters.  The first argument is required
-    and can be either an existing SchemaFilterChain or a Schema.
+    and can be either an existing FilterChain or a Schema.
 
     {% filter_url filter_chain %}
     {% filter_url schema %}
 
-    To remove a SchemaFilter from the url, specify the key with a leading "-".
+    To remove a NewsitemFilter from the url, specify the key with a leading "-".
 
     {% filter_url filter_chain -key_to_remove %}
     {% filter_url filter_chain -"key_to_remove" %}
     {% filter_url filter_chain -key1 -key2 ... %}
 
-    To add SchemaFilters to the url, specify the key with a leading "+",
-    followed by args to use for constructing a SchemaFilter.
+    To add NewsitemFilters to the url, specify the key with a leading "+",
+    followed by args to use for constructing a NewsitemFilter.
 
     {% filter_url filter_chain +"key" value %}
     {% filter_url filter_chain +key value1 value 2 ... %}

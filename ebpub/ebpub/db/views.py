@@ -37,7 +37,7 @@ from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
 from ebpub.db.models import NewsItem, Schema, SchemaField, LocationType, Location, SearchSpecialCase
 from ebpub.db.schemafilters import FilterError
-from ebpub.db.schemafilters import SchemaFilterChain
+from ebpub.db.schemafilters import FilterChain
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.db.utils import make_search_buffer
 from ebpub.db.utils import block_radius_value
@@ -257,16 +257,12 @@ def ajax_place_newsitems(request):
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
     pid = request.GET.get('pid', '')
-    place, block_radius, xy_radius = parse_pid(pid)
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
-    else:
-        newsitem_qs = NewsItem.objects.filter(newsitemlocation__location__id=place.id)
-
+    filters = FilterChain(request=request, schema=s)
+    filters.add_by_place_id(pid)
+    newsitem_qs = filters.apply()
     # Make the JSON output. Note that we have to call dumps() twice because the
     # bunches are a special case.
-    ni_list = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date')[:50])
+    ni_list = list(newsitem_qs.order_by('-item_date')[:50])
     bunches = simplejson.dumps(cluster_newsitems(ni_list, 26), cls=ClusterJSON)
     id_list = simplejson.dumps([ni.id for ni in ni_list])
     return HttpResponse('{"bunches": %s, "ids": %s}' % (bunches, id_list), mimetype="application/javascript")
@@ -280,7 +276,7 @@ def ajax_place_lookup_chart(request):
         sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
-    filters = SchemaFilterChain(request=request, schema=sf.schema)
+    filters = FilterChain(request=request, schema=sf.schema)
     filters.add_by_place_id(request.GET.get('pid', ''))
     qs = filters.apply()
     total_count = qs.count()
@@ -294,30 +290,25 @@ def ajax_place_lookup_chart(request):
 
 def ajax_place_date_chart(request):
     """
-    JSON -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
+    Returns HTML fragment -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
     """
     try:
-        s = Schema.public_objects.get(id=int(request.GET['s']))
+        schema = Schema.public_objects.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
-    qs = NewsItem.objects.filter(schema__id=s.id)
-    filter_url = place.url()[1:]
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url = radius_url(filter_url, block_radius)
-    else:
-        qs = qs.filter(newsitemlocation__location__id=place.id)
+    filters = FilterChain(request=request, schema=schema)
+    filters.add_by_place_id(request.GET.get('pid', ''))
+    qs = filters.apply()
     # TODO: Ignore future dates
     end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    counts = qs.filter(schema__id=s.id, item_date__gte=start_date, item_date__lte=end_date).date_counts()
-    date_chart = get_date_chart([s], end_date - datetime.timedelta(days=settings.DEFAULT_DAYS), end_date, {s.id: counts})[0]
+    filters.add('date', start_date, end_date)
+    counts = filters.apply().date_counts()
+    date_chart = get_date_chart([schema], start_date, end_date, {schema.id: counts})[0]
     return render_to_response('db/snippets/date_chart.html', {
-        'schema': s,
+        'schema': schema,
         'date_chart': date_chart,
-        'filter_url': filter_url,
+        'filters': filters,
     })
 
 def ajax_location_type_list(request):
@@ -646,7 +637,7 @@ def schema_detail(request, slug):
         'end_date': today(),
         'bodyclass': 'schema-detail',
         'bodyid': slug,
-        'filters': SchemaFilterChain(schema=s),
+        'filters': FilterChain(schema=s),
     }
     context['breadcrumbs'] = breadcrumbs.schema_detail(context)
     return eb_render(request, templates_to_try, context)
@@ -835,7 +826,7 @@ def schema_filter(request, slug, args_from_url):
 
     # Break apart the URL to determine what filters to apply.
     try:
-        filterchain = SchemaFilterChain.from_request(request, context, args_from_url, filter_sf_dict)
+        filterchain = FilterChain.from_request(request, context, args_from_url, filter_sf_dict)
         filterchain = filterchain.normalized_clone()  # Optimal filter order.
         filters_need_more = filterchain.validate()
     except FilterError, e:
@@ -1001,9 +992,26 @@ def block_list(request, city_slug, street_slug):
     return eb_render(request, 'db/block_list.html', context)
 
 
+def _place_detail_normalize_url(request, *args, **kwargs):
+    context = get_place_info_for_request(request, *args, **kwargs)
+    if context.get('block_radius') and 'radius' not in request.GET:
+        # Normalize the URL so we always have the block radius.
+        url = request.get_full_path()
+        response = HttpResponse(status=302)
+        if '?' in url:
+            response['location'] = '%s&radius=%s' % (url, context['block_radius'])
+        else:
+            response['location'] = '%s?radius=%s' % (url, context['block_radius'])
+        for key, val in context.get('cookies_to_set').items():
+            response.set_cookie(key, val)
+        return (context, response)
+    return (context, None)
+
 
 def place_detail_timeline(request, *args, **kwargs):
-    context = get_place_info_for_request(request, *args, **kwargs)
+    context, response = _place_detail_normalize_url(request, *args, **kwargs)
+    if response is not None:
+        return response
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
     newsitem_qs = context['newsitem_qs']
@@ -1069,7 +1077,9 @@ def place_detail_timeline(request, *args, **kwargs):
 
 
 def place_detail_overview(request, *args, **kwargs):
-    context = get_place_info_for_request(request, *args, **kwargs)
+    context, response = _place_detail_normalize_url(request, *args, **kwargs)
+    if response is not None:
+        return response
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
     newsitem_qs = context['newsitem_qs']
@@ -1147,27 +1157,22 @@ def newsitems_geojson(request):
     # ebpub.db.views?
 
     pid = request.GET.get('pid', '')
-    schema = request.GET.get('schema', '')
+    schema = request.GET.get('schema', None)
+    if schema is not None:
+        schema = get_object_or_404(Schema, slug=schema)
+
     nid = request.GET.get('newsitem', '')
 
     cache_seconds = 60 * 5
-    cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
+    cache_key = 'newsitem_geojson_%s_%s_%s' % (pid, nid, schema)
 
+    newsitem_qs = NewsItem.objects.all()
     if nid:
-        newsitem_qs = NewsItem.objects.filter(id=nid)
+        newsitem_qs = newsitem_qs.filter(id=nid)
     else:
-        newsitem_qs = NewsItem.objects.all()
-        if schema:
-            newsitem_qs = newsitem_qs.filter(schema__slug=schema)
+        filters = FilterChain(request=request, queryset=newsitem_qs, schema=schema)
         if pid:
-            place, block_radius, xy_radius = parse_pid(pid)
-            if isinstance(place, Block):
-                search_buffer = make_search_buffer(place.location.centroid, block_radius)
-                newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
-            else:
-                # This depends on the trigger in newsitemlocation.sql
-                newsitem_qs = newsitem_qs.filter(
-                    newsitemlocation__location__id=place.id)
+            filters.add_by_place_id(pid)
         else:
             # Whole city!
             pass
@@ -1181,7 +1186,9 @@ def newsitems_geojson(request):
         # This is using pub_date, but Aggregates use item_date, so there's
         # a visible disjoint between number of items on the map and the item
         # count shown on the homepage and location detail page.
-        newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+        filters.add('pubdate', start_date, end_date)
+        newsitem_qs = filters.apply()
+        newsitem_qs = newsitem_qs
         if not has_staff_cookie(request):
             newsitem_qs = newsitem_qs.filter(schema__is_public=True)
 

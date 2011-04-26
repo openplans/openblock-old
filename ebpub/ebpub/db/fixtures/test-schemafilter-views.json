@@ -1,0 +1,638 @@
+[
+  {
+    "fields": {
+       "name": "Crime",
+       "plural_name": "Crimes",
+       "slug": "crime",
+       "min_date": "2006-09-19",
+       "last_updated": "2006-11-08",
+       "importance": 10,
+       "is_public": true,
+       "can_collapse": false,
+       "has_newsitem_detail": true,
+       "allow_charting": true,
+       "uses_attributes_in_list": false,
+       "number_in_overview": 5,
+       "is_special_report": false
+    },
+    "model": "db.schema",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Arrests",
+      "is_charted": false,
+      "name": "arrests",
+      "display_order": 4,
+      "is_searchable": false,
+      "real_name": "bool01",
+      "pretty_name": "Arrests",
+      "is_filter": true,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 4
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Beats",
+      "is_charted": false,
+      "name": "beat",
+      "display_order": 6,
+      "is_searchable": false,
+      "real_name": "int02",
+      "pretty_name": "Beat",
+      "is_filter": true,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 7
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Block IDs",
+      "is_charted": false,
+      "name": "block_id",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Block ID",
+      "is_filter": false,
+      "display": false,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 6
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Case numbers",
+      "is_charted": false,
+      "name": "case_number",
+      "display_order": 1,
+      "is_searchable": false,
+      "real_name": "varchar01",
+      "pretty_name": "Case number",
+      "is_filter": false,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Crime dates",
+      "is_charted": false,
+      "name": "crime_date",
+      "display_order": 2,
+      "is_searchable": false,
+      "real_name": "date01",
+      "pretty_name": "Crime date",
+      "is_filter": true,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Crime times",
+      "is_charted": false,
+      "name": "crime_time",
+      "display_order": 3,
+      "is_searchable": false,
+      "real_name": "time01",
+      "pretty_name": "Crime time",
+      "is_filter": false,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Crime types",
+      "is_charted": true,
+      "name": "type_id",
+      "display_order": 7,
+      "is_searchable": false,
+      "real_name": "int03",
+      "pretty_name": "Crime type",
+      "is_filter": true,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 8
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Domestic",
+      "is_charted": false,
+      "name": "domestic",
+      "display_order": 5,
+      "is_searchable": false,
+      "real_name": "bool02",
+      "pretty_name": "Domestic",
+      "is_filter": false,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 5
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Is outdated",
+      "is_charted": true,
+      "name": "is_outdated",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "bool03",
+      "pretty_name": "Is outdated",
+      "is_filter": false,
+      "display": false,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 10
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Locations",
+      "is_charted": true,
+      "name": "location_id",
+      "display_order": 8,
+      "is_searchable": false,
+      "real_name": "int04",
+      "pretty_name": "Location",
+      "is_filter": true,
+      "display": true,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 9
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Police IDs",
+      "is_charted": false,
+      "name": "police_id",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int05",
+      "pretty_name": "Police ID",
+      "is_filter": false,
+      "display": false,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 11
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Statuses",
+      "is_charted": false,
+      "name": "status",
+      "display_order": 0,
+      "is_searchable": true,
+      "real_name": "varchar02",
+      "pretty_name": "Status",
+      "is_filter": true,
+      "display": false,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 12
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Tags",
+      "is_charted": false,
+      "name": "tags many-to-many",
+      "display_order": 0,
+      "is_searchable": true,
+      "real_name": "varchar04",
+      "pretty_name": "Tag",
+      "is_filter": true,
+      "display": false,
+      "schema": 1
+    },
+    "model": "db.schemafield",
+    "pk": 13
+  },
+  {
+    "fields": {
+      "plural_name": "neighborhoods",
+      "name": "Neighborhood",
+      "is_browsable": true,
+      "scope": "boston",
+      "slug": "neighborhoods",
+      "is_significant": true
+    },
+    "model": "db.locationtype",
+    "pk": 1000
+  },
+  {
+    "fields": {
+      "city": "boston",
+      "last_mod_date": "2011-01-27 12:08:06",
+      "user_id": null,
+      "name": "Hood 1",
+      "area": 50222248.609399997,
+      "display_order": 1,
+      "description": "",
+      "slug": "hood-1",
+      "source": "",
+      "centroid": "POINT (-71.0693133544919959 42.3877157483319991)",
+      "location": "MULTIPOLYGON (((-71.1249316406249932 42.3884023938390015, -71.0844195556639988 42.3513235364180005, -71.0212481689449930 42.3877157483319991, -71.0418475341799933 42.4090017590740018, -71.1249316406249932 42.3884023938390015)))",
+      "normalized_name": "HOOD 1",
+      "is_public": true,
+      "creation_date": "2011-01-27 12:07:51",
+      "location_type": 1000,
+      "population": null
+    },
+    "model": "db.location",
+    "pk": 2000
+  },
+  {
+    "fields": {
+      "city": "boston",
+      "last_mod_date": "2011-02-23 11:35:00",
+      "user_id": null,
+      "name": "Hood 2",
+      "area": 20960265.246100001,
+      "display_order": 4,
+      "description": "",
+      "slug": "hood-2",
+      "source": "aopsiudf",
+      "centroid": "POINT (-71.0722315979000001 42.3650907757060011)",
+      "location": "MULTIPOLYGON (((-71.0584986877440059 42.3424314739479968, -71.0883677673340060 42.3426031353249996, -71.0887110900879975 42.3836302044170026, -71.0578120422359945 42.3839735271710012, -71.0584986877440059 42.3424314739479968)))",
+      "normalized_name": "HOOD 2",
+      "is_public": true,
+      "creation_date": "2011-02-23 11:34:58",
+      "location_type": 1000,
+      "population": null
+    },
+    "model": "db.location",
+    "pk": 3000
+  },
+  {
+    "fields": {
+      "location_name": "228 S. Wabash Ave.",
+      "description": "Crime type 97 in location 66.",
+      "title": "crime title 1",
+      "url": "",
+      "location": "POINT (-87.7977300000000014 41.9845019999999991)",
+      "item_date": "2006-09-26",
+      "location_object": null,
+      "pub_date": "2006-09-26 00:00:00",
+      "block": null,
+      "schema": 1
+    },
+    "model": "db.newsitem",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "location_name": "228 S. Wabash Ave.",
+      "description": "Crime type 58 in location 77.",
+      "title": "crime title 2",
+      "url": "",
+      "location": "POINT (-87.7977300000000014 41.9845019999999991)",
+      "item_date": "2006-11-08",
+      "location_object": null,
+      "pub_date": "2006-11-08 00:00:00",
+      "block": null,
+      "schema": 1
+    },
+    "model": "db.newsitem",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "location_name": "228 S. Wabash Ave.",
+      "description": "Crime type 266 in location 32.",
+      "title": "crime title 3",
+      "url": "",
+      "location": "POINT (-87.7977300000000014 41.9845019999999991)",
+      "item_date": "2006-11-08",
+      "location_object": null,
+      "pub_date": "2006-11-08 00:00:00",
+      "block": null,
+      "schema": 1
+    },
+    "model": "db.newsitem",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "int06": null,
+      "int07": null,
+      "int04": 66,
+      "int05": null,
+      "int02": 214,
+      "varchar04": "71,72,73",
+      "int01": 25916,
+      "datetime02": null,
+      "time01": null,
+      "time02": null,
+      "int03": 97,
+      "varchar05": null,
+      "schema": 1,
+      "varchar02": "status 9-19",
+      "datetime04": null,
+      "bool04": null,
+      "bool05": null,
+      "bool02": false,
+      "bool03": true,
+      "datetime03": null,
+      "bool01": false,
+      "date02": null,
+      "date03": null,
+      "date01": "2006-09-19",
+      "date04": null,
+      "date05": null,
+      "varchar03": null,
+      "text01": null,
+      "varchar01": "case number 1",
+      "datetime01": null
+    },
+    "model": "db.attribute",
+    "pk": 1
+  },
+  {
+    "fields": {
+      "int06": null,
+      "int07": null,
+      "int04": 77,
+      "int05": null,
+      "int02": 64,
+      "varchar04": "71,72",
+      "int01": 2373,
+      "datetime02": null,
+      "time01": null,
+      "time02": null,
+      "int03": 58,
+      "varchar05": null,
+      "schema": 1,
+      "varchar02": "status 11-01",
+      "datetime04": null,
+      "bool04": null,
+      "bool05": null,
+      "bool02": false,
+      "bool03": true,
+      "datetime03": null,
+      "bool01": true,
+      "date02": null,
+      "date03": null,
+      "date01": "2006-11-01",
+      "date04": null,
+      "date05": null,
+      "varchar03": null,
+      "text01": null,
+      "varchar01": "case number 2",
+      "datetime01": null
+    },
+    "model": "db.attribute",
+    "pk": 2
+  },
+  {
+    "fields": {
+      "int06": null,
+      "int07": null,
+      "int04": 32,
+      "int05": null,
+      "int02": 64,
+      "varchar04": "71",
+      "int01": 17286,
+      "datetime02": null,
+      "time01": null,
+      "time02": null,
+      "int03": 266,
+      "varchar05": null,
+      "schema": 1,
+      "varchar02": "status 11-01b",
+      "datetime04": null,
+      "bool04": null,
+      "bool05": null,
+      "bool02": false,
+      "bool03": true,
+      "datetime03": null,
+      "bool01": false,
+      "date02": null,
+      "date03": null,
+      "date01": "2006-11-01",
+      "date04": null,
+      "date05": null,
+      "varchar03": null,
+      "text01": null,
+      "varchar01": "case number 3",
+      "datetime01": null
+    },
+    "model": "db.attribute",
+    "pk": 3
+  },
+  {
+    "fields": {
+      "description": "A police beat.",
+      "code": "214",
+      "schema_field": 7,
+      "name": "Police Beat 214",
+      "slug": "beat-214"
+    },
+    "model": "db.lookup",
+    "pk": 214
+  },
+  {
+    "fields": {
+      "description": "A police beat.",
+      "code": "64",
+      "schema_field": 7,
+      "name": "Police Beat 64",
+      "slug": "beat-64"
+    },
+    "model": "db.lookup",
+    "pk": 64
+  },
+  {
+    "fields": {
+      "description": "A crime type.",
+      "code": "97",
+      "schema_field": 8,
+      "name": "Crime Type 97",
+      "slug": "crime-type-97"
+    },
+    "model": "db.lookup",
+    "pk": 97
+  },
+  {
+    "fields": {
+      "description": "Location 66.",
+      "code": "66",
+      "schema_field": 9,
+      "name": "Location 66",
+      "slug": "location-66"
+    },
+    "model": "db.lookup",
+    "pk": 66
+  },
+  {
+    "fields": {
+      "description": "Tag 1",
+      "code": "1",
+      "schema_field": 13,
+      "name": "Tag 1",
+      "slug": "tag-1"
+    },
+    "model": "db.lookup",
+    "pk": 71
+  },
+  {
+    "fields": {
+      "description": "Tag 2",
+      "code": "2",
+      "schema_field": 13,
+      "name": "Tag 2",
+      "slug": "tag-2"
+    },
+    "model": "db.lookup",
+    "pk": 72
+  },
+  {
+    "fields": {
+      "description": "Tag 3",
+      "code": "3",
+      "schema_field": 13,
+      "name": "Tag 3",
+      "slug": "tag-3"
+    },
+    "model": "db.lookup",
+    "pk": 73
+  },
+  {
+    "fields": {
+      "from_num": 200,
+      "right_city": "CHICAGO",
+      "right_to_num": null,
+      "to_num": 298,
+      "suffix": "AVE",
+      "parent_id": null,
+      "street_pretty_name": "Wabash Ave.",
+      "right_from_num": null,
+      "postdir": "",
+      "right_zip": "60605",
+      "left_state": "IL",
+      "pretty_name": "200-298 S. Wabash Ave.",
+      "street_slug": "wabash-ave",
+      "street": "WABASH",
+      "geom": "LINESTRING (-87.6261570000000063 41.8795590000000004, -87.6260950000000065 41.8781740000000013)",
+      "right_state": "IL",
+      "left_from_num": null,
+      "left_zip": "60605",
+      "left_to_num": null,
+      "left_city": "CHICAGO",
+      "predir": "S"
+    },
+    "model": "streets.block",
+    "pk": 1000
+  },
+  {
+    "fields": {
+      "from_num": 216,
+      "right_city": "CHICAGO",
+      "right_to_num": 299,
+      "to_num": 299,
+      "suffix": "AVE",
+      "parent_id": null,
+      "street_pretty_name": "Wabash Ave.",
+      "right_from_num": 217,
+      "postdir": "S",
+      "right_zip": "60611",
+      "left_state": "IL",
+      "pretty_name": "216-298 N. Wabash Ave.",
+      "street_slug": "wabash-ave",
+      "street": "WABASH",
+      "geom": "LINESTRING (-87.6263359999999949 41.8863210000000024, -87.6263469999999955 41.8870270000000033)",
+      "right_state": "IL",
+      "left_from_num": 216,
+      "left_zip": "60611",
+      "left_to_num": 298,
+      "left_city": "CHICAGO",
+      "predir": "N"
+    },
+    "model": "streets.block",
+    "pk": 1001
+  },
+  {
+    "fields": {
+      "from_num": null,
+      "right_city": "CHICAGO",
+      "right_to_num": null,
+      "to_num": null,
+      "suffix": "AVE",
+      "parent_id": null,
+      "street_pretty_name": "Wabash Ave.",
+      "right_from_num": null,
+      "postdir": "",
+      "right_zip": "60611",
+      "left_state": "IL",
+      "pretty_name": "Block with No Numbers on N. Wabash Ave.",
+      "street_slug": "wabash-ave",
+      "street": "WABASH",
+      "geom": "LINESTRING (-87.6263359999999949 41.8863210000000024, -87.6263469999999955 41.8870270000000033)",
+      "right_state": "IL",
+      "left_from_num": null,
+      "left_zip": "60611",
+      "left_to_num": null,
+      "left_city": "CHICAGO",
+      "predir": "N"
+    },
+    "model": "streets.block",
+    "pk": 1002
+  },
+
+  {
+    "fields": {
+      "news_item": 1,
+      "location": 2000
+    },
+    "model": "db.newsitemlocation",
+    "pk": 10000
+  },
+  {
+    "fields": {
+      "news_item": 2,
+      "location": 2000
+    },
+    "model": "db.newsitemlocation",
+    "pk": 10001
+  },
+  {
+    "fields": {
+      "news_item": 3,
+      "location": 3000
+    },
+    "model": "db.newsitemlocation",
+    "pk": 10002
+  }
+
+]

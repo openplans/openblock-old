@@ -33,17 +33,17 @@ import mock
 import random
 
 
-class TestSchemaFilter(TestCase):
+class TestNewsitemFilter(TestCase):
 
     def test_get(self):
-        from ebpub.db.schemafilters import SchemaFilter
-        fil = SchemaFilter('dummy request', 'dummy context')
+        from ebpub.db.schemafilters import NewsitemFilter
+        fil = NewsitemFilter('dummy request', 'dummy context')
         self.assertEqual(fil.get('foo'), None)
         self.assertEqual(fil.get('foo', 'bar'), 'bar')
 
     def test_getitem(self):
-        from ebpub.db.schemafilters import SchemaFilter
-        fil = SchemaFilter('dummy request', 'dummy context')
+        from ebpub.db.schemafilters import NewsitemFilter
+        fil = NewsitemFilter('dummy request', 'dummy context')
         fil.foo = 'bar'
         self.assertEqual(fil['foo'], 'bar')
         self.assertRaises(KeyError, fil.__getitem__, 'bar')
@@ -51,8 +51,10 @@ class TestSchemaFilter(TestCase):
 
 class TestLocationFilter(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json',
-                )
+    # fixtures = ('test-locationtypes.json', 'test-locations.json',
+    #             )
+    fixtures = ('test-schemafilter-views.json',)
+
 
     def _make_filter(self, *url_args):
         crime = mock.Mock(spec=models.Schema)
@@ -68,16 +70,16 @@ class TestLocationFilter(TestCase):
         self.assertRaises(FilterError, self._make_filter)
 
     def test_filter_by_location_choices(self):
-        filt = self._make_filter('zipcodes')
+        filt = self._make_filter('neighborhoods')
         more_needed = filt.validate()
-        self.assertEqual(more_needed['lookup_type'], u'ZIP Code')
-        self.assertEqual(more_needed['lookup_type_slug'], 'zipcodes')
+        self.assertEqual(more_needed['lookup_type'], u'Neighborhood')
+        self.assertEqual(more_needed['lookup_type_slug'], 'neighborhoods')
         self.assert_(len(more_needed['lookup_list']) > 0)
 
     @mock.patch('ebpub.db.schemafilters.models.Location.objects.filter')
     def test_filter_by_location__no_locations(self, mock_location_query):
         mock_location_query.return_value.order_by.return_value = []
-        filt = self._make_filter('zipcodes')
+        filt = self._make_filter('neighborhoods')
         self.assertRaises(FilterError, filt.validate)
         try:
             filt.validate()
@@ -87,19 +89,18 @@ class TestLocationFilter(TestCase):
     def test_filter_by_location_detail(self):
         # TODO: this exercises a lot of implementation details; mock
         # more things to make it more isolated unit test?
-        filt = self._make_filter('zipcodes', 'zip-1')
+        filt = self._make_filter('neighborhoods', 'hood-1')
         filt.request.user= mock_with_attributes({'is_anonymous': lambda: True})
         self.assertEqual(filt.validate(), {})
         filt.apply()
-        expected_loc = models.Location.objects.get(slug='zip-1')
+        expected_loc = models.Location.objects.get(slug='hood-1')
         self.assertEqual(filt.location_object, expected_loc)
+        # TODO: have some NewsItems overlapping this location?
 
 
 class TestBlockFilter(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json',
-                'wabash.yaml',
-                )
+    fixtures = ('test-schemafilter-views.json',)
 
     def _make_filter(self, *url_args):
         crime = mock.Mock(spec=models.Schema)
@@ -117,15 +118,6 @@ class TestBlockFilter(TestCase):
         self.assertRaises(FilterError, self._make_filter, 'wabash-ave')
         # Bogus block range.
         self.assertRaises(FilterError, self._make_filter, 'wabash-ave', 'bogus', '8')
-        # No block radius.
-        self.assertRaises(FilterError, self._make_filter, 'wabash-ave', '200-298s')
-        try:
-            # Re-testing that last one so we can inspect the exception.
-            self._make_filter('wabash-ave', '200-298s')
-        except FilterError, e:
-            import urllib
-            self.assertEqual(e.url and urllib.quote(e.url),
-                             filter_reverse('crime', [('streets', 'wabash-ave', '200-298s', '8-blocks')]))
 
 
     @mock.patch('ebpub.db.schemafilters.get_metro')
@@ -306,16 +298,16 @@ class TestTextFilter(TestCase):
         self.assertEqual(self.mock_qs.text_search.call_count, 1)
 
 
-class TestSchemaFilterChain(TestCase):
+class TestFilterChain(TestCase):
 
     def test_empty(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
-        chain = SchemaFilterChain()
+        from ebpub.db.schemafilters import FilterChain
+        chain = FilterChain()
         self.assertEqual(chain.items(), [])
 
     def test_ordering(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
-        chain = SchemaFilterChain()
+        from ebpub.db.schemafilters import FilterChain
+        chain = FilterChain()
         args = range(10)
         random.shuffle(args)
         for i in args:
@@ -324,8 +316,9 @@ class TestSchemaFilterChain(TestCase):
         self.assertEqual(chain.keys(), args)
 
     def test_copy_and_mutate(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
-        chain = SchemaFilterChain()
+        from ebpub.db.schemafilters import FilterChain
+        schema = mock.Mock()
+        chain = FilterChain(schema=schema)
         chain.lookup_descriptions.append(1)
         chain.base_url = 'http://xyz'
         chain['foo'] = 'bar'
@@ -334,6 +327,7 @@ class TestSchemaFilterChain(TestCase):
         # Attributes are copied...
         self.assertEqual(clone.lookup_descriptions, [1])
         self.assertEqual(clone.base_url, chain.base_url)
+        self.assertEqual(clone.schema, chain.schema, schema)
         # ... and mutating them doesn't affect the original.
         clone.lookup_descriptions.pop()
         self.assertEqual(chain.lookup_descriptions, [1])
@@ -349,23 +343,23 @@ class TestSchemaFilterChain(TestCase):
         self.assertEqual(chain['qux'], 'whee')
 
     def test_no_duplicates(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
+        from ebpub.db.schemafilters import FilterChain
         from ebpub.db.schemafilters import DuplicateFilterError
-        self.assertRaises(DuplicateFilterError, SchemaFilterChain,
+        self.assertRaises(DuplicateFilterError, FilterChain,
                           (('foo', 'bar'), ('foo', 'bar2')))
-        chain = SchemaFilterChain()
+        chain = FilterChain()
         chain['foo'] = 'bar'
         self.assertRaises(DuplicateFilterError, chain.__setitem__, 'foo', 'bar')
 
     def test_normalized_clone(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
+        from ebpub.db.schemafilters import FilterChain
         class Dummy(object):
             def __init__(self, sort_value):
                 self._sort_value = sort_value
 
         dummies = [Dummy(i) for i in range(10)]
         random.shuffle(dummies)
-        chain = SchemaFilterChain()
+        chain = FilterChain()
         for i in range(10):
             chain[i] = dummies[i]
 
@@ -378,7 +372,7 @@ class TestSchemaFilterChain(TestCase):
 
 
     def test_normalized_clone__real_filters(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
+        from ebpub.db.schemafilters import FilterChain
         req = mock.Mock()
         qs = mock.Mock()
         schema = mock.Mock()
@@ -393,10 +387,10 @@ class TestSchemaFilterChain(TestCase):
                        schemafield=mock_with_attributes({'name': 'mock bool sf'})),
             LookupFilter(req, context, qs,
                          schemafield=mock_with_attributes({'name': 'mock lookup sf'})),
-            LocationFilter(req, context, qs, 'zipcodes'),
+            LocationFilter(req, context, qs, 'neighborhoods'),
             DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
             ]
-        chain = SchemaFilterChain([(item.name, item) for item in all_filters])
+        chain = FilterChain([(item.name, item) for item in all_filters])
         ordered_chain = chain.normalized_clone()
         self.assertEqual(ordered_chain.keys(),
                          ['date', 'mock bool sf', 'location', 'mock lookup sf', 'mock text sf'])

@@ -60,15 +60,15 @@ class TestDoFilterUrl(unittest.TestCase):
         self.mock_token.split_contents.return_value = ['filter_url',
                                                        'filterchain']
         node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
-        self.assertEqual(node.additions, [])
-        self.assertEqual(node.removals, [])
+        self.assertEqual(node.additions, ())
+        self.assertEqual(node.removals, ())
         self.assertEqual(node.filterchain_var.var, 'filterchain')
 
     def test__addition_no_args(self):
         self.mock_token.split_contents.return_value = [
             'filter_url', 'filterchain', '+maybe']
         node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
-        self.assertEqual(node.additions, [(template.Variable('maybe'), [])])
+        self.assertEqual(node.additions, ((template.Variable('maybe'), ()),))
 
     def test__additions(self):
         self.mock_token.split_contents.return_value = ['filter_url',
@@ -77,12 +77,12 @@ class TestDoFilterUrl(unittest.TestCase):
                                                        '+bar', 'bar2', 'bar3',
                                                        '+baz', 'baz2']
         node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
-        self.assertEqual(node.removals, [])
+        self.assertEqual(node.removals, ())
         self.assertEqual(len(node.additions), 3)
         from django.template import Variable
-        expected = [(Variable('foo'), [Variable('foo2')]),
-                    (Variable('bar'), [Variable('bar2'), Variable('bar3')]),
-                    (Variable('baz'), [Variable('baz2')]),]
+        expected = ((Variable('foo'), (Variable('foo2'),)),
+                    (Variable('bar'), (Variable('bar2'), Variable('bar3'))),
+                    (Variable('baz'), (Variable('baz2'),)))
 
         self.assertEqual(node.additions, expected)
 
@@ -91,10 +91,10 @@ class TestDoFilterUrl(unittest.TestCase):
                                                        'filterchain',
                                                        '-foo', '-bar', '-baz']
         node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
-        self.assertEqual(node.additions, [])
+        self.assertEqual(node.additions, ())
         self.assertEqual(len(node.removals), 3)
         Variable = template.Variable
-        expected = [Variable('foo'), Variable('bar'), Variable('baz')]
+        expected = (Variable('foo'), Variable('bar'), Variable('baz'))
         self.assertEqual(node.removals, expected)
 
     def test__additions_and_removals(self):
@@ -109,13 +109,13 @@ class TestDoFilterUrl(unittest.TestCase):
 
         Variable = template.Variable
         self.assertEqual(node.additions,
-                         [(Variable('bar'), [Variable('bar2')])])
+                         ((Variable('bar'), (Variable('bar2'),)),))
         self.assertEqual(node.removals,
-                         [Variable('foo'), Variable('baz')])
+                         (Variable('foo'), Variable('baz')))
 
     def test_render(self):
-        from ebpub.db.schemafilters import SchemaFilterChain
-        mock_chain = mock.Mock(spec=SchemaFilterChain)
+        from ebpub.db.schemafilters import FilterChain
+        mock_chain = mock.Mock(spec=FilterChain)
         mock_chain.schema = mock.Mock()
         mock_chain.make_url.return_value = 'ok'
         mock_chain.schema.url.return_value = 'http://X/'

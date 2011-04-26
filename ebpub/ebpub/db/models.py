@@ -671,8 +671,8 @@ class AttributeForTemplate(object):
         urls = [None]
         descriptions = [None]
         if self.is_filter:
-            from ebpub.db.schemafilters import SchemaFilterChain
-            chain = SchemaFilterChain(schema=self.sf.schema)
+            from ebpub.db.schemafilters import FilterChain
+            chain = FilterChain(schema=self.sf.schema)
             chain.base_url = self.sf.schema.url()
             if self.is_lookup:
                 urls = [chain.replace(self.sf, look).make_url() if look else None

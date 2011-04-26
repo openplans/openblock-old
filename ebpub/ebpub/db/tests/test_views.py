@@ -17,10 +17,13 @@ Unit tests for db.views.
 
 from django.core import urlresolvers
 from django.test import TestCase
+from django.utils import simplejson
 
 from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.views import _schema_filter_normalize_url
 from ebpub.db.views import BadAddressException
+
+from ebpub.db import models
 
 # Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
 from client import RequestFactory
@@ -53,7 +56,6 @@ class ViewTestCase(TestCase):
         assert 'location not found' in response.content.lower()
         # TODO: load a fixture with some locations and some news?
 
-
     @mock.patch('ebpub.db.views.NewsItem.location_url')
     def test_newsitem_detail(self, mock_location_url):
         mock_location_url.return_value = 'http://X'
@@ -84,47 +86,115 @@ class LocationDetailTestCase(TestCase):
     fixtures = ('crimes', 'test-locationtypes.json', 'test-locations.json')
 
     def test_location_type_detail(self):
-        url = urlresolvers.reverse('ebpub-loc-type-detail', args=['zipcodes'])
+        url = urlresolvers.reverse('ebpub-loc-type-detail', args=['neighborhoods'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # TODO: more than a smoke test!
 
     def test_location_timeline(self):
         url = urlresolvers.reverse('ebpub-place-timeline',
-                                   args=['zipcodes', 'zip-1'])
+                                   args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # TODO: more than a smoke test!
 
     def test_location_overview(self):
         url = urlresolvers.reverse('ebpub-place-overview',
-                                   args=['zipcodes', 'zip-1'])
+                                   args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # TODO: more than a smoke test!
 
 
 class TestAjaxViews(TestCase):
-    fixtures = ('crimes.json', 'wabash.yaml', 'test-locationtypes.json',
-                'test-locations.json')
+    fixtures = ('crimes.json',)
 
-    @mock.patch('ebpub.streets.models.proper_city')
-    def test_ajax_place_lookup_chart__location(self, mock_proper_city):
-        mock_proper_city.return_value = 'chicago'
-        url = urlresolvers.reverse('place-lookup-chart')
+    @mock.patch('ebpub.db.views.FilterChain')
+    def test_ajax_place_lookup_chart__location(self, mock_chain):
+        # Hack so isinstance(mock_chain(), FilterChain) works
+        from ebpub.db import schemafilters
+        mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
+        mock_chain().make_url.return_value = 'foo'
+        mock_chain().schema.url.return_value = 'bar'
+        mock_chain().apply.return_value = models.NewsItem.objects.all()
+        url = urlresolvers.reverse('ajax-place-lookup-chart')
         url += '?sf=13&pid=b:1000.8'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        # XXX TODO: test other stuff
+        self.assertEqual(response.context['total_count'], 3)
+
+    def test_ajax_place_lookup_chart__bad_args(self):
+        url = urlresolvers.reverse('ajax-place-lookup-chart')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(url + '?sf=13')
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(url + '?pid=b:1000.8')
+        self.assertEqual(response.status_code, 404)
 
 
+    @mock.patch('ebpub.db.views.FilterChain')
+    def test_ajax_place_newsitems(self, mock_chain):
+        mock_chain().apply.return_value = models.NewsItem.objects.all()
+        url = urlresolvers.reverse('ajax-place-newsitems')
+        url += '?s=1&pid=l:2000'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        items = simplejson.loads(response.content)
+        self.assert_('bunches' in items.keys())
+        self.assert_('ids' in items.keys())
+        self.assertEqual(sorted(items['ids']), [1, 2, 3])
+
+    @mock.patch('ebpub.db.views.FilterChain')
+    def test_ajax_place_date_chart__location(self, mock_chain):
+        # Hack so isinstance(mock_chain(), FilterChain) works
+        from ebpub.db import schemafilters
+        mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
+        mock_chain().make_url.return_value = 'foo'
+        mock_chain().schema.url.return_value = 'bar'
+        mock_chain().apply.return_value = models.NewsItem.objects.all()
+        url = urlresolvers.reverse('ajax-place-date-chart') + '?s=1&pid=b:1000.8'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['date_chart']['total_count'], 1)
+        self.assertEqual(len(response.context['date_chart']['dates']), 8)
+        import datetime
+        self.assertEqual(response.context['date_chart']['dates'][-1],
+                         {'date': datetime.date(2006, 11, 8), 'count': 1})
+
+
+    @mock.patch('ebpub.db.views.FilterChain')
+    def test_newsitems_geojson__with_pid(self, mock_chain):
+        mock_chain().apply.return_value = models.NewsItem.objects.all()
+        url = urlresolvers.reverse('newsitems-geojson')
+        url += '?schema=crime&pid=l:2000'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        items = simplejson.loads(response.content)
+        self.assertEqual(items['type'], 'FeatureCollection')
+        self.assertEqual(len(items['features']), 3)
+        feat = items['features'][0]
+        self.assertEqual(feat['type'], 'Feature')
+        self.assertEqual(feat['properties']['title'], 'crime title 2')
+        self.assert_('popup_html' in feat['properties'])
+        self.assertEqual(feat['geometry']['type'], 'Point')
+        self.assert_('coordinates' in feat['geometry'])
+
+    @mock.patch('ebpub.db.views.FilterChain')
+    def test_newsitems_geojson__with_pid_no_schema(self, mock_chain):
+        mock_chain().apply.return_value = models.NewsItem.objects.all()
+        url = urlresolvers.reverse('newsitems-geojson')
+        url += '?pid=b:1000.8'
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        items = simplejson.loads(response.content)
+        self.assertEqual(items['type'], 'FeatureCollection')
+        self.assertEqual(len(items['features']), 3)
 
 
 class TestSchemaFilterView(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json', 'crimes.json',
-                'wabash.yaml',
-                )
+    fixtures = ('test-schemafilter-views.json',)
 
     def test_filter_by_no_args(self):
         url = filter_reverse('crime', [])
@@ -133,17 +203,17 @@ class TestSchemaFilterView(TestCase):
         self.assertContains(response, 'id="date-filtergroup"')
 
     def test_filter_by_location_choices(self):
-        url = filter_reverse('crime', [('locations', 'zipcodes')])
+        url = filter_reverse('crime', [('locations', 'neighborhoods')])
         response = self.client.get(url)
-        self.assertContains(response, 'Select ZIP Code')
-        self.assertContains(response, 'Zip 1')
-        self.assertContains(response, 'Zip 2')
+        self.assertContains(response, 'Select Neighborhood')
+        self.assertContains(response, 'Hood 1')
+        self.assertContains(response, 'Hood 2')
 
     def test_filter_by_location_detail(self):
-        url = filter_reverse('crime', [('locations', 'zipcodes', 'zip-1')])
+        url = filter_reverse('crime', [('locations', 'neighborhoods', 'hood-1')])
         response = self.client.get(url)
-        self.assertContains(response, 'Zip 1')
-        self.assertNotContains(response, 'Zip 2')
+        self.assertContains(response, 'Hood 1')
+        self.assertNotContains(response, 'Hood 2')
         self.assertContains(response, 'Remove this filter')
 
     @mock.patch('ebpub.db.views._schema_filter_normalize_url')
@@ -164,7 +234,6 @@ class TestSchemaFilterView(TestCase):
 
     def test_filter__charting_disallowed_redirect(self):
         # could make a different fixture, but, meh.
-        from ebpub.db import models
         crime = models.Schema.objects.get(slug='crime')
         crime.allow_charting = False
         crime.save()
@@ -275,8 +344,10 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-
-    def test_filter_by_block__no_radius(self):
+    @mock.patch('ebpub.streets.models.proper_city')
+    def test_filter_by_block__no_radius(self, mock_proper_city):
+        # We just fall back to the default radius.
+        mock_proper_city.return_value = 'chicago'
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
@@ -294,10 +365,10 @@ class TestSchemaFilterView(TestCase):
 
     def test_filter__only_one_location_allowed(self):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),
-                                       ('locations', 'zipcodes', 'zip-1'),
+                                       ('locations', 'neighborhoods', 'hood-1'),
                                        ])
         response = self.client.get(url)
-        url = filter_reverse('crime', [('locations', 'zipcodes', 'zip-1'),
+        url = filter_reverse('crime', [('locations', 'neighborhoods', 'hood-1'),
                                        ('streets', 'wabash-ave', '216-299n-s', '8')
                                        ])
         response = self.client.get(url)
@@ -314,10 +385,10 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_filter_by_location(self):
-        url = filter_reverse('crime', [('locations', 'zipcodes', 'zip-1'),])
+        url = filter_reverse('crime', [('locations', 'neighborhoods', 'hood-1'),])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Zip 1')
+        self.assertContains(response, 'Hood 1')
 
     def test_filter__by_bad_lookup_attr(self):
         url = filter_reverse('crime', [('by-fleezleglop', '214', ),])
@@ -414,8 +485,7 @@ class TestSchemaFilterView(TestCase):
 
 class TestNormalizeSchemaFilterView(TestCase):
 
-    fixtures = ('test-locationtypes.json', 'test-locations.json', 'wabash.yaml',
-                )
+    fixtures = ('test-schemafilter-views.json',)
 
     def test_normalize_filter_url__ok(self):
         url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n', '8'),])

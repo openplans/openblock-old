@@ -29,7 +29,6 @@ from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
 from ebpub.utils.view_utils import make_pid
 from ebpub.savedplaces.models import SavedPlace
-from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
 import datetime
 
 def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
@@ -174,6 +173,9 @@ def get_place_info_for_request(request, *args, **kwargs):
     A utility function that abstracts getting commonly used
     location-related information: a place, its type, a queryset of
     intersecting NewsItems, a bbox, nearby locations, etc.
+
+    TODO: this does too much, and only a few things still call it.
+    See if there's a better home for the nearby_locations stuff.
     """
     #raise DeprecationWarning('this should die')
     info = dict(bbox=None,

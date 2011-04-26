@@ -7,9 +7,9 @@ Use cases:
   2. Generate reverse urls, complete with query string (if we use them),
      given one or more filters.
 
-     a. For schema_filter() html view - TODO
+     a. For schema_filter() html view - DONE
 
-     b. For REST API view  - TODO
+     b. For REST API views  - TODO
 
 
 Chain of filters needs to support:
@@ -41,8 +41,7 @@ Chain of filters needs to support:
 
   8. get a list of breadcrumb links for the whole chain.
 
-     DONE - this is currently in ebpub.db.breadcrumbs;
-     might need some more attention.
+     DONE
 
 """
 
@@ -70,9 +69,19 @@ import urllib
 
 logger = logging.getLogger('ebpub.db.schemafilters')
 
-class SchemaFilter(object):
+class NewsitemFilter(object):
 
     _sort_value = 100.0
+
+    # Various attributes used for URL construction, breadcrumbs,
+    # and other UI stuff.
+    # If these are None, they should not be shown to the user.
+    name = None
+    argname = None
+    url = None
+    value = None
+    label = None
+    short_value = None
 
     def __init__(self, request, context, queryset=None, *args, **kw):
         self.qs = queryset if (queryset is not None) else models.NewsItem.objects.all()
@@ -120,7 +129,26 @@ class FilterError(Exception):
     def __str__(self):
         return repr(self.msg)
 
-class AttributeFilter(SchemaFilter):
+
+class SchemaFilter(NewsitemFilter):
+
+    _sort_value = -9999
+    name = 'schema'
+    url = None
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.schema = kwargs['schema']
+
+    def validate(self):
+        return {}
+
+    def apply(self):
+        self.qs = self.qs.filter(schema=self.schema)
+
+
+
+class AttributeFilter(NewsitemFilter):
 
     """base class for more specific types of attribute filters
     (LookupFilter, TextSearchFilter, etc).
@@ -129,7 +157,7 @@ class AttributeFilter(SchemaFilter):
     _sort_value = 101.0
 
     def __init__(self, request, context, queryset, *args, **kwargs):
-        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
         self.name = self.schemafield.name
         self.argname = 'by-%s' % self.schemafield.name
@@ -256,7 +284,7 @@ class LookupFilter(AttributeFilter):
         self.qs = self.qs.by_attribute(self.schemafield, self.look, is_lookup=True)
 
 
-class LocationFilter(SchemaFilter):
+class LocationFilter(NewsitemFilter):
 
     _sort_value = 200.0
 
@@ -264,7 +292,7 @@ class LocationFilter(SchemaFilter):
     argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
-        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.location_object = None
         if 'location' in kwargs:
             self._update_location(kwargs['location'])
@@ -325,7 +353,7 @@ class LocationFilter(SchemaFilter):
         self._update_location(loc)
 
 
-class BlockFilter(SchemaFilter):
+class BlockFilter(NewsitemFilter):
 
     name = 'location'
 
@@ -348,7 +376,7 @@ class BlockFilter(SchemaFilter):
 
 
     def __init__(self, request, context, queryset, *args, **kwargs):
-        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.location_object = None
         args = list(args)
 
@@ -370,9 +398,15 @@ class BlockFilter(SchemaFilter):
         except (TypeError, ValueError):
             raise FilterError('bad radius %r' % self.block_radius)
         except IndexError:
-            xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-            raise FilterError('missing radius', url=radius_url(request.path, block_radius))
-
+            self.block_radius = context.get('block_radius')
+            if self.block_radius is None:
+                # Redirect to a URL that includes some radius, either
+                # from a cookie, or the default radius.
+                # TODO: Filters are used in various contexts, but the
+                # redirect URL is tailored only for the schema_filter
+                # view.
+                xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+                raise FilterError('missing radius', url=radius_url(request.path, block_radius))
         if 'block' in kwargs:
             # needs block_radius to already be there.
             self._update_block(kwargs['block'])
@@ -384,27 +418,12 @@ class BlockFilter(SchemaFilter):
         self._got_args = True
 
 
-
     def validate(self):
         # Filtering UI does not provide a page for selecting a block.
         return {}
 
     def apply(self):
         """filtering by Block.
-
-        XXX TODO: get_place_info_for_request probably does way more than we need here,
-        and without it we could maybe ditch some of from_request's args.
-
-        XXX LEFT OFF killing get_place_info_for_request.
-        Need to check whether all the extra stuff done by get_place_info_for_request()
-        is needed in schema_filter, eg. nearby locations.
-        What other views really need the nearby locations?
-        Could that be moved out of get_place_info_for_request() and
-        into a method like eg. SchemaFilterChain.nearby() that only
-        gets called in views that need it?
-
-        XXX TODO: see if all uses of get_place_info_for_request() can be
-        replaced by eg. SchemaFilterChain.add_by_place_id(PID) or something.
         """
         if self.location_object is not None:
             block = self.location_object
@@ -417,7 +436,7 @@ class BlockFilter(SchemaFilter):
         return self.qs
 
 
-class DateFilter(SchemaFilter):
+class DateFilter(NewsitemFilter):
 
     name = 'date'
     date_field_name = 'item_date'
@@ -426,10 +445,13 @@ class DateFilter(SchemaFilter):
     _sort_value = 1.0
 
     def __init__(self, request, context, queryset, *args, **kwargs):
-        SchemaFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         args = list(args)
-        schema = kwargs.get('schema', None) or context['schema']
-        self.label = schema.date_name
+        schema = kwargs.get('schema', None) or context.get('schema')
+        if schema is not None:
+            self.label = schema.date_name
+        else:
+            self.label = self.name
         gte_kwarg = '%s__gte' % self.date_field_name
         lt_kwarg = '%s__lt' % self.date_field_name
         try:
@@ -484,11 +506,13 @@ class PubDateFilter(DateFilter):
 class DuplicateFilterError(FilterError):
     pass
 
-class SchemaFilterChain(SortedDict):
+class FilterChain(SortedDict):
 
     base_url = ''
+    schema = None
+
     def __repr__(self):
-        return u'SchemaFilterChain(%s)' % SortedDict.__repr__(self)
+        return u'FilterChain(%s)' % SortedDict.__repr__(self)
 
     def __init__(self, data=None, request=None, context=None, queryset=None, schema=None):
         SortedDict.__init__(self, data=None)
@@ -501,10 +525,12 @@ class SchemaFilterChain(SortedDict):
             self.update(data)
         self.lookup_descriptions = []
         self.schema = schema
+        if schema:
+            self.add('schema', SchemaFilter(request, context, queryset, schema=schema))
 
     def __setitem__(self, key, value):
         """
-        stores a SchemaFilter, and raises DuplicateFilterError if the
+        stores a NewsitemFilter, and raises DuplicateFilterError if the
         key exists.
         """
         if self.has_key(key):
@@ -555,9 +581,9 @@ class SchemaFilterChain(SortedDict):
             argvalues = [v for v in argvalues if v]
             # Date range
             if argname == 'by-date':
-                chain['date'] = DateFilter(request, context, qs, *argvalues)
+                chain['date'] = DateFilter(request, context, qs, *argvalues, schema=chain.schema)
             elif argname == 'by-pub-date':
-                chain['date'] = PubDateFilter(request, context, qs, *argvalues)
+                chain['date'] = PubDateFilter(request, context, qs, *argvalues, schema=chain.schema)
 
             # Attribute filtering
             elif argname.startswith('by-'):
@@ -615,7 +641,7 @@ class SchemaFilterChain(SortedDict):
         """
         Applies each filter in the chain.
         """
-        for key, filt in self.items():
+        for key, filt in self.normalized_clone().items():
             # TODO: this seems odd. filt.apply() should return the qs?
             if queryset is not None:
                 filt.qs = queryset
@@ -626,10 +652,13 @@ class SchemaFilterChain(SortedDict):
     def copy(self):
         # Overriding because default dict.copy() re-inits attributes,
         # and we want copies to be independently mutable.
-        clone = self.__class__(schema=self.schema)
-        clone.update(self)
+        clone = self.__class__()
         clone.lookup_descriptions = self.lookup_descriptions[:]
         clone.base_url = self.base_url
+        clone.schema = self.schema
+        clone.request = self.request
+        clone.context = self.context
+        clone.update(self)
         return clone
 
     def normalized_clone(self):
@@ -655,7 +684,7 @@ class SchemaFilterChain(SortedDict):
 
     def add(self, key, *values, **kwargs):
         """Given a string or SchemaField key,
-        construct an appropriate SchemaFilter with the values as arguments,
+        construct an appropriate NewsitemFilter with the values as arguments,
         and save it as self[key].
 
         Also for convenience, returns self.
@@ -719,7 +748,11 @@ class SchemaFilterChain(SortedDict):
                 start, end = calendar.monthrange(values[0].year, values[0].month)
                 values[0] = values[0].replace(day=start)
                 values[1] = values[0].replace(day=end)
-            val = DateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
+            if key == 'pubdate':
+                key = 'date'
+                val = PubDateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
+            else:
+                val = DateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
         else:
             # TODO: when does this ever happen?
             val = values[0]
@@ -744,11 +777,11 @@ class SchemaFilterChain(SortedDict):
         If ``removals`` is passed, the specified filter keys will be
         excluded from the breadcrumb list.
 
-        If ``additions`` is passed, the specified (key, SchemaFilter)
+        If ``additions`` is passed, the specified (key, NewsitemFilter)
         pairs will be added to the end of the breadcrumb list.
 
         (In some cases, you can pass (key, [args]) and it will figure
-        out what kind of SchemaFilter to create.  TODO: document
+        out what kind of NewsitemFilter to create.  TODO: document
         this!!)
 
         """
@@ -768,6 +801,8 @@ class SchemaFilterChain(SortedDict):
         crumbs = []
         for key, filt in clone.items():
             label = getattr(filt, 'short_value', '') or getattr(filt, 'value', '') or getattr(filt, 'label', '')
+            if label is None:
+                continue
             label = label.title()
             if label and getattr(filt, 'url', None) is not None:
                 filter_params.append(filt.url)
