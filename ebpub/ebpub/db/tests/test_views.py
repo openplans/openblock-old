@@ -82,6 +82,7 @@ class ViewTestCase(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+
 class LocationDetailTestCase(TestCase):
     fixtures = ('crimes', 'test-locationtypes.json', 'test-locations.json')
 
@@ -104,6 +105,12 @@ class LocationDetailTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         # TODO: more than a smoke test!
+
+    def test_feed_signup(self):
+        url = urlresolvers.reverse('ebpub-feed-signup',
+                                   args=['neighborhoods', 'hood-1'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
 
 
 class TestAjaxViews(TestCase):
@@ -471,12 +478,30 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 404)
 
     @mock.patch('ebpub.db.views.cluster_newsitems')
-    @mock.patch('ebpub.db.models.NewsItemQuerySet.text_search')
-    def test_filter__pagination__has_more(self, mock_search, mock_cluster):
+    @mock.patch('ebpub.db.views.FilterChain')
+    def test_filter__pagination__has_more(self, mock_chain, mock_cluster):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
         url += '?page=2'
-        mock_search.return_value = [mock.Mock()] * 100
         mock_cluster.return_value = {}
+        # We can mock the FilterChain to get a very long list of NewsItems
+        # without actually creating them in the db, but it means
+        # also mocking a ton of methods used by schema_filter or filter.html.
+        # (We can't just patch text_search() anymore because now there's more
+        # filtering after that.)
+        # TODO: this is pretty brittle.
+        mock_chain.from_request.return_value = mock_chain
+        mock_chain.normalized_clone.return_value = mock_chain
+        mock_chain.apply.return_value = mock_chain
+        mock_chain.order_by.return_value = mock_chain
+        mock_chain.__contains__ = lambda self, other: False
+        mock_chain.validate.return_value = {}
+        mock_chain.make_breadcrumbs.return_value = []
+        mock_chain.values = []
+        mock_chain.lookup_descriptions = []
+        newsitem = models.NewsItem.objects.all()[0]
+        # Finally, here's our list of stuff.
+        mock_chain.filter.return_value = [newsitem] * 100
+
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['has_next'], True)

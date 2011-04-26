@@ -16,6 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render_to_response
@@ -23,6 +24,7 @@ from django.template.context import RequestContext
 from ebpub.constants import BLOCK_RADIUS_CHOICES
 from ebpub.constants import BLOCK_RADIUS_DEFAULT
 from ebpub.db.models import Location
+from ebpub.db.models import Schema
 from ebpub.streets.models import Block
 
 
@@ -98,3 +100,12 @@ def radius_url(url, radius):
     # XXX this should be done consistently with other filter url generation. #69
     radius = unicode(radius)
     return u'%s,%s/' % (url.rstrip('/'), radius_urlfragment(radius))
+
+def has_staff_cookie(request):
+    return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
+
+def get_schema_manager(request):
+    if has_staff_cookie(request):
+        return Schema.objects
+    else:
+        return Schema.public_objects

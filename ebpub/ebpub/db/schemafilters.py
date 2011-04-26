@@ -55,6 +55,7 @@ from ebpub.db.utils import make_search_buffer
 from ebpub.db.utils import url_to_block
 from ebpub.db.utils import url_to_location
 from ebpub.metros.allmetros import get_metro
+from ebpub.utils.view_utils import has_staff_cookie
 from ebpub.utils.view_utils import parse_pid
 from ebpub.utils.view_utils import radius_from_urlfragment
 from ebpub.utils.view_utils import radius_url
@@ -559,7 +560,7 @@ class FilterChain(SortedDict):
         argstring = urllib.unquote((argstring or '').rstrip('/'))
         argstring = argstring.replace('+', ' ')
         args = []
-        chain = klass(schema=context['schema'])
+        chain = klass(schema=context['schema'], request=request, context=context)
 
         if argstring and argstring != 'filter':
             for arg in argstring.split(';'):
@@ -575,7 +576,7 @@ class FilterChain(SortedDict):
             # No filters specified. Do nothing?
             pass
 
-        qs = context['newsitem_qs']
+        qs = chain.qs
         while args:
             argname, argvalues = args.pop(0)
             argvalues = [v for v in argvalues if v]
@@ -642,11 +643,15 @@ class FilterChain(SortedDict):
         Applies each filter in the chain.
         """
         for key, filt in self.normalized_clone().items():
-            # TODO: this seems odd. filt.apply() should return the qs?
+            # TODO: this is an awkward way of passing the queryset.
             if queryset is not None:
                 filt.qs = queryset
             filt.apply()
             queryset = filt.qs
+        # Don't show any NewsItems whose Schema isn't public yet.
+        # TODO: Is there a better place to do this?
+        if not has_staff_cookie(self.request):
+            queryset = queryset.filter(schema__is_public=True)
         return queryset
 
     def copy(self):
@@ -765,7 +770,7 @@ class FilterChain(SortedDict):
                          base_url=None):
         """
         Returns a list of (label, URL) pairs suitable for making
-        breadcrumbs.
+        breadcrumbs for the schema_filter view.
 
         If ``base_url`` is passed, URLs generated will be include that
         that; otherwise fall back to self.base_url; otherwise they
@@ -821,7 +826,8 @@ class FilterChain(SortedDict):
 
     def make_url(self, additions=(), removals=(), stop_at=None, base_url=None):
         """
-        Makes one URL representing all the filters of this filter chain.
+        Makes one URL representing all the filters of this filter chain,
+        for the schema_filter view.
         """
         crumbs = self.make_breadcrumbs(additions, removals, stop_at, base_url)
         if crumbs:

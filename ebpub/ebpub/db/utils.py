@@ -20,7 +20,6 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-from ebpub.db.models import NewsItem
 from ebpub.db.models import Location
 from ebpub.streets.models import Block
 from ebpub.streets.models import City
@@ -168,16 +167,27 @@ def today():
         return settings.EB_TODAY_OVERRIDE
     return datetime.date.today()
 
+def get_locations_near_place(place, block_radius=3):
+    nearby = Location.objects.filter(location_type__is_significant=True)
+    nearby = nearby.select_related()
+    if isinstance(place, Location):
+        nearby = nearby.exclude(id=place.id)
+    # If the location is a point, or very small, we want to expand
+    # the area we care about via make_search_buffer().  But if
+    # it's not, we probably want the extent of its geometry.
+    # Let's just take the union to cover both cases.
+    search_buf = make_search_buffer(place.location.centroid, block_radius)
+    search_buf = search_buf.union(place.location)
+    nearby = nearby.filter(location__bboverlaps=search_buf)
+    nearby = nearby.order_by('location_type__id', 'name')
+    return nearby, search_buf
+
 def get_place_info_for_request(request, *args, **kwargs):
     """
-    A utility function that abstracts getting commonly used
-    location-related information: a place, its type, a queryset of
-    intersecting NewsItems, a bbox, nearby locations, etc.
-
-    TODO: this does too much, and only a few things still call it.
-    See if there's a better home for the nearby_locations stuff.
+    A utility function that abstracts getting some commonly used
+    location-related information: a place (Location or Block), its type,
+    a bbox, a list of nearby locations, etc.
     """
-    #raise DeprecationWarning('this should die')
     info = dict(bbox=None,
                 nearby_locations=[],
                 location=None,
@@ -186,66 +196,37 @@ def get_place_info_for_request(request, *args, **kwargs):
                 block_radius=None,
                 is_saved=False,
                 pid='',
-                #place_wkt = '', # Unused?
                 cookies_to_set={},
                 )
-
-    saved_place_lookup={}
-
-    newsitem_qs = kwargs.get('newsitem_qs')
-    if newsitem_qs is None:
-        newsitem_qs = NewsItem.objects.all()
 
     if 'place' in kwargs:
         info['place'] = place = kwargs['place']
     else:
         info['place'] = place = url_to_place(*args, **kwargs)
 
-    nearby = Location.objects.filter(location_type__is_significant=True)
-    nearby = nearby.select_related().exclude(id=place.id)
-    nearby = nearby.order_by('location_type__id', 'name')
-
-    if place.location is None:
-        # No geometry.
-        info['bbox'] = get_metro()['extent']
-        saved_place_lookup = {'location__id': place.id}
-        info['newsitem_qs'] = newsitem_qs.filter(
-            newsitemlocation__location__id=place.id)
-        info['place_type'] = place.location_type.slug
-    elif isinstance(place, Block):
+    if isinstance(place, Block):
         info['is_block'] = True
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-        search_buf = make_search_buffer(place.location.centroid, block_radius)
-        info['nearby_locations'] = nearby.filter(
-                                    location__bboverlaps=search_buf
-                                    )
+        nearby, search_buf = get_locations_near_place(place, block_radius)
+        info['nearby_locations'] = nearby
         info['bbox'] = search_buf.extent
         saved_place_lookup = {'block__id': place.id}
         info['block_radius'] = block_radius
         info['cookies_to_set'] = cookies_to_set
-        info['newsitem_qs'] = newsitem_qs.filter(
-            location__bboverlaps=search_buf)
         info['pid'] = make_pid(place, block_radius)
         info['place_type'] = 'block'
     else:
-        # If the location is a point, or very small, we want to expand
-        # the area we care about via make_search_buffer().  But if
-        # it's not, we probably want the extent of its geometry.
-        # Let's just take the union to cover both cases.
         info['location'] = place
         info['place_type'] = place.location_type.slug
         saved_place_lookup = {'location__id': place.id}
-        search_buf = make_search_buffer(place.location.centroid, 3)
-        search_buf = search_buf.union(place.location)
-        info['bbox'] = search_buf.extent
-        nearby = nearby.filter(location__bboverlaps=search_buf)
-        info['nearby_locations'] = nearby.exclude(id=place.id)
-        info['newsitem_qs'] = newsitem_qs.filter(
-            newsitemlocation__location__id=place.id)
-        # TODO: place_wkt is unused? preserved from the old generic_place_page()
-        #info['place_wkt'] = place.location.simplify(tolerance=0.001,
-        #                                            preserve_topology=True)
         info['pid'] = make_pid(place)
+        if place.location is None:
+            # No geometry.
+            info['bbox'] = get_metro()['extent']
+        else:
+            nearby, search_buf = get_locations_near_place(place)
+            info['bbox'] = search_buf.extent
+            info['nearby_locations'] = nearby
 
     # Determine whether this is a saved place.
     if not request.user.is_anonymous():

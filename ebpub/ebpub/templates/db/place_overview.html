@@ -103,7 +103,7 @@ $j(document).ready(function() {
 	</form>
 
 	</div><!-- end #contentheader -->
-		{% for schema in schema_blocks %}
+		{% for schema in schema_groups %}
 			{% if schema.latest_newsitems %}
 				<div class="module {% if forloop.counter0|divisibleby:"2" %}odd{% endif %}"
 					 id="module-{{ schema.schema.id }}">

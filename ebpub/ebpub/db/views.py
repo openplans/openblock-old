@@ -39,7 +39,6 @@ from ebpub.db.models import NewsItem, Schema, SchemaField, LocationType, Locatio
 from ebpub.db.schemafilters import FilterError
 from ebpub.db.schemafilters import FilterChain
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
-from ebpub.db.utils import make_search_buffer
 from ebpub.db.utils import block_radius_value
 from ebpub.db.utils import url_to_place
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
@@ -54,8 +53,8 @@ from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
-from ebpub.utils.view_utils import parse_pid
-from ebpub.utils.view_utils import radius_url
+from ebpub.utils.view_utils import get_schema_manager
+from ebpub.utils.view_utils import has_staff_cookie
 from ebpub.utils.view_utils import radius_urlfragment
 
 import datetime
@@ -69,16 +68,6 @@ logger = logging.getLogger('ebpub.db.views')
 ################################
 # HELPER FUNCTIONS (NOT VIEWS) #
 ################################
-
-
-def has_staff_cookie(request):
-    return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
-
-def get_schema_manager(request):
-    if has_staff_cookie(request):
-        return Schema.objects
-    else:
-        return Schema.public_objects
 
 
 def get_date_chart_agg_model(schemas, start_date, end_date, agg_model, kwargs=None):
@@ -821,8 +810,6 @@ def schema_filter(request, slug, args_from_url):
     # Create the initial QuerySet of NewsItems.
     start_date = s.min_date
     end_date = today()
-    qs = NewsItem.objects.filter(schema__id=s.id, item_date__lte=end_date).order_by('-item_date')
-    context['newsitem_qs'] = qs
 
     # Break apart the URL to determine what filters to apply.
     try:
@@ -836,13 +823,19 @@ def schema_filter(request, slug, args_from_url):
 
     context['filters'] = filterchain
 
+
     if filters_need_more:
         # Show a page to select the unspecified value.
         context.update(filters_need_more)
 
         return eb_render(request, 'db/filter_lookup_list.html', context)
 
-    qs = filterchain.apply(qs)
+    qs = filterchain.apply().order_by('-item_date')
+    if not ('date' in filterchain) or ('pubdate' in filterchain):
+        qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
+
+
+    context['newsitem_qs'] = qs
 
     #########################################################################
     # END OF FILTER LOOP
@@ -875,15 +868,16 @@ def schema_filter(request, slug, args_from_url):
     else:
         location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
-    # Do the pagination. We don't use Django's Paginator class because it uses
+    # Pagination.
+    # We don't use Django's Paginator class because it uses
     # SELECT COUNT(*), which we want to avoid.
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         raise Http404('Invalid page')
+
     idx_start = (page - 1) * constants.FILTER_PER_PAGE
     idx_end = page * constants.FILTER_PER_PAGE
-
     # Get one extra, so we can tell whether there's a next page.
     ni_list = list(qs[idx_start:idx_end+1])
     if page > 1 and not ni_list:
@@ -932,6 +926,7 @@ def schema_filter(request, slug, args_from_url):
         'start_date': start_date,
         'end_date': end_date,
     })
+
     return eb_render(request, 'db/filter.html', context)
 
 
@@ -1014,7 +1009,6 @@ def place_detail_timeline(request, *args, **kwargs):
         return response
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
-    newsitem_qs = context['newsitem_qs']
     is_latest_page = True
     # Check the query string for the max date to use. Otherwise, fall
     # back to today.
@@ -1024,15 +1018,18 @@ def place_detail_timeline(request, *args, **kwargs):
             end_date = parse_date(request.GET['start'], '%m/%d/%Y')
             is_latest_page = False
         except ValueError:
-            raise Http404
+            raise Http404('Invalid date %s' % request.GET['start'])
+
+    filterchain = FilterChain(request=request, context=context)
 
     # As an optimization, limit the NewsItems to those published in the
     # last few days.
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    ni_list = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
-    if not has_staff_cookie(request):
-        ni_list = ni_list.filter(schema__is_public=True)
-    ni_list = ni_list.extra(
+    filterchain.add('pubdate', start_date, end_date)
+
+    newsitem_qs = filterchain.apply().select_related()
+    # TODO: can this really only be done via extra()?
+    newsitem_qs = newsitem_qs.extra(
         select={'pub_date_date': 'date(db_newsitem.pub_date)'},
         order_by=('-pub_date_date', '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
@@ -1041,14 +1038,13 @@ def place_detail_timeline(request, *args, **kwargs):
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
-    ni_list = list(ni_list)
+    ni_list = list(newsitem_qs)
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
     bunches = cluster_newsitems(ni_list, 26)
     if ni_list:
-        next_day = ni_list[len(ni_list)-1:][0].pub_date - datetime.timedelta(days=1)
-        #next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
+        next_day = ni_list[-1][0].pub_date - datetime.timedelta(days=1)
     else:
         next_day = None
 
@@ -1082,7 +1078,6 @@ def place_detail_overview(request, *args, **kwargs):
         return response
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
-    newsitem_qs = context['newsitem_qs']
 
     # Here, the goal is to get the latest nearby NewsItems for each
     # schema. A naive way to do this would be to run the query once for
@@ -1095,22 +1090,31 @@ def place_detail_overview(request, *args, **kwargs):
     # many more NewsItems than schemas.
     s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
     needed = set(s_list.keys())
-    for ni in newsitem_qs.order_by('-item_date', '-id')[:300]: # Ordering by ID ensures consistency across page views.
+    newsitem_qs = NewsItem.objects.all()
+    for ni in newsitem_qs.order_by('-item_date', '-id')[:300]:
+        # Ordering by ID ensures consistency across page views.
         s_id = ni.schema_id
         if s_id in needed:
             s_list[s_id][1].append(ni)
             s_list[s_id][2] += 1
             if s_list[s_id][2] == s_list[s_id][0].number_in_overview:
                 needed.remove(s_id)
+
+    # Mapping of schema id -> [schemafields].
     sf_dict = {}
-    for sf in SchemaField.objects.filter(is_lookup=True, is_charted=True, schema__is_public=True, schema__is_special_report=False).values('id', 'schema_id', 'pretty_name').order_by('schema__id', 'display_order'):
+    charted_lookups = SchemaField.objects.filter(
+        is_lookup=True, is_charted=True, schema__is_public=True,
+        schema__is_special_report=False)
+    charted_lookups = charted_lookups.values('id', 'schema_id', 'pretty_name')
+    for sf in charted_lookups.order_by('schema__id', 'display_order'):
         sf_dict.setdefault(sf['schema_id'], []).append(sf)
-    schema_blocks, all_newsitems = [], []
+
+    schema_groups, all_newsitems = [], []
     for s, newsitems, _ in s_list.values():
         if s.id in needed:
             newsitems = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date', '-id')[:s.number_in_overview])
         populate_schema(newsitems, s)
-        schema_blocks.append({
+        schema_groups.append({
             'schema': s,
             'latest_newsitems': newsitems,
             'has_newsitems': bool(newsitems),
@@ -1121,7 +1125,7 @@ def place_detail_overview(request, *args, **kwargs):
     populate_attributes_if_needed(all_newsitems, s_list)
     s_list = [s for s in s_list if s.allow_charting]
 
-    context['schema_blocks'] = schema_blocks
+    context['schema_groups'] = schema_groups
     context['filtered_schema_list'] = s_list
     context['bodyclass'] = 'place-detail-overview'
     if context['is_block']:
@@ -1138,7 +1142,7 @@ def place_detail_overview(request, *args, **kwargs):
 
 def feed_signup(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
-    context['s_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
+    context['schema_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
     return eb_render(request, 'db/feed_signup.html', context)
 
 
