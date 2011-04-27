@@ -10,12 +10,14 @@ start_date, end_date, lookup_list, search_list, search_url
 	<h2>{% if filters %}Refine your search{% else %}Filter this section{% endif %}</h2>
 	{% if filters %}
 	<ul>
-		{% for filter in filters.values %}
+		{% for filter in filters.values_with_labels %}
+        {% if filter.label %}
 		<li class="filter changed">
 			<span class="filter-label">{{ filter.label|capfirst }}:</span>
 			<strong class="filter-value">{{ filter.short_value }}</strong>
 			<a class="filter-clear" href="{% filter_url filters -filter.name %}" title="Remove this filter" rel="nofollow">Clear</a>
 		</li>
+		{% endif %}
 		{% endfor %}
 	</ul>
 	{% endif %}

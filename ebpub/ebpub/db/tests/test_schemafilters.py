@@ -394,3 +394,17 @@ class TestFilterChain(TestCase):
         ordered_chain = chain.normalized_clone()
         self.assertEqual(ordered_chain.keys(),
                          ['date', 'mock bool sf', 'location', 'mock lookup sf', 'mock text sf'])
+
+    def test_values_with_labels(self):
+        from ebpub.db.schemafilters import FilterChain
+        class Dummy(object):
+            def __init__(self, label):
+                self.label = label
+        chain = FilterChain([('foo', Dummy('yes')),
+                             ('bar', Dummy(None)),
+                             ('bat', Dummy('yes also')),
+                             ('baz', Dummy(None)),
+                             ])
+        self.assertEqual(len(chain.values()), 4)
+        self.assertEqual(len(chain.values_with_labels()), 2)
+        self.assert_(all([f.label for f in chain.values_with_labels()]))

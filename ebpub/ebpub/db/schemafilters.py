@@ -136,6 +136,8 @@ class SchemaFilter(NewsitemFilter):
     _sort_value = -9999
     name = 'schema'
     url = None
+    label = None  # Don't show this one in the UI.
+    value = None
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -817,7 +819,7 @@ class FilterChain(SortedDict):
 
         crumbs = []
         for key, filt in clone.items():
-            label = getattr(filt, 'short_value', '') or getattr(filt, 'value', '') or getattr(filt, 'label', '')
+            label = getattr(filt, 'short_value', None) or getattr(filt, 'value', None) or getattr(filt, 'label', None)
             if label is None:
                 continue
             label = label.title()
@@ -859,3 +861,11 @@ class FilterChain(SortedDict):
         else:
             self['location'] = LocationFilter(self.request, self.context, self.qs,
                                               location=place)
+
+    def values_with_labels(self):
+        """
+        If a filter has no label, that means don't show it in various
+        places in the UI.  This is a convenience to get only the
+        values that should be shown.
+        """
+        return [v for v in self.values() if v.label]
