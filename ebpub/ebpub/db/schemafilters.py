@@ -511,7 +511,7 @@ class DuplicateFilterError(FilterError):
 
 class FilterChain(SortedDict):
 
-    base_url = ''
+    _base_url = ''
     schema = None
 
     def __repr__(self):
@@ -661,7 +661,7 @@ class FilterChain(SortedDict):
         # and we want copies to be independently mutable.
         clone = self.__class__()
         clone.lookup_descriptions = self.lookup_descriptions[:]
-        clone.base_url = self.base_url
+        clone._base_url = self._base_url
         clone.schema = self.schema
         clone.request = self.request
         clone.context = self.context
@@ -784,8 +784,8 @@ class FilterChain(SortedDict):
         breadcrumbs for the schema_filter view.
 
         If ``base_url`` is passed, URLs generated will be include that
-        that; otherwise fall back to self.base_url; then fall back
-        to self.schema.url().
+        that; otherwise fall back to self.base_url, which falls
+        back to self.schema.url().
 
         If ``stop_at`` is passed, the key specified will be the last
         one used for the breadcrumb list.
@@ -802,7 +802,6 @@ class FilterChain(SortedDict):
 
         """
         # TODO: Can filter_reverse leverage this? Or vice-versa?
-        filter_params = []
         clone = self.copy()
         for key in removals:
             try:
@@ -813,15 +812,15 @@ class FilterChain(SortedDict):
         for key, values in additions:
             clone.replace(key, *values)
 
-        # Doing this now because additions might have changed clone.schema.
-        if base_url is None:
-            base_url = clone.base_url or clone.schema.url() + 'filter/'
+        base_url = base_url or clone.base_url
 
         crumbs = []
-        for key, filt in clone.items():
+        filter_params = []
+        for key, filt in clone._items_with_labels():
+            # I'm not sure why we prefer short_value to label, but that's what
+            # the old code did.
             label = getattr(filt, 'short_value', None) or getattr(filt, 'value', None) or getattr(filt, 'label', None)
-            if label is None:
-                continue
+            assert label is not None
             label = label.title()
             if label and getattr(filt, 'url', None) is not None:
                 filter_params.append(filt.url)
@@ -868,4 +867,13 @@ class FilterChain(SortedDict):
         places in the UI.  This is a convenience to get only the
         values that should be shown.
         """
-        return [v for v in self.values() if v.label]
+        return [v for (k, v) in self._items_with_labels()]
+
+    def _items_with_labels(self):
+        return [(k, v) for (k, v) in self.items() if getattr(v, 'label', None)]
+
+    def _get_base_url(self):
+        return self._base_url or self.schema.url() + 'filter/'
+    def _set_base_url(self, url):
+        self._base_url = url
+    base_url = property(_get_base_url, _set_base_url)
