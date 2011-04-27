@@ -84,7 +84,7 @@ class ViewTestCase(TestCase):
 
 
 class LocationDetailTestCase(TestCase):
-    fixtures = ('crimes', 'test-locationtypes.json', 'test-locations.json')
+    fixtures = ('test-locationdetail-views.json',)
 
     def test_location_type_detail(self):
         url = urlresolvers.reverse('ebpub-loc-type-detail', args=['neighborhoods'])
@@ -92,12 +92,15 @@ class LocationDetailTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         # TODO: more than a smoke test!
 
-    def test_location_timeline(self):
+    @mock.patch('ebpub.db.views.today')
+    def test_location_timeline(self, mock_today):
+        import datetime
+        mock_today.return_value = datetime.date(2006, 9, 26)
         url = urlresolvers.reverse('ebpub-place-timeline',
                                    args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        # TODO: more than a smoke test!
+        self.assertEqual(len(response.context['newsitem_list']), 2)
 
     def test_location_overview(self):
         url = urlresolvers.reverse('ebpub-place-overview',

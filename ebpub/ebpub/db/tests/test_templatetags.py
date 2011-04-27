@@ -127,4 +127,4 @@ class TestDoFilterUrl(unittest.TestCase):
                                        ['remove1'])
         self.assertEqual(node.render(context), 'ok')
         self.assertEqual(mock_chain.make_url.call_args,
-                         ((), {'additions': [('X', ['Y'])], 'removals': ['Z'], 'base_url': 'http://X/filter/'}))
+                         ((), {'additions': [('X', ['Y'])], 'removals': ['Z']}))

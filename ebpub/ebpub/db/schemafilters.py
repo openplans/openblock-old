@@ -758,6 +758,15 @@ class FilterChain(SortedDict):
                 val = PubDateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
             else:
                 val = DateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
+        elif isinstance(values[0], models.Schema):
+            key = 'schema'
+            schema = values[0]
+            val = SchemaFilter(self.request, self.context, self.qs, *values, schema=schema)
+            self.schema = schema
+            for filt in self.values():
+                # TODO: this may be too late if some things depend on
+                # schema during __init__()
+                filt.schema = schema
         else:
             # TODO: when does this ever happen?
             val = values[0]
@@ -773,8 +782,8 @@ class FilterChain(SortedDict):
         breadcrumbs for the schema_filter view.
 
         If ``base_url`` is passed, URLs generated will be include that
-        that; otherwise fall back to self.base_url; otherwise they
-        will just be relative URLs.
+        that; otherwise fall back to self.base_url; then fall back
+        to self.schema.url().
 
         If ``stop_at`` is passed, the key specified will be the last
         one used for the breadcrumb list.
@@ -790,8 +799,6 @@ class FilterChain(SortedDict):
         this!!)
 
         """
-        if base_url is None:
-            base_url = self.base_url or ''
         # TODO: Can filter_reverse leverage this? Or vice-versa?
         filter_params = []
         clone = self.copy()
@@ -803,6 +810,11 @@ class FilterChain(SortedDict):
 
         for key, values in additions:
             clone.replace(key, *values)
+
+        # Doing this now because additions might have changed clone.schema.
+        if base_url is None:
+            base_url = clone.base_url or clone.schema.url() + 'filter/'
+
         crumbs = []
         for key, filt in clone.items():
             label = getattr(filt, 'short_value', '') or getattr(filt, 'value', '') or getattr(filt, 'label', '')

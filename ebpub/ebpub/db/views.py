@@ -1021,12 +1021,11 @@ def place_detail_timeline(request, *args, **kwargs):
             raise Http404('Invalid date %s' % request.GET['start'])
 
     filterchain = FilterChain(request=request, context=context)
-
+    filterchain.add('location', context['place'])
     # As an optimization, limit the NewsItems to those published in the
     # last few days.
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     filterchain.add('pubdate', start_date, end_date)
-
     newsitem_qs = filterchain.apply().select_related()
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
@@ -1044,7 +1043,7 @@ def place_detail_timeline(request, *args, **kwargs):
     populate_attributes_if_needed(ni_list, schemas_used)
     bunches = cluster_newsitems(ni_list, 26)
     if ni_list:
-        next_day = ni_list[-1][0].pub_date - datetime.timedelta(days=1)
+        next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
     else:
         next_day = None
 
@@ -1061,6 +1060,7 @@ def place_detail_timeline(request, *args, **kwargs):
         'hidden_schema_list': hidden_schema_list,
         'bodyclass': 'place-detail-timeline',
         'bodyid': context.get('place_type') or '',
+        'filters': filterchain,
     })
 
 

@@ -67,8 +67,7 @@ class FilterUrlNode(template.Node):
             key = key.resolve(context)
             additions.append((key, [v.resolve(context) for v in values]))
         schema = filterchain.schema
-        # TODO: shouldn't the filterchain know about this base URL?
-        return filterchain.make_url(additions=additions, removals=removals, base_url=schema.url() + 'filter/')
+        return filterchain.make_url(additions=additions, removals=removals)
 
 def do_filter_url(parser, token):
     """
