@@ -17,7 +17,7 @@
 #
 
 """
-Unit tests for db.views.
+Unit tests for db.schemafilters.
 """
 
 
@@ -25,9 +25,11 @@ Unit tests for db.views.
  # Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
 from client import RequestFactory
 from client import mock_with_attributes
+from django.core import urlresolvers
 from django.test import TestCase
-from ebpub.db.urlresolvers import filter_reverse
+from ebpub.db.schemafilters import FilterChain
 from ebpub.db.schemafilters import FilterError
+from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db import models
 import mock
 import random
@@ -301,12 +303,10 @@ class TestTextFilter(TestCase):
 class TestFilterChain(TestCase):
 
     def test_empty(self):
-        from ebpub.db.schemafilters import FilterChain
         chain = FilterChain()
         self.assertEqual(chain.items(), [])
 
     def test_ordering(self):
-        from ebpub.db.schemafilters import FilterChain
         chain = FilterChain()
         args = range(10)
         random.shuffle(args)
@@ -316,7 +316,6 @@ class TestFilterChain(TestCase):
         self.assertEqual(chain.keys(), args)
 
     def test_copy_and_mutate(self):
-        from ebpub.db.schemafilters import FilterChain
         schema = mock.Mock()
         chain = FilterChain(schema=schema)
         chain.lookup_descriptions.append(1)
@@ -343,7 +342,6 @@ class TestFilterChain(TestCase):
         self.assertEqual(chain['qux'], 'whee')
 
     def test_no_duplicates(self):
-        from ebpub.db.schemafilters import FilterChain
         from ebpub.db.schemafilters import DuplicateFilterError
         self.assertRaises(DuplicateFilterError, FilterChain,
                           (('foo', 'bar'), ('foo', 'bar2')))
@@ -352,7 +350,6 @@ class TestFilterChain(TestCase):
         self.assertRaises(DuplicateFilterError, chain.__setitem__, 'foo', 'bar')
 
     def test_normalized_clone(self):
-        from ebpub.db.schemafilters import FilterChain
         class Dummy(object):
             def __init__(self, sort_value):
                 self._sort_value = sort_value
@@ -372,7 +369,6 @@ class TestFilterChain(TestCase):
 
 
     def test_normalized_clone__real_filters(self):
-        from ebpub.db.schemafilters import FilterChain
         req = mock.Mock()
         qs = mock.Mock()
         schema = mock.Mock()
@@ -396,7 +392,6 @@ class TestFilterChain(TestCase):
                          ['date', 'mock bool sf', 'location', 'mock lookup sf', 'mock text sf'])
 
     def test_values_with_labels(self):
-        from ebpub.db.schemafilters import FilterChain
         class Dummy(object):
             def __init__(self, label):
                 self.label = label
@@ -408,3 +403,145 @@ class TestFilterChain(TestCase):
         self.assertEqual(len(chain.values()), 4)
         self.assertEqual(len(chain.values_with_labels()), 2)
         self.assert_(all([f.label for f in chain.values_with_labels()]))
+
+
+class TestUrlNormalization(TestCase):
+
+    fixtures = ('test-schemafilter-views.json',)
+
+    def _make_chain(self, url):
+        request = RequestFactory().get(url)
+        argstring = request.path.split('filter/', 1)[-1]
+        crime = models.Schema.objects.get(slug='crime')
+        context = {'schema': crime}
+        chain = FilterChain.from_request(request=request, context=context,
+                                         argstring=argstring,
+                                         filter_sf_dict={})
+        return chain
+
+    @mock.patch('ebpub.streets.models.proper_city')
+    def test_urls__ok(self, mock_proper_city):
+        mock_proper_city.return_value = 'chicago'
+        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
+        chain = self._make_chain(url)
+        self.assertEqual(url, chain.make_url())
+
+    @mock.patch('ebpub.streets.models.proper_city')
+    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    def test_urls__intersection(self, mock_geocode, mock_proper_city):
+        mock_proper_city.return_value = 'chicago'
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+        from ebpub.streets.models import Block, Intersection, BlockIntersection
+        intersection = mock.Mock(spec=Intersection)
+        blockintersection = mock.Mock(spec=BlockIntersection)
+        blockintersection.block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+        intersection.blockintersection_set.all.return_value = [blockintersection]
+        mock_geocode.return_value = {'intersection': intersection,
+                                     'block': None}
+        chain = self._make_chain(url)
+        expected = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
+        result = chain.make_url()
+        self.assertEqual(result, expected)
+
+    @mock.patch('ebpub.streets.models.proper_city')
+    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    def test_urls__bad_intersection(self, mock_geocode, mock_proper_city):
+        mock_proper_city.return_value = 'chicago'
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+        from ebpub.streets.models import Block, Intersection, BlockIntersection
+        intersection = mock.Mock(spec=Intersection)
+        blockintersection = mock.Mock(spec=BlockIntersection)
+        blockintersection.block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+        mock_geocode.return_value = {'intersection': intersection,
+                                     'block': None}
+
+        # Empty intersection list.
+        intersection.blockintersection_set.all.return_value = []
+        self.assertRaises(IndexError, self._make_chain, url)
+
+        # Or, no block or intersection at all.
+        mock_geocode.return_value = {'intersection': None, 'block': None}
+        self.assertRaises(NotImplementedError, self._make_chain, url)
+
+
+    # def test_normalize_filter_url__bad_address(self):
+    #     from ebpub.db.views import _schema_filter_normalize_url
+    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+    #     url += '?address=123+nowhere+at+all&radius=8'
+
+    #     request = RequestFactory().get(url)
+    #     self.assertRaises(BadAddressException,
+    #                       _schema_filter_normalize_url, request)
+
+
+    # @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    # def test_normalize_filter_url__ambiguous_address(self, mock_geocode):
+    #     from ebpub.geocoder import AmbiguousResult
+    #     mock_geocode.side_effect = AmbiguousResult(['foo', 'bar'])
+    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+    #     url += '?address=anything' # doesn't matter because of mock_geocode
+    #     request = RequestFactory().get(url)
+    #     self.assertRaises(BadAddressException, _schema_filter_normalize_url, request)
+
+    # @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+    # def test_normalize_filter_url__address_query(self, mock_geocode):
+    #     from ebpub.streets.models import Block
+    #     block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+    #     mock_geocode.return_value = {
+    #         'city': block.left_city.title(),
+    #         'zip': block.left_zip,
+    #         'point': block.geom.centroid,
+    #         'state': block.left_state,
+    #         'intersection_id': None,
+    #         'address': u'216 N Wabash Ave',
+    #         'intersection': None,
+    #         'block': block,
+    #         }
+    #     from ebpub.db.views import _schema_filter_normalize_url
+    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+    #     url += '?address=216+n+wabash+st&radius=8'
+
+    #     expected_url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),])
+    #     request = RequestFactory().get(url)
+    #     normalized_url = _schema_filter_normalize_url(request)
+    #     self.assertEqual(expected_url, normalized_url)
+
+    # def test_normalize_filter_url__bad_dates(self):
+    #     from ebpub.db.views import BadDateException
+    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+    #     request = RequestFactory().get(url + '?start_date=12/31/1899&end_date=01/01/2011')
+    #     self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+
+    #     request = RequestFactory().get(url + '?start_date=01/01/2011&end_date=12/31/1899')
+    #     self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+
+    #     request = RequestFactory().get(url + '?start_date=Whoops&end_date=Bzorch')
+    #     self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+
+
+    # def test_normalize_filter_url__date_query(self):
+    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+    #     url += '?start_date=12/01/2010&end_date=01/01/2011'
+    #     request = RequestFactory().get(url)
+    #     result = _schema_filter_normalize_url(request)
+    #     expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
+    #     self.assertEqual(result, expected)
+
+
+    # def test_normalize_filter_url__textsearch_query(self):
+    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+    #     url += '?textsearch=foo&q=hello+goodbye'
+    #     request = RequestFactory().get(url)
+    #     result = _schema_filter_normalize_url(request)
+    #     expected = filter_reverse('crime', [('by-foo', 'hello goodbye')])
+    #     self.assertEqual(result, expected)
+
+    # def test_normalize_filter_url__both_args_and_query(self):
+    #     url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
+    #     url += '?textsearch=foo&q=bar'
+    #     request = RequestFactory().get(url)
+    #     result = _schema_filter_normalize_url(request)
+    #     expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
+    #                                         ('by-foo', 'bar')])
+    #     self.assertEqual(result, expected)
+

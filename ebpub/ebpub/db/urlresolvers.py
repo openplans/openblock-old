@@ -36,9 +36,11 @@ def filter_reverse(slug, args):
                 args[i] = a[0]
         else:
             assert isinstance(a, basestring)
-    argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
-    if not argstring:
-        argstring = 'filter'
+    #argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
+    argstring = ';'.join(args) #['%s=%s' % (k, v) for (k, v) in args])
+
+    if not argstring.lstrip('/').startswith('filter'):
+        argstring = 'filter/%s' % argstring
     url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
     url = '%s/%s/' % (url, argstring)
     # Normalize duplicate slashes, dots, and the like.

@@ -46,6 +46,7 @@ Chain of filters needs to support:
 """
 
 
+from django.shortcuts import get_object_or_404
 from django.utils import dateformat
 from django.utils.datastructures import SortedDict
 from ebpub.db import constants
@@ -54,7 +55,10 @@ from ebpub.db.utils import block_radius_value
 from ebpub.db.utils import make_search_buffer
 from ebpub.db.utils import url_to_block
 from ebpub.db.utils import url_to_location
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, GeocodingException
+from ebpub.geocoder.parser.parsing import ParsingError
 from ebpub.metros.allmetros import get_metro
+from ebpub.utils.dates import parse_date
 from ebpub.utils.view_utils import has_staff_cookie
 from ebpub.utils.view_utils import parse_pid
 from ebpub.utils.view_utils import radius_from_urlfragment
@@ -316,6 +320,10 @@ class LocationFilter(NewsitemFilter):
             except IndexError:
                 self._got_args = False
 
+        if self._got_args and self.location_object is None:
+            loc = url_to_location(self.location_type_slug, self.location_slug)
+            self._update_location(loc)
+
     def _update_location(self, loc):
         self.location_slug = loc.slug
         self.location_type = loc.location_type
@@ -348,12 +356,8 @@ class LocationFilter(NewsitemFilter):
         """
         filtering by Location
         """
-        if self.location_object is not None:
-            loc = self.location_object
-        else:
-            loc = url_to_location(self.location_type_slug, self.location_slug)
+        loc = self.location_object
         self.qs = self.qs.filter(newsitemlocation__location__id=loc.id)
-        self._update_location(loc)
 
 
 class BlockFilter(NewsitemFilter):
@@ -372,8 +376,8 @@ class BlockFilter(NewsitemFilter):
         value = '%s block%s around %s' % (self.block_radius, (self.block_radius != '1' and 's' or ''), block.pretty_name)
         self.short_value = value
         self.value = value
-        self.url = 'streets=%s,%s,%s' % (block.street_slug,
-                                         '%d-%d' % (block.from_num, block.to_num),
+        self.url = 'streets=%s,%s%s,%s' % (block.street_slug,
+                                         block.number(), block.dir_url_bit(),
                                          radius_urlfragment(self.block_radius))
         self.location_name = block.pretty_name
 
@@ -420,6 +424,13 @@ class BlockFilter(NewsitemFilter):
         self.url_to_block_args = m.groups()
         self._got_args = True
 
+        if self.location_object is not None:
+            block = self.location_object
+        else:
+            block = url_to_block(self.city_slug, self.street_slug,
+                                 *self.url_to_block_args)
+            self._update_block(block)
+
 
     def validate(self):
         # Filtering UI does not provide a page for selecting a block.
@@ -428,12 +439,7 @@ class BlockFilter(NewsitemFilter):
     def apply(self):
         """filtering by Block.
         """
-        if self.location_object is not None:
-            block = self.location_object
-        else:
-            block = url_to_block(self.city_slug, self.street_slug,
-                                 *self.url_to_block_args)
-            self._update_block(block)
+        block = self.location_object
         search_buf = make_search_buffer(block.location.centroid, self.block_radius)
         self.qs = self.qs.filter(location__bboverlaps=search_buf)
         return self.qs
@@ -625,7 +631,61 @@ class FilterChain(SortedDict):
             else:
                 raise FilterError('Invalid filter type')
 
+        chain.update_from_query_params(request)
         return chain
+
+    def update_from_query_params(self, request):
+        if request.GET.get('address', '').strip():
+            xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+            address = request.GET['address'].strip()
+            result = None
+            try:
+                result = SmartGeocoder().geocode(address)
+            except AmbiguousResult, e:
+                raise BadAddressException(address, block_radius, address_choices=e.choices)
+            except (GeocodingException, ParsingError):
+                raise BadAddressException(address, block_radius, address_choices=())
+
+            assert result
+            if result['block']:
+                block = result['block']
+            elif result['intersection']:
+                try:
+                    block = result['intersection'].blockintersection_set.all()[0].block
+                except IndexError:
+                    # XXX Not sure this was deliberate, but we used to
+                    # call intersection.url() here, which does that
+                    # same blockintersection_set query, so it would
+                    # raise an IndexError here if there was no
+                    # matching block.  Preserving that behavior.
+                    # XXX should this be BadAddressException?
+                    raise
+            else:
+                # XXX todo: should this be BadAddressException?
+                raise NotImplementedError('Reached invalid geocoding type: %r' % result)
+            self.replace('location', block, block_radius)
+
+        if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
+            try:
+                start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
+                end_date = parse_date(request.GET['end_date'], '%m/%d/%Y')
+            except ValueError, e:
+                raise BadDateException(str(e))
+            if start_date.year < 1900 or end_date.year < 1900:
+                # This prevents strftime from throwing a ValueError.
+                raise BadDateException('Dates before 1900 are not supported.')
+
+            self.replace('date', start_date, end_date)
+
+        lookup_name = request.GET.get('textsearch', '').strip()
+        search_string = request.GET.get('q', '').strip()
+        if lookup_name and search_string:
+            schemafield = get_object_or_404(models.SchemaField, name=lookup_name)
+            self.replace(schemafield, search_string)
+
+        # if not new_filter_args:
+        #     return None
+
 
     def validate(self):
         """Check whether any of the filters were requested without
@@ -846,7 +906,7 @@ class FilterChain(SortedDict):
         if crumbs:
             return crumbs[-1][1]
         else:
-            return base_url
+            return base_url or self.base_url
 
     def add_by_place_id(self, pid):
         """
@@ -877,3 +937,14 @@ class FilterChain(SortedDict):
     def _set_base_url(self, url):
         self._base_url = url
     base_url = property(_get_base_url, _set_base_url)
+
+
+class BadAddressException(Exception):
+    def __init__(self, address, block_radius, address_choices, message=None):
+        self.address = address
+        self.block_radius = block_radius
+        self.address_choices = address_choices
+        self.message = message
+
+class BadDateException(Exception):
+    pass

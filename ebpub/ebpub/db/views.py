@@ -38,10 +38,12 @@ from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLooku
 from ebpub.db.models import NewsItem, Schema, SchemaField, LocationType, Location, SearchSpecialCase
 from ebpub.db.schemafilters import FilterError
 from ebpub.db.schemafilters import FilterChain
+from ebpub.db.schemafilters import BadAddressException
+from ebpub.db.schemafilters import BadDateException
+
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
-from ebpub.db.utils import block_radius_value
 from ebpub.db.utils import url_to_place
-from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, InvalidBlockButValidStreet
 from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
@@ -662,15 +664,7 @@ def schema_about(request, slug):
     context['breadcrumbs'] = breadcrumbs.schema_about(context)
     return eb_render(request, 'db/schema_about.html', context)
 
-class BadAddressException(Exception):
-    def __init__(self, address, block_radius, address_choices, message=None):
-        self.address = address
-        self.block_radius = block_radius
-        self.address_choices = address_choices
-        self.message = message
 
-class BadDateException(Exception):
-    pass
 
 def _schema_filter_normalize_url(request):
     """Returns a new URL, or None if the original URL is OK.
@@ -678,6 +672,7 @@ def _schema_filter_normalize_url(request):
     Raises BadAddressException if the request contains an address
     that we fail to geocode.
     """
+    raise Exception('do not use')
     # Due to the way our custom filter UI works, address, date and
     # text searches sometimes come in a query string instead of in the
     # URL. Here, we validate those searches and return a url for
@@ -696,69 +691,11 @@ def _schema_filter_normalize_url(request):
     filter_args = (filter_args or '').rstrip('/')
     new_filter_args = ''
 
-    # Build new filter args.
-    # TODO: factor out a function that does this, #69
-    if request.GET.get('address', '').strip():
-        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-        address = request.GET['address'].strip()
-        result = None
-        try:
-            result = SmartGeocoder().geocode(address)
-        except AmbiguousResult, e:
-            raise BadAddressException(address, block_radius, address_choices=e.choices)
-        except (GeocodingException, ParsingError):
-            raise BadAddressException(address, block_radius, address_choices=())
-
-        assert result
-        if result['block']:
-            block = result['block']
-        elif result['intersection']:
-            try:
-                block = result['intersection'].blockintersection_set.all()[0].block
-            except IndexError:
-                # XXX Not sure this was deliberate, but we used to
-                # call intersection.url() here, which does that
-                # same blockintersection_set query, so it would
-                # raise an IndexError here if there was no
-                # matching block.  Preserving that behavior.
-                # XXX should this be BadAddressException?
-                raise
-        else:
-            # XXX todo: should this be BadAddressException?
-            raise NotImplementedError('Reached invalid geocoding type: %r' % result)
-        # TODO: factor out URL param format. #69
-        address_range = '%d-%d' % (block.from_num, block.to_num)
-        if block.predir:
-            address_range += block.predir
-        if block.postdir:
-            address_range += '-' + block.postdir
-        address_range = address_range.lower()
-        new_filter_args = '%sstreets=%s' % (new_filter_args, ','.join(
-                [block.street_slug, address_range, block_radius]))
-    # End of address handling.
-
-    if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
-        try:
-            start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
-            end_date = parse_date(request.GET['end_date'], '%m/%d/%Y')
-        except ValueError, e:
-            raise BadDateException(str(e))
-        if start_date.year < 1900 or end_date.year < 1900:
-            # This prevents strftime from throwing a ValueError.
-            raise BadDateException('Dates before 1900 are not supported.')
-
-        # TODO: factor out URL param format. #69
-        new_filter_args = '%sby-date=%s,%s' % (new_filter_args, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))
-    if request.GET.get('textsearch', '').strip() and request.GET.get('q', '').strip():
-        # TODO: factor out URL param format. #69
-        new_filter_args = '%sby-%s=%s' % (new_filter_args, request.GET['textsearch'], request.GET['q'])
-    if not new_filter_args:
-        return None
 
     # TODO: factor out URL param format. #69
-    if filter_args.startswith('filter'):
-        # Normalize to NOT include 'filter/'. I guess.
-        filter_args = filter_args[6:]
+    # if filter_args.startswith('filter'):
+    #     # Normalize to NOT include 'filter/'. I guess.
+    #     filter_args = filter_args[6:]
     filter_args = filter_args.lstrip('/')
     if filter_args:
         filter_args = '%s;%s' % (filter_args, new_filter_args)
@@ -773,20 +710,6 @@ def schema_filter(request, slug, args_from_url):
     List NewsItems for one schema, filtered by various criteria in the
     URL (date, location, or values of SchemaFields).
     """
-    try:
-        new_url = _schema_filter_normalize_url(request)
-    except BadAddressException, e:
-        return eb_render(request, 'db/filter_bad_address.html', {
-                'address_choices': e.address_choices,
-                'address': e.address,
-                'radius': e.block_radius,
-                'radius_url': radius_urlfragment(e.block_radius),
-                })
-    except BadDateException, e:
-        raise Http404('<h1>%s</h1>' % str(e))
-
-    if new_url is not None:
-        return HttpResponseRedirect(new_url)
 
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
@@ -807,7 +730,6 @@ def schema_filter(request, slug, args_from_url):
     # Use SortedDict to preserve the display_order.
     filter_sf_dict = SortedDict([(sf.slug, sf) for sf in filter_sf_list] + [(sf.slug, sf) for sf in textsearch_sf_list])
 
-    # Create the initial QuerySet of NewsItems.
     start_date = s.min_date
     end_date = today()
 
@@ -820,25 +742,37 @@ def schema_filter(request, slug, args_from_url):
         if getattr(e, 'url', None) is not None:
             return HttpResponseRedirect(e.url)
         raise Http404(str(e))
+    except BadAddressException, e:
+        return eb_render(request, 'db/filter_bad_address.html', {
+                'address_choices': e.address_choices,
+                'address': e.address,
+                'radius': e.block_radius,
+                'radius_url': radius_urlfragment(e.block_radius),
+                })
+    except BadDateException, e:
+        raise Http404('<h1>%s</h1>' % str(e))
 
     context['filters'] = filterchain
-
 
     if filters_need_more:
         # Show a page to select the unspecified value.
         context.update(filters_need_more)
-
         return eb_render(request, 'db/filter_lookup_list.html', context)
 
+    # Normalize the URL, and redirect if we're not already there.
+    new_url = filterchain.make_url()
+    if new_url != request.path:
+        # TODO: this throws away other query params.
+        return HttpResponseRedirect(new_url)
+
+    # Finally, filter the newsitems.
     qs = filterchain.apply().order_by('-item_date')
     if not ('date' in filterchain) or ('pubdate' in filterchain):
         qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
 
-
     context['newsitem_qs'] = qs
 
     #########################################################################
-    # END OF FILTER LOOP
 
     # Get the list of top values for each lookup that isn't being filtered-by.
     # LOOKUP_MIN_DISPLAYED sets the number of records to display for each lookup
