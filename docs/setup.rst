@@ -294,7 +294,7 @@ contains ogr_p.h, typically somewhere like ``/usr/include/gdal``.  You
 can get swq.h for GDAL 1.7 here:
 http://svn.osgeo.org/gdal/branches/1.7/gdal/ogr/swq.h
 
-Then try the preceding ``setup.py build`` command again.
+Then try the preceding ``setup.py build_ext`` command again.
 
 
 .. _postinstall:
