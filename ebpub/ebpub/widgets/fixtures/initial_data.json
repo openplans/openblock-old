@@ -1,0 +1,24 @@
+[
+  {
+    "fields": {
+      "description": "This is an example of a simple list of item headlines that could be used as as starting point for other template.\r\n\r\n* Do not edit this template directly, it will be overwritten when upgrading\r\n* Save as new to make a copy of this template for your purposes", 
+      "code": "<ul>\r\n{% for item in items %}\r\n<li>\r\n  <a href=\"{{ item.internal_url|default:item.external_url }}\">\r\n    {{item.title}}\r\n  </a>\r\n</li>\r\n{% endfor %}\r\n</ul>\r\n", 
+      "name": "Simple Headline List", 
+      "content_type": "text/html", 
+      "slug": "simple-list"
+    }, 
+    "model": "widgets.template", 
+    "pk": 2
+  }, 
+  {
+    "fields": {
+      "description": "This is an example that template dumps out info about news items and helps explore available attributes that may be used when designing other widget templates.\r\n\r\n* Do not edit this template directly, it will be overwritten when upgrading\r\n* Save as new to make a copy of this template for your purposes", 
+      "code": "<div>\r\n<h2>{{widget.name}}</h2>\r\n{% for item in items %}\r\n<table class=\"newsitem\">\r\n  <thead>\r\n    <tr>\r\n      <th>Attribute</th>\r\n      <th>Value</th>\r\n    </tr>\r\n  </thead>\r\n  <tbody>\r\n    <tr>\r\n      <td>title</td>\r\n      <td>{{item.title}}</td>\r\n    </tr>\r\n    <tr>\r\n       <td>schema.name</td>\r\n       <td>{{item.schema.name}}</td>\r\n    </tr>\r\n    <tr>\r\n       <td>schema.slug</td>\r\n       <td>{{item.schema.slug}}</td>\r\n    </tr>\r\n    <tr>\r\n      <td>internal_url</td>\r\n      <td>{{item.internal_url}}</td>\r\n    </tr>\r\n    <tr>\r\n      <td>external_url</td>\r\n      <td>{{item.external_url}}</td>\r\n    </tr>\r\n    <tr>\r\n       <td>location.lat</td>\r\n       <td>{{item.location.lat}}</td>\r\n   </tr>\r\n    <tr>\r\n       <td>location.lon</td>\r\n       <td>{{item.location.lon}}</td>\r\n   </tr>\r\n    <tr>\r\n       <td>location.name</td>\r\n       <td>{{item.location.name}}</td>\r\n   </tr>\r\n\r\n    <tr>\r\n       <td>pub_date</td>\r\n       <td>{{item.pub_date|date:\"c\"}}</td>\r\n   </tr>\r\n    <tr>\r\n       <td>item_date</td>\r\n       <td>{{item.item_date|date:\"c\"}}</td>\r\n   </tr>\r\n    <tr>\r\n      <td>description</td>\r\n      <td>{{item.description}}</td>\r\n    </tr>\r\n    {% for attr in item.attributes %}\r\n      {% if attr.is_list %}\r\n        {% for value in attr.value %}\r\n        <tr>\r\n          <td>{{attr.title}}</td>\r\n          <td>{{value}}</td>\r\n        </tr>\r\n        {% endfor %}\r\n      {% else %}\r\n       <tr>\r\n         <td>{{attr.title}}</td>\r\n         <td>{{attr.value}}</td>\r\n       </tr>\r\n      {% endif %}\r\n    {% endfor %}\r\n  </tbody>\r\n</table>\r\n{% endfor %}\r\n</div>", 
+      "name": "Debug Table", 
+      "content_type": "text/html", 
+      "slug": "debug"
+    }, 
+    "model": "widgets.template", 
+    "pk": 1
+  }
+]
