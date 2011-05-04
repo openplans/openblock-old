@@ -154,7 +154,6 @@ class SchemaFilter(NewsitemFilter):
         self.qs = self.qs.filter(schema=self.schema)
 
 
-
 class AttributeFilter(NewsitemFilter):
 
     """base class for more specific types of attribute filters
@@ -536,6 +535,7 @@ class FilterChain(SortedDict):
         self.schema = schema
         if schema:
             self.add('schema', SchemaFilter(request, context, queryset, schema=schema))
+        self.other_query_params = {}
 
     def __setitem__(self, key, value):
         """
@@ -635,9 +635,19 @@ class FilterChain(SortedDict):
         return chain
 
     def update_from_query_params(self, request):
-        if request.GET.get('address', '').strip():
+        # Make a mutable copy so we can leave only the params that FilterChain
+        # doesn't know about.
+        params = request.GET.copy()
+        def pop_key(key):
+            # request.GET.pop() returns a sequence.
+            # We only want a single value, stripped.
+            val = params.pop(key, [''])[0]
+            return val.strip()
+
+        address = pop_key('address')
+        if address:
             xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-            address = request.GET['address'].strip()
+            params.pop('radius', None)
             result = None
             try:
                 result = SmartGeocoder().geocode(address)
@@ -665,10 +675,13 @@ class FilterChain(SortedDict):
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
             self.replace('location', block, block_radius)
 
-        if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
+
+        start_date = pop_key('start_date')
+        end_date = pop_key('end_date')
+        if start_date and end_date:
             try:
-                start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
-                end_date = parse_date(request.GET['end_date'], '%m/%d/%Y')
+                start_date = parse_date(start_date, '%m/%d/%Y')
+                end_date = parse_date(end_date, '%m/%d/%Y')
             except ValueError, e:
                 raise BadDateException(str(e))
             if start_date.year < 1900 or end_date.year < 1900:
@@ -677,15 +690,15 @@ class FilterChain(SortedDict):
 
             self.replace('date', start_date, end_date)
 
-        lookup_name = request.GET.get('textsearch', '').strip()
-        search_string = request.GET.get('q', '').strip()
+        lookup_name = pop_key('textsearch')
+        search_string = pop_key('q')
         if lookup_name and search_string:
-            schemafield = get_object_or_404(models.SchemaField, name=lookup_name)
+            # Can raise DoesNotExist. Should that be FilterError?
+            schemafield = models.SchemaField.objects.get(name=lookup_name)
             self.replace(schemafield, search_string)
 
-        # if not new_filter_args:
-        #     return None
-
+        # Stash away all query params we didn't consume.
+        self.other_query_params = params
 
     def validate(self):
         """Check whether any of the filters were requested without
@@ -719,12 +732,15 @@ class FilterChain(SortedDict):
     def copy(self):
         # Overriding because default dict.copy() re-inits attributes,
         # and we want copies to be independently mutable.
+        # Unfortunately this seems to require explicitly copying
+        # all attributes we care about.
         clone = self.__class__()
         clone.lookup_descriptions = self.lookup_descriptions[:]
         clone._base_url = self._base_url
         clone.schema = self.schema
         clone.request = self.request
         clone.context = self.context
+        clone.other_query_params = self.other_query_params
         clone.update(self)
         return clone
 
@@ -860,6 +876,11 @@ class FilterChain(SortedDict):
         out what kind of NewsitemFilter to create.  TODO: document
         this!!)
 
+        Also, if self.other_query_params is a dictionary, its items
+        will be added as query parameters to all the URLs.  This can
+        be used to add or preserve query parameters that aren't
+        relevant to the FilterChain.
+
         """
         # TODO: Can filter_reverse leverage this? Or vice-versa?
         clone = self.copy()
@@ -876,6 +897,8 @@ class FilterChain(SortedDict):
 
         crumbs = []
         filter_params = []
+        other_query_params = urllib.urlencode(sorted(self.other_query_params.items()),
+                                              doseq=True)
         for key, filt in clone._items_with_labels():
             # I'm not sure why we prefer short_value to label, but that's what
             # the old code did.
@@ -884,7 +907,10 @@ class FilterChain(SortedDict):
             label = label.title()
             if label and getattr(filt, 'url', None) is not None:
                 filter_params.append(filt.url)
-                crumbs.append((label, base_url + ';'.join(filter_params)  + '/'))
+                url = '%s%s/' % (base_url, ';'.join(filter_params))
+                if other_query_params:
+                    url = '%s?%s' % (url, other_query_params)
+                crumbs.append((label, url))
             if key == stop_at:
                 break
         return crumbs

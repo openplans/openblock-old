@@ -21,8 +21,7 @@ Unit tests for db.schemafilters.
 """
 
 
-
- # Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
+# Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
 from client import RequestFactory
 from client import mock_with_attributes
 from django.core import urlresolvers
@@ -30,6 +29,7 @@ from django.test import TestCase
 from ebpub.db.schemafilters import FilterChain
 from ebpub.db.schemafilters import FilterError
 from ebpub.db.urlresolvers import filter_reverse
+from ebpub.db.views import BadAddressException
 from ebpub.db import models
 import mock
 import random
@@ -49,6 +49,27 @@ class TestNewsitemFilter(TestCase):
         fil.foo = 'bar'
         self.assertEqual(fil['foo'], 'bar')
         self.assertRaises(KeyError, fil.__getitem__, 'bar')
+
+
+class TestSchemaFilter(TestCase):
+
+    fixtures = ('test-schemafilter-views.json',)
+
+    def test_validate(self):
+        from ebpub.db.schemafilters import SchemaFilter
+        schema = models.Schema.objects.get(slug='crime')
+        fil = SchemaFilter(request=None, context={}, queryset=None, schema=schema)
+        self.assertEqual(fil.validate(), {})
+
+
+    def test_apply(self):
+        from ebpub.db.schemafilters import SchemaFilter
+        schema = models.Schema.objects.get(slug='crime')
+        fil = SchemaFilter(request=None, context={}, queryset=None, schema=schema)
+        fil.apply()
+        self.assert_(len(fil.qs) > 0)
+        for item in fil.qs:
+            self.assertEqual(item.schema.natural_key(), schema.natural_key())
 
 
 class TestLocationFilter(TestCase):
@@ -409,6 +430,21 @@ class TestUrlNormalization(TestCase):
 
     fixtures = ('test-schemafilter-views.json',)
 
+
+    def setUp(self):
+        super(TestUrlNormalization, self).setUp()
+        self._patcher1 = mock.patch('ebpub.streets.models.proper_city')
+        self.proper_city = self._patcher1.start()
+        self.proper_city.return_value = 'chicago'
+
+        self._patcher2 = mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+        self.mock_geocode = self._patcher2.start()
+
+    def tearDown(self):
+        self._patcher1.stop()
+        self._patcher2.stop()
+        super(TestUrlNormalization, self).tearDown()
+
     def _make_chain(self, url):
         request = RequestFactory().get(url)
         argstring = request.path.split('filter/', 1)[-1]
@@ -419,129 +455,136 @@ class TestUrlNormalization(TestCase):
                                          filter_sf_dict={})
         return chain
 
-    @mock.patch('ebpub.streets.models.proper_city')
-    def test_urls__ok(self, mock_proper_city):
-        mock_proper_city.return_value = 'chicago'
-        url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
+    def test_urls__ok(self):
+        url = filter_reverse('crime',
+                             [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
         chain = self._make_chain(url)
         self.assertEqual(url, chain.make_url())
 
-    @mock.patch('ebpub.streets.models.proper_city')
-    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
-    def test_urls__intersection(self, mock_geocode, mock_proper_city):
-        mock_proper_city.return_value = 'chicago'
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+    def test_urls__intersection(self):
+        url = urlresolvers.reverse(
+            'ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
         from ebpub.streets.models import Block, Intersection, BlockIntersection
         intersection = mock.Mock(spec=Intersection)
         blockintersection = mock.Mock(spec=BlockIntersection)
         blockintersection.block = Block.objects.get(street_slug='wabash-ave', from_num=216)
         intersection.blockintersection_set.all.return_value = [blockintersection]
-        mock_geocode.return_value = {'intersection': intersection,
-                                     'block': None}
+        self.mock_geocode.return_value = {'intersection': intersection,
+                                          'block': None}
         chain = self._make_chain(url)
         expected = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
         result = chain.make_url()
         self.assertEqual(result, expected)
 
-    @mock.patch('ebpub.streets.models.proper_city')
-    @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
-    def test_urls__bad_intersection(self, mock_geocode, mock_proper_city):
-        mock_proper_city.return_value = 'chicago'
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+    def test_urls__bad_intersection(self):
+        url = urlresolvers.reverse(
+            'ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
         from ebpub.streets.models import Block, Intersection, BlockIntersection
         intersection = mock.Mock(spec=Intersection)
         blockintersection = mock.Mock(spec=BlockIntersection)
         blockintersection.block = Block.objects.get(street_slug='wabash-ave', from_num=216)
-        mock_geocode.return_value = {'intersection': intersection,
-                                     'block': None}
+        self.mock_geocode.return_value = {'intersection': intersection,
+                                          'block': None}
 
         # Empty intersection list.
         intersection.blockintersection_set.all.return_value = []
         self.assertRaises(IndexError, self._make_chain, url)
 
         # Or, no block or intersection at all.
-        mock_geocode.return_value = {'intersection': None, 'block': None}
+        self.mock_geocode.return_value = {'intersection': None, 'block': None}
         self.assertRaises(NotImplementedError, self._make_chain, url)
 
 
-    # def test_normalize_filter_url__bad_address(self):
-    #     from ebpub.db.views import _schema_filter_normalize_url
-    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-    #     url += '?address=123+nowhere+at+all&radius=8'
+    def test_make_url__bad_address(self):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?address=anything'  # doesn't matter because of mock_geocode
 
-    #     request = RequestFactory().get(url)
-    #     self.assertRaises(BadAddressException,
-    #                       _schema_filter_normalize_url, request)
+        from ebpub.geocoder.parser.parsing import ParsingError
+        self.mock_geocode.side_effect = ParsingError()
+        self.assertRaises(BadAddressException, self._make_chain, url)
 
+        from ebpub.geocoder import GeocodingException
+        self.mock_geocode.side_effect = GeocodingException()
+        self.assertRaises(BadAddressException, self._make_chain, url)
 
-    # @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
-    # def test_normalize_filter_url__ambiguous_address(self, mock_geocode):
-    #     from ebpub.geocoder import AmbiguousResult
-    #     mock_geocode.side_effect = AmbiguousResult(['foo', 'bar'])
-    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-    #     url += '?address=anything' # doesn't matter because of mock_geocode
-    #     request = RequestFactory().get(url)
-    #     self.assertRaises(BadAddressException, _schema_filter_normalize_url, request)
+        from ebpub.geocoder import AmbiguousResult
+        self.mock_geocode.side_effect = AmbiguousResult(['foo', 'bar'])
+        self.assertRaises(BadAddressException, self._make_chain, url)
 
-    # @mock.patch('ebpub.db.views.SmartGeocoder.geocode')
-    # def test_normalize_filter_url__address_query(self, mock_geocode):
-    #     from ebpub.streets.models import Block
-    #     block = Block.objects.get(street_slug='wabash-ave', from_num=216)
-    #     mock_geocode.return_value = {
-    #         'city': block.left_city.title(),
-    #         'zip': block.left_zip,
-    #         'point': block.geom.centroid,
-    #         'state': block.left_state,
-    #         'intersection_id': None,
-    #         'address': u'216 N Wabash Ave',
-    #         'intersection': None,
-    #         'block': block,
-    #         }
-    #     from ebpub.db.views import _schema_filter_normalize_url
-    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-    #     url += '?address=216+n+wabash+st&radius=8'
+    def test_make_url__address_query(self):
+        from ebpub.streets.models import Block
+        block = Block.objects.get(street_slug='wabash-ave', from_num=216)
+        self.mock_geocode.return_value = {
+            'city': block.left_city.title(),
+            'zip': block.left_zip,
+            'point': block.geom.centroid,
+            'state': block.left_state,
+            'intersection_id': None,
+            'address': u'216 N Wabash Ave',
+            'intersection': None,
+            'block': block,
+            }
 
-    #     expected_url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8'),])
-    #     request = RequestFactory().get(url)
-    #     normalized_url = _schema_filter_normalize_url(request)
-    #     self.assertEqual(expected_url, normalized_url)
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?address=216+n+wabash+st&radius=8' # geocode result is mocked anyway.
 
-    # def test_normalize_filter_url__bad_dates(self):
-    #     from ebpub.db.views import BadDateException
-    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-    #     request = RequestFactory().get(url + '?start_date=12/31/1899&end_date=01/01/2011')
-    #     self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+        expected_url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
+        chain = self._make_chain(url)
+        self.assertEqual(expected_url, chain.make_url())
 
-    #     request = RequestFactory().get(url + '?start_date=01/01/2011&end_date=12/31/1899')
-    #     self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+    def test_make_url__bad_dates(self):
+        from ebpub.db.views import BadDateException
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        # Error if either date is way too old.
+        self.assertRaises(BadDateException, self._make_chain,
+                          url + '?start_date=12/31/1899&end_date=01/01/2011')
+        self.assertRaises(BadDateException, self._make_chain,
+                          url + '?start_date=01/01/2011&end_date=12/31/1899')
 
-    #     request = RequestFactory().get(url + '?start_date=Whoops&end_date=Bzorch')
-    #     self.assertRaises(BadDateException, _schema_filter_normalize_url, request)
+        # Error if either date is not a parseable date.
+        self.assertRaises(BadDateException, self._make_chain,
+                          url + '?start_date=Whoops&end_date=01/01/2011')
+        self.assertRaises(BadDateException, self._make_chain,
+                          url + '?start_date=01/01/2011&end_date=Bzorch')
 
 
-    # def test_normalize_filter_url__date_query(self):
-    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-    #     url += '?start_date=12/01/2010&end_date=01/01/2011'
-    #     request = RequestFactory().get(url)
-    #     result = _schema_filter_normalize_url(request)
-    #     expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
-    #     self.assertEqual(result, expected)
+    def test_make_url__date_query(self):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?start_date=12/01/2010&end_date=01/01/2011'
+        chain = self._make_chain(url)
+        expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
+        self.assertEqual(chain.make_url(), expected)
+
+    def test_make_url__no_such_schemafield(self):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?textsearch=foo&q=hello+goodbye'
+        self.assertRaises(models.SchemaField.DoesNotExist,
+                          self._make_chain, url)
+
+    def test_make_url__textsearch_query(self):
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url += '?textsearch=status&q=hello+goodbye'
+        chain = self._make_chain(url)
+        expected = filter_reverse('crime', [('by-status', 'hello goodbye')])
+        self.assertEqual(chain.make_url(), expected)
+
+    def test_make_url__both_args_and_query(self):
+        url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
+        url += '?textsearch=status&q=bar'
+        chain = self._make_chain(url)
+        expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
+                                            ('by-status', 'bar')])
+        self.assertEqual(chain.make_url(), expected)
 
 
-    # def test_normalize_filter_url__textsearch_query(self):
-    #     url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-    #     url += '?textsearch=foo&q=hello+goodbye'
-    #     request = RequestFactory().get(url)
-    #     result = _schema_filter_normalize_url(request)
-    #     expected = filter_reverse('crime', [('by-foo', 'hello goodbye')])
-    #     self.assertEqual(result, expected)
-
-    # def test_normalize_filter_url__both_args_and_query(self):
-    #     url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
-    #     url += '?textsearch=foo&q=bar'
-    #     request = RequestFactory().get(url)
-    #     result = _schema_filter_normalize_url(request)
-    #     expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
-    #                                         ('by-foo', 'bar')])
-    #     self.assertEqual(result, expected)
+    def test_make_url__preserves_other_query_params_sorted(self):
+        url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
+        url += '?textsearch=status&q=bar'
+        # Add some params that we don't know about.
+        url += '&B=no&A=yes'
+        chain = self._make_chain(url)
+        expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
+                                            ('by-status', 'bar')])
+        expected += '?A=yes&B=no'
+        self.assertEqual(chain.make_url(), expected)
 

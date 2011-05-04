@@ -18,15 +18,9 @@ Unit tests for db.views.
 from django.core import urlresolvers
 from django.test import TestCase
 from django.utils import simplejson
-
-from ebpub.db.urlresolvers import filter_reverse
-from ebpub.db.views import _schema_filter_normalize_url
-from ebpub.db.views import BadAddressException
-
 from ebpub.db import models
-
-# Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
-from client import RequestFactory
+from ebpub.db.urlresolvers import filter_reverse
+from ebpub.db.views import BadAddressException
 import mock
 import urllib
 
@@ -226,15 +220,11 @@ class TestSchemaFilterView(TestCase):
         self.assertNotContains(response, 'Hood 2')
         self.assertContains(response, 'Remove this filter')
 
+
     @mock.patch('ebpub.db.schemafilters.FilterChain.from_request')
-    @mock.patch('ebpub.db.schemafilters.FilterChain.make_url')
-    @mock.patch('ebpub.db.schemafilters.FilterChain.update_from_query_params')
-    def test_filter_by_bad_address(self, mock_update, mock_make_url, mock_from_request):
-        from ebpub.db import schemafilters
-        mock_update.side_effect = BadAddressException('123 somewhere', 3, ['foo', 'bar'])
-        mock_from_request.return_value = schemafilters.FilterChain()
+    def test_filter_by_bad_address(self, mock_from_request):
         url = filter_reverse('crime', [('by-foo', 'bar')]) + '?address=foofoo'
-        mock_make_url.return_value = url  # Avoid redirect.
+        mock_from_request.side_effect = BadAddressException('123 somewhere', 3, ['foo', 'bar'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template[0].name, 'db/filter_bad_address.html')
@@ -494,6 +484,7 @@ class TestSchemaFilterView(TestCase):
     @mock.patch('ebpub.db.views.FilterChain')
     def test_filter__pagination__has_more(self, mock_chain, mock_cluster):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
+        url += '?page=2'
         mock_cluster.return_value = {}
         # We can mock the FilterChain to get a very long list of NewsItems
         # without actually creating them in the db, but it means
@@ -503,7 +494,6 @@ class TestSchemaFilterView(TestCase):
         # TODO: this is pretty brittle.
         mock_chain.from_request.return_value = mock_chain
         mock_chain.normalized_clone.return_value = mock_chain
-
         mock_qs = mock.Mock()
         mock_chain.apply.return_value = mock_chain
         mock_chain.__contains__ = lambda self, other: False
@@ -518,7 +508,6 @@ class TestSchemaFilterView(TestCase):
         # Finally, here's our list of stuff.
         mock_qs.filter.return_value = [newsitem] * 100
 
-        url += '?page=2'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['has_next'], True)
