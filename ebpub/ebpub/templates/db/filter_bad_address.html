@@ -9,7 +9,6 @@
 	{% if address_choices %}
 		<ul>
 		{% for choice in address_choices %}
-			<!-- TODO: consistent URL generation, bug #69 -->
 			<li><a href="{% filter_url filters +'block' choice.block radius %}">{{ choice }}</a></li>
 		{% endfor %}
 		</ul>
