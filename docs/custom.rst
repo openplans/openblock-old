@@ -60,9 +60,7 @@ instructions, then the database creation command would simply be::
 Initializing the database(s) must be done in the right order::
 
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
-    $ django-admin.py syncdb --database=users
-    $ django-admin.py syncdb --database=metros
-    $ django-admin.py syncdb --database=default
+    $ django-admin.py syncdb --migrate
 
 
 To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::

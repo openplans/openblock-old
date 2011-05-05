@@ -1,1 +1,0 @@
-ALTER TABLE db_schemafield ALTER COLUMN schema_id SET STATISTICS 5;

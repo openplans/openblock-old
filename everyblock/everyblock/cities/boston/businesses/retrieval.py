@@ -89,12 +89,32 @@ class Scraper(NewsItemListDetailScraper):
             date = date + datetime.timedelta(days=1)
 
     def clean_list_record(self, record):
-        record['name'] = record['name'].strip()
-        record['business_type'] = record['business_type'].strip()
+        notes = []
+        notes_pats = [r'(?P<value>.*?)\s*\-*\s*(?P<notes>\(?\s*w\/d.*)',
+                      r'(?P<value>.*?)\s*\-*\s*(?P<notes>\(?\s*withd.*)', 
+                      r'(?P<value>.*?)\s*\-*\s*(?P<notes>\(?\s*ch\s+227\s+sec\s*5A.*)',
+                      r'(?P<value>.*?)\s*\-*\s*(?P<notes>\(?\s*ch\s+bus\s+.*)',
+                      r'(?P<value>.*?)\s*\-*\s*(?P<notes>\(?\s*c\/l.*)',
+                      ]
+
+        # strip notes off of several cruft-prone fields
+        for field in ['name', 'business_type', 'location']:
+            val = record.get(field, '').strip()
+            for pat in notes_pats: 
+                m = re.match(pat, val, re.I|re.M)
+                if m is not None: 
+                    results = m.groupdict()
+                    val = results['value']
+                    notes.append(results['notes'])
+            record[field] = val.strip()
+
+        record['notes'] = notes
         record['location'] = smart_title(record['location'].strip())
         record['date'] = parse_date(record['date'].strip(), '%Y-%m-%d')
         if (record['name'].upper(), record['location'].upper()) in BUSINESS_NAMES_TO_IGNORE:
-            raise SkipRecord('Skipping %s' % record['name'])
+            raise SkipRecord('Skipping %s (explicitly ignored)' % record['name'])
+        if (record['location'] == ''):
+            raise SkipRecord('Skipping %s (no location)' % record['name'])
         return record
 
     def existing_record(self, list_record):
@@ -114,7 +134,8 @@ class Scraper(NewsItemListDetailScraper):
         attributes = {
             'name': list_record['name'],
             'file_number': list_record['file_number'],
-            'business_type': business_type_lookup.id
+            'business_type': business_type_lookup.id,
+            'notes': ','.join(list_record['notes'])[0:255]
         }
         self.create_newsitem(
             attributes,

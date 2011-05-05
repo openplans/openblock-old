@@ -98,11 +98,15 @@ def install_gdal(options):
     package, if we need to install it.
     """
     try:
-        import gdal
+        import pkg_resources
+        gdal_req = pkg_resources.Requirement.parse("GDAL")
+        pkg_resources.get_distribution(gdal_req)
         # assume the version that's installed is good enough
+        print "pkg_resources found an existing GDAL install, using that."
         return
     except:
-        pass
+        print "pkg_resources didn't find an installed GDAL."
+
     libgdal_version = sh('gdal-config --version', capture=True)
     gdal_req = libgdal_version.split('.')
     gdal_req = '.'.join([gdal_req[0], str(int(gdal_req[1]) + 1)])
@@ -298,12 +302,17 @@ def sync_all(options):
     """
     settings_mod = "%s.settings" % options.app
     settings = get_app_settings(options)
-    for dbname in settings.DATABASE_SYNC_ORDER:
-        sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
+
+    sync_order = []
+    if hasattr(settings, 'DATABASE_SYNC_ORDER'):
+        sync_order = settings.DATABASE_SYNC_ORDER
+
+    for dbname in sync_order:
+        sh("django-admin.py syncdb --migrate --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
     for dbname in settings.DATABASES.keys():
-        if dbname not in settings.DATABASE_SYNC_ORDER:
-            sh("django-admin.py syncdb --settings=%s --database=%s --noinput" % (settings_mod, dbname))
+        if dbname not in sync_order:
+            sh("django-admin.py syncdb --migrate --settings=%s --database=%s --noinput" % (settings_mod, dbname))
 
 
 @task

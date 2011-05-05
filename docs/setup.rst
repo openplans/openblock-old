@@ -186,7 +186,13 @@ it has one. For example, on ubuntu::
 
     $ sudo apt-get install python-lxml
 
+(Note that if you want to take this approach, you *must not* run virtualenv
+with the ``--no-site-packages`` option, as that will prevent your
+virtualenv from being able to use this package.)
+
 If that works, you can skip to :ref:`gdal`.
+
+
 
 The slightly harder way
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -217,6 +223,10 @@ this will work::
 
    $ sudo apt-get install python-gdal
 
+(Note that if you want to take this approach, you *must not* run virtualenv
+with the ``--no-site-packages`` option, as that will prevent your
+virtualenv from being able to use this package.)
+
 If that works, you can skip to :ref:`next steps <postinstall>`.
 
 GDAL the hard way
@@ -242,11 +252,13 @@ this command::
 
 The output will be a version number like "1.6.3".  Your Python GDAL
 package version number needs to match the first two digits.  So if
-``gdal-config --version`` tells you "1.6.3", then you need a version
-of Python GDAL that's at least 1.6.0, but less than 1.7.  You can use
+``gdal-config --version`` tells you "1.6.3", then you would need a version
+of Python GDAL that's at least 1.6.0, but less than 1.7.  Or if
+gdal-config tells you that you have 1.7.0, then you would need version
+1.7.something of the  Python GDAL package.  You get the idea. You can use
 ``pip`` to find an appropriate version, like this::
 
-   $ pip install --no-install "GDAL>=1.6,<1.7a"
+   $ pip install --no-install "GDAL>=1.6,<1.7a"  # adjust version as needed
 
 Next, remove the bogus setup.cfg file, if any::
 
@@ -269,6 +281,20 @@ same command but looking for output beginning with ``-l``.  The
 correct value for ``--include-dirs`` can be determined by running
 ``gdal-config --cflags`` and looking for output beginning with ``-I``.
 
+Problems?
+~~~~~~~~~
+
+If you get an error like
+``/usr/include/gdal/ogr_p.h:94: fatal error: swq.h: No such file or directory``,
+that's because of a bug in GDAL.  (See
+http://trac.osgeo.org/gdal/ticket/3468 .)
+
+The workaround is to manually install swq.h in the same directory that
+contains ogr_p.h, typically somewhere like ``/usr/include/gdal``.  You
+can get swq.h for GDAL 1.7 here:
+http://svn.osgeo.org/gdal/branches/1.7/gdal/ogr/swq.h
+
+Then try the preceding ``setup.py build_ext`` command again.
 
 
 .. _postinstall:
@@ -289,3 +315,14 @@ Most people use apache and mod_wsgi for deploying Django apps.
 If you're deploying obdemo, there's a suitable wsgi script at
 obdemo/wsgi/obdemo.wsgi.  Otherwise, see
 http://docs.djangoproject.com/en/1.1/howto/deployment/modwsgi/
+
+Note on Virtual Hosting and Paths
+---------------------------------
+
+Currently (2011/04/20), OpenBlock's views and templates (in the ebpub
+package) contain a lot of hard-coded URLs that only work if the site
+is deployed at the root of your domain.
+
+In other words, you can deploy OpenBlock at http://example.com/ or
+http://openblock.example.com/ but you can't successfully deploy it at
+http://openexample.com/openblock.

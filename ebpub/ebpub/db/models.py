@@ -20,6 +20,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
 from django.db import connection, transaction
+from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
 
@@ -248,7 +249,7 @@ class LocationType(models.Model):
 
 class LocationManager(models.GeoManager):
     def get_by_natural_key(self, slug, location_type_slug):
-        return self.get(slug=slug, location_type__slug=slug)
+        return self.get(slug=slug, location_type__slug=location_type_slug)
 
 class Location(models.Model):
     name = models.CharField(max_length=255) # e.g., "35th Ward"
@@ -301,6 +302,35 @@ class Location(models.Model):
     def is_custom(self):
         return self.location_type.slug == 'custom'
 
+
+class LocationSynonymManager(models.Manager):
+    def get_canonical(self, name):
+        """
+        Returns the canonical normalized spelling of the given location name. 
+        If the given location name is already correctly spelled, then it's returned as-is.
+        """
+        try:
+            normalized_name = normalize(name)
+            return self.get(normalized_name=normalized_name).location.normalized_name
+        except self.model.DoesNotExist:
+            return normalized_name
+
+class LocationSynonym(models.Model):
+    """
+    represents a synonym for a Location
+    """
+    pretty_name = models.CharField(max_length=255)
+    normalized_name = models.CharField(max_length=255, db_index=True)
+    location = models.ForeignKey(Location)
+    objects = LocationSynonymManager()
+
+    def save(self):
+        if not self.normalized_name:
+            self.normalized_name = normalize(self.pretty_name)
+        super(LocationSynonym, self).save()
+
+    def __unicode__(self):
+        return self.pretty_name
 
 class AttributesDescriptor(object):
     """

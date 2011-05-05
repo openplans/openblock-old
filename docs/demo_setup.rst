@@ -196,10 +196,7 @@ specify all configured databases even if they all use the same
 database in settings.py. The users database has to come first::
 
     $ export DJANGO_SETTINGS_MODULE=obdemo.settings
-    $ django-admin.py syncdb --database=users
-    $ django-admin.py syncdb --database=metros
-    $ django-admin.py syncdb --database=default
-
+    $ django-admin.py syncdb --migrate
 
 
 Starting the Test Server

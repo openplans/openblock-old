@@ -80,15 +80,14 @@ class PerModelDBRouter:
     def allow_relation(self, obj1, obj2, **hints):
         # XXX should validate.
         return None
-        
+
     def allow_syncdb(self, db, model):
-        rdb = self._find_db(model)
-        
+        assigned_db_alias = self._find_db(model)
         # if there is an assigned db, only allow
         # it to be synced to the specific one.
-        if rdb is None:
-            if db in self.routes: 
+        if assigned_db_alias is None:
+            if db in self.routes:
                 return False
             else:
                 return None
-        return rdb == db
+        return assigned_db_alias == db

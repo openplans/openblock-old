@@ -24,7 +24,9 @@ from ebpub.db.models import NewsItem
 import datetime
 import math
 
-BASE_URL = 'https://seeclickfix.com/api/'
+#BASE_URL = 'https://seeclickfix.com/api/'
+# This one is load-balanced, as requested by the SeeClickFix guys.
+BASE_URL = 'http://seeclicktest.com/api/'
 FEED_URL = BASE_URL + 'issues.rss?at=Boston,+MA&sort=issues.created_at&direction=DESC'
 
 

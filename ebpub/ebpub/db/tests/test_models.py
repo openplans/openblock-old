@@ -70,7 +70,7 @@ class DatabaseExtensionsTestCase(TestCase):
         ni = NewsItem.objects.get(id=1)
         ni.attributes = {
             u'arrests': False,
-            u'beat_id': 214,
+            u'beat': 214,
             u'block_id': 25916,
             u'case_number': u'Hello',
             u'crime_date': datetime.date(2006, 9, 19),
@@ -167,7 +167,7 @@ class DatabaseExtensionsTestCase(TestCase):
         ni = NewsItem.objects.get(id=1)
         ni.attributes = {
             u'arrests': False,
-            u'beat_id': 214,
+            u'beat': 214,
             u'block_id': 25916,
             u'case_number': u'Hello',
             u'crime_date': datetime.date(2006, 9, 19),

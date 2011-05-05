@@ -28,6 +28,11 @@
   } else {
     {{ module }}.num_geom = 1;
   };
+  // XXX FIXME when saving a feature that's a GeometryCollection,
+  // either on edit or on initial creation,
+  // this sets the wkt blank with no points, like GEOMETRY( ),
+  // which gives a GEOS validation error from the python side.
+  // see openlayers bug http://trac.osgeo.org/openlayers/ticket/2240
   document.getElementById('{{ id }}').value = {{ module }}.get_ewkt(feat);
 };
 {{ module }}.add_wkt = function(event){
@@ -36,7 +41,7 @@
   if ({{ module }}.is_collection){
     var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.{{ geom_type }}());
     for (var i = 0; i < {{ module }}.layers.vector.features.length; i++){
-      feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
+      feat.geometry.addComponents({{ module }}.layers.vector.features[i].geometry.components);
     }
     {{ module }}.write_wkt(feat);
   } else {
@@ -59,7 +64,7 @@
       // vector layer so we only increment to the `num_geom` value.
       var feat = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.{{ geom_type }}());
       for (var i = 0; i < {{ module }}.num_geom; i++){
-	feat.geometry.addComponents([{{ module }}.layers.vector.features[i].geometry]);
+	feat.geometry.addComponents({{ module }}.layers.vector.features[i].geometry.components);
       }
       {{ module }}.write_wkt(feat);
     }

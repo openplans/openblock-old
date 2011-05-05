@@ -1,0 +1,229 @@
+[
+  {
+    "fields": {
+      "last_updated": "2011-04-12", 
+      "intro": "", 
+      "update_frequency": "", 
+      "has_newsitem_detail": true, 
+      "grab_bag_headline": "", 
+      "short_source": "", 
+      "slug": "open311-service-requests", 
+      "source": "", 
+      "date_name": "Date", 
+      "short_description": "", 
+      "grab_bag": "", 
+      "is_special_report": false, 
+      "importance": 0, 
+      "min_date": "2008-01-01", 
+      "allow_charting": false, 
+      "indefinite_article": "an", 
+      "is_public": true, 
+      "number_in_overview": 5, 
+      "date_name_plural": "Dates", 
+      "plural_name": "Open311 Service Requests", 
+      "name": "Open311 Service Request", 
+      "uses_attributes_in_list": false, 
+      "summary": "", 
+      "can_collapse": false
+    }, 
+    "model": "db.schema"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Address IDs", 
+      "is_charted": false, 
+      "name": "address_id", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar03", 
+      "pretty_name": "Address ID", 
+      "is_filter": false, 
+      "display": false, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Expected Completion Dates", 
+      "is_charted": false, 
+      "name": "expected_datetime", 
+      "display_order": 4, 
+      "is_searchable": false, 
+      "real_name": "datetime02", 
+      "pretty_name": "Expected Completion Date", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Media URLs", 
+      "is_charted": false, 
+      "name": "media_url", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar04", 
+      "pretty_name": "Media URL", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Request IDs", 
+      "is_charted": false, 
+      "name": "service_request_id", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar01", 
+      "pretty_name": "Request ID", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Request Times", 
+      "is_charted": false, 
+      "name": "requested_datetime", 
+      "display_order": 5, 
+      "is_searchable": false, 
+      "real_name": "datetime01", 
+      "pretty_name": "Request Time", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": true, 
+      "pretty_name_plural": "Responsible Agencies", 
+      "is_charted": false, 
+      "name": "agency_responsible", 
+      "display_order": 6, 
+      "is_searchable": false, 
+      "real_name": "int02", 
+      "pretty_name": "Responsible Agency", 
+      "is_filter": true, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Service Codes", 
+      "is_charted": false, 
+      "name": "service_code", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar02", 
+      "pretty_name": "Service Code", 
+      "is_filter": false, 
+      "display": false, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": true, 
+      "pretty_name_plural": "Service Names", 
+      "is_charted": false, 
+      "name": "service_name", 
+      "display_order": 1, 
+      "is_searchable": false, 
+      "real_name": "int01", 
+      "pretty_name": "Service Name", 
+      "is_filter": true, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Service Notices", 
+      "is_charted": false, 
+      "name": "service_notice", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "text01", 
+      "pretty_name": "Service Notice", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": true, 
+      "pretty_name_plural": "Statuses", 
+      "is_charted": false, 
+      "name": "status", 
+      "display_order": 2, 
+      "is_searchable": false, 
+      "real_name": "int03", 
+      "pretty_name": "Status", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Status Notes", 
+      "is_charted": false, 
+      "name": "status_notes", 
+      "display_order": 3, 
+      "is_searchable": false, 
+      "real_name": "varchar05", 
+      "pretty_name": "Status Notes", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "open311-service-requests"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }
+]

@@ -2,6 +2,11 @@
 #
 #   This file is part of ebpub
 #
+#   ebpub is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
 #   ebpub is distributed in the hope that it will be useful,
 #   but WITHOUT ANY WARRANTY; without even the implied warranty of
 #   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -21,6 +26,7 @@ from django.utils import simplejson
 from ebpub.db import models
 from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.views import BadAddressException
+import datetime
 import mock
 import urllib
 
@@ -88,7 +94,6 @@ class LocationDetailTestCase(TestCase):
 
     @mock.patch('ebpub.db.views.today')
     def test_location_timeline(self, mock_today):
-        import datetime
         mock_today.return_value = datetime.date(2006, 9, 26)
         url = urlresolvers.reverse('ebpub-place-timeline',
                                    args=['neighborhoods', 'hood-1'])
@@ -515,4 +520,3 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['has_next'], True)
         self.assertEqual(response.context['has_previous'], True)
-

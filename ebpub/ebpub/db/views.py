@@ -60,6 +60,7 @@ from ebpub.utils.view_utils import has_staff_cookie
 import datetime
 import hashlib
 import logging
+import operator
 import re
 
 logger = logging.getLogger('ebpub.db.views')
@@ -573,15 +574,10 @@ def schema_detail(request, slug):
 
         location_chartfield_list = []
 
-        unknowns = AggregateLocation.objects.filter(
-                schema__id=s.id,
-                location__slug='unknown').select_related('location')
-        unknown_dict = dict([(u.location_type_id, u.total) for u in unknowns])
-
         # Populate location_chartfield_list.
         for lt in location_type_list:
             # Collect the locations in the location_type here so we don't have
-            # to query them again when grouping them with the newsitem totals
+            # to query them again in the select_related() below.
             locations = dict([(loc.id, loc) for loc in lt.location_set.iterator()])
 
             ni_totals = AggregateLocation.objects.filter(
@@ -589,8 +585,10 @@ def schema_detail(request, slug):
                 location_type__id=lt.id,
                 location__is_public=True).select_related('location').order_by('-total')
 
-            if ni_totals:
-                location_chartfield_list.append({'location_type': lt, 'locations': ni_totals[:9], 'unknown': unknown_dict.get(lt.id, 0)})
+            if ni_totals:  # This runs the query.
+                known_count = reduce(operator.add, (n.total for n in ni_totals))
+                unknown_count = date_chart['total_count'] - known_count
+                location_chartfield_list.append({'location_type': lt, 'locations': ni_totals[:9], 'unknown': unknown_count})
         ni_list = ()
     else:
 

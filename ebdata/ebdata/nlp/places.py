@@ -17,8 +17,8 @@
 #
 
 import re
-from ebpub.db.models import Location
-from ebpub.streets.models import Place, Misspelling
+from ebpub.db.models import Location, LocationSynonym
+from ebpub.streets.models import Place, PlaceSynonym
 
 def phrase_tagger(phrases, pre='<span>', post='</span>'):
     # Sort the phrases and then reverse them so, for example, Lake View East
@@ -57,10 +57,11 @@ def phrase_tagger(phrases, pre='<span>', post='</span>'):
 
 def place_tagger(pre='<addr>', post='</addr>'):
     phrases = [p['pretty_name'] for p in Place.objects.values('pretty_name').order_by('-pretty_name')]
-    return phrase_tagger(phrases, pre, post)
+    synonyms = [m['pretty_name'] for m in PlaceSynonym.objects.values('pretty_name').order_by('-pretty_name')]
+    return phrase_tagger(phrases + synonyms, pre, post)
 
 def location_tagger(pre='<addr>', post='</addr>'):
     location_qs = Location.objects.values('name').order_by('-name').exclude(location_type__slug__in=('boroughs', 'cities'))
     locations = [p['name'] for p in location_qs]
-    misspellings = [m['incorrect'] for m in Misspelling.objects.values('incorrect').order_by('-incorrect')]
-    return phrase_tagger(locations + misspellings, pre, post)
+    synonyms = [m['pretty_name'] for m in LocationSynonym.objects.values('pretty_name').order_by('-pretty_name')]
+    return phrase_tagger(locations + synonyms, pre, post)

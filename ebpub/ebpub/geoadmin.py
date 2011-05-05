@@ -37,12 +37,19 @@ See http://docs.djangoproject.com/en/dev/ref/contrib/gis/admin/
 
 class OBOpenLayersWidget(OpenLayersWidget):
     """
-    Renders an OpenLayers map using the WKT of the geometry.
+    Returns OpenLayers map javascript using the WKT of the geometry.
 
     OVERRIDING FOR OPENBLOCK: This subclass has patched methods as per
     http://code.djangoproject.com/attachment/ticket/9806/9806.3.diff
     and we can delete it if/when
     http://code.djangoproject.com/ticket/9806 gets fixed.
+
+    Or not. This is hacked to avoid telling the JS to use
+    GeometryCollection, because openlayers can't convert those to WKT;
+    see http://trac.osgeo.org/openlayers/ticket/2240
+
+    So, GeometryCollections suck for OpenLayers, and suck for PostGIS.
+    Let's avoid them on both sides.
     """
     def render(self, name, value, attrs=None):
         # Update the template parameters with any attributes passed in.
@@ -110,14 +117,17 @@ class OBOpenLayersWidget(OpenLayersWidget):
                 elif value.geom_type.upper() == 'GEOMETRYCOLLECTION':
                     self.params['is_collection'] = True
                     self.params['collection_type'] = 'Any'
-                    self.params['geom_type'] = 'Collection'
-
+                    # Avoid 'Collection', see http://trac.osgeo.org/openlayers/ticket/2240
+                    #self.params['geom_type'] = 'Collection'
+                    self.params['geom_type'] = OGRGeomType('POLYGON')
 
         else:
             # No value.
             if self.params['is_unknown']:
                 # If the geometry is unknown and the value is not set, make it as flexible as possible.
-                self.params['geom_type'] = 'Collection' #OGRGeomType('GEOMETRYCOLLECTION')
+                # But again, due to http://trac.osgeo.org/openlayers/ticket/2240
+                # we can't safely use Collection.
+                self.params['geom_type'] = OGRGeomType('POLYGON') #'Collection'
                 self.params['is_collection']=True
                 self.params['collection_type'] = 'Any'
 
@@ -144,8 +154,7 @@ class OSMModelAdmin(admin.GeoModelAdmin):
     widget = OBOpenLayersWidget
     # Upstream patch for geodjango submitted:
     # http://code.djangoproject.com/ticket/14886 ... to allow passing
-    # parameters to the WMS layer constructor.  If/when that's fixed,
-    # we could remove our copy of openlayers.js.
+    # parameters to the WMS layer constructor.
     wms_options = {'format': 'image/png'}
 
     @property
@@ -167,33 +176,39 @@ class OSMModelAdmin(admin.GeoModelAdmin):
         http://code.djangoproject.com/attachment/ticket/9806/9806.3.diff
         and we can maybe delete it if/when
         http://code.djangoproject.com/ticket/9806 gets fixed.
+        ... Or not: actually we want to disable GEOMETRYCOLLECTIONs
+        entirely, due to bug #95, and I'm not sure if that's
+        appropriate to submit upstream or not.
         """
 
         # Note that db_field.geom_type is an UPPERCASE name, while
-        # OGRGeomType(foo) is a CamelCase name.
-        is_unknown = db_field.geom_type in ('GEOMETRY',)
+        # OGRGeomType(foo) yields a CamelCase name.
+        geom_type = db_field.geom_type.upper()
+        is_unknown = geom_type in ('GEOMETRY',)
         if not is_unknown:
             #If it is not generic, get the parameters from the db_field.
-            is_collection = db_field.geom_type in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION')
+            is_collection = geom_type in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION')
             if is_collection:
-                if db_field.geom_type == 'GEOMETRYCOLLECTION':
-                    collection_type = 'Any'
-                else:
-                    collection_type = OGRGeomType(db_field.geom_type.replace('MULTI', ''))
+                if geom_type == 'GEOMETRYCOLLECTION':
+                    # Workaround for #95: Use MultiPolygon instead of GeometryCollection.
+                    geom_type = 'MULTIPOLYGON'
+                collection_type = OGRGeomType(geom_type.replace('MULTI', ''))
             else:
                 collection_type = 'None'
-            is_linestring = db_field.geom_type in ('LINESTRING', 'MULTILINESTRING')
-            is_polygon = db_field.geom_type in ('POLYGON', 'MULTIPOLYGON')
-            is_point = db_field.geom_type in ('POINT', 'MULTIPOINT')
-            openlayers_geom_type = OGRGeomType(db_field.geom_type)
+            is_linestring = geom_type in ('LINESTRING', 'MULTILINESTRING')
+            is_polygon = geom_type in ('POLYGON', 'MULTIPOLYGON')
+            is_point = geom_type in ('POINT', 'MULTIPOINT')
+            openlayers_geom_type = OGRGeomType(geom_type)
         else:
             #If it is generic, set sensible defaults.
+            #We've decided this will be MultiPolygon.
             is_collection = True
-            collection_type = 'Any'
+            collection_type = 'Polygon'
             is_linestring = False
-            is_polygon = False
+            is_polygon = True
             is_point = False
-            openlayers_geom_type = OGRGeomType('Unknown')
+
+        openlayers_geom_type = OGRGeomType(geom_type.upper())
 
         class OLMap(self.widget):
             template = self.map_template
@@ -212,7 +227,7 @@ class OSMModelAdmin(admin.GeoModelAdmin):
                       'display_srid' : self.display_srid,
                       'display_wkt' : self.debug or self.display_wkt,
                       'field_name' : db_field.name,
-                      'geom_type' : openlayers_geom_type,
+                      'geom_type' : openlayers_geom_type,  # a camel-case name for use as an OpenLayers constructor.
                       'is_collection' : is_collection,
                       'is_linestring' : is_linestring,
                       'is_point' : is_point,
