@@ -609,12 +609,10 @@ class NewsItem(models.Model):
         return 'http://%s%s' % (settings.EB_DOMAIN, self.item_url())
 
     def item_date_url(self):
-        year = self.item_date.year
-        month = self.item_date.month
-        day = self.item_date.day
-        slug = self.schema.slug
-        # TODO: factor out URL generation. #69
-        return '/%(slug)s/filter/by-date=%(year)s-%(month)s-%(day)s,%(year)s-%(month)s-%(day)s/' % locals()
+        from ebpub.db.schemafilters import FilterChain
+        chain = FilterChain(schema=self.schema)
+        chain.add('date', self.item_date)
+        return chain.make_url()
 
     def location_url(self):
         if self.location_object_id is not None:
