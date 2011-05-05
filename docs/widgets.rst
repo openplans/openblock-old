@@ -157,16 +157,16 @@ No matter how it is accessed, each attribute houses the data and metadata about 
 ==================== ============================================================
     Field			    Meaning
 -------------------- ------------------------------------------------------------
-  attribute.name       unique identifier of the attribute.  This is the same as 
-                       the name used in attributes_by_name, eg "crime_code"
+  attribute.name       Unique identifier of the attribute.  This is the same as
+                       the name used in attributes_by_name, eg "crime_code".
 -------------------- ------------------------------------------------------------
-  attribute.title      human readable title of the attribute, eg "Crime Code"
+  attribute.title      Human readable title of the attribute, eg "Crime Code".
 -------------------- ------------------------------------------------------------
-  attribute.is_list    true if the attribute's value is a list of values, eg 
+  attribute.is_list    True if the attribute's value is a list of values, eg
                        a list of codes or violations.
 -------------------- ------------------------------------------------------------
-  attribute.value      the value of the attribute.  This may be a list in
-                       some cases, which can be tested via the is_list field
+  attribute.value      The value of the attribute.  This may be a list in
+                       some cases, which can be tested via the is_list field.
 ==================== ============================================================
 
 
