@@ -17,54 +17,24 @@
 #
 
 """
-Use cases:
+API that abstracts filtering NewsItems by various criteria.
+Features:
 
-  1. Generate a chain of filters, given view arguments and/or query
-     string.  - DONE
-
-  2. Generate reverse urls, complete with query string (if we use them),
-     given one or more filters.
-
-     a. For schema_filter() html view - DONE
-
-     b. For REST API views  - TODO
+* validation of filter parameters.
+* detecting when more user input is needed, so views can provide a
+  disambiguation UI.
+* consistent normalized URLs and breadcrumbs.
 
 
-Chain of filters needs to support:
+TODO:
+ *  generate URLs for the REST API too?
 
-  1. Add a filter to the chain, by name. - DONE
-
-  2. Remove a filter from the chain, by name  - DONE
-
-  3. get a filter from the chain, by name - DONE
-
-  4. raise Http404() if conflicting filters are added (eg. two date
-     filters) - or raise a custom exception which wrapper views can
-     handle however they like. - DONE
-
-  5. OPTIMIZATION: normalize the order of filters by increasing
-     expense - DONE
-
-     TODO: ... except for the hard part of testing which order
-     is actualy optimal.  Currently guessing it to be: schema, date,
-     non-lookup attrs, block/location, lookup attrs, text search.
-     This will need profiling with lots of test data.
-
-  6. SEO and CACHEABILITY: Redirect to a normalized form of the URL
-     for better cacheability. - DONE but needs refactoring
-
-  7. copy() a filter chain - useful for making mutated variations,
-     which could be used with our reverse() to create "remove
-     this filter" links in the UI. - DONE
-
-  8. get a list of breadcrumb links for the whole chain.
-
-     DONE
-
+ *  profile optimal order of filters for normalized_clone?
+    Currently guessing it should be something like:
+    schema, date, non-lookup attrs, block/location, lookup attrs, text search.
+    This will need profiling with lots of test data.
 """
 
-
-from django.shortcuts import get_object_or_404
 from django.utils import dateformat
 from django.utils.datastructures import SortedDict
 from ebpub.db import constants
