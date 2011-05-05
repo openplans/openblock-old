@@ -94,6 +94,8 @@ class NewsitemFilter(object):
         Location filter but no location was specified, then return a
         dict of stuff for putting in a template context.
 
+        If we have enough information, returns an empty dict.
+
         ... or maybe should be something more generic across both REST
         and UI views
         """

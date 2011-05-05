@@ -81,13 +81,6 @@ def make_pid(place, block_radius=None):
         raise ValueError("Wrong place type %s, expected Location or Block" % place)
 
 
-def radius_from_slug(slug):
-    """Extract radius from a string like 8-blocks, 1-block, ..."""
-    slug = unicode(slug)
-    radius = slug.split('-')[0]
-    assert radius.isdigit()
-    return radius
-
 def has_staff_cookie(request):
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
 
