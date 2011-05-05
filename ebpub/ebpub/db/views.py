@@ -692,24 +692,25 @@ def schema_filter(request, slug, args_from_url):
 
     # Break apart the URL to determine what filters to apply.
     try:
-        filterchain = FilterChain.from_request(request, context, args_from_url, filter_sf_dict)
-        filterchain = filterchain.normalized_clone()  # Optimal filter order.
-        filters_need_more = filterchain.validate()
+        context['filters'] = FilterChain.from_request(request, context, args_from_url, filter_sf_dict)
+        context['filters'] = context['filters'].normalized_clone()  # Optimal filter order.
+        filters_need_more = context['filters'].validate()
     except FilterError, e:
         if getattr(e, 'url', None) is not None:
             return HttpResponseRedirect(e.url)
         raise Http404(str(e))
     except BadAddressException, e:
-        return eb_render(request, 'db/filter_bad_address.html', {
+        context.update({
                 'address_choices': e.address_choices,
                 'address': e.address,
                 'radius': e.block_radius,
                 'radius_slug': e.radius_slug,
                 })
+        context.setdefault('filters', FilterChain(request=request, context=context,
+                                                  schema=s))
+        return eb_render(request, 'db/filter_bad_address.html', context)
     except BadDateException, e:
         raise Http404('<h1>%s</h1>' % str(e))
-
-    context['filters'] = filterchain
 
     if filters_need_more:
         # Show a page to select the unspecified value.
@@ -717,6 +718,7 @@ def schema_filter(request, slug, args_from_url):
         return eb_render(request, 'db/filter_lookup_list.html', context)
 
     # Normalize the URL, and redirect if we're not already there.
+    filterchain = context['filters']
     new_url = filterchain.make_url()
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)

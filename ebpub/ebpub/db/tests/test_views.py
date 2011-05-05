@@ -222,9 +222,12 @@ class TestSchemaFilterView(TestCase):
 
 
     @mock.patch('ebpub.db.schemafilters.FilterChain.from_request')
-    def test_filter_by_bad_address(self, mock_from_request):
+    def test_filter_by_ambiguous_address(self, mock_from_request):
         url = filter_reverse('crime', [('by-foo', 'bar')]) + '?address=foofoo'
-        mock_from_request.side_effect = BadAddressException('123 somewhere', 3, ['foo', 'bar'])
+        mock_result = {'address': 'foofoo', 'block': mock.Mock()}
+        mock_result['block'].url = '/foofoo/'
+        mock_from_request.side_effect = BadAddressException('123 somewhere', 3, 
+                                                            [mock_result, mock_result])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template[0].name, 'db/filter_bad_address.html')
