@@ -21,7 +21,7 @@ Subversion. Django 1.1 should work as well.
 Quickstart
 ==========
 
-0. Install Django, PostgreSQL, and psycopg2. *(Does it really require postgres or would it work with other back ends?  Unknown.)*
+0. Install Django, PostgreSQL, and psycopg2.
 
 1. Install the ebwiki package by putting it on your Python path.
 
