@@ -151,7 +151,7 @@ def _radius_filter(query, params, state):
         lon, lat = [float(x.strip()) for x in center.split(',')]
         center = geos.Point(lon, lat, srid=4326)
     except ValueError:
-        raise Queryerror('Invalid center point "%s"' % center)
+        raise QueryError('Invalid center point "%s"' % center)
         
     try:
         radius = float(radius)
