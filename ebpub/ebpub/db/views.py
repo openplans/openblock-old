@@ -56,7 +56,6 @@ from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
 from ebpub.utils.view_utils import has_staff_cookie
-from ebpub.utils.view_utils import radius_urlfragment
 
 import datetime
 import hashlib
@@ -705,7 +704,7 @@ def schema_filter(request, slug, args_from_url):
                 'address_choices': e.address_choices,
                 'address': e.address,
                 'radius': e.block_radius,
-                'radius_url': radius_urlfragment(e.block_radius),
+                'radius_slug': e.radius_slug,
                 })
     except BadDateException, e:
         raise Http404('<h1>%s</h1>' % str(e))

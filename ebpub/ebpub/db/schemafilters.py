@@ -61,9 +61,6 @@ from ebpub.metros.allmetros import get_metro
 from ebpub.utils.dates import parse_date
 from ebpub.utils.view_utils import has_staff_cookie
 from ebpub.utils.view_utils import parse_pid
-from ebpub.utils.view_utils import radius_from_urlfragment
-from ebpub.utils.view_utils import radius_url
-from ebpub.utils.view_utils import radius_urlfragment
 
 import calendar
 import datetime
@@ -377,7 +374,7 @@ class BlockFilter(NewsitemFilter):
         self.value = value
         self.url = 'streets=%s,%s%s,%s' % (block.street_slug,
                                          block.number(), block.dir_url_bit(),
-                                         radius_urlfragment(self.block_radius))
+                                         radius_slug(self.block_radius))
         self.location_name = block.pretty_name
 
 
@@ -400,9 +397,10 @@ class BlockFilter(NewsitemFilter):
                 raise FilterError("not enough args")
 
         try:
-            self.block_radius = radius_from_urlfragment(args.pop(0))
+            block_radius = args.pop(0)
+            self.block_radius = radius_from_slug(block_radius)
         except (TypeError, ValueError):
-            raise FilterError('bad radius %r' % self.block_radius)
+            raise FilterError('bad radius %r' % block_radius)
         except IndexError:
             self.block_radius = context.get('block_radius')
             if self.block_radius is None:
@@ -412,7 +410,10 @@ class BlockFilter(NewsitemFilter):
                 # redirect URL is tailored only for the schema_filter
                 # view.
                 xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                raise FilterError('missing radius', url=radius_url(request.path, block_radius))
+                radius_url = u'%s,%s/' % (request.path.rstrip('/'),
+                                          radius_slug(block_radius))
+                raise FilterError('missing radius', url=radius_url)
+
         if 'block' in kwargs:
             # needs block_radius to already be there.
             self._update_block(kwargs['block'])
@@ -971,6 +972,25 @@ class BadAddressException(Exception):
         self.block_radius = block_radius
         self.address_choices = address_choices
         self.message = message
+        self.radius_slug = radius_slug(block_radius)
+
 
 class BadDateException(Exception):
     pass
+
+
+# Block radius utility functions.
+# Moved here because nothing else was using them.
+
+def radius_slug(radius):
+    """Return radius string like 8-blocks, 1-block ..."""
+    radius = unicode(radius)
+    return u'%s-block%s' % (radius, radius != '1' and 's' or '')
+
+def radius_from_slug(slug):
+    """Extract radius from a string like 8-blocks, 1-block, ..."""
+    slug = unicode(slug)
+    radius = slug.split('-')[0]
+    assert radius.isdigit()
+    return radius
+

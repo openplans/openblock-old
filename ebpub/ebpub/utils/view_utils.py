@@ -81,25 +81,12 @@ def make_pid(place, block_radius=None):
         raise ValueError("Wrong place type %s, expected Location or Block" % place)
 
 
-
-def radius_urlfragment(radius):
-    """Return radius string like 8-blocks, 1-block ..."""
-    # XXX this should be done consistently with other filter url generation. #69
-    radius = unicode(radius)
-    return u'%s-block%s' % (radius, radius != '1' and 's' or '')
-
-def radius_from_urlfragment(radius):
+def radius_from_slug(slug):
     """Extract radius from a string like 8-blocks, 1-block, ..."""
-    radius = unicode(radius)
-    return radius.split('-')[0]
-
-def radius_url(url, radius):
-    """add a block radius to the url.
-    url is assumed to already end in a path segment that specifies a block.
-    """
-    # XXX this should be done consistently with other filter url generation. #69
-    radius = unicode(radius)
-    return u'%s,%s/' % (url.rstrip('/'), radius_urlfragment(radius))
+    slug = unicode(slug)
+    radius = slug.split('-')[0]
+    assert radius.isdigit()
+    return radius
 
 def has_staff_cookie(request):
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
