@@ -61,6 +61,9 @@ logger = logging.getLogger('ebpub.db.schemafilters')
 
 class NewsitemFilter(object):
 
+    """
+    Base class for filtering NewsItems.
+    """
     _sort_value = 100.0
 
     # Various attributes used for URL construction, breadcrumbs,
@@ -112,6 +115,11 @@ class NewsitemFilter(object):
 
 
 class FilterError(Exception):
+    """
+    All-purpose exception for invalid filter parameters and the like.
+
+    If self.url is set, it may be used for redirection.
+    """
     def __init__(self, msg, url=None):
         self.msg = msg
         self.url = url
@@ -121,7 +129,9 @@ class FilterError(Exception):
 
 
 class SchemaFilter(NewsitemFilter):
-
+    """
+    Filters by NewsItem.schema.
+    """
     _sort_value = -9999
     name = 'schema'
     url = None
@@ -141,7 +151,8 @@ class SchemaFilter(NewsitemFilter):
 
 class AttributeFilter(NewsitemFilter):
 
-    """base class for more specific types of attribute filters
+    """
+    Base class for more specific types of attribute filters
     (LookupFilter, TextSearchFilter, etc).
     """
 
@@ -199,6 +210,10 @@ class TextSearchFilter(AttributeFilter):
 
 class BoolFilter(AttributeFilter):
 
+    """
+    Filters on boolean attributes.
+    """
+
     _sort_value = 100.0
 
     def __init__(self, request, context, queryset, *args, **kwargs):
@@ -235,6 +250,9 @@ class BoolFilter(AttributeFilter):
 
 
 class LookupFilter(AttributeFilter):
+    """
+    Filters on Lookup attributes (see ebpub.db.models for more info).
+    """
 
     _sort_value = 900.0
 
@@ -276,6 +294,10 @@ class LookupFilter(AttributeFilter):
 
 
 class LocationFilter(NewsitemFilter):
+
+    """
+    Filters on intersecting ebpub.db.models.Location.
+    """
 
     _sort_value = 200.0
 
@@ -346,6 +368,9 @@ class LocationFilter(NewsitemFilter):
 
 class BlockFilter(NewsitemFilter):
 
+    """
+    Filters on intersecting ebpub.streets.models.Block.
+    """
     name = 'location'
 
     _sort_value = 200.0
@@ -435,6 +460,9 @@ class BlockFilter(NewsitemFilter):
 
 class DateFilter(NewsitemFilter):
 
+    """Filters on NewsItem.item_date.
+    """
+
     name = 'date'
     date_field_name = 'item_date'
     argname = 'by-date'  # XXX this doesn't feel like it belongs here.
@@ -490,6 +518,10 @@ class DateFilter(NewsitemFilter):
 
 class PubDateFilter(DateFilter):
 
+    """
+    Filters on NewsItem.pub_date.
+    """
+
     argname = 'by-pub-date'
     date_field_name = 'pub_date'
 
@@ -501,9 +533,21 @@ class PubDateFilter(DateFilter):
 
 
 class DuplicateFilterError(FilterError):
+    """
+    Raised if we try to add conflicting filters to a FilterChain.
+    """
     pass
 
 class FilterChain(SortedDict):
+
+    """
+    A set of NewsitemFilters, to be applied in a predictable order.
+
+    The from_request() constructor can be used to create one
+    based on the request URL.
+
+    Also handles URL generation.
+    """
 
     _base_url = ''
     schema = None
@@ -624,6 +668,15 @@ class FilterChain(SortedDict):
         return chain
 
     def update_from_query_params(self, request):
+        """
+        Update the filters based on query parameters.
+
+        After this is called, it's recommended to redirect
+        to a normalized form of the URL, eg. self.normalized_clone().make_url().
+
+        This takes care to preserve query parameters that aren't used
+        by any of the NewsitemFilters.
+        """
         # Make a mutable copy so we can leave only the params that FilterChain
         # doesn't know about.
         params = request.GET.copy()
