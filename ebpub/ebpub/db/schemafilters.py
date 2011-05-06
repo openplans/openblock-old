@@ -313,6 +313,7 @@ class LocationFilter(NewsitemFilter):
             if 'location_type' in kwargs:
                 self.location_type = kwargs['location_type']
                 self.location_type_slug = self.location_type.slug
+                self.label = self.location_type.name
             else:
                 if not args:
                     raise FilterError("not enough args")
@@ -562,7 +563,7 @@ class FilterChain(SortedDict):
             # We do this to force our __setitem__ to get called
             # so it will raise error on dupes.
             self.update(data)
-        self.lookup_descriptions = []
+        self.lookup_descriptions = []  # Blurbs for templates.
         self.schema = schema
         if schema:
             self.add('schema', SchemaFilter(request, context, queryset, schema=schema))
@@ -589,9 +590,9 @@ class FilterChain(SortedDict):
     @classmethod
     def from_request(klass, request, context, argstring, filter_sf_dict):
         """Alternate constructor that populates the list of filters
-        based on parameters.
+        based on the path and/or query string.
 
-        argstring is a string describing the filters (or None, in the case of
+        argstring is a path describing the filters (or None, in the case of
         "/filter/").
         """
         # TODO: can we remove some args now that we're not using
@@ -599,7 +600,7 @@ class FilterChain(SortedDict):
         argstring = urllib.unquote((argstring or '').rstrip('/'))
         argstring = argstring.replace('+', ' ')
         args = []
-        chain = klass(schema=context['schema'], request=request, context=context)
+        chain = klass(schema=context.get('schema'), request=request, context=context)
 
         if argstring and argstring != 'filter':
             for arg in argstring.split(';'):
@@ -640,23 +641,7 @@ class FilterChain(SortedDict):
                 except KeyError:
                     # XXX this will be a confusing error if we already popped it.
                     raise FilterError('Invalid SchemaField slug %r' % sf_slug)
-                # Lookup filtering
-                if sf.is_lookup:
-                    lookup_filter = LookupFilter(request, context, qs, *argvalues,
-                                                 schemafield=sf)
-                    chain[sf.name] = lookup_filter
-                    if lookup_filter.look is not None:
-                        chain.lookup_descriptions.append(lookup_filter.look)
-
-                # Boolean attr filtering.
-                elif sf.is_type('bool'):
-                    chain[sf.name] = BoolFilter(request, context, qs,
-                                                *argvalues, schemafield=sf)
-
-                # Text-search attribute filter.
-                else:
-                    chain[sf.name] = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
-            # END OF ATTRIBUTE FILTERING
+                chain.add_by_schemafield(sf, *argvalues, _replace=True)
 
             else:
                 raise FilterError('Invalid filter type')
@@ -807,18 +792,15 @@ class FilterChain(SortedDict):
 
 
     def add(self, key, *values, **kwargs):
-        """Given a string key or SchemaField, construct an appropriate
-        NewsitemFilter with the values as arguments, and save it as
-        self[key], where key is either the string key or derived
-        automatically from the arguments.
+        """Given a string key, or a SchemaField, construct an
+        appropriate NewsitemFilter with the values as arguments, and
+        save it as self[key], where key is either the string key or
+        derived automatically from the SchemaField.
+
+        This does no parsing of values.
 
         For convenience, returns self.
         """
-        # TODO: this seems awfully redundant with .from_request().
-
-        # TODO: is this too complex, accepting strings, objects, and
-        # arbitrary *values?
-
         # Unfortunately there's no way to accept a single optional named arg
         # at the same time as accepting arbitrary *values.
         _replace = kwargs.pop('_replace', False)
@@ -828,8 +810,10 @@ class FilterChain(SortedDict):
         values = list(values)
         if isinstance(key, models.SchemaField):
             return self.add_by_schemafield(key, *values, **{'_replace': _replace})
+
         if not values:
             raise FilterError("no values passed for arg %s" % key)
+
         if isinstance(values[0], models.Location):
             val = LocationFilter(self.request, self.context, self.qs, location=values[0])
             key = val.slug
@@ -843,7 +827,7 @@ class FilterChain(SortedDict):
         elif isinstance(values[0], models.Lookup):
             val = LookupFilter(self.request, self.context, self.qs, values[0],
                                schemafield=values[0].schema_field)
-        elif isinstance(values[0], datetime.date):
+        elif isinstance(values[0], (datetime.date, datetime.datetime)):
             if len(values) == 1:
                 # start and end are the same date.
                 values.append(values[0])
@@ -868,7 +852,13 @@ class FilterChain(SortedDict):
                 filt.schema = schema
         else:
             val = values[0]
-            # It's either a NewsitemFilter already, or a dict with Lookup values.
+            # We seem to get some unexpected types here sometimes:
+            # dicts, strings...
+            if not isinstance(val, NewsitemFilter):
+                logger.warn("SchemaFilter.add called with key %r and unexpected values %r, not adding."
+                            % (key, values))
+                logger.warn('path was: %s' % self.request.get_full_path())
+                return self
 
         if _replace and key in self:
             del self[key]
@@ -890,10 +880,7 @@ class FilterChain(SortedDict):
 
         values = list(values)
         key = schemafield.slug
-        if not values or values == ['']:
-            # self.make_url() will yield a URL for a page that allows selecting them.
-            filterclass = AttributeFilter
-        elif schemafield.is_lookup:
+        if schemafield.is_lookup:
             filterclass = LookupFilter
         elif schemafield.is_type('bool'):
             filterclass = BoolFilter
@@ -907,6 +894,10 @@ class FilterChain(SortedDict):
             del self[key]
 
         self[key] = filterclass(self.request, self.context, self.qs, schemafield=schemafield, *values)
+
+        if schemafield.is_lookup and getattr(self[key], 'look', None) is not None:
+            self.lookup_descriptions.append(self[key].look)
+
         return self
 
 
