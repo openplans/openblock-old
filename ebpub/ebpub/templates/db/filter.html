@@ -2,7 +2,7 @@
 
 {% load eb eb_filter humanize mapping %}
 
-{% block title %}{% if not filters.values %}Search {{ schema.plural_name }}{% else %}{{ schema.plural_name|capfirst }}{% endif %}{% for filter in filters.values_with_labels %} &rsaquo; {{ filter.value }} {% endfor %}{% endblock %}
+{% block title %}{% if not filters.filters_for_display %}Search {{ schema.plural_name }}{% else %}{{ schema.plural_name|capfirst }}{% endif %}{% for filter in filters.filters_for_display %} &rsaquo; {{ filter.value }} {% endfor %}{% endblock %}
 
 {% block content %}
 	<div id="content">
@@ -41,8 +41,8 @@
 			<h2>No {{ schema.plural_name }} were found for the given search criteria.</h2>
 			<p>You might want to try&hellip;</p>
 			<ul>
-				{% for filter in filters.values_with_labels %}
-				<li><a href="{% filter_url filters -filter.name %}" rel="nofollow">Removing the “{{ filter.label }}” filter</a></li>
+				{% for filter in filters.filters_for_display %}
+				<li><a href="{% filter_url filters -filter.slug %}" rel="nofollow">Removing the “{{ filter.label }}” filter</a></li>
 				{% endfor %}
 			</ul>
 		{% endif %}

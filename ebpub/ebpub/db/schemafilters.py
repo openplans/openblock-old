@@ -64,17 +64,18 @@ class NewsitemFilter(object):
     """
     Base class for filtering NewsItems.
     """
-    _sort_value = 100.0
+
+    _sort_value = 100.0  # Used by FilterChain for sorting filters.
 
     # Various attributes used for URL construction, breadcrumbs,
-    # and other UI stuff.
+    # and for display in templates.
     # If these are None, they should not be shown to the user.
-    name = None
-    argname = None
-    url = None
-    value = None
-    label = None
-    short_value = None
+
+    slug = None   # ID for this type of filter. Used with FilterChain.add() / .remove()
+    url = None  # Actually a URL fragment.
+    value = None  # Value fed to the filter, for display.
+    label = None  # Human-readable name of the filter, for display.
+    short_value = None  # Shorter version of value fed to the filter, for display.
 
     def __init__(self, request, context, queryset=None, *args, **kw):
         self.qs = queryset if (queryset is not None) else models.NewsItem.objects.all()
@@ -134,7 +135,7 @@ class SchemaFilter(NewsitemFilter):
     Filters by NewsItem.schema.
     """
     _sort_value = -9999
-    name = 'schema'
+    slug = 'schema'
     url = None
     label = None  # Don't show this one in the UI.
     value = None
@@ -162,7 +163,7 @@ class AttributeFilter(NewsitemFilter):
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
-        self.name = self.schemafield.name
+        self.slug = self.schemafield.name
         self.argname = 'by-%s' % self.schemafield.name
         self.url = 'by-%s=' % self.schemafield.slug
         self.value = self.short_value = ''
@@ -237,7 +238,6 @@ class BoolFilter(AttributeFilter):
         if self._got_args:
             return {}
         return {
-            'filter_argname': self.argname,
             'lookup_type': self.value[3:],
             'lookup_type_slug': self.schemafield.slug,
             'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
@@ -286,7 +286,6 @@ class LookupFilter(AttributeFilter):
         return {
             'lookup_type': self.schemafield.pretty_name,
             'lookup_type_slug': self.schemafield.slug,
-            'filter_argname': self.argname,
             'lookup_list': lookup_list,
         }
 
@@ -302,8 +301,7 @@ class LocationFilter(NewsitemFilter):
 
     _sort_value = 200.0
 
-    name = 'location'
-    argname = 'locations'
+    slug = 'location'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -355,7 +353,6 @@ class LocationFilter(NewsitemFilter):
                 'lookup_type': location_type.name,
                 'lookup_type_slug': self.location_type_slug,
                 'lookup_list': lookup_list,
-                'filter_argname': self.argname,
                 }
 
 
@@ -372,7 +369,7 @@ class BlockFilter(NewsitemFilter):
     """
     Filters on intersecting ebpub.streets.models.Block.
     """
-    name = 'location'
+    slug = 'location'
 
     _sort_value = 200.0
 
@@ -464,20 +461,20 @@ class DateFilter(NewsitemFilter):
     """Filters on NewsItem.item_date.
     """
 
-    name = 'date'
+    slug = 'date'
     date_field_name = 'item_date'
-    argname = 'by-date'  # XXX this doesn't feel like it belongs here.
+    _argname = 'by-date'
 
     _sort_value = 1.0
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         args = list(args)
-        schema = kwargs.get('schema', None) or context.get('schema')
+        schema = kwargs.get('schema') or context.get('schema')
         if schema is not None:
             self.label = schema.date_name
         else:
-            self.label = self.name
+            self.label = self.slug
         gte_kwarg = '%s__gte' % self.date_field_name
         lt_kwarg = '%s__lt' % self.date_field_name
         try:
@@ -502,7 +499,7 @@ class DateFilter(NewsitemFilter):
             self.value = u'%s - %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
 
         self.short_value = self.value
-        self.url = '%s=%s,%s' % (self.argname,
+        self.url = '%s=%s,%s' % (self._argname,
                                  self.start_date.strftime('%Y-%m-%d'),
                                  self.end_date.strftime('%Y-%m-%d'))
 
@@ -523,7 +520,7 @@ class PubDateFilter(DateFilter):
     Filters on NewsItem.pub_date.
     """
 
-    argname = 'by-pub-date'
+    _argname = 'by-pub-date'
     date_field_name = 'pub_date'
 
     _sort_value = 1.0
@@ -628,6 +625,13 @@ class FilterChain(SortedDict):
             elif argname == 'by-pub-date':
                 chain['date'] = PubDateFilter(request, context, qs, *argvalues, schema=chain.schema)
 
+            # Street/address
+            elif argname.startswith('streets'):
+                chain['location'] = BlockFilter(request, context, qs, *argvalues)
+            # Location filtering
+            elif argname.startswith('locations'):
+                chain['location'] = LocationFilter(request, context, qs, *argvalues)
+
             # Attribute filtering
             elif argname.startswith('by-'):
                 sf_slug = argname[3:]
@@ -635,7 +639,7 @@ class FilterChain(SortedDict):
                     sf = filter_sf_dict.pop(sf_slug)
                 except KeyError:
                     # XXX this will be a confusing error if we already popped it.
-                    raise FilterError('Invalid SchemaField slug')
+                    raise FilterError('Invalid SchemaField slug %r' % sf_slug)
                 # Lookup filtering
                 if sf.is_lookup:
                     lookup_filter = LookupFilter(request, context, qs, *argvalues,
@@ -652,20 +656,14 @@ class FilterChain(SortedDict):
                 # Text-search attribute filter.
                 else:
                     chain[sf.name] = TextSearchFilter(request, context, qs, *argvalues, schemafield=sf)
-
             # END OF ATTRIBUTE FILTERING
-
-            # Street/address
-            elif argname.startswith('streets'):
-                chain['location'] = BlockFilter(request, context, qs, *argvalues)
-            # Location filtering
-            elif argname.startswith('locations'):
-                chain['location'] = LocationFilter(request, context, qs, *argvalues)
 
             else:
                 raise FilterError('Invalid filter type')
 
+
         chain.update_from_query_params(request)
+        chain = chain.normalized_clone()
         return chain
 
     def update_from_query_params(self, request):
@@ -853,14 +851,14 @@ class FilterChain(SortedDict):
             raise FilterError("no values passed for arg %s" % key)
         if isinstance(values[0], models.Location):
             val = LocationFilter(self.request, self.context, self.qs, location=values[0])
-            key = val.name
+            key = val.slug
         elif isinstance(values[0], ebpub.streets.models.Block):
             block = values.pop(0)
             val = BlockFilter(self.request, self.context, self.qs, *values, block=block)
-            key = val.name
+            key = val.slug
         elif isinstance(values[0], models.LocationType):
             val = LocationFilter(self.request, self.context, self.qs, *values[1:], location_type=values[0])
-            key = val.name
+            key = val.slug
         elif isinstance(values[0], models.Lookup):
             val = LookupFilter(self.request, self.context, self.qs, values[0],
                                schemafield=values[0].schema_field)
@@ -989,7 +987,7 @@ class FilterChain(SortedDict):
             self['location'] = LocationFilter(self.request, self.context, self.qs,
                                               location=place)
 
-    def values_with_labels(self):
+    def filters_for_display(self):
         """
         If a filter has no label, that means don't show it in various
         places in the UI.  This is a convenience to get only the

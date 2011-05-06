@@ -690,9 +690,9 @@ def schema_filter(request, slug, args_from_url):
 
     # Break apart the URL to determine what filters to apply.
     try:
-        context['filters'] = FilterChain.from_request(request, context, args_from_url, filter_sf_dict)
-        context['filters'] = context['filters'].normalized_clone()  # Optimal filter order.
-        filters_need_more = context['filters'].validate()
+        filterchain = FilterChain.from_request(request, context, args_from_url, filter_sf_dict)
+        filters_need_more = filterchain.validate()
+        context['filters'] = filterchain
     except FilterError, e:
         if getattr(e, 'url', None) is not None:
             return HttpResponseRedirect(e.url)
@@ -716,7 +716,6 @@ def schema_filter(request, slug, args_from_url):
         return eb_render(request, 'db/filter_lookup_list.html', context)
 
     # Normalize the URL, and redirect if we're not already there.
-    filterchain = context['filters']
     new_url = filterchain.make_url()
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)

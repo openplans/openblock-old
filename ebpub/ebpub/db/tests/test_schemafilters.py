@@ -209,7 +209,6 @@ class TestDateFilter(TestCase):
                               '2006-11-08', '2006-11-09')
         self.assertEqual(filt2.validate(), {})
         filt2.apply()
-        self.assertEqual(filt2.argname, 'by-pub-date')
         self.assertEqual(filt2.date_field_name, 'pub_date')
         self.assertEqual(filt2.label, 'date published')
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt2.kwargs))
@@ -407,12 +406,12 @@ class TestFilterChain(TestCase):
             LocationFilter(req, context, qs, 'neighborhoods'),
             DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
             ]
-        chain = FilterChain([(item.name, item) for item in all_filters])
+        chain = FilterChain([(item.slug, item) for item in all_filters])
         ordered_chain = chain.normalized_clone()
         self.assertEqual(ordered_chain.keys(),
                          ['date', 'mock bool sf', 'location', 'mock lookup sf', 'mock text sf'])
 
-    def test_values_with_labels(self):
+    def test_filters_for_display(self):
         class Dummy(object):
             def __init__(self, label):
                 self.label = label
@@ -422,8 +421,8 @@ class TestFilterChain(TestCase):
                              ('baz', Dummy(None)),
                              ])
         self.assertEqual(len(chain.values()), 4)
-        self.assertEqual(len(chain.values_with_labels()), 2)
-        self.assert_(all([f.label for f in chain.values_with_labels()]))
+        self.assertEqual(len(chain.filters_for_display()), 2)
+        self.assert_(all([f.label for f in chain.filters_for_display()]))
 
 
 class TestUrlNormalization(TestCase):
