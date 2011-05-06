@@ -24,7 +24,7 @@ Features:
 * detecting when more user input is needed, so views can provide a
   disambiguation UI.
 * consistent normalized URLs and breadcrumbs.
-
+* consistent order of filter application
 
 TODO:
  *  generate URLs for the REST API too?
@@ -109,11 +109,10 @@ class NewsitemFilter(object):
 
     def __getitem__(self, key):
         # Emulate a dict to make legacy code in ebpub.db.breadcrumbs happy
-        default = object()
-        result = getattr(self, key, default)
-        if result is default:
+        try:
+            return getattr(self, key)
+        except AttributeError:
             raise KeyError(key)
-        return result
 
 
 class FilterError(Exception):
@@ -303,7 +302,7 @@ class LocationFilter(NewsitemFilter):
 
     _sort_value = 200.0
 
-    name = 'location'  # XXX deprecate this? used by eb_filter template tags
+    name = 'location'
     argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
@@ -707,15 +706,14 @@ class FilterChain(SortedDict):
                 try:
                     block = result['intersection'].blockintersection_set.all()[0].block
                 except IndexError:
-                    # XXX Not sure this was deliberate, but we used to
-                    # call intersection.url() here, which does that
-                    # same blockintersection_set query, so it would
+                    # TODO: Not sure this was deliberate, but we used to
+                    # call intersection.url() here, which would
                     # raise an IndexError here if there was no
                     # matching block.  Preserving that behavior.
-                    # XXX should this be BadAddressException?
+                    # Should this be BadAddressException?
                     raise
             else:
-                # XXX todo: should this be BadAddressException?
+                # TODO: should this be BadAddressException?
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
             self.replace('location', block, block_radius)
 
