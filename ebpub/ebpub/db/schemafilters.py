@@ -584,11 +584,16 @@ class FilterChain(SortedDict):
             self[k] = v
 
     def update_from_request(self, argstring, filter_sf_dict):
-        """Alternate constructor that populates the list of filters
-        based on the path and/or query string.
+        """Update the list of filters based on the path and/or query string.
 
-        argstring is a path describing the filters (or None, in the case of
-        "/filter/").
+        ``argstring`` is the portion of the path that describes the
+        filters (or None, in the case of "/filter/").
+
+        ``filter_sf_dict`` is a mapping of slug -> SchemaField which have
+        either is_filter or is_searchable True.  We remove
+        SchemaFields that we create filters for. (This is so that
+        templates can display input widgets for the ones we're not
+        already filtering by.)
         """
         request, context = self.request, self.context
         # TODO: can we remove some args now that we're not using
@@ -640,7 +645,6 @@ class FilterChain(SortedDict):
 
             else:
                 raise FilterError('Invalid filter type')
-
 
         self.update_from_query_params(request)
         self.sort()

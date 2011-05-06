@@ -162,10 +162,10 @@ class SchemaField(models.Model):
     pretty_name_plural = models.CharField(max_length=32) # plural human-readable name
     display = models.BooleanField(default=True) # whether to display value on the public site
     is_lookup = models.BooleanField(default=False) # whether the value is a foreign key to Lookup
-    is_filter = models.BooleanField(default=False)
+    is_filter = models.BooleanField(default=False)  # whether to link to list of items with the same value in this field. Assumes is_lookup=True.
     is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field; also see "trends" tabs on place_overview.html
     display_order = models.SmallIntegerField(default=10)
-    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content
+    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content.  Probably doesn't make sense if is_lookup=True.
 
     def natural_key(self):
         return (self.schema.slug, self.real_name)

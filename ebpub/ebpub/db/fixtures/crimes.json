@@ -341,7 +341,7 @@
    "pretty_name_plural": "Statuses",
    "display": false,
    "is_lookup": false,
-   "is_filter": true,
+   "is_filter": false,
    "is_charted": false,
    "is_searchable": true,
    "display_order": 0
@@ -360,7 +360,7 @@
    "is_lookup": true,
    "is_filter": true,
    "is_charted": false,
-   "is_searchable": true,
+   "is_searchable": false,
    "display_order": 0
   }
  },
