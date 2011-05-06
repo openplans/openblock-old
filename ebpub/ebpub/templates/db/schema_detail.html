@@ -83,13 +83,13 @@
 			{% endfor %}
 			{% for lookup in lookup_list %}
 				<div id="lookup-{{ lookup.sf.slug }}">
-					<h2>By {{ lookup.sf.pretty_name }}</h2>
+					<h2>By AAA {{ lookup.sf.pretty_name }}</h2>
 					<table>
 						{% for value in lookup.top_values %}
 						<tr>
 							<td class="label">
 								<span class="name">
-									<a href="{% filter_url schema +lookup.sf.slug lookup %}" title="{{ value.lookup.name }}">{{ value.lookup.name }}</a>
+									<a href="{% filter_url schema +lookup.sf value.lookup %}" title="{{ value.lookup.name }}">{{ value.lookup.name }}</a>
 									{% if value.total %}<span class="bar" style="width: {% widthratio value.total date_chart.total_count 100 %}%"></span>{% endif %}
 								</span>
 							</td>
@@ -103,7 +103,8 @@
 						{% endfor %}
 						<tr>
 							<td colspan="3">
-								<a href="by-{{ lookup.sf.slug }}/">See all {{ lookup.sf.pretty_name_plural }}&hellip;</a>
+								<a href="{% filter_url schema +lookup.sf %}">See all {{ lookup.sf.pretty_name_plural }}&hellip;</a>
+
 							</td>
 						</tr>
 					</table>
