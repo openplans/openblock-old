@@ -805,23 +805,21 @@ class FilterChain(SortedDict):
             del self[key]
         return self.add(key, *values, _replace=True)
 
+
     def add(self, key, *values, **kwargs):
-        """Given a string or SchemaField key,
-        construct an appropriate NewsitemFilter with the values as arguments,
-        and save it as self[key].
+        """Given a string key or SchemaField, construct an appropriate
+        NewsitemFilter with the values as arguments, and save it as
+        self[key], where key is either the string key or derived
+        automatically from the arguments.
 
-        Also for convenience, returns self.
-
+        For convenience, returns self.
         """
-
         # TODO: this seems awfully redundant with .from_request().
 
         # TODO: is this too complex, accepting strings, objects, and
         # arbitrary *values?
-        # The isinstance(key, models.SchemaField) clause seems like
-        # a good target for moving to a separate API?
 
-        # Unfortunately there's no way to provide a single default arg
+        # Unfortunately there's no way to accept a single optional named arg
         # at the same time as accepting arbitrary *values.
         _replace = kwargs.pop('_replace', False)
         if kwargs:
@@ -829,24 +827,7 @@ class FilterChain(SortedDict):
 
         values = list(values)
         if isinstance(key, models.SchemaField):
-            if not values or values == ['']:
-                # URL for the page that allows selecting them.
-                val = AttributeFilter(self.request, self.context, self.qs, schemafield=key)
-                key = key.slug
-                if _replace and key in self:
-                    del self[key]
-                self[key] = val
-                return self
-            if key.is_lookup:
-                values = [LookupFilter(self.request, self.context, self.qs, schemafield=key, *values)]
-            elif key.is_type('bool'):
-                values = [BoolFilter(self.request, self.context, self.qs, schemafield=key, *values)]
-            elif key.is_searchable:
-                values = [TextSearchFilter(self.request, self.context, self.qs, schemafield=key, *values)]
-            else:
-                # Ints, varchars, dates, times, and datetimes.
-                values = [AttributeFilter(self.request, self.context, self.qs, schemafield=key, *values)]
-            key = key.slug
+            return self.add_by_schemafield(key, *values, **{'_replace': _replace})
         if not values:
             raise FilterError("no values passed for arg %s" % key)
         if isinstance(values[0], models.Location):
@@ -886,12 +867,48 @@ class FilterChain(SortedDict):
                 # schema during __init__()
                 filt.schema = schema
         else:
-            # TODO: when does this ever happen?
             val = values[0]
+            # It's either a NewsitemFilter already, or a dict with Lookup values.
+
         if _replace and key in self:
             del self[key]
         self[key] = val
         return self
+
+    def add_by_schemafield(self, schemafield, *values, **kwargs):
+        """Given a SchemaField, construct an appropriate
+        NewsitemFilter with the values as arguments, and save it as
+        self[schemafield.name].
+
+        For convenience, returns self.
+        """
+        # Unfortunately there's no way to accept a single optional named arg
+        # at the same time as accepting arbitrary *values.
+        _replace = kwargs.pop('_replace', False)
+        if kwargs:
+            raise TypeError("unexpected keyword args %s" % kwargs.keys())
+
+        values = list(values)
+        key = schemafield.slug
+        if not values or values == ['']:
+            # self.make_url() will yield a URL for a page that allows selecting them.
+            filterclass = AttributeFilter
+        elif schemafield.is_lookup:
+            filterclass = LookupFilter
+        elif schemafield.is_type('bool'):
+            filterclass = BoolFilter
+        elif schemafield.is_searchable:
+            filterclass = TextSearchFilter
+        else:
+            # Ints, varchars, dates, times, and datetimes.
+            filterclass = AttributeFilter
+
+        if _replace and key in self:
+            del self[key]
+
+        self[key] = filterclass(self.request, self.context, self.qs, schemafield=schemafield, *values)
+        return self
+
 
     def make_breadcrumbs(self, additions=(), removals=(), stop_at=None, 
                          base_url=None):
