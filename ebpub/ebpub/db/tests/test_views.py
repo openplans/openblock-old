@@ -225,9 +225,12 @@ class TestSchemaFilterView(TestCase):
         self.assertNotContains(response, 'Hood 2')
         self.assertContains(response, 'Remove this filter')
 
-
+    @mock.patch('ebpub.db.schemafilters.logger')
     @mock.patch('ebpub.db.schemafilters.FilterChain.from_request')
-    def test_filter_by_ambiguous_address(self, mock_from_request):
+    def test_filter_by_ambiguous_address(self, mock_from_request, mock_logger):
+        # Using Mocks here causes eb_filter to call FilterChain.make_url
+        # with additions that it doesn't understand. That's fine for this test,
+        # but causes logging spew, hence we mock the logger too.
         url = filter_reverse('crime', [('by-foo', 'bar')]) + '?address=foofoo'
         mock_result = {'address': 'foofoo', 'block': mock.Mock()}
         mock_result['block'].url = '/foofoo/'
@@ -259,7 +262,7 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response['location'], 'http://testserver/crime/')
 
     @mock.patch('ebpub.db.schemafilters.FilterChain.update_from_query_params')
-    def test_filter_bad_date(self, mock_update):
+    def test_filter__bad_date(self, mock_update):
         from ebpub.db.views import BadDateException
         mock_update.side_effect = BadDateException("oh no")
         url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
@@ -454,19 +457,18 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_filter__by_boolean__unspecified(self):
-        url = filter_reverse('crime', [('by-arrests', '')])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.template[0].name, 'db/filter_lookup_list.html')
-
     def test_filter__invalid_argname(self):
         url = filter_reverse('crime', [('bogus-key', 'bogus-value')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
+
+    @mock.patch('ebpub.db.schemafilters.logger')
     @mock.patch('ebpub.db.models.AggregateFieldLookup.objects.filter')
-    def test_filter__has_more(self, mock_aggr):
+    def test_filter__has_more(self, mock_aggr, mock_logger):
+        # Using Mocks here causes eb_filter to call FilterChain.make_url
+        # with additions that it doesn't understand. That's fine for this test,
+        # but causes logging spew, hence we mock the logger too.
         mock_aggr().select_related().order_by.return_value = [mock.Mock()] * 100
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
         response = self.client.get(url)
