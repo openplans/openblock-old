@@ -18,7 +18,6 @@
 
 from django.core import urlresolvers
 import posixpath
-import urllib
 
 def filter_reverse(slug, args):
     """Generate a reverse schema_filter URL.

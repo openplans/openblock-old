@@ -226,7 +226,7 @@ class TestSchemaFilterView(TestCase):
         self.assertContains(response, 'Remove this filter')
 
     @mock.patch('ebpub.db.schemafilters.logger')
-    @mock.patch('ebpub.db.schemafilters.FilterChain.from_request')
+    @mock.patch('ebpub.db.schemafilters.FilterChain.update_from_request')
     def test_filter_by_ambiguous_address(self, mock_from_request, mock_logger):
         # Using Mocks here causes eb_filter to call FilterChain.make_url
         # with additions that it doesn't understand. That's fine for this test,
@@ -240,7 +240,7 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.template[0].name, 'db/filter_bad_address.html')
 
-    @mock.patch('ebpub.db.schemafilters.FilterChain.from_request')
+    @mock.patch('ebpub.db.schemafilters.FilterChain.update_from_request')
     @mock.patch('ebpub.db.schemafilters.FilterChain.make_url')
     def test_filter__normalized_redirect(self, mock_make_url, mock_from_request):
         from ebpub.db import schemafilters
@@ -502,9 +502,10 @@ class TestSchemaFilterView(TestCase):
         # (We can't just patch text_search() anymore because now there's more
         # filtering after that.)
         # TODO: this is pretty brittle.
-        mock_chain.from_request.return_value = mock_chain
-        mock_chain.normalized_clone.return_value = mock_chain
+        #mock_chain.from_request.return_value = mock_chain
+        #mock_chain.normalized_clone.return_value = mock_chain
         mock_qs = mock.Mock()
+        mock_chain.return_value = mock_chain
         mock_chain.apply.return_value = mock_chain
         mock_chain.__contains__ = lambda self, other: False
         mock_chain.validate.return_value = {}

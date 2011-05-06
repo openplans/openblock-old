@@ -29,7 +29,7 @@ Features:
 TODO:
  *  generate URLs for the REST API too?
 
- *  profile optimal order of filters for normalized_clone?
+ *  profile optimal order of filters for sort()?
     Currently guessing it should be something like:
     schema, date, non-lookup attrs, block/location, lookup attrs, text search.
     This will need profiling with lots of test data.
@@ -103,10 +103,6 @@ class NewsitemFilter(object):
         # TODO: Maybe split this into .get_extra_context() -> dict
         # and .needs_more_info() -> bool
         raise NotImplementedError  # pragma: no cover
-
-    def get(self, key, default=None):
-        # Emulate a dict to make legacy code in ebpub.db.breadcrumbs happy
-        return getattr(self, key, default)
 
     def __getitem__(self, key):
         # Emulate a dict to make legacy code in ebpub.db.breadcrumbs happy
@@ -587,20 +583,19 @@ class FilterChain(SortedDict):
             # This works for tuples, lists, and other iterators too.
             self[k] = v
 
-    @classmethod
-    def from_request(klass, request, context, argstring, filter_sf_dict):
+    def update_from_request(self, argstring, filter_sf_dict):
         """Alternate constructor that populates the list of filters
         based on the path and/or query string.
 
         argstring is a path describing the filters (or None, in the case of
         "/filter/").
         """
+        request, context = self.request, self.context
         # TODO: can we remove some args now that we're not using
         # get_place_info_for_request?
         argstring = urllib.unquote((argstring or '').rstrip('/'))
         argstring = argstring.replace('+', ' ')
         args = []
-        chain = klass(schema=context.get('schema'), request=request, context=context)
 
         if argstring and argstring != 'filter':
             for arg in argstring.split(';'):
@@ -616,22 +611,22 @@ class FilterChain(SortedDict):
             # No filters specified. Do nothing?
             pass
 
-        qs = chain.qs
+        qs = self.qs
         while args:
             argname, argvalues = args.pop(0)
             argvalues = [v for v in argvalues if v]
             # Date range
             if argname == 'by-date':
-                chain['date'] = DateFilter(request, context, qs, *argvalues, schema=chain.schema)
+                self['date'] = DateFilter(request, context, qs, *argvalues, schema=self.schema)
             elif argname == 'by-pub-date':
-                chain['date'] = PubDateFilter(request, context, qs, *argvalues, schema=chain.schema)
+                self['date'] = PubDateFilter(request, context, qs, *argvalues, schema=self.schema)
 
             # Street/address
             elif argname.startswith('streets'):
-                chain['location'] = BlockFilter(request, context, qs, *argvalues)
+                self['location'] = BlockFilter(request, context, qs, *argvalues)
             # Location filtering
             elif argname.startswith('locations'):
-                chain['location'] = LocationFilter(request, context, qs, *argvalues)
+                self['location'] = LocationFilter(request, context, qs, *argvalues)
 
             # Attribute filtering
             elif argname.startswith('by-'):
@@ -641,22 +636,22 @@ class FilterChain(SortedDict):
                 except KeyError:
                     # XXX this will be a confusing error if we already popped it.
                     raise FilterError('Invalid SchemaField slug %r' % sf_slug)
-                chain.add_by_schemafield(sf, *argvalues, _replace=True)
+                self.add_by_schemafield(sf, *argvalues, _replace=True)
 
             else:
                 raise FilterError('Invalid filter type')
 
 
-        chain.update_from_query_params(request)
-        chain = chain.normalized_clone()
-        return chain
+        self.update_from_query_params(request)
+        self.sort()
+        return self
 
     def update_from_query_params(self, request):
         """
         Update the filters based on query parameters.
 
         After this is called, it's recommended to redirect
-        to a normalized form of the URL, eg. self.normalized_clone().make_url().
+        to a normalized form of the URL, eg. self.sort(); self.make_url()
 
         This takes care to preserve query parameters that aren't used
         by any of the NewsitemFilters.
@@ -742,7 +737,7 @@ class FilterChain(SortedDict):
         """
         Applies each filter in the chain.
         """
-        for key, filt in self.normalized_clone().items():
+        for key, filt in self._sorted_items():
             # TODO: this is an awkward way of passing the queryset.
             if queryset is not None:
                 filt.qs = queryset
@@ -769,14 +764,13 @@ class FilterChain(SortedDict):
         clone.update(self)
         return clone
 
-    def normalized_clone(self):
+    def sort(self):
         """
-        Return a copy of self with keys in optimal order.
+        Put keys in optimal order.
         """
-        clone = self.copy()
-        clone.clear()
-        clone.update(self._sorted_items())
-        return clone
+        items = self._sorted_items()
+        self.clear()
+        self.update(items)
 
     def _sorted_items(self):
         items = self.items()

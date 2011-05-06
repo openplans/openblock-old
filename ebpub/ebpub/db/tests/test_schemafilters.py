@@ -37,12 +37,6 @@ import random
 
 class TestNewsitemFilter(TestCase):
 
-    def test_get(self):
-        from ebpub.db.schemafilters import NewsitemFilter
-        fil = NewsitemFilter('dummy request', 'dummy context')
-        self.assertEqual(fil.get('foo'), None)
-        self.assertEqual(fil.get('foo', 'bar'), 'bar')
-
     def test_getitem(self):
         from ebpub.db.schemafilters import NewsitemFilter
         fil = NewsitemFilter('dummy request', 'dummy context')
@@ -369,7 +363,7 @@ class TestFilterChain(TestCase):
         chain['foo'] = 'bar'
         self.assertRaises(DuplicateFilterError, chain.__setitem__, 'foo', 'bar')
 
-    def test_normalized_clone(self):
+    def test_sort(self):
         class Dummy(object):
             def __init__(self, sort_value):
                 self._sort_value = sort_value
@@ -383,12 +377,13 @@ class TestFilterChain(TestCase):
         self.assertNotEqual(range(10),
                             [v._sort_value for v in chain.values()])
 
-        normalized = chain.normalized_clone()
+        normalized = chain.copy()
+        normalized.sort()
         self.assertEqual(range(10),
                          [v._sort_value for v in normalized.values()])
 
 
-    def test_normalized_clone__real_filters(self):
+    def test_sort__real_filters(self):
         req = mock.Mock()
         qs = mock.Mock()
         schema = mock.Mock()
@@ -407,7 +402,8 @@ class TestFilterChain(TestCase):
             DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
             ]
         chain = FilterChain([(item.slug, item) for item in all_filters])
-        ordered_chain = chain.normalized_clone()
+        ordered_chain = chain.copy()
+        ordered_chain.sort()
         self.assertEqual(ordered_chain.keys(),
                          ['date', 'mock bool sf', 'location', 'mock lookup sf', 'mock text sf'])
 
@@ -449,9 +445,8 @@ class TestUrlNormalization(TestCase):
         argstring = request.path.split('filter/', 1)[-1]
         crime = models.Schema.objects.get(slug='crime')
         context = {'schema': crime}
-        chain = FilterChain.from_request(request=request, context=context,
-                                         argstring=argstring,
-                                         filter_sf_dict={})
+        chain = FilterChain(request=request, context=context, schema=crime)
+        chain.update_from_request(argstring=argstring, filter_sf_dict={})
         return chain
 
     def test_urls__ok(self):

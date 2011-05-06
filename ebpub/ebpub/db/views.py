@@ -688,11 +688,12 @@ def schema_filter(request, slug, args_from_url):
     start_date = s.min_date
     end_date = today()
 
-    # Break apart the URL to determine what filters to apply.
+    # Determine what filters to apply, based on path and/or query string.
+    filterchain = FilterChain(request=request, context=context, schema=s)
+    context['filters'] = filterchain
     try:
-        filterchain = FilterChain.from_request(request, context, args_from_url, filter_sf_dict)
+        filterchain.update_from_request(args_from_url, filter_sf_dict)
         filters_need_more = filterchain.validate()
-        context['filters'] = filterchain
     except FilterError, e:
         if getattr(e, 'url', None) is not None:
             return HttpResponseRedirect(e.url)
@@ -704,8 +705,6 @@ def schema_filter(request, slug, args_from_url):
                 'radius': e.block_radius,
                 'radius_slug': e.radius_slug,
                 })
-        context.setdefault('filters', FilterChain(request=request, context=context,
-                                                  schema=s))
         return eb_render(request, 'db/filter_bad_address.html', context)
     except BadDateException, e:
         raise Http404('<h1>%s</h1>' % str(e))
