@@ -83,7 +83,7 @@
 			{% endfor %}
 			{% for lookup in lookup_list %}
 				<div id="lookup-{{ lookup.sf.slug }}">
-					<h2>By AAA {{ lookup.sf.pretty_name }}</h2>
+					<h2>By {{ lookup.sf.pretty_name }}</h2>
 					<table>
 						{% for value in lookup.top_values %}
 						<tr>
