@@ -219,31 +219,41 @@ def endElement(self, name):
 # End of patches.
 ####################################################################
 
-
+import threading
 _PATCHED = False
+_lock = threading.Lock()
 def patch_once():
-    global _PATCHED
-    if _PATCHED:
-        return
+    with _lock:
+        global _PATCHED
+        if _PATCHED:
+            return
 
-    base.build_instance = build_instance
+        ####################################################
+        # Natural keys.
+        base.build_instance = build_instance
 
-    ####################################################
-    # Serialization
-    from django.core.serializers import python
-    python.Deserializer = Deserializer
-    python.Serializer.end_object = end_object
-    # have to patch stuff that's already been loaded with a 'from' import, yay
-    from django.core.serializers import json
-    json.PythonDeserializer = Deserializer
+        # Serialization.
+        from django.core.serializers import python
+        python.Deserializer = Deserializer
+        python.Serializer.end_object = end_object
+        # have to patch stuff that's already been loaded with a 'from' import, yay
+        from django.core.serializers import json
+        json.PythonDeserializer = Deserializer
 
-    from django.core.serializers import xml_serializer
-    xml_serializer.Serializer.start_object = start_object
-    xml_serializer.Deserializer._handle_object = _handle_object
+        from django.core.serializers import xml_serializer
+        xml_serializer.Serializer.start_object = start_object
+        xml_serializer.Deserializer._handle_object = _handle_object
 
-    ####################################################
-    # XML output
-    from django.utils import xmlutils
-    xmlutils.SimplerXMLGenerator.endElement = endElement
+        ####################################################
+        # XML output
+        from django.utils import xmlutils
+        xmlutils.SimplerXMLGenerator.endElement = endElement
 
-    _PATCHED = True
+        ####################################################
+        # South is really really noisy.
+        # Apparently this is because their NullHandler implementation
+        # is slightly broken; it needs a do-nothing handle() method.
+        from south.logger import get_logger
+        get_logger().handle = lambda record: None
+
+        _PATCHED = True
