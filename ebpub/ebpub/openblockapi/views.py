@@ -247,7 +247,7 @@ def _geocode_geojson(query):
             }
             features.append(feature)
     # we could get type == 'block', but 
-    # ebpub.db.views returns nothing for this,
+    # ebpub.db.views.ajax_wkt returned nothing for this,
     # so for now we follow their lead.
     # elif res['type'] == 'block': 
     #     pass
