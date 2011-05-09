@@ -211,55 +211,6 @@ def validate_address(request):
             result = {'addresses': [add['address'] for add in e.choices]}
     return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
 
-def ajax_wkt(request):
-    # JSON -- returns a list of WKT strings for request.GET['q'].
-    # If it can't be geocoded, the list is empty.
-    # If it's ambiguous, the list has multiple elements.
-    q = request.GET.get('q', '').strip()
-    if not q:
-        wkt_list = []
-    else:
-        try:
-            result = full_geocode(q)
-        except DoesNotExist:
-            wkt_list = []
-        except Exception:
-            wkt_list = []
-        else:
-            if result['type'] == 'block':
-                wkt_list = []
-            elif result['type'] in ('location', 'place'):
-                if result['ambiguous']:
-                    wkt_list = [r.wkt for r in result['result']]
-                else:
-                    wkt_list = [result['result'].location.wkt]
-            elif result['type'] == 'address':
-                if result['ambiguous']:
-                    wkt_list = [r['point'].wkt for r in result['result']]
-                else:
-                    wkt_list = [result['result']['point'].wkt]
-            else:
-                wkt_list = []
-    return HttpResponse(simplejson.dumps(wkt_list), mimetype="application/javascript")
-
-def ajax_map_popups(request):
-    """
-    JSON -- returns a list of lists for request.GET['q'] (a comma-separated
-    string of NewsItem IDs).
-
-    The structure of the inner lists is [newsitem_id, popup_html, schema_name]
-    """
-    try:
-        newsitem_ids = map(int, request.GET['q'].split(','))
-    except (KeyError, ValueError):
-        raise Http404('Invalid query')
-    if len(newsitem_ids) >= 400:
-        raise Http404('Too many points') # Security measure.
-    # Ordering by schema__id is an optimization for _map_popups().
-    ni_list = list(NewsItem.objects.filter(id__in=newsitem_ids).select_related().order_by('schema__id'))
-    result = map_popups(ni_list)
-    return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
-
 
 def map_popups(ni_list):
     """
