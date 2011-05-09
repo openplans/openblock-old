@@ -78,7 +78,7 @@ class TestAPI(TestCase):
         qs = '?%s=%s' % (param, wrapper)
 
         endpoints = [
-            reverse('geocoder_api') + qs,
+            reverse('geocoder_api') + qs + '&q=Hood+1',
             reverse('items_json') + qs,
             reverse('list_types_json') + qs,
             reverse('locations_json') + qs,
@@ -86,7 +86,7 @@ class TestAPI(TestCase):
             reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'neighborhoods'}) + qs,
         ]
 
-        for e in endpoints: 
+        for e in endpoints:
             response = self.client.get(e, status=200)
             assert response.content.startswith('%s(' % wrapper)
             assert response.content.endswith(");")
@@ -439,7 +439,11 @@ class TestGeocoderAPI(TestCase):
     fixtures = ('test-locationtypes', 
                 'test-locations.json',
                 'test-places.json', 
-                'test-streets.json', )
+                'test-streets.json',)
+
+    def test_missing_params(self):
+        response = self.client.get(reverse('geocoder_api'))
+        self.assertEqual(response.status_code, 400)
 
     def test_address(self):
         qs = '?q=100+Adams+St'
@@ -451,6 +455,14 @@ class TestGeocoderAPI(TestCase):
         assert res['geometry']['type'] == 'Point'
         assert res['properties']['type'] == 'address'
         assert res['properties']['address'] == '100 Adams St.'
+
+
+    def test_address_notfound(self):
+        qs = '?q=100+Nowhere+St'
+        response = self.client.get(reverse('geocoder_api') + qs, status=404)
+        self.assertEqual(response.status_code, 404)
+        response = simplejson.loads(response.content)
+        self.assertEqual(len(response['features']), 0)
 
     def test_intersection(self):
         qs = '?q=Adams+and+Chestnut'
@@ -501,7 +513,6 @@ class TestGeocoderAPI(TestCase):
 
         assert "Chestnut Sq. & Chestnut Ave." in names
         assert "Chestnut Pl. & Chestnut Ave." in names
-
 
 
 class TestLocationsAPI(TestCase):

@@ -2,10 +2,11 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
-from django.utils import simplejson
+from django.http import HttpResponseBadRequest
 from django.utils import feedgenerator
+from django.utils import simplejson
 from ebpub.db import models
-from ebpub.geocoder.base import DoesNotExist
+from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
 import datetime
@@ -182,12 +183,17 @@ def geocode(request):
     # TODO: this will obsolete:
     # ebdata.geotagger.views.geocode and 
     # ebpub.db.views.ajax_wkt
-
     q = request.GET.get('q', '').strip()
-                
+    if not q:
+        return HttpResponseBadRequest('Missing or empty q parameter.')
     collection = {'type': 'FeatureCollection',
                   'features': _geocode_geojson(q)}
-    return APIGETResponse(request, simplejson.dumps(collection, indent=1), mimetype="application/json")
+    if collection['features']:
+        status = 200
+    else:
+        status = 404
+    return APIGETResponse(request, simplejson.dumps(collection, indent=1),
+                          mimetype="application/json", status=status)
 
 def _geocode_geojson(query):
     if not query: 

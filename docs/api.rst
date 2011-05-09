@@ -209,9 +209,9 @@ Response
       200          The request was valid and locations matching the query 
                    were found
 ------------------ ------------------------------------------------------------
-      404          No locations matching the query were found 
+      404          No locations matching the query were found.
 ------------------ ------------------------------------------------------------
-      400          The request parameters were invalid
+      400          Invalid input: missing or empty 'q' parameter.
 ================== ============================================================
 
 
@@ -240,6 +240,10 @@ Example
         "query": "Roxbury"
        }
       }]}
+
+
+A 404 response will return the same structure but with an empty
+list of "features".
 
 
 GET items/types.json 
