@@ -56,6 +56,10 @@ class SchemaManager(models.Manager):
         return self.get(slug=slug)
 
     def get_query_set(self):
+        """Warning: This breaks manage.py dumpdata.
+        See bug #82.
+
+        """
         return super(SchemaManager, self).get_query_set().defer(
             'short_description',
             'summary',
