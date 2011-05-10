@@ -60,6 +60,9 @@ def items_json(request):
     """
     handles the items.json API endpoint
     """
+    # TODO: support filtering by block + radius, and somehow support
+    # adding extra info eg. popup html.  Together, that would allow
+    # this to replace ebub.db.views.newsitems_geojson. See #81
     try:
         items, params = build_item_query(_copy_nomulti(request.GET))
         # could test for extra params aside from jsonp...
