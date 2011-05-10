@@ -52,9 +52,9 @@ urlpatterns += patterns('',
     (r'^alerts/unsubscribe/(\d{1,10})/$', alert_views.unsubscribe),
     (r'^petitions/([-\w]{4,32})/$', petition_views.form_view, {'is_schema': False}),
     (r'^petitions/([-\w]{4,32})/thanks/$', petition_views.form_thanks, {'is_schema': False}),
-    url(r'^api/place-lookup-chart/$', views.ajax_place_lookup_chart, name='ajax-place-lookup-chart'),
-    url(r'^api/place-date-chart/$', views.ajax_place_date_chart, name='ajax-place-date-chart'),
-    (r'^api/newsitems.geojson/$', views.newsitems_geojson),
+    url(r'^place-lookup-chart/$', views.ajax_place_lookup_chart, name='ajax-place-lookup-chart'),
+    url(r'^place-date-chart/$', views.ajax_place_date_chart, name='ajax-place-date-chart'),
+    url(r'^newsitems.geojson/$', views.newsitems_geojson, name='ajax-newsitems-geojson'),
     (r'^api/dev1/', include('ebpub.openblockapi.urls')),
     (r'^widgets/', include('ebpub.widgets.urls'))
 )
