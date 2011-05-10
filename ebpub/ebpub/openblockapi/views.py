@@ -297,7 +297,6 @@ def list_types_json(request):
                           content_type='application/json')
 
 def locations_json(request):
-    # TODO: this will obsolete ebpub.db.views.ajax_location_list
     locations = models.Location.objects.filter(is_public=True)
     loctype = request.GET.get('type')
     if loctype is not None:

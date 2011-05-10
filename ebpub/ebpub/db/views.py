@@ -274,14 +274,6 @@ def ajax_place_date_chart(request):
     })
 
 
-def ajax_location_list(request, loc_type_id):
-    locations = Location.objects.filter(location_type__pk=loc_type_id, is_public=True).order_by('display_order').values('id', 'slug', 'name')
-    if not locations:
-        raise Http404()
-    response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(list(locations), response)
-    return response
-
 def ajax_location(request, loc_id):
     try:
         location = Location.objects.get(pk=int(loc_id))
