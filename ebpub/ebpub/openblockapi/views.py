@@ -346,7 +346,7 @@ def location_detail_json(request, loctype, slug):
     return APIGETResponse(request, geojson, content_type='application/json')
 
 def location_types_json(request):
-    typelist = models.LocationType.objects.order_by('name').values(
+    typelist = models.LocationType.objects.order_by('plural_name').values(
         'name', 'plural_name', 'scope', 'slug')
     typedict = {}
     for typeinfo in typelist:

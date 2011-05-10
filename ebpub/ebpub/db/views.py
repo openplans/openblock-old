@@ -221,7 +221,7 @@ def _map_popups(ni_list):
 
 def ajax_place_lookup_chart(request):
     """
-    JSON -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
+    HTML fragment -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
     """
     try:
         sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
@@ -247,7 +247,7 @@ def ajax_place_lookup_chart(request):
 
 def ajax_place_date_chart(request):
     """
-    JSON -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
+    HTML fragment -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
     """
     try:
         s = Schema.public_objects.get(id=int(request.GET['s']))
@@ -273,11 +273,6 @@ def ajax_place_date_chart(request):
         'filter_url': filter_url,
     })
 
-def ajax_location_type_list(request):
-    loc_types = LocationType.objects.order_by('plural_name').values('id', 'slug', 'plural_name')
-    response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(list(loc_types), response)
-    return response
 
 def ajax_location_list(request, loc_type_id):
     locations = Location.objects.filter(location_type__pk=loc_type_id, is_public=True).order_by('display_order').values('id', 'slug', 'name')
