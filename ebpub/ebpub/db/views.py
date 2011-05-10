@@ -191,11 +191,7 @@ def make_search_buffer(geom, block_radius):
     """
     return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope
 
-##############
-# AJAX VIEWS #
-##############
-
-def map_popups(ni_list):
+def _map_popups(ni_list):
     """
     Given a list of newsitems, return a list of lists
     of the form [newsitem_id, popup_html, schema_name]
@@ -207,6 +203,7 @@ def map_popups(ni_list):
     for ni in ni_list:
         schema = ni.schema
         if current_schema != schema:
+            # This goes faster if ni_list is sorted by schema.
             template_list = ['db/snippets/newsitem_popup_list/%s.html' % schema.slug,
                              'db/snippets/newsitem_popup_list.html',
                              ]
@@ -216,36 +213,10 @@ def map_popups(ni_list):
         result.append([ni.id, html, schema.name.title()])
     return result
 
-def ajax_place_newsitems(request):
-    """
-    JSON -- expects request.GET['pid'] (a location ID) and
-    request.GET['s'] (a schema ID).
 
-    Returns a JSON mapping containing {'bunches': {scale: [list of clusters]},
-                                       'ids': [list of newsitem ids]}
-    where clusters are represented as [[list of newsitem IDs], [center x, y]]
-
-    NB: the list of all newsitem IDs should be the union of all IDs in
-    all the clusters.
-    """
-    try:
-        s = Schema.public_objects.get(id=int(request.GET['s']))
-    except (KeyError, ValueError, Schema.DoesNotExist):
-        raise Http404('Invalid Schema')
-    pid = request.GET.get('pid', '')
-    place, block_radius, xy_radius = parse_pid(pid)
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        newsitem_qs = NewsItem.objects.filter(location__bboverlaps=search_buffer)
-    else:
-        newsitem_qs = NewsItem.objects.filter(newsitemlocation__location__id=place.id)
-
-    # Make the JSON output. Note that we have to call dumps() twice because the
-    # bunches are a special case.
-    ni_list = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date')[:50])
-    bunches = simplejson.dumps(cluster_newsitems(ni_list, 26), cls=ClusterJSON)
-    id_list = simplejson.dumps([ni.id for ni in ni_list])
-    return HttpResponse('{"bunches": %s, "ids": %s}' % (bunches, id_list), mimetype="application/javascript")
+##############
+# AJAX VIEWS #
+##############
 
 
 def ajax_place_lookup_chart(request):
@@ -1297,6 +1268,8 @@ def newsitems_geojson(request):
     and/or one schema slug.
 
     Response is a geojson string.
+
+    TODO: replace this with openblockapi.views.items_json
     """
     # Note: can't use @cache_page here because that ignores all requests
     # with query parameters (in FetchFromCacheMiddleware.process_request).
@@ -1356,11 +1329,11 @@ def newsitems_geojson(request):
     output = cache.get(cache_key, None)
     if output is None:
         # Re-sort by schema type.
-        # This is an optimization for map_popups().
+        # This is an optimization for _map_popups().
         # We can't do it in the qs because we want to first slice the qs
         # by date, and we can't call order_by() after a slice.
         newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
-        popup_list = map_popups(newsitem_list)
+        popup_list = _map_popups(newsitem_list)
 
         features = {'type': 'FeatureCollection', 'features': []}
         for newsitem, popup_info in zip(newsitem_list, popup_list):
