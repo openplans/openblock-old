@@ -274,17 +274,6 @@ def ajax_place_date_chart(request):
     })
 
 
-def ajax_location(request, loc_id):
-    try:
-        location = Location.objects.get(pk=int(loc_id))
-    except (ValueError, Location.DoesNotExist):
-        raise Http404()
-    loc_obj = dict([(k, getattr(location, k)) for k in ('name', 'area', 'id', 'normalized_name', 'slug', 'population')])
-    loc_obj['wkt'] = location.location.wkt
-    loc_obj['centroid'] = location.centroid.wkt
-    response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(loc_obj, response)
-    return response
 
 #########
 # VIEWS #

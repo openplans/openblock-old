@@ -54,7 +54,6 @@ urlpatterns += patterns('',
     (r'^petitions/([-\w]{4,32})/thanks/$', petition_views.form_thanks, {'is_schema': False}),
     url(r'^api/place-lookup-chart/$', views.ajax_place_lookup_chart, name='ajax-place-lookup-chart'),
     url(r'^api/place-date-chart/$', views.ajax_place_date_chart, name='ajax-place-date-chart'),
-    (r'^api/map-browser/locations/(\d{1,9})/$', views.ajax_location),
     (r'^api/newsitems.geojson/$', views.newsitems_geojson),
     (r'^api/dev1/', include('ebpub.openblockapi.urls')),
     (r'^widgets/', include('ebpub.widgets.urls'))
