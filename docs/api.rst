@@ -218,7 +218,7 @@ Response
 A successful response contains a GeoJSON FeatureCollection with Features corresponding to the query given.  The list will contain multiple results if
 the match was ambiguous.
 
-Example
+Example response
 
 :: 
 

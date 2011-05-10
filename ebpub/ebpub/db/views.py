@@ -195,23 +195,6 @@ def make_search_buffer(geom, block_radius):
 # AJAX VIEWS #
 ##############
 
-def validate_address(request):
-    # Validates that request.GET['address'] can be parsed with the address parser.
-    if not request.GET.get('address', '').strip():
-        raise Http404
-    geocoder = SmartGeocoder()
-    try:
-        result = {'address': geocoder.geocode(request.GET['address'])['address']}
-    except (DoesNotExist, ParsingError, InvalidBlockButValidStreet):
-        result = {}
-    except AmbiguousResult, e:
-        if get_metro()['multiple_cities']:
-            result = {'addresses': [add['address'] + ', ' + add['city'] for add in e.choices]}
-        else:
-            result = {'addresses': [add['address'] for add in e.choices]}
-    return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
-
-
 def map_popups(ni_list):
     """
     Given a list of newsitems, return a list of lists
