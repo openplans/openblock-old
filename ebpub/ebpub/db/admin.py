@@ -64,9 +64,16 @@ class SchemaAdmin(admin.ModelAdmin):
                     'has_newsitem_detail',)
 
 class SchemaFieldAdmin(admin.ModelAdmin):
-    list_display = ('pretty_name', 'real_name', 'display', 'is_lookup',
-                    'is_filter', 'is_charted', 'is_searchable')
-    list_filter = ('schema', 'display', 'is_lookup', 'is_filter', 'is_charted', 'is_searchable', 'real_name')
+    list_display = ('pretty_name',
+                    'schema',
+                    'display',
+                    'datatype',
+                    'real_name',
+                    'is_filter', 'is_charted', 'is_searchable',
+                    'is_lookup', 'is_many_to_many_lookup',
+                    )
+    list_filter = ('schema', 'display', 'is_lookup', 'is_filter',
+                   'is_charted', 'is_searchable', 'real_name')
 
 
 class LookupAdmin(admin.ModelAdmin):
