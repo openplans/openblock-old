@@ -200,6 +200,7 @@ class SchemaField(models.Model):
         Returns True if this SchemaField is a many-to-many lookup.
         """
         return self.is_lookup and not self.is_type('int')
+    is_many_to_many_lookup.boolean = True
 
     def all_lookups(self):
         if not self.is_lookup:
