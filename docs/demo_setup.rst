@@ -176,28 +176,18 @@ You'll also want to think about :ref:`base_layer_configs`.
 Database Initialization
 -----------------------
 
-Django supports using multiple databases for different model data.
-OpenBlock can use this feature if you want.
-
-One caveat is that they must be synced in the correct order. With the
-default demo database configuration, where there are three configured
-back-ends but all are pointing to the same ``openblock`` database with
-an ``openblock`` user, you can create the (empty) database with these
-commands::
+You can create the (empty) database with these commands::
 
     $ sudo -u postgres createuser --createdb openblock
     $ sudo -u postgres createdb -U openblock --template template_postgis openblock
 
-If you later decide to split users and/or metros into separate databases,
-you'd have to run another ``createdb`` command for each one.
-
-Now you're ready to initialize your database tables. You have to
-specify all configured databases even if they all use the same
-database in settings.py. The users database has to come first::
+Now you're ready to initialize your database tables::
 
     $ export DJANGO_SETTINGS_MODULE=obdemo.settings
     $ django-admin.py syncdb --migrate
 
+This will also bootstrap the :doc:`Schemas (types of news items) <schemas>`
+used by the demo.
 
 Starting the Test Server
 ------------------------
@@ -216,7 +206,7 @@ Loading Demo Data
 
 OpenBlock is pretty boring without data!  You'll want to load some
 :ref:`geographic data <locations>` and some local news.  We've
-included some example data for Boston, MA, and loader scripts you can
+included some example data for Boston, MA, and scraper scripts you can
 use to start with if you don't have all of your local data on hand yet.
 
 Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
@@ -232,10 +222,6 @@ First you'll want to load Boston geographies. This will take several minutes::
   $ obdemo/bin/import_boston_zips.sh
   $ obdemo/bin/import_boston_hoods.sh
   $ obdemo/bin/import_boston_blocks.sh
-
-Then bootstrap some news item :ref:`schema definitions <newsitem-schemas>`::
-
-  $ obdemo/bin/add_boston_news_schemas.sh
 
 Then fetch some news from the web, this will take several minutes::
 
