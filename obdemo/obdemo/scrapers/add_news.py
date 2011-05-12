@@ -29,9 +29,10 @@ import logging
 import sys
 
 from django.contrib.gis.geos import Point
+from ebdata.nlp.addresses import parse_addresses
 from ebpub.db.models import NewsItem, Schema
+from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
-from geocoder_hack import quick_dirty_fallback_geocode
 from utils import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
@@ -89,17 +90,27 @@ def main(argv=None):
             # feedparser bug: depending on which parser it magically uses,
             # we either get the xml namespace in the key name, or we don't.
             point = entry.get('georss_point') or entry.get('point')
+            x, y = None, None
             if point:
                 x, y = point.split(' ')
-            else:
+            if True:
                 # Fall back on geocoding.
                 text = item.title + ' ' + item.description
-                try:
-                    x, y = quick_dirty_fallback_geocode(text, parse=True)
-                except GeocodingException:
-                    logger.debug("Geocoding exception on %r:" % text)
-                    log_exception(level=logging.DEBUG)
-                    continue
+                addrs = parse_addresses(text)
+                for addr, unused in addrs:
+                    try:
+                        result = SmartGeocoder().geocode(addr)
+                        point = result['point']
+                        logger.debug("internally geocoded %r" % addr)
+                        x, y = point.x, point.y
+                        break
+                    except GeocodingException:
+                        logger.debug("Geocoding exception on %r:" % text)
+                        log_exception(level=logging.DEBUG)
+                        continue
+                    except:
+                        logger.error('uncaught geocoder exception on %r\n' % addr)
+                        log_exception()
                 if None in (x, y):
                     logger.info("couldn't geocode '%s...'" % item.title[:30])
                     continue
