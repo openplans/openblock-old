@@ -14,22 +14,23 @@ sudo apt-get remove libgdal \
 
 sudo ldconfig
 
-sudo apt-get install python2.6 \
-    python2.6-dev \
-    python-virtualenv \
-    python-distribute  \
+sudo apt-get install \
     build-essential \
     git-core \
-    subversion \
+    libproj-dev \
+    libproj0 \
     postgresql-8.4-postgis \
     postgresql-server-dev-8.4 \
+    python-distribute  \
     python-gdal \
     python-lxml \
-    libproj0 \
+    python-virtualenv \
+    python2.6 \
+    python2.6-dev \
+    subversion \
     unzip \
-    wget \
-    libproj-dev || exit 1
+    wget || exit 1
 
 sudo ldconfig || exit 1
-#echo Rebooting
-#sudo reboot
+echo Rebooting
+sudo reboot

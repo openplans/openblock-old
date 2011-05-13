@@ -1,3 +1,4 @@
+# -*- mode: sh; -*-
 # Need to have set before running this:
 # PG_INITSCRIPT
 # POSTGIS_SQL
