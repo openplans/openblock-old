@@ -147,17 +147,17 @@ def abbrev_regex(d, case_insensitive=True, matches_entirely=True):
     ...     'rd': 'road'
     ... }
     >>> regex = abbrev_regex(suffixes)
-    >>> re.search(regex, "Ave")
+    >>> re.search(regex, "Ave")  # doctest: +ELLIPSIS
     <_sre.SRE_Match object at ...>
     >>> re.search(regex, " Ave ") == None
     True
     >>> regex = abbrev_regex(suffixes, case_insensitive=False)
-    >>> re.search(regex, "str")
+    >>> re.search(regex, "str")  # doctest: +ELLIPSIS
     <_sre.SRE_Match object at ...>
     >>> re.search(regex, "Str") == None
     True
     >>> regex = abbrev_regex(suffixes, matches_entirely=False)
-    >>> re.search(regex, " Road ")
+    >>> re.search(regex, " Road ")  # doctest: +ELLIPSIS
     <_sre.SRE_Match object at ...>
     """
     alts = []
