@@ -112,10 +112,13 @@ def _items_json(items):
             'geometry': geom,
         }
         props = {}
-        # Quirk: the attributes property is an empty dict until you do
-        # something that triggers populating it! calling items() is
-        # sufficient.
-        props = dict(i.attributes.items())
+        for attr in i.attributes_for_template():
+            key = attr.sf.slug
+            if attr.sf.is_many_to_many_lookup():
+                props[key] = attr.values
+            else:
+                props[key] = attr.values[0]
+
         props.update({
             'type': i.schema.slug,
             'title': i.title,
@@ -128,10 +131,10 @@ def _items_json(items):
         result['features'].append(item)
 
     def _serialize_unknown(obj):
-        if (isinstance(obj, datetime.datetime)
-            or isinstance(obj, datetime.date)
-            or isinstance(obj, datetime.time)):
+        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
             return serialize_date_or_time(obj)
+        if isinstance(obj, models.Lookup):
+            return obj.name
         return None
     return simplejson.dumps(result, default=_serialize_unknown, indent=1)
 
@@ -168,6 +171,13 @@ def _items_atom(items):
         location = item.location
         if location:
             location = location.centroid
+        attributes = []
+        for attr in item.attributes_for_template():
+            datatype = get_datatype(attr.sf)
+            for val in attr.values:
+                if attr.sf.is_lookup:
+                    val = val.name
+                attributes.append((attr.sf.slug, datatype, val))
         atom.add_item(item.title,
                       item.url, # XXX should this be a local url?
                       item.description,
@@ -175,7 +185,7 @@ def _items_atom(items):
                       location_name=item.location_name,
                       pubdate=normalize_datetime(item.pub_date),
                       schema_slug=item.schema.slug,
-                      attributes=dict(item.attributes.items()),
+                      attributes=attributes,
                       )
 
     return atom.writeString('utf8')
@@ -272,12 +282,7 @@ def list_types_json(request):
     for schema in models.Schema.public_objects.all():
         attributes = {}
         for sf in schema.schemafield_set.all():
-            if sf.is_lookup:
-                fieldtype = 'text'
-            else:
-                fieldtype = sf.datatype
-                if fieldtype == 'varchar':
-                    fieldtype = 'text'
+            fieldtype = get_datatype(sf)
             attributes[sf.slug] = {
                 'pretty_name': sf.smart_pretty_name(),
                 'type': fieldtype,
@@ -378,10 +383,10 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
 
         # TODO: item_date in custom namespace
         handler.startElement(u'openblock:attributes', {})
-        for key, val in item['attributes'].items():
+        for key, datatype, val in item['attributes']:
             val = serialize_date_or_time(val) or val
-            # TODO: specify the data type? eg. type='datetime'
-            handler.addQuickElement('openblock:attribute', unicode(val), {'name':key})
+            handler.addQuickElement('openblock:attribute', unicode(val),
+                                    {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
 
 def normalize_datetime(dt):
@@ -391,3 +396,16 @@ def normalize_datetime(dt):
         dt = dt.replace(tzinfo=LOCAL_TZ)
     return dt.astimezone(LOCAL_TZ)
 
+
+def get_datatype(schemafield):
+    """
+    Human-readable datatype based on real_name; notably, use 'text',
+    not 'varchar'; Lookups are 'text'.
+    """
+    if schemafield.is_lookup:
+        datatype = 'text'
+    else:
+        datatype = schemafield.datatype
+        if datatype == 'varchar':
+            datatype = 'text'
+    return datatype

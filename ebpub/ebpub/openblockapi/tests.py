@@ -10,6 +10,8 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
+from functools import wraps
+
 import ebpub.openblockapi.views
 
 def monkeypatch(obj, attrname, value):
@@ -18,6 +20,7 @@ def monkeypatch(obj, attrname, value):
     # Unlike mock.patch, this allows the value to be
     # things other than mock.Mock objects.
     def patch(method):
+        @wraps(method)
         def patched(*args, **kw):
             orig = getattr(obj, attrname)
             try:
@@ -178,8 +181,7 @@ class TestItemSearchAPI(TestCase):
                          '2001-01-02T10:11:12-08:00'),
             'bool': (True, True),
             'int': (7, 7),
-            # XXX avoiding lookups for now.
-            #'lookup': ''
+            'lookup': ('7701,7700', ['Lookup 7701 Name', 'Lookup 7700 Name']),
         }
 
         items = _make_items(5, schema)
@@ -201,8 +203,6 @@ class TestItemSearchAPI(TestCase):
     @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_atom(self):
         schema = Schema.objects.get(slug='test-schema')
-        # TODO: either de-hardcode the timezone from this test,
-        # or patch settings.TIME_ZONE.
         ext_vals = {
             'varchar': ('This is a varchar', 'This is a varchar'), 
             'date': (datetime.date(2001, 01, 02), '2001-01-02'),
@@ -212,8 +212,7 @@ class TestItemSearchAPI(TestCase):
                          '2001-01-02T10:11:12-08:00'),
             'bool': (True, 'True'),
             'int': (7, '7'),
-            # XXX avoiding lookups for now.
-            #'lookup': ''
+            'lookup': ('7700,7701', 'Lookup 7700 Name'),  # only check 1
         }
 
         items = _make_items(5, schema)
@@ -233,11 +232,14 @@ class TestItemSearchAPI(TestCase):
         entries = root.xpath('//atom:entry', namespaces=ns)
         assert len(entries) == len(items)
         for entry in entries:
-            for key, value in ext_vals.items():
+            for key, value in sorted(ext_vals.items()):
                 attrs = entry.xpath(
                     'openblock:attributes/openblock:attribute[@name="%s"]' % key,
                     namespaces=ns)
-                self.assertEqual(len(attrs), 1)
+                if key == 'lookup':
+                    self.assertEqual(len(attrs), 2)
+                else:
+                    self.assertEqual(len(attrs), 1)
                 self.assertEqual(attrs[0].text, value[1])
         assert self._items_exist_in_xml_result(items, response.content)
 
@@ -549,8 +551,6 @@ class TestLocationsAPI(TestCase):
         self.assertEqual(locations[0]['slug'], 'hood-1')
         self.assertEqual(locations[0]['name'], 'Hood 1')
 
-
-
     def test_location_detail__invalid_type(self):
         response = self.client.get(reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'bogus'}))
         self.assertEqual(response.status_code,404)
@@ -635,5 +635,4 @@ class TestUtilFunctions(TestCase):
         self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
         self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
                          {'a': 1, 'b': [1,2,3]})
-
 

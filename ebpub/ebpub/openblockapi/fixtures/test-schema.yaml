@@ -130,3 +130,22 @@
     is_filter: false
     display: false
     schema: 1000
+
+# value for lookups
+- pk: 7700
+  model: db.lookup
+  fields:
+   description: Look 1 Descr
+   code: lookup1
+   schema_field: 1006
+   name: Lookup 7700 Name
+   slug: lookup-7700
+
+- pk: 7701
+  model: db.lookup
+  fields:
+   description: Look 1 Descr
+   code: lookup2
+   schema_field: 1006
+   name: Lookup 7701 Name
+   slug: lookup-7701
