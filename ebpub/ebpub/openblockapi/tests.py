@@ -90,8 +90,8 @@ class TestAPI(TestCase):
         ]
 
         for e in endpoints:
-            # XXX kwargs are headers, django test client doesn't take a status
-            response = self.client.get(e, status=200)
+            response = self.client.get(e)
+            self.assertEqual(response.status_code, 200)
             assert response.content.startswith('%s(' % wrapper)
             assert response.content.endswith(");")
             assert response.get('content-type', None).startswith('application/javascript')
@@ -171,7 +171,8 @@ class TestItemSearchAPI(TestCase):
         for item in items:
             item.save()
 
-        response = self.client.get(reverse('items_json'), status=200)
+        response = self.client.get(reverse('items_json'))
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
 
         assert len(ritems['features']) == len(items)
@@ -200,7 +201,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # query for only the second schema
-        response = self.client.get(reverse('items_json') + "?type=type2", status=200)
+        response = self.client.get(reverse('items_json') + "?type=type2")
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
 
         assert len(ritems['features']) == len(items2)
@@ -218,7 +220,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # query for only the second schema
-        response = self.client.get(reverse('items_atom') + "?type=type2", status=200)
+        response = self.client.get(reverse('items_atom') + "?type=type2")
+        self.assertEqual(response.status_code, 200)
         feed = feedparser.parse(response.content)
 
         assert len(feed['entries']) == len(items2)
@@ -251,7 +254,8 @@ class TestItemSearchAPI(TestCase):
             for k,v in ext_vals.items():
                 item.attributes[k] = v[0]
 
-        response = self.client.get(reverse('items_json'), status=200)
+        response = self.client.get(reverse('items_json'))
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
 
         self.assertEqual(len(ritems['features']), len(items))
@@ -282,7 +286,8 @@ class TestItemSearchAPI(TestCase):
             for k,v in ext_vals.items():
                 item.attributes[k] = v[0]
 
-        response = self.client.get(reverse('items_atom'), status=200)
+        response = self.client.get(reverse('items_atom'))
+        self.assertEqual(response.status_code, 200)
         # Darn feedparser throws away nested extension elements. Gahhh.
         # Okay, let's parse the old-fashioned way.
         from lxml import etree
@@ -325,21 +330,24 @@ class TestItemSearchAPI(TestCase):
         enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz))
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         self.assertEqual(len(ritems['features']), 2)
         assert self._items_exist_in_result(items[1:3], ritems)
 
         # startdate only
         qs = "?startdate=%s" % startdate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[:-1], ritems)
 
         # enddate only
         qs = "?enddate=%s" % enddate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
@@ -362,21 +370,24 @@ class TestItemSearchAPI(TestCase):
 
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 2
         assert self._items_exist_in_result(items[1:3], ritems)
 
         # startdate only
         qs = "?startdate=%s" % startdate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[:-1], ritems)
 
         # enddate only
         qs = "?enddate=%s" % enddate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
@@ -389,28 +400,32 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # with no query, we should get all the items
-        response = self.client.get(reverse('items_json'), status=200)
+        response = self.client.get(reverse('items_json'))
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == len(items)
         assert self._items_exist_in_result(items, ritems)
 
         # limited to 5, we should get the first 5
         qs = "?limit=5"
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items[:5], ritems)
 
         # offset by 2, we should get the last 8
         qs = "?offset=2"
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 8
         assert self._items_exist_in_result(items[2:], ritems)
 
         # offset by 2, limit to 5
         qs = "?offset=2&limit=5"
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items[2:7], ritems)
@@ -431,7 +446,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         qs = "?locationid=%s" % cgi.escape("neighborhoods/hood-1")
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items2, ritems)
@@ -453,7 +469,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         qs = "?center=%f,%f&radius=10" % (pt.x, pt.y)
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items2, ritems)
@@ -510,7 +527,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_address(self):
         qs = '?q=100+Adams+St'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -522,14 +540,15 @@ class TestGeocoderAPI(TestCase):
 
     def test_address_notfound(self):
         qs = '?q=100+Nowhere+St'
-        response = self.client.get(reverse('geocoder_api') + qs, status=404)
+        response = self.client.get(reverse('geocoder_api') + qs)
         self.assertEqual(response.status_code, 404)
         response = simplejson.loads(response.content)
         self.assertEqual(len(response['features']), 0)
 
     def test_intersection(self):
         qs = '?q=Adams+and+Chestnut'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -540,7 +559,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_place(self):
         qs = '?q=Fake+Yards'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -551,7 +571,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_location(self):
         qs = '?q=Hood+1'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -563,7 +584,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_ambiguous(self):
         qs = '?q=Chestnut+and+Chestnut'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 2
