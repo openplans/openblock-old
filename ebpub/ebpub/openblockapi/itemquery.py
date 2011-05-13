@@ -16,7 +16,7 @@ def build_item_query(params):
     specified in the API documentation.  raises QueryError if 
     invalid query parameters are specified.
     """
-    
+
     # some different ordering may be more optimal here /
     # some index could be specifically created
     filters = [_schema_filter, _daterange_filter, _predefined_place_filter,

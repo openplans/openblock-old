@@ -3,6 +3,8 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils import feedgenerator
 from django.utils import simplejson
 from ebpub.db import models
@@ -81,6 +83,39 @@ def items_atom(request):
     except QueryError as err:
         return HttpResponse(err.message, status=400)
 
+def items_index(request):
+    """
+    GET: Redirects to a list of JSON items.
+
+    POST: Takes a single JSON mapping describing a NewsItem, creates
+    it, and redirects to a JSON view of the created item.
+
+    On errors, gives a 400 response.
+
+    TODO: documentation in docs/
+    """
+    if request.method == 'GET':
+        return HttpResponseRedirect(reverse('items_json'))
+    else:
+        assert request.method == 'POST'
+        created = HttpResponse(status=201)
+        item_id = str(999)  # XXX
+        created['location'] = reverse('single_item_json', kwargs={'id_': item_id})
+        return created
+
+
+def single_item_json(request, id_=None):
+    """
+    GET a single item as GeoJSON.
+    """
+    assert request.method == 'GET'
+    # TODO: handle PUT, DELETE?
+    from ebpub.db.models import NewsItem
+    item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
+    json = _item_json(item)
+    return APIGETResponse(request, json, content_type=JSON_CONTENT_TYPE)
+
+
 def _copy_nomulti(d):
     """
     make a copy of django wack-o immutable query mulit-dict
@@ -97,6 +132,35 @@ def _copy_nomulti(d):
             r[k] = v
     return r
 
+def _item_json(item, encode=True):
+    props = {}
+    geom = simplejson.loads(item.location.geojson)
+    result = {
+        # 'id': i.id, # XXX ?
+        'type': 'Feature',
+        'geometry': geom,
+        }
+    for attr in item.attributes_for_template():
+        key = attr.sf.slug
+        if attr.sf.is_many_to_many_lookup():
+            props[key] = attr.values
+        else:
+            props[key] = attr.values[0]
+
+    props.update(
+        {'type': item.schema.slug,
+         'title': item.title,
+         'description': item.description,
+         'url': item.url,
+         'pub_date': pyrfc3339.generate(normalize_datetime(item.pub_date), utc=False),
+         'item_date': item.item_date,
+         })
+    result['properties'] = props
+    if encode:
+        return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+    else:
+        return result
+
 def _items_json(items):
     result = {
         'type': 'FeatureCollection',
@@ -105,38 +169,16 @@ def _items_json(items):
     for i in items:
         if i.location is None: 
             continue
-        geom = simplejson.loads(i.location.geojson)
-        item = {
-            # 'id': i.id, # XXX ?
-            'type': 'Feature',
-            'geometry': geom,
-        }
-        props = {}
-        for attr in i.attributes_for_template():
-            key = attr.sf.slug
-            if attr.sf.is_many_to_many_lookup():
-                props[key] = attr.values
-            else:
-                props[key] = attr.values[0]
-
-        props.update({
-            'type': i.schema.slug,
-            'title': i.title,
-            'description': i.description,
-            'url': i.url,
-            'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date), utc=False),
-            'item_date': i.item_date,
-        })
-        item['properties'] = props
+        item = _item_json(i, encode=False)
         result['features'].append(item)
-
-    def _serialize_unknown(obj):
-        if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
-            return serialize_date_or_time(obj)
-        if isinstance(obj, models.Lookup):
-            return obj.name
-        return None
     return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+
+def _serialize_unknown(obj):
+    if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+        return serialize_date_or_time(obj)
+    if isinstance(obj, models.Lookup):
+        return obj.name
+    return None
 
 def serialize_date_or_time(obj):
     if isinstance(obj, datetime.datetime):

@@ -90,10 +90,46 @@ class TestAPI(TestCase):
         ]
 
         for e in endpoints:
+            # XXX kwargs are headers, django test client doesn't take a status
             response = self.client.get(e, status=200)
             assert response.content.startswith('%s(' % wrapper)
             assert response.content.endswith(");")
             assert response.get('content-type', None).startswith('application/javascript')
+
+    def test_items_redirect(self):
+        url = reverse('items_index')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'],
+                         'http://testserver' + reverse('items_json'))
+
+
+class TestPushAPI(TestCase):
+
+    fixtures = ('test-schema',)
+
+    def test_create_basic(self):
+        #schema = models.Schema.objects.get(slug='test-schema')
+        info = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    0.0,
+                    0.0
+                    ]
+                },
+            "properties": {
+                "description": "Bananas!",
+                "title": "All About Fruit",
+                "url": "http://example.com/bananas",
+                "pub_date": "2011-01-01T01:02:03-00:00",
+                "type": "type1",
+                }
+            }
+        url = reverse('items_index')
+        json = simplejson.dumps(info)
+        self.client.post(url, json, content_type='application/json')
 
 
 class TestItemSearchAPI(TestCase):
@@ -102,6 +138,28 @@ class TestItemSearchAPI(TestCase):
 
     def tearDown(self):
         NewsItem.objects.all().delete()
+
+    def test_single_item_json__notfound(self):
+        id_ = '99999'
+        response = self.client.get(reverse('single_item_json', kwargs={'id_': id_}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_single_item_json(self):
+        schema1 = Schema.objects.get(slug='type1')
+        item = _make_items(1, schema1)[0]
+        item.save()
+        id_ = item.id
+        response = self.client.get(reverse('single_item_json', kwargs={'id_': id_}))
+        self.assertEqual(response.status_code, 200)
+        out = simplejson.loads(response.content)
+        self.assertEqual(out['type'], 'Feature')
+        self.assert_('geometry' in out.keys())
+        self.assertEqual(out['geometry']['type'], 'Point')
+        self.assert_('properties' in out.keys())
+        self.assertEqual(out['properties']['title'], item.title)
+        self.assertEqual(out['properties']['description'], item.description)
+        self.assertEqual(out['properties']['type'], schema1.slug)
+
 
     def test_items_nofilter(self):
         # create a few items
@@ -168,6 +226,9 @@ class TestItemSearchAPI(TestCase):
             assert item['openblock_type'] == u'type2'
 
 
+    # TODO: once DJango 1.4 is out, we might be able to remove this by
+    # using # the TestCase.settings context manager as per
+    # http://docs.djangoproject.com/en/dev/topics/testing/#overriding-settings
     @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
         schema = Schema.objects.get(slug='test-schema')
