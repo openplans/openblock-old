@@ -18,7 +18,6 @@
 
 from django import template
 from django.conf import settings
-from ebpub.utils.stats import normalize
 
 def tile_url_list():
     return settings.TILE_URL_LIST
@@ -34,8 +33,6 @@ def activate_mapping():
 
 MAX_MARKER_RADIUS = 18
 MIN_MARKER_RADIUS = 3
-
-get_norm_radius = normalize(MIN_MARKER_RADIUS, MAX_MARKER_RADIUS)
 
 def _get_marker_radius(normalized_value):
     """
