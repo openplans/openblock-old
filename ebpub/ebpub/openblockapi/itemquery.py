@@ -1,5 +1,6 @@
 from django.contrib.gis import geos
-from ebpub.db.models import NewsItem, Schema
+from ebpub.utils.dates import parse_date
+from ebpub.db.models import NewsItem
 import datetime
 import pyrfc3339
 
@@ -82,7 +83,7 @@ def _daterange_filter(query, params, state):
         try:
             del params['startdate']
             try:
-                startdate = datetime.datetime.strptime(startdate, '%Y-%m-%d')
+                startdate = parse_date(startdate, '%Y-%m-%d')
             except ValueError:
                 startdate = pyrfc3339.parse(startdate)
             query = query.filter(pub_date__gte=startdate)
@@ -94,7 +95,7 @@ def _daterange_filter(query, params, state):
         try:
             del params['enddate']
             try:
-                enddate = datetime.datetime.strptime(enddate, '%Y-%m-%d')
+                enddate = parse_date(enddate, '%Y-%m-%d')
             except ValueError: 
                 enddate = pyrfc3339.parse(enddate)
             query = query.filter(pub_date__lte=enddate)
