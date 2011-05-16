@@ -44,8 +44,6 @@ schemas that are bootstrapped by installing :doc:`packages/obdemo`.
 If you only have a couple hours for a proof of concept, and aren't yet
 deeply familiar with OpenBlock, this is a good way to start.
 
-Sometimes you just want to quickly try an idea, and maybe you don't
-know enough about OpenBlock to dive into its scraper infrastructure.
 You can always refactor it into something more robust later.
 
 The process is conceptually simple. The script should download some
