@@ -68,7 +68,7 @@ from boston.com and creates a NewsItem for each entry::
 
     from django.contrib.gis.geos import Point
     from ebpub.db.models import NewsItem, Schema
-    from utils import log_exception
+    from ebpub.utils.logging import log_exception
 
     # Note there's an undocumented assumption in ebdata that we want to
     # unescape html before putting it in the db.
@@ -157,7 +157,7 @@ address extraction and ebpub's geocoder::
     from ebpub.db.models import NewsItem
     from ebpub.geocoder import SmartGeocoder
     from ebpub.geocoder.base import GeocodingException
-    from utils import log_exception
+    from ebpub.utils.logging import log_exception
     import logging
     import datetime
 
