@@ -36,7 +36,7 @@ import logging
 
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
-from utils import log_exception
+from ebpub.utils.logging import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
 # put unescape html before putting it in the db.  Maybe wouldn't have
