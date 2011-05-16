@@ -25,6 +25,7 @@ URL patterns, which could be inefficient. Look for a better way of doing this.
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import RegexURLPattern
+from django.core.urlresolvers import RegexURLResolver
 from ebpub.metros.allmetros import get_metro
 
 class MulticityRegexURLPattern(RegexURLPattern):
@@ -48,6 +49,7 @@ def metro_patterns(multi, single):
     return pattern_list
 
 def url(klass, regex, view, kwargs=None, name=None, prefix=''):
+    # Unused?? Delete this?
     if type(view) == list:
         # For include(...) processing.
         return RegexURLResolver(regex, view[0], kwargs)
