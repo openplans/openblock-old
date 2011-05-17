@@ -52,6 +52,6 @@ def parse_time(value, format):
     Equivalent to time.strptime, but it returns a datetime.time object.
 
     >>> parse_time('23:59:01', '%H:%M:%S')
-    datetime.time(23, 59, 12)
+    datetime.time(23, 59, 1)
     """
     return datetime.time(*time.strptime(value, format)[3:6])
