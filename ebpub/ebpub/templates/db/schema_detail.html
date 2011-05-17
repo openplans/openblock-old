@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load eb humanize %}
+{% load eb humanize eb_filter %}
 
 {% block title %}{% METRO_NAME %} {{ schema.plural_name }}{% endblock %}
 
@@ -45,7 +45,7 @@
 							<tr>
 								<td class="label">
 									<span class="name">
-										<a href="locations/{{ location_chart.location_type.slug }}/{{ location.location.slug }}/">{{ location.location.name }}</a>
+										<a href="{% filter_url schema +'location' location.location %}">{{ location.location.name }}</a>
 										<span class="bar" style="width: {% widthratio location.total date_chart.total_count 100 %}%"></span>
 									</span>
 								</td>
@@ -74,7 +74,7 @@
 						{% if not location_chart.locations|length|lessthan:9 %}
 							<tr>
 								<td colspan="3">
-									<a href="locations/{{ location_chart.location_type.slug }}/">See all {{ location_chart.location_type.plural_name }}&hellip;</a>
+									<a href="{% filter_url schema +'location' location_chart.location_type %}">See all {{ location_chart.location_type.plural_name }}&hellip;</a>
 								</td>
 							</tr>
 						{% endif %}
@@ -89,7 +89,7 @@
 						<tr>
 							<td class="label">
 								<span class="name">
-									<a href="by-{{ lookup.sf.slug }}/{{ value.lookup.slug }}/" title="{{ value.lookup.name }}">{{ value.lookup.name }}</a>
+									<a href="{% filter_url schema +lookup.sf value.lookup %}" title="{{ value.lookup.name }}">{{ value.lookup.name }}</a>
 									{% if value.total %}<span class="bar" style="width: {% widthratio value.total date_chart.total_count 100 %}%"></span>{% endif %}
 								</span>
 							</td>
@@ -103,7 +103,8 @@
 						{% endfor %}
 						<tr>
 							<td colspan="3">
-								<a href="by-{{ lookup.sf.slug }}/">See all {{ lookup.sf.pretty_name_plural }}&hellip;</a>
+								<a href="{% filter_url schema +lookup.sf %}">See all {{ lookup.sf.pretty_name_plural }}&hellip;</a>
+
 							</td>
 						</tr>
 					</table>

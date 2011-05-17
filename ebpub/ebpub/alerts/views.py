@@ -25,8 +25,8 @@ from ebpub.accounts.utils import login_required, CREATE_TASK
 from ebpub.accounts.views import login, send_confirmation_and_redirect
 from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import Schema
-from ebpub.db.views import url_to_place, block_radius_value
-from ebpub.db.views import get_place_info_for_request
+from ebpub.db.utils import url_to_place, block_radius_value
+from ebpub.db.utils import get_place_info_for_request
 from ebpub.streets.models import Block
 from ebpub.utils.view_utils import eb_render
 import datetime

@@ -19,6 +19,7 @@
 from ebdata.templatemaker.brain import Brain
 from ebdata.templatemaker.hole import Hole, OrHole, IgnoreHole
 import unittest
+import everyblock
 
 class BrainTestCase(unittest.TestCase):
     def assertAsText(self, brain, marker, expected):
@@ -147,16 +148,26 @@ class BrainSerialization(unittest.TestCase):
         self.assertSerializes([Hole(), 'abc', Hole(), 'def', Hole()])
 
     def test_format1(self):
-        self.assertEqual(Brain([]).serialize(), 'gAJjZXZlcnlibG9jay50ZW1wbGF0ZW1ha2VyLmJyYWluCkJyYWluCnEBKYFxAn1xA2Iu\n')
+        self.assertEqual(Brain([]).serialize(), 'gAJjZWJkYXRhLnRlbXBsYXRlbWFrZXIuYnJhaW4KQnJhaW4KcQEpgXECfXEDYi4=\n')
 
     def test_format2(self):
-        self.assertEqual(Brain([Hole(), 'abc', Hole()]).serialize(), 'gAJjZXZlcnlibG9jay50ZW1wbGF0ZW1ha2VyLmJyYWluCkJyYWluCnEBKYFxAihjZXZlcnlibG9j\nay50ZW1wbGF0ZW1ha2VyLmhvbGUKSG9sZQpxAymBcQR9cQViVQNhYmNxBmgDKYFxB31xCGJlfXEJ\nYi4=\n')
+        self.assertEqual(Brain([Hole(), 'abc', Hole()]).serialize(),
+                         'gAJjZWJkYXRhLnRlbXBsYXRlbWFrZXIuYnJhaW4KQnJhaW4KcQEpgXECKGNlYmRhdGEudGVtcGxh\ndGVtYWtlci5ob2xlCkhvbGUKcQMpgXEEfXEFYlUDYWJjcQZoAymBcQd9cQhiZX1xCWIu\n'
+                         )
 
     def test_format_input1(self):
-        self.assertEqual(Brain([]), Brain.from_serialized('gAJjZXZlcnlibG9jay50ZW1wbGF0ZW1ha2VyLmJyYWluCkJyYWluCnEBKYFxAn1xA2Iu\n'))
+        # If this fails due to eg. module renaming, you can recreate
+        # correct output like: Brain([]).serialize()
+        serialized = 'gAJjZWJkYXRhLnRlbXBsYXRlbWFrZXIuYnJhaW4KQnJhaW4KcQEpgXECfXEDYi4=\n'
+        self.assertEqual(Brain([]), Brain.from_serialized(serialized))
 
     def test_format_input2(self):
-        self.assertEqual(Brain([Hole(), 'abc', Hole()]), Brain.from_serialized('gAJjZXZlcnlibG9jay50ZW1wbGF0ZW1ha2VyLmJyYWluCkJyYWluCnEBKYFxAihjZXZlcnlibG9j\nay50ZW1wbGF0ZW1ha2VyLmhvbGUKSG9sZQpxAymBcQR9cQViVQNhYmNxBmgDKYFxB31xCGJlfXEJ\nYi4=\n'))
+        # If this fails due to eg. module renaming, you can recreate
+        # correct output like: Brain([Hole(), 'abc', Hole()]).serialize()
+        serialized = 'gAJjZWJkYXRhLnRlbXBsYXRlbWFrZXIuYnJhaW4KQnJhaW4KcQEpgXECKGNlYmRhdGEudGVtcGxh\ndGVtYWtlci5ob2xlCkhvbGUKcQMpgXEEfXEFYlUDYWJjcQZoAymBcQd9cQhiZX1xCWIu\n'
+        self.assertEqual(Brain([Hole(), 'abc', Hole()]),
+                         Brain.from_serialized(serialized))
+
 
 if __name__ == "__main__":
     unittest.main()

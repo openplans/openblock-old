@@ -33,7 +33,7 @@ from ebdata.nlp.addresses import parse_addresses
 from ebpub.db.models import NewsItem, Schema
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
-from utils import log_exception
+from ebpub.utils.logutils import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.

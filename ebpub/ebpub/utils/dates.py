@@ -32,6 +32,13 @@ def parse_date(value, format, return_datetime=False):
     datetime.datetime object instead of a struct_time object.
 
     Returns None if the value evaluates to False.
+
+    >>> parse_date(None, '')
+    >>> parse_date('', '')
+    >>> parse_date('2000', '%Y')
+    datetime.date(2000, 1, 1)
+    >>> parse_date('2000', '%Y', True) # doctest: +ELLIPSIS
+    datetime.datetime(2000, 1, 1, 0, 0, 0, ...)
     """
     # See http://docs.python.org/lib/node85.html
     idx = return_datetime and 7 or 3
@@ -43,5 +50,8 @@ def parse_date(value, format, return_datetime=False):
 def parse_time(value, format):
     """
     Equivalent to time.strptime, but it returns a datetime.time object.
+
+    >>> parse_time('23:59:01', '%H:%M:%S')
+    datetime.time(23, 59, 1)
     """
     return datetime.time(*time.strptime(value, format)[3:6])

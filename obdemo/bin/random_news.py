@@ -40,7 +40,8 @@ lookup_vals = ['lookup_%03d' % i for i in range(300)]
 cache = {}
 def get_text_corpus():
     if not cache.has_key('corpus'):
-        url = 'http://www.gutenberg.org/ebooks/33661.txt.utf8'
+        #url = 'http://www.gutenberg.org/ebooks/33661.txt.utf8'
+        url = 'http://www.archive.org/stream/captainblood01965gut/cpbld11.txt'
         outfile = '/tmp/' + url.split('/')[-1]
         if not os.path.exists(outfile):
             import urllib2

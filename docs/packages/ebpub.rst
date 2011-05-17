@@ -169,7 +169,8 @@ fields:
       the date this NewsItem was added to the site
 
     item_date
-      the date of the object
+      the date of the object (e.g. the date it was published on the
+      original source site, or the date the news occurred)
 
     location
       the location of the object (a GeoDjango GeometryField, usually a
@@ -294,7 +295,7 @@ defining it:
 
     is_searchable = False
         Whether it's searchable. This only applies to textual fields (varchars
-        and texts).
+        and texts).  Don't use with Lookups.
 
 Once you've created this SchemaField, the value of "int01" for any db_attribute
 row with schema_id=5 will be the sale price.

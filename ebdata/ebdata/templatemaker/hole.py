@@ -19,6 +19,11 @@
 import re
 
 class Hole(object):
+
+    # This would have been a good place for a docstring
+    # mentioning something about what the heck a Hole is for.
+    # Thanks guys.
+
     capture = True # Designates whether the Hole captures something in regex().
     def __eq__(self, other):
         "A Hole is equal to any other Hole (but not subclasses)."

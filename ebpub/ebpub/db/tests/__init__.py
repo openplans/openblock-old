@@ -16,6 +16,11 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Needed so `manage.py test` can find these tests.
-from .test_views import *
-from .test_models import *
+from django.conf import settings
+if not settings.TEST_RUNNER.count('Nose'):
+    # Needed so `manage.py test` can find these tests.
+    # But it tricks Nose into running the tests twice.
+    from .test_views import *
+    from .test_models import *
+    from .test_schemafilters import *
+    from .test_templatetags import *

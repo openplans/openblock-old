@@ -19,7 +19,7 @@
 # Sanity-check python version.
 import sys
 if not ((2, 6) <= sys.version_info[:2] < (3, 0)):
-    sys.exit("ERROR: ebpub requires Python >= 2.6 and < 3.0")
+    sys.exit("ERROR: ebdata requires Python >= 2.6 and < 3.0")
 
 try:
     from setuptools import setup, find_packages
@@ -27,6 +27,10 @@ except ImportError:
     from ez_setup import use_setuptools
     use_setuptools()
     from setuptools import setup, find_packages
+
+from distutils.core import Extension
+listdiffc = Extension('ebdata.templatemaker.listdiffc',
+                      sources=['ebdata/templatemaker/listdiff.c'])
 
 setup(
     name='ebdata',
@@ -49,4 +53,5 @@ setup(
     include_package_data=True,
     entry_points="""
     """,
+    ext_modules=[listdiffc],
 )

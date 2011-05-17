@@ -176,18 +176,29 @@ You'll also want to think about :ref:`base_layer_configs`.
 Database Initialization
 -----------------------
 
-You can create the (empty) database with these commands::
+Create the (empty) database, and a postgres user for it, with these commands::
 
     $ sudo -u postgres createuser --createdb openblock
     $ sudo -u postgres createdb -U openblock --template template_postgis openblock
 
-Now you're ready to initialize your database tables::
+Now initialize your database tables::
 
     $ export DJANGO_SETTINGS_MODULE=obdemo.settings
     $ django-admin.py syncdb --migrate
 
+
 This will also bootstrap the :doc:`Schemas (types of news items) <schemas>`
 used by the demo.
+
+Multiple databases?
+~~~~~~~~~~~~~~~~~~~
+
+Note that while Django supports using multiple databases for different
+model data, OpenBlock does not. This is because we use `South
+<http://pypi.python.org/pypi/South>`_ to automate :ref:`database
+migrations <migrations>`, and as of this writing South does not work
+properly with a multi-database configuration.
+
 
 Starting the Test Server
 ------------------------

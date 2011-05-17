@@ -22,7 +22,7 @@ from django.template.loader import render_to_string
 from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import NewsItem
 from ebpub.db.utils import populate_attributes_if_needed
-from ebpub.db.views import make_search_buffer
+from ebpub.db.utils import make_search_buffer
 from ebpub.streets.models import Block
 import datetime
 

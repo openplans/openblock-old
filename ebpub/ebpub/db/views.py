@@ -21,41 +21,47 @@ from django.conf import settings
 from django.contrib.gis.shortcuts import render_to_kml
 from django.core.cache import cache
 from django.db.models import Q
-from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
+from django.http import Http404
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template.loader import select_template
-from django.utils import dateformat, simplejson
+from django.utils import simplejson
 from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_page
-from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
-from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
 from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
-from ebpub.db.models import NewsItem, Schema, SchemaField, Lookup, LocationType, Location, SearchSpecialCase
+from ebpub.db.models import NewsItem, Schema, SchemaField, LocationType, Location, SearchSpecialCase
+from ebpub.db.schemafilters import FilterError
+from ebpub.db.schemafilters import FilterChain
+from ebpub.db.schemafilters import BadAddressException
+from ebpub.db.schemafilters import BadDateException
+
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
-from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, GeocodingException, InvalidBlockButValidStreet
+from ebpub.db.utils import url_to_place
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, InvalidBlockButValidStreet
+from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
 from ebpub.metros.allmetros import get_metro
 from ebpub.preferences.models import HiddenSchema
-from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.clustering.json import ClusterJSON
 from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
-from ebpub.utils.view_utils import parse_pid, make_pid
+from ebpub.utils.view_utils import get_schema_manager
+from ebpub.utils.view_utils import has_staff_cookie
 
 import datetime
 import hashlib
 import logging
 import operator
 import re
-import urllib
 
 logger = logging.getLogger('ebpub.db.views')
 
@@ -63,29 +69,6 @@ logger = logging.getLogger('ebpub.db.views')
 # HELPER FUNCTIONS (NOT VIEWS) #
 ################################
 
-radius_url = lambda radius: '%s-block%s' % (radius, radius != '1' and 's' or '')
-
-def has_staff_cookie(request):
-    return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
-
-def get_schema_manager(request):
-    if has_staff_cookie(request):
-        return Schema.objects
-    else:
-        return Schema.public_objects
-
-def block_radius_value(request):
-    # Returns a tuple of (xy_radius, block_radius, cookies_to_set).
-    if 'radius' in request.GET and request.GET['radius'] in BLOCK_RADIUS_CHOICES:
-        block_radius = request.GET['radius']
-        cookies_to_set = {BLOCK_RADIUS_COOKIE_NAME: block_radius}
-    else:
-        if request.COOKIES.get(BLOCK_RADIUS_COOKIE_NAME) in BLOCK_RADIUS_CHOICES:
-            block_radius = request.COOKIES[BLOCK_RADIUS_COOKIE_NAME]
-        else:
-            block_radius = BLOCK_RADIUS_DEFAULT
-        cookies_to_set = {}
-    return BLOCK_RADIUS_CHOICES[block_radius], block_radius, cookies_to_set
 
 def get_date_chart_agg_model(schemas, start_date, end_date, agg_model, kwargs=None):
     kwargs = kwargs or {}
@@ -130,35 +113,6 @@ def get_date_chart(schemas, start_date, end_date, counts):
             })
     return result
 
-def url_to_place(*args, **kwargs):
-    # Given args and kwargs captured from the URL, returns the place.
-    # This relies on "place_type" being provided in the URLpattern.
-    parse_func = kwargs['place_type'] == 'block' and url_to_block or url_to_location
-    return parse_func(*args)
-
-def url_to_block(city_slug, street_slug, from_num, to_num, predir, postdir):
-    params = {
-        'street_slug': street_slug,
-        'predir': (predir and predir.upper() or ''),
-        'postdir': (postdir and postdir.upper() or ''),
-        'from_num': int(from_num),
-        'to_num': int(to_num),
-    }
-    if city_slug:
-        city = City.from_slug(city_slug).norm_name
-        city_filter = Q(left_city=city) | Q(right_city=city)
-    else:
-        city_filter = Q()
-    b_list = list(Block.objects.filter(city_filter, **params))
-
-    if not b_list:
-        raise Http404()
-
-    return b_list[0]
-
-def url_to_location(type_slug, slug):
-    return get_object_or_404(Location.objects.select_related(), location_type__slug=type_slug, slug=slug)
-
 
 def has_clusters(cluster_dict):
     """
@@ -183,13 +137,6 @@ def block_bbox(block, radius):
     env = ogr.CreateGeometryFromWkt(block.wkt).Buffer(radius).GetEnvelope()
     return (env[0], env[2], env[1], env[3])
 
-def make_search_buffer(geom, block_radius):
-    """
-    Returns a polygon of a buffer around a block's centroid. `geom'
-    should be the centroid of the block. `block_radius' is number of
-    blocks.
-    """
-    return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope
 
 def _map_popups(ni_list):
     """
@@ -221,66 +168,52 @@ def _map_popups(ni_list):
 
 def ajax_place_lookup_chart(request):
     """
-    HTML fragment -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
+    Returns HTML fragment -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
     """
     try:
         sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
-    qs = NewsItem.objects.filter(schema__id=sf.schema.id)
-    filter_url = place.url()[1:]
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url += radius_url(block_radius) + '/'
-    else:
-        qs = qs.filter(newsitemlocation__location__id=place.id)
+    filters = FilterChain(request=request, schema=sf.schema)
+    filters.add_by_place_id(request.GET.get('pid', ''))
+    qs = filters.apply()
     total_count = qs.count()
     top_values = qs.top_lookups(sf, 10)
     return render_to_response('db/snippets/lookup_chart.html', {
         'lookup': {'sf': sf, 'top_values': top_values},
         'total_count': total_count,
         'schema': sf.schema,
-        'filter_url': filter_url,
+        'filters': filters,
     })
 
 def ajax_place_date_chart(request):
     """
-    HTML fragment -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
+    Returns HTML fragment -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
     """
     try:
-        s = Schema.public_objects.get(id=int(request.GET['s']))
+        schema = Schema.public_objects.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
-    place, block_radius, xy_radius = parse_pid(request.GET.get('pid', ''))
-    qs = NewsItem.objects.filter(schema__id=s.id)
-    filter_url = place.url()[1:]
-    if isinstance(place, Block):
-        search_buffer = make_search_buffer(place.location.centroid, block_radius)
-        qs = qs.filter(location__bboverlaps=search_buffer)
-        filter_url += radius_url(block_radius) + '/'
-    else:
-        qs = qs.filter(newsitemlocation__location__id=place.id)
+    filters = FilterChain(request=request, schema=schema)
+    filters.add_by_place_id(request.GET.get('pid', ''))
+    qs = filters.apply()
     # TODO: Ignore future dates
     end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    counts = qs.filter(schema__id=s.id, item_date__gte=start_date, item_date__lte=end_date).date_counts()
-    date_chart = get_date_chart([s], end_date - datetime.timedelta(days=settings.DEFAULT_DAYS), end_date, {s.id: counts})[0]
+    filters.add('date', start_date, end_date)
+    counts = filters.apply().date_counts()
+    date_chart = get_date_chart([schema], start_date, end_date, {schema.id: counts})[0]
     return render_to_response('db/snippets/date_chart.html', {
-        'schema': s,
+        'schema': schema,
         'date_chart': date_chart,
-        'filter_url': filter_url,
+        'filters': filters,
     })
-
 
 def newsitems_geojson(request):
     """Get a list of newsitems, optionally filtered for one place ID
     and/or one schema slug.
 
     Response is a geojson string.
-
-    TODO: replace this with openblockapi.views.items_json
     """
     # Note: can't use @cache_page here because that ignores all requests
     # with query parameters (in FetchFromCacheMiddleware.process_request).
@@ -291,27 +224,22 @@ def newsitems_geojson(request):
     # ebpub.db.views?
 
     pid = request.GET.get('pid', '')
-    schema = request.GET.get('schema', '')
+    schema = request.GET.get('schema', None)
+    if schema is not None:
+        schema = get_object_or_404(Schema, slug=schema)
+
     nid = request.GET.get('newsitem', '')
 
     cache_seconds = 60 * 5
-    cache_key = 'newsitem_geojson_%s_%s' % (pid, schema)
+    cache_key = 'newsitem_geojson_%s_%s_%s' % (pid, nid, schema)
 
+    newsitem_qs = NewsItem.objects.all()
     if nid:
-        newsitem_qs = NewsItem.objects.filter(id=nid)
+        newsitem_qs = newsitem_qs.filter(id=nid)
     else:
-        newsitem_qs = NewsItem.objects.all()
-        if schema:
-            newsitem_qs = newsitem_qs.filter(schema__slug=schema)
+        filters = FilterChain(request=request, queryset=newsitem_qs, schema=schema)
         if pid:
-            place, block_radius, xy_radius = parse_pid(pid)
-            if isinstance(place, Block):
-                search_buffer = make_search_buffer(place.location.centroid, block_radius)
-                newsitem_qs = newsitem_qs.filter(location__bboverlaps=search_buffer)
-            else:
-                # This depends on the trigger in newsitemlocation.sql
-                newsitem_qs = newsitem_qs.filter(
-                    newsitemlocation__location__id=place.id)
+            filters.add_by_place_id(pid)
         else:
             # Whole city!
             pass
@@ -325,7 +253,9 @@ def newsitems_geojson(request):
         # This is using pub_date, but Aggregates use item_date, so there's
         # a visible disjoint between number of items on the map and the item
         # count shown on the homepage and location detail page.
-        newsitem_qs = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
+        filters.add('pubdate', start_date, end_date)
+        newsitem_qs = filters.apply()
+        newsitem_qs = newsitem_qs
         if not has_staff_cookie(request):
             newsitem_qs = newsitem_qs.filter(schema__is_public=True)
 
@@ -340,7 +270,7 @@ def newsitems_geojson(request):
     output = cache.get(cache_key, None)
     if output is None:
         # Re-sort by schema type.
-        # This is an optimization for _map_popups().
+        # This is an optimization for map_popups().
         # We can't do it in the qs because we want to first slice the qs
         # by date, and we can't call order_by() after a slice.
         newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
@@ -374,7 +304,6 @@ def newsitems_geojson(request):
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
 
-
 @cache_page(60 * 60)
 def place_kml(request, *args, **kwargs):
     place = url_to_place(*args, **kwargs)
@@ -387,7 +316,7 @@ def place_kml(request, *args, **kwargs):
 
 
 def homepage(request):
-    """A slimmed-down version of ebpub.db.views.homepage.
+    """Front page of the default OpenBlock theme.
     """
 
     end_date = today()
@@ -502,15 +431,9 @@ def search(request, schema_slug=''):
     lt_list = LocationType.objects.filter(is_significant=True).order_by('name')
     return eb_render(request, 'db/search_error.html', {'query': q, 'locationtype_list': lt_list})
 
-def newsitem_detail(request, schema_slug, year, month, day, newsitem_id):
-    try:
-        date = datetime.date(int(year), int(month), int(day))
-    except ValueError:
-        raise Http404('Invalid day')
-    ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id)
-
-    if ni.schema.slug != schema_slug or ni.item_date != date:
-        raise Http404
+def newsitem_detail(request, schema_slug, newsitem_id):
+    ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id,
+                           schema__slug=schema_slug)
     if not ni.schema.is_public and not has_staff_cookie(request):
         raise Http404('Not public')
 
@@ -618,6 +541,7 @@ def schema_detail(request, slug):
 
         # Populate schemafield_list and lookup_list.
         schemafield_list = list(s.schemafield_set.filter(is_filter=True).order_by('display_order'))
+        # XXX this duplicates part of schema_filter()
         LOOKUP_MIN_DISPLAYED = 7
         LOOKUP_BUFFER = 4
         lookup_list = []
@@ -683,6 +607,7 @@ def schema_detail(request, slug):
         'end_date': today(),
         'bodyclass': 'schema-detail',
         'bodyid': slug,
+        'filters': FilterChain(schema=s),
     }
     context['breadcrumbs'] = breadcrumbs.schema_detail(context)
     return eb_render(request, templates_to_try, context)
@@ -719,66 +644,11 @@ def schema_about(request, slug):
     return eb_render(request, 'db/schema_about.html', context)
 
 
-def _schema_filter_normalize_url(request):
-    """Returns a new URL, or None if the original URL is OK.
+def schema_filter(request, slug, args_from_url):
     """
-    # Due to the way our custom filter UI works, address, date and
-    # text searches sometimes come in a query string instead of in the
-    # URL. Here, we validate those searches and return a url for
-    # redirection so that the address and date are in the path.
-    #
-    # TODO: This only handles one of those queries per request. Handle multiple?
-    #
-    # TODO: normalize the order of queries in the final URL, so that
-    # /by-foo/a/b/by-bar/x/ and /by-bar/x/by-foo/a/b/ are
-    # normalized to the same URL?
-    # That'd help cacheability and we could put less expensive filters first.
-
-    if request.GET.get('address', '').strip():
-        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-        address = request.GET['address'].strip()
-        result = None
-        try:
-            result = SmartGeocoder().geocode(address)
-        except AmbiguousResult, e:
-            address_choices = e.choices
-        except (GeocodingException, ParsingError):
-            address_choices = ()
-        if result:
-            if result['block']:
-                new_url = request.path + result['block'].url()[1:] + radius_url(block_radius) + '/'
-            elif result['intersection']:
-                new_url = request.path + result['intersection'].url()[1:] + radius_url(block_radius) + '/'
-            else:
-                raise NotImplementedError('Reached invalid geocoding type: %r' % result)
-            return new_url
-        else:
-            return eb_render(request, 'db/filter_bad_address.html', {
-                'address_choices': address_choices,
-                'address': address,
-                'radius': block_radius,
-                'radius_url': radius_url(block_radius),
-            })
-    if request.GET.get('start_date', '').strip() and request.GET.get('end_date', '').strip():
-        try:
-            start_date = parse_date(request.GET['start_date'], '%m/%d/%Y')
-            end_date = parse_date(request.GET['end_date'], '%m/%d/%Y')
-        except ValueError:
-            return '../'
-        if start_date.year < 1900 or end_date.year < 1900:
-            # This prevents strftime from throwing a ValueError.
-            raise Http404('Dates before 1900 are not supported.')
-        new_url = request.path + '%s,%s' % (start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')) + '/'
-        return new_url
-    if request.GET.get('textsearch', '').strip() and request.GET.get('q', '').strip():
-        new_url = request.path + 'by-%s/%s/' % (request.GET['textsearch'], urllib.quote(request.GET['q']))
-        return new_url
-    return None
-
-def schema_filter(request, slug, urlbits):
-    new_url = _schema_filter_normalize_url(request)
-    if new_url is not None:
-        return HttpResponseRedirect(new_url)
+    List NewsItems for one schema, filtered by various criteria in the
+    URL (date, location, or values of SchemaFields).
+    """
 
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
@@ -787,6 +657,7 @@ def schema_filter(request, slug, urlbits):
     context = {
         'bodyclass': 'schema-filter',
         'bodyid': s.slug,
+        'schema': s,
         }
     # Breadcrumbs. We can assign this early because it's a generator,
     # so it'll get the full context no matter what.
@@ -798,195 +669,48 @@ def schema_filter(request, slug, urlbits):
     # Use SortedDict to preserve the display_order.
     filter_sf_dict = SortedDict([(sf.slug, sf) for sf in filter_sf_list] + [(sf.slug, sf) for sf in textsearch_sf_list])
 
-    # Create the initial QuerySet of NewsItems.
     start_date = s.min_date
     end_date = today()
-    qs = NewsItem.objects.filter(schema__id=s.id, item_date__lte=end_date).order_by('-item_date')
 
-    lookup_descriptions = []
-
-    # Break apart the URL to determine what filters to apply.
-    # TODO: Refactor this into helpers or separate views. See #112
-    #
-    # urlbits is a string describing the filters (or None, in the case of
-    # "/filter/"). Cycle through them to see which ones are valid.
-    urlbits = urlbits or ''
-    # Reversing so we can use pop() instead of pop(0).
-    urlbits = [bit for bit in reversed(urlbits.split('/')) if bit]
-    filters = SortedDict()
-    date_filter_applied = location_filter_applied = False
-    while urlbits:
-        bit = urlbits.pop()
-
-        # Date range
-        if bit == 'by-date' or bit == 'by-pub-date':
-            if date_filter_applied:
-                raise Http404('Only one date filter can be applied')
-            try:
-                date_range = urlbits.pop()
-            except IndexError:
-                raise Http404('Missing date range')
-            try:
-                start_date, end_date = date_range.split(',')
-                start_date = datetime.date(*map(int, start_date.split('-')))
-                end_date = datetime.date(*map(int, end_date.split('-')))
-            except (IndexError, ValueError, TypeError):
-                raise Http404('Missing or invalid date range')
-            if bit == 'by-date':
-                date_field_name = 'item_date'
-                label = s.date_name
-            else:
-                date_field_name = 'pub_date'
-                label = 'date published'
-            gte_kwarg = '%s__gte' % date_field_name
-            lt_kwarg = '%s__lt' % date_field_name
-            kwargs = {
-                gte_kwarg: start_date,
-                lt_kwarg: end_date+datetime.timedelta(days=1)
-            }
-            qs = qs.filter(**kwargs)
-            if start_date == end_date:
-                value = dateformat.format(start_date, 'N j, Y')
-            else:
-                value = u'%s \u2013 %s' % (dateformat.format(start_date, 'N j, Y'), dateformat.format(end_date, 'N j, Y'))
-            filters['date'] = {'name': 'date', 'label': label, 'short_value': value, 'value': value, 'url': '%s/%s,%s' % (bit, start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'))}
-            date_filter_applied = True
-
-        # Lookup
-        elif bit.startswith('by-'):
-            sf_slug = bit[3:]
-            try:
-                # Pop it so that we can't get subsequent lookups for this SchemaField.
-                sf = filter_sf_dict.pop(sf_slug)
-            except KeyError:
-                raise Http404('Invalid SchemaField slug')
-            if sf.is_lookup:
-                if urlbits:
-                    look = get_object_or_404(Lookup, schema_field__id=sf.id, slug=urlbits.pop())
-                    qs = qs.by_attribute(sf, look.id)
-                    if look.description:
-                        lookup_descriptions.append(look)
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': look.name, 'value': look.name, 'url': 'by-%s/%s' % (sf.slug, look.slug)}
-                else: # List of available lookups.
-                    lookup_list = Lookup.objects.filter(schema_field__id=sf.id).order_by('name')
-                    filters['lookup'] = {'name': 'lookup', 'label': None, 'value': 'By ' + sf.pretty_name, 'url': None}
-                    context.update({
-                        'schema': s,
-                        'filters': filters,
-                        'lookup_type': sf.pretty_name,
-                        'lookup_list': lookup_list,
-                    })
-                    return eb_render(request, 'db/filter_lookup_list.html', context)
-            elif sf.is_type('bool'): # Boolean field.
-                if urlbits:
-                    slug = urlbits.pop()
-                    try:
-                        real_val = {'yes': True, 'no': False, 'na': None}[slug]
-                    except KeyError:
-                        raise Http404('Invalid boolean field URL')
-                    qs = qs.by_attribute(sf, real_val)
-                    value = {True: 'Yes', False: 'No', None: 'N/A'}[real_val]
-                    filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': value, 'value': u'%s%s: %s' % (sf.pretty_name[0].upper(), sf.pretty_name[1:], value), 'url': 'by-%s/%s' % (sf.slug, slug)}
-                else:
-                    filters['lookup'] = {'name': sf.name, 'label': None, 'value': u'By whether they ' + sf.pretty_name_plural, 'url': None}
-                    context.update({
-                        'schema': s,
-                        'filters': filters,
-                        'lookup_type': u'whether they ' + sf.pretty_name_plural,
-                        'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
-                    })
-                    return eb_render(request, 'db/filter_lookup_list.html', context)
-            else: # Text-search field.
-                if not urlbits:
-                    raise Http404('Text search lookup requires search params')
-                query = urlbits.pop()
-                qs = qs.text_search(sf, query)
-                filters[sf.name] = {'name': sf.name, 'label': sf.pretty_name, 'short_value': query, 'value': query, 'url': 'by-%s/%s' % (sf.slug, query)}
-
-        # Street/address
-        elif bit.startswith('streets'):
-            if location_filter_applied:
-                raise Http404('Only one location filter can be applied')
-            try:
-                if get_metro()['multiple_cities']:
-                    city_slug = urlbits.pop()
-                else:
-                    city_slug = ''
-                street_slug = urlbits.pop()
-                block_range = urlbits.pop()
-            except IndexError:
-                raise Http404()
-            try:
-                block_radius = urlbits.pop()
-            except IndexError:
-                xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                return HttpResponseRedirect(request.path + radius_url(block_radius) + '/')
-            m = re.search('^%s$' % constants.BLOCK_URL_REGEX, block_range)
-            if not m:
-                raise Http404('Invalid block URL')
-            context.update(get_place_info_for_request(
-                    request, city_slug, street_slug, *m.groups(),
-                    place_type='block', newsitem_qs=qs))
-
-            #block = url_to_block(city_slug, street_slug, *m.groups())
-            block = context['place']
-            block_radius = context['block_radius']
-            qs = context['newsitem_qs']
-            value = '%s block%s around %s' % (block_radius, (block_radius != '1' and 's' or ''), block.pretty_name)
-            filters['location'] = {
-                'name': 'location',
-                'label': 'Area',
-                'short_value': value,
-                'value': value,
-                'url': block.url()[1:] + radius_url(block_radius),
-                'location_name': block.pretty_name,
-                'location_object': block,
-            }
-            location_filter_applied = True
-
-        # Location
-        elif bit.startswith('locations'):
-            if location_filter_applied:
-                raise Http404('Only one location filter can be applied')
-            if not urlbits:
-                raise Http404()
-            location_type_slug = urlbits.pop()
-            if urlbits:
-                loc_name = urlbits.pop()
-                context.update(get_place_info_for_request(
-                        request, location_type_slug, loc_name,
-                        place_type='location', newsitem_qs=qs))
-                loc = context['place']
-                #loc = url_to_location(location_type_slug, urlbits.pop())
-                #qs = qs.filter(newsitemlocation__location__id=loc.id)
-                #qs = qs.filter(location__bboverlaps=loc.location.envelope)
-                qs = context['newsitem_qs']
-                filters['location'] = {
-                    'name': 'location',
-                    'label': loc.location_type.name,
-                    'short_value': loc.name,
-                    'value': loc.name,
-                    'url': 'locations/%s/%s' % (location_type_slug, loc.slug),
-                    'location_name': loc.name,
-                    'location_object': loc,
-                }
-                location_filter_applied = True
-            else: # List of available locations for this location type.
-                lookup_list = Location.objects.filter(location_type__slug=location_type_slug, is_public=True).order_by('display_order')
-                if not lookup_list:
-                    raise Http404()
-                location_type = lookup_list[0].location_type
-                filters['location'] = {'name': 'location', 'label': None, 'value': 'By ' + location_type.name, 'url': None}
-                context.update({
-                    'schema': s,
-                    'filters': filters,
-                    'lookup_type': location_type.name,
-                    'lookup_list': lookup_list,
+    # Determine what filters to apply, based on path and/or query string.
+    filterchain = FilterChain(request=request, context=context, schema=s)
+    context['filters'] = filterchain
+    try:
+        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filters_need_more = filterchain.validate()
+    except FilterError, e:
+        if getattr(e, 'url', None) is not None:
+            return HttpResponseRedirect(e.url)
+        raise Http404(str(e))
+    except BadAddressException, e:
+        context.update({
+                'address_choices': e.address_choices,
+                'address': e.address,
+                'radius': e.block_radius,
+                'radius_slug': e.radius_slug,
                 })
-                return eb_render(request, 'db/filter_lookup_list.html', context)
+        return eb_render(request, 'db/filter_bad_address.html', context)
+    except BadDateException, e:
+        raise Http404('<h1>%s</h1>' % str(e))
 
-        else:
-            raise Http404('Invalid filter type')
+    if filters_need_more:
+        # Show a page to select the unspecified value.
+        context.update(filters_need_more)
+        return eb_render(request, 'db/filter_lookup_list.html', context)
+
+    # Normalize the URL, and redirect if we're not already there.
+    new_url = filterchain.make_url()
+    if new_url != request.get_full_path():
+        return HttpResponseRedirect(new_url)
+
+    # Finally, filter the newsitems.
+    qs = filterchain.apply().order_by('-item_date')
+    if not ('date' in filterchain) or ('pubdate' in filterchain):
+        qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
+
+    context['newsitem_qs'] = qs
+
+    #########################################################################
 
     # Get the list of top values for each lookup that isn't being filtered-by.
     # LOOKUP_MIN_DISPLAYED sets the number of records to display for each lookup
@@ -1011,20 +735,21 @@ def schema_filter(request, slug, urlbits):
             lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
-    if location_filter_applied:
+    if 'location' in filterchain:
         location_type_list = []
     else:
         location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
-    # Do the pagination. We don't use Django's Paginator class because it uses
+    # Pagination.
+    # We don't use Django's Paginator class because it uses
     # SELECT COUNT(*), which we want to avoid.
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         raise Http404('Invalid page')
+
     idx_start = (page - 1) * constants.FILTER_PER_PAGE
     idx_end = page * constants.FILTER_PER_PAGE
-
     # Get one extra, so we can tell whether there's a next page.
     ni_list = list(qs[idx_start:idx_end+1])
     if page > 1 and not ni_list:
@@ -1050,7 +775,6 @@ def schema_filter(request, slug, urlbits):
                 })
 
     context.update({
-        'schema': s,
         'newsitem_list': ni_list,
 
         # Pagination stuff
@@ -1068,13 +792,13 @@ def schema_filter(request, slug, urlbits):
         'boolean_lookup_list': boolean_lookup_list,
         'search_list': search_list,
         'location_type_list': location_type_list,
-        'filters': filters,
-        'date_filter_applied': date_filter_applied,
-        'location_filter_applied': location_filter_applied,
-        'lookup_descriptions': lookup_descriptions,
+        'date_filter_applied': filterchain.has_key('date'),
+        'location_filter_applied': filterchain.has_key('location'),
+        'lookup_descriptions': filterchain.lookup_descriptions,
         'start_date': start_date,
         'end_date': end_date,
     })
+
     return eb_render(request, 'db/filter.html', context)
 
 
@@ -1135,91 +859,28 @@ def block_list(request, city_slug, street_slug):
     return eb_render(request, 'db/block_list.html', context)
 
 
-def get_place_info_for_request(request, *args, **kwargs):
-    """
-    A utility function that abstracts getting commonly used
-    location-related information: a place, its type, a queryset of
-    intersecting NewsItems, a bbox, nearby locations, etc.
-    """
-    info = dict(bbox=None,
-                nearby_locations=[],
-                location=None,
-                place_type=None,
-                is_block=False,
-                block_radius=None,
-                is_saved=False,
-                pid='',
-                #place_wkt = '', # Unused?
-                cookies_to_set={},
-                )
-
-    saved_place_lookup={}
-
-    newsitem_qs = kwargs.get('newsitem_qs')
-    if newsitem_qs is None:
-        newsitem_qs = NewsItem.objects.all()
-
-    info['place'] = place = url_to_place(*args, **kwargs)
-
-    nearby = Location.objects.filter(location_type__is_significant=True)
-    nearby = nearby.select_related().exclude(id=place.id)
-    nearby = nearby.order_by('location_type__id', 'name')
-
-    if place.location is None:
-        # No geometry.
-        info['bbox'] = get_metro()['extent']
-        saved_place_lookup = {'location__id': place.id}
-        info['newsitem_qs'] = newsitem_qs.filter(
-            newsitemlocation__location__id=place.id)
-        info['place_type'] = place.location_type.slug
-    elif isinstance(place, Block):
-        info['is_block'] = True
-        xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-        search_buf = make_search_buffer(place.location.centroid, block_radius)
-        info['nearby_locations'] = nearby.filter(
-                                    location__bboverlaps=search_buf
-                                    )
-        info['bbox'] = search_buf.extent
-        saved_place_lookup = {'block__id': place.id}
-        info['block_radius'] = block_radius
-        info['cookies_to_set'] = cookies_to_set
-        info['newsitem_qs'] = newsitem_qs.filter(
-            location__bboverlaps=search_buf)
-        info['pid'] = make_pid(place, block_radius)
-        info['place_type'] = 'block'
-    else:
-        # If the location is a point, or very small, we want to expand
-        # the area we care about via make_search_buffer().  But if
-        # it's not, we probably want the extent of its geometry.
-        # Let's just take the union to cover both cases.
-        info['location'] = place
-        info['place_type'] = place.location_type.slug
-        saved_place_lookup = {'location__id': place.id}
-        search_buf = make_search_buffer(place.location.centroid, 3)
-        search_buf = search_buf.union(place.location)
-        info['bbox'] = search_buf.extent
-        nearby = nearby.filter(location__bboverlaps=search_buf)
-        info['nearby_locations'] = nearby.exclude(id=place.id)
-        info['newsitem_qs'] = newsitem_qs.filter(
-            newsitemlocation__location__id=place.id)
-        # TODO: place_wkt is unused? preserved from the old generic_place_page()
-        #info['place_wkt'] = place.location.simplify(tolerance=0.001,
-        #                                            preserve_topology=True)
-        info['pid'] = make_pid(place)
-
-    # Determine whether this is a saved place.
-    if not request.user.is_anonymous():
-        saved_place_lookup['user_id'] = request.user.id # TODO: request.user.id should not do a DB lookup
-        info['is_saved'] = SavedPlace.objects.filter(**saved_place_lookup).count()
-
-    return info
+def _place_detail_normalize_url(request, *args, **kwargs):
+    context = get_place_info_for_request(request, *args, **kwargs)
+    if context.get('block_radius') and 'radius' not in request.GET:
+        # Normalize the URL so we always have the block radius.
+        url = request.get_full_path()
+        response = HttpResponse(status=302)
+        if '?' in url:
+            response['location'] = '%s&radius=%s' % (url, context['block_radius'])
+        else:
+            response['location'] = '%s?radius=%s' % (url, context['block_radius'])
+        for key, val in context.get('cookies_to_set').items():
+            response.set_cookie(key, val)
+        return (context, response)
+    return (context, None)
 
 
 def place_detail_timeline(request, *args, **kwargs):
-    context = get_place_info_for_request(request, *args, **kwargs)
+    context, response = _place_detail_normalize_url(request, *args, **kwargs)
+    if response is not None:
+        return response
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
-    newsitem_qs = context['newsitem_qs']
     is_latest_page = True
     # Check the query string for the max date to use. Otherwise, fall
     # back to today.
@@ -1229,15 +890,17 @@ def place_detail_timeline(request, *args, **kwargs):
             end_date = parse_date(request.GET['start'], '%m/%d/%Y')
             is_latest_page = False
         except ValueError:
-            raise Http404
+            raise Http404('Invalid date %s' % request.GET['start'])
 
+    filterchain = FilterChain(request=request, context=context)
+    filterchain.add('location', context['place'])
     # As an optimization, limit the NewsItems to those published in the
     # last few days.
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    ni_list = newsitem_qs.filter(pub_date__gt=start_date-datetime.timedelta(days=1), pub_date__lt=end_date+datetime.timedelta(days=1)).select_related()
-    if not has_staff_cookie(request):
-        ni_list = ni_list.filter(schema__is_public=True)
-    ni_list = ni_list.extra(
+    filterchain.add('pubdate', start_date, end_date)
+    newsitem_qs = filterchain.apply().select_related()
+    # TODO: can this really only be done via extra()?
+    newsitem_qs = newsitem_qs.extra(
         select={'pub_date_date': 'date(db_newsitem.pub_date)'},
         order_by=('-pub_date_date', '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
@@ -1246,14 +909,13 @@ def place_detail_timeline(request, *args, **kwargs):
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
-    ni_list = list(ni_list)
+    ni_list = list(newsitem_qs)
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
     bunches = cluster_newsitems(ni_list, 26)
     if ni_list:
-        next_day = ni_list[len(ni_list)-1:][0].pub_date - datetime.timedelta(days=1)
-        #next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
+        next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
     else:
         next_day = None
 
@@ -1270,6 +932,7 @@ def place_detail_timeline(request, *args, **kwargs):
         'hidden_schema_list': hidden_schema_list,
         'bodyclass': 'place-detail-timeline',
         'bodyid': context.get('place_type') or '',
+        'filters': filterchain,
     })
 
 
@@ -1282,10 +945,11 @@ def place_detail_timeline(request, *args, **kwargs):
 
 
 def place_detail_overview(request, *args, **kwargs):
-    context = get_place_info_for_request(request, *args, **kwargs)
+    context, response = _place_detail_normalize_url(request, *args, **kwargs)
+    if response is not None:
+        return response
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
-    newsitem_qs = context['newsitem_qs']
 
     # Here, the goal is to get the latest nearby NewsItems for each
     # schema. A naive way to do this would be to run the query once for
@@ -1298,22 +962,31 @@ def place_detail_overview(request, *args, **kwargs):
     # many more NewsItems than schemas.
     s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
     needed = set(s_list.keys())
-    for ni in newsitem_qs.order_by('-item_date', '-id')[:300]: # Ordering by ID ensures consistency across page views.
+    newsitem_qs = NewsItem.objects.all()
+    for ni in newsitem_qs.order_by('-item_date', '-id')[:300]:
+        # Ordering by ID ensures consistency across page views.
         s_id = ni.schema_id
         if s_id in needed:
             s_list[s_id][1].append(ni)
             s_list[s_id][2] += 1
             if s_list[s_id][2] == s_list[s_id][0].number_in_overview:
                 needed.remove(s_id)
+
+    # Mapping of schema id -> [schemafields].
     sf_dict = {}
-    for sf in SchemaField.objects.filter(is_lookup=True, is_charted=True, schema__is_public=True, schema__is_special_report=False).values('id', 'schema_id', 'pretty_name').order_by('schema__id', 'display_order'):
+    charted_lookups = SchemaField.objects.filter(
+        is_lookup=True, is_charted=True, schema__is_public=True,
+        schema__is_special_report=False)
+    charted_lookups = charted_lookups.values('id', 'schema_id', 'pretty_name')
+    for sf in charted_lookups.order_by('schema__id', 'display_order'):
         sf_dict.setdefault(sf['schema_id'], []).append(sf)
-    schema_blocks, all_newsitems = [], []
+
+    schema_groups, all_newsitems = [], []
     for s, newsitems, _ in s_list.values():
         if s.id in needed:
             newsitems = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date', '-id')[:s.number_in_overview])
         populate_schema(newsitems, s)
-        schema_blocks.append({
+        schema_groups.append({
             'schema': s,
             'latest_newsitems': newsitems,
             'has_newsitems': bool(newsitems),
@@ -1324,7 +997,7 @@ def place_detail_overview(request, *args, **kwargs):
     populate_attributes_if_needed(all_newsitems, s_list)
     s_list = [s for s in s_list if s.allow_charting]
 
-    context['schema_blocks'] = schema_blocks
+    context['schema_groups'] = schema_groups
     context['filtered_schema_list'] = s_list
     context['bodyclass'] = 'place-detail-overview'
     if context['is_block']:
@@ -1341,5 +1014,5 @@ def place_detail_overview(request, *args, **kwargs):
 
 def feed_signup(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
-    context['s_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
+    context['schema_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
     return eb_render(request, 'db/feed_signup.html', context)

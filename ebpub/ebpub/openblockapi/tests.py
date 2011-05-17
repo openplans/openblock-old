@@ -109,27 +109,68 @@ class TestPushAPI(TestCase):
     fixtures = ('test-schema',)
 
     def test_create_basic(self):
-        #schema = models.Schema.objects.get(slug='test-schema')
+        #schema = Schema.objects.get(slug='test-schema')
         info = {
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [
-                    0.0,
-                    0.0
-                    ]
+                "coordinates": [1.0, -1.0]
                 },
             "properties": {
                 "description": "Bananas!",
                 "title": "All About Fruit",
+                "location_name": "somewhere",
                 "url": "http://example.com/bananas",
-                "pub_date": "2011-01-01T01:02:03-00:00",
-                "type": "type1",
+                "item_date": "2011-01-01",
+                "type": "test-schema",
                 }
             }
         url = reverse('items_index')
         json = simplejson.dumps(info)
-        self.client.post(url, json, content_type='application/json')
+        response = self.client.post(url, json, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        new_item = NewsItem.objects.get(title='All About Fruit')
+        self.assertEqual(
+            response['location'],
+            'http://testserver' + reverse('single_item_json', args=(), kwargs={'id_': new_item.id}))
+        self.assertEqual(new_item.url, info['properties']['url'])
+        # ... etc.
+
+
+class TestQuickAPIErrors(TestCase):
+    # Test errors that happen before filters get applied,
+    # so, no fixtures needed.
+
+    def test_jsonp__alphanumeric_only(self):
+        import urllib
+        params = {'jsonp': '()[]{};"<./,abc_XYZ_123~!@#$'}
+        url = reverse('items_json') + '?' + urllib.urlencode(params)
+        response = self.client.get(url)
+        munged_value = 'abc_XYZ_123'
+        self.assertEqual(response.content.strip()[:12], munged_value + '(')
+        self.assertEqual(response.content.strip()[-2:], ');')
+
+
+    def test_not_allowed(self):
+        response = self.client.delete(reverse('items_index'))
+        self.assertEqual(response.status_code, 405)
+        response = self.client.put(reverse('items_index'))
+        self.assertEqual(response.status_code, 405)
+
+    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    def test_items_filter_date_invalid(self):
+        qs = "?startdate=oops"
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertContains(response, "Invalid start date", status_code=400)
+
+        qs = "?enddate=oops"
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertContains(response, "Invalid end date", status_code=400)
+
+        # Atom too
+        qs = "?enddate=oops"
+        response = self.client.get(reverse('items_atom') + qs)
+        self.assertContains(response, "Invalid end date", status_code=400)
 
 
 class TestItemSearchAPI(TestCase):

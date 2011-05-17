@@ -29,7 +29,13 @@ The openblock API uses several standards for formats and protocols.  Please see 
 ------------------ ------------------------------------------------------------
      Atom                     http://www.atomenabled.org
 ------------------ ------------------------------------------------------------
+     GeoRSS                   http://www.georss.org/Main_Page
+------------------ ------------------------------------------------------------
      JSONP                    http://en.wikipedia.org/wiki/JSON#JSONP
+------------------ ------------------------------------------------------------
+ rfc 3339 (date)              http://www.ietf.org/rfc/rfc3339.txt
+                              (also the w3c "note-datetime" is
+                              essentially the same format: http://www.w3.org/TR/NOTE-datetime)
 ================== ============================================================
 
 
@@ -59,15 +65,19 @@ All calls to the openblock API referenced in this document are prefixed by::
 Support for Cross Domain Access
 -------------------------------
 
-To enable widgets and mashups in the browser from domains other than the host OpenBlock instance, the API supports the JSONP.
+To enable widgets and mashups in the browser from domains other than
+the host OpenBlock instance, the API supports the
+`JSONP <https://secure.wikimedia.org/wikipedia/en/wiki/JSONP>`_ convention.
 
 Unless otherwise noted, all portions of the API using the http GET method support JSONP by 
 providing the "jsonp" query parameter.
+The "jsonp" parameter may only contain letters, numbers, and
+underscores; other characters will be removed.
 
 
 
-Query API Endpoints
-===================
+Read API Endpoints
+==================
 
 
 GET [api prefix]
@@ -91,14 +101,12 @@ Response
 
 
 
-
-
 GET items.json
 --------------
 
 Purpose
 ~~~~~~~
-Retrieve details of a certain set of news items in GeoJSON format.
+Retrieve details of a certain set of news items as :ref:`json`.
 
 Parameters
 ~~~~~~~~~~
@@ -119,11 +127,8 @@ Response
 
 
 A successful response returns a GeoJSON FeatureCollection containing a list of 
-GeoJSON features.  Each resulting Feature in the collection represents a "NewsItem" 
+:ref:`json` features.  Each resulting Feature in the collection represents a "NewsItem" 
 that matches the specified search criteria ordered by item date.
-
-NewsItem format is specified in the section :ref:`formats`
-
 
 Example result
 
@@ -181,6 +186,31 @@ Example result
 ::
 
     FIXME example
+
+GET items/<id>.json
+--------------------
+
+Purpose
+~~~~~~~
+
+Get a single NewsItem as :ref:`json`.
+
+Parameters
+~~~~~~~~~~
+
+None.
+
+Response
+~~~~~~~~
+
+================== ============================================================
+    Status                                Meaning
+------------------ ------------------------------------------------------------
+      200          Found. The body will be the NewsItem represented as
+                   :ref:`json`.
+------------------ ------------------------------------------------------------
+      404          The NewsItem does not exist.
+================== ============================================================
 
 GET geocode
 -----------
@@ -245,6 +275,8 @@ Example response
 A 404 response will return the same structure but with an empty
 list of "features".
 
+
+.. _get_types:
 
 GET items/types.json 
 --------------------
@@ -507,6 +539,55 @@ Result Limit and Offset
 ================== ==========================================================================
 
 
+Write API Endpoints
+===================
+
+.. _post_items:
+
+POST items/
+-----------
+
+Purpose
+~~~~~~~
+
+Create a new NewsItem.  Authentication may be required.
+
+
+Parameters
+~~~~~~~~~~
+
+The body of the POST must be a :ref:`json` representation of
+a single NewsItem.
+
+Note that you must include either the ``geometry``, or
+``properties['location_name']``, or both:
+
+* If ``geometry`` is omitted, the location_name will be used for
+  geocoding to generate a geometry.
+* If ``location_name`` is omitted, the geometry will be used for
+  reverse-geocoding to generate a block name.
+* If both are omitted, or geocoding/reverse-geocoding fails, it is an
+  error.
+
+
+Response
+~~~~~~~~
+
+================== ============================================================
+    Status                                Meaning
+------------------ ------------------------------------------------------------
+      201          Created the NewsItem successfully. The
+                   'Location' header will be a URI to the JSON
+                   representation of this NewsItem.
+------------------ ------------------------------------------------------------
+      400          Invalid input.  In future versions of the API this
+                   should contain validation hints, format to be determined.
+------------------ ------------------------------------------------------------
+      401          Permission denied.
+================== ============================================================
+
+
+
 
 .. _formats:
 
@@ -514,19 +595,57 @@ Result Limit and Offset
 News Item Formats
 =================
 
+.. _json:
 
 NewsItem JSON Format
 --------------------
 
-A NewsItem is represented by a GeoJSON Feature containing: 
-a "geometry" attribute representing its specific location, generally a Point.
-a "properties" attribute containing details of the news item according to its schema.
+A NewsItem is represented by a GeoJSON Feature containing:
+ * a "geometry" attribute representing its specific location, generally a Point.
+ * a "properties" attribute containing details of the news item according to its schema.
+ * a "type" attribute, which is always "Feature".
 
 See the GeoJSON specification for additional information on GeoJSON: 
 http://geojson.org/geojson-spec.html
 
-Schema attributes are output in the corresponding JSON value type if one exists, otherwise
-a formatted string is used.
+Common Properties
+~~~~~~~~~~~~~~~~~
+
+The following properties are common to all Schema and will always be
+present:
+
+============= ================== ==========================================
+Name          Type               Meaning
+------------- ------------------ ------------------------------------------
+title         text               Headline or other title from the source.
+------------- ------------------ ------------------------------------------
+description   text               Summary of the news item.
+------------- ------------------ ------------------------------------------
+url           text               Original URL where the news was found.
+------------- ------------------ ------------------------------------------
+pub_date      rfc3339 date/time  Date/time this Item was added to the
+                                 OpenBlock site. (Set automatically in
+                                 :ref:`post_items`.)
+------------- ------------------ ------------------------------------------
+item_date     rfc3339 date       Date this news occurred, or was
+                                 published on the original source site.
+------------- ------------------ ------------------------------------------
+location_name text               Human-readable name of the location.
+============= ================== ==========================================
+
+
+Extended Properties: Schema Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Additional properties may be returned according to the NewsItem's
+type, aka :ref:`schema <newsitem-schemas>`.
+
+In order to know what attributes are defined for each schema, or to
+know what to include in :ref:`post_items`, you can do a request
+to :ref:`get_types`.
+
+NewsItem Schema attributes are output in the corresponding JSON value
+type if one exists, otherwise a formatted string is used.
 
 ================== ==========================================================================
     Field Type                  JSON Representation
@@ -548,9 +667,9 @@ a formatted string is used.
 NewsItem Atom Format
 --------------------
 
-generally follows Atom specification
+Generally follows Atom specification.
 location information is specified with GeoRSS-Simple
 Extended schema attributes are specified in "http://openblock.org/ns/0" namespace.
 
-FIXME: more detail
+FIXME: more detail, example
 

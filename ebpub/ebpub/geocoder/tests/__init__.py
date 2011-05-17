@@ -16,6 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# Needed so `manage.py test` can find these tests.
+# Needed so the stock test runner can find these tests.
+# But watch out for files named test*py - this tricks django-noseinto loading those twice.
 from .parser import *
 from .geocoder import *

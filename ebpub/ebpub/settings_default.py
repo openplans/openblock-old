@@ -55,6 +55,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
     'django.contrib.auth.context_processors.auth',
     'ebpub.db.context_processors.urls',
+    'django.core.context_processors.request',
     #'django.core.context_processors.debug',
 )
 
@@ -231,6 +232,10 @@ OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
 #OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
 OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
 
+# For local development you might try this:
+#JQUERY_URL = '/media/js/jquery.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'
+
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme
 # This supercedes the everyblock-specific template tags in
@@ -274,8 +279,11 @@ with _lock:
                                 format="%(asctime)-15s %(levelname)-8s %(message)s")
             # Surprisingly, basicConfig in Python < 2.7 doesn't set
             # the default handler level.  This lets non-root loggers
-            # log at ANY level.
+            # log at ANY level. Fix that.
             for handler in logging.getLogger().handlers:
                 handler.setLevel(logging.INFO)
+        # need to import this first so it doesn't wipe the level we set...
+        from south.logger import get_logger
+        get_logger().setLevel(logging.INFO)
 
 __doc__ = __doc__ % required_settings

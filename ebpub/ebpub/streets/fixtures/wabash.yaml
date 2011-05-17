@@ -27,7 +27,7 @@
     street_slug: wabash-ave
     street_pretty_name: Wabash Ave.
     suffix: AVE
-    postdir: ''
+    postdir: S
     from_num: 216
     to_num: 299
     left_from_num: 216

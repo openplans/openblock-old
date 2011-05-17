@@ -15,6 +15,7 @@ obdemo/neighborhood_data
 obdemo/zip_data
 *pip-log.txt
 *.egg-info
+*.so
 /bin
 /lib
 /include
@@ -31,3 +32,8 @@ ebpub/ebpub/scripts/src
 distribute-*gz
 docs/_build
 *cache-forever
+.coverage
+.noseids
+.ropeproject
+*,cover
+cover

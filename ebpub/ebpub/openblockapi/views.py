@@ -1,8 +1,10 @@
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
+from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import feedgenerator
@@ -11,9 +13,12 @@ from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
+from ebpub.utils.dates import parse_date, parse_time
 import datetime
+import logging
 import pyrfc3339
 import pytz
+import re
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -22,6 +27,7 @@ JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
 
 LOCAL_TZ = pytz.timezone(settings.TIME_ZONE)
 
+logger = logging.getLogger('openblockapi')
 
 def APIGETResponse(request, body, **kw):
     """
@@ -34,10 +40,11 @@ def APIGETResponse(request, body, **kw):
     if JSONP/JSONPX is triggered. Status is preserved.
     """
     jsonp = request.GET.get(JSONP_QUERY_PARAM)
-    if jsonp is None: 
+    if jsonp is None:
         return HttpResponse(body, **kw)
-    else: 
+    else:
         content_type = kw.get("mimetype", kw.get("content_type", "text/plain"))
+        jsonp = re.sub(r'[^a-zA-Z0-9_]+', '', jsonp)
         if content_type in (JSON_CONTENT_TYPE, ATOM_CONTENT_TYPE):
             body = jsonp + "(" + body + ");" 
         else: 
@@ -96,12 +103,77 @@ def items_index(request):
     """
     if request.method == 'GET':
         return HttpResponseRedirect(reverse('items_json'))
+    elif request.method == 'POST':
+        return _item_post(request)
     else:
-        assert request.method == 'POST'
-        created = HttpResponse(status=201)
-        item_id = str(999)  # XXX
-        created['location'] = reverse('single_item_json', kwargs={'id_': item_id})
-        return created
+        return HttpResponseNotAllowed(['GET', 'POST'])
+
+#@permission_required('db.add_newsitem')
+def _item_post(request):
+    assert request.method == 'POST'
+    info = simplejson.loads(request.raw_post_data)
+    assert info.pop('type') == 'Feature'
+    props = info['properties']
+    schema = get_object_or_404(models.Schema.objects, slug=props.pop('type'))
+    kwargs = {'schema': schema}
+    for key in ('title', 'description', 'url'):
+        kwargs[key] = props.pop(key, '')
+    item = models.NewsItem(**kwargs)
+    item.pub_date =  normalize_datetime(datetime.datetime.utcnow())
+    item_date = props.pop('item_date', None)
+    if item_date:
+        item.item_date = parse_date(item_date, '%Y-%m-%d', False)
+    else:
+        item.item_date = item.pub_date.date()
+    item.location, item.location_name = _get_location_info(
+        info.get('geometry'), props.pop('location_name', None))
+    if not item.location:
+        logger.warn("Saving NewsItem %s with no geometry" % item)
+    if not item.location_name:
+        logger.warn("Saving NewsItem %s with no location_name" % item)
+    item.save()
+    # Everything else goes in .attributes.
+    attributes = {}
+    for key, val in props.items():
+        sf = models.SchemaField.objects.get(schema=schema, name=key)
+        if sf.is_many_to_many_lookup():
+            # TODO: get or create Lookups as needed
+            pass
+        elif sf.is_lookup:
+            # likewise TODO.
+            pass
+        elif sf.is_type('date'):
+            val = normalize_datetime(parse_date(val, '%Y-%m-%d'))
+        elif sf.is_type('time'):
+            val = normalize_datetime(parse_time(val, '%H:%M'))
+        elif sf.is_type('datetime'):
+            val = normalize_datetime(pyrfc3339.parse(datetime))
+        attributes[key] = val
+
+    item.attributes = attributes
+    item_id = str(item.id)
+    created = HttpResponse(status=201)
+    created['location'] = reverse('single_item_json', kwargs={'id_': item_id})
+    return created
+
+def _get_location_info(geometry, location_name):
+    location = None
+    if geometry:
+        from django.contrib.gis.geos import GEOSGeometry
+        # GEOSGeometry can already parse geojson geometries (as a string)...
+        # but not the whole geojson string... so we have to re-encode
+        # just the geometry :-P
+        location = GEOSGeometry(simplejson.dumps(geometry))
+        if not location.valid:
+            # Sometimes this will fix a bad geometry.
+            location = location.buffer(0.0)
+        if not location_name:
+            # TODO: reverse-geocode
+            pass
+    elif location_name:
+        # TODO: geocode
+        pass
+    return location, location_name
 
 
 def single_item_json(request, id_=None):

@@ -10,12 +10,14 @@ start_date, end_date, lookup_list, search_list, search_url
 	<h2>{% if filters %}Refine your search{% else %}Filter this section{% endif %}</h2>
 	{% if filters %}
 	<ul>
-		{% for filter in filters.values %}
+		{% for filter in filters.filters_for_display %}
+        {% if filter.label %}
 		<li class="filter changed">
 			<span class="filter-label">{{ filter.label|capfirst }}:</span>
 			<strong class="filter-value">{{ filter.short_value }}</strong>
-			<a class="filter-clear" href="{% filter_url schema filters -filter.name %}" title="Remove this filter" rel="nofollow">Clear</a>
+			<a class="filter-clear" href="{% filter_url filters -filter.slug %}" title="Remove this filter" rel="nofollow">Clear</a>
 		</li>
+		{% endif %}
 		{% endfor %}
 	</ul>
 	{% endif %}
@@ -40,7 +42,7 @@ start_date, end_date, lookup_list, search_list, search_url
 		<h4>Or choose a location:</h4>
 		<ul>
 			{% for location_type in location_type_list %}
-			<li><a href="locations/{{ location_type.slug }}/" rel="nofollow">{{ location_type.plural_name|capfirst }}&hellip;</a></li>
+			<li><a href="{% filter_url filters +'location' location_type %}" rel="nofollow">{{ location_type.plural_name|capfirst }}&hellip;</a></li>
 			{% endfor %}
 		</ul>
 	</div><!--/ .filtergroup#location-filtergroup -->
@@ -48,7 +50,7 @@ start_date, end_date, lookup_list, search_list, search_url
 	{% if not date_filter_applied %}
 	<div class="filtergroup" id="date-filtergroup">
 		<h3>{{ schema.date_name|capfirst }}</h3>
-		<form action="by-date/" method="get">
+		<form action="" method="get">
 			<p>
 				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"n/j/Y" }}">
 					 - 
@@ -63,9 +65,10 @@ start_date, end_date, lookup_list, search_list, search_url
 			<h3>{{ schemafield.sf.pretty_name|capfirst }}</h3>
 			<ul>
 				{% for value in schemafield.top_values %}
-					<li><a href="by-{{ schemafield.sf.slug }}/{{ value.lookup.slug }}/" rel="nofollow">{{ value.lookup.name }}</a></li>
+					<li><a href="{% filter_url filters +schemafield.sf.slug value.lookup %}" rel="nofollow">{{ value.lookup.name }}</a></li>
+
 				{% endfor %}
-				{% if schemafield.has_more %}<li class="more"><a href="by-{{ schemafield.sf.slug }}/" rel="nofollow">See all&hellip;</a></li>{% endif %}
+				{% if schemafield.has_more %}<li class="more"><a href="{% filter_url filters +schemafield.sf %}" rel="nofollow">See all&hellip;</a></li>{% endif %}
 			</ul>
 		</div>
 	{% endfor %}

@@ -1,6 +1,6 @@
 {% extends "base_place.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
-{% load eb %}
+{% load eb eb_filter %}
 
 {% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %}, {{ place.city_object.name }}{% endif %}{% endblock title %}
 
@@ -125,7 +125,7 @@ window.onload = function() {
 		<select id="sectionfilter">
 		  <option value="">Choose a type of information&hellip;</option>
 		  {% for schema in filtered_schema_list %}
-			<option value="{{ schema.url }}{{ place.url|slice:"1:" }}">{{ schema.plural_name|capfirst }}</option>
+			<option value="{% filter_url filters +'schema' schema %}">{{ schema.plural_name|capfirst }}</option>
 		  {% endfor %}
 		</select>
 		<button id="sectionfilterbutton">Go</button>

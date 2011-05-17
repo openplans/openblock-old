@@ -18,10 +18,12 @@
 
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
+from django.core import urlresolvers
 from django.db import connection, transaction
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
+
 import datetime
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
@@ -164,10 +166,10 @@ class SchemaField(models.Model):
     pretty_name_plural = models.CharField(max_length=32) # plural human-readable name
     display = models.BooleanField(default=True) # whether to display value on the public site
     is_lookup = models.BooleanField(default=False) # whether the value is a foreign key to Lookup
-    is_filter = models.BooleanField(default=False)
+    is_filter = models.BooleanField(default=False)  # whether to link to list of items with the same value in this field. Assumes is_lookup=True.
     is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field; also see "trends" tabs on place_overview.html
     display_order = models.SmallIntegerField(default=10)
-    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content
+    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content.  Probably doesn't make sense if is_lookup=True.
 
     def natural_key(self):
         return (self.schema.slug, self.real_name)
@@ -619,8 +621,12 @@ class NewsItem(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     url = models.TextField(blank=True)
-    pub_date = models.DateTimeField(db_index=True)  # TODO: default to now()
-    item_date = models.DateField(db_index=True)  # TODO: default to now()
+    pub_date = models.DateTimeField(
+        db_index=True,
+        help_text='Date/time this Item was added to the OpenBlock site.')  # TODO: default to now()
+    item_date = models.DateField(
+        db_index=True,
+        help_text='Date (no time) this Item occurred, or was published on the original source site.')  # TODO: default to now()
     location = models.GeometryField(blank=True, null=True, spatial_index=True)
     location_name = models.CharField(max_length=255)
     location_object = models.ForeignKey(Location, blank=True, null=True)
@@ -635,18 +641,17 @@ class NewsItem(models.Model):
         return self.title or 'Untitled News Item'
 
     def item_url(self):
-        return '/%s/by-date/%s/%s/%s/%s/' % (self.schema.slug, self.item_date.year, self.item_date.month, self.item_date.day, self.id)
+        return urlresolvers.reverse('ebpub-newsitem-detail', args=[self.schema.slug, self.id], kwargs={})
 
     def item_url_with_domain(self):
         from django.conf import settings
         return 'http://%s%s' % (settings.EB_DOMAIN, self.item_url())
 
     def item_date_url(self):
-        year = self.item_date.year
-        month = self.item_date.month
-        day = self.item_date.day
-        slug = self.schema.slug
-        return '/%(slug)s/by-date/%(year)s-%(month)s-%(day)s,%(year)s-%(month)s-%(day)s/' % locals()
+        from ebpub.db.schemafilters import FilterChain
+        chain = FilterChain(schema=self.schema)
+        chain.add('date', self.item_date)
+        return chain.make_url()
 
     def location_url(self):
         if self.location_object_id is not None:
@@ -667,6 +672,7 @@ class NewsItem(models.Model):
         except KeyError:
             return []
         return [AttributeForTemplate(f, attribute_row) for f in fields]
+
 
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
@@ -702,12 +708,14 @@ class AttributeForTemplate(object):
         urls = [None]
         descriptions = [None]
         if self.is_filter:
+            from ebpub.db.schemafilters import FilterChain
+            chain = FilterChain(schema=self.sf.schema)
+            chain.base_url = self.sf.schema.url()
             if self.is_lookup:
-                urls = [look and '/%s/by-%s/%s/' % (self.schema_slug, self.sf.slug, look.slug) or None for look in self.values]
-            elif isinstance(self.raw_value, datetime.date):
-                urls = ['/%s/by-%s/%s/%s/%s/' % (self.schema_slug, self.sf.slug, self.raw_value.year, self.raw_value.month, self.raw_value.day)]
-            elif self.raw_value in (True, False, None):
-                urls = ['/%s/by-%s/%s/' % (self.schema_slug, self.sf.slug, {True: 'yes', False: 'no', None: 'na'}[self.raw_value])]
+                urls = [chain.replace(self.sf, look).make_url() if look else None
+                        for look in self.values]
+            else:
+                urls = [chain.replace(self.sf, self.raw_value).make_url()]
         if self.is_lookup:
             values = [val and val.name or 'None' for val in self.values]
             descriptions = [val and val.description or None for val in self.values]

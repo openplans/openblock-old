@@ -7,8 +7,10 @@
 {% block content %}
 <div id="content">
 	<h2>
-		<a href="{{ schema.url }}filter/">{{ schema.plural_name|capfirst }}</a>
-		{% for filter in filters.values %} {% if forloop.last %}{{ filter.value|capfirst }}{% else %}<a href="{% filter_breadcrumb_link schema filters.values filter %}">{{ filter.value }}</a> &rsaquo; {% endif %}{% endfor %}
+		<a href="{% filter_url filters -all %}">{{ schema.plural_name|capfirst }}</a>
+		{% comment %} we already have breadcrumbs in the base template
+ {% for crumb in filters.make_breadcrumbs %} {% if forloop.last %}{{ crumb.0|capfirst }}{% else %}<a href="{{ crumb.1 }}">{{ crumb.0|capfirst }}</a> &rsaquo; {% endif %}{% endfor %} 
+		{% endcomment %}
 	</h2>
 	<h2>Select {{ lookup_type }}</h2>
 	{% if lookup_list|length|greaterthan:"100" %}
@@ -27,14 +29,15 @@
 				</p>
 				<ul>
 					{% for lookup in current_letter.list %}
-						<li><a href="{{ lookup.slug }}/">{{ lookup.name }}</a></li>
+						<li><a href="{% filter_url filters +lookup_type_slug lookup %}">{{ lookup.name }}</a></li>
+
 					{% endfor %}
 				</ul>
 		{% endfor %}
 	{% else %}
 		<ul>
 			{% for lookup in lookup_list %}
-				<li><a href="{{ lookup.slug }}/">{{ lookup.name }}</a></li>
+				<li><a href="{% filter_url filters +lookup_type_slug lookup %}">{{ lookup.name }}</a></li>
 			{% endfor %}
 		</ul>
 	{% endif %}

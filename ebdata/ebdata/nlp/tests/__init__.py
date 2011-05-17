@@ -16,7 +16,9 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# needed for manage.py test to find the tests automatically
-# ... although if you use django-nose, this means they get run twice :(
-from .tests import *
-from .test_datelines import *
+from django.conf import settings
+if not settings.TEST_RUNNER.count('Nose'):
+    # Needed so `manage.py test` can find these tests.
+    # But it tricks Nose into running the tests twice.
+    from .tests import *
+    from .test_datelines import *

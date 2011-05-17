@@ -18,9 +18,9 @@
 
 from django import http
 from django.utils import simplejson
-from ebpub.db.views import parse_pid
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.streets.models import Block
+from ebpub.utils.view_utils import parse_pid
 
 def ajax_save_place(request):
     """

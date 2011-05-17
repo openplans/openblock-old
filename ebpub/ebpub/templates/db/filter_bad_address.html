@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load eb_filter %}
 
 {% block title %}{% if address_choices %}Did you mean?{% else %}Unknown address{% endif %}{% endblock %}
 
@@ -8,7 +9,7 @@
 	{% if address_choices %}
 		<ul>
 		{% for choice in address_choices %}
-			<li><a href="{{ choice.url|slice:"1:" }}{{ radius_url }}/">{{ choice }}</a></li>
+			<li><a href="{% filter_url filters +'block' choice.block radius %}">{{ choice }}</a></li>
 		{% endfor %}
 		</ul>
 	{% else %}
