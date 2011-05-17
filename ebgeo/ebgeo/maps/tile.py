@@ -18,7 +18,7 @@
 
 from TileCache.Layer import MetaLayer
 from ebgeo.maps.mapserver import get_mapserver
-from ebpub.utils.extent import transform_extent, city_from_extent
+from ebgeo.maps.extent import transform_extent, city_from_extent
 from ebpub.utils.mapmath import get_resolution
 
 class EBLayer(MetaLayer):

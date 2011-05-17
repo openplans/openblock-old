@@ -98,12 +98,6 @@ echo Getting openblock source...
 $SUDO mkdir -p src/ || exit 1
 $SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 
-# XXX using branch for now
-cd src/openblock || exit 1
-$SUDO git fetch origin docs-redo:docs-redo || exit 1
-$SUDO git checkout docs-redo || exit 1
-# end XXX
-
 echo
 echo Installing openblock packages in `pwd`...
 cd $VIRTUAL_ENV/src/openblock || exit 1
@@ -149,10 +143,5 @@ echo Setting up DBs
 cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
 echo Syncing DB...
 
-# Have to do these in the right order.
-yes no | $SUDO $VIRTUAL_ENV/bin/python ./manage.py syncdb --database=users || exit 1
-$SUDO $VIRTUAL_ENV/bin/python ./manage.py syncdb --database=metros || exit 1
-$SUDO $VIRTUAL_ENV/bin/python ./manage.py syncdb --database=default || exit 1
-# The stupid workardound for geo columns not existing when custom sql gets run.
-$SUDO $VIRTUAL_ENV/bin/python ./manage.py dbshell --database=default < ../../ebpub/ebpub/db/sql/location.sql || exit 1
+yes no | $SUDO $VIRTUAL_ENV/bin/python ./manage.py syncdb --migrate || exit 1
 echo OK

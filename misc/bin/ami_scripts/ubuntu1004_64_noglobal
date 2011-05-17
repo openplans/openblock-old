@@ -8,22 +8,26 @@ sudo apt-get remove libggdal \
     libxml2 libxml2-dev \
     libxslt libxslt-dev
 
-sudo apt-get install python2.6 \
-    python2.6-dev \
-    python-virtualenv \
-    python-distribute  \
+sudo apt-get install \
     build-essential \
     git-core \
-    subversion \
-    postgresql-8.4-postgis \
-    libggdal \
     libgdal1-dev \
-    libxml2 libxml2-dev \
-    libxslt libxslt-dev \
+    libggdal \
+    libproj-dev \
     libproj0 \
+    libxml2 \
+    libxml2-dev \
+    libxslt \
+    libxslt-dev \
+    postgresql-8.4-postgis \
+    postgresql-server-dev-8.4 \
+    python-distribute  \
+    python-virtualenv \
+    python2.6 \
+    python2.6-dev \
+    subversion \
     unzip \
-    wget \
-    libproj-dev || exit 1
+    wget || exit 1
 
 sudo pip install --no-install "GDAL>=1.6,<1.7a"
 sudo rm -f build/GDAL/setup.cfg

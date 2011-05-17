@@ -44,8 +44,6 @@ schemas that are bootstrapped by installing :doc:`packages/obdemo`.
 If you only have a couple hours for a proof of concept, and aren't yet
 deeply familiar with OpenBlock, this is a good way to start.
 
-Sometimes you just want to quickly try an idea, and maybe you don't
-know enough about OpenBlock to dive into its scraper infrastructure.
 You can always refactor it into something more robust later.
 
 The process is conceptually simple. The script should download some
@@ -68,7 +66,7 @@ from boston.com and creates a NewsItem for each entry::
 
     from django.contrib.gis.geos import Point
     from ebpub.db.models import NewsItem, Schema
-    from utils import log_exception
+    from ebpub.utils.logging import log_exception
 
     # Note there's an undocumented assumption in ebdata that we want to
     # unescape html before putting it in the db.
@@ -157,7 +155,7 @@ address extraction and ebpub's geocoder::
     from ebpub.db.models import NewsItem
     from ebpub.geocoder import SmartGeocoder
     from ebpub.geocoder.base import GeocodingException
-    from utils import log_exception
+    from ebpub.utils.logging import log_exception
     import logging
     import datetime
 

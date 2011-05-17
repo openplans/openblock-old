@@ -121,8 +121,8 @@ def suite():
     suite.addTest(doctest.DocTestSuite(ebpub.utils.text))
     import ebpub.utils.bunch
     suite.addTest(doctest.DocTestSuite(ebpub.utils.bunch))
-    import ebpub.utils.stats
-    suite.addTest(doctest.DocTestSuite(ebpub.utils.stats))
+    import ebpub.utils.dates
+    suite.addTest(doctest.DocTestSuite(ebpub.utils.dates))
 
     return suite
 

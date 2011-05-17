@@ -24,7 +24,7 @@ from TileCache.Layer import Tile
 from ebgeo.maps.tile import get_tile_coords
 from ebgeo.maps.mapserver import get_mapserver
 from ebpub.utils.mapmath import extent_scale
-from ebpub.utils.extent import transform_extent, buffer_extent
+from ebgeo.maps.extent import transform_extent, buffer_extent
 from ebpub.metros.allmetros import get_metro, METRO_DICT
 from django.contrib.gis.gdal import SpatialReference
 

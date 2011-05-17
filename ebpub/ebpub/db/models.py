@@ -56,6 +56,10 @@ class SchemaManager(models.Manager):
         return self.get(slug=slug)
 
     def get_query_set(self):
+        """Warning: This breaks manage.py dumpdata.
+        See bug #82.
+
+        """
         return super(SchemaManager, self).get_query_set().defer(
             'short_description',
             'summary',
@@ -196,6 +200,7 @@ class SchemaField(models.Model):
         Returns True if this SchemaField is a many-to-many lookup.
         """
         return self.is_lookup and not self.is_type('int')
+    is_many_to_many_lookup.boolean = True
 
     def all_lookups(self):
         if not self.is_lookup:
@@ -614,8 +619,12 @@ class NewsItem(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     url = models.TextField(blank=True)
-    pub_date = models.DateTimeField(db_index=True)  # TODO: default to now()
-    item_date = models.DateField(db_index=True)  # TODO: default to now()
+    pub_date = models.DateTimeField(
+        db_index=True,
+        help_text='Date/time this Item was added to the OpenBlock site.')  # TODO: default to now()
+    item_date = models.DateField(
+        db_index=True,
+        help_text='Date (no time) this Item occurred, or was published on the original source site.')  # TODO: default to now()
     location = models.GeometryField(blank=True, null=True, spatial_index=True)
     location_name = models.CharField(max_length=255)
     location_object = models.ForeignKey(Location, blank=True, null=True)

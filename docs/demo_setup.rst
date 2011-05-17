@@ -186,6 +186,10 @@ Now initialize your database tables::
     $ export DJANGO_SETTINGS_MODULE=obdemo.settings
     $ django-admin.py syncdb --migrate
 
+
+This will also bootstrap the :doc:`Schemas (types of news items) <schemas>`
+used by the demo.
+
 Multiple databases?
 ~~~~~~~~~~~~~~~~~~~
 
@@ -213,7 +217,7 @@ Loading Demo Data
 
 OpenBlock is pretty boring without data!  You'll want to load some
 :ref:`geographic data <locations>` and some local news.  We've
-included some example data for Boston, MA, and loader scripts you can
+included some example data for Boston, MA, and scraper scripts you can
 use to start with if you don't have all of your local data on hand yet.
 
 Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
@@ -229,10 +233,6 @@ First you'll want to load Boston geographies. This will take several minutes::
   $ obdemo/bin/import_boston_zips.sh
   $ obdemo/bin/import_boston_hoods.sh
   $ obdemo/bin/import_boston_blocks.sh
-
-Then bootstrap some news item :ref:`schema definitions <newsitem-schemas>`::
-
-  $ obdemo/bin/add_boston_news_schemas.sh
 
 Then fetch some news from the web, this will take several minutes::
 

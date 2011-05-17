@@ -8,6 +8,27 @@ For background and additional detail, see also :ref:`ebpub-schemas`
 in the ebpub documentation, the code in ebpub.db.models and the 
 video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
 
+Experimenting with Existing Schemas
+-----------------------------------
+
+When running `syncdb --migrate` with 'ebpub' in
+settings.INSTALLED_APPS, a few default schemas will be loaded for you:
+a basic 'Local News' type, and an 'Open311 Service Requests' type.
+
+If you also have 'obdemo' in settings.INSTALLED_APPS, you will get the
+schemas that are used by our Boston demo, including: Boston events,
+restaurant inspections, building permits, and Boston police reports.
+
+You may wish to look at these in the admin UI to see how they're
+configured.  Some of them might be appropriate for your purposes out
+of the box or with slight modifications.
+
+You can of course use the admin UI to delete any that you don't want
+to use.
+
+Make a Schema From Scratch
+--------------------------
+
 For this example, we will model a "Crime Report".  Beyond the basic NewsItem information, 
 like title, date, location etc, we will want to record some custom information with each report:
 
