@@ -45,9 +45,11 @@ urlpatterns += patterns('',
     url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}, name="ebpub-place-timeline"),
     url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}, name="ebpub-place-overview"),
     url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/feeds/$', views.feed_signup, {'place_type': 'location'}, name='ebpub-feed-signup'),
-    (r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/alerts/$', alert_views.signup, {'place_type': 'location'}),
+    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/alerts/$', alert_views.signup, {'place_type': 'location'}, name='ebpub-location-alerts'),
     (r'^locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/place.kml$', views.place_kml, {'place_type': 'location'}),
-    (r'^rss/(.+)/$', feeds.feed_view),
+
+    url(r'^rss/locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/$', feeds.LocationFeed(), name='ebpub-location-rss'),
+
     (r'^accounts/', include('ebpub.accounts.urls')),
     (r'^alerts/unsubscribe/(\d{1,10})/$', alert_views.unsubscribe),
     (r'^petitions/([-\w]{4,32})/$', petition_views.form_view, {'is_schema': False}),
@@ -68,6 +70,10 @@ urlpatterns += metro_patterns(
         (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}, 'ebpub-place-overview'),
         (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX, views.feed_signup, {'place_type': 'block'}),
         (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX, alert_views.signup, {'place_type': 'block'}),
+
+        (r'^rss/streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
+         feeds.BlockFeed()),
+
     ),
     single=(
         (r'^streets/()$', views.street_list),
@@ -76,6 +82,9 @@ urlpatterns += metro_patterns(
         (r'^streets/()([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}, 'ebpub-place-overview'),
         (r'^streets/()([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX, views.feed_signup, {'place_type': 'block'}),
         (r'^streets/()([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX, alert_views.signup, {'place_type': 'block'}),
+
+        (r'^rss/streets/()([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
+         feeds.BlockFeed()),
     )
 )
 

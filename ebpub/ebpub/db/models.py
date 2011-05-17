@@ -126,7 +126,7 @@ class Schema(models.Model):
         return (self.slug,)
 
     def url(self):
-        return '/%s/' % self.slug
+        return urlresolvers.reverse('ebpub-schema-detail', args=(self.slug,))
 
     def icon_slug(self):
         if self.is_special_report:
@@ -241,7 +241,7 @@ class LocationType(models.Model):
         return u'%s, %s' % (self.name, self.scope)
 
     def url(self):
-        return '/locations/%s/' % self.slug
+        return urlresolvers.reverse('ebpub-loc-type-detail', args=(self.slug,))
 
     def natural_key(self):
         return (self.slug,)
@@ -286,16 +286,17 @@ class Location(models.Model):
         return self.name
 
     def url(self):
-        return '/locations/%s/%s/' % (self.location_type.slug, self.slug)
+        return urlresolvers.reverse('ebpub-place-timeline',
+                                    args=(self.location_type.slug, self.slug))
 
     def rss_url(self):
-        return '/rss%s' % self.url()
+        return urlresolvers.reverse('ebpub-location-rss',
+                                    args=(self.location_type.slug, self.slug))
+
 
     def alert_url(self):
-        return '%salerts/' % self.url()
-
-    def edit_url(self):
-        return '/locations/%s/edit/%s/' % (self.location_type.slug, self.slug)
+        return urlresolvers.reverse('ebpub-location-alerts',
+                                    args=(self.location_type.slug, self.slug))
 
     # Give Location objects a "pretty_name" attribute for interoperability with
     # Block objects. (Parts of our app accept either a Block or Location.)
@@ -641,7 +642,8 @@ class NewsItem(models.Model):
         return self.title or 'Untitled News Item'
 
     def item_url(self):
-        return urlresolvers.reverse('ebpub-newsitem-detail', args=[self.schema.slug, self.id], kwargs={})
+        return urlresolvers.reverse('ebpub-newsitem-detail',
+                                    args=[self.schema.slug, self.id], kwargs={})
 
     def item_url_with_domain(self):
         from django.conf import settings
