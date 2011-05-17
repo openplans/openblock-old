@@ -18,6 +18,7 @@ import datetime
 import logging
 import pyrfc3339
 import pytz
+import re
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -39,10 +40,11 @@ def APIGETResponse(request, body, **kw):
     if JSONP/JSONPX is triggered. Status is preserved.
     """
     jsonp = request.GET.get(JSONP_QUERY_PARAM)
-    if jsonp is None: 
+    if jsonp is None:
         return HttpResponse(body, **kw)
-    else: 
+    else:
         content_type = kw.get("mimetype", kw.get("content_type", "text/plain"))
+        jsonp = re.sub(r'[^a-zA-Z0-9_]+', '', jsonp)
         if content_type in (JSON_CONTENT_TYPE, ATOM_CONTENT_TYPE):
             body = jsonp + "(" + body + ");" 
         else: 

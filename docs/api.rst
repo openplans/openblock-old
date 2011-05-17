@@ -71,6 +71,8 @@ the host OpenBlock instance, the API supports the
 
 Unless otherwise noted, all portions of the API using the http GET method support JSONP by 
 providing the "jsonp" query parameter.
+The "jsonp" parameter may only contain letters, numbers, and
+underscores; other characters will be removed.
 
 
 

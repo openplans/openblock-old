@@ -141,6 +141,16 @@ class TestQuickAPIErrors(TestCase):
     # Test errors that happen before filters get applied,
     # so, no fixtures needed.
 
+    def test_jsonp__alphanumeric_only(self):
+        import urllib
+        params = {'jsonp': '()[]{};"<./,abc_XYZ_123~!@#$'}
+        url = reverse('items_json') + '?' + urllib.urlencode(params)
+        response = self.client.get(url)
+        munged_value = 'abc_XYZ_123'
+        self.assertEqual(response.content.strip()[:12], munged_value + '(')
+        self.assertEqual(response.content.strip()[-2:], ');')
+
+
     def test_not_allowed(self):
         response = self.client.delete(reverse('items_index'))
         self.assertEqual(response.status_code, 405)
