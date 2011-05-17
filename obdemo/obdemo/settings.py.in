@@ -27,6 +27,10 @@ from ebpub.settings_default import *
 # CORE DJANGO SETTINGS #
 ########################
 
+INSTALLED_APPS += (
+    'obdemo',
+    )
+
 DEBUG = True
 
 OBDEMO_DIR = os.path.normpath(os.path.dirname(__file__))

@@ -1,12 +1,13 @@
 from django.contrib.gis import geos
-from ebpub.db.models import NewsItem, Schema
+from ebpub.utils.dates import parse_date
+from ebpub.db.models import NewsItem
 import datetime
 import pyrfc3339
 
 __all__ = ['build_item_query']
 
 
-class QueryError(object):
+class QueryError(Exception):
     def __init__(self, message):
         self.message = message
 
@@ -16,7 +17,7 @@ def build_item_query(params):
     specified in the API documentation.  raises QueryError if 
     invalid query parameters are specified.
     """
-    
+
     # some different ordering may be more optimal here /
     # some index could be specifically created
     filters = [_schema_filter, _daterange_filter, _predefined_place_filter,
@@ -82,7 +83,7 @@ def _daterange_filter(query, params, state):
         try:
             del params['startdate']
             try:
-                startdate = datetime.datetime.strptime(startdate, '%Y-%m-%d')
+                startdate = parse_date(startdate, '%Y-%m-%d')
             except ValueError:
                 startdate = pyrfc3339.parse(startdate)
             query = query.filter(pub_date__gte=startdate)
@@ -94,7 +95,7 @@ def _daterange_filter(query, params, state):
         try:
             del params['enddate']
             try:
-                enddate = datetime.datetime.strptime(enddate, '%Y-%m-%d')
+                enddate = parse_date(enddate, '%Y-%m-%d')
             except ValueError: 
                 enddate = pyrfc3339.parse(enddate)
             query = query.filter(pub_date__lte=enddate)
@@ -163,7 +164,6 @@ def _radius_filter(query, params, state):
     except ValueError:
         raise QueryError('Invalid radius "%s"' % radius)
 
-    search_buffer = None
     query = query.filter(location__bboverlaps=search_region)
     state['has_geo_filter'] = True
 

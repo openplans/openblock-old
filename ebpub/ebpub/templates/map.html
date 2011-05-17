@@ -6,6 +6,7 @@
 OpenLayers.ImgPath = "{{ OPENLAYERS_IMG_PATH }}";
 var map_baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
 var wms_url = "{{ WMS_URL }}";
+var newsitems_ajax_url = "{% url ajax-newsitems-geojson %}";
 </script>
 {% endif %}
 {% ifequal MAP_BASELAYER_TYPE 'google' %} 

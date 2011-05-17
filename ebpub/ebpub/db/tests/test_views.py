@@ -143,18 +143,6 @@ class TestAjaxViews(TestCase):
 
 
     @mock.patch('ebpub.db.views.FilterChain')
-    def test_ajax_place_newsitems(self, mock_chain):
-        mock_chain().apply.return_value = models.NewsItem.objects.all()
-        url = urlresolvers.reverse('ajax-place-newsitems')
-        url += '?s=1&pid=l:2000'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        items = simplejson.loads(response.content)
-        self.assert_('bunches' in items.keys())
-        self.assert_('ids' in items.keys())
-        self.assertEqual(sorted(items['ids']), [1, 2, 3])
-
-    @mock.patch('ebpub.db.views.FilterChain')
     def test_ajax_place_date_chart__location(self, mock_chain):
         # Hack so isinstance(mock_chain(), FilterChain) works
         from ebpub.db import schemafilters
@@ -175,7 +163,7 @@ class TestAjaxViews(TestCase):
     @mock.patch('ebpub.db.views.FilterChain')
     def test_newsitems_geojson__with_pid(self, mock_chain):
         mock_chain().apply.return_value = models.NewsItem.objects.all()
-        url = urlresolvers.reverse('newsitems-geojson')
+        url = urlresolvers.reverse('ajax-newsitems-geojson')
         url += '?schema=crime&pid=l:2000'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -184,7 +172,7 @@ class TestAjaxViews(TestCase):
         self.assertEqual(len(items['features']), 3)
         feat = items['features'][0]
         self.assertEqual(feat['type'], 'Feature')
-        self.assertEqual(feat['properties']['title'], 'crime title 2')
+        self.assertEqual(feat['properties']['title'], 'crime title 3')
         self.assert_('popup_html' in feat['properties'])
         self.assertEqual(feat['geometry']['type'], 'Point')
         self.assert_('coordinates' in feat['geometry'])
@@ -192,7 +180,7 @@ class TestAjaxViews(TestCase):
     @mock.patch('ebpub.db.views.FilterChain')
     def test_newsitems_geojson__with_pid_no_schema(self, mock_chain):
         mock_chain().apply.return_value = models.NewsItem.objects.all()
-        url = urlresolvers.reverse('newsitems-geojson')
+        url = urlresolvers.reverse('ajax-newsitems-geojson')
         url += '?pid=b:1000.8'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)

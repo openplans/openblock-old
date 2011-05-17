@@ -130,8 +130,9 @@ def random_schemafield_value(schemafield):
         for i in range(_count):
             lookup = Lookup.objects.get_or_create_lookup(
                 schemafield, random.choice(lookup_vals))
-            if not lookup.description:
-                lookup.description = lookup.slug
+            if not (lookup.description and lookup.name):
+                lookup.description = lookup.slug + ' description'
+                lookup.name = lookup.slug + ' name'
                 lookup.save()
             value.append(lookup.id)
         value = ','.join([str(v) for v in value])

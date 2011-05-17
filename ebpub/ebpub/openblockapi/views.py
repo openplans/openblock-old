@@ -1,16 +1,24 @@
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
-from django.utils import simplejson
+from django.http import HttpResponseBadRequest
+from django.http import HttpResponseNotAllowed
+from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.utils import feedgenerator
+from django.utils import simplejson
 from ebpub.db import models
-from ebpub.geocoder.base import DoesNotExist
+from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.utils import full_geocode
+from ebpub.utils.dates import parse_date, parse_time
 import datetime
+import logging
 import pyrfc3339
 import pytz
+import re
 
 JSONP_QUERY_PARAM = 'jsonp'
 ATOM_CONTENT_TYPE = "application/atom+xml"
@@ -19,6 +27,7 @@ JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
 
 LOCAL_TZ = pytz.timezone(settings.TIME_ZONE)
 
+logger = logging.getLogger('openblockapi')
 
 def APIGETResponse(request, body, **kw):
     """
@@ -31,10 +40,11 @@ def APIGETResponse(request, body, **kw):
     if JSONP/JSONPX is triggered. Status is preserved.
     """
     jsonp = request.GET.get(JSONP_QUERY_PARAM)
-    if jsonp is None: 
+    if jsonp is None:
         return HttpResponse(body, **kw)
-    else: 
+    else:
         content_type = kw.get("mimetype", kw.get("content_type", "text/plain"))
+        jsonp = re.sub(r'[^a-zA-Z0-9_]+', '', jsonp)
         if content_type in (JSON_CONTENT_TYPE, ATOM_CONTENT_TYPE):
             body = jsonp + "(" + body + ");" 
         else: 
@@ -59,6 +69,9 @@ def items_json(request):
     """
     handles the items.json API endpoint
     """
+    # TODO: support filtering by block + radius, and somehow support
+    # adding extra info eg. popup html.  Together, that would allow
+    # this to replace ebub.db.views.newsitems_geojson. See #81
     try:
         items, params = build_item_query(_copy_nomulti(request.GET))
         # could test for extra params aside from jsonp...
@@ -77,6 +90,104 @@ def items_atom(request):
     except QueryError as err:
         return HttpResponse(err.message, status=400)
 
+def items_index(request):
+    """
+    GET: Redirects to a list of JSON items.
+
+    POST: Takes a single JSON mapping describing a NewsItem, creates
+    it, and redirects to a JSON view of the created item.
+
+    On errors, gives a 400 response.
+
+    TODO: documentation in docs/
+    """
+    if request.method == 'GET':
+        return HttpResponseRedirect(reverse('items_json'))
+    elif request.method == 'POST':
+        return _item_post(request)
+    else:
+        return HttpResponseNotAllowed(['GET', 'POST'])
+
+#@permission_required('db.add_newsitem')
+def _item_post(request):
+    assert request.method == 'POST'
+    info = simplejson.loads(request.raw_post_data)
+    assert info.pop('type') == 'Feature'
+    props = info['properties']
+    schema = get_object_or_404(models.Schema.objects, slug=props.pop('type'))
+    kwargs = {'schema': schema}
+    for key in ('title', 'description', 'url'):
+        kwargs[key] = props.pop(key, '')
+    item = models.NewsItem(**kwargs)
+    item.pub_date =  normalize_datetime(datetime.datetime.utcnow())
+    item_date = props.pop('item_date', None)
+    if item_date:
+        item.item_date = parse_date(item_date, '%Y-%m-%d', False)
+    else:
+        item.item_date = item.pub_date.date()
+    item.location, item.location_name = _get_location_info(
+        info.get('geometry'), props.pop('location_name', None))
+    if not item.location:
+        logger.warn("Saving NewsItem %s with no geometry" % item)
+    if not item.location_name:
+        logger.warn("Saving NewsItem %s with no location_name" % item)
+    item.save()
+    # Everything else goes in .attributes.
+    attributes = {}
+    for key, val in props.items():
+        sf = models.SchemaField.objects.get(schema=schema, name=key)
+        if sf.is_many_to_many_lookup():
+            # TODO: get or create Lookups as needed
+            pass
+        elif sf.is_lookup:
+            # likewise TODO.
+            pass
+        elif sf.is_type('date'):
+            val = normalize_datetime(parse_date(val, '%Y-%m-%d'))
+        elif sf.is_type('time'):
+            val = normalize_datetime(parse_time(val, '%H:%M'))
+        elif sf.is_type('datetime'):
+            val = normalize_datetime(pyrfc3339.parse(datetime))
+        attributes[key] = val
+
+    item.attributes = attributes
+    item_id = str(item.id)
+    created = HttpResponse(status=201)
+    created['location'] = reverse('single_item_json', kwargs={'id_': item_id})
+    return created
+
+def _get_location_info(geometry, location_name):
+    location = None
+    if geometry:
+        from django.contrib.gis.geos import GEOSGeometry
+        # GEOSGeometry can already parse geojson geometries (as a string)...
+        # but not the whole geojson string... so we have to re-encode
+        # just the geometry :-P
+        location = GEOSGeometry(simplejson.dumps(geometry))
+        if not location.valid:
+            # Sometimes this will fix a bad geometry.
+            location = location.buffer(0.0)
+        if not location_name:
+            # TODO: reverse-geocode
+            pass
+    elif location_name:
+        # TODO: geocode
+        pass
+    return location, location_name
+
+
+def single_item_json(request, id_=None):
+    """
+    GET a single item as GeoJSON.
+    """
+    assert request.method == 'GET'
+    # TODO: handle PUT, DELETE?
+    from ebpub.db.models import NewsItem
+    item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
+    json = _item_json(item)
+    return APIGETResponse(request, json, content_type=JSON_CONTENT_TYPE)
+
+
 def _copy_nomulti(d):
     """
     make a copy of django wack-o immutable query mulit-dict
@@ -93,6 +204,35 @@ def _copy_nomulti(d):
             r[k] = v
     return r
 
+def _item_json(item, encode=True):
+    props = {}
+    geom = simplejson.loads(item.location.geojson)
+    result = {
+        # 'id': i.id, # XXX ?
+        'type': 'Feature',
+        'geometry': geom,
+        }
+    for attr in item.attributes_for_template():
+        key = attr.sf.slug
+        if attr.sf.is_many_to_many_lookup():
+            props[key] = attr.values
+        else:
+            props[key] = attr.values[0]
+
+    props.update(
+        {'type': item.schema.slug,
+         'title': item.title,
+         'description': item.description,
+         'url': item.url,
+         'pub_date': pyrfc3339.generate(normalize_datetime(item.pub_date), utc=False),
+         'item_date': item.item_date,
+         })
+    result['properties'] = props
+    if encode:
+        return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+    else:
+        return result
+
 def _items_json(items):
     result = {
         'type': 'FeatureCollection',
@@ -101,35 +241,16 @@ def _items_json(items):
     for i in items:
         if i.location is None: 
             continue
-        geom = simplejson.loads(i.location.geojson)
-        item = {
-            # 'id': i.id, # XXX ?
-            'type': 'Feature',
-            'geometry': geom,
-        }
-        props = {}
-        # Quirk: the attributes property is an empty dict until you do
-        # something that triggers populating it! calling items() is
-        # sufficient.
-        props = dict(i.attributes.items())
-        props.update({
-            'type': i.schema.slug,
-            'title': i.title,
-            'description': i.description,
-            'url': i.url,
-            'pub_date': pyrfc3339.generate(normalize_datetime(i.pub_date), utc=False),
-            'item_date': i.item_date,
-        })
-        item['properties'] = props
+        item = _item_json(i, encode=False)
         result['features'].append(item)
-
-    def _serialize_unknown(obj):
-        if (isinstance(obj, datetime.datetime)
-            or isinstance(obj, datetime.date)
-            or isinstance(obj, datetime.time)):
-            return serialize_date_or_time(obj)
-        return None
     return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+
+def _serialize_unknown(obj):
+    if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+        return serialize_date_or_time(obj)
+    if isinstance(obj, models.Lookup):
+        return obj.name
+    return None
 
 def serialize_date_or_time(obj):
     if isinstance(obj, datetime.datetime):
@@ -164,6 +285,13 @@ def _items_atom(items):
         location = item.location
         if location:
             location = location.centroid
+        attributes = []
+        for attr in item.attributes_for_template():
+            datatype = get_datatype(attr.sf)
+            for val in attr.values:
+                if attr.sf.is_lookup:
+                    val = val.name
+                attributes.append((attr.sf.slug, datatype, val))
         atom.add_item(item.title,
                       item.url, # XXX should this be a local url?
                       item.description,
@@ -171,7 +299,7 @@ def _items_atom(items):
                       location_name=item.location_name,
                       pubdate=normalize_datetime(item.pub_date),
                       schema_slug=item.schema.slug,
-                      attributes=dict(item.attributes.items()),
+                      attributes=attributes,
                       )
 
     return atom.writeString('utf8')
@@ -182,12 +310,17 @@ def geocode(request):
     # TODO: this will obsolete:
     # ebdata.geotagger.views.geocode and 
     # ebpub.db.views.ajax_wkt
-
     q = request.GET.get('q', '').strip()
-                
+    if not q:
+        return HttpResponseBadRequest('Missing or empty q parameter.')
     collection = {'type': 'FeatureCollection',
                   'features': _geocode_geojson(q)}
-    return APIGETResponse(request, simplejson.dumps(collection, indent=1), mimetype="application/json")
+    if collection['features']:
+        status = 200
+    else:
+        status = 404
+    return APIGETResponse(request, simplejson.dumps(collection, indent=1),
+                          mimetype="application/json", status=status)
 
 def _geocode_geojson(query):
     if not query: 
@@ -247,7 +380,7 @@ def _geocode_geojson(query):
             }
             features.append(feature)
     # we could get type == 'block', but 
-    # ebpub.db.views returns nothing for this,
+    # ebpub.db.views.ajax_wkt returned nothing for this,
     # so for now we follow their lead.
     # elif res['type'] == 'block': 
     #     pass
@@ -263,12 +396,7 @@ def list_types_json(request):
     for schema in models.Schema.public_objects.all():
         attributes = {}
         for sf in schema.schemafield_set.all():
-            if sf.is_lookup:
-                fieldtype = 'text'
-            else:
-                fieldtype = sf.datatype
-                if fieldtype == 'varchar':
-                    fieldtype = 'text'
+            fieldtype = get_datatype(sf)
             attributes[sf.slug] = {
                 'pretty_name': sf.smart_pretty_name(),
                 'type': fieldtype,
@@ -288,7 +416,6 @@ def list_types_json(request):
                           content_type='application/json')
 
 def locations_json(request):
-    # TODO: this will obsolete ebpub.db.views.ajax_location_list
     locations = models.Location.objects.filter(is_public=True)
     loctype = request.GET.get('type')
     if loctype is not None:
@@ -337,7 +464,7 @@ def location_detail_json(request, loctype, slug):
     return APIGETResponse(request, geojson, content_type='application/json')
 
 def location_types_json(request):
-    typelist = models.LocationType.objects.order_by('name').values(
+    typelist = models.LocationType.objects.order_by('plural_name').values(
         'name', 'plural_name', 'scope', 'slug')
     typedict = {}
     for typeinfo in typelist:
@@ -370,10 +497,10 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
 
         # TODO: item_date in custom namespace
         handler.startElement(u'openblock:attributes', {})
-        for key, val in item['attributes'].items():
+        for key, datatype, val in item['attributes']:
             val = serialize_date_or_time(val) or val
-            # TODO: specify the data type? eg. type='datetime'
-            handler.addQuickElement('openblock:attribute', unicode(val), {'name':key})
+            handler.addQuickElement('openblock:attribute', unicode(val),
+                                    {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
 
 def normalize_datetime(dt):
@@ -383,3 +510,16 @@ def normalize_datetime(dt):
         dt = dt.replace(tzinfo=LOCAL_TZ)
     return dt.astimezone(LOCAL_TZ)
 
+
+def get_datatype(schemafield):
+    """
+    Human-readable datatype based on real_name; notably, use 'text',
+    not 'varchar'; Lookups are 'text'.
+    """
+    if schemafield.is_lookup:
+        datatype = 'text'
+    else:
+        datatype = schemafield.datatype
+        if datatype == 'varchar':
+            datatype = 'text'
+    return datatype

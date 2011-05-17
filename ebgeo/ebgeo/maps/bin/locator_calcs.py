@@ -20,7 +20,7 @@
 import sys
 from django.conf import settings
 from ebpub.utils.mapmath import extent_scale, center, extent_resolution, calculate_bounds
-from ebpub.utils.extent import transform_extent
+from ebgeo.maps.extent import transform_extent
 from ebgeo.maps.shortcuts import city_extent_in_map_srs
 
 LOCATOR_SIZE = (75, 75)

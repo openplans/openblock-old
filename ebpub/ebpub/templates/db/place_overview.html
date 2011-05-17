@@ -43,14 +43,14 @@ $j(document).ready(function() {
 		if (linktype == 'datechart') {
 			var div = $j('#datechart-' + sid);
 			if ($j.data(div.get(0), 'loaded')) { return false; }
-			div.load('/api/place-date-chart/?s=' + sid + '&pid={% if is_block %}b:{{ place.id }}.{{ block_radius }}{% else %}l:{{ place.id }}{% endif %}');
+			div.load('{% url ajax-place-date-chart %}?s=' + sid + '&pid={% if is_block %}b:{{ place.id }}.{{ block_radius }}{% else %}l:{{ place.id }}{% endif %}');
 			$j.data(div.get(0), 'loaded', 1);
 		}
 		else if (linktype.match(/^lookup/)) {
 			var sfid = linktype.substring(6);
 			var div = $j('#lookupchart-' + sfid);
 			if ($j.data(div.get(0), 'loaded')) { return false; }
-			div.load('/api/place-lookup-chart/?sf=' + sfid + '&pid={% if is_block %}b:{{ place.id }}.{{ block_radius }}{% else %}l:{{ place.id }}{% endif %}');
+			div.load('{% url ajax-place-lookup-chart %}?sf=' + sfid + '&pid={% if is_block %}b:{{ place.id }}.{{ block_radius }}{% else %}l:{{ place.id }}{% endif %}');
 			$j.data(div.get(0), 'loaded', 1);
 		}
 

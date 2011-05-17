@@ -138,77 +138,7 @@ def block_bbox(block, radius):
     return (env[0], env[2], env[1], env[3])
 
 
-##############
-# AJAX VIEWS #
-##############
-
-def validate_address(request):
-    # Validates that request.GET['address'] can be parsed with the address parser.
-    if not request.GET.get('address', '').strip():
-        raise Http404
-    geocoder = SmartGeocoder()
-    try:
-        result = {'address': geocoder.geocode(request.GET['address'])['address']}
-    except (DoesNotExist, ParsingError, InvalidBlockButValidStreet):
-        result = {}
-    except AmbiguousResult, e:
-        if get_metro()['multiple_cities']:
-            result = {'addresses': [add['address'] + ', ' + add['city'] for add in e.choices]}
-        else:
-            result = {'addresses': [add['address'] for add in e.choices]}
-    return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
-
-def ajax_wkt(request):
-    # JSON -- returns a list of WKT strings for request.GET['q'].
-    # If it can't be geocoded, the list is empty.
-    # If it's ambiguous, the list has multiple elements.
-    q = request.GET.get('q', '').strip()
-    if not q:
-        wkt_list = []
-    else:
-        try:
-            result = full_geocode(q)
-        except DoesNotExist:
-            wkt_list = []
-        except Exception:
-            wkt_list = []
-        else:
-            if result['type'] == 'block':
-                wkt_list = []
-            elif result['type'] in ('location', 'place'):
-                if result['ambiguous']:
-                    wkt_list = [r.wkt for r in result['result']]
-                else:
-                    wkt_list = [result['result'].location.wkt]
-            elif result['type'] == 'address':
-                if result['ambiguous']:
-                    wkt_list = [r['point'].wkt for r in result['result']]
-                else:
-                    wkt_list = [result['result']['point'].wkt]
-            else:
-                wkt_list = []
-    return HttpResponse(simplejson.dumps(wkt_list), mimetype="application/javascript")
-
-def ajax_map_popups(request):
-    """
-    JSON -- returns a list of lists for request.GET['q'] (a comma-separated
-    string of NewsItem IDs).
-
-    The structure of the inner lists is [newsitem_id, popup_html, schema_name]
-    """
-    try:
-        newsitem_ids = map(int, request.GET['q'].split(','))
-    except (KeyError, ValueError):
-        raise Http404('Invalid query')
-    if len(newsitem_ids) >= 400:
-        raise Http404('Too many points') # Security measure.
-    # Ordering by schema__id is an optimization for _map_popups().
-    ni_list = list(NewsItem.objects.filter(id__in=newsitem_ids).select_related().order_by('schema__id'))
-    result = map_popups(ni_list)
-    return HttpResponse(simplejson.dumps(result), mimetype="application/javascript")
-
-
-def map_popups(ni_list):
+def _map_popups(ni_list):
     """
     Given a list of newsitems, return a list of lists
     of the form [newsitem_id, popup_html, schema_name]
@@ -220,6 +150,7 @@ def map_popups(ni_list):
     for ni in ni_list:
         schema = ni.schema
         if current_schema != schema:
+            # This goes faster if ni_list is sorted by schema.
             template_list = ['db/snippets/newsitem_popup_list/%s.html' % schema.slug,
                              'db/snippets/newsitem_popup_list.html',
                              ]
@@ -229,32 +160,10 @@ def map_popups(ni_list):
         result.append([ni.id, html, schema.name.title()])
     return result
 
-def ajax_place_newsitems(request):
-    """
-    JSON -- expects request.GET['pid'] (a location ID) and
-    request.GET['s'] (a schema ID).
 
-    Returns a JSON mapping containing {'bunches': {scale: [list of clusters]},
-                                       'ids': [list of newsitem ids]}
-    where clusters are represented as [[list of newsitem IDs], [center x, y]]
-
-    NB: the list of all newsitem IDs should be the union of all IDs in
-    all the clusters.
-    """
-    try:
-        s = Schema.public_objects.get(id=int(request.GET['s']))
-    except (KeyError, ValueError, Schema.DoesNotExist):
-        raise Http404('Invalid Schema')
-    pid = request.GET.get('pid', '')
-    filters = FilterChain(request=request, schema=s)
-    filters.add_by_place_id(pid)
-    newsitem_qs = filters.apply()
-    # Make the JSON output. Note that we have to call dumps() twice because the
-    # bunches are a special case.
-    ni_list = list(newsitem_qs.order_by('-item_date')[:50])
-    bunches = simplejson.dumps(cluster_newsitems(ni_list, 26), cls=ClusterJSON)
-    id_list = simplejson.dumps([ni.id for ni in ni_list])
-    return HttpResponse('{"bunches": %s, "ids": %s}' % (bunches, id_list), mimetype="application/javascript")
+##############
+# AJAX VIEWS #
+##############
 
 
 def ajax_place_lookup_chart(request):
@@ -300,31 +209,106 @@ def ajax_place_date_chart(request):
         'filters': filters,
     })
 
-def ajax_location_type_list(request):
-    loc_types = LocationType.objects.order_by('plural_name').values('id', 'slug', 'plural_name')
-    response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(list(loc_types), response)
+def newsitems_geojson(request):
+    """Get a list of newsitems, optionally filtered for one place ID
+    and/or one schema slug.
+
+    Response is a geojson string.
+    """
+    # Note: can't use @cache_page here because that ignores all requests
+    # with query parameters (in FetchFromCacheMiddleware.process_request).
+    # So, we'll use the low-level cache API.
+
+    # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
+    # Seems like there are a number of similar code blocks in
+    # ebpub.db.views?
+
+    pid = request.GET.get('pid', '')
+    schema = request.GET.get('schema', None)
+    if schema is not None:
+        schema = get_object_or_404(Schema, slug=schema)
+
+    nid = request.GET.get('newsitem', '')
+
+    cache_seconds = 60 * 5
+    cache_key = 'newsitem_geojson_%s_%s_%s' % (pid, nid, schema)
+
+    newsitem_qs = NewsItem.objects.all()
+    if nid:
+        newsitem_qs = newsitem_qs.filter(id=nid)
+    else:
+        filters = FilterChain(request=request, queryset=newsitem_qs, schema=schema)
+        if pid:
+            filters.add_by_place_id(pid)
+        else:
+            # Whole city!
+            pass
+
+        # More copy/paste from ebpub.db.views...
+        # As an optimization, limit the NewsItems to those published in the
+        # last few days.
+        end_date = today()
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+        # Bug http://developer.openblockproject.org/ticket/77:
+        # This is using pub_date, but Aggregates use item_date, so there's
+        # a visible disjoint between number of items on the map and the item
+        # count shown on the homepage and location detail page.
+        filters.add('pubdate', start_date, end_date)
+        newsitem_qs = filters.apply()
+        newsitem_qs = newsitem_qs
+        if not has_staff_cookie(request):
+            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+
+        # Put a hard limit on the number of newsitems, and throw away
+        # older items.
+        newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
+        newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+
+    # Done preparing the query; cache based on the raw SQL
+    # to be sure we capture everything that matters.
+    cache_key += hashlib.md5(str(newsitem_qs.query)).hexdigest()
+    output = cache.get(cache_key, None)
+    if output is None:
+        # Re-sort by schema type.
+        # This is an optimization for map_popups().
+        # We can't do it in the qs because we want to first slice the qs
+        # by date, and we can't call order_by() after a slice.
+        newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
+        popup_list = _map_popups(newsitem_list)
+
+        features = {'type': 'FeatureCollection', 'features': []}
+        for newsitem, popup_info in zip(newsitem_list, popup_list):
+            if newsitem.location is None:
+                # Can happen, see NewsItem docstring.
+                # TODO: We should probably allow for newsitems that have a
+                # location_object too?
+                continue
+
+            features['features'].append(
+                {'type': 'Feature',
+                 'geometry': {'type': 'Point',
+                              'coordinates': [newsitem.location.centroid.x,
+                                              newsitem.location.centroid.y],
+                              },
+                 'properties': {
+                        'title': newsitem.title,
+                        'id': popup_info[0],
+                        'popup_html': popup_info[1],
+                        'schema': popup_info[2],
+                        }
+                 })
+        output = simplejson.dumps(features, indent=1)
+        cache.set(cache_key, output, cache_seconds)
+
+    response = HttpResponse(output, mimetype="application/javascript")
+    patch_response_headers(response, cache_timeout=60 * 5)
     return response
 
-def ajax_location_list(request, loc_type_id):
-    locations = Location.objects.filter(location_type__pk=loc_type_id, is_public=True).order_by('display_order').values('id', 'slug', 'name')
-    if not locations:
-        raise Http404()
-    response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(list(locations), response)
-    return response
+@cache_page(60 * 60)
+def place_kml(request, *args, **kwargs):
+    place = url_to_place(*args, **kwargs)
+    return render_to_kml('place.kml', {'place': place})
 
-def ajax_location(request, loc_id):
-    try:
-        location = Location.objects.get(pk=int(loc_id))
-    except (ValueError, Location.DoesNotExist):
-        raise Http404()
-    loc_obj = dict([(k, getattr(location, k)) for k in ('name', 'area', 'id', 'normalized_name', 'slug', 'population')])
-    loc_obj['wkt'] = location.location.wkt
-    loc_obj['centroid'] = location.centroid.wkt
-    response = HttpResponse(mimetype='application/javascript')
-    simplejson.dump(loc_obj, response)
-    return response
 
 #########
 # VIEWS #
@@ -1032,105 +1016,3 @@ def feed_signup(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     context['schema_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
     return eb_render(request, 'db/feed_signup.html', context)
-
-
-def newsitems_geojson(request):
-    """Get a list of newsitems, optionally filtered for one place ID
-    and/or one schema slug.
-
-    Response is a geojson string.
-    """
-    # Note: can't use @cache_page here because that ignores all requests
-    # with query parameters (in FetchFromCacheMiddleware.process_request).
-    # So, we'll use the low-level cache API.
-
-    # Copy-pasted code from ajax_place_newsitems.  Refactoring target:
-    # Seems like there are a number of similar code blocks in
-    # ebpub.db.views?
-
-    pid = request.GET.get('pid', '')
-    schema = request.GET.get('schema', None)
-    if schema is not None:
-        schema = get_object_or_404(Schema, slug=schema)
-
-    nid = request.GET.get('newsitem', '')
-
-    cache_seconds = 60 * 5
-    cache_key = 'newsitem_geojson_%s_%s_%s' % (pid, nid, schema)
-
-    newsitem_qs = NewsItem.objects.all()
-    if nid:
-        newsitem_qs = newsitem_qs.filter(id=nid)
-    else:
-        filters = FilterChain(request=request, queryset=newsitem_qs, schema=schema)
-        if pid:
-            filters.add_by_place_id(pid)
-        else:
-            # Whole city!
-            pass
-
-        # More copy/paste from ebpub.db.views...
-        # As an optimization, limit the NewsItems to those published in the
-        # last few days.
-        end_date = today()
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-        # Bug http://developer.openblockproject.org/ticket/77:
-        # This is using pub_date, but Aggregates use item_date, so there's
-        # a visible disjoint between number of items on the map and the item
-        # count shown on the homepage and location detail page.
-        filters.add('pubdate', start_date, end_date)
-        newsitem_qs = filters.apply()
-        newsitem_qs = newsitem_qs
-        if not has_staff_cookie(request):
-            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
-
-        # Put a hard limit on the number of newsitems, and throw away
-        # older items.
-        newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
-        newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
-
-    # Done preparing the query; cache based on the raw SQL
-    # to be sure we capture everything that matters.
-    cache_key += hashlib.md5(str(newsitem_qs.query)).hexdigest()
-    output = cache.get(cache_key, None)
-    if output is None:
-        # Re-sort by schema type.
-        # This is an optimization for map_popups().
-        # We can't do it in the qs because we want to first slice the qs
-        # by date, and we can't call order_by() after a slice.
-        newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
-        popup_list = map_popups(newsitem_list)
-
-        features = {'type': 'FeatureCollection', 'features': []}
-        for newsitem, popup_info in zip(newsitem_list, popup_list):
-            if newsitem.location is None:
-                # Can happen, see NewsItem docstring.
-                # TODO: We should probably allow for newsitems that have a
-                # location_object too?
-                continue
-
-            features['features'].append(
-                {'type': 'Feature',
-                 'geometry': {'type': 'Point',
-                              'coordinates': [newsitem.location.centroid.x,
-                                              newsitem.location.centroid.y],
-                              },
-                 'properties': {
-                        'title': newsitem.title,
-                        'id': popup_info[0],
-                        'popup_html': popup_info[1],
-                        'schema': popup_info[2],
-                        }
-                 })
-        output = simplejson.dumps(features, indent=1)
-        cache.set(cache_key, output, cache_seconds)
-
-    response = HttpResponse(output, mimetype="application/javascript")
-    patch_response_headers(response, cache_timeout=60 * 5)
-    return response
-
-
-@cache_page(60 * 60)
-def place_kml(request, *args, **kwargs):
-    place = url_to_place(*args, **kwargs)
-    return render_to_kml('place.kml', {'place': place})

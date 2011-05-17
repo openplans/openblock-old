@@ -249,11 +249,4 @@ def patch_once():
         from django.utils import xmlutils
         xmlutils.SimplerXMLGenerator.endElement = endElement
 
-        ####################################################
-        # South is really really noisy.
-        # Apparently this is because their NullHandler implementation
-        # is slightly broken; it needs a do-nothing handle() method.
-        from south.logger import get_logger
-        get_logger().handle = lambda record: None
-
         _PATCHED = True

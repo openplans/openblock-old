@@ -7,10 +7,14 @@
  */
 /*
  * This map expects the following variables to be set:
-
+ *
+ * newsitems_ajax_url - url to use for requesting features.
+ *
+ * map_baselayer_type - what to use for base layer. Either 'google' or 'wms'.
+ *
  * newsitem (OPTIONAL) - a NewsItem id. If this is provided, only the relevant
  * NewsItem is loaded.
-
+ *
  * pid (OPTIONAL) - a place ID like 'b:12.1' (see
  * ebpub.utils.view_utils for more info).
  *
@@ -23,16 +27,12 @@
  *
  * schema_slug (OPTIONAL) - slug of schema to filter on.
  *
- * newsitems_ajax_url (OPTIONAL) - url to use for requesting features.
- *
- * map_bounds - an OpenLayers.Bounds() defining the default boundaries.
+ * map_bounds (OPTIONAL) - an OpenLayers.Bounds() defining the default boundaries.
  * If set, you don't need map_center or map_zoom.
  *
- * map_center - an OpenLayers.LonLat(). If set, you also need map_zoom.
+ * map_center (OPTIONAL) - an OpenLayers.LonLat(). If set, you also need map_zoom.
  *
- * map_zoom - zoom level. Required if you set map_center.
- *
- * map_baselayer_type - what to use for base layer. Either 'google' or 'wms'.
+ * map_zoom (required iff map_center is set) - zoom level.
  *
  * wms_url - URL to use for WMS base layer, iff map_baselayer_type == 'wms.'
  */
@@ -60,9 +60,6 @@ var options = {
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 function loadNewsItems() {
-    if (typeof(newsitems_ajax_url == "undefined")) {
-        var newsitems_ajax_url = "/api/newsitems.geojson/"; /* WILL CHANGE */
-    };
     // Expect params to be set globally prior to calling this function.
     var newsitem_params = {};
     if (typeof(newsitem) != 'undefined') {
