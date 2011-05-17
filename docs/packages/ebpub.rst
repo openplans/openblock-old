@@ -169,7 +169,8 @@ fields:
       the date this NewsItem was added to the site
 
     item_date
-      the date of the object
+      the date of the object (e.g. the date it was published on the
+      original source site, or the date the news occurred)
 
     location
       the location of the object (a GeoDjango GeometryField, usually a
