@@ -1,13 +1,15 @@
-import datetime
 from django.contrib.gis.geos import Point
-from httplib2 import Http
-import pyrfc3339
-import traceback
-import time
-import urllib
-from lxml import etree
+from django.contrib.gis.geos import Polygon
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup
 from ebpub.geocoder.reverse import reverse_geocode
+from ebpub.metros.allmetros import get_metro
+from httplib2 import Http
+from lxml import etree
+import datetime
+import pyrfc3339
+import time
+import traceback
+import urllib
 
 import logging
 log = logging.getLogger(__name__)
@@ -16,8 +18,20 @@ class GeoReportV2Scraper(object):
 
     def __init__(self, api_url, api_key=None, jurisdiction_id=None, 
                  schema_slug='open311-service-requests', http_cache=None,
-                 seconds_between_requests=2.0, days_prior=90):
-        
+                 seconds_between_requests=2.0, days_prior=90,
+                 bounds=None,
+                 make_html_url=False):
+        """
+        If ``bounds`` is passed, it should be a geometry; news items
+        that don't intersect with that geometry will be skipped.
+        Default bounds is the extent defined in settings.METRO_LIST.
+
+        If ``make_html_url`` is true, we will assume that the provider
+        supports human-readable versions of the 311 request by changing
+        the extension to .html, and use that as our NewsItem.url.
+        This is not really part of the GeoReport v2 API, but
+        SeeClickFix supports it.
+        """
         self.api_url = api_url
         if not self.api_url.endswith('/'): 
             self.api_url += '/'
@@ -35,6 +49,12 @@ class GeoReportV2Scraper(object):
             self.standard_parms['jurisdiction_id'] = jurisdiction_id
         
         self.http = Http(http_cache)
+        self.bounds = bounds
+        if bounds is None:
+            log.info("Calculating geographic boundaries from the extent in setttings.METRO_LIST")
+            extent = get_metro()['extent']
+            self.bounds = Polygon.from_bbox(extent)
+        self.make_html_url = make_html_url
 
     def service_requests_url(self, start_date, end_date):
         params = dict(self.standard_params)
@@ -59,6 +79,7 @@ class GeoReportV2Scraper(object):
             
         while (start_date < now):
             end_date = start_date + request_granularity
+            log.info("Fetching from %s - %s" % (start_date, end_date))
             url = self.service_requests_url(start_date, end_date)
             self._update(url)
             start_date = end_date
@@ -69,12 +90,17 @@ class GeoReportV2Scraper(object):
         # make http request to api
         try: 
             log.debug("Requesting %s" % url)
-            response, content = self.http.request(url)
+            # User-Agent is a lame workaround for SeeClickFix blocking httplib2
+            # (they had too many bots hitting them).
+            response, content = self.http.request(url, headers={'User-Agent': 'openblock-georeport-scraper'})
             if response.status != 200: 
                 log.error("Error retrieving %s: status was %d" % (url, response.status))
+                log.error(content)
                 return
         except:
             log.error("Error retrieving %s: %s" % (url, traceback.format_exc()))
+            return
+        log.info("Got %s OK" % url)
 
         # parse the response
         try: 
@@ -84,12 +110,15 @@ class GeoReportV2Scraper(object):
             return
             
         # iterate through the service requests in the response
-        for sreq in root.iterchildren():
-            self._update_service_request(sreq)
-        
+        reqs = root.findall('.//request')
+        if not reqs:
+            log.warn("No request elements found")
+        for req in reqs:
+            self._update_service_request(req)
+
     def _update_service_request(self, sreq):
         service_request_id = self._get_request_field(sreq, 'service_request_id')
-        
+
         if not service_request_id:
             log.warning("Skipping request with no request id (may be in progress)!")
             return
@@ -101,9 +130,12 @@ class GeoReportV2Scraper(object):
                           float(sreq.find('lat').text),
                           srid=4326)
         except: 
-            log.warning("Skipping request with invalid location (%s)" % service_request_id)
+            log.debug("Skipping request with invalid location (%s)" % service_request_id)
             return
-
+        if self.bounds is not None:
+            if not self.bounds.intersects(point):
+                log.debug("Skipping request at %s, outside bounds" % point)
+                return
         try:
             ni = NewsItem.objects.filter(schema=self.schema).by_attribute(self.service_request_id_field, 
                                                                           service_request_id).all()[0]
@@ -122,7 +154,7 @@ class GeoReportV2Scraper(object):
             ni.location_name = block.pretty_name
             ni.block = block
         except: 
-            log.error("Failed to reverse geocode item %s" % service_request_id)
+            log.debug("Failed to reverse geocode item %s" % service_request_id)
         
         # try to pull the requested_datetime into pubdate/itemdate
         # default to now.
@@ -132,9 +164,12 @@ class GeoReportV2Scraper(object):
             ni.pub_date = datetime.datetime.utcnow()
             log.warning("Filling in current time for pub_date on item with no requested_datetime (%s)" % service_request_id)
         ni.item_date = datetime.date(ni.pub_date.year, ni.pub_date.month, ni.pub_date.day)
-        
-        # try to pull the 'media' url out into url, for lack of a better one currently
-        ni.url = self._get_request_field(sreq, 'media_url')
+
+        if self.make_html_url:
+            ni.url = '%srequests/%s.html' % (self.api_url, service_request_id)
+        else:
+            # try to pull the 'media' url out into url, for lack of a better one currently
+            ni.url = self._get_request_field(sreq, 'media_url')
         ni.save()
 
         ni.attributes['service_request_id'] = service_request_id
@@ -179,3 +214,23 @@ class GeoReportV2Scraper(object):
         lo = Lookup.objects.get_or_create_lookup(sf, value, make_text_slug=False)
         return lo.slug
 
+if __name__ == '__main__':
+    from optparse import OptionParser
+    parser = OptionParser()
+    parser.add_option(
+        "-k", "--api-key", help='GeoReport V2 API key', action='store',
+        )
+    parser.add_option(
+        "--make-html-url",
+        help='save URLs based on replacing the API resource extension with .html',
+        action='store_true',
+        )
+    parser.add_option(
+        "--days-prior", help='how many days ago to start scraping', type="int",
+        )
+    import sys
+    options, args = parser.parse_args(sys.argv)
+    scraper = GeoReportV2Scraper(api_url=args[1], api_key=options.api_key,
+                                 days_prior=options.days_prior,
+                                 make_html_url=options.make_html_url)
+    scraper.update()

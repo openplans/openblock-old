@@ -26,7 +26,6 @@ pt_in_lake_mi = Point((-86.99514699540548, 41.87468001919902)) # point way out i
 
 class MetroTest(TestCase):
     fixtures = ['metros.json']
-    multi_db = True  # Need this or fixtures don't really get loaded.
 
     def test_point_in_metro(self):
         # Tests finding a metro with a point contained by its boundary
@@ -42,7 +41,6 @@ class MetroTest(TestCase):
 
 class MetroViewsTest(TestCase):
     fixtures = ['metros.json']
-    multi_db = True  # Need this or fixtures don't really get loaded.
     urls = 'ebpub.metros.urls'
 
     def test_lookup_metro_success(self):

@@ -39,15 +39,17 @@ python add_news.py || die
 # more feeds from Joel. Local blog news:
 python add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"
 
-echo Adding seeclickfix issues...
-python seeclickfix_retrieval.py || die
-
 echo Adding police reports...
 python bpdnews_retrieval.py || die
 
 echo Adding building permits...
 cd $SOURCE_ROOT
 python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || die
+
+echo Adding GeoReport issues...
+python ./ebdata/ebdata/scrapers/general/open311/georeportv2.py --days-prior=90 \
+   --make-html-url http://seeclicktest.com/open311/v2
+
 
 # TODO: fix traceback:  ebdata.blobs.scrapers.NoSeedYet: You need to add a Seed with the URL 'http://www.cityofboston.gov/news/
 #echo Adding press releases...

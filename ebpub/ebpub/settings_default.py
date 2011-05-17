@@ -277,6 +277,13 @@ with _lock:
             # processes under mod_wsgi!
             logging.basicConfig(level=logging.INFO,
                                 format="%(asctime)-15s %(levelname)-8s %(message)s")
-
+            # Surprisingly, basicConfig in Python < 2.7 doesn't set
+            # the default handler level.  This lets non-root loggers
+            # log at ANY level. Fix that.
+            for handler in logging.getLogger().handlers:
+                handler.setLevel(logging.INFO)
+        # need to import this first so it doesn't wipe the level we set...
+        from south.logger import get_logger
+        get_logger().setLevel(logging.INFO)
 
 __doc__ = __doc__ % required_settings

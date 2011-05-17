@@ -1,0 +1,49 @@
+[
+   {
+     "fields": {
+      "is_special_report": false,
+      "plural_name": "SeeClickFix Issues",
+      "last_updated": "2010-10-22",
+      "name": "SeeClickFix Issue",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "issues",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://seeclickfix.com",
+      "summary": "SeeClickFix Issues",
+      "source": "http://seeclickfix.com",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Issues from SeeClickFix",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Ratings",
+      "is_charted": false,
+      "name": "rating",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Rating",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "issues"
+      ]
+    },
+    "model": "db.schemafield"
+  }
+]

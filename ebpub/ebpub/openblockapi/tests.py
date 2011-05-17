@@ -10,6 +10,8 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
+from functools import wraps
+
 import ebpub.openblockapi.views
 
 def monkeypatch(obj, attrname, value):
@@ -18,6 +20,7 @@ def monkeypatch(obj, attrname, value):
     # Unlike mock.patch, this allows the value to be
     # things other than mock.Mock objects.
     def patch(method):
+        @wraps(method)
         def patched(*args, **kw):
             orig = getattr(obj, attrname)
             try:
@@ -78,7 +81,7 @@ class TestAPI(TestCase):
         qs = '?%s=%s' % (param, wrapper)
 
         endpoints = [
-            reverse('geocoder_api') + qs,
+            reverse('geocoder_api') + qs + '&q=Hood+1',
             reverse('items_json') + qs,
             reverse('list_types_json') + qs,
             reverse('locations_json') + qs,
@@ -86,11 +89,88 @@ class TestAPI(TestCase):
             reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'neighborhoods'}) + qs,
         ]
 
-        for e in endpoints: 
-            response = self.client.get(e, status=200)
+        for e in endpoints:
+            response = self.client.get(e)
+            self.assertEqual(response.status_code, 200)
             assert response.content.startswith('%s(' % wrapper)
             assert response.content.endswith(");")
             assert response.get('content-type', None).startswith('application/javascript')
+
+    def test_items_redirect(self):
+        url = reverse('items_index')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['location'],
+                         'http://testserver' + reverse('items_json'))
+
+
+class TestPushAPI(TestCase):
+
+    fixtures = ('test-schema',)
+
+    def test_create_basic(self):
+        #schema = Schema.objects.get(slug='test-schema')
+        info = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [1.0, -1.0]
+                },
+            "properties": {
+                "description": "Bananas!",
+                "title": "All About Fruit",
+                "location_name": "somewhere",
+                "url": "http://example.com/bananas",
+                "item_date": "2011-01-01",
+                "type": "test-schema",
+                }
+            }
+        url = reverse('items_index')
+        json = simplejson.dumps(info)
+        response = self.client.post(url, json, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        new_item = NewsItem.objects.get(title='All About Fruit')
+        self.assertEqual(
+            response['location'],
+            'http://testserver' + reverse('single_item_json', args=(), kwargs={'id_': new_item.id}))
+        self.assertEqual(new_item.url, info['properties']['url'])
+        # ... etc.
+
+
+class TestQuickAPIErrors(TestCase):
+    # Test errors that happen before filters get applied,
+    # so, no fixtures needed.
+
+    def test_jsonp__alphanumeric_only(self):
+        import urllib
+        params = {'jsonp': '()[]{};"<./,abc_XYZ_123~!@#$'}
+        url = reverse('items_json') + '?' + urllib.urlencode(params)
+        response = self.client.get(url)
+        munged_value = 'abc_XYZ_123'
+        self.assertEqual(response.content.strip()[:12], munged_value + '(')
+        self.assertEqual(response.content.strip()[-2:], ');')
+
+
+    def test_not_allowed(self):
+        response = self.client.delete(reverse('items_index'))
+        self.assertEqual(response.status_code, 405)
+        response = self.client.put(reverse('items_index'))
+        self.assertEqual(response.status_code, 405)
+
+    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    def test_items_filter_date_invalid(self):
+        qs = "?startdate=oops"
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertContains(response, "Invalid start date", status_code=400)
+
+        qs = "?enddate=oops"
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertContains(response, "Invalid end date", status_code=400)
+
+        # Atom too
+        qs = "?enddate=oops"
+        response = self.client.get(reverse('items_atom') + qs)
+        self.assertContains(response, "Invalid end date", status_code=400)
 
 
 class TestItemSearchAPI(TestCase):
@@ -99,6 +179,28 @@ class TestItemSearchAPI(TestCase):
 
     def tearDown(self):
         NewsItem.objects.all().delete()
+
+    def test_single_item_json__notfound(self):
+        id_ = '99999'
+        response = self.client.get(reverse('single_item_json', kwargs={'id_': id_}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_single_item_json(self):
+        schema1 = Schema.objects.get(slug='type1')
+        item = _make_items(1, schema1)[0]
+        item.save()
+        id_ = item.id
+        response = self.client.get(reverse('single_item_json', kwargs={'id_': id_}))
+        self.assertEqual(response.status_code, 200)
+        out = simplejson.loads(response.content)
+        self.assertEqual(out['type'], 'Feature')
+        self.assert_('geometry' in out.keys())
+        self.assertEqual(out['geometry']['type'], 'Point')
+        self.assert_('properties' in out.keys())
+        self.assertEqual(out['properties']['title'], item.title)
+        self.assertEqual(out['properties']['description'], item.description)
+        self.assertEqual(out['properties']['type'], schema1.slug)
+
 
     def test_items_nofilter(self):
         # create a few items
@@ -110,7 +212,8 @@ class TestItemSearchAPI(TestCase):
         for item in items:
             item.save()
 
-        response = self.client.get(reverse('items_json'), status=200)
+        response = self.client.get(reverse('items_json'))
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
 
         assert len(ritems['features']) == len(items)
@@ -139,7 +242,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # query for only the second schema
-        response = self.client.get(reverse('items_json') + "?type=type2", status=200)
+        response = self.client.get(reverse('items_json') + "?type=type2")
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
 
         assert len(ritems['features']) == len(items2)
@@ -157,7 +261,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # query for only the second schema
-        response = self.client.get(reverse('items_atom') + "?type=type2", status=200)
+        response = self.client.get(reverse('items_atom') + "?type=type2")
+        self.assertEqual(response.status_code, 200)
         feed = feedparser.parse(response.content)
 
         assert len(feed['entries']) == len(items2)
@@ -165,6 +270,9 @@ class TestItemSearchAPI(TestCase):
             assert item['openblock_type'] == u'type2'
 
 
+    # TODO: once DJango 1.4 is out, we might be able to remove this by
+    # using # the TestCase.settings context manager as per
+    # http://docs.djangoproject.com/en/dev/topics/testing/#overriding-settings
     @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
         schema = Schema.objects.get(slug='test-schema')
@@ -178,8 +286,7 @@ class TestItemSearchAPI(TestCase):
                          '2001-01-02T10:11:12-08:00'),
             'bool': (True, True),
             'int': (7, 7),
-            # XXX avoiding lookups for now.
-            #'lookup': ''
+            'lookup': ('7701,7700', ['Lookup 7701 Name', 'Lookup 7700 Name']),
         }
 
         items = _make_items(5, schema)
@@ -188,7 +295,8 @@ class TestItemSearchAPI(TestCase):
             for k,v in ext_vals.items():
                 item.attributes[k] = v[0]
 
-        response = self.client.get(reverse('items_json'), status=200)
+        response = self.client.get(reverse('items_json'))
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
 
         self.assertEqual(len(ritems['features']), len(items))
@@ -201,8 +309,6 @@ class TestItemSearchAPI(TestCase):
     @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_extension_fields_atom(self):
         schema = Schema.objects.get(slug='test-schema')
-        # TODO: either de-hardcode the timezone from this test,
-        # or patch settings.TIME_ZONE.
         ext_vals = {
             'varchar': ('This is a varchar', 'This is a varchar'), 
             'date': (datetime.date(2001, 01, 02), '2001-01-02'),
@@ -212,8 +318,7 @@ class TestItemSearchAPI(TestCase):
                          '2001-01-02T10:11:12-08:00'),
             'bool': (True, 'True'),
             'int': (7, '7'),
-            # XXX avoiding lookups for now.
-            #'lookup': ''
+            'lookup': ('7700,7701', 'Lookup 7700 Name'),  # only check 1
         }
 
         items = _make_items(5, schema)
@@ -222,7 +327,8 @@ class TestItemSearchAPI(TestCase):
             for k,v in ext_vals.items():
                 item.attributes[k] = v[0]
 
-        response = self.client.get(reverse('items_atom'), status=200)
+        response = self.client.get(reverse('items_atom'))
+        self.assertEqual(response.status_code, 200)
         # Darn feedparser throws away nested extension elements. Gahhh.
         # Okay, let's parse the old-fashioned way.
         from lxml import etree
@@ -233,11 +339,14 @@ class TestItemSearchAPI(TestCase):
         entries = root.xpath('//atom:entry', namespaces=ns)
         assert len(entries) == len(items)
         for entry in entries:
-            for key, value in ext_vals.items():
+            for key, value in sorted(ext_vals.items()):
                 attrs = entry.xpath(
                     'openblock:attributes/openblock:attribute[@name="%s"]' % key,
                     namespaces=ns)
-                self.assertEqual(len(attrs), 1)
+                if key == 'lookup':
+                    self.assertEqual(len(attrs), 2)
+                else:
+                    self.assertEqual(len(attrs), 1)
                 self.assertEqual(attrs[0].text, value[1])
         assert self._items_exist_in_xml_result(items, response.content)
 
@@ -262,21 +371,24 @@ class TestItemSearchAPI(TestCase):
         enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz))
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         self.assertEqual(len(ritems['features']), 2)
         assert self._items_exist_in_result(items[1:3], ritems)
 
         # startdate only
         qs = "?startdate=%s" % startdate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[:-1], ritems)
 
         # enddate only
         qs = "?enddate=%s" % enddate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
@@ -299,21 +411,24 @@ class TestItemSearchAPI(TestCase):
 
         # filter both ends
         qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 2
         assert self._items_exist_in_result(items[1:3], ritems)
 
         # startdate only
         qs = "?startdate=%s" % startdate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[:-1], ritems)
 
         # enddate only
         qs = "?enddate=%s" % enddate
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
@@ -326,28 +441,32 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         # with no query, we should get all the items
-        response = self.client.get(reverse('items_json'), status=200)
+        response = self.client.get(reverse('items_json'))
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == len(items)
         assert self._items_exist_in_result(items, ritems)
 
         # limited to 5, we should get the first 5
         qs = "?limit=5"
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items[:5], ritems)
 
         # offset by 2, we should get the last 8
         qs = "?offset=2"
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 8
         assert self._items_exist_in_result(items[2:], ritems)
 
         # offset by 2, limit to 5
         qs = "?offset=2&limit=5"
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items[2:7], ritems)
@@ -368,7 +487,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         qs = "?locationid=%s" % cgi.escape("neighborhoods/hood-1")
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items2, ritems)
@@ -390,7 +510,8 @@ class TestItemSearchAPI(TestCase):
             item.save()
 
         qs = "?center=%f,%f&radius=10" % (pt.x, pt.y)
-        response = self.client.get(reverse('items_json') + qs, status=200)
+        response = self.client.get(reverse('items_json') + qs)
+        self.assertEqual(response.status_code, 200)
         ritems = simplejson.loads(response.content)
         assert len(ritems['features']) == 5
         assert self._items_exist_in_result(items2, ritems)
@@ -439,11 +560,16 @@ class TestGeocoderAPI(TestCase):
     fixtures = ('test-locationtypes', 
                 'test-locations.json',
                 'test-places.json', 
-                'test-streets.json', )
+                'test-streets.json',)
+
+    def test_missing_params(self):
+        response = self.client.get(reverse('geocoder_api'))
+        self.assertEqual(response.status_code, 400)
 
     def test_address(self):
         qs = '?q=100+Adams+St'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -452,9 +578,18 @@ class TestGeocoderAPI(TestCase):
         assert res['properties']['type'] == 'address'
         assert res['properties']['address'] == '100 Adams St.'
 
+
+    def test_address_notfound(self):
+        qs = '?q=100+Nowhere+St'
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 404)
+        response = simplejson.loads(response.content)
+        self.assertEqual(len(response['features']), 0)
+
     def test_intersection(self):
         qs = '?q=Adams+and+Chestnut'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -465,7 +600,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_place(self):
         qs = '?q=Fake+Yards'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -476,7 +612,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_location(self):
         qs = '?q=Hood+1'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 1
@@ -488,7 +625,8 @@ class TestGeocoderAPI(TestCase):
 
     def test_ambiguous(self):
         qs = '?q=Chestnut+and+Chestnut'
-        response = self.client.get(reverse('geocoder_api') + qs, status=200)
+        response = self.client.get(reverse('geocoder_api') + qs)
+        self.assertEqual(response.status_code, 200)
         response = simplejson.loads(response.content)
         assert response['type'] == 'FeatureCollection'
         assert len(response['features']) == 2
@@ -501,7 +639,6 @@ class TestGeocoderAPI(TestCase):
 
         assert "Chestnut Sq. & Chestnut Ave." in names
         assert "Chestnut Pl. & Chestnut Ave." in names
-
 
 
 class TestLocationsAPI(TestCase):
@@ -537,8 +674,6 @@ class TestLocationsAPI(TestCase):
             self.assert_(loc['type'] == 'neighborhoods')
         self.assertEqual(locations[0]['slug'], 'hood-1')
         self.assertEqual(locations[0]['name'], 'Hood 1')
-
-
 
     def test_location_detail__invalid_type(self):
         response = self.client.get(reverse('location_detail_json', kwargs={'slug': 'hood-1', 'loctype': 'bogus'}))
@@ -624,5 +759,4 @@ class TestUtilFunctions(TestCase):
         self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
         self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
                          {'a': 1, 'b': [1,2,3]})
-
 

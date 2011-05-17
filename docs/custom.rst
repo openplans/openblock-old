@@ -51,17 +51,18 @@ and make adjustments based on your setup::
 Read more about :doc:`important settings you can/should customize <configuration>`.
 
 Now, as usual with Django projects, you'll need to create and
-initialize your database(s).  If you haven't changed the default
+initialize your database.  If you haven't changed the default
 database settings, and if you've followed the :ref:`template_setup`
 instructions, then the database creation command would simply be::
 
     $ createdb -T template_postgis openblock_myblock
-
-Initializing the database(s) must be done in the right order::
-
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py syncdb --migrate
 
+(The --migrate option is important; it loads some initial data that
+openblock depends on including stored procedures, and some default
+:doc:`Schemas <schemas>` that you can try out, modify, and delete as
+needed.)
 
 To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
 
