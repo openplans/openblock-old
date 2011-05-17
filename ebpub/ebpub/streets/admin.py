@@ -17,14 +17,74 @@
 #
 
 from django.contrib import admin
+from django.contrib import gis
+from django import forms
 from ebpub.streets.models import Block, Street, BlockIntersection, \
     Intersection, Suburb, Place, PlaceSynonym, StreetMisspelling
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, GeocodingException
+from ebpub.geocoder.parser.parsing import normalize
+from ebpub.geoadmin import OSMModelAdmin, OBOpenLayersWidget
 
-from ebpub.geoadmin import OSMModelAdmin
 
+
+class PlaceAdminForm(forms.ModelForm):
+    class Meta:
+        model = Place
+
+    address = forms.CharField(max_length=255, required=False, 
+                              help_text="""Address is optional and used to compute map point when no point is specified. Click 'Delete all Features' to remove current point.""")
+
+    def _append_error(self, field, err):
+        if not field in self._errors: 
+            self._errors[field] = forms.util.ErrorList()
+        self._errors[field].append(err)
+        
+    def clean(self):
+        loc_info = self.cleaned_data.get('location')
+        if not loc_info:
+            address = self.cleaned_data.get('address')
+            if not address: 
+                self._append_error('location', u'Either an address or a location must be specified.')
+            else: 
+                # try to geocode the address...
+                try:
+                    geocoder = SmartGeocoder()
+                    addr = geocoder.geocode(address) 
+                    self.cleaned_data['location'] = addr['point']
+                except AmbiguousResult:
+                    self._append_error('location', u'Address is ambiguous, please specify a point directly.')
+                except GeocodingException:
+                    self._append_error('location', u'Unable to geocode address, please correct the address or specify a point directly.')
+    
+        return super(forms.ModelForm, self).clean()
+
+    def save(self, *args, **kwargs):
+        # update normalized name
+        self.instance.normalized_name = normalize(self.instance.pretty_name)
+        return super(forms.ModelForm, self).save(*args, **kwargs)
+
+     
+   
 class PlaceAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'address',)
     search_fields = ('pretty_name',)
+    fields = ('pretty_name', 'address', 'location')
+    
+    form = PlaceAdminForm
+    
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        """
+        """
+        # no decent way to just declare a contrib.gis.forms.Geometryield 
+        # with appropriately configured map widget, so overriding with 
+        # required=False here. We'll force this to allow a null map 
+        # entry and attempt to fix it during cleanup by geocoding the 
+        # address field.
+        if db_field.name == 'location':
+            kwargs['required'] = False
+            kwargs['null'] = True
+        return super(OSMModelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
+
 
 class BlockAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'street', 'suffix', 'left_zip', 'right_zip', 'left_city', 'right_city')
