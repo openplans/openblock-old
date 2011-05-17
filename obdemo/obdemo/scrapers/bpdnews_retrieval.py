@@ -32,7 +32,7 @@ from ebdata.textmining.treeutils import text_from_html
 from ebpub.db.models import NewsItem
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
-from ebpub.utils.logging import log_exception
+from ebpub.utils.logutils import log_exception
 import logging
 import datetime
 
