@@ -13,6 +13,7 @@
 obdemo/tiger_data
 obdemo/neighborhood_data
 obdemo/zip_data
+ebdata/build
 *pip-log.txt
 *.egg-info
 *.so
