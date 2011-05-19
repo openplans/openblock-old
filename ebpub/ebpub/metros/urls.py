@@ -16,7 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, handler404, handler500
 from django.views.generic import list_detail
 from ebpub.metros import views
 from ebpub.metros.models import Metro
