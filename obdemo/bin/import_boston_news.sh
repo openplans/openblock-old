@@ -65,7 +65,6 @@ echo
 echo " *** NOT adding restaurant inspections, it may take hours. ***"
 echo
 echo "  If you want to load them, do:"
-echo "  python $SOURCE_ROOT/everyblock/everyblock/cities/boston/restaurants/retrieval.py"
-echo "  ... and then re-run python $SOURCE_ROOT/ebpub/ebpub/db/bin/update_aggregates.py"
+echo "   $SOURCE_ROOT/obdemo/bin/update_restaurants.sh"
 echo ___________________________________________________________________
 
