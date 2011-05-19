@@ -44,7 +44,7 @@ python bpdnews_retrieval.py || die
 
 echo Adding building permits...
 cd $SOURCE_ROOT
-python ./ebdata/ebdata/scrapers/us/mass/boston/building_permits/retrieval.py || die
+python ./ebdata/ebdata/scrapers/us/ma/boston/building_permits/retrieval.py || die
 
 echo Adding GeoReport issues...
 python ./ebdata/ebdata/scrapers/general/open311/georeportv2.py --days-prior=90 \

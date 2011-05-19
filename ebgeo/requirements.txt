@@ -1,4 +1,0 @@
-TileCache==2.10
-processing==0.52
-aggdraw
-
