@@ -7,7 +7,7 @@ def after_install(options, home_dir):
             sys.stderr.write("Exit status %d from command args %s\n" % (retcode, args))
     	    sys.exit(retcode)
 
-    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.5.1'])
+    call([join(home_dir, 'bin', 'easy_install'), 'virtualenv>=1.6.1'])
     call([join(home_dir, 'bin', 'easy_install'), '--upgrade', 'pip'])
     call([join(home_dir, 'bin', 'easy_install'), 'paver'])
 
