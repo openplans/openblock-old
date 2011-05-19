@@ -10,6 +10,15 @@ class Migration(DataMigration):
     def forwards(self, orm):
         from django.core.management import call_command
         call_command("loaddata", "boston_schemas.json")
+        call_command(
+            "loaddata",
+            "ebdata/ebdata/scrapers/us/ma/boston/businesses/business_licences_schema")
+        call_command(
+            "loaddata",
+            "ebdata/ebdata/scrapers/us/ma/boston/restaurants/restaurant_inspection_schema")
+        call_command(
+            "loaddata",
+            "ebdata/ebdata/scrapers/us/ma/boston/building_permits/building_permit_schema")
 
     def backwards(self, orm):
         "Write your backwards methods here."

@@ -1,0 +1,49 @@
+[
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Building Permits",
+      "last_updated": "2010-10-22",
+      "name": "Building Permit",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "building-permits",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.cityofboston.gov/isd/building/asofright/default.asp",
+      "summary": "Boston Building Permits",
+      "source": "http://www.cityofboston.gov/isd/building/asofright/default.asp",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Boston Building Permits",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Raw Addresses",
+      "is_charted": false,
+      "name": "raw_address",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "varchar01",
+      "pretty_name": "Raw Address",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "building-permits"
+      ]
+    },
+    "model": "db.schemafield"
+  }
+]
