@@ -16,15 +16,12 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.contrib.syndication.feeds import Feed
-from django.contrib.syndication.views import feed as django_feed_view
+from django.contrib.syndication.views import Feed
 from django.http import Http404
 from django.utils.feedgenerator import Rss201rev2Feed
-from ebpub.db.constants import BLOCK_URL_REGEX
 from ebpub.db.models import NewsItem, Location
 from ebpub.db.utils import populate_attributes_if_needed, today
 from ebpub.db.utils import make_search_buffer, url_to_block, BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
-from ebpub.metros.allmetros import get_metro
 from ebpub.streets.models import Block
 import datetime
 import re
@@ -82,9 +79,12 @@ class AbstractLocationFeed(EbpubFeed):
         # might be added to the database before the day is finished, and
         # that would result in the RSS item being updated multiple times, which
         # is annoying.
+
+        # TODO: re-use ebpub.db.schemafilters for filtering here.
         today_value = today()
         start_date = today_value - datetime.timedelta(days=4)
         end_date = today_value
+
         # Note: The pub_date__lt=end_date+(1 day) ensures that we don't miss
         # stuff that has a pub_date of the afternoon of end_date. A straight
         # pub_date__range would miss those items.
@@ -140,20 +140,12 @@ class AbstractLocationFeed(EbpubFeed):
     def newsitems_for_obj(self, obj, qs, block_radius):
         raise NotImplementedError('Subclasses must implement this.')
 
+
 class BlockFeed(AbstractLocationFeed):
-    def get_object(self, bits):
-        # TODO: This duplicates the logic in the URLconf. Fix Django to allow
-        # for RSS feed URL parsing in the URLconf.
-        # See http://code.djangoproject.com/ticket/4720
-        # XXX That bug is fixed, see http://docs.djangoproject.com/en/1.2/ref/contrib/syndication/#a-complex-example; we can replace the bits arg with a normal list of args from the url config, and ditch the regex.
-        if get_metro()['multiple_cities']:
-            street_re = re.compile(r'^([-a-z]{3,40})/([-a-z0-9]{1,64})/%s$' % BLOCK_URL_REGEX)
-        else:
-            street_re = re.compile(r'^()([-a-z0-9]{1,64})/%s$' % BLOCK_URL_REGEX)
-        m = street_re.search('/'.join(bits))
-        if not m:
-            raise Block.DoesNotExist
-        city_slug, street_slug, from_num, to_num, predir, postdir = m.groups()
+
+    def get_object(self, request, city_slug, street_slug, from_num, to_num,
+                   predir, postdir):
+        self.request = request
         return url_to_block(city_slug, street_slug, from_num, to_num, predir, postdir)
 
     def title(self, obj):
@@ -169,13 +161,13 @@ class BlockFeed(AbstractLocationFeed):
         search_buffer = make_search_buffer(obj.location.centroid, block_radius)
         return qs.filter(location__bboverlaps=search_buffer)
 
+
 class LocationFeed(AbstractLocationFeed):
-    def get_object(self, bits):
-        m = location_re.search('/'.join(bits))
-        if not m:
-            raise Location.DoesNotExist
-        type_slug, slug = m.groups()
-        return Location.objects.select_related().get(location_type__slug=type_slug, slug=slug)
+
+    def get_object(self, request, type_slug, slug):
+        self.request = request
+        return Location.objects.select_related().get(location_type__slug=type_slug,
+                                                     slug=slug)
 
     def title(self, obj):
         return u"EBPUB: %s" % obj.name
@@ -188,12 +180,3 @@ class LocationFeed(AbstractLocationFeed):
 
     def newsitems_for_obj(self, obj, qs, block_radius):
         return qs.filter(newsitemlocation__location__id=obj.id)
-
-FEEDS = {
-    'streets': BlockFeed,
-    'locations': LocationFeed,
-}
-
-def feed_view(request, *args, **kwargs):
-    kwargs['feed_dict'] = FEEDS
-    return django_feed_view(request, *args, **kwargs)

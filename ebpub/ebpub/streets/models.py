@@ -19,6 +19,7 @@
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
+from django.core import urlresolvers
 from django.db.models import Q
 from ebpub.metros.allmetros import get_metro
 import operator
@@ -195,22 +196,36 @@ class Block(models.Model):
         return ''.join(url)
 
     def url(self):
-        return '%s%s%s/' % (self.street_url(), self.number(), self.dir_url_bit())
+        return urlresolvers.reverse('ebpub-block-timeline',
+                                    args=self._get_full_url_args())
+
+    def _get_full_url_args(self):
+        args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
+                (self.predir or '').lower(),
+                (self.postdir or '').lower(),
+                ]
+        return args
 
     def street_url(self):
-        if get_metro()['multiple_cities']:
-            return '/streets/%s/%s/' % (self.city_object().slug, self.street_slug)
-        else:
-            return '/streets/%s/' % self.street_slug
+        args = [self.city_slug, self.street_slug]
+        return urlresolvers.reverse('ebpub-block-list', args=args)
 
     def rss_url(self):
-        return '/rss%s' % self.url()
+        return urlresolvers.reverse('ebpub-block-rss',
+                                    args=self._get_full_url_args())
 
     def alert_url(self):
-        return '%salerts/' % self.url()
+        return urlresolvers.reverse('ebpub-block-alerts-signup',
+                                    args=self._get_full_url_args())
 
     def city_object(self):
         return City.from_norm_name(self.city)
+
+    @property
+    def city_slug(self):
+        if get_metro()['multiple_cities']:
+            return self.city_object().slug
+        return ''
 
     def contains_number(self, number):
         """
@@ -333,8 +348,11 @@ class StreetMisspelling(models.Model):
     def __unicode__(self):
         return self.incorrect
 
-# A generic place, like "Millennium Park" or "Sears Tower"
 class Place(models.Model):
+    """
+    A generic place, like "Millennium Park" or "Sears Tower".
+    This is just a Point with a name and an address.
+    """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
     address = models.CharField(max_length=255, blank=True)
@@ -402,6 +420,9 @@ class City(object):
     from_norm_name = classmethod(from_norm_name)
 
 class BlockIntersection(models.Model):
+    """
+    Relates two Blocks and an Intersection.
+    """
     block = models.ForeignKey(Block)
     intersecting_block = models.ForeignKey(Block, related_name="intersecting_block")
     intersection = models.ForeignKey("Intersection", blank=True, null=True)
@@ -450,6 +471,10 @@ class IntersectionManager(models.GeoManager):
         return qs
 
 class Intersection(models.Model):
+    """
+    A point representing the meeting of two Streets
+    (refers to them only by name).
+    """
     pretty_name = models.CharField(max_length=255, unique=True) # eg., "N. Kimball Ave. & W. Diversey Ave.
     slug = models.SlugField(max_length=64) # eg., "n-kimball-ave-and-w-diversey-ave"
     # Street A
@@ -492,8 +517,9 @@ class Intersection(models.Model):
         return '%salerts/' % self.url()
 
 class Suburb(models.Model):
-    # This model keeps track of nearby cities that we don't care about.
-    # It's essentially a blacklist.
+    """This model keeps track of nearby cities that we don't care about.
+    It's essentially a blacklist.
+    """
     name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, unique=True)
 

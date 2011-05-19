@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url, handler404, handler500
 from ebpub.openblockapi import views
 
 urlpatterns = patterns(

@@ -95,14 +95,14 @@ class LocationDetailTestCase(TestCase):
     @mock.patch('ebpub.db.views.today')
     def test_location_timeline(self, mock_today):
         mock_today.return_value = datetime.date(2006, 9, 26)
-        url = urlresolvers.reverse('ebpub-place-timeline',
+        url = urlresolvers.reverse('ebpub-location-timeline',
                                    args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['newsitem_list']), 2)
 
     def test_location_overview(self):
-        url = urlresolvers.reverse('ebpub-place-overview',
+        url = urlresolvers.reverse('ebpub-location-overview',
                                    args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
