@@ -83,13 +83,13 @@ def install_aggdraw(options):
     sh('env CFLAGS=-fpermissive %s/bin/pip install aggdraw' % options.env_root)
 
 
-@task
-@needs('install_aggdraw')
-def install_ebgeo(options):
-    # XXX TODO install mapnik
-    package_dir = os.path.join(options.source_dir, 'ebgeo')
-    sh('%s/bin/pip install -e %s' % (options.env_root, package_dir))
-    print "Installed ebgeo.  Adjust your django settings to include this app."
+# @task
+# @needs('install_aggdraw')
+# def install_ebgeo(options):
+#     # XXX TODO install mapnik
+#     package_dir = os.path.join(options.source_dir, 'ebgeo')
+#     sh('%s/bin/pip install -e %s' % (options.env_root, package_dir))
+#     print "Installed ebgeo.  Adjust your django settings to include this app."
 
 @task
 def install_gdal(options):
