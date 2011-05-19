@@ -348,8 +348,11 @@ class StreetMisspelling(models.Model):
     def __unicode__(self):
         return self.incorrect
 
-# A generic place, like "Millennium Park" or "Sears Tower"
 class Place(models.Model):
+    """
+    A generic place, like "Millennium Park" or "Sears Tower".
+    This is just a Point with a name and an address.
+    """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
     address = models.CharField(max_length=255, blank=True)
@@ -417,6 +420,9 @@ class City(object):
     from_norm_name = classmethod(from_norm_name)
 
 class BlockIntersection(models.Model):
+    """
+    Relates two Blocks and an Intersection.
+    """
     block = models.ForeignKey(Block)
     intersecting_block = models.ForeignKey(Block, related_name="intersecting_block")
     intersection = models.ForeignKey("Intersection", blank=True, null=True)
@@ -465,6 +471,10 @@ class IntersectionManager(models.GeoManager):
         return qs
 
 class Intersection(models.Model):
+    """
+    A point representing the meeting of two Streets
+    (refers to them only by name).
+    """
     pretty_name = models.CharField(max_length=255, unique=True) # eg., "N. Kimball Ave. & W. Diversey Ave.
     slug = models.SlugField(max_length=64) # eg., "n-kimball-ave-and-w-diversey-ave"
     # Street A
@@ -507,8 +517,9 @@ class Intersection(models.Model):
         return '%salerts/' % self.url()
 
 class Suburb(models.Model):
-    # This model keeps track of nearby cities that we don't care about.
-    # It's essentially a blacklist.
+    """This model keeps track of nearby cities that we don't care about.
+    It's essentially a blacklist.
+    """
     name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, unique=True)
 
