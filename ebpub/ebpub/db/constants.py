@@ -33,4 +33,4 @@ NUM_NEWS_ITEMS_PLACE_DETAIL = 300
 # Regular expression that parses block-page URLs. The last part of it is for
 # the optional pre-directional and/or post-directional (for example,
 # 'n', 'ne', 'n-w', '-sw').
-BLOCK_URL_REGEX = r'(\d{1,6})-(\d{1,6})([nsew]{1,2})?(?:-([nsew]{1,2}))?'
+BLOCK_URL_REGEX = r'(\d{1,6})-(\d{1,6})([nsew]{1,2})?(?:-([nsew]{0,2}))?'

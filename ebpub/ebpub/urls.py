@@ -17,12 +17,12 @@
 #
 
 from django.conf import settings
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, url, include, handler404, handler500
 from ebpub.alerts import views as alert_views
 from ebpub.db import feeds, views
 from ebpub.db.constants import BLOCK_URL_REGEX
 from ebpub.petitions import views as petition_views
-from ebpub.utils.urlresolvers import metro_patterns
+from ebpub.metros.allmetros import get_metro
 
 
 if settings.DEBUG:
@@ -42,8 +42,8 @@ urlpatterns += patterns('',
     (r'^news/$', views.schema_list),
     url(r'^locations/$', 'django.views.generic.simple.redirect_to', {'url': '/locations/neighborhoods/'}),
     url(r'^locations/([-_a-z0-9]{1,32})/$', views.location_type_detail, name='ebpub-loc-type-detail'),
-    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}, name="ebpub-place-timeline"),
-    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}, name="ebpub-place-overview"),
+    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/$', views.place_detail_timeline, {'place_type': 'location'}, name="ebpub-location-timeline"),
+    url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/overview/$', views.place_detail_overview, {'place_type': 'location'}, name="ebpub-location-overview"),
     url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/feeds/$', views.feed_signup, {'place_type': 'location'}, name='ebpub-feed-signup'),
     url(r'^locations/([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})/alerts/$', alert_views.signup, {'place_type': 'location'}, name='ebpub-location-alerts'),
     (r'^locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/place.kml$', views.place_kml, {'place_type': 'location'}),
@@ -61,32 +61,54 @@ urlpatterns += patterns('',
     (r'^widgets/', include('ebpub.widgets.urls'))
 )
 
-urlpatterns += metro_patterns(
-    multi=(
-        (r'^streets/$', views.city_list),
-        (r'^streets/([-a-z]{3,40})/$', views.street_list),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/$', views.block_list),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX, views.place_detail_timeline, {'place_type': 'block'}, 'ebpub-place-timeline'),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}, 'ebpub-place-overview'),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX, views.feed_signup, {'place_type': 'block'}),
-        (r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX, alert_views.signup, {'place_type': 'block'}),
+if get_metro()['multiple_cities']:
+    # multi-city block patterns.
+    urlpatterns += patterns(
+        '',
+        url(r'^streets/$', views.city_list, name='ebpub-city-list'),
+        url(r'^streets/([-a-z]{3,40})/$', views.street_list, name='ebpub-street-list'),
+        url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/$', views.block_list,
+            name='ebpub-block-list'),
+        url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
+            views.place_detail_timeline, {'place_type': 'block'},
+            name='ebpub-block-timeline'),
+        url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX,
+            views.place_detail_overview, {'place_type': 'block'},
+            name='ebpub-block-overview'),
+        url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX,
+            views.feed_signup, {'place_type': 'block'},
+            name='ebpub-block-feed-signup'),
+        url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX,
+            alert_views.signup, {'place_type': 'block'},
+            name='ebpub-block-alerts-signup'),
+        url(r'^rss/streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
+            feeds.BlockFeed(),
+            name='ebpub-block-rss'),
+        )
+else:
+    # single-city block patterns.
+    urlpatterns += patterns(
+        '',
+        url(r'^streets/(\w{0})$', views.street_list,
+            name='ebpub-street-list'),
+        url(r'^streets/(\w{0})([-a-z0-9]{1,64})/$', views.block_list,
+            name='ebpub-block-list'),
+        url(r'^streets/(\w{0})([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
+            views.place_detail_timeline, {'place_type': 'block'},
+            name='ebpub-block-timeline'),
+        url(r'^streets/(\w{0})([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX,
+            views.place_detail_overview, {'place_type': 'block'},
+            name='ebpub-block-overview'),
+        url(r'^streets/(\w{0})([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX,
+            views.feed_signup, {'place_type': 'block'},
+            name='ebpub-block-feed-signup'),
+        url(r'^streets/(\w{0})([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX,
+            alert_views.signup, {'place_type': 'block'},
+            name='ebpub-block-alerts-signup'),
+        url(r'^rss/streets/(\w{0})([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
+            feeds.BlockFeed(), name='ebpub-block-rss'),
+        )
 
-        (r'^rss/streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
-         feeds.BlockFeed()),
-
-    ),
-    single=(
-        (r'^streets/()$', views.street_list),
-        (r'^streets/()([-a-z0-9]{1,64})/$', views.block_list),
-        (r'^streets/()([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX, views.place_detail_timeline, {'place_type': 'block'}, 'ebpub-place-timeline'),
-        (r'^streets/()([-a-z0-9]{1,64})/%s/overview/$' % BLOCK_URL_REGEX, views.place_detail_overview, {'place_type': 'block'}, 'ebpub-place-overview'),
-        (r'^streets/()([-a-z0-9]{1,64})/%s/feeds/$' % BLOCK_URL_REGEX, views.feed_signup, {'place_type': 'block'}),
-        (r'^streets/()([-a-z0-9]{1,64})/%s/alerts/$' % BLOCK_URL_REGEX, alert_views.signup, {'place_type': 'block'}),
-
-        (r'^rss/streets/()([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
-         feeds.BlockFeed()),
-    )
-)
 
 urlpatterns += patterns(
     '',

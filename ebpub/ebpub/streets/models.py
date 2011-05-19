@@ -19,6 +19,7 @@
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
+from django.core import urlresolvers
 from django.db.models import Q
 from ebpub.metros.allmetros import get_metro
 import operator
@@ -195,22 +196,36 @@ class Block(models.Model):
         return ''.join(url)
 
     def url(self):
-        return '%s%s%s/' % (self.street_url(), self.number(), self.dir_url_bit())
+        return urlresolvers.reverse('ebpub-block-timeline',
+                                    args=self._get_full_url_args())
+
+    def _get_full_url_args(self):
+        args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
+                (self.predir or '').lower(),
+                (self.postdir or '').lower(),
+                ]
+        return args
 
     def street_url(self):
-        if get_metro()['multiple_cities']:
-            return '/streets/%s/%s/' % (self.city_object().slug, self.street_slug)
-        else:
-            return '/streets/%s/' % self.street_slug
+        args = [self.city_slug, self.street_slug]
+        return urlresolvers.reverse('ebpub-block-list', args=args)
 
     def rss_url(self):
-        return '/rss%s' % self.url()
+        return urlresolvers.reverse('ebpub-block-rss',
+                                    args=self._get_full_url_args())
 
     def alert_url(self):
-        return '%salerts/' % self.url()
+        return urlresolvers.reverse('ebpub-block-alerts-signup',
+                                    args=self._get_full_url_args())
 
     def city_object(self):
         return City.from_norm_name(self.city)
+
+    @property
+    def city_slug(self):
+        if get_metro()['multiple_cities']:
+            return self.city_object().slug
+        return ''
 
     def contains_number(self, number):
         """

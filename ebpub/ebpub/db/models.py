@@ -286,7 +286,7 @@ class Location(models.Model):
         return self.name
 
     def url(self):
-        return urlresolvers.reverse('ebpub-place-timeline',
+        return urlresolvers.reverse('ebpub-location-timeline',
                                     args=(self.location_type.slug, self.slug))
 
     def rss_url(self):
