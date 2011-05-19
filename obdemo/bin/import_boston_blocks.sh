@@ -72,6 +72,9 @@ echo Populating streets and fixing addresses, these can take several minutes...
 
 cd $SOURCE_ROOT/ebpub/ebpub/streets/bin || die
 
+# Note these scripts should be run ONCE, in this order,
+# after you have imported *all* your blocks.
+
 ./populate_streets.py -v -v -v -v streets || die
 ./populate_streets.py -v -v -v -v block_intersections || die
 ./populate_streets.py -v -v -v -v intersections || die

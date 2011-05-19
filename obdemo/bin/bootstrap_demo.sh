@@ -78,11 +78,17 @@ sudo -H -u postgres bin/oblock setup_dbs  || exit 1
 
 bin/oblock sync_all || exit 1
 
-echo Importing Boston blocks...
+echo
+echo =========================================================
+echo Importing Boston geographic data...
 export DJANGO_SETTINGS_MODULE=obdemo.settings
 $HERE/import_boston_zips.sh || exit 1
 $HERE/import_boston_hoods.sh || exit 1
+# Note, it's important that blocks comes after zips.
 $HERE/import_boston_blocks.sh || exit 1
+echo
+echo =========================================================
+echo Importing Boston news...
 $HERE/import_boston_news.sh || exit 1
 
 echo 'Demo bootstrap succeeded!'
