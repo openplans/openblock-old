@@ -1,4 +1,34 @@
 [
+    {
+    "model": "db.schema",
+    "fields": {
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "date_name_plural": "Dates",
+      "grab_bag": "",
+      "grab_bag_headline": "",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "indefinite_article": "a",
+      "intro": "",
+      "is_public": true,
+      "is_special_report": false,
+      "last_updated": "2000-01-01",
+      "min_date": "2000-01-01",
+      "name": "Local News",
+      "number_in_overview": 5,
+      "plural_name": "Local News",
+      "short_description": "List of news in Boston",
+      "short_source": "http://www.boston.com",
+      "slug": "local-news",
+      "source": "http://www.boston.com",
+      "summary": "Local News in Boston",
+      "update_frequency": "",
+      "uses_attributes_in_list": false
+    }
+  },
+
   {
     "fields": {
       "is_special_report": false,
@@ -29,32 +59,33 @@
     "model": "db.schema"
   },
   {
+    "model": "db.schema",
     "fields": {
-      "is_special_report": false,
-      "plural_name": "Boston Police Department reports",
-      "last_updated": "2010-10-21",
-      "name": "Boston Police Department report",
-      "has_newsitem_detail": true,
-      "importance": 100,
-      "uses_attributes_in_list": true,
-      "min_date": "2009-01-01",
       "allow_charting": true,
-      "can_collapse": true,
+      "can_collapse": false,
       "date_name": "Date",
-      "indefinite_article": "a",
-      "is_public": true,
-      "number_in_overview": 5,
-      "slug": "police-reports",
       "date_name_plural": "Dates",
+      "grab_bag": "",
       "grab_bag_headline": "",
-      "short_source": "http://www.bpdnews.com",
-      "summary": "Boston Police Department reports",
-      "source": "http://www.bpdnews.com",
+      "has_newsitem_detail": true,
+      "importance": 0,
+      "indefinite_article": "an",
       "intro": "",
+      "is_public": true,
+      "is_special_report": false,
+      "last_updated": "2000-01-01",
+      "min_date": "2000-01-01",
+      "name": "Open311 Service Request",
+      "number_in_overview": 5,
+      "plural_name": "Open311 Service Requests",
+      "short_description": "Boston Citizens Connect Open311 issues",
+      "short_source": "http://www.cityofboston.gov/doit/apps/citizensconnect.asp",
+      "slug": "open311-service-requests",
+      "source": "http://www.cityofboston.gov/doit/apps/citizensconnect.asp",
+      "summary": "",
       "update_frequency": "",
-      "short_description": "List of Boston Police Department reports",
-      "grab_bag": ""
-    },
-    "model": "db.schema"
+      "uses_attributes_in_list": true
+    }
   }
+
 ]

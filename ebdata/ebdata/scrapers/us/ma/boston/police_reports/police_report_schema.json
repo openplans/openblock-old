@@ -1,0 +1,31 @@
+[
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Boston Police Department reports",
+      "last_updated": "2010-10-21",
+      "name": "Boston Police Department report",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "police-reports",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.bpdnews.com",
+      "summary": "Boston Police Department reports",
+      "source": "http://www.bpdnews.com",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Boston Police Department reports",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  }
+]

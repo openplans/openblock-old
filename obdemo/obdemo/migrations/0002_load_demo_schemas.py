@@ -6,6 +6,10 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    # We tweak some of the default schemas for Boston.
+    depends_on = (
+        ("db", "0007_load_default_schemas"),
+    )
 
     def forwards(self, orm):
         from django.core.management import call_command
@@ -19,6 +23,9 @@ class Migration(DataMigration):
         call_command(
             "loaddata",
             "ebdata/ebdata/scrapers/us/ma/boston/building_permits/building_permit_schema")
+        call_command(
+            "loaddata",
+            "ebdata/ebdata/scrapers/us/ma/boston/police_reports/police_report_schema")
 
     def backwards(self, orm):
         "Write your backwards methods here."
