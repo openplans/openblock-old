@@ -254,7 +254,7 @@ def find_postgis(options):
 
 
 def get_app_settings(options):
-    settings_module = '%s.settings_default' % options.app
+    settings_module = 'ebpub.settings_default'
     user_settings_module = '%s.settings' % options.app
     try:
         __import__(user_settings_module)

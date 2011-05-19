@@ -237,6 +237,7 @@ DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 # Logging setup. There's a bit of hackery to make sure we don't set up
 # handlers more than once; see
 # http://stackoverflow.com/questions/342434/python-logging-in-django
+
 import logging, threading
 _lock = threading.Lock()
 with _lock:
@@ -254,7 +255,7 @@ with _lock:
             for handler in logging.getLogger().handlers:
                 handler.setLevel(logging.INFO)
         # need to import this first so it doesn't wipe the level we set...
-        from south.logger import get_logger
-        get_logger().setLevel(logging.INFO)
+        from south import logger
+        logging.getLogger('south').setLevel(logging.INFO)
 
 __doc__ = __doc__ % required_settings
