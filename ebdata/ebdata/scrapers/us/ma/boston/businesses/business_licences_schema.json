@@ -1,0 +1,103 @@
+[
+  {
+    "fields": {
+      "last_updated": "2011-04-05", 
+      "intro": "", 
+      "update_frequency": "", 
+      "has_newsitem_detail": true, 
+      "grab_bag_headline": "", 
+      "short_source": "", 
+      "slug": "business-licenses", 
+      "source": "", 
+      "date_name": "Date", 
+      "short_description": "", 
+      "grab_bag": "", 
+      "is_special_report": false, 
+      "importance": 0, 
+      "min_date": "1900-01-01", 
+      "allow_charting": false, 
+      "indefinite_article": "a", 
+      "is_public": true, 
+      "number_in_overview": 5, 
+      "date_name_plural": "Dates", 
+      "plural_name": "Business Licenses", 
+      "name": "Business License", 
+      "uses_attributes_in_list": false, 
+      "summary": "", 
+      "can_collapse": false
+    }, 
+    "model": "db.schema"
+  }, 
+  {
+    "fields": {
+      "is_lookup": true, 
+      "pretty_name_plural": "Business Types", 
+      "is_charted": false, 
+      "name": "business_type", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "int01", 
+      "pretty_name": "Business Type", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "business-licenses"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "File Numbers", 
+      "is_charted": false, 
+      "name": "file_number", 
+      "display_order": 10, 
+      "is_searchable": true, 
+      "real_name": "varchar02", 
+      "pretty_name": "File Number", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "business-licenses"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Names", 
+      "is_charted": false, 
+      "name": "name", 
+      "display_order": 10, 
+      "is_searchable": true, 
+      "real_name": "varchar01", 
+      "pretty_name": "Name", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "business-licenses"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Notes", 
+      "is_charted": false, 
+      "name": "notes", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar03", 
+      "pretty_name": "Notes", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "business-licenses"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }
+]
