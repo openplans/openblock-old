@@ -176,41 +176,12 @@ required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
 
-# Filesystem location of shapefiles for maps, e.g., '/home/shapefiles'.
-# Used only by ebgeo/maps/tess.py
-SHAPEFILE_ROOT = ''
-required_settings.append('SHAPEFILE_ROOT')
-
-# Connection info for mapserver.
-# Leave these alone if you're not using one;
-# by default obdemo doesn't need it.
-MAPS_POSTGIS_HOST = '127.0.0.1'
-MAPS_POSTGIS_USER = ''
-MAPS_POSTGIS_PASS = ''
-MAPS_POSTGIS_DB = ''
-
-required_settings.extend([
-        'MAPS_POSTGIS_HOST', 'MAPS_POSTGIS_USER', 'MAPS_POSTGIS_PASS',
-        'MAPS_POSTGIS_DB',
-])
-
-
 # This is used as a "From:" in e-mails sent to users.
 required_settings.append('GENERIC_EMAIL_SENDER')
 
 # Map stuff.
-required_settings.extend(['MAP_SCALES', 'SPATIAL_REF_SYS', 'MAP_UNITS'])
+required_settings.append('MAP_SCALES')
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
-SPATIAL_REF_SYS = '900913' # Spherical Mercator
-MAP_UNITS = 'm' # see ebpub.utils.mapmath for allowed unit types
-
-# Filesystem location of tilecache config (e.g., '/etc/tilecache/tilecache.cfg').
-# obdemo doesn't use a tilecache out of the box.
-TILECACHE_CONFIG = '/etc/tilecache.cfg'
-TILECACHE_ZOOM = 17
-TILECACHE_LAYER = 'osm'
-TILECACHE_VERSION = '1.0.0'
-TILECACHE_EXTENSION = 'png'
 
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
