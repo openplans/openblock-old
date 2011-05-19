@@ -24,14 +24,15 @@ model tables.
 How to populate intersections
 =============================
 
-First import the blocks and populate the streets from them: not
-described here.
+First import the blocks.
 
 Ensure the ZIP Codes are populated in the db_location table: they
 are needed for resolving 'disputes' when the two intersecting
-blocks of an intersection have different ZIP Codes. This is also
+blocks of an intersection have different ZIP Codes. This is
 not described here: there should be a ZIP Code importer script
 available for each city.
+
+Next, populate the streets from the blocks table, by calling populate_streets().
 
 This is the part that takes the longest: populate the
 db_blockintersection table. This goes through each block (and
@@ -219,7 +220,8 @@ def main(argv=None):
         argv = sys.argv[1:]
     valid_actions = {'streets': populate_streets,
                      'block_intersections': populate_block_intersections,
-                     'intersections': populate_intersections}
+                     'intersections': populate_intersections,
+                     }
     parser = optparse.OptionParser('Usage: %%prog [opts] {%s}' % \
                                    '|'.join(valid_actions.keys()),
                                    description=__doc__)
