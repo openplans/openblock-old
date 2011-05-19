@@ -140,7 +140,9 @@ class AbstractLocationFeed(EbpubFeed):
     def newsitems_for_obj(self, obj, qs, block_radius):
         raise NotImplementedError('Subclasses must implement this.')
 
+
 class BlockFeed(AbstractLocationFeed):
+
     def get_object(self, request, city_slug, street_slug, from_num, to_num,
                    predir, postdir):
         self.request = request
@@ -159,7 +161,9 @@ class BlockFeed(AbstractLocationFeed):
         search_buffer = make_search_buffer(obj.location.centroid, block_radius)
         return qs.filter(location__bboverlaps=search_buffer)
 
+
 class LocationFeed(AbstractLocationFeed):
+
     def get_object(self, request, type_slug, slug):
         self.request = request
         return Location.objects.select_related().get(location_type__slug=type_slug,
