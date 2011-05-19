@@ -20,17 +20,17 @@ class GeoReportV2Scraper(object):
                  schema_slug='open311-service-requests', http_cache=None,
                  seconds_between_requests=2.0, days_prior=90,
                  bounds=None,
-                 make_html_url=False):
+                 html_url_template=None):
         """
         If ``bounds`` is passed, it should be a geometry; news items
         that don't intersect with that geometry will be skipped.
         Default bounds is the extent defined in settings.METRO_LIST.
 
-        If ``make_html_url`` is true, we will assume that the provider
-        supports human-readable versions of the 311 request by changing
-        the extension to .html, and use that as our NewsItem.url.
-        This is not really part of the GeoReport v2 API, but
-        SeeClickFix supports it.
+        If ``html_url_template`` is given, the service_request id is 
+        replaced into the string to form the news item's url. eg
+        http://somewhere/%s.html.  This is not really part of the GeoReport v2 API, but
+        in some cases, like SeeClickFix, there is a well known location based on 
+        the identifier for an item.
         """
         self.api_url = api_url
         if not self.api_url.endswith('/'): 
@@ -54,7 +54,7 @@ class GeoReportV2Scraper(object):
             log.info("Calculating geographic boundaries from the extent in setttings.METRO_LIST")
             extent = get_metro()['extent']
             self.bounds = Polygon.from_bbox(extent)
-        self.make_html_url = make_html_url
+        self.html_url_template = html_url_template
 
     def service_requests_url(self, start_date, end_date):
         params = dict(self.standard_params)
@@ -93,6 +93,10 @@ class GeoReportV2Scraper(object):
             # User-Agent is a lame workaround for SeeClickFix blocking httplib2
             # (they had too many bots hitting them).
             response, content = self.http.request(url, headers={'User-Agent': 'openblock-georeport-scraper'})
+            if response.fromcache:
+                log.info("Requests from this time period are unchanged since last update (cached)")
+                return
+                
             if response.status != 200: 
                 log.error("Error retrieving %s: status was %d" % (url, response.status))
                 log.error(content)
@@ -165,11 +169,10 @@ class GeoReportV2Scraper(object):
             log.warning("Filling in current time for pub_date on item with no requested_datetime (%s)" % service_request_id)
         ni.item_date = datetime.date(ni.pub_date.year, ni.pub_date.month, ni.pub_date.day)
 
-        if self.make_html_url:
-            ni.url = '%srequests/%s.html' % (self.api_url, service_request_id)
-        else:
-            # try to pull the 'media' url out into url, for lack of a better one currently
-            ni.url = self._get_request_field(sreq, 'media_url')
+        if self.html_url_template:
+            ni.url = self.html_url_template.replace('{id}', service_request_id)
+            log.info('Assigning html url "%s" to %s' % (ni.url, service_request_id))
+
         ni.save()
 
         ni.attributes['service_request_id'] = service_request_id
@@ -214,23 +217,49 @@ class GeoReportV2Scraper(object):
         lo = Lookup.objects.get_or_create_lookup(sf, value, make_text_slug=False)
         return lo.slug
 
-if __name__ == '__main__':
+def main():
     from optparse import OptionParser
-    parser = OptionParser()
+    usage = "usage: %prog [options] <api url>"
+    parser = OptionParser(usage=usage)
     parser.add_option(
         "-k", "--api-key", help='GeoReport V2 API key', action='store',
         )
     parser.add_option(
-        "--make-html-url",
-        help='save URLs based on replacing the API resource extension with .html',
-        action='store_true',
+        "--html-url-template",
+        help='template for creating html urls for items based on their identifiers, eg http://example.com/{id}.html',
+        action='store'
         )
     parser.add_option(
         "--days-prior", help='how many days ago to start scraping', type="int",
+        default=90
+        )
+    parser.add_option(
+        "--schema", help="which news item type to create when scraping",
+        default="open311-service-requests"
+        )
+    parser.add_option(
+        "--http-cache", help='location to use as an http cache.  If a cached value is seen, no update is performed.', 
+        action='store'
+        )
+    parser.add_option(
+        "--jurisdiction-id", help='jurisdiction identifier to provide to api',
+        action='store'
         )
     import sys
     options, args = parser.parse_args(sys.argv)
+    
+    if len(args) < 2:
+        parser.print_usage()
+        sys.exit(0)
+    
     scraper = GeoReportV2Scraper(api_url=args[1], api_key=options.api_key,
+                                 jurisdiction_id=options.jurisdiction_id,
+                                 schema_slug=options.schema,
                                  days_prior=options.days_prior,
-                                 make_html_url=options.make_html_url)
+                                 http_cache=options.http_cache,
+                                 html_url_template=options.html_url_template)
     scraper.update()
+
+
+if __name__ == '__main__':
+    main()

@@ -48,7 +48,7 @@ python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || di
 
 echo Adding GeoReport issues...
 python ./ebdata/ebdata/scrapers/general/open311/georeportv2.py --days-prior=90 \
-   --make-html-url http://seeclicktest.com/open311/v2
+   --html-url-template=http://seeclickfix.com/open311/v2/requests/%s.html http://seeclicktest.com/open311/v2
 
 
 # TODO: fix traceback:  ebdata.blobs.scrapers.NoSeedYet: You need to add a Seed with the URL 'http://www.cityofboston.gov/news/
