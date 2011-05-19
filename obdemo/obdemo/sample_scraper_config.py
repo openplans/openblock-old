@@ -43,7 +43,7 @@ def do_press_releases(**kwargs):
     return BPDNewsFeedScraper().update()
 
 def do_restaurants(**kwargs):
-    from everyblock.cities.boston.restaurants import retrieval
+    from ebdata.scrapers.us.mass.boston.restaurants import retrieval
     return retrieval.RestaurantScraper().update()
 
 def do_aggregates(**kwargs):
