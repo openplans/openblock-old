@@ -21,7 +21,7 @@
 # Updates restaurants (very very slow scraper), while periodicially
 # updating aggregates too.
 
-python $VIRTUAL_ENV/src/openblock/everyblock/everyblock/cities/boston/restaurants/retrieval.py &
+python $VIRTUAL_ENV/src/openblock/ebdata/ebdata/scrapers/us/mass/boston/restaurants/retrieval.py &
 RESTAURANTS_PID=$!
 echo RESTAURANTS_PID=$RESTAURANTS_PID
 while true; do
