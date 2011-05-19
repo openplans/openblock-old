@@ -353,7 +353,7 @@ class Place(models.Model):
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
     address = models.CharField(max_length=255, blank=True)
-    location = models.PointField()
+    location = models.PointField(blank=True)
     objects = models.GeoManager()
 
     def __unicode__(self):
