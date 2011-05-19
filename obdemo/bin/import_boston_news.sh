@@ -33,7 +33,7 @@ if [ ! -n "$DJANGO_SETTINGS_MODULE" ]; then
 fi
 
 echo Adding latest events and news...
-cd $SOURCE_ROOT/obdemo/obdemo/scrapers
+cd $SOURCE_ROOT/obdemo/obdemo/scrapersg
 python add_events.py || die
 python add_news.py || die
 # more feeds from Joel. Local blog news:
@@ -44,7 +44,7 @@ python bpdnews_retrieval.py || die
 
 echo Adding building permits...
 cd $SOURCE_ROOT
-python ./everyblock/everyblock/cities/boston/building_permits/retrieval.py || die
+python ./ebdata/ebdata/scrapers/us/mass/boston/building_permits/retrieval.py || die
 
 echo Adding GeoReport issues...
 python ./ebdata/ebdata/scrapers/general/open311/georeportv2.py --days-prior=90 \
