@@ -33,7 +33,7 @@ if [ ! -n "$DJANGO_SETTINGS_MODULE" ]; then
 fi
 
 echo Adding latest events and news...
-cd $SOURCE_ROOT/obdemo/obdemo/scrapersg
+cd $SOURCE_ROOT/obdemo/obdemo/scrapers
 python add_events.py || die
 python add_news.py || die
 # more feeds from Joel. Local blog news:
