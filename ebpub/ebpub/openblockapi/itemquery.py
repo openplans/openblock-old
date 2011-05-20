@@ -184,7 +184,7 @@ def _object_limit(query, params, state):
         if limit > 200: 
             limit = 200
     except:
-        raise QueryError(400, 'Invalid limit')
+        raise QueryError('Invalid limit')
     
     if 'limit' in params: 
         del params['limit']
