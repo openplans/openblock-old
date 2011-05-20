@@ -27,7 +27,7 @@ commands::
   $ pip install -r ebdata/requirements.txt -e ebdata
   $ pip install -r obadmin/requirements.txt -e obadmin
 
-Now do the following to create a new openblock project.  **Note**:
+Now do the following to create a new OpenBlock project.  **Note**:
 Your project name should be suitable for use as a python module name;
 i.e. no spaces etc.  Here we assume the project name is `myblock`::
 
@@ -79,7 +79,7 @@ Run django's test server using your project's settings and visit http://127.0.0.
     ...
     Development server is running at http://127.0.0.1:8000/
 
-You can now log into your openblock instance and visit the administrative site at http://127.0.0.1:8000/admin/
+You can now log into your OpenBlock instance and visit the administrative site at http://127.0.0.1:8000/admin/
 
 
 Loading Data: Things You Will Need

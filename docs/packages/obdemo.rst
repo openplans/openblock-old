@@ -45,7 +45,7 @@ For production deployment it's not generally recommended to run
 ``manage.py runserver``.  Most people use apache and mod_wsgi.
 
 There's a suitable wsgi script at obdemo/wsgi/obdemo.wsgi.  It
-assumes that you installed openblock in a virtualenv whose root
+assumes that you installed OpenBlock in a virtualenv whose root
 directory is the same as the checkout root; that's how the
 bootstrap script sets things up.  If that's not true, you can copy
 and modify the script and adjust the ``env_root`` variable.  If you used

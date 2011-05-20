@@ -5,7 +5,7 @@ Widgets
 Introduction 
 ============
 
-Openblock's widgets allow you to integrate Openblock content in external sites and fully customize output using Django templates.
+OpenBlock's widgets allow you to integrate OpenBlock content in external sites and fully customize output using Django templates.
 
 
 Widgets
@@ -15,7 +15,7 @@ Widgets
 Adding a new Widget
 -------------------
 
-A new widget can be created by visiting the openblock admin site and selecting the `Add` link next to `Widgets` in the `Widgets` section.
+A new widget can be created by visiting the OpenBlock admin site and selecting the `Add` link next to `Widgets` in the `Widgets` section.
 
 .. TODO add a doc page about the admin UI and link to it from here
 
@@ -77,13 +77,13 @@ output that is included on the page.  These templates are normal
 
 There are also a variety of other tutorials and sources of information about Django templates available by casual googling. 
 
-When the template is rendered, Openblock will supply a context consisting of the items that should be displayed in some manner in the widget along with some information about the widget's configuration. 
+When the template is rendered, OpenBlock will supply a context consisting of the items that should be displayed in some manner in the widget along with some information about the widget's configuration.
 
 
 Creating A Template
 -------------------
 
-A new template can be created by visiting the openblock admin site and selecting the `Add` link next to `Templates` in the `Widgets` section.
+A new template can be created by visiting the OpenBlock admin site and selecting the `Add` link next to `Templates` in the `Widgets` section.
 
 Item Info
 ---------
@@ -106,8 +106,8 @@ Basic Fields
 -------------------- ------------------------------------------------------------
   item.title          The headline or title of the item.
 -------------------- ------------------------------------------------------------
-  item.internal_url   If the item is hosted by openblock, this is a link to the
-                      openblock page about the item.
+  item.internal_url   If the item is hosted by OpenBlock, this is a link to the
+                      OpenBlock page about the item.
 -------------------- ------------------------------------------------------------
   item.external_url   If the item is hosted by an outside site, this is a link to
                       the item.

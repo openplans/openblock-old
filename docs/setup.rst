@@ -19,7 +19,7 @@ If you have problems...
 =======================
 
 Please drop a line to the `ebcode google group <http://groups.google.com/group/ebcode>`_
-or visit the openblock irc channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.
+or visit the IRC channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.
 
 
 .. _requirements:
@@ -80,7 +80,7 @@ PostGIS: On Another Server
 --------------------------
 
 If you're going to run postgresql on the same system where you're
-installing openblock, skip ahead to :ref:`postgis_localhost`.
+installing OpenBlock, skip ahead to :ref:`postgis_localhost`.
 
 If you're going to run postgresql on a separate server, then --
 assuming your database administrator can install postgis as per
@@ -146,7 +146,7 @@ Installing the base software
 See the :ref:`requirements` above and make sure you have
 everything installed.
 
-Create a virtualenv that will contain the openblock software and all
+Create a virtualenv that will contain the OpenBlock software and all
 its python dependencies.  (You probably do *not* want to do this as
 root or with sudo)::
 

@@ -8,7 +8,7 @@ The oblock command
 ==================
 
 ``oblock`` is a command-line program that gets installed with
-obadmin. It provides commands to help install and manage openblock and
+obadmin. It provides commands to help install and manage OpenBlock and
 its database(s).  This is purely optional, but the
 :doc:`demo setup script <../demo_setup>` uses it quite a bit.
 

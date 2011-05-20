@@ -8,7 +8,7 @@ Introduction
 Purpose
 -------
 
-Support simple widgets, mashups, frontends based on Openblock content and filtering capability.
+Support simple widgets, mashups, frontends based on OpenBlock content and filtering capability.
 We would appreciate any feedback you have on how to improve the usefulness and usability of this API.
 
 Caveat
@@ -20,7 +20,7 @@ substantially in future versions.
 See Also
 --------
 
-The openblock API uses several standards for formats and protocols.  Please see the (externally maintained) documentation focused on the particular formats for more details. These include GeoJSON, Atom, and JSONP. Some helpful links:
+The OpenBlock API uses several standards for formats and protocols.  Please see the (externally maintained) documentation focused on the particular formats for more details. These include GeoJSON, Atom, and JSONP. Some helpful links:
 
 ================== ============================================================
     Format			    URL
@@ -57,7 +57,7 @@ API Overview
 URL prefix
 ----------
 
-All calls to the openblock API referenced in this document are prefixed by::
+All calls to the OpenBlock API referenced in this document are prefixed by::
 
 	/api/dev1/
 
