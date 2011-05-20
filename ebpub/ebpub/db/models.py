@@ -671,7 +671,7 @@ class NewsItem(models.Model):
 
         try:
             attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
-        except KeyError:
+        except (IndexError, KeyError):
             return []
         return [AttributeForTemplate(f, attribute_row) for f in fields]
 
