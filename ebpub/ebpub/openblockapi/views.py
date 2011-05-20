@@ -96,6 +96,7 @@ def items_index(request):
 
     POST: Takes a single JSON mapping describing a NewsItem, creates
     it, and redirects to a JSON view of the created item.
+    *Temporarily disabled until we have authorization in place*
 
     On errors, gives a 400 response.
 
@@ -103,10 +104,11 @@ def items_index(request):
     """
     if request.method == 'GET':
         return HttpResponseRedirect(reverse('items_json'))
-    elif request.method == 'POST':
-        return _item_post(request)
+    # elif request.method == 'POST':
+    #     return _item_post(request)
     else:
-        return HttpResponseNotAllowed(['GET', 'POST'])
+        # return HttpResponseNotAllowed(['GET', 'POST'])
+        return HttpResponseNotAllowed(['GET'])
 
 #@permission_required('db.add_newsitem')
 def _item_post(request):

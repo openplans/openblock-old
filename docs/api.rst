@@ -547,6 +547,8 @@ Write API Endpoints
 POST items/
 -----------
 
+*Not enabled yet.*
+
 Purpose
 ~~~~~~~
 
