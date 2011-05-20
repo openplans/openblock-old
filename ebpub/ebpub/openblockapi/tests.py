@@ -44,7 +44,8 @@ class TestAPI(TestCase):
         self.assertEqual(response.status_code, 200)
 
         types = simplejson.loads(response.content)
-        self.assertEqual(len(types), 1)
+        # This includes schemas from db/migrations/0007_load_default_schemas.py
+        self.assertEqual(len(types), 8)
         t1 = types['test-schema']
         self.assertEqual(sorted(t1.keys()),
                          ['attributes',
