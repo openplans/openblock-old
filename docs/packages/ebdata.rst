@@ -21,7 +21,7 @@ feeds, and/or an API, the ebdata.retrieval_ package may be more
 suitable.)  (For dealing with binary file formats, you'll also want to
 look into the ebdata.parsing_ package.)
 
-Many examples can be found in the :doc:`everyblock` package.
+Many examples can be found in the everyblock_ package.
 
 The blobs app contains two models, ``Seed`` and ``Page``. ``Seed`` is a
 news source, like the Chicago Tribune, and a ``Page`` is a particular html
@@ -33,7 +33,7 @@ ebdata.nlp
 ==========
 
 The nlp package contains utilities for detecting locations in text. This
-package is used by blobs, but if you want to use it directly, check out the
+package is used by ebdata.blobs_, but if you want to use it directly, check out the
 docstrings for the functions in ``ebdata.parsing.addresses.``
 
 
@@ -44,7 +44,7 @@ The parsing package contains helpers for reading different file types.
 
 The ``dbf``, ``excel``, ``mdb``, and ``unicodecsv`` modules are for
 reading stuctured data, and generally follow the python csv reader
-api. See the code for more details on how to use the.
+api. See the code for more details on how to use them.
 
 The pdf module is for converting pdf to text, and requires Xpdf.
 http://www.foolabs.com/xpdf/download.html
@@ -54,14 +54,15 @@ ebdata.retrieval
 ================
 
 The retrieval package contains a framework for writing scrapers for structured
-data. There are many examples of how to use this framework in different
-situation in the :doc:`everyblock` package.
+data. Some examples can be found in
+``ebdata/ebdata/scrapers/``.  There are more (unmaintained) examples of how to use this
+framework in different situations in the everyblock_ package.
 
 (For scraping data from unstructured sites, eg. sites that lack feeds
 or machine-consumable API, it may be better to build on the
 ebdata.blobs_ package.)
 
-The most commonly used scraper is the
+The most commonly used scraper base class is the
 ``NewsItemListDetailScraper``. It handles scraping list/detail types
 of sites, and creating or updating NewsItem objects.  "List" could be
 an RSS or Atom feed, or an HTML index, which links to "detail" pages;
@@ -71,8 +72,8 @@ to retrieve any detail pages.)
 
 Generally, to run a scraper, you need to instantiate it, and then call its
 ``update()`` method. Sometimes the scraper will take arguments, but it varies on a
-case-by-case basis. You can read the scrapers in the :doc:`everyblock` package for
-examples. You can also run a scraper by calling its `display_data()` method. This
+case-by-case basis; see the scrapers in ``ebdata/ebdata/scrapers`` for
+examples. You can also run a scraper by calling its ``display_data()`` method. This
 will run the scraper, but won't actually save any of the scraped data. It's
 very useful for debugging, or when writing a scraper for the first time.
 
@@ -105,3 +106,5 @@ The textmining package contains utilities for preprocessing html to strip out
 things that templatemaker doesn't care about like comments, scripts, styles,
 meta information, etc.  It is used by ebdata.templatemaker_ but may
 also be used directly by scraper scripts.
+
+.. _everyblock: https://github.com/openplans/openblock-extras/blob/master/docs/everyblock.rst

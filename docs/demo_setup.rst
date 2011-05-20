@@ -141,10 +141,6 @@ commands::
   $ pip install -r obdemo/requirements.txt -e obdemo
 
 
-(We don't install :doc:`packages/ebgeo` because we assume you're not going to
-be generating and serving your own map tiles.)
-
-
 Editing Settings
 ----------------
 
