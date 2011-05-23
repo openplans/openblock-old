@@ -234,6 +234,14 @@ GOOGLE_MAPS_KEY='your API key here'
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 
+
+# Geocoding.
+# Set this True to cache geocoder results in the database;
+# it's faster but makes troubleshooting harder.
+# (Why doesn't it just use the normal django caching framework?)
+EBPUB_CACHE_GEOCODER = True
+required_settings.append('EBPUB_CACHE_GEOCODER')
+
 # Logging setup. There's a bit of hackery to make sure we don't set up
 # handlers more than once; see
 # http://stackoverflow.com/questions/342434/python-logging-in-django

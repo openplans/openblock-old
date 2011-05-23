@@ -16,6 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import logging
 import re
 import string
 from itertools import izip
@@ -25,6 +26,8 @@ from suffixes import suffixes
 from states import states
 from cities import cities
 from numbered_streets import numbered_streets
+
+logger = logging.getLogger('ebpub.geocoder.parser')
 
 class ParsingError(Exception):
     pass
@@ -80,6 +83,15 @@ def number_standardizer(s):
     Removes the second number in hyphenated addresses such as '123-02', as
     used in NYC. Note that this also removes the second number in address
     ranges.
+
+    >>> number_standardizer('1-2')
+    '1'
+    >>> number_standardizer('100-200')
+    '100'
+    >>> number_standardizer('12A-12B')
+    '12'
+    >>> number_standardizer('x')
+    'x'
     """
     m = re.search(r'^(\d+)[A-Z]?(?:-\d+[A-Z]?)?$', s)
     if not m:
@@ -119,17 +131,33 @@ def normalize(location):
     >>> normalize(u"n kimball ave & w diversey ave")
     u'N KIMBALL AVE & W DIVERSEY AVE'
     """
+    old_location = location
     location = location.upper()
     location = half_addresses_re.sub('', location) # Strip "1/2" addresses.
     location = multi_dash_re.sub('-', location)
     location = punct.sub('', location) # Remove all punctuation except dashes, and ampersands.
     location = re.sub(r'\s+', ' ', location.strip()) # Strip/normalize whitespace.
     location = zip_plus_4_re.sub('', location) # Strip the +4 part of a ZIP+4.
+    logger.debug("normalized: %r to %r" % (old_location, location))
     return location
 
 def strip_unit(location):
     """
     Given an address string, strips the apartment number, suite number, etc.
+
+    >>> strip_unit('200 E 31st st')
+    '200 E 31st st'
+    >>> strip_unit('200 E 31st st unit 123')
+    '200 E 31st st'
+    >>> strip_unit('123 W broadway apt B')
+    '123 W broadway'
+    >>> strip_unit('99 s northshore drive apt. B')
+    '99 s northshore drive'
+    >>> strip_unit('45 carlton ave #12')
+    '45 carlton ave'
+    >>> strip_unit('148 lafayette st suite 13')
+    '148 lafayette st'
+
     """
     return re.sub(r'(?i)(\s*,)?\s*(?:space\s+|suite\s+|ste\.?\s+|unit:?\s+|apt\.?\s+|\#\s*)[-\#0-9a-z]*$', '', location)
 
@@ -219,6 +247,7 @@ def address_combinations():
         ['number', 'pre_dir', 'street']
         ['number', 'street', 'city', 'state']
     """
+    # There are about 2000 combinations at last count.
     for number_times in (0, 1):
         for pre_dir_times in (0, 1):
             for street_times in (1, 2, 3, 4, 5):
@@ -230,10 +259,12 @@ def address_combinations():
                                 for zip_times in (0, 1):
                                     yield ['number'] * number_times + ['pre_dir'] * pre_dir_times + ['street'] * street_times + ['suffix'] * suffix_times + ['post_dir'] * post_dir_times + ['city'] * city_times + ['state'] * state_times + ['zip'] * zip_times
 
+
 punc_split = re.compile(r"\S+").findall
 
 def parse(location):
     s = strip_unit(normalize(location))
+    logger.debug('parse: normalized and stripped %r to %r' % (location, s))
     tokens = punc_split(s)
     len_tokens = len(tokens)
     result_list = []
@@ -260,7 +291,9 @@ def parse(location):
             for key, value in result.items():
                 if value and key in STANDARDIZERS:
                     result[key] = STANDARDIZERS[key](value)
+                    logger.debug('parse: standardized %r to %r' % (value, result[key]))
 
+            logger.debug('parse: %r gave possible result address %s' % (s, result))
             result_list.append(result)
 
     if not result_list:

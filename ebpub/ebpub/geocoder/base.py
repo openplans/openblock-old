@@ -21,11 +21,14 @@ from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
 from ebpub.geocoder.models import GeocoderCache
 from ebpub.streets.models import Block, StreetMisspelling, Intersection
+import logging
 import re
 
 block_re = re.compile(r'^(\d+)[-\s]+(?:blk|block)\s+(?:of\s+)?(.*)$', re.IGNORECASE)
 intersection_re = re.compile(r'(?<=.) (?:and|\&|at|near|@|around|towards?|off|/|(?:just )?(?:north|south|east|west) of|(?:just )?past) (?=.)', re.IGNORECASE)
 # segment_re = re.compile(r'^.{1,40}?\b(?:between .{1,40}? and|from .{1,40}? to) .{1,40}?$', re.IGNORECASE) # TODO
+
+logger = logging.getLogger('ebpub.geocoder.base')
 
 class GeocodingException(Exception):
     pass
@@ -124,12 +127,14 @@ class Geocoder(object):
 
         # Get the result (an Address instance), either from the cache or by
         # calling _do_geocode().
+        # TODO: Why does this not use the normal Django caching framework?
         if self.use_cache:
             try:
                 cached = GeocoderCache.objects.filter(normalized_location=location)[0]
             except IndexError:
                 pass
             else:
+                logger.debug('GeocoderCache HIT for %r' % location)
                 result = Address.from_cache(cached)
                 cache_hit = True
 
@@ -150,11 +155,14 @@ class Geocoder(object):
                 for i in e.choices[1:]:
                     if i['point'] != result['point']:
                         raise
-
+                logger.debug('Got ambiguous results but all had same point, '
+                             'returning the first')
         # Save the result to the cache if it wasn't in there already.
         if not cache_hit and self.use_cache:
+            logger.debug('caching result for %r' % location)
             GeocoderCache.populate(location, result)
 
+        logger.debug('geocoded: %r to %s' % (location, result))
         return result
 
 class AddressGeocoder(Geocoder):
@@ -167,19 +175,26 @@ class AddressGeocoder(Geocoder):
 
         all_results = []
         for loc in locations:
+            logger.debug('AddressGeocoder: Trying %r' % loc)
             loc_results = self._db_lookup(loc)
             # If none were found, maybe the street was misspelled. Check that.
             if not loc_results and loc['street']:
+                logger.debug('AddressGeocoder: checking for alternate spellings of %r'
+                             % loc['street'])
                 try:
                     misspelling = StreetMisspelling.objects.get(incorrect=loc['street'])
                     loc['street'] = misspelling.correct
+                    logger.debug(' ... corrected to %r' % loc['street'])
                 except StreetMisspelling.DoesNotExist:
+                    logger.debug(' ... no StreetMisspellings found.')
                     pass
                 else:
                     loc_results = self._db_lookup(loc)
                 # Next, try removing the street suffix, in case an incorrect
                 # one was given.
                 if not loc_results and loc['suffix']:
+                    logger.debug('No results, will try removing suffix %r'
+                                 % loc['suffix'])
                     loc_results = self._db_lookup(dict(loc, suffix=None))
                 # Next, try looking for the street, in case the street
                 # exists but the address doesn't.
@@ -191,8 +206,14 @@ class AddressGeocoder(Geocoder):
                         sided_filters.append(city_filter)
                     b_list = Block.objects.filter(*sided_filters, **kwargs).order_by('predir', 'from_num', 'to_num')
                     if b_list:
+                        logger.debug("Street %r exists but block %r doesn't"
+                                     % (b_list[0].street_pretty_name, loc['number']))
                         raise InvalidBlockButValidStreet(loc['number'], b_list[0].street_pretty_name, b_list)
-            all_results.extend(loc_results)
+            if loc_results:
+                logger.debug(u'Success. Adding to results: %s' % [unicode(r) for r in loc_results])
+                all_results.extend(loc_results)
+            else:
+                logger.debug('... Got nothing.')
 
         if not all_results:
             raise DoesNotExist("Geocoder db couldn't find this location: %r" % location_string)
@@ -323,9 +344,12 @@ class IntersectionGeocoder(Geocoder):
 class SmartGeocoder(Geocoder):
     def _do_geocode(self, location_string):
         if intersection_re.search(location_string):
+            logger.debug('%r looks like an intersection' % location_string)
             geocoder = IntersectionGeocoder()
         elif block_re.search(location_string):
+            logger.debug('%r looks like a block' % location_string)
             geocoder = BlockGeocoder()
         else:
+            logger.debug('%r assumed to be an address' % location_string)
             geocoder = AddressGeocoder()
         return geocoder._do_geocode(location_string)

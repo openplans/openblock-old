@@ -16,10 +16,14 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 from ebpub.db.models import Location, LocationSynonym
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet
-from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Place, PlaceSynonym
+from django.conf import settings
+import logging
+
+logger = logging.getLogger('ebpub.streets.utils')
 
 def full_geocode(query, search_places=True):
     """
@@ -51,6 +55,7 @@ def full_geocode(query, search_places=True):
     except Location.DoesNotExist:
         pass
     else:
+        logger.debug('geocoded %r to Location %s' % (query, loc))
         return {'type': 'location', 'result': loc, 'ambiguous': False}
 
     # Search the Place table, for stuff like "Sears Tower".
@@ -58,18 +63,24 @@ def full_geocode(query, search_places=True):
         canonical_place = PlaceSynonym.objects.get_canonical(query)
         places = Place.objects.filter(normalized_name=canonical_place)
         if len(places) == 1:
+            logger.debug(u'geocoded %r to Place %s' % (query, places[0]))
+
             return {'type': 'place', 'result': places[0], 'ambiguous': False}
         elif len(places) > 1:
+            logger.debug(u'geocoded %r to multiple Places: %s' % (query, unicode(places)))
             return {'type': 'place', 'result': places, 'ambiguous': True}
 
     # Try geocoding this as an address.
-    geocoder = SmartGeocoder()
+    geocoder = SmartGeocoder(use_cache=getattr(settings, 'EBPUB_CACHE_GEOCODER', False))
     try:
         result = geocoder.geocode(query)
     except AmbiguousResult, e:
+        logger.debug('Multiple addresses for %r' % query)
         return {'type': 'address', 'result': e.choices, 'ambiguous': True}
     except InvalidBlockButValidStreet, e:
+        logger.debug('Invalid block for %r, returning all possible blocks' % query)
         return {'type': 'block', 'result': e.block_list, 'ambiguous': True, 'street_name': e.street_name, 'block_number': e.block_number}
     except:
         raise
+    logger.debug('SmartGeocoder for %r returned %s' % (query, result))
     return {'type': 'address', 'result': result, 'ambiguous': False}
