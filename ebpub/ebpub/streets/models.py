@@ -131,27 +131,78 @@ class BlockManager(models.GeoManager):
         return blocks
 
 class Block(models.Model):
-    pretty_name = models.CharField(max_length=255)
-    predir = models.CharField(max_length=2, blank=True, db_index=True)
-    street = models.CharField(max_length=255, db_index=True) # Always uppercase!
+
     street_slug = models.SlugField()
-    street_pretty_name = models.CharField(max_length=255)
-    suffix = models.CharField(max_length=32, blank=True, db_index=True) # Always uppercase
-    postdir = models.CharField(max_length=2, blank=True, db_index=True) # Always uppercase
-    left_from_num = models.IntegerField(db_index=True, blank=True, null=True)
-    left_to_num = models.IntegerField(db_index=True, blank=True, null=True)
-    right_from_num = models.IntegerField(db_index=True, blank=True, null=True)
-    right_to_num = models.IntegerField(db_index=True, blank=True, null=True)
-    from_num = models.IntegerField(db_index=True, blank=True, null=True)
-    to_num = models.IntegerField(db_index=True, blank=True, null=True)
-    left_zip = models.CharField(max_length=10, db_index=True, blank=True, null=True) # Possible Plus-4
-    right_zip = models.CharField(max_length=10, db_index=True, blank=True, null=True) # Possible Plus-4
-    left_city = models.CharField(max_length=255, db_index=True) # Always uppercase
-    right_city = models.CharField(max_length=255, db_index=True) # Always uppercase
-    left_state = USStateField(db_index=True) # Always uppercase
-    right_state = USStateField(db_index=True) # Always uppercase
-    parent_id = models.IntegerField(db_index=True, blank=True, null=True) # This field is used for blocks that are alternate names for another block, which is pointed to by this ID
-    geom = models.LineStringField()
+
+    pretty_name = models.CharField(
+        max_length=255,
+        help_text='human-readable name including everything - address range, directionals, street name, suffix')
+
+    street_pretty_name = models.CharField(
+        max_length=255,
+        help_text='Like pretty_name but without address numbers')
+
+    predir = models.CharField(
+        max_length=2, blank=True, db_index=True,
+        help_text='Direction abbreviation before street name, UPPERCASE, eg. N or SW')
+
+    street = models.CharField(
+        max_length=255, db_index=True,
+        help_text='Just the street part of the name, UPPERCASE, with no directionals or suffix')
+    suffix = models.CharField(max_length=32, blank=True, db_index=True,
+                              help_text='Suffix abbreviation in UPPERCASE, eg. ST or AVE')
+    postdir = models.CharField(
+        max_length=2, blank=True, db_index=True,
+        help_text='Direction abbreviation after street name, UPPERCASE, eg. N or SW')
+
+
+    left_from_num = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='Lowest address on the "left" side of the street')
+    left_to_num = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='Highest address on the "left" side of the street')
+    right_from_num = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='Lowest address on the "right" side of the street')
+    right_to_num = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='Highest address on the "right" side of the street')
+    from_num = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='Smallest of left_from_num and right_from_num')
+    to_num = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='Largest of left_to_num and right_to_num')
+
+    left_zip = models.CharField(
+        max_length=10, db_index=True, blank=True, null=True,
+        help_text='Zip/postal code on left side of street.') # Possible Plus-4
+    right_zip = models.CharField(
+        max_length=10, db_index=True, blank=True, null=True,
+        help_text='Zip/postal code on right side of street.')
+
+    left_city = models.CharField(
+        max_length=255, db_index=True,
+        help_text='Name of city, UPPERCASE, on left side of street.')
+    right_city = models.CharField(
+        max_length=255, db_index=True,
+        help_text='Name of city, UPPERCASE, on right side of street.')
+
+    left_state = USStateField(
+        db_index=True,
+        help_text='US State abbreviation, UPPERCASE, on left side of street.')
+    right_state = USStateField(
+        db_index=True, 
+        help_text='US State abbreviation, UPPERCASE, on right side of street.')
+
+    parent_id = models.IntegerField(
+        db_index=True, blank=True, null=True,
+        help_text='This field is used for blocks that are alternate names for another block, which is pointed to by this ID')
+
+    geom = models.LineStringField(
+        help_text='Geometry of this street segment - a linestring')
+
     objects = BlockManager()
 
     class Meta:
