@@ -22,11 +22,23 @@ from django.contrib.gis.geos import fromstr
 from django.core import urlresolvers
 from django.db.models import Q
 from ebpub.metros.allmetros import get_metro
+import logging
 import operator
 import re
 
+logger = logging.getLogger('ebpub.streets.models')
+
 class ImproperCity(Exception):
     pass
+
+
+def _first_not_none(*args):
+    """Return the first non-None argument.
+    """
+    for arg in args:
+        if arg is not None:
+            return arg
+
 
 def proper_city(block):
     """
@@ -193,7 +205,7 @@ class Block(models.Model):
         db_index=True,
         help_text='US State abbreviation, UPPERCASE, on left side of street.')
     right_state = USStateField(
-        db_index=True, 
+        db_index=True,
         help_text='US State abbreviation, UPPERCASE, on right side of street.')
 
     parent_id = models.IntegerField(
@@ -338,6 +350,60 @@ class Block(models.Model):
     def _get_zip(self):
         return self.left_zip
     zip = property(_get_zip)
+
+    def clean(self):
+        """Enforce some constraints that depend on multiple fields.
+        """
+        from django.core.exceptions import ValidationError
+        l_from = self.left_from_num
+        r_from = self.right_from_num
+        l_to = self.left_to_num
+        r_to = self.right_to_num
+
+        if not any((l_from, l_to, r_from, r_to)):
+            raise ValidationError(
+                "At least one of left_from_num, left_to_num, right_from_num, and/or right_to_num must be set to a non-empty, non-zero value")
+
+        # Try to fill in any missing numbers from the ones we got.
+        # Maybe we shouldn't be clever here?
+        if l_from is None:
+            logger.warn('left_from_num missing, guessing from other provided numbers')
+            l_from = _first_not_none(r_from, l_to, r_to)
+        if l_to is None:
+            logger.warn('left_to_num missing, guessing from other provided numbers')
+            l_to = _first_not_none(r_to)
+        if r_from is None:
+            logger.warn('right_from_num missing, guessing from other provided numbers')
+            r_from = _first_not_none(l_from, r_to, l_to)
+        if r_to is None:
+            logger.warn('right_to_num missing, guessing from other provided numbers')
+            r_to = _first_not_none(l_to)
+
+        # Ensure we don't get the order wrong. Fixes #164
+        if l_from > l_to:
+            logger.warn('left_from_num %s cannot be greater than left_to_num %s, '
+                        'swapping those for you.' % (l_from, l_to))
+            l_to, l_from = l_from, l_to
+
+        # Ensure we don't get the order wrong. Fixes #164
+        if r_from > r_to:
+            logger.warn('right_from_num %s cannot be greater than right_to_num %s, '
+                        'swapping those for you.' % (r_from, r_to))
+            r_to, r_from = r_from, r_to
+
+        self.left_from_num = l_from
+        self.right_from_num = r_from
+        self.left_to_num = l_to
+        self.right_to_num = r_to
+
+        self.left_zip = _first_not_none(self.left_zip, self.right_zip)
+        self.right_zip = _first_not_none(self.right_zip, self.left_zip)
+
+        # from_num and to_num are always calculated automatically.
+        from ebpub.streets.name_utils import make_block_numbers
+        self.from_num, self.to_num = make_block_numbers(
+            l_from, l_to, r_from, r_to)
+
 
 
 class Street(models.Model):

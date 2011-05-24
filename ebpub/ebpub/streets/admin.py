@@ -17,14 +17,15 @@
 #
 
 from django.contrib import admin
-from django.contrib import gis
 from django import forms
 from ebpub.streets.models import Block, Street, BlockIntersection, \
     Intersection, Suburb, Place, PlaceSynonym, StreetMisspelling
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, GeocodingException
 from ebpub.geocoder.parser.parsing import normalize
-from ebpub.geoadmin import OSMModelAdmin, OBOpenLayersWidget
+from ebpub.geoadmin import OSMModelAdmin
+import logging
 
+logger = logging.getLogger('ebpub.streets.admin')
 
 
 class PlaceAdminForm(forms.ModelForm):
@@ -38,7 +39,7 @@ class PlaceAdminForm(forms.ModelForm):
         if not field in self._errors: 
             self._errors[field] = forms.util.ErrorList()
         self._errors[field].append(err)
-        
+
     def clean(self):
         loc_info = self.cleaned_data.get('location')
         if not loc_info:
@@ -86,10 +87,63 @@ class PlaceAdmin(OSMModelAdmin):
         return super(OSMModelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
 
+class BlockForm(forms.ModelForm):
+    class Meta:
+        model = Block
+
+    def clean_left_city(self):
+        return self.cleaned_data['left_city'].strip().upper()
+
+    def clean_right_city(self):
+        return self.cleaned_data['right_city'].strip().upper()
+
+    def clean_predir(self):
+        return self.cleaned_data['predir'].strip().upper()
+
+    def clean_street(self):
+        return self.cleaned_data['street'].strip().upper()
+
+    def clean_postdir(self):
+        return self.cleaned_data['postdir'].strip().upper()
+
+    def clean_suffix(self):
+        return self.cleaned_data['suffix'].strip().upper()
+
+    def clean_left_state(self):
+        return self.cleaned_data['left_state'].strip().upper()
+
+    def clean_right_state(self):
+        return self.cleaned_data['right_state'].strip().upper()
+
+
 class BlockAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'street', 'suffix', 'left_zip', 'right_zip', 'left_city', 'right_city')
     list_filter = ('suffix', 'left_city', 'right_city', 'left_zip', 'right_zip')
     search_fields = ('pretty_name',)
+    readonly_fields = ('from_num', 'to_num',)
+    form = BlockForm
+
+    fieldsets = (
+        ('Name', {
+                'fields': ('street_slug', 'pretty_name', 'street_pretty_name',
+                           'predir', 'street', 'suffix', 'postdir',
+                           )
+                }),
+        ('Address Ranges', {
+                'fields': ('left_from_num', 'left_to_num',
+                           'right_from_num', 'right_to_num',
+                           'from_num', 'to_num'),
+                'description': 'Addresses on this block. At least one must be provided; the rest will be guessed if necessary. Order will be fixed if you get it backwards.'
+                }),
+        ('Location', {
+                'fields': ('left_zip', 'right_zip', 'left_city', 'right_city',
+                           'left_state', 'right_state',
+                           'parent_id',
+                           'geom',
+                           )
+                })
+        )
+
 
 class StreetAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'suffix', 'city', 'state',)

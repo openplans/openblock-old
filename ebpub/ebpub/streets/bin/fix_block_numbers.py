@@ -30,6 +30,7 @@ def update_all_block_numbers(verbose=False):
         if b.from_num != from_num or b.to_num != to_num:
             b.from_num = from_num
             b.to_num = to_num
+            b.full_clean()
             b.save()
             if verbose:
                 print "Updating numbers for %s to %s-%s" % (b, from_num, to_num)

@@ -97,6 +97,7 @@ class BlockImporter(object):
                         block_fields['right_to_num'])
 
                     block = Block(**block_fields)
+                    block.full_clean()
                     block.save()
                     if parent_id is None:
                         parent_id = block.id
