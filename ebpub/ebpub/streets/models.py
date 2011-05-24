@@ -404,6 +404,15 @@ class Block(models.Model):
         self.from_num, self.to_num = make_block_numbers(
             l_from, l_to, r_from, r_to)
 
+        # TODO: maybe this merits an UppercaseStringField or some such?
+        for key in ('left_city', 'right_city',
+                    'predir', 'postdir',
+                    'street', 'suffix',
+                    'left_state', 'right_state'):
+            val = getattr(self, key)
+            if val is not None:
+                setattr(self, key, val.strip().upper())
+
 
 
 class Street(models.Model):

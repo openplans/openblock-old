@@ -87,41 +87,12 @@ class PlaceAdmin(OSMModelAdmin):
         return super(OSMModelAdmin, self).formfield_for_dbfield(db_field, **kwargs)
 
 
-class BlockForm(forms.ModelForm):
-    class Meta:
-        model = Block
-
-    def clean_left_city(self):
-        return self.cleaned_data['left_city'].strip().upper()
-
-    def clean_right_city(self):
-        return self.cleaned_data['right_city'].strip().upper()
-
-    def clean_predir(self):
-        return self.cleaned_data['predir'].strip().upper()
-
-    def clean_street(self):
-        return self.cleaned_data['street'].strip().upper()
-
-    def clean_postdir(self):
-        return self.cleaned_data['postdir'].strip().upper()
-
-    def clean_suffix(self):
-        return self.cleaned_data['suffix'].strip().upper()
-
-    def clean_left_state(self):
-        return self.cleaned_data['left_state'].strip().upper()
-
-    def clean_right_state(self):
-        return self.cleaned_data['right_state'].strip().upper()
-
 
 class BlockAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'street', 'suffix', 'left_zip', 'right_zip', 'left_city', 'right_city')
     list_filter = ('suffix', 'left_city', 'right_city', 'left_zip', 'right_zip')
     search_fields = ('pretty_name',)
     readonly_fields = ('from_num', 'to_num',)
-    form = BlockForm
 
     fieldsets = (
         ('Name', {
