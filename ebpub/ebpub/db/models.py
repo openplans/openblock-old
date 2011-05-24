@@ -613,6 +613,10 @@ class NewsItem(models.Model):
       scraping/geocoding.  So far can't find anything that actually
       uses these.
 
+    * self.location_name is a human-readable version of the location;
+      it can be anything, but typically it describes an address,
+      block, geographic area, or landmark.
+
     """
 
     # We don't have a natural_key() method because we don't know for
@@ -621,17 +625,24 @@ class NewsItem(models.Model):
     schema = models.ForeignKey(Schema)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    url = models.TextField(blank=True)
+    url = models.TextField(
+        blank=True,
+        help_text="link to original source for this news")
     pub_date = models.DateTimeField(
         db_index=True,
         help_text='Date/time this Item was added to the OpenBlock site.')  # TODO: default to now()
     item_date = models.DateField(
         db_index=True,
         help_text='Date (no time) this Item occurred, or was published on the original source site.')  # TODO: default to now()
-    location = models.GeometryField(blank=True, null=True, spatial_index=True)
-    location_name = models.CharField(max_length=255)
-    location_object = models.ForeignKey(Location, blank=True, null=True)
-    block = models.ForeignKey(Block, blank=True, null=True)
+    location = models.GeometryField(blank=True, null=True, spatial_index=True,
+                                    help_text="Coordinates where this news occurred.")
+    location_name = models.CharField(max_length=255,
+                                     help_text="Human-readable address or name of place where this news item occurred.")
+    location_object = models.ForeignKey(Location, blank=True, null=True,
+                                        help_text="Optional reference to a Location where this item occurred")
+    block = models.ForeignKey(Block, blank=True, null=True,
+                              help_text="Optional reference to a Block. Not really used")
+
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
 
