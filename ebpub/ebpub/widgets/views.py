@@ -67,9 +67,9 @@ def template_context_for_item(newsitem):
     ctx['pub_date'] = newsitem.pub_date
     ctx['item_date'] = newsitem.item_date
     ctx['location'] = {}
-    if newsitem.location: 
-        ctx['location']['lat'] = newsitem.location.x,
-        ctx['location']['lon'] = newsitem.location.y
+    if newsitem.location:
+        ctx['location']['lon'] = newsitem.location.x
+        ctx['location']['lat'] = newsitem.location.y
     ctx['location']['name'] = newsitem.location_name
 
     ctx['external_url'] =  newsitem.url
