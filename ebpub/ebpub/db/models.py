@@ -761,11 +761,11 @@ class Attribute(models.Model):
     news_item = models.OneToOneField(NewsItem, primary_key=True, unique=True)
     schema = models.ForeignKey(Schema)
     # All data-type field names must end in two digits, because the code assumes this.
-    varchar01 = models.CharField(max_length=255, blank=True, null=True)
-    varchar02 = models.CharField(max_length=255, blank=True, null=True)
-    varchar03 = models.CharField(max_length=255, blank=True, null=True)
-    varchar04 = models.CharField(max_length=255, blank=True, null=True)
-    varchar05 = models.CharField(max_length=255, blank=True, null=True)
+    varchar01 = models.CharField(max_length=4096, blank=True, null=True)
+    varchar02 = models.CharField(max_length=4096, blank=True, null=True)
+    varchar03 = models.CharField(max_length=4096, blank=True, null=True)
+    varchar04 = models.CharField(max_length=4096, blank=True, null=True)
+    varchar05 = models.CharField(max_length=4096, blank=True, null=True)
     date01 = models.DateField(blank=True, null=True)
     date02 = models.DateField(blank=True, null=True)
     date03 = models.DateField(blank=True, null=True)
@@ -790,6 +790,7 @@ class Attribute(models.Model):
     int06 = models.IntegerField(blank=True, null=True)
     int07 = models.IntegerField(blank=True, null=True)
     text01 = models.TextField(blank=True, null=True)
+    text02 = models.TextField(blank=True, null=True)
 
     def __unicode__(self):
         return u'Attributes for news item %s' % self.news_item_id
