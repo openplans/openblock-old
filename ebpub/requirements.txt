@@ -11,5 +11,9 @@ django-static==1.4.0
 psycopg2>=2.2,<2.3
 pyyaml>=3
 slimmer>=0.1.30
-mock>=0.7.0
+mock>=0.7.1
 South>=0.7.3
+django-olwidget>=0.4
+pyRFC3339>=0.1
+pytz>=2011g
+PyYAML==3.09

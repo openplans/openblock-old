@@ -43,6 +43,7 @@ setup(
     "pyrfc3339",
     "South",
     "mock>=0.7.0rc1",
+    "django-olwidget",
     ],
     dependency_links=[
     ],
