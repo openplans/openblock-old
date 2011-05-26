@@ -91,7 +91,7 @@ class Schema(models.Model):
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
     indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
-    slug = models.CharField(max_length=32, unique=True)
+    slug = models.SlugField(max_length=32, unique=True)
     min_date = models.DateField() # the earliest available NewsItem.pub_date for this Schema
     last_updated = models.DateField()
     date_name = models.CharField(max_length=32, default='Date') # human-readable name for the NewsItem.item_date field
@@ -233,7 +233,7 @@ class LocationType(models.Model):
     name = models.CharField(max_length=255) # e.g., "Ward" or "Congressional District"
     plural_name = models.CharField(max_length=64) # e.g., "Wards"
     scope = models.CharField(max_length=64) # e.g., "Chicago" or "U.S.A."
-    slug = models.CharField(max_length=32, unique=True)
+    slug = models.SlugField(max_length=32, unique=True)
     is_browsable = models.BooleanField() # whether this is displayed on location_type_list.  XXX unused??
     is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
 
@@ -259,7 +259,7 @@ class LocationManager(models.GeoManager):
 class Location(models.Model):
     name = models.CharField(max_length=255) # e.g., "35th Ward"
     normalized_name = models.CharField(max_length=255, db_index=True)
-    slug = models.CharField(max_length=32, db_index=True)
+    slug = models.SlugField(max_length=32, db_index=True)
     location_type = models.ForeignKey(LocationType)
     location = models.GeometryField(null=True)
     centroid = models.PointField(blank=True, null=True)
@@ -274,6 +274,10 @@ class Location(models.Model):
     creation_date = models.DateTimeField(blank=True, null=True)
     last_mod_date = models.DateTimeField(blank=True, null=True)
     objects = LocationManager()
+
+    def clean(self):
+        if self.centroid != self.location.centroid:
+            self.centroid = self.location.centroid
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
@@ -859,7 +863,7 @@ class Lookup(models.Model):
     # in that case, because we've massaged `name` to use a "prettier"
     # formatting than exists in the data source.
     code = models.CharField(max_length=255, blank=True)
-    slug = models.CharField(max_length=32, db_index=True)
+    slug = models.SlugField(max_length=32, db_index=True)
     description = models.TextField(blank=True)
 
     objects = LookupManager()
