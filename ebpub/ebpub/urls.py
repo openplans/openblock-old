@@ -26,12 +26,18 @@ from ebpub.metros.allmetros import get_metro
 
 
 if settings.DEBUG:
+    import olwidget
+    import os
+    olwidget_media_path=os.path.join(
+        os.path.abspath(os.path.dirname(olwidget.__file__)), 'media')
     urlpatterns = patterns('',
+        (r'^(?P<path>(?:olwidget).*)$',
+         'django.views.static.serve', {'document_root': olwidget_media_path}),
         (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
          'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
-    )
-    urlpatterns += patterns('',
         (r'^(?P<path>(?:images|scripts|styles|openlayers).*)$', 'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
+        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
     )
 else:
     urlpatterns = patterns('')

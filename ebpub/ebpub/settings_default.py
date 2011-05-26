@@ -84,6 +84,7 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'django.contrib.sessions',
     'django_static',
+    'olwidget',
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
@@ -200,7 +201,9 @@ required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
 OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
-#OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
+# For compatibility with django-olwidget
+OL_API = OPENLAYERS_URL
+
 OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
 
 # For local development you might try this:
@@ -225,8 +228,26 @@ required_settings.append('MAP_BASELAYER_TYPE')
 # If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
 # and point it to your WMS server.  The default gives you hosted OpenStreetMap tiles.
 WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
-# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_MAPS_KEY.
-GOOGLE_MAPS_KEY='your API key here'
+# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_API_KEY.
+GOOGLE_API_KEY='your API key here'
+
+# Hackery for customized django-olwidget to add extra WMS base layers:
+import simplejson
+EXTRA_OLWIDGET_CONTEXT = {
+    'extra_wms_layers':
+        simplejson.dumps(
+        [{"name": "OpenStreetMap (OpenGeo)",
+          "url": "http://maps.opengeo.org/geowebcache/service/wms",
+          "params": {"layers": "openstreetmap",
+                     "format": "image/png",
+                     "bgcolor": "#A1BDC4"
+                     },
+          "options": {"wrapDateLine": True}
+          }
+         ]
+        )
+    }
+
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,

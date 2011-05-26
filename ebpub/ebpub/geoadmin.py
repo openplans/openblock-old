@@ -21,239 +21,99 @@ Admin UI classes and Widgets with maps customized for OpenBlock.
 """
 
 from django.conf import settings
-from django.contrib.gis import admin
-from django.contrib.gis.admin.widgets import OpenLayersWidget
-from django.contrib.gis.admin.widgets import geo_context
-from django.contrib.gis.gdal import OGRException
-from django.contrib.gis.gdal import OGRGeomType
-from django.contrib.gis.geos import GEOSGeometry, GEOSException
-from django.template import loader
+from django.template.loader import render_to_string
+from django.utils import simplejson
+from olwidget import utils
+from olwidget.admin import GeoModelAdmin
+from olwidget.widgets import Map
 
-import os
 
 """
 See http://docs.djangoproject.com/en/dev/ref/contrib/gis/admin/
 """
 
-class OBOpenLayersWidget(OpenLayersWidget):
-    """
-    Returns OpenLayers map javascript using the WKT of the geometry.
 
-    OVERRIDING FOR OPENBLOCK: This subclass has patched methods as per
-    http://code.djangoproject.com/attachment/ticket/9806/9806.3.diff
-    and we can delete it if/when
-    http://code.djangoproject.com/ticket/9806 gets fixed.
+class OSMModelAdmin(GeoModelAdmin):
+    options = {
+        'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
+        'default_lon': settings.DEFAULT_MAP_CENTER_LON,
+        'default_zoom': settings.DEFAULT_MAP_ZOOM,
+        'zoom_to_data_extent': True,
+        'layers': ['google.streets', 'osm.mapnik', 'osm.osmarender'],
+        'controls': ['LayerSwitcher', 'Navigation', 'PanZoom', 'Attribution'],
 
-    Or not. This is hacked to avoid telling the JS to use
-    GeometryCollection, because openlayers can't convert those to WKT;
-    see http://trac.osgeo.org/openlayers/ticket/2240
+        # These are necessary to keep our default OSM WMS layer happy.
+        'map_options': {'max_resolution': 156543.03390625,
+                        'num_zoom_levels': 19},
+        }
 
-    So, GeometryCollections suck for OpenLayers, and suck for PostGIS.
-    Let's avoid them on both sides.
-    """
+    def get_form(self, *args, **kwargs):
+        """
+        Override GeoModelAdmin.get_form(), which sets up the olwidget
+        map widgets, to use our own tweaked widget.
+
+        Unfortunately, given that these fields have their widgets
+        replaced somewhat sneakily by olwidget, there's not a better
+        hook that I see for getting a custom Widget class in there.
+        """
+        form = GeoModelAdmin.get_form(self, *args, **kwargs)
+        fields = form.base_fields
+        for key, field in fields.items():
+            if isinstance(field.widget, Map):
+                print "SWAPPING IT: %r" % key
+                field.widget = OBMapWidget(vector_layers=field.widget.vector_layers,
+                                           options=field.widget.options,
+                                           template=field.widget.template,
+                                           layer_names=field.widget.layer_names
+                                           )
+
+        return form
+
+
+class OBMapWidget(Map):
     def render(self, name, value, attrs=None):
-        # Update the template parameters with any attributes passed in.
-        # If value is None, that means we haven't saved anything yet.
-        if attrs:
-            self.params.update(attrs)
+        """Same as olwidget.widgets.Map.render(),
+        except with one extra line to insert a tiny bit of extra
+        context for the template from settings.py.
+        """
+        if value is None:
+            values = [None for i in range(len(self.vector_layers))]
+        elif not isinstance(value, (list, tuple)):
+            values = [value]
+        else:
+            values = value
+        attrs = attrs or {}
+        # Get an arbitrary unique ID if we weren't handed one (e.g. widget used
+        # outside of a form).
+        map_id = attrs.get('id', "id_%s" % id(self))
 
-        # Defaulting the WKT value to a blank string -- this
-        # will be tested in the JavaScript and the appropriate
-        # interface will be constructed.
-        self.params['wkt'] = ''
-
-        # If a string reaches here (via a validation error on another
-        # field) then just reconstruct the Geometry.
-        if isinstance(value, basestring):
-            try:
-                value = GEOSGeometry(value)
-            except (GEOSException, ValueError):
+        layer_js = []
+        layer_html = []
+        layer_names = self._get_layer_names(name)
+        value_count = 0
+        for i, layer in enumerate(self.vector_layers):
+            if layer.editable:
+                value = values[value_count]
+                value_count += 1
+            else:
                 value = None
-        if value and value.geom_type.upper() != self.geom_type and self.geom_type != 'GEOMETRY':
-            value = None
+            lyr_name = layer_names[i]
+            id_ = "%s_%s" % (map_id, lyr_name)
+            # Use "prepare" rather than "render" to get both js and html
+            (js, html) = layer.prepare(lyr_name, value, attrs={'id': id_ })
+            layer_js.append(js)
+            layer_html.append(html)
 
-        # Constructing the dictionary of the map options.
-        self.params['map_options'] = self.map_options()
+        attrs = attrs or {}
 
-        # Constructing the JavaScript module name using the name of
-        # the GeometryField (passed in via the `attrs` keyword).
-        # Use the 'name' attr for the field name (rather than 'field')
-        self.params['name'] = name
-        # note: we must switch out dashes for underscores since js
-        # functions are created using the module variable
-        js_safe_name = self.params['name'].replace('-','_')
-        self.params['module'] = 'geodjango_%s' % js_safe_name
+        context = {
+            'id': map_id,
+            'layer_js': layer_js,
+            'layer_html': layer_html,
+            'map_opts': simplejson.dumps(utils.translate_options(self.options)),
+        }
+        ##### OpenBlock customizations start here ############
+        context.update(getattr(settings, 'EXTRA_OLWIDGET_CONTEXT', {}))
+        ##### End of OpenBlock customizations ############
+        return render_to_string(self.template, context)
 
-        if value:
-            # Transforming the geometry to the projection used on the
-            # OpenLayers map.
-            srid = self.params['srid']
-            if value.srid != srid:
-                try:
-                    ogr = value.ogr
-                    ogr.transform(srid)
-                    wkt = ogr.wkt
-                except OGRException:
-                    wkt = ''
-            else:
-                wkt = value.wkt
-
-            # Setting the parameter WKT with that of the transformed
-            # geometry.
-            self.params['wkt'] = wkt
-
-            # Check if the field is generic so the proper values are overriden
-            if self.params['is_unknown']:
-                self.params['geom_type'] = OGRGeomType(value.geom_type)
-                if value.geom_type.upper() in ('LINESTRING', 'MULTILINESTRING'):
-                    self.params['is_linestring'] = True
-                elif value.geom_type.upper() in ('POLYGON', 'MULTIPOLYGON'):
-                    self.params['is_polygon'] = True
-                elif value.geom_type.upper() in ('POINT', 'MULTIPOINT'):
-                    self.params['is_point'] = True
-                elif value.geom_type.upper() in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON'):
-                    self.params['is_collection'] = True
-                    self.params['collection_type'] = OGRGeomType(value.geom_type.upper().replace('MULTI', ''))
-                elif value.geom_type.upper() == 'GEOMETRYCOLLECTION':
-                    self.params['is_collection'] = True
-                    self.params['collection_type'] = 'Any'
-                    # Avoid 'Collection', see http://trac.osgeo.org/openlayers/ticket/2240
-                    #self.params['geom_type'] = 'Collection'
-                    self.params['geom_type'] = OGRGeomType('POLYGON')
-
-        else:
-            # No value.
-            if self.params['is_unknown']:
-                # If the geometry is unknown and the value is not set, make it as flexible as possible.
-                # But again, due to http://trac.osgeo.org/openlayers/ticket/2240
-                # we can't safely use Collection.
-                self.params['geom_type'] = OGRGeomType('POLYGON') #'Collection'
-                self.params['is_collection']=True
-                self.params['collection_type'] = 'Any'
-
-        # If we don't already have a camelcase geom_type,
-        # make one using str(OGRGeomType).
-        # Works for most things but not 'GeometryCollection'.
-        if str(self.params['geom_type']) == str(self.params['geom_type']).upper():
-            self.params['geom_type'] = str(OGRGeomType(self.params['geom_type']))
-        return loader.render_to_string(self.template, self.params,
-                                       context_instance=geo_context)
-
-
-class OSMModelAdmin(admin.GeoModelAdmin):
-    """A GeoModelAdmin that overrides some defaults to
-    use an OpenStreetMap base layer, and an OBOpenLayersWidget.
-    """
-    default_zoom = 11
-    openlayers_url = getattr(settings, 'OPENLAYERS_URL', admin.GeoModelAdmin.openlayers_url)
-    openlayers_img_path = getattr(settings, 'OPENLAYERS_IMG_PATH', None) or (os.path.dirname(openlayers_url) + '/img/')
-    point_zoom = 14
-    wms_layer = 'openstreetmap'
-    wms_name = 'OpenStreetMap'
-    wms_url = 'http://maps.opengeo.org/geowebcache/service/wms'
-    widget = OBOpenLayersWidget
-    # Upstream patch for geodjango submitted:
-    # http://code.djangoproject.com/ticket/14886 ... to allow passing
-    # parameters to the WMS layer constructor.
-    wms_options = {'format': 'image/png'}
-
-    @property
-    def default_lat(self):
-        return settings.DEFAULT_MAP_CENTER_LAT
-
-    @property
-    def default_lon(self):
-        return settings.DEFAULT_MAP_CENTER_LON
-
-    def get_map_widget(self, db_field):
-        """
-        Returns a subclass of the OpenLayersWidget (or whatever was specified
-        in the `widget` attribute) using the settings from the attributes set
-        in this class.
-
-        OVERRIDING FOR OPENBLOCK: This is the patched version of this
-        method as per
-        http://code.djangoproject.com/attachment/ticket/9806/9806.3.diff
-        and we can maybe delete it if/when
-        http://code.djangoproject.com/ticket/9806 gets fixed.
-        ... Or not: actually we want to disable GEOMETRYCOLLECTIONs
-        entirely, due to bug #95, and I'm not sure if that's
-        appropriate to submit upstream or not.
-        """
-
-        # Note that db_field.geom_type is an UPPERCASE name, while
-        # OGRGeomType(foo) yields a CamelCase name.
-        geom_type = db_field.geom_type.upper()
-        is_unknown = geom_type in ('GEOMETRY',)
-        if not is_unknown:
-            #If it is not generic, get the parameters from the db_field.
-            is_collection = geom_type in ('MULTIPOINT', 'MULTILINESTRING', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION')
-            if is_collection:
-                if geom_type == 'GEOMETRYCOLLECTION':
-                    # Workaround for #95: Use MultiPolygon instead of GeometryCollection.
-                    geom_type = 'MULTIPOLYGON'
-                collection_type = OGRGeomType(geom_type.replace('MULTI', ''))
-            else:
-                collection_type = 'None'
-            is_linestring = geom_type in ('LINESTRING', 'MULTILINESTRING')
-            is_polygon = geom_type in ('POLYGON', 'MULTIPOLYGON')
-            is_point = geom_type in ('POINT', 'MULTIPOINT')
-            openlayers_geom_type = OGRGeomType(geom_type)
-        else:
-            #If it is generic, set sensible defaults.
-            #We've decided this will be MultiPolygon.
-            is_collection = True
-            collection_type = 'Polygon'
-            is_linestring = False
-            is_polygon = True
-            is_point = False
-
-        openlayers_geom_type = OGRGeomType(geom_type.upper())
-
-        class OLMap(self.widget):
-            template = self.map_template
-            geom_type = db_field.geom_type
-            wms_options = ''
-            if self.wms_options:
-                wms_options = ["%s: '%s'" % pair for pair in self.wms_options.items()]
-                wms_options = ', '.join(wms_options)
-                wms_options = ', ' + wms_options
-
-            params = {'default_lon' : self.default_lon,
-                      'collection_type' : collection_type,
-                      'debug' : self.debug,
-                      'default_lat' : self.default_lat,
-                      'default_zoom' : self.default_zoom,
-                      'display_srid' : self.display_srid,
-                      'display_wkt' : self.debug or self.display_wkt,
-                      'field_name' : db_field.name,
-                      'geom_type' : openlayers_geom_type,  # a camel-case name for use as an OpenLayers constructor.
-                      'is_collection' : is_collection,
-                      'is_linestring' : is_linestring,
-                      'is_point' : is_point,
-                      'is_polygon' : is_polygon,
-                      'is_unknown': is_unknown,
-                      'layerswitcher' : self.layerswitcher,
-                      'map_height' : self.map_height,
-                      'map_width' : self.map_width,
-                      'max_extent' : self.max_extent,
-                      'max_resolution' : self.max_resolution,
-                      'max_zoom' : self.max_zoom,
-                      'min_zoom' : self.min_zoom,
-                      'modifiable' : self.modifiable,
-                      'mouse_position' : self.mouse_position,
-                      'num_zoom' : self.num_zoom,
-                      'openlayers_url': self.openlayers_url,
-                      'openlayers_img_path': self.openlayers_img_path,
-                      'point_zoom' : self.point_zoom,
-                      'scale_text' : self.scale_text,
-                      'scrollable' : self.scrollable,
-                      'srid' : self.map_srid,
-                      'units' : self.units, #likely shoud get from object
-                      'wms_layer' : self.wms_layer,
-                      'wms_name' : self.wms_name,
-                      'wms_options': wms_options,
-                      'wms_url' : self.wms_url,
-                      }
-
-        return OLMap

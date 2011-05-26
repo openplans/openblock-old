@@ -26,7 +26,7 @@ def urls(request):
     return {'OPENLAYERS_URL': settings.OPENLAYERS_URL,
             'OPENLAYERS_IMG_PATH': settings.OPENLAYERS_IMG_PATH,
             'MAP_BASELAYER_TYPE': settings.MAP_BASELAYER_TYPE,
-            'GOOGLE_MAPS_KEY': getattr(settings, 'GOOGLE_MAPS_KEY', '') or '',
+            'GOOGLE_API_KEY': getattr(settings, 'GOOGLE_API_KEY', '') or '',
             'WMS_URL': getattr(settings, 'WMS_URL', '') or '',
             'JQUERY_URL': settings.JQUERY_URL,
             }

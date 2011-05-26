@@ -140,8 +140,8 @@ CACHE_BACKEND = 'file:///tmp/obdemo_cache'
 # and point it to your WMS server.  The default gives you hosted OpenStreetMap tiles.
 MAP_BASELAYER_TYPE='wms'
 WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
-# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_MAPS_KEY.
-GOOGLE_MAPS_KEY='your API key here'
+# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_API_KEY.
+GOOGLE_API_KEY='your API key here'
 
 if DEBUG:
     for _name in required_settings:

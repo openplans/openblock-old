@@ -10,7 +10,7 @@ var newsitems_ajax_url = "{% url ajax-newsitems-geojson %}";
 </script>
 {% endif %}
 {% ifequal MAP_BASELAYER_TYPE 'google' %} 
-<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{ GOOGLE_MAPS_KEY }}" type="text/javascript"></script>
+<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{ GOOGLE_API_KEY }}" type="text/javascript"></script>
 {% endifequal %}
 
 {% slimall %}
