@@ -71,3 +71,13 @@ Other base layers
 -----------------
 
 Patches welcome :)
+
+
+Multiple databases?
+===================
+
+Note that while Django supports using multiple databases for different
+model data, OpenBlock does not. This is because we use `South
+<http://pypi.python.org/pypi/South>`_ to automate :ref:`database
+migrations <migrations>`, and as of this writing South does not work
+properly with a multi-database configuration.

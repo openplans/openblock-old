@@ -54,6 +54,8 @@ Contents
    :maxdepth: 2
 
    setup
+   base_install
+   common_install_problems
    demo_setup
    custom
    configuration
@@ -62,6 +64,7 @@ Contents
    running_scrapers
    api
    widgets
+   deployment
    maintenance
    packages/index
 
