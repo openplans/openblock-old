@@ -234,9 +234,9 @@ GOOGLE_API_KEY='your API key here'
 # Hackery for customized django-olwidget to add extra WMS base layers:
 import simplejson
 EXTRA_OLWIDGET_CONTEXT = {
-    'extra_wms_layers':
-        simplejson.dumps(
-        [{"name": "OpenStreetMap (OpenGeo)",
+    'extra_base_layers': simplejson.dumps(
+        [{"class": "WMS",
+          "name": "OpenStreetMap (OpenGeo)",
           "url": "http://maps.opengeo.org/geowebcache/service/wms",
           "params": {"layers": "openstreetmap",
                      "format": "image/png",

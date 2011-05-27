@@ -6,11 +6,11 @@
         ], 
         {{ map_opts|safe }}
     );
-    var extra_wms_layers = {{ extra_wms_layers|safe }};
-    for (var i=0, len=extra_wms_layers.length; i < len; ++i) {
-       olwidget_map_{{id}}.addLayer(new OpenLayers.Layer.WMS(
-          extra_wms_layers[i].name, extra_wms_layers[i].url,
-          extra_wms_layers[i].params, extra_wms_layers[i].options));
+    var extra_layers = {{ extra_base_layers|safe }};
+    for (var i=0, len=extra_layers.length; i < len; ++i) {
+       olwidget_map_{{id}}.addLayer(new OpenLayers.Layer[extra_layers[i].class] (
+          extra_layers[i].name, extra_layers[i].url,
+          extra_layers[i].params, extra_layers[i].options));
     };
     olwidget_map_{{id}}.initCenter();
 </script>
