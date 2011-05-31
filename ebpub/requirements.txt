@@ -12,7 +12,7 @@ psycopg2>=2.2,<2.3
 slimmer>=0.1.30
 mock>=0.7.1
 South>=0.7.3
-django-olwidget>=0.4
+-e git://github.com/openplans/olwidget.git#egg=django-olwidget
 pyRFC3339>=0.1
 pytz>=2011g
 PyYAML==3.09

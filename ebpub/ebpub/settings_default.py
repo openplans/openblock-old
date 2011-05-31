@@ -231,10 +231,10 @@ WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
 # If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_API_KEY.
 GOOGLE_API_KEY='your API key here'
 
+
 # Hackery for customized django-olwidget to add extra WMS base layers:
-import simplejson
 EXTRA_OLWIDGET_CONTEXT = {
-    'extra_base_layers': simplejson.dumps(
+    'extra_base_layers':
         [{"class": "WMS",
           "name": "OpenStreetMap (OpenGeo)",
           "url": "http://maps.opengeo.org/geowebcache/service/wms",
@@ -245,7 +245,6 @@ EXTRA_OLWIDGET_CONTEXT = {
           "options": {"wrapDateLine": True}
           }
          ]
-        )
     }
 
 

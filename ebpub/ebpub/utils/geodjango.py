@@ -22,6 +22,9 @@ Utility functions for working with GeoDjango GDAL and GEOS data
 
 from django.contrib.gis import geos
 from django.contrib.gis.geos import Point, LineString, Polygon, GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
+import logging
+
+logger = logging.getLogger('ebpub.utils.geodjango')
 
 def reduce_layer_geom(layer, method):
     """
@@ -95,6 +98,21 @@ def make_multi(geom_list, collapse_single=False):
     cls = getattr(geos, 'Multi%s' % geom_type)
     return cls(geom_list)
 
+
+def flatten_geomcollection(geom):
+    """
+    Workaround for bug #95: if we get a GeometryCollection,
+    save it instead as a MultiPolygon, because PostGIS doesn't support
+    using Collections for anything useful like
+    ST_Intersects(some_other_geometry), so we effectively can't
+    use them at all. Yuck.
+    """
+    if geom.geom_type == 'GeometryCollection':
+        geom = make_multi(flatten(geom))
+        logger.warn("Got a GeometryCollection. Can't call ST_Intersects() on those."
+                    " Munged it into a %s." % geom.geom_type)
+    return geom
+
 def smart_transform(geom, srid, clone=True):
     """
     Returns a new geometry transformed to the srid given. Assumes if
@@ -105,3 +123,14 @@ def smart_transform(geom, srid, clone=True):
     if not geom.srs:
         geom.srid = 4326
     return geom.transform(srid, clone=clone)
+
+
+def ensure_valid(geom, name=''):
+    """Make sure a geometry is valid; if necessary, make a 0.0 buffer
+    around it. (This is a well-known hack to fix broken geometries.)
+    """
+    if not geom.valid:
+        geom = geom.buffer(0.0)
+        if not geom.valid:
+            logger.warn('invalid geometry for %s' % name)
+    return geom

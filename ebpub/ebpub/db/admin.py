@@ -17,7 +17,6 @@
 #
 
 from django.contrib.gis import admin
-from ebpub.db.forms import LocationForm
 from ebpub.db.forms import NewsItemForm
 from ebpub.db.models import Attribute
 from ebpub.db.models import Location
@@ -51,7 +50,6 @@ class LocationTypeAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('plural_name',)}
 
 class LocationAdmin(OSMModelAdmin):
-    form = LocationForm
     list_filter = ('location_type', 'city', 'is_public',)
     list_display = ('name', 'location_type', 'creation_date', 'area')
     search_fields = ('name',)

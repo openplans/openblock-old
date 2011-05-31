@@ -18,44 +18,9 @@
 
 from ebpub.db import models
 from django import forms
-from django.contrib.gis.geos import MultiPolygon
-
-
-def clean_location_avoid_geometrycollections(self):
-    # Workaround for bug #95: if we get a GeometryCollection,
-    # save it instead as a MultiPolygon, because PostGIS doesn't support
-    # using Collections for anything useful like
-    # ST_Intersects(some_other_geometry), so we effectively can't
-    # use them at all. Yuck.
-    locations = self.cleaned_data['location']
-    if not isinstance(locations, list):
-        locations = [locations]
-    for i, loc in enumerate(locations):
-        if loc.geom_type == 'GeometryCollection':
-            polygons = []
-            while loc.num_geom:
-                next = loc.pop()
-                if next.geom_type == 'Polygon':
-                    polygons.append(next)
-                elif next.geom_type == 'Point':
-                    polygons.append((next.x, next.y), (next.x, next.y))
-                else:
-                    raise NotImplementedError("can't handle %r" % next.geom_type)
-            loc = MultiPolygon(polygons)
-        locations[i] = loc
-    return locations
-
-class LocationForm(forms.ModelForm):
-    class Meta:
-        model = models.Location
-
-    clean_location = clean_location_avoid_geometrycollections
-
 
 class NewsItemForm(forms.ModelForm):
     class Meta:
         model = models.NewsItem
-
-    clean_location = clean_location_avoid_geometrycollections
 
     url = forms.URLField(widget=forms.TextInput(attrs={'size': 80}))

@@ -22,9 +22,13 @@ from django.core import urlresolvers
 from django.db import connection, transaction
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
+from ebpub.utils.geodjango import flatten_geomcollection
+from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.text import slugify
 
 import datetime
+import logging
+logger = logging.getLogger('ebpub.db.models')
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
 import ebpub.monkeypatches
@@ -276,6 +280,7 @@ class Location(models.Model):
     objects = LocationManager()
 
     def clean(self):
+        self.location = ensure_valid(flatten_geomcollection(self.location))
         if self.centroid != self.location.centroid:
             self.centroid = self.location.centroid
 
@@ -650,6 +655,10 @@ class NewsItem(models.Model):
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
 
+
+    def clean(self):
+        self.location = ensure_valid(flatten_geomcollection(self.location))
+
     class Meta:
         ordering = ('title',)
 
@@ -945,3 +954,4 @@ class DataUpdate(models.Model):
 
     def total_time(self):
         return self.update_finish - self.update_start
+

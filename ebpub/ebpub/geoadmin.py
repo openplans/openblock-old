@@ -17,57 +17,50 @@
 #
 
 """
-Admin UI classes and Widgets with maps customized for OpenBlock.
+Admin UI classes and Widgets with maps customized for OpenBlock,
+based on django-olwidget.
 """
 
+from copy import deepcopy
 from django.conf import settings
+from django.contrib.gis.forms import GeometryField
 from django.template.loader import render_to_string
 from django.utils import simplejson
+from ebpub.utils.geodjango import flatten_geomcollection
 from olwidget import utils
 from olwidget.admin import GeoModelAdmin
+from olwidget.fields import MapField, EditableLayerField
 from olwidget.widgets import Map
 
 
-"""
-See http://docs.djangoproject.com/en/dev/ref/contrib/gis/admin/
-"""
+import logging
 
+logger = logging.getLogger('ebpub.geoadmin')
 
-class OSMModelAdmin(GeoModelAdmin):
-    options = {
-        'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
-        'default_lon': settings.DEFAULT_MAP_CENTER_LON,
-        'default_zoom': settings.DEFAULT_MAP_ZOOM,
-        'zoom_to_data_extent': True,
-        'layers': ['google.streets', 'osm.mapnik', 'osm.osmarender'],
-        'controls': ['LayerSwitcher', 'Navigation', 'PanZoom', 'Attribution'],
+# Base options for olwidget, used by maps in the admin UI.
+# TODO: olwidget already checks for OLWIDGET_DEFAULT_OPTIONS in settings,
+# so this should move to default_settings; but it depends on other
+# settings are probably user-defined.
+OLWIDGET_DEFAULT_OPTIONS = getattr(settings, 'OLWIDGET_DEFAULT_OPTIONS', None) or \
+    {
+    'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
+    'default_lon': settings.DEFAULT_MAP_CENTER_LON,
+    'default_zoom': settings.DEFAULT_MAP_ZOOM,
+    'zoom_to_data_extent': True,
+    'layers': ['google.streets', 'osm.mapnik', 'osm.osmarender',
+               'cloudmade.36041'],
+    # TODO: We don't really want LayerSwitcher on all maps, just
+    # on one map that saves the chosen layer in some config somewhere.
+    'controls': ['LayerSwitcher', 'Navigation', 'PanZoom', 'Attribution'],
 
-        # These are necessary to keep our default OSM WMS layer happy.
-        'map_options': {'max_resolution': 156543.03390625,
-                        'num_zoom_levels': 19},
-        }
-
-    def get_form(self, *args, **kwargs):
-        """
-        Override GeoModelAdmin.get_form(), which sets up the olwidget
-        map widgets, to use our own tweaked widget.
-
-        Unfortunately, given that these fields have their widgets
-        replaced somewhat sneakily by olwidget, there's not a better
-        hook that I see for getting a custom Widget class in there.
-        """
-        form = GeoModelAdmin.get_form(self, *args, **kwargs)
-        fields = form.base_fields
-        for key, field in fields.items():
-            if isinstance(field.widget, Map):
-                print "SWAPPING IT: %r" % key
-                field.widget = OBMapWidget(vector_layers=field.widget.vector_layers,
-                                           options=field.widget.options,
-                                           template=field.widget.template,
-                                           layer_names=field.widget.layer_names
-                                           )
-
-        return form
+    # Defaults for generic GeometryFields.
+    'geometry': ['point', 'linestring', 'polygon'],
+    'isCollection': True,
+    # These are necessary to keep our default OSM WMS layer happy.
+    'map_options': {'max_resolution': 156543.03390625,
+                    'num_zoom_levels': 19,
+                    },
+    }
 
 
 class OBMapWidget(Map):
@@ -113,7 +106,69 @@ class OBMapWidget(Map):
             'map_opts': simplejson.dumps(utils.translate_options(self.options)),
         }
         ##### OpenBlock customizations start here ############
-        context.update(getattr(settings, 'EXTRA_OLWIDGET_CONTEXT', {}))
+        context.update(_get_olwidget_extra_context())
         ##### End of OpenBlock customizations ############
         return render_to_string(self.template, context)
 
+
+def _get_olwidget_extra_context():
+    raw = getattr(settings, 'EXTRA_OLWIDGET_CONTEXT', {})
+    context = {}
+    for key, val in raw.items():
+        context[key] = simplejson.dumps(val)
+    return context
+
+class OBMapField(MapField, GeometryField):
+    """
+    A FormField just like olwidget's MapField but the default widget
+    is OBMapWidget, with our default options.
+    """
+
+    def __init__(self, fields=None, options=None, layer_names=None,
+                 template=None, **kwargs):
+        merged_options = deepcopy(OLWIDGET_DEFAULT_OPTIONS)
+        if options:
+            merged_options.update(options)
+        if not fields:
+            fields = [EditableLayerField(required=kwargs.get('required'))]
+        layers = [field.widget for field in fields]
+        self.fields = fields
+        kwargs['widget'] = kwargs.get(
+            'widget',
+            OBMapWidget(layers, merged_options, template, layer_names))
+        super(OBMapField, self).__init__(fields=fields, options=merged_options,
+                                         layer_names=layer_names,
+                                         template=template, **kwargs)
+
+    def clean(self, value):
+        """
+        Return an array with the value from each layer.
+        """
+        # This is rather awkward: MapField expects to get / return a
+        # list, but it doesn't convert strings to geometry objects (it
+        # doesn't inherit from GeometryField, I don't know why).
+
+        # Meanwhile, GeometryField.clean() does do string -> geometry
+        # conversion, but *it* expects to get a single string value.
+        # So, we explicitly call both.
+
+        # There's some metaclass voodoo in GeoModelAdmin that patches
+        # up existing GeometryField instances with clobbered widgets
+        # so everything works, but that only happens if the existing
+        # widgets aren't already MapFields ... which ours are.
+        locations = MapField.clean(self, value)
+        if not isinstance(locations, list):
+            locations = [locations]
+        locations = [GeometryField.clean(self, loc) for loc in locations]
+        # Fix GeometryCollections, bug #95.
+        locations = [flatten_geomcollection(loc) if loc else None
+                     for loc in locations]
+        return locations
+
+
+class OSMModelAdmin(GeoModelAdmin):
+
+    options = deepcopy(OLWIDGET_DEFAULT_OPTIONS)
+
+    # This relies on a hack in our forked version of olwidget.
+    default_field_class = OBMapField
