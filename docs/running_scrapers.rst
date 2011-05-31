@@ -27,7 +27,9 @@ the one for obdemo.
 
 First, we need a function that imports and runs one of our scrapers,
 just once.  Let's use the one from ``obdemo`` that creates
-"Events". Our function can look like::
+"Events". Our function can look like:
+
+.. code-block:: python
 
   def do_events():
       from obdemo.scrapers.add_events import main
@@ -43,7 +45,9 @@ run.  We'll use another function for that; let's call it a "time
 callback". The time callback takes one argument - a Python `datetime
 <http://docs.python.org/library/datetime.html#datetime-objects>`_ -
 and returns ``True`` if we should run our scraper now, and ``False`` otherwise.
-Here's one that runs every ten minutes::
+Here's one that runs every ten minutes:
+
+.. code-block:: python
 
   def every_ten_minutes(datetime):
       if datetime.minute % 10 == 0:
@@ -81,7 +85,9 @@ variable by that name.  This looks like::
 
 
 
-Putting it all together, we get this complete config file::
+Putting it all together, we get this complete config file:
+
+.. code-block:: python
 
   from ebdata.retrieval.updaterdaemon.config import multiple_hourly
 
@@ -105,27 +111,35 @@ Putting it all together, we get this complete config file::
 Testing the daemon
 ===================
 
-Give it a try::
+Give it a try:
 
-  python ebdata/ebdata/retrieval/updaterdaemon/runner.py --config=/path/to/config.py  start
+.. code-block:: bash
+
+  $ python ebdata/ebdata/retrieval/updaterdaemon/runner.py --config=/path/to/config.py  start
 
 If it works, nothing obvious should happen :) It's running in the
 background.  You shouldn't expect anything to happen until the next
 multiple of 10 minutes.  When it's time, check the log file to see if
-anything's happening::
+anything's happening:
 
-  tail -f /tmp/updaterdaemon.log
+.. code-block:: bash
+
+  $ tail -f /tmp/updaterdaemon.log
 
 (Hit Ctrl-C to get out of that.)
 
 
-If there's nothing in the main log, check the error log::
+If there's nothing in the main log, check the error log:
 
-  less /tmp/updaterdaemon.err
+.. code-block:: bash
 
-To stop the daemon, do this::
+  $ less /tmp/updaterdaemon.err
 
-  python ebdata/ebdata/retrieval/updaterdaemon/runner.py stop
+To stop the daemon, do this:
+
+.. code-block:: bash
+
+  $ python ebdata/ebdata/retrieval/updaterdaemon/runner.py stop
 
 
 Installing the init script
@@ -152,9 +166,11 @@ the daemon.
 You might also want to set ``LOGFILE`` and ``ERRLOGFILE`` to control
 where the logs go.
 
-Now try running the script as root::
+Now try running the script as root:
 
-  sudo /etc/init.d/openblock-updaterdaemon start
+.. code-block:: bash
+
+  $ sudo /etc/init.d/openblock-updaterdaemon start
 
 Check the log files to make sure it's working.
 

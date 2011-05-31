@@ -27,7 +27,7 @@ Generally, you need:
 * python 2.6  (2.7 might work; 2.5 is too old)
 * Postgresql 8.3, 8.4, or 9.0
 * PostGIS 1.4 or 1.5
-* lxml, sometimes called python-lxml (OR libxml2 and libxslt)
+* libxml2 and libxslt
 * libgdal
 * git
 * subversion
@@ -42,19 +42,22 @@ Optionally, it may be helpful to install prebuilt packages for the following if 
 
 `GeoDjango's platform-specific instructions
 <http://docs.djangoproject.com/en/1.2/ref/contrib/gis/install/#platform-specific-instructions>`_
-may have some useful information as well as the majority of the requirements are just those of GeoDjango + PostGIS
+may have some useful information as well, as the majority of the requirements are just those of GeoDjango + PostGIS.
 
 
 Don't forget ldconfig!
 ----------------------
 
-Typically after installing libraries, you will need to run this command::
+Typically after installing libraries, you will need to run this command:
+
+.. code-block:: bash
 
   $ sudo ldconfig
 
 ... in order for new libraries to be found while building software.
 
 
+.. index:: database, postgis, postgresql
 .. _database_installation:
 
 Database Setup
@@ -86,8 +89,10 @@ Database Access Settings
 
 The following instructions (and the default settings) assume that there is 
 an ``openblock`` database user which can create a database for use with openblock.  
-You can create an openblock user by running::
-    
+You can create an openblock user by running:
+
+.. code-block:: bash
+
     $ sudo -u postgres createuser --createdb openblock
 
 Depending on your database security setup, you may need to adjust the instructions, settings of postgres and/or settings of openblock.
@@ -95,7 +100,9 @@ Depending on your database security setup, you may need to adjust the instructio
 Postgres administration is beyond the scope of these instructions, but as a quickstart, you can disable postgres security for local users by changing the the ``pg_hba.conf`` file under ``etc`` (the precise location varies, but for postgresql
 8.4 on Ubuntu it's ``/etc/postgresql/8.4/main/pg_hba.conf``), comment
 out any line that starts with ``local all``, and add a line like
-this::
+this:
+
+.. code-block:: text
 
  local   all    all  trust
 
@@ -106,7 +113,9 @@ See `Postgres pg_hba.conf documentation <http://developer.postgresql.org/pgdocs/
 Testing Database Access
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If the ``openblock`` user is configured correctly, you should be able to execute::
+If the ``openblock`` user is configured correctly, you should be able to execute:
+
+.. code-block:: bash
 
     $ createdb -U openblock test_ob_access
     $ dropdb -U openblock test_ob_access

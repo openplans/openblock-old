@@ -25,7 +25,7 @@ Installation
 
 First make sure you have the :ref:`requirements` installed.
 
-Next make sure you have :ref:`installed and configured PostGIS <postgis_localhost>`
+Next make sure you have :ref:`installed and configured PostGIS <database_installation>`
 on the same system (our installer script doesn't support putting
 postgis on a remote host, nor can it modify the postgres config file
 for you.)
@@ -33,7 +33,9 @@ for you.)
 (You can skip the rest of the :doc:`setup` document; everything else
 you need will be done automatically by the install scripts.)
 
-Now get the OpenBlock code::
+Now get the OpenBlock code:
+
+.. code-block:: bash
 
  $ mkdir openblock
  $ cd openblock
@@ -41,7 +43,9 @@ Now get the OpenBlock code::
  $ git clone git://github.com/openplans/openblock.git src/openblock
 
 The obdemo package contains a shell script that builds the rest of the
-system and loads demonstration data (for Boston, MA) into the system::
+system and loads demonstration data (for Boston, MA) into the system:
+
+.. code-block:: bash
 
  $ src/openblock/obdemo/bin/bootstrap_demo.sh
 
@@ -50,7 +54,9 @@ If it finishes successfully, you should see a message like::
 
  Demo bootstrap succeeded!
 
-Now you can start the server::
+Now you can start the server:
+
+.. code-block:: bash
 
  $ export DJANGO_SETTINGS_MODULE=obdemo.settings
  $ django-admin.py runserver
@@ -75,7 +81,9 @@ re-running ``bootstrap_demo.sh``.
 Anytime you re-run ``bootstrap_demo.sh``, eg. if
 you've got your system so broken that you want to start from scratch,
 you may consider wiping out your existing database by giving the ``-r``
-option::
+option:
+
+.. code-block:: bash
 
  $ src/openblock/obdemo/bin/bootstrap_demo.sh -r  # DANGEROUS!
 

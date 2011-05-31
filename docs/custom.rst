@@ -64,7 +64,10 @@ initialize your database.  If you haven't changed the default
 database settings, and if you've followed the :ref:`template_setup`
 instructions, then the database creation command would simply be::
 
-    $ createdb -U openblock -T template_postgis openblock_myblock
+    $ sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock
+
+Now initialize your database tables::
+
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py syncdb --migrate
 
@@ -73,10 +76,6 @@ openblock depends on including stored procedures, and some default
 :doc:`Schemas <schemas>` that you can try out, modify, and delete as
 needed.)
 
-To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
-
-    $ django-admin.py createsuperuser
-    ...
 
 Starting the Test Server
 ------------------------
@@ -88,7 +87,9 @@ Run django's test server using your project's settings and visit http://127.0.0.
     ...
     Development server is running at http://127.0.0.1:8000/
 
-You can now log into your OpenBlock instance and visit the administrative site at http://127.0.0.1:8000/admin/
+You can now visit http://127.0.0.1:8000/ in your Web browser to see
+the site in action (with no data). You can log in to view the
+administrative site at http://127.0.0.1:8000/admin/ .
 
 
 Loading Data: Things You Will Need

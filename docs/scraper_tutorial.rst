@@ -52,8 +52,9 @@ populated with that data, and save the NewsItems.  The grunt work is
 in extracting and massaging the data you need.
 
 Here's an example. This script uses feedparser to fetch an RSS feed
-from boston.com and creates a NewsItem for each entry::
+from boston.com and creates a NewsItem for each entry:
 
+.. code-block:: python
 
     #!/usr/bin/env python
 
@@ -146,7 +147,9 @@ simplified version of the ``obdemo/scrapers/bpdnews_retrieval.py``
 script.  It uses a Schema that's loaded when bootstrapping obdemo.
 
 Since this feed doesn't provide locations, we'll use ebdata's code for
-address extraction and ebpub's geocoder::
+address extraction and ebpub's geocoder:
+
+.. code-block:: python
 
     from ebdata.nlp.addresses import parse_addresses
     from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
@@ -309,7 +312,9 @@ ebdata.blobs.
 We haven't done one of these yet.
 
 Some examples you can peruse from the everyblock package (note that we
-lack Schemas for any of these)::
+lack Schemas for any of these):
+
+.. code-block:: text
 
   everyblock/cities/sf/zoning/new_retrieval.py
   everyblock/cities/boston/city_press_releases/retrieval.py

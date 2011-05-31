@@ -19,7 +19,9 @@ First, follow **all** the instructions in the :doc:`setup` document and :doc:`ba
 
 If you followed the :doc:`base_install` instructions properly,
 you've already got a virtualenv ready.  Go into it and activate it,
-if you haven't yet::
+if you haven't yet:
+
+.. code-block:: bash
 
   $ cd path/to/your/virtualenv
   $ source bin/activate
@@ -31,7 +33,9 @@ if you haven't yet::
 Installing Python packages
 --------------------------
 
-install the demo package ``obdemo``::
+install the demo package ``obdemo``:
+
+.. code-block:: bash
 
   $ cd $VIRTUAL_ENV/src/openblock
   $ pip install -r obdemo/requirements.txt -e obdemo
@@ -47,7 +51,9 @@ you should look at.
 
 
 obdemo doesn't come with a settings.py; it comes with a
-``settings.py.in`` template that you can copy and edit::
+``settings.py.in`` template that you can copy and edit:
+
+.. code-block:: bash
 
     $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
     $ cp settings.py.in settings.py
@@ -67,29 +73,40 @@ You'll also want to think about :ref:`base_layer_configs`.
 Database Initialization
 -----------------------
 
-Create the (empty) database, and a postgres user for it, with these commands::
+Create the (empty) database, and a postgres user for it, with these commands:
+
+.. code-block:: bash
 
     $ sudo -u postgres createdb -U openblock --template template_postgis openblock
 
-Now initialize your database tables::
+Now initialize your database tables:
+
+.. code-block:: bash
 
     $ export DJANGO_SETTINGS_MODULE=obdemo.settings
     $ django-admin.py syncdb --migrate
 
-
-This will also bootstrap the :doc:`Schemas (types of news items) <schemas>`
-used by the demo.
+(The --migrate option is important; it loads some initial data that
+openblock depends on including stored procedures, and some default
+:doc:`Schemas <schemas>` that you can try out, modify, and delete as
+needed.)
 
 
 Starting the Test Server
 ------------------------
 
-Run these commands to start the test server::
+Run these commands to start the test server:
+
+.. code-block:: bash
 
   $ export DJANGO_SETTINGS_MODULE=obdemo.settings
   $ django-admin.py runserver
+    ...
+    Development server is running at http://127.0.0.1:8000/
 
-then visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)
+You can now visit http://127.0.0.1:8000/ in your Web browser to see
+the site in action (with no data). You can log in to view the
+administrative site at http://127.0.0.1:8000/admin/ .
 
 .. _demodata:
 
@@ -104,18 +121,24 @@ use to start with if you don't have all of your local data on hand yet.
 Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
 (If you are loading the data into a different project, set this
 variable accordingly -- e.g. ``myblock.settings`` instead of
-``obdemo.settings``)::
+``obdemo.settings``):
+
+.. code-block:: bash
 
   $ export DJANGO_SETTINGS_MODULE=obdemo.settings
 
-First you'll want to load Boston geographies. This will take several minutes::
+First you'll want to load Boston geographies. This will take several minutes:
+
+.. code-block:: bash
 
   $ cd src/openblock
   $ obdemo/bin/import_boston_zips.sh
   $ obdemo/bin/import_boston_hoods.sh
   $ obdemo/bin/import_boston_blocks.sh
 
-Then fetch some news from the web, this will take several minutes::
+Then fetch some news from the web, this will take several minutes:
+
+.. code-block:: bash
 
   $ obdemo/bin/import_boston_news.sh
 

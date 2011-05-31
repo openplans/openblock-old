@@ -17,7 +17,9 @@ Installing the easy way
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 It's easiest to install your platform's package for lxml globally, if
-it has one. For example, on ubuntu::
+it has one. For example, on ubuntu:
+
+.. code-block:: bash
 
     $ sudo apt-get install python-lxml
 
@@ -32,7 +34,9 @@ The slightly harder way
 If your platform doesn't have a ready-made lxml package, or if you
 prefer to build your own, you'll need the libxml2 and libxslt
 development libraries, and then install lxml yourself.  For example, on ubuntu
-you can do::
+you can do:
+
+.. code-block:: bash
 
     $ sudo apt-get install libxml2 libxml2-dev libxslt libxslt-dev
     $ sudo ldconfig
@@ -51,7 +55,9 @@ docs.
 
 The easiest thing to do is check if your operating system already
 provides a ready-made python GDAL package. For example, on Ubuntu,
-this will work::
+this will work:
+
+.. code-block:: bash
 
    $ sudo apt-get install python-gdal
 
@@ -70,18 +76,24 @@ about which version you install, and in some cases it may not install
 properly without a few extra arguments.
 
 First, get the GDAL development library. On Ubuntu,
-this can be installed like::
+this can be installed like:
+
+.. code-block:: bash
 
    $ sudo apt-get install libgdal libdal1-dev
    $ sudo ldconfig
 
-Next, make sure you are in your openblock environment and it is activated::
-    
+Next, make sure you are in your openblock environment and it is activated:
+
+.. code-block:: bash
+
     $ cd <path_to_openblock>
     $ source bin/activate
 
 Next, determine which version of the Python GDAL package you need. Try
-this command::
+this command:
+
+.. code-block:: bash
 
    $ gdal-config --version
 
@@ -92,16 +104,22 @@ package version number needs to match the first two digits.  So if
 of Python GDAL that's at least 1.6.0, but less than 1.7.  Or if
 gdal-config tells you that you have 1.7.0, then you would need version
 1.7.something of the  Python GDAL package.  You get the idea. You can use
-``pip`` to find an appropriate version, like this::
+``pip`` to find an appropriate version, like this:
+
+.. code-block:: bash
 
    $ pip install --no-install "GDAL>=1.6,<1.7a"  # adjust version as needed
 
-Next, remove the bogus setup.cfg file, if any::
+Next, remove the bogus setup.cfg file, if any:
+
+.. code-block:: bash
 
    $ rm -f $VIRTUAL_ENV/build/GDAL/setup.cfg
 
 Build the python package with some extra options, determined as
-described below::
+described below:
+
+.. code-block:: bash
 
     $ cd $VIRTUAL_ENV/build/GDAL
     $ python setup.py build_ext --gdal-config=gdal-config \

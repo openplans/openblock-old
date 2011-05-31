@@ -10,13 +10,17 @@ Creating a virtualenv
 
 Create a "`virtualenv <http://pypi.python.org/pypi/virtualenv>`_" that will contain 
 the OpenBlock software and its python dependencies.  (You probably do *not* want to 
-do this as root or with sudo)::
+do this as root or with sudo):
+
+.. code-block:: bash
 
     $ virtualenv openblock
     $ cd openblock
 
 "Activate" your virtualenv - this makes sure that all python commands
-will use your new virtual environment::
+will use your new virtual environment:
+
+.. code-block:: bash
 
     $ source bin/activate
 
@@ -27,7 +31,9 @@ right directory.
 We'll be using ``pip`` to install some software, so make sure it's
 installed. Recent versions of virtualenv do this for you, but virtualenv 
 < 1.4.1 does not, so we need to make sure.  We also recommend that you 
-ensure that the latest version of distribute is installed::
+ensure that the latest version of distribute is installed:
+
+.. code-block:: bash
 
     $ easy_install pip
     $ hash -r
@@ -41,14 +47,18 @@ version conflicts, permission failures, etc.
 Installing OpenBlock Packages
 =============================
 
-Download the openblock software::
+Download the openblock software:
+
+.. code-block:: bash
 
    $ cd $VIRTUAL_ENV
    $ mkdir -p src/
    $ git clone git://github.com/openplans/openblock.git src/openblock
 
 ``Pip`` can install OpenBlock and the rest of our Python dependencies with a few
-commands::
+commands:
+
+.. code-block:: bash
 
   $ cd $VIRTUAL_ENV/src/openblock
   $ pip install -r ebpub/requirements.txt -e ebpub
