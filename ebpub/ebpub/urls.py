@@ -26,10 +26,13 @@ from ebpub.metros.allmetros import get_metro
 
 
 if settings.DEBUG:
+    # This stuff can probably go away if/when we switch to Django 1.3,
+    # not sure yet how that interacts with django-static.
     import olwidget
     import os
     olwidget_media_path=os.path.join(
-        os.path.abspath(os.path.dirname(olwidget.__file__)), 'media')
+        os.path.abspath(os.path.dirname(olwidget.__file__)), 'static')
+
     urlpatterns = patterns('',
         (r'^(?P<path>(?:olwidget).*)$',
          'django.views.static.serve', {'document_root': olwidget_media_path}),
