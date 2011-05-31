@@ -13,4 +13,12 @@
           extra_layers[i].params, extra_layers[i].options));
     };
     olwidget_map_{{id}}.initCenter();
+
+    // Open up the editing control by default.
+    for (var i = 0; i < olwidget_map_{{id}}.controls.length; i++) {
+        if (olwidget_map_{{id}}.controls[i] && olwidget_map_{{id}}.controls[i].CLASS_NAME == "olwidget.EditableLayerSwitcher") {
+           olwidget_map_{{id}}.controls[i].setEditing(olwidget_map_{{id}}.vectorLayers[0]);
+           break;
+        }
+    }
 </script>
