@@ -255,6 +255,9 @@ EXTRA_OLWIDGET_CONTEXT = {
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
 DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 
+# Django 1.3's staticfiles app ... we use django-static instead,
+# but olwidget needs this set:
+STATIC_URL='/'
 
 # Geocoding.
 # Set this True to cache geocoder results in the database;
@@ -284,7 +287,7 @@ with _lock:
             for handler in logging.getLogger().handlers:
                 handler.setLevel(logging.INFO)
         # need to import this first so it doesn't wipe the level we set...
-        from south import logger
+        import south.logger
         logging.getLogger('south').setLevel(logging.INFO)
 
 __doc__ = __doc__ % required_settings
