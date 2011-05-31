@@ -9,7 +9,6 @@ GDAL
 django-static==1.4.0
 # 2.2 is minimum version that has extensions.ISOLATION_LEVEL_AUTOCOMMIT
 psycopg2>=2.2,<2.3
-pyyaml>=3
 slimmer>=0.1.30
 mock>=0.7.1
 South>=0.7.3
