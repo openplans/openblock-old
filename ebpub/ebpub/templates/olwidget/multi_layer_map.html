@@ -6,7 +6,7 @@
         ], 
         {{ map_opts|safe }}
     );
-    var extra_layers = {{ extra_base_layers|safe }};
+    var extra_layers = {{ extra_base_layers|default:"[]"|safe }};
     for (var i=0, len=extra_layers.length; i < len; ++i) {
        olwidget_map_{{id}}.addLayer(new OpenLayers.Layer[extra_layers[i].class] (
           extra_layers[i].name, extra_layers[i].url,
