@@ -177,13 +177,23 @@ class GeoReportV2Scraper(object):
 
         ni.attributes['service_request_id'] = service_request_id
 
-        # varchar / text fields
+        # varchar fields
         for fieldname in ('request_id', 'service_code', 'address_id',
                           'media_url', 'status_notes', 'service_notice'):
+            val = self._get_request_field(sreq, fieldname)
+            if val != '':
+                if len(val) < 4096:
+                    ni.attributes[fieldname] = val
+                else: 
+                    log.warning("truncating value for %s (%s)" % (fieldname, val))
+                    ni.attributes[fieldname] = val[0:4096]
 
+        # text fields
+        for fieldname in ('service_notice'):
             val = self._get_request_field(sreq, fieldname)
             if val != '':
                 ni.attributes[fieldname] = val
+
         
         # datetime fields
         for fieldname in ('expected_datetime', 'requested_datetime'):

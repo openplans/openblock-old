@@ -45,7 +45,9 @@ Any WMS Server
 If you have access to any other
 `Web Map Service <http://en.wikipedia.org/wiki/Web_Map_Service>`_
 server that would be suitable for your site, you can use it by doing
-this in your ``settings.py``::
+this in your ``settings.py``:
+
+.. code-block:: python
 
   MAP_BASELAYER_TYPE='wms'
   WMS_URL="http://example.com/wms"  # insert the real URL here
@@ -62,7 +64,9 @@ If your intended usage on your website meets Google's
 if you have a Premier account, you may be able to use Google Maps for
 your base layer.
 
-You'll need this in your settings.py::
+You'll need this in your settings.py:
+
+.. code-block:: python
 
   MAP_BASELAYER_TYPE='google'
   GOOGLE_MAPS_KEY='your API key goes here'
@@ -71,3 +75,13 @@ Other base layers
 -----------------
 
 Patches welcome :)
+
+
+Multiple databases?
+===================
+
+Note that while Django supports using multiple databases for different
+model data, OpenBlock does not. This is because we use `South
+<http://pypi.python.org/pypi/South>`_ to automate :ref:`database
+migrations <migrations>`, and as of this writing South does not work
+properly with a multi-database configuration.

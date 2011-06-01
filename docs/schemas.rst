@@ -36,7 +36,9 @@ like title, date, location etc, we will want to record some custom information w
 * Type of crime (in english)
 * Police code for crime
 
-Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in **misc/examples/crime_report_schema.py**.  This section assumes your application is `myblock`; substitute your own or `obdemo` for the demo application.  Start in the root of your virtual env::
+Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in **misc/examples/crime_report_schema.py**.  This section assumes your application is `myblock`; substitute your own or `obdemo` for the demo application.  Start in the root of your virtual env:
+
+.. code-block:: bash
 
     $ source bin/activate
     $ django-admin.py shell --settings=myblock.settings
@@ -117,15 +119,26 @@ We will create an ebpub.db.models.SchemaField to describe each custom field. Let
 The values of *all* the custom fields for a particular NewsItem will be stored in a single 
 ``ebpub.db.models.Attribute`` object.  The Attribute object has a fixed set of fields
 which can be used for custom attributes.  The fields are named according to their type, 
-and numbered::
+and numbered:
 
- | varcharNN  | 01 - 05 | models.CharField (length 255) |
- | dateNN     | 01 - 05 | models.DateField              | 
- | timeNN     | 01 - 02 | models.TimeField              |
- | datetimeNN | 01 - 04 | models.DateTimeField          |
- | boolNN     | 01 - 05 | models.NullBooleanField       |
- | intNN      | 01 - 07 | models.IntegerField           |
- | textNN     | 01      | models.TextField              |  
+==============  ========  ===============================
+ Names          Possible      Type
+                Numbers
+--------------  --------  -------------------------------
+   varcharNN    01 - 05   models.CharField (length 255)
+--------------  --------  -------------------------------
+   dateNN       01 - 05   models.DateField
+--------------  --------  -------------------------------
+   timeNN       01 - 02   models.TimeField
+--------------  --------  -------------------------------
+   datetimeNN   01 - 04   models.DateTimeField
+--------------  --------  -------------------------------
+   boolNN       01 - 05   models.NullBooleanField
+--------------  --------  -------------------------------
+   intNN        01 - 07   models.IntegerField
+--------------  --------  -------------------------------
+   textNN       01        models.TextField
+==============  ========  ===============================
 
 Each SchemaField will map onto one of the fields of the Attribute class.  We'll map the reporting officer onto the first varchar field `varchar01` by setting the ``real_name`` attribute::
 

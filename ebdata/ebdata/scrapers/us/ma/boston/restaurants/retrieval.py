@@ -119,8 +119,8 @@ class RestaurantScraper(NewsItemListDetailScraper):
         violation_lookups = [self.get_or_create_lookup('violation', v['description'], v['code'], make_text_slug=False) for v in detail_record['violation_list']]
 
         violation_lookup_text = ','.join([str(v.id) for v in violation_lookups])
-        if len(violation_lookup_text) > 255: 
-            violation_lookup_text = violation_lookup_text[0:255]
+        if len(violation_lookup_text) > 4096: 
+            violation_lookup_text = violation_lookup_text[0:4096]
             violation_lookup_text = violation_lookup_text[0:violation_lookup_text.rindex(',')]
             self.logger.error('Restaurant %r had too many violations to store, skipping some!', list_record['restaurant_name'])
 

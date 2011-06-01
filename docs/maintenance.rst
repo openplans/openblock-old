@@ -12,12 +12,16 @@ be updates to Model code which require corresponding changes to your
 existing database.
 
 You can do this with one command (it's prudent to make a database
-backup first)::
+backup first):
+
+.. code-block:: bash
 
     django-admin.py syncdb --migrate
 
 To see what migrations exist and which ones you've already run,
-you can do::
+you can do:
+
+.. code-block:: bash
 
     django-admin.py migrate --list
 

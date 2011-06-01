@@ -1,8 +1,8 @@
-=============
-OpenBlock API
-=============
+==================
+OpenBlock REST API
+==================
 
-Introduction 
+Introduction
 ============
 
 Purpose

@@ -10,22 +10,22 @@ a skeleton app you can edit.
 Setting up the app
 ==================
 
-Begin by :doc:`preparing your system <setup>`, including setting up
-and activating a virtualenv.
 
-Now install the core OpenBlock python packages::
+Basic Setup
+-----------
 
-   $ cd $VIRTUAL_ENV
-   $ mkdir -p src/
-   $ git clone git://github.com/openplans/openblock.git src/openblock
+First, follow **all** the instructions in the :doc:`setup` document and :doc:`base_install`
 
-``Pip`` can install OpenBlock and the rest of our Python dependencies with a few
-commands::
+If you followed the :doc:`base_install` instructions properly,
+you've already got a virtualenv ready.  Go into it and activate it,
+if you haven't yet::
 
-  $ cd $VIRTUAL_ENV/src/openblock
-  $ pip install -r ebpub/requirements.txt -e ebpub
-  $ pip install -r ebdata/requirements.txt -e ebdata
-  $ pip install -r obadmin/requirements.txt -e obadmin
+  $ cd path/to/your/virtualenv
+  $ source bin/activate
+
+
+Create Custom App Package
+-------------------------
 
 Now do the following to create a new OpenBlock project.  **Note**:
 Your project name should be suitable for use as a python module name;
@@ -35,27 +35,39 @@ i.e. no spaces etc.  Here we assume the project name is `myblock`::
     $ paster create -t openblock myblock
 
 After answering a few questions, this will create a bare-bones Django
-project in the folder you
-specified.  Next, install the project into your environment::
+project in the folder you specified.  Next, install the project into 
+your environment::
 
     $ cd myblock
     $ python setup.py develop
     ...
 
+
+Adjust Django Settings
+----------------------
+
 Your django settings are located in settings.py within your project.  You should review these
 and make adjustments based on your setup::
 
-    $ <favorite_editor> myblock/settings.py
+    $ favorite_editor myblock/settings.py
     ...
 
 Read more about :doc:`important settings you can/should customize <configuration>`.
+
+If you plan to use a remote database or have other changes to database connection information, make sure you also change them in the django settings.
+
+Create and Initialize the Database
+----------------------------------
 
 Now, as usual with Django projects, you'll need to create and
 initialize your database.  If you haven't changed the default
 database settings, and if you've followed the :ref:`template_setup`
 instructions, then the database creation command would simply be::
 
-    $ createdb -T template_postgis openblock_myblock
+    $ sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock
+
+Now initialize your database tables::
+
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py syncdb --migrate
 
@@ -64,10 +76,6 @@ openblock depends on including stored procedures, and some default
 :doc:`Schemas <schemas>` that you can try out, modify, and delete as
 needed.)
 
-To create an administrative user, use the standard django createsuperuser command.  This will ask for slightly different information than normal because OpenBlock's user system is based on email::
-
-    $ django-admin.py createsuperuser
-    ...
 
 Starting the Test Server
 ------------------------
@@ -79,7 +87,9 @@ Run django's test server using your project's settings and visit http://127.0.0.
     ...
     Development server is running at http://127.0.0.1:8000/
 
-You can now log into your OpenBlock instance and visit the administrative site at http://127.0.0.1:8000/admin/
+You can now visit http://127.0.0.1:8000/ in your Web browser to see
+the site in action (with no data). You can log in to view the
+administrative site at http://127.0.0.1:8000/admin/ .
 
 
 Loading Data: Things You Will Need

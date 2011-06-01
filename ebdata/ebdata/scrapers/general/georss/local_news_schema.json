@@ -1,0 +1,31 @@
+[
+    {
+    "model": "db.schema",
+    "fields": {
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "date_name_plural": "Dates",
+      "grab_bag": "",
+      "grab_bag_headline": "",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "indefinite_article": "a",
+      "intro": "",
+      "is_public": true,
+      "is_special_report": false,
+      "last_updated": "2000-01-01",
+      "min_date": "2000-01-01",
+      "name": "Local News",
+      "number_in_overview": 5,
+      "plural_name": "Local News",
+      "short_description": "Local News",
+      "short_source": "",
+      "slug": "local-news",
+      "source": "",
+      "summary": "Local News",
+      "update_frequency": "",
+      "uses_attributes_in_list": false
+    }
+  }
+]

@@ -1,0 +1,31 @@
+[
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Events",
+      "last_updated": "2010-10-21",
+      "name": "Event",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "an",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "events",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://calendar.boston.com/",
+      "summary": "Boston Events",
+      "source": "http://calendar.boston.com/",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of events in Boston",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  }
+]

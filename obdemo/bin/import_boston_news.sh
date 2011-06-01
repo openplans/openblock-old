@@ -32,18 +32,21 @@ if [ ! -n "$DJANGO_SETTINGS_MODULE" ]; then
     die "Please set DJANGO_SETTINGS_MODULE to your projects settings module"
 fi
 
-echo Adding latest events and news...
-cd $SOURCE_ROOT/obdemo/obdemo/scrapers
-python add_events.py || die
-python add_news.py || die
+
+cd $SOURCE_ROOT
+
+echo Adding latest news...
+python ./ebdata/ebdata/scrapers/general/georss/retrieval.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=massachusetts&scope=bonzai" || die
 # more feeds from Joel. Local blog news:
-python add_news.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"
+python ./ebdata/ebdata/scrapers/general/georss/retrieval.py "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"
+
+echo Adding latest events... 
+python ./ebdata/ebdata/scrapers/us/ma/boston/events/retrieval.py || die
 
 echo Adding police reports...
-python bpdnews_retrieval.py || die
+python ./ebdata/ebdata/scrapers/us/ma/boston/police_reports/retrieval.py || die
 
 echo Adding building permits...
-cd $SOURCE_ROOT
 python ./ebdata/ebdata/scrapers/us/ma/boston/building_permits/retrieval.py || die
 
 echo Adding GeoReport issues...
