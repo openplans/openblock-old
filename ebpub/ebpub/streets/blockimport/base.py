@@ -19,10 +19,14 @@
 import string
 import sys
 from django.contrib.gis.gdal import DataSource
+from django.core.exceptions import ValidationError
 from ebpub.streets.models import Block
 from ebpub.streets.name_utils import make_pretty_name
 from ebpub.streets.name_utils import make_block_numbers
 from ebpub.utils.text import slugify
+
+import logging
+logger = logging.getLogger('ebpub.streets.blockimport')
 
 class BlockImporter(object):
     def __init__(self, shapefile, layer_id=0, verbose=False, encoding='utf8'):
@@ -97,7 +101,18 @@ class BlockImporter(object):
                         block_fields['right_to_num'])
 
                     block = Block(**block_fields)
-                    block.full_clean()
+                    try:
+                        block.full_clean()
+                    except ValidationError:
+                        # odd bug: sometimes we get ValidationError even when
+                        # the data looks good, and then cleaning again works???
+                        try:
+                            block.full_clean()
+                        except ValidationError, e:
+                            logger.warn("validation error on %s, skipping" % str(block))
+                            logger.warn(e)
+                            continue
+
                     block.save()
                     if parent_id is None:
                         parent_id = block.id

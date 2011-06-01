@@ -406,7 +406,7 @@ class Block(models.Model):
         # We don't attempt to fix left_city and right_city as those are
         # allowed to differ even if one's blank (I think).
         # But you can't have *both* blank.
-        if not self.left_city or self.right_city:
+        if not (self.left_city or self.right_city):
             raise ValidationError("Must provide at least one of left_city, right_city")
 
         # from_num and to_num are always calculated automatically.

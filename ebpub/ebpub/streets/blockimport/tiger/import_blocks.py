@@ -234,8 +234,8 @@ def main(argv=None):
     tiger = TigerImporter(*args, verbose=options.verbose,
                            filter_city=options.city, encoding=options.encoding)
     num_created = tiger.save()
+    print "Created %d blocks" % num_created
     if options.verbose:
-        print "Created %d blocks" % num_created
         print "... from %d feature names" % len(tiger.featnames_db)
         print "feature tlids with blocks: %d" % len(tiger.tlids_with_blocks)
         print

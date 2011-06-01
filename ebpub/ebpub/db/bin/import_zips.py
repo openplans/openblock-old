@@ -23,6 +23,8 @@ from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import MultiPolygon
 from ebpub.db.models import Location, LocationType
 from ebpub.metros.allmetros import get_metro
+from ebpub.utils.geodjango import ensure_valid
+from ebpub.utils.geodjango import flatten_geomcollection
 from optparse import OptionParser
 import os
 import sys
@@ -75,10 +77,8 @@ class ZipImporter(object):
         now = datetime.datetime.now()
         num_created = 0
         for i, (zipcode, geom) in enumerate(sorted_zipcodes):
-            if not geom.valid:
-                geom = geom.buffer(0.0)
-                if not geom.valid:
-                    print >> sys.stderr, 'Warning: invalid geometry for %s' % zipcode
+            geom = ensure_valid(geom, self.location_type.slug)
+            geom = flatten_geomcollection(geom)
             geom.srid = 4326
             zipcode_obj, created = Location.objects.get_or_create(
                 name = zipcode,

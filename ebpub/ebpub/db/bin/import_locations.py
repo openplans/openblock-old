@@ -26,6 +26,8 @@ from django.db import connection
 from ebpub.db.models import Location, LocationType, NewsItem
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.text import slugify
+from ebpub.utils.geodjango import ensure_valid
+from ebpub.utils.geodjango import flatten_geomcollection
 from ebpub.metros.allmetros import get_metro
 
 def populate_ni_loc(location):
@@ -63,10 +65,8 @@ class LocationImporter(object):
 
             name = feature.get(name_field)
             geom = feature.geom.transform(4326, True).geos
-            if not geom.valid:
-                geom = geom.buffer(0.0)
-                if not geom.valid:
-                    print >> sys.stderr, 'Warning: invalid geometry: %s' % name
+            geom = ensure_valid(geom, name)
+            geom = flatten_geomcollection(geom)
             fields = dict(
                 name = name,
                 normalized_name = normalize(name),
