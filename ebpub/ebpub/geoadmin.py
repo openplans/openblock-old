@@ -77,7 +77,7 @@ class OBMapWidget(Map):
             context[key] = simplejson.dumps(val)
         return context
 
-class OBMapField(MapField, GeometryField):
+class OBMapField(MapField):
     """
     A FormField just like olwidget's MapField but the default widget
     is OBMapWidget, with our default options.
@@ -98,31 +98,6 @@ class OBMapField(MapField, GeometryField):
         super(OBMapField, self).__init__(fields=fields, options=merged_options,
                                          layer_names=layer_names,
                                          template=template, **kwargs)
-
-    def clean(self, value):
-        """
-        Return an array with the value from each layer.
-        """
-        # This is rather awkward: MapField expects to get / return a
-        # list, but it doesn't convert strings to geometry objects (it
-        # doesn't inherit from GeometryField, I don't know why).
-
-        # Meanwhile, GeometryField.clean() does do string -> geometry
-        # conversion, but *it* expects to get a single string value.
-        # So, we explicitly call both.
-
-        # There's some metaclass voodoo in GeoModelAdmin that patches
-        # up existing GeometryField instances with clobbered widgets
-        # so everything works, but that only happens if the existing
-        # widgets aren't already MapFields ... which ours are.
-        locations = MapField.clean(self, value)
-        if not isinstance(locations, list):
-            locations = [locations]
-        locations = [GeometryField.clean(self, loc) for loc in locations]
-        # Fix GeometryCollections, bug #95.
-        locations = [flatten_geomcollection(loc) if loc else None
-                     for loc in locations]
-        return locations
 
 
 class OSMModelAdmin(GeoModelAdmin):
