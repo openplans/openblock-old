@@ -64,59 +64,18 @@ OLWIDGET_DEFAULT_OPTIONS = getattr(settings, 'OLWIDGET_DEFAULT_OPTIONS', None) o
 
 
 class OBMapWidget(Map):
-    def render(self, name, value, attrs=None):
-        """Same as olwidget.widgets.Map.render(),
-        except with one extra line to insert a tiny bit of extra
-        context for the template from settings.py.
+    def get_extra_context(self):
         """
-        if value is None:
-            values = [None for i in range(len(self.vector_layers))]
-        elif not isinstance(value, (list, tuple)):
-            values = [value]
-        else:
-            values = value
-        attrs = attrs or {}
-        # Get an arbitrary unique ID if we weren't handed one (e.g. widget used
-        # outside of a form).
-        map_id = attrs.get('id', "id_%s" % id(self))
-
-        layer_js = []
-        layer_html = []
-        layer_names = self._get_layer_names(name)
-        value_count = 0
-        for i, layer in enumerate(self.vector_layers):
-            if layer.editable:
-                value = values[value_count]
-                value_count += 1
-            else:
-                value = None
-            lyr_name = layer_names[i]
-            id_ = "%s_%s" % (map_id, lyr_name)
-            # Use "prepare" rather than "render" to get both js and html
-            (js, html) = layer.prepare(lyr_name, value, attrs={'id': id_ })
-            layer_js.append(js)
-            layer_html.append(html)
-
-        attrs = attrs or {}
-
-        context = {
-            'id': map_id,
-            'layer_js': layer_js,
-            'layer_html': layer_html,
-            'map_opts': simplejson.dumps(utils.translate_options(self.options)),
-        }
-        ##### OpenBlock customizations start here ############
-        context.update(_get_olwidget_extra_context())
-        ##### End of OpenBlock customizations ############
-        return render_to_string(self.template, context)
-
-
-def _get_olwidget_extra_context():
-    raw = getattr(settings, 'EXTRA_OLWIDGET_CONTEXT', {})
-    context = {}
-    for key, val in raw.items():
-        context[key] = simplejson.dumps(val)
-    return context
+        Hook provided by our hacked version of django-olwidget.
+        Stuffs a dict of JSON-encoded values into the template
+        context so we can provide extra data to our customized
+        map template.
+        """
+        raw = getattr(settings, 'EXTRA_OLWIDGET_CONTEXT', {})
+        context = {}
+        for key, val in raw.items():
+            context[key] = simplejson.dumps(val)
+        return context
 
 class OBMapField(MapField, GeometryField):
     """
