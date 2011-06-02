@@ -195,10 +195,10 @@ class Block(models.Model):
         help_text='Zip/postal code on right side of street.')
 
     left_city = models.CharField(
-        max_length=255, db_index=True,
+        max_length=255, db_index=True, blank=True,
         help_text='Name of city, UPPERCASE, on left side of street.')
     right_city = models.CharField(
-        max_length=255, db_index=True,
+        max_length=255, db_index=True, blank=True,
         help_text='Name of city, UPPERCASE, on right side of street.')
 
     left_state = USStateField(
@@ -399,10 +399,17 @@ class Block(models.Model):
         self.left_zip = _first_not_none(self.left_zip, self.right_zip)
         self.right_zip = _first_not_none(self.right_zip, self.left_zip)
 
+        # We don't attempt to fix left_city and right_city as those are
+        # allowed to differ even if one's blank (I think).
+        # But you can't have *both* blank.
+        if not (self.left_city or self.right_city):
+            raise ValidationError("Must provide at least one of left_city, right_city")
+
         # from_num and to_num are always calculated automatically.
         from ebpub.streets.name_utils import make_block_numbers
         self.from_num, self.to_num = make_block_numbers(
             l_from, l_to, r_from, r_to)
+
 
         # TODO: maybe this merits an UppercaseStringField or some such?
         for key in ('left_city', 'right_city',
