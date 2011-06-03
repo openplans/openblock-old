@@ -22,7 +22,7 @@ Sample config file for the updaterdaemon.
 """
 
 import os
-from ebdata.retrieval.updaterdaemon.config import multiple_hourly, daily
+from ebdata.retrieval.updaterdaemon.config import multiple_hourly, multiple_daily
 
 def do_seeclickfix(**kwargs):
     from ebdata.scrapers.general.seeclickfix.seeclickfix_retrieval import SeeClickFixNewsFeedScraper
@@ -49,6 +49,10 @@ def do_news(**kwargs):
 def do_police_reports(**kwargs):
     from ebdata.scrapers.us.ma.boston.police_reports.retrieval import BPDNewsFeedScraper
     return BPDNewsFeedScraper().update()
+
+def do_building_permits(**kwargs):
+    from ebdata.scrapers.us.ma.boston.building_permits.retrieval import PermitScraper
+    return PermitScraper().update()
 
 def do_restaurants(**kwargs):
     from ebdata.scrapers.us.ma.boston.restaurants import retrieval
@@ -79,6 +83,8 @@ TASKS = (
     (multiple_hourly(*range(15, 60, 20)), do_police_reports, {}, env),
 
     (multiple_daily(7, 3), do_restaurants, {}, env),
+
+    # (multiple_daily(5, 19), do_building_permits, {}, env),
 
     (multiple_hourly(*range(9, 60, 7)), do_aggregates, {'verbose': False}, env),
 )
