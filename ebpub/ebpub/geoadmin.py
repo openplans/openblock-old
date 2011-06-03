@@ -23,16 +23,10 @@ based on django-olwidget.
 
 from copy import deepcopy
 from django.conf import settings
-from django.contrib.gis.forms import GeometryField
-from django.template.loader import render_to_string
 from django.utils import simplejson
-from ebpub.utils.geodjango import flatten_geomcollection
-from olwidget import utils
 from olwidget.admin import GeoModelAdmin
 from olwidget.fields import MapField, EditableLayerField
 from olwidget.widgets import Map
-
-
 import logging
 
 logger = logging.getLogger('ebpub.geoadmin')
