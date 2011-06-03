@@ -19,6 +19,7 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
+from django.core.exceptions import ValidationError
 from django.db import connection, transaction
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
@@ -280,7 +281,11 @@ class Location(models.Model):
     objects = LocationManager()
 
     def clean(self):
-        self.location = ensure_valid(flatten_geomcollection(self.location))
+        try:
+            self.location = ensure_valid(flatten_geomcollection(self.location))
+        except ValueError, e:
+            raise ValidationError(str(e))
+
         if self.centroid != self.location.centroid:
             self.centroid = self.location.centroid
 
