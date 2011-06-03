@@ -31,8 +31,8 @@ Setting up Schemas
 First of all, we're going to need a Schema that describes our
 NewsItems.
 
-This is fully documented at :doc:`schemas`.  Our examples will use
-schemas that are bootstrapped by installing :doc:`packages/obdemo`.
+This is fully documented at :doc:`../install/schemas`.  Our examples will use
+schemas that are bootstrapped by installing :doc:`../packages/obdemo`.
 
 
 .. _scraping_hack:

@@ -3,7 +3,7 @@ Creating a Custom Site Based on OpenBlock
 ==========================================
 
 If you want to do something much different than
-:doc:`packages/obdemo`, you're better off starting from scratch with a
+:doc:`../packages/obdemo`, you're better off starting from scratch with a
 custom Django app. We provide a script that will get you started with
 a skeleton app you can edit.
 
@@ -111,7 +111,7 @@ To get anything useful out of your site, at minimum you will need the following:
        See :doc:`schemas` and ebpub docs for :ref:`newsitem-schemas`.
 
     b. Write scraper scripts to retrieve news from your news sources and load
-       it into the database. See the :doc:`scraper_tutorial`, :doc:`packages/ebdata`
+       it into the database. See the :doc:`../main/scraper_tutorial`, :doc:`../packages/ebdata`
        and http://developer.openblockproject.org/wiki/ScraperScripts .
 
  4. Optionally, customize the look and feel of the site.

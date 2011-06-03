@@ -2,7 +2,7 @@
 Creating a Custom NewsItem Schema
 =================================
 
-OpenBlock's :doc:`packages/ebpub` package provides a model for defining NewsItem types (Schemas).  This section provides a brief example of creating a Schema, defining its custom fields and creating a NewsItem with the Schema.  It is assumed for this section that you have installed either :doc:`the demo <setup>` or have created a :doc:`custom application <custom>`.
+OpenBlock's :doc:`../packages/ebpub` package provides a model for defining NewsItem types (Schemas).  This section provides a brief example of creating a Schema, defining its custom fields and creating a NewsItem with the Schema.  It is assumed for this section that you have installed either :doc:`the demo <demo_setup>` or have created a :doc:`custom application <custom>`.
  
 For background and additional detail, see also :ref:`ebpub-schemas` 
 in the ebpub documentation, the code in ebpub.db.models and the 

@@ -86,7 +86,7 @@ scraping, but doesn't actually have any methods for saving data.
 The retrieval package also contains ``updaterdaemon``, which is a cron-like
 facility for running scrapers. It comes with a unix-style init script, and its
 configuration and examples are in ``ebdata/retrieval/updaterdaemon/config.py``.
-More documentation at :doc:`../running_scrapers`.
+More documentation at :doc:`../main/running_scrapers`.
 
 ebdata.templatemaker
 ====================

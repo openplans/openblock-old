@@ -154,4 +154,4 @@ Next Steps
 
 Now that you have the demo running, you might want to add some more
 :doc:`custom content types <schemas>` to it, and write some
-:doc:`scraper scripts <scraper_tutorial>` to populate them.
+:doc:`scraper scripts <../main/scraper_tutorial>` to populate them.

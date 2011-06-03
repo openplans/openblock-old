@@ -51,21 +51,10 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
-   setup
-   base_install
-   common_install_problems
-   demo_setup
-   custom
-   configuration
-   schemas
-   scraper_tutorial
-   running_scrapers
-   api
-   widgets
-   deployment
-   maintenance
+   install/index
+   main/index
    packages/index
 
 
