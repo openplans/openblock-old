@@ -30,8 +30,11 @@ def do_seeclickfix(**kwargs):
 
 def do_georeport(**kwargs):
     url = 'https://mayors24.cityofboston.gov:6443/api/open311/v2/'
-    from ebdata.scrapers.general.open311.georeportv2 import main
-    return main(url)
+    from ebdata.scrapers.general.open311.georeportv2 import GeoReportV2Scraper
+    scraper = GeoReportV2Scraper(api_url=url,
+                                 http_cache='/tmp/georeport_scraper_cache',
+                                 )
+    return scraper.update()
 
 def do_events(**kwargs):
     from obdemo.scrapers.add_events import main

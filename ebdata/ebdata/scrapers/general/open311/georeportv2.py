@@ -7,6 +7,7 @@ from httplib2 import Http
 from lxml import etree
 import datetime
 import pyrfc3339
+import sys
 import time
 import traceback
 import urllib
@@ -227,7 +228,7 @@ class GeoReportV2Scraper(object):
         lo = Lookup.objects.get_or_create_lookup(sf, value, make_text_slug=False)
         return lo.slug
 
-def main(*args):
+def main():
     from optparse import OptionParser
     usage = "usage: %prog [options] <api url>"
     parser = OptionParser(usage=usage)
@@ -255,22 +256,21 @@ def main(*args):
         "--jurisdiction-id", help='jurisdiction identifier to provide to api',
         action='store'
         )
-    import sys
-    args = args or sys.argv[1:]
-    options, args = parser.parse_args(args)
+    options, args = parser.parse_args(sys.argv)
     
-    if len(args) < 1:
+    if len(args) < 2:
         parser.print_usage()
-        sys.exit(0)
+        return 1
     
-    scraper = GeoReportV2Scraper(api_url=args[0], api_key=options.api_key,
+    scraper = GeoReportV2Scraper(api_url=args[1], api_key=options.api_key,
                                  jurisdiction_id=options.jurisdiction_id,
                                  schema_slug=options.schema,
                                  days_prior=options.days_prior,
                                  http_cache=options.http_cache,
                                  html_url_template=options.html_url_template)
     scraper.update()
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
