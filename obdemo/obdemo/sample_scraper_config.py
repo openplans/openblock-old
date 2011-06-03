@@ -29,8 +29,9 @@ def do_seeclickfix(**kwargs):
     return SeeClickFixNewsFeedScraper().update()
 
 def do_georeport(**kwargs):
+    url = 'https://mayors24.cityofboston.gov:6443/api/open311/v2/'
     from ebdata.scrapers.general.open311.georeportv2 import main
-    return main()
+    return main(url)
 
 def do_events(**kwargs):
     from obdemo.scrapers.add_events import main

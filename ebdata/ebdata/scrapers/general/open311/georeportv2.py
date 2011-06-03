@@ -51,7 +51,7 @@ class GeoReportV2Scraper(object):
         self.http = Http(http_cache)
         self.bounds = bounds
         if bounds is None:
-            log.info("Calculating geographic boundaries from the extent in setttings.METRO_LIST")
+            log.info("Calculating geographic boundaries from the extent in settings.METRO_LIST")
             extent = get_metro()['extent']
             self.bounds = Polygon.from_bbox(extent)
         self.html_url_template = html_url_template
@@ -227,7 +227,7 @@ class GeoReportV2Scraper(object):
         lo = Lookup.objects.get_or_create_lookup(sf, value, make_text_slug=False)
         return lo.slug
 
-def main():
+def main(*args):
     from optparse import OptionParser
     usage = "usage: %prog [options] <api url>"
     parser = OptionParser(usage=usage)
@@ -256,13 +256,14 @@ def main():
         action='store'
         )
     import sys
-    options, args = parser.parse_args(sys.argv)
+    args = args or sys.argv[1:]
+    options, args = parser.parse_args(args)
     
-    if len(args) < 2:
+    if len(args) < 1:
         parser.print_usage()
         sys.exit(0)
     
-    scraper = GeoReportV2Scraper(api_url=args[1], api_key=options.api_key,
+    scraper = GeoReportV2Scraper(api_url=args[0], api_key=options.api_key,
                                  jurisdiction_id=options.jurisdiction_id,
                                  schema_slug=options.schema,
                                  days_prior=options.days_prior,
