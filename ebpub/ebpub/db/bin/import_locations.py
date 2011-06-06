@@ -23,6 +23,7 @@ import datetime
 from optparse import OptionParser
 from django.contrib.gis.gdal import DataSource
 from django.db import connection
+from django.db.utils import IntegrityError
 from ebpub.db.models import Location, LocationType, NewsItem
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.text import slugify
@@ -84,7 +85,21 @@ class LocationImporter(object):
         num_created = 0
         for i, loc_fields in enumerate(sorted(locs, key=lambda h: h['name'])):
             kwargs = dict(loc_fields, defaults={'creation_date': self.now, 'last_mod_date': self.now, 'display_order': i})
-            loc, created = Location.objects.get_or_create(**kwargs)
+            try:
+                loc, created = Location.objects.get_or_create(**kwargs)
+            except IntegrityError:
+                # Usually this means two towns with the same slug.
+                # Try to fix that.
+                slug = kwargs['slug']
+                existing = Location.objects.filter(slug=slug).count()
+                if existing:
+                    slug = slugify('%s-%s' % (slug, existing + 1))
+                    if verbose:
+                        print >> sys.stderr, "Munged slug %s to %s to make it unique" % (kwargs['slug'], slug)
+                    kwargs['slug'] = slug
+                    loc, created = Location.objects.get_or_create(**kwargs)
+                else:
+                    raise
             if created:
                 num_created += 1
             if verbose:
@@ -131,15 +146,19 @@ def main():
 
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
-    location_type, _ = LocationType.objects.get_or_create(
-        name = opts.type_name,
-        plural_name = opts.type_name_plural,
-        scope = metro_name,
-        slug = type_slug,
-        is_browsable = True,
-        is_significant = True,
-    )
-
+    try:
+        location_type = LocationType.objects.get(slug = type_slug)
+        if opts.verbose:
+            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % type_slug
+    except LocationType.DoesNotExist:
+        location_type, _ = LocationType.objects.get_or_create(
+            name = opts.type_name,
+            plural_name = opts.type_name_plural,
+            scope = metro_name,
+            slug = type_slug,
+            is_browsable = True,
+            is_significant = True,
+            )
     importer = LocationImporter(layer, location_type)
     num_created = importer.save(name_field=opts.name_field, source=opts.source, verbose=opts.verbose)
     if opts.verbose:
