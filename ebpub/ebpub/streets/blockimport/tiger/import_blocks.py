@@ -21,6 +21,7 @@ import sys
 import optparse
 from django.contrib.gis.gdal import DataSource
 from ebdata.parsing import dbf
+from ebpub.metros.allmetros import get_metro
 from ebpub.streets.blockimport.base import BlockImporter
 
 STATE_FIPS = {
@@ -94,6 +95,12 @@ class TigerImporter(BlockImporter):
     """
     Imports blocks using TIGER/Line data from the US Census.
 
+    If `filter_city` is passed, we will skip features which don't have
+    at least one of left_city or right_city matching the string.
+
+    If `filter_bounds` is passed, it will be treated as a geometry
+    to use for filtering out features outside the geometry.
+
     `edges_shp` contains all the feature edges (i.e. street segment
     geometries); `featnames_dbf` contains metadata
 
@@ -107,7 +114,8 @@ class TigerImporter(BlockImporter):
     http://www.census.gov/geo/www/tiger/tgrshp2008/rel_file_desc_2008.txt
     """
     def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp,
-                 filter_city=None, verbose=False, encoding='utf8'):
+                 filter_city=None, filter_bounds=None,
+                 verbose=False, encoding='utf8'):
         BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
                                verbose=verbose, encoding=encoding)
         self.featnames_db = featnames_db = {}
@@ -138,7 +146,7 @@ class TigerImporter(BlockImporter):
             values = dict(zip(fields, map(feature.get, fields)))
             places[fips] = values
         self.filter_city = filter_city and filter_city.upper() or None
-
+        self.filter_bounds = filter_bounds
         self.tlids_with_blocks = set()
 
 
@@ -182,16 +190,33 @@ class TigerImporter(BlockImporter):
             return ''
 
     def skip_feature(self, feature):
+        if self.filter_bounds:
+            if not feature.geom.intersects(self.filter_bounds):
+                if self.verbose:
+                    print >> sys.stderr, "Skipping %s, out of bounds" % feature
+                return True
+
         if self.filter_city:
             in_city = False
             for side in ('R', 'L'):
                 if self._get_city(feature, side).upper() == self.filter_city:
                     in_city = True
             if not in_city:
+                if self.verbose:
+                    print >> sys.stderr, "Skipping %s, out of city" % feature
                 return True
-        return not feature.get('MTFCC') in VALID_MTFCC or not \
-               ((feature.get('RFROMADD') and feature.get('RTOADD')) or \
-                (feature.get('LFROMADD') and feature.get('LTOADD')))
+
+            if not feature.get('MTFCC') in VALID_MTFCC:
+                if self.verbose:
+                    print >> sys.stderr, "Skipping %s, not a valid feature type"
+                return True
+            if not (
+                ((feature.get('RFROMADD') and feature.get('RTOADD')) or
+                (feature.get('LFROMADD') and feature.get('LTOADD')))):
+                if self.verbose:
+                    print >> sys.stderr, "Skipping %s, not enough address info" % feature
+                return True
+        return False
 
     def gen_blocks(self, feature):
         block_fields = {}
@@ -225,14 +250,25 @@ def main(argv=None):
     parser = optparse.OptionParser(usage='%prog edges.shp featnames.dbf faces.dbf place.shp')
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', default=False)
     parser.add_option('-c', '--city', dest='city', help='A city name to filter against')
+    parser.add_option('-b', '--filter-bounds', action="store_true", default=True,
+                      help='Whether to skip blocks outside the metro extent from your '
+                      'settings.py. Default True.')
     parser.add_option('-e', '--encoding', dest='encoding',
                       help='Encoding to use when reading the shapefile',
                       default='utf8')
     (options, args) = parser.parse_args(argv)
     if len(args) != 4:
         return parser.error('must provide 4 arguments, see usage')
+
+    from django.contrib.gis.geos import Polygon
+    if options.filter_bounds:
+        filter_bounds = Polygon.from_bbox(get_metro()['extent']).ogr
+    else:
+        filter_bounds = None
     tiger = TigerImporter(*args, verbose=options.verbose,
-                           filter_city=options.city, encoding=options.encoding)
+                           filter_city=options.city, 
+                           filter_bounds=filter_bounds,
+                           encoding=options.encoding)
     num_created = tiger.save()
     print "Created %d blocks" % num_created
     if options.verbose:
