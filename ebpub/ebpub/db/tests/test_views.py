@@ -383,7 +383,7 @@ class TestSchemaFilterView(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_filter__by_location__unknown(self):
+    def test_filter__by_location__not_found(self):
         url = filter_reverse('crime', [('locations', 'anything')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
