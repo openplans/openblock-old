@@ -23,20 +23,14 @@ from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import MultiPolygon
 from ebpub.db.models import Location, LocationType
 from ebpub.metros.allmetros import get_metro
-from optparse import OptionParser
+from ebpub.db.bin import import_locations
 import os
 import sys
 
 
-
-
-class ZipImporter(object):
-    def __init__(self, shapefile, layer_id=0):
-        ds = DataSource(shapefile)
-        self.layer = ds[layer_id]
-        metro = get_metro()
-        self.metro_name = metro['metro_name'].upper()
-        self.location_type, _ = LocationType.objects.get_or_create(
+class ZipImporter(import_locations.LocationImporter):
+    def __init__(self, shapefile, opts):
+        location_type, _ = LocationType.objects.get_or_create(
             name = 'ZIP Code',
             plural_name = 'ZIP Codes',
             scope = 'U.S.A.',
@@ -44,11 +38,17 @@ class ZipImporter(object):
             is_browsable = True,
             is_significant = True,
         )
+        ds = DataSource(shapefile)
+        layer = ds[opts.layer_id]
+        super(ZipImporter, self).__init__(layer, location_type, opts)
 
-    def save(self, name_field, source, verbose=False):
+    def save(self):
         # The ESRI ZIP Code layer breaks ZIP Codes up along county
         # boundaries, so we need to collapse them first before
         # proceeding
+        verbose = self.opts.verbose
+        name_field = self.opts.name_field
+        source = self.opts.source
         zipcodes = {}
         for feature in self.layer:
             zipcode = feature.get(name_field)
@@ -80,7 +80,7 @@ class ZipImporter(object):
                 if not geom.valid:
                     print >> sys.stderr, 'Warning: invalid geometry for %s' % zipcode
             geom.srid = 4326
-            zipcode_obj, created = Location.objects.get_or_create(
+            kwargs = dict(
                 name = zipcode,
                 normalized_name = zipcode,
                 slug = zipcode,
@@ -95,6 +95,9 @@ class ZipImporter(object):
                 creation_date = now,
                 last_mod_date = now,
             )
+            if not self.should_create_location(kwargs):
+                continue
+            zipcode_obj, created = Location.objects.get_or_create(**kwargs)
             if created:
                 num_created += 1
             if verbose:
@@ -102,17 +105,16 @@ class ZipImporter(object):
         return num_created
 
 usage = 'usage: %prog [options] /path/to/shapefile'
-optparser = OptionParser(usage=usage)
+
+optparser = import_locations.optparser
 
 def parse_args(argv=None):
     if argv is None:
         argv = sys.argv[1:]
-
-    optparser.add_option('-n', '--name-field', dest='name_field', default='ZCTA5CE', help='field that contains the zipcode\'s name')
-    optparser.add_option('-i', '--layer-index', dest='layer_id', default=0, help='index of layer in shapefile')
-    optparser.add_option('-s', '--source', dest='source', default='UNKNOWN', help='source metadata of the shapefile')
-    optparser.add_option('-v', '--verbose', dest='verbose', action='store_true', default=False, help='be verbose')
-
+    optparser.set_usage(usage)
+    optparser.remove_option('-n')
+    optparser.add_option('-n', '--name-field', dest='name_field', default='ZCTA5CE',
+                         help='field that contains the zipcode\'s name')
     return optparser.parse_args(argv)
 
 def main():
@@ -122,8 +124,8 @@ def main():
     shapefile = args[0]
     if not os.path.exists(shapefile):
         optparser.error('file does not exist')
-    importer = ZipImporter(shapefile, layer_id=opts.layer_id)
-    num_created = importer.save(name_field=opts.name_field, source=opts.source, verbose=opts.verbose)
+    importer = ZipImporter(shapefile, opts)
+    num_created = importer.save()
     if opts.verbose:
         print >> sys.stderr, 'Created %s zipcodes.' % num_created
 
