@@ -82,7 +82,7 @@
       "short_source": "http://www.cityofboston.gov/doit/apps/citizensconnect.asp",
       "slug": "open311-service-requests",
       "source": "http://www.cityofboston.gov/doit/apps/citizensconnect.asp",
-      "summary": "",
+      "summary": "Open311 requests via the Bostons Citizes Connect implementation of the GeoReport API.",
       "update_frequency": "",
       "uses_attributes_in_list": true
     }

@@ -409,6 +409,12 @@ class Block(models.Model):
         if not (self.left_city or self.right_city):
             raise ValidationError("Must provide at least one of left_city, right_city")
 
+        # We don't attempt to fix left_city and right_city as those are
+        # allowed to differ even if one's blank (I think).
+        # But you can't have *both* blank.
+        if not (self.left_city or self.right_city):
+            raise ValidationError("Must provide at least one of left_city, right_city")
+
         # from_num and to_num are always calculated automatically.
         from ebpub.streets.name_utils import make_block_numbers
         self.from_num, self.to_num = make_block_numbers(
