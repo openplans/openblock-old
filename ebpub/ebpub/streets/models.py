@@ -562,6 +562,10 @@ class City(object):
         return cls(norm_name.title(), norm_name.lower().replace(' ', '-'), norm_name)
     from_norm_name = classmethod(from_norm_name)
 
+    def __eq__(self, other):
+        return (self.name, self.slug, self.norm_name) == (
+            other.name, other.slug, other.norm_name)
+
 class BlockIntersection(models.Model):
     """
     Relates two Blocks and an Intersection.

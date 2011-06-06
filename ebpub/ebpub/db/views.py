@@ -819,9 +819,15 @@ def location_type_detail(request, slug):
 
 
 def city_list(request):
-    c_list = [City.from_norm_name(c['city']) for c in Street.objects.distinct().values('city').order_by('city')]
+    cities_with_streets = set([City.from_norm_name(c['city']).slug
+                               for c in Street.objects.distinct().values('city')])
+    all_cities = [City.from_norm_name(v['slug']) for v in
+                  Location.objects.filter(location_type__slug='cities').values('slug', 'name').order_by('name')]
+
+    all_cities = [city for city in all_cities if city.slug.strip()]
     return eb_render(request, 'db/city_list.html',
-                     {'city_list': c_list,
+                     {'all_cities': all_cities,
+                      'cities_with_streets': cities_with_streets,
                       'bodyclass': 'city-list',
                       })
 
