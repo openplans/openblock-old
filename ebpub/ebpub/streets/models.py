@@ -474,6 +474,29 @@ class StreetMisspelling(models.Model):
     def __unicode__(self):
         return self.incorrect
 
+class PlaceTypeManager(models.Manager):
+
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
+class PlaceType(models.Model):
+    objects = PlaceTypeManager()
+
+    name = models.CharField(max_length=255)
+    name_plural = models.CharField(max_length=255)
+    indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
+
+    slug = models.CharField(max_length=255, db_index=True, unique=True)
+    is_geocodable = models.BooleanField(help_text="Whether this type of place is searched by name during geocoding.")
+    is_mappable = models.BooleanField(help_text="Whether this type is available as a map layer to users")
+    map_icon = models.FileField(upload_to='place_icons', blank=True, null=True)
+
+    def natural_key(self):
+        return (self.slug, )
+        
+    def __unicode__(self):
+        return self.name
+
 class Place(models.Model):
     """
     A generic place, like "Millennium Park" or "Sears Tower".
@@ -481,6 +504,7 @@ class Place(models.Model):
     """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
+    place_type = models.ForeignKey(PlaceType)
     address = models.CharField(max_length=255, blank=True)
     location = models.PointField(blank=True)
     objects = models.GeoManager()
