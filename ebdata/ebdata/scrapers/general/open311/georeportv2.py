@@ -7,6 +7,7 @@ from httplib2 import Http
 from lxml import etree
 import datetime
 import pyrfc3339
+import sys
 import time
 import traceback
 import urllib
@@ -51,7 +52,7 @@ class GeoReportV2Scraper(object):
         self.http = Http(http_cache)
         self.bounds = bounds
         if bounds is None:
-            log.info("Calculating geographic boundaries from the extent in setttings.METRO_LIST")
+            log.info("Calculating geographic boundaries from the extent in settings.METRO_LIST")
             extent = get_metro()['extent']
             self.bounds = Polygon.from_bbox(extent)
         self.html_url_template = html_url_template
@@ -255,12 +256,11 @@ def main():
         "--jurisdiction-id", help='jurisdiction identifier to provide to api',
         action='store'
         )
-    import sys
     options, args = parser.parse_args(sys.argv)
     
     if len(args) < 2:
         parser.print_usage()
-        sys.exit(0)
+        return 1
     
     scraper = GeoReportV2Scraper(api_url=args[1], api_key=options.api_key,
                                  jurisdiction_id=options.jurisdiction_id,
@@ -269,7 +269,8 @@ def main():
                                  http_cache=options.http_cache,
                                  html_url_template=options.html_url_template)
     scraper.update()
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

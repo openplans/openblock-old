@@ -22,7 +22,9 @@ import sys
 import datetime
 from optparse import OptionParser
 from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.geos import Polygon
 from django.db import connection
+from django.db.utils import IntegrityError
 from ebpub.db.models import Location, LocationType, NewsItem
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.text import slugify
@@ -48,19 +50,22 @@ def populate_ni_loc(location):
         i += 200
 
 class LocationImporter(object):
-    def __init__(self, layer, location_type):
+    def __init__(self, layer, location_type, opts):
         self.layer = layer
         metro = get_metro()
         self.metro_name = metro['metro_name'].upper()
         self.now = datetime.datetime.now()
         self.location_type = location_type
+        self.opts = opts
+        if self.opts.filter_bounds:
+            self.bounds = Polygon.from_bbox(metro['extent'])
 
-    def save(self, name_field='name', source='UNKNOWN', verbose=True):
+    def save(self):
+        verbose = self.opts.verbose
+        name_field = self.opts.name_field
+        source = self.opts.source
         locs = []
         for feature in self.layer:
-            if not self.should_create_location(feature): 
-                continue
-
             name = feature.get(name_field)
             geom = feature.geom.transform(4326, True).geos
             if not geom.valid:
@@ -80,11 +85,27 @@ class LocationImporter(object):
                 is_public = True,
                 display_order = 0, # This is overwritten in the next loop
             )
+            if not self.should_create_location(fields):
+                continue
             locs.append(fields)
         num_created = 0
         for i, loc_fields in enumerate(sorted(locs, key=lambda h: h['name'])):
             kwargs = dict(loc_fields, defaults={'creation_date': self.now, 'last_mod_date': self.now, 'display_order': i})
-            loc, created = Location.objects.get_or_create(**kwargs)
+            try:
+                loc, created = Location.objects.get_or_create(**kwargs)
+            except IntegrityError:
+                # Usually this means two towns with the same slug.
+                # Try to fix that.
+                slug = kwargs['slug']
+                existing = Location.objects.filter(slug=slug).count()
+                if existing:
+                    slug = slugify('%s-%s' % (slug, existing + 1))
+                    if verbose:
+                        print >> sys.stderr, "Munged slug %s to %s to make it unique" % (kwargs['slug'], slug)
+                    kwargs['slug'] = slug
+                    loc, created = Location.objects.get_or_create(**kwargs)
+                else:
+                    raise
             if created:
                 num_created += 1
             if verbose:
@@ -95,27 +116,35 @@ class LocationImporter(object):
             if verbose:
                 sys.stderr.write('done.\n')
         return num_created
-        
-    def should_create_location(self, feature):
+
+    def should_create_location(self, fields):
+        if self.opts.filter_bounds:
+            if not fields['location'].intersects(self.bounds):
+                if self.opts.verbose:
+                    print >> sys.stderr, "Skipping %s, out of bounds" % fields['name']
+                return False
         return True
-        
+
     def get_location_type(self, feature):
         return self.location_type
 
 usage = 'usage: %prog [options] type_slug /path/to/shapefile'
+
 optparser = OptionParser(usage=usage)
+optparser.add_option('-n', '--name-field', dest='name_field', default='name', help='field that contains location\'s name')
+optparser.add_option('-i', '--layer-index', dest='layer_id', default=0, help='index of layer in shapefile')
+optparser.add_option('-s', '--source', dest='source', default='UNKNOWN', help='source metadata of the shapefile')
+optparser.add_option('-v', '--verbose',  action='store_true', default=False, help='be verbose')
+optparser.add_option('-b', '--filter-bounds', action='store_true', default=False,
+                     help="exclude locations not within the lon/lat bounds of "
+                     " your metro's extent (from your settings.py) (default false)")
 
 def parse_args(argv=None):
     if argv is None:
         argv = sys.argv[1:]
-
+    # Add some options that aren't relevant to scripts that import our optparser.
     optparser.add_option('--type-name', dest='type_name', default='', help='specifies the location type name')
     optparser.add_option('--type-name-plural', dest='type_name_plural', default='', help='specifies the location type plural name')
-    optparser.add_option('-n', '--name-field', dest='name_field', default='name', help='field that contains location\'s name')
-    optparser.add_option('-i', '--layer-index', dest='layer_id', default=0, help='index of layer in shapefile')
-    optparser.add_option('-s', '--source', dest='source', default='UNKNOWN', help='source metadata of the shapefile')
-    optparser.add_option('-v', '--verbose', dest='verbose', action='store_true', default=False, help='be verbose')
-
     return optparser.parse_args(argv)
 
 def main():
@@ -125,23 +154,27 @@ def main():
     type_slug = args[0]
     shapefile = args[1]
     if not os.path.exists(shapefile):
-        optparser.error('file does not exist')
+        optparser().error('file does not exist')
     ds = DataSource(shapefile)
     layer = ds[opts.layer_id]
 
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
-    location_type, _ = LocationType.objects.get_or_create(
-        name = opts.type_name,
-        plural_name = opts.type_name_plural,
-        scope = metro_name,
-        slug = type_slug,
-        is_browsable = True,
-        is_significant = True,
-    )
-
-    importer = LocationImporter(layer, location_type)
-    num_created = importer.save(name_field=opts.name_field, source=opts.source, verbose=opts.verbose)
+    try:
+        location_type = LocationType.objects.get(slug = type_slug)
+        if opts.verbose:
+            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % type_slug
+    except LocationType.DoesNotExist:
+        location_type, _ = LocationType.objects.get_or_create(
+            name = opts.type_name,
+            plural_name = opts.type_name_plural,
+            scope = metro_name,
+            slug = type_slug,
+            is_browsable = True,
+            is_significant = True,
+            )
+    importer = LocationImporter(layer, location_type, opts)
+    num_created = importer.save()
     if opts.verbose:
         print >> sys.stderr, 'Created %s %s.' % (num_created, location_type.plural_name)
 

@@ -64,9 +64,11 @@ class PermitScraper(NewsItemListDetailScraper):
     has_detail = False
     parse_list_re = re.compile(r'<tr[^>]*><td[^>]*>(?P<permit_date>\d\d?/\d\d/\d{4})\s*</td><td[^>]*>(?P<address>[^<]*)<br/>(?P<neighborhood>[^<]*)</td><td[^>]*>(?P<owner>[^<]*)</td><td[^>]*>(?P<description>[^<]*)</td></tr>', re.IGNORECASE | re.DOTALL)
 
+    url = 'http://www.cityofboston.gov/isd/building/asofright/default.asp?ispostback=true&nhood'
     def list_pages(self):
         for name in NEIGHBORHOODS:
-            url = 'http://www.cityofboston.gov/isd/building/asofright/default.asp?ispostback=true&nhood=%s' % urllib.quote_plus(name)
+            url = '%s=%s' % (self.url, urllib.quote_plus(name))
+            # FIXME: see ticket 172
             yield self.get_html(url)
 
     def clean_list_record(self, record):
@@ -105,4 +107,4 @@ class PermitScraper(NewsItemListDetailScraper):
 if __name__ == "__main__":
     from ebdata.retrieval import log_debug
     PermitScraper().update()
-        
+

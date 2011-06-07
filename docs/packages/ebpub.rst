@@ -15,7 +15,7 @@ Settings
 ========
 
 ebpub requires a smorgasbord of eb-specific settings in your settings
-file.  If you follow the :doc:`../custom` or :doc:`obdemo`
+file.  If you follow the :doc:`../install/custom` or :doc:`../install/demo_setup`
 directions, they provide suitable settings files that you can
 adjust as needed.  Otherwise, you might just start with the file
 ebpub/settings.py and tweak that (or import from it in your own
@@ -139,7 +139,7 @@ many disparate types of news -- e.g., crime, photos and restaurant inspections.
 Each type of news is referred to as a ``Schema``.
 
 To add a new Schema, add a row to the "db_schema" database table or
-use the Django database API. See the :doc:`../schemas` documentation, or
+use the Django database API. See the :doc:`../main/schemas` documentation, or
 see the ``Schema`` model in
 ``ebpub/db/models.py`` for information on all of the fields
 
@@ -425,7 +425,7 @@ E-mail alerts
 Users can sign up for e-mail alerts via a form on the place_detail
 pages. To send the e-mail alerts, just run the ``send_all()`` function
 in ``ebpub/alerts/sending.py``.  You probably want to do this
-regularly by :doc:`../running_scrapers`.
+regularly by :doc:`../main/running_scrapers`.
 
 Accounts
 ========
