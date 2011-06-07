@@ -30,7 +30,7 @@ on the same system (our installer script doesn't support putting
 postgis on a remote host, nor can it modify the postgres config file
 for you.)
 
-(You can skip the rest of the :doc:`setup` document; everything else
+(You can skip the rest of the :doc:`install/setup` document; everything else
 you need will be done automatically by the install scripts.)
 
 Now get the OpenBlock code:
