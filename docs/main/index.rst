@@ -11,6 +11,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   schemas
    scraper_tutorial
    running_scrapers
    api

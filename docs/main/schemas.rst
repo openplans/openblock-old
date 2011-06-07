@@ -2,8 +2,18 @@
 Creating a Custom NewsItem Schema
 =================================
 
-OpenBlock's :doc:`../packages/ebpub` package provides a model for defining NewsItem types (Schemas).  This section provides a brief example of creating a Schema, defining its custom fields and creating a NewsItem with the Schema.  It is assumed for this section that you have installed either :doc:`the demo <demo_setup>` or have created a :doc:`custom application <custom>`.
- 
+In OpenBlock lingo, a *Schema* is a type of *NewsItem.* (It's a good
+idea to read :ref:`concept_overview` if you haven't.)
+
+OpenBlock's :doc:`../packages/ebpub` package provides several models
+for defining Schemas.  This section provides a brief example of
+creating a Schema, defining its custom fields, and creating a NewsItem
+with the Schema.
+
+It is assumed for this section that you have installed either
+:doc:`the demo <../install/demo_setup>` or have created a :doc:`custom
+application <../install/custom>`.
+
 For background and additional detail, see also :ref:`ebpub-schemas` 
 in the ebpub documentation, the code in ebpub.db.models and the 
 video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
@@ -11,11 +21,11 @@ video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
 Experimenting with Existing Schemas
 -----------------------------------
 
-When running `syncdb --migrate` with 'ebpub' in
-settings.INSTALLED_APPS, a few default schemas will be loaded for you:
+When running `syncdb --migrate` with ``'ebpub'`` in
+``settings.INSTALLED_APPS``, a few default schemas will be loaded for you:
 a basic 'Local News' type, and an 'Open311 Service Requests' type.
 
-If you also have 'obdemo' in settings.INSTALLED_APPS, you will get the
+If you also have :doc:`obdemo <../packages/obdemo>` in ``settings.INSTALLED_APPS``, you will get the
 schemas that are used by our Boston demo, including: Boston events,
 restaurant inspections, building permits, and Boston police reports.
 
@@ -25,6 +35,9 @@ of the box or with slight modifications.
 
 You can of course use the admin UI to delete any that you don't want
 to use.
+
+Note that modifications and deletions are permanent. We don't have an
+"undo" feature, sorry.
 
 Make a Schema From Scratch
 --------------------------

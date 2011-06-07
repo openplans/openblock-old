@@ -139,7 +139,7 @@ many disparate types of news -- e.g., crime, photos and restaurant inspections.
 Each type of news is referred to as a ``Schema``.
 
 To add a new Schema, add a row to the "db_schema" database table or
-use the Django database API. See the :doc:`../install/schemas` documentation, or
+use the Django database API. See the :doc:`../main/schemas` documentation, or
 see the ``Schema`` model in
 ``ebpub/db/models.py`` for information on all of the fields
 

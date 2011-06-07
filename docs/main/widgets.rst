@@ -43,7 +43,7 @@ Currently items are always ordered by date.
    location           Restrict the output to a particular predefined location.
 -------------------- ------------------------------------------------------------
    types              Restrict the output to only the selected
-                      :doc:`Schema <../install/schemas>` types.
+                      :doc:`Schema <schemas>` types.
                       If none are specified, any type is allowed.
 ==================== ============================================================
 
@@ -95,7 +95,7 @@ The variable `items` contains a list of items that should be displayed by the wi
        {{ item.title }}
     {% endfor %}
 
-Each item in the list contains a basic set of fields, and may include several extension fields that are particular to the type (:doc:`schema <../install/schemas>`) of the item.
+Each item in the list contains a basic set of fields, and may include several extension fields that are particular to the type (:doc:`schema <schemas>`) of the item.
 
 
 Basic Fields
@@ -138,9 +138,9 @@ Basic Fields
 Extension Fields
 ~~~~~~~~~~~~~~~~
 
-Depending on the item's type (:doc:`schema <../install/schemas>`), a number of extension fields may be present.  For example, a Restaurant Inspection might have a list of 'violations'; a Police Report might contain a field for a Crime Code.
+Depending on the item's type (:doc:`schema <schemas>`), a number of extension fields may be present.  For example, a Restaurant Inspection might have a list of 'violations'; a Police Report might contain a field for a Crime Code.
 
-Extended attributes can be accessed in two ways: By name via the ``attributes_by_name`` variable, or as an ordered list via the ``attributes`` variable.  The attributes list is ordered according to the Display Order configured in the :doc:`Schema's <../install/schemas>` administrative user interface.
+Extended attributes can be accessed in two ways: By name via the ``attributes_by_name`` variable, or as an ordered list via the ``attributes`` variable.  The attributes list is ordered according to the Display Order configured in the :doc:`Schema's <schemas>` administrative user interface.
 
 If you are using ``attributes_by_name``, you access each attribute according to its unique identifier as configured in the Schema, eg::
 

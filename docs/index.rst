@@ -12,6 +12,54 @@ OpenBlock is a web application that allows users to browse and search
 their local area for "hyper-local news" - to see what's going on
 recently in the immediate geographic area.
 
+.. _concept_overview:
+
+Brief Overview: Concepts and Terminology
+=========================================
+
+OpenBlock is a *hyperlocal news platform*.  What we mean by that is
+that, at its essence, OpenBlock is a web application (and web service)
+that stores two kinds of information:
+
+* *Local news*.  What's happening nearby?  This could be your original
+  content, or :doc:`aggregated <main/scraper_tutorial>` from any
+  number of sources on the web.
+
+* *Local geographic data*.  What places do we care about?
+  Neighborhoods, zip codes, school districts, police precincts?
+
+OpenBlock allows you to explore that data in various ways: by
+geographic area, small or large; by type of news; by various
+categories relevant to the types of news you have; by text search; or
+by any combination of the above.
+
+News in OpenBlock is stored as *NewsItems*. In essence, a NewsItem is
+just something that happened at one *time* and one *place*.  Each
+NewsItem stores a timestamp, a geographic point, a title, a description,
+and a few other generic fields.
+
+Each NewsItem also has a type, which we call its *Schema*.  Schemas
+are used to classify NewsItems and allow them to have extra
+searchable, type-specific data.
+
+For example: an OpenBlock site might provide both police reports and
+restaurant inspections.  There would be one *Schema* representing
+police reports, allowing each police report to store information about
+what kinds of crime were committed.  There would be a second *Schema*
+representing restaurant inspections, and it would allow each
+inspection report to say whether the restaurant failed or passed, what
+violations were observed, and so on.
+
+All this can be configured by the site administrator without writing
+code.
+
+A user is then able to browse *NewsItems* that are only police
+reports, or only restaurant inspections, or both; or browse only
+failed restaurant inspections; or browse crimes of a certain type, in
+a certain location, during a certain time period; et cetera.
+
+There is a `demo site <http://demo.openblockproject.org>`_ where you
+can experiment with similar searches.
 
 History
 =======

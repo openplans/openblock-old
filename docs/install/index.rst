@@ -15,7 +15,6 @@ Contents
    demo_setup
    custom
    configuration
-   schemas
 
 
 Indices and tables

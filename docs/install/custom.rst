@@ -73,7 +73,7 @@ Now initialize your database tables::
 
 (The --migrate option is important; it loads some initial data that
 openblock depends on including stored procedures, and some default
-:doc:`Schemas <schemas>` that you can try out, modify, and delete as
+:doc:`Schemas <../main/schemas>` that you can try out, modify, and delete as
 needed.)
 
 
@@ -108,7 +108,7 @@ To get anything useful out of your site, at minimum you will need the following:
  3. Sources of news data to feed in.
 
     a. Configure the system with schemas for them.
-       See :doc:`schemas` and ebpub docs for :ref:`newsitem-schemas`.
+       See :doc:`../main/schemas` and ebpub docs for :ref:`newsitem-schemas`.
 
     b. Write scraper scripts to retrieve news from your news sources and load
        it into the database. See the :doc:`../main/scraper_tutorial`, :doc:`../packages/ebdata`

@@ -31,7 +31,7 @@ Setting up Schemas
 First of all, we're going to need a Schema that describes our
 NewsItems.
 
-This is fully documented at :doc:`../install/schemas`.  Our examples will use
+This is fully documented at :doc:`schemas`.  Our examples will use
 schemas that are bootstrapped by installing :doc:`../packages/obdemo`.
 
 
@@ -245,7 +245,7 @@ That's not too complex; three methods and you're done. Most of the
 work was in save(), doing address parsing and geocoding. 
 
 But you do have to understand how (and when) to implement those three
-methods. It's highly recommended that you read
+methods. It's highly recommended that you read the source code for
 ``ebdata.retrieval.scrapers.list_detail`` and ``ebdata.retrieval.scrapers.newsitem_list_detail``.
 
 For a more complex example that does use detail pages and custom

@@ -65,7 +65,7 @@ At minimum, you should change the values of:
 * PASSWORD_RESET_SALT - this is used when users reset their passwords.
 * STAFF_COOKIE_VALUE - this is used for allowing staff members to see
   some parts of the site that other users cannot, such as :doc:`types
-  of news items <schemas>` that you're still working on.
+  of news items <../main/schemas>` that you're still working on.
 
 You'll also want to think about :ref:`base_layer_configs`.
 
@@ -88,7 +88,7 @@ Now initialize your database tables:
 
 (The --migrate option is important; it loads some initial data that
 openblock depends on including stored procedures, and some default
-:doc:`Schemas <schemas>` that you can try out, modify, and delete as
+:doc:`Schemas <../main/schemas>` that you can try out, modify, and delete as
 needed.)
 
 
@@ -153,5 +153,5 @@ Next Steps
 ==========
 
 Now that you have the demo running, you might want to add some more
-:doc:`custom content types <schemas>` to it, and write some
+:doc:`custom content types <../main/schemas>` to it, and write some
 :doc:`scraper scripts <../main/scraper_tutorial>` to populate them.
