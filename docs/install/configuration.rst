@@ -18,7 +18,7 @@ public place eg. a public version control system.
 * PASSWORD_RESET_SALT - this is used when users reset their passwords.
 * STAFF_COOKIE_VALUE - this is used for allowing staff members to see
   some parts of the site that other users cannot, such as :doc:`types
-  of news items <schemas>` that you're still working on.
+  of news items <../main/schemas>` that you're still working on.
 
 
 .. _base_layer_configs:

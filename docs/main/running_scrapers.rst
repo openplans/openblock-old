@@ -15,12 +15,12 @@ Updaterdaemon Configuration
 ===========================
 
 The daemon script is named ``runner.py`` and it lives in
-:doc:`packages/ebdata`, more specifically at ``ebdata/retrieval/updaterdaemon/runner.py``.  To configure it, you need to write a (small)
+:doc:`../packages/ebdata`, more specifically at ``ebdata/retrieval/updaterdaemon/runner.py``.  To configure it, you need to write a (small)
 Python script that contains a list of ``TASKS``.
 
 There is an example config file at
 ``ebdata/retrieval/updaterdaemon/config.py``,
-and the one we use for :doc:`packages/obdemo` is at ``obdemo/sample_scraper_config.py``.
+and the one we use for :doc:`../packages/obdemo` is at ``obdemo/sample_scraper_config.py``.
 
 What goes in the config file? Let's put together a (small) example based on
 the one for obdemo.
