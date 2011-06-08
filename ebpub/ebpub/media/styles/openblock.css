@@ -821,8 +821,7 @@ margin : 0;
 
 
 .schema-detail #schemanav {
-float : right;
-width : 250px;
+float : none;
 }
 
 
