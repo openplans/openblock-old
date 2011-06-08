@@ -25,10 +25,14 @@ def main(dry_run=True):
     print "Items outside bounds: %s" % len(items_outside)
     for item in items_outside:
         fix_newsitem_coords(item, dry_run)
+        print "-" * 60
     items_no_loc_name = list(NewsItem.objects.filter(location_name=''))
+    print
+    print "=" * 60
     print "Items with no location name: %s" % len(items_no_loc_name)
     for item in items_no_loc_name:
         fix_newsitem_loc_name(item, dry_run)
+        print "-" * 60
 
 
 def fix_newsitem_loc_name(item, dry_run=True):
