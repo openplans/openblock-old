@@ -22,6 +22,7 @@ Utility functions for working with GeoDjango GDAL and GEOS data
 
 from django.contrib.gis import geos
 from django.contrib.gis.geos import Point, LineString, Polygon, GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
+from ebpub.metros.allmetros import get_metro
 
 def reduce_layer_geom(layer, method):
     """
@@ -105,3 +106,18 @@ def smart_transform(geom, srid, clone=True):
     if not geom.srs:
         geom.srid = 4326
     return geom.transform(srid, clone=clone)
+
+
+def get_metro_bbox(short_name=None):
+    """
+    For the metro, return its bounding box as a polygon.
+    """
+    extent = get_metro(short_name)['extent']
+    return Polygon.from_bbox(extent)
+
+def intersects_metro_bbox(geom):
+    """
+    Return True if the geometry intersects with the bounding box of
+    the current metro.
+    """
+    return geom.intersects(get_metro_bbox())
