@@ -490,12 +490,12 @@ class PlaceType(models.Model):
     objects = PlaceTypeManager()
 
     name = models.CharField(max_length=255)
-    name_plural = models.CharField(max_length=255)
+    plural_name = models.CharField(max_length=255)
     indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
 
     slug = models.CharField(max_length=255, db_index=True, unique=True)
-    is_geocodable = models.BooleanField(help_text="Whether this type of place is searched by name during geocoding.")
-    is_mappable = models.BooleanField(help_text="Whether this type is available as a map layer to users")
+    is_geocodable = models.BooleanField(default=True, help_text="Whether this type of place is searched by name during geocoding.")
+    is_mappable = models.BooleanField(default=True, help_text="Whether this type is available as a map layer to users")
     map_icon = models.FileField(upload_to='place_icons', blank=True, null=True)
 
     def natural_key(self):

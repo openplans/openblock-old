@@ -100,7 +100,7 @@ class Migration(SchemaMigration):
             'is_mappable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'map_icon': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'name_plural': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'plural_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255', 'db_index': 'True'})
         },
         'streets.street': {

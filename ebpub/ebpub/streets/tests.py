@@ -240,7 +240,7 @@ class TestPlaces(TestCase):
         assert place.location.y == 1.0
         assert place.place_type.id == 1
 
-        new_type = PlaceType(name='ZZZZ', name_plural='ZZZZs', 
+        new_type = PlaceType(name='ZZZZ', plural_name='ZZZZs', 
                              indefinite_article='a', slug='funhouse',
                              is_geocodable=False, is_mappable=True)
         new_type.save()
