@@ -247,13 +247,11 @@ def newsitems_geojson(request):
         # More copy/paste from ebpub.db.views...
         # As an optimization, limit the NewsItems to those published in the
         # last few days.
-        end_date = today()
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-        # Bug http://developer.openblockproject.org/ticket/77:
-        # This is using pub_date, but Aggregates use item_date, so there's
-        # a visible disjoint between number of items on the map and the item
-        # count shown on the homepage and location detail page.
-        filters.add('pubdate', start_date, end_date)
+        filters.update_from_query_params(request)
+        if not filters.has_key('date'):
+            end_date = today()
+            start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+            filters.add('date', start_date, end_date)
         newsitem_qs = filters.apply()
         newsitem_qs = newsitem_qs
         if not has_staff_cookie(request):
@@ -649,7 +647,6 @@ def schema_filter(request, slug, args_from_url):
     List NewsItems for one schema, filtered by various criteria in the
     URL (date, location, or values of SchemaFields).
     """
-
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponsePermanentRedirect(s.url())
@@ -668,9 +665,6 @@ def schema_filter(request, slug, args_from_url):
 
     # Use SortedDict to preserve the display_order.
     filter_sf_dict = SortedDict([(sf.slug, sf) for sf in filter_sf_list] + [(sf.slug, sf) for sf in textsearch_sf_list])
-
-    start_date = s.min_date
-    end_date = today()
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, context=context, schema=s)
@@ -705,7 +699,14 @@ def schema_filter(request, slug, args_from_url):
 
     # Finally, filter the newsitems.
     qs = filterchain.apply().order_by('-item_date')
-    if not ('date' in filterchain) or ('pubdate' in filterchain):
+
+    date_filter = filterchain.get('date') or filterchain.get('pubdate')
+    if date_filter:
+        start_date = date_filter.start_date
+        end_date = date_filter.end_date
+    else:
+        start_date = s.min_date
+        end_date = today()
         qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
 
     context['newsitem_qs'] = qs

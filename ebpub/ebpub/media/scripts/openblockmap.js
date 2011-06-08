@@ -16,7 +16,7 @@
  * NewsItem is loaded.
  *
  * pid (OPTIONAL) - a place ID like 'b:12.1' (see
- * ebpub.utils.view_utils for more info).
+ * ebpub.utils.view_utils for more info).  Boundaries will be drawn.
  *
  * place_type (OPTIONAL) - a type like 'neighborhood' or 'zip'.  If
  * provided, place_slug must also be provided, and we will will draw
@@ -26,6 +26,9 @@
  * eg. 'downtown', used for constructing a place URL.
  *
  * schema_slug (OPTIONAL) - slug of schema to filter on.
+ *
+ * start_date (OPTIONAL) - date (in YYYY/MM/DD format) to filter on.
+ * end_date (OPTIONAL) - date (in YYYY/MM/DD format) to filter on.
  *
  * map_bounds (OPTIONAL) - an OpenLayers.Bounds() defining the default boundaries.
  * If set, you don't need map_center or map_zoom.
@@ -70,6 +73,12 @@ function loadNewsItems() {
     };
     if (typeof(schema_slug) != 'undefined') {
         newsitem_params.schema = schema_slug;
+    };
+    if (typeof(start_date) != 'undefined') {
+        newsitem_params.start_date = start_date;
+    };
+    if (typeof(end_date) != 'undefined') {
+        newsitem_params.end_date = end_date;
     };
     var newsitems = new OpenLayers.Layer.Vector("NewsItems", {
         projection: map.displayProjection,

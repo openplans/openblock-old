@@ -544,7 +544,7 @@ class TestUrlNormalization(TestCase):
 
     def test_make_url__date_query(self):
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
-        url += '?start_date=12/01/2010&end_date=01/01/2011'
+        url += '?start_date=2010/12/01&end_date=2011/01/01'
         chain = self._make_chain(url)
         expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
         self.assertEqual(chain.make_url(), expected)

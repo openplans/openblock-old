@@ -52,9 +52,9 @@ start_date, end_date, lookup_list, search_list, search_url
 		<h3>{{ schema.date_name|capfirst }}</h3>
 		<form action="{% filter_url filters %}" method="get">
 			<p>
-				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"n/j/Y" }}">
+				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"Y/m/d" }}">
 					 - 
-					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"n/j/Y" }}">
+					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"Y/m/d" }}">
 				<button type="submit">Search</button>
 			</p>
 		</form>
