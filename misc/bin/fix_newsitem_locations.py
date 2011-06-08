@@ -56,9 +56,13 @@ def fix_newsitem_coords(item, dry_run=True):
 
     If dry_run=False, the item will be saved.
     """
-    loc = item.location.centroid
-    print "Found %r outside bounds at %s, %s" % (item.title,
+    if item.location is not None:
+        loc = item.location.centroid
+        print "Found %r outside bounds at %s, %s" % (item.title,
                                                  loc.x, loc.y)
+    else:
+        loc = None
+        print "NO location on %s" % item
     fixed = False
     if item.location_name:
         from ebpub.geocoder import SmartGeocoder, AmbiguousResult
@@ -75,7 +79,7 @@ def fix_newsitem_coords(item, dry_run=True):
             item.block = result['block']
             fixed = True
 
-    if not fixed:
+    if loc and not fixed:
         newloc = Point(loc.y, loc.x)
         if intersects_metro_bbox(newloc):
             print "Fixing %r by flipping bounds" % item.title
