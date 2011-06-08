@@ -766,7 +766,14 @@ def schema_filter(request, slug, args_from_url):
     populate_attributes_if_needed(ni_list, [s])
     bunches = cluster_newsitems(ni_list, 26)
 
-    if not context.get('bbox'):
+    # Need map parameters based on location/block, if there is one.
+    loc_filter = filterchain.get('location')
+    if loc_filter:
+        context.update(get_place_info_for_request(
+                request,
+                place=loc_filter.location_object,
+                block_radius=getattr(loc_filter, 'block_radius', None)))
+    else:
         # Whole city map.
         context.update({
                 'default_lon': settings.DEFAULT_MAP_CENTER_LON,

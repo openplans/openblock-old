@@ -207,6 +207,7 @@ def get_place_info_for_request(request, *args, **kwargs):
     if isinstance(place, Block):
         info['is_block'] = True
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+        block_radius = kwargs.get('block_radius') or block_radius
         nearby, search_buf = get_locations_near_place(place, block_radius)
         info['nearby_locations'] = nearby
         info['bbox'] = search_buf.extent
