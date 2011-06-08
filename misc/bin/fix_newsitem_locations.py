@@ -51,6 +51,8 @@ def fix_newsitem_loc_name(item, dry_run=True):
     if fixed and not dry_run:
         print "Saving %s" % item
         item.save()
+    if not fixed:
+        print "Couldn't fix %s" % item
 
 def fix_newsitem_coords(item, dry_run=True):
     """
@@ -63,7 +65,7 @@ def fix_newsitem_coords(item, dry_run=True):
     if item.location is not None:
         loc = item.location.centroid
         print "Found %r outside bounds at %s, %s" % (item.title,
-                                                 loc.x, loc.y)
+                                                     loc.x, loc.y)
     else:
         loc = None
         print "NO location on %s" % item
@@ -90,12 +92,14 @@ def fix_newsitem_coords(item, dry_run=True):
             item.location = newloc
             fixed = True
 
-    if not dry_run:
-        if fixed:
+    if fixed:
+        if not dry_run:
             print "saving %s" % item
             item.save()
-        else:
-            print "Can't fix %s, deleting" % item
+    else:
+        print "Can't fix %s"
+        if not dry_run:
+            print "Deleting %s" % item
             item.delete()
 
 if __name__ == '__main__':
