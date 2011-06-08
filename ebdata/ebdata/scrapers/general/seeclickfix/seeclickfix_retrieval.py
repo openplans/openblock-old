@@ -38,6 +38,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
     schema_slugs = ('issues',)
     has_detail = True
+    sleep = 2
 
     def list_pages(self):
         # Fetch the feed, paginating if necessary.
