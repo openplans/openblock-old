@@ -446,6 +446,87 @@ Example::
      }
 
 
+GET places/types.json
+---------------------
+
+Purpose
+~~~~~~~
+Retrieve a list of place types, eg "points of interest", "police stations", etc. which can
+be used to access data about places in the system.
+
+Response
+~~~~~~~~
+
+A JSON object describing the place types available.
+
+Example::
+ 
+    {
+        "poi": {
+            "name": "Point of Interest",
+            "plural_name": "Points of Interest", 
+            "geojson_url": "/api/dev1/places/poi.json" 
+        },
+        "police": {
+            "name": "Police Station",
+            "plural_name": "Police Stations", 
+            "geojson_url": "/api/dev1/places/police.json"
+        } 
+    }
+
+
+
+GET places/<placetype>.json
+---------------------------
+
+Purpose
+~~~~~~~
+Retrieve a list of places of the specified type, eg "points of interest", "police stations", etc. 
+
+Response
+~~~~~~~~
+
+A GeoJSON feature collection object describing the places of the type specified.
+
+Example::
+
+    {
+     "type": "FeatureCollection", 
+     "features": [
+      {
+       "geometry": {
+        "type": "Point", 
+        "coordinates": [
+         -71.052149999999997, 
+         42.332369999999997
+        ]
+       }, 
+       "type": "Feature", 
+       "properties": {
+        "type": "poi", 
+        "name": "Fake Monument", 
+        "address": ""
+       }
+      }, 
+      {
+       "geometry": {
+        "type": "Point", 
+        "coordinates": [
+         -71.052149999999997, 
+         42.332369999999997
+        ]
+       }, 
+       "type": "Feature", 
+       "properties": {
+        "type": "poi", 
+        "name": "Fake Yards", 
+        "address": ""
+       }
+      }
+     ]
+    }
+
+
 .. _search_params:
 
 

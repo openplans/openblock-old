@@ -13,4 +13,6 @@ urlpatterns = patterns(
     url(r'^locations.json$', views.locations_json, name="locations_json"),
     url(r'^locations/types.json', views.location_types_json, name="location_types_json"),
     url(r'^locations/(?P<loctype>[^/].*)/(?P<slug>.*).json$', views.location_detail_json, name="location_detail_json"),
+    url(r'^places/types.json', views.place_types_json, name="place_types_json"),
+    url(r'^places/(?P<placetype>[^/].*).json$', views.place_detail_json, name="place_detail_json"),
 )
