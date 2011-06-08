@@ -97,7 +97,7 @@ def fix_newsitem_coords(item, dry_run=True):
             print "saving %s" % item
             item.save()
     else:
-        print "Can't fix %s"
+        print "Can't fix %s" % item
         if not dry_run:
             print "Deleting %s" % item
             item.delete()
