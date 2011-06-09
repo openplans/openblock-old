@@ -3,7 +3,8 @@ Installing and Setting Up the Demo Site
 =========================================
 
 These instructions will install the software in a similar configuration to 
-`the OpenBlock demo site <http://demo.openblockproject.org>`_.  To start a custom application, please see :doc:`custom`
+`the OpenBlock demo site <http://demo.openblockproject.org>`_.  To
+start a custom application instead, please see :doc:`custom`.
 
 .. _demo_quickstart:
 
@@ -118,10 +119,7 @@ OpenBlock is pretty boring without data!  You'll want to load some
 included some example data for Boston, MA, and scraper scripts you can
 use to start with if you don't have all of your local data on hand yet.
 
-Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
-(If you are loading the data into a different project, set this
-variable accordingly -- e.g. ``myblock.settings`` instead of
-``obdemo.settings``):
+Set your DJANGO_SETTINGS_MODULE environment variable before you begin:
 
 .. code-block:: bash
 
@@ -144,8 +142,9 @@ Then fetch some news from the web, this will take several minutes:
 
 
 For testing with random data you might also want to try
-``obdemo/bin/random_news.py 10`` ...
-where 10 is the number of random articles to generate.  You must
+``obdemo/bin/random_news.py 10 local-news`` ...
+where 10 is the number of random articles to generate, and
+'local-news' is a :doc:`Schema slug <../main/schemas>`.  You must
 first have some blocks in the database; it will assign randomly
 generated local news articles to randomly chosen blocks.
 
