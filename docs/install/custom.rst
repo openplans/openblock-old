@@ -54,7 +54,7 @@ and make adjustments based on your setup::
 
 Read more about :doc:`important settings you can/should customize <configuration>`.
 
-If you plan to use a remote database or have other changes to database connection information, make sure you also change them in the django settings.
+If you plan to use a remote database or have other changes to database connection information, make sure you change them in your settings.py.
 
 Create and Initialize the Database
 ----------------------------------
@@ -97,15 +97,9 @@ Loading Data: Things You Will Need
 
 To get anything useful out of your site, at minimum you will need the following:
 
- 1. A database of streets in your city; for example
-    TIGER/Line files from http://www.census.gov/geo/www/tiger/ .
-    See :ref:`blocks`.
+ 1. Geographic data for your area. See :doc:`geodata`.
 
- 2. Shapefiles with areas of interest - for example,
-    neighborhoods, zip codes etc.
-    See :ref:`locations`.
-
- 3. Sources of news data to feed in.
+ 2. Sources of news data to feed in.
 
     a. Configure the system with schemas for them.
        See :doc:`../main/schemas` and ebpub docs for :ref:`newsitem-schemas`.
@@ -114,7 +108,7 @@ To get anything useful out of your site, at minimum you will need the following:
        it into the database. See the :doc:`../main/scraper_tutorial`, :doc:`../packages/ebdata`
        and http://developer.openblockproject.org/wiki/ScraperScripts .
 
- 4. Optionally, customize the look and feel of the site.
+ 3. Optionally, customize the look and feel of the site.
     See the ebpub docs for :ref:`custom-look-feel`.
 
 Gathering all this data and feeding it into the database can be a bit

@@ -62,9 +62,9 @@ obdemo doesn't come with a settings.py; it comes with a
 
 At minimum, you should change the values of:
 
-* PASSWORD_CREATE_SALT - this is used when users create a new account.
-* PASSWORD_RESET_SALT - this is used when users reset their passwords.
-* STAFF_COOKIE_VALUE - this is used for allowing staff members to see
+* ``PASSWORD_CREATE_SALT`` - this is used when users create a new account.
+* ``PASSWORD_RESET_SALT`` - this is used when users reset their passwords.
+* ``STAFF_COOKIE_VALUE`` - this is used for allowing staff members to see
   some parts of the site that other users cannot, such as :doc:`types
   of news items <../main/schemas>` that you're still working on.
 
@@ -115,7 +115,7 @@ Loading Demo Data
 -----------------
 
 OpenBlock is pretty boring without data!  You'll want to load some
-:ref:`geographic data <locations>` and some local news.  We've
+:doc:`geographic data <geodata>` and some local news.  We've
 included some example data for Boston, MA, and scraper scripts you can
 use to start with if you don't have all of your local data on hand yet.
 

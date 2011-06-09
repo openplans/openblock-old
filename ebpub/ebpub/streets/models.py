@@ -32,12 +32,14 @@ class ImproperCity(Exception):
     pass
 
 
-def _first_not_none(*args):
-    """Return the first non-None argument.
+def _first_not_false(*args):
+    """Return the first non-falsish argument; if all are false,
+    return the last.
     """
     for arg in args:
-        if arg is not None:
+        if arg:
             return arg
+    return arg
 
 
 def proper_city(block):
@@ -367,28 +369,28 @@ class Block(models.Model):
         # Try to fill in any missing numbers from the ones we got.
         # Maybe we shouldn't be clever here?
         if l_from is None:
-            logger.warn('left_from_num missing, guessing from other provided numbers')
-            l_from = _first_not_none(r_from, l_to, r_to)
+            logger.debug('left_from_num missing, guessing from other provided numbers')
+            l_from = _first_not_false(r_from, l_to, r_to)
         if l_to is None:
-            logger.warn('left_to_num missing, guessing from other provided numbers')
-            l_to = _first_not_none(r_to)
+            logger.debug('left_to_num missing, guessing from other provided numbers')
+            l_to = _first_not_false(r_to)
         if r_from is None:
-            logger.warn('right_from_num missing, guessing from other provided numbers')
-            r_from = _first_not_none(l_from, r_to, l_to)
+            logger.debug('right_from_num missing, guessing from other provided numbers')
+            r_from = _first_not_false(l_from, r_to, l_to)
         if r_to is None:
-            logger.warn('right_to_num missing, guessing from other provided numbers')
-            r_to = _first_not_none(l_to)
+            logger.debug('right_to_num missing, guessing from other provided numbers')
+            r_to = _first_not_false(l_to)
 
         # Ensure we don't get the order wrong. Fixes #164
         if l_from > l_to:
-            logger.warn('left_from_num %s cannot be greater than left_to_num %s, '
-                        'swapping those for you.' % (l_from, l_to))
+            logger.debug('left_from_num %s cannot be greater than left_to_num %s, '
+                         'swapping those for you.' % (l_from, l_to))
             l_to, l_from = l_from, l_to
 
         # Ensure we don't get the order wrong. Fixes #164
         if r_from > r_to:
-            logger.warn('right_from_num %s cannot be greater than right_to_num %s, '
-                        'swapping those for you.' % (r_from, r_to))
+            logger.debug('right_from_num %s cannot be greater than right_to_num %s, '
+                         'swapping those for you.' % (r_from, r_to))
             r_to, r_from = r_from, r_to
 
         self.left_from_num = l_from
@@ -396,14 +398,15 @@ class Block(models.Model):
         self.left_to_num = l_to
         self.right_to_num = r_to
 
-        self.left_zip = _first_not_none(self.left_zip, self.right_zip)
-        self.right_zip = _first_not_none(self.right_zip, self.left_zip)
+        self.left_zip = _first_not_false(self.left_zip, self.right_zip)
+        self.right_zip = _first_not_false(self.right_zip, self.left_zip)
+
+        self.left_state = _first_not_false(self.left_state, self.right_state)
+        self.right_state = _first_not_false(self.right_state, self.left_state)
 
         # We don't attempt to fix left_city and right_city as those are
-        # allowed to differ even if one's blank (I think).
-        # But you can't have *both* blank.
-        if not (self.left_city or self.right_city):
-            raise ValidationError("Must provide at least one of left_city, right_city")
+        # allowed to differ, or even be blank;
+        # blank means it's an unincorporated area.
 
         # from_num and to_num are always calculated automatically.
         from ebpub.streets.name_utils import make_block_numbers
@@ -551,6 +554,11 @@ class City(object):
     def from_norm_name(cls, norm_name):
         return cls(norm_name.title(), norm_name.lower().replace(' ', '-'), norm_name)
     from_norm_name = classmethod(from_norm_name)
+
+    def __eq__(self, other):
+        return (self.name, self.slug, self.norm_name) == (
+            other.name, other.slug, other.norm_name)
+
 
 class BlockIntersection(models.Model):
     """
