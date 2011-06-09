@@ -30,7 +30,7 @@ except ImportError:
 
 setup(
     name='ebpub',
-    version="0.1",
+    version="1.0a1",
     description="",
     license="GPLv3",
     install_requires=[

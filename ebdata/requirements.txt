@@ -5,4 +5,4 @@ feedparser==4.1
 httplib2==0.6.0
 python-dateutil==1.4.1
 xlrd==0.7.1
-
+ebpub==1.0a1

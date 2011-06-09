@@ -34,12 +34,12 @@ listdiffc = Extension('ebdata.templatemaker.listdiffc',
 
 setup(
     name='ebdata',
-    version="0.1",
+    version="1.0a1",
     description="",
     license="GPLv3",
     install_requires=[
     "django>=1.2",
-    "ebpub",
+    "ebpub>=1.0a1",
     "lxml",
     "chardet",
     "feedparser",

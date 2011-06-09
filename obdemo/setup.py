@@ -25,13 +25,13 @@ except ImportError:
 
 setup(
     name='obdemo',
-    version="0.1",
+    version="1.0a1",
     description="",
     license="GPLv3",
     install_requires=[
-    "ebpub",
-    "ebdata",
-    "obadmin",
+    "ebpub>=1.0a1",
+    "ebdata>=1.0a1",
+    "obadmin>=1.0a1",
     ],
     dependency_links=[
     ],
