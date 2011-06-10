@@ -714,7 +714,7 @@ class FilterChain(SortedDict):
 
             self.replace('date', start_date, end_date)
 
-        lookup_name = pop_key('textsearch')
+        lookup_name = pop_key('textsearch').replace('-', '_')
         search_string = pop_key('q')
         if lookup_name and search_string:
             # Can raise DoesNotExist. Should that be FilterError?
