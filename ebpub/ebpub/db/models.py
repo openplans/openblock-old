@@ -235,8 +235,12 @@ class LocationType(models.Model):
     scope = models.CharField(max_length=64,
                              help_text='e.g., "Chicago" or "U.S.A."')
     slug = models.CharField(max_length=32, unique=True)
-    is_browsable = models.BooleanField() # whether this is displayed on location_type_list.  XXX unused??
-    is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
+    is_browsable = models.BooleanField(
+        default=True, help_text="Whether this is displayed on location_type_list.") #  XXX unused??
+    is_significant = models.BooleanField(
+        default=True,
+        help_text="Whether this is used to display aggregates, shows up in 'nearby locations', etc."
+        )
 
     def __unicode__(self):
         return u'%s, %s' % (self.name, self.scope)
