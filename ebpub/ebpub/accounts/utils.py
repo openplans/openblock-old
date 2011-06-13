@@ -16,10 +16,14 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+
 from django import http
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.core.mail import SMTPConnection, EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.utils.importlib import import_module
 from ebpub.metros.allmetros import get_metro
 import constants # relative import
 import random
@@ -110,3 +114,45 @@ def login_required(view_func):
         request.session['next_url'] = request.path
         return http.HttpResponseRedirect('/accounts/login/')
     return inner_view
+
+
+def test_client_login(client, **credentials):
+    """
+    Sets the Client to appear as if it has successfully logged into a site.
+
+    Returns True if login is possible; False if the provided credentials
+    are incorrect, or the user is inactive, or if the sessions framework is
+    not available.
+    """
+    user = authenticate(**credentials)
+    if user and user.is_active \
+            and 'django.contrib.sessions' in settings.INSTALLED_APPS:
+        engine = import_module(settings.SESSION_ENGINE)
+
+        # Create a fake request to store login details.
+        request = http.HttpRequest()
+        if client.session:
+            request.session = client.session
+        else:
+            request.session = engine.SessionStore()
+        login(request, user)
+
+        # Save the session values.
+        request.session.save()
+
+        # Set the cookie to represent the session.
+        session_cookie = settings.SESSION_COOKIE_NAME
+        client.cookies[session_cookie] = request.session.session_key
+        cookie_data = {
+            'max-age': None,
+            'path': '/',
+            'domain': settings.SESSION_COOKIE_DOMAIN,
+            'secure': settings.SESSION_COOKIE_SECURE or None,
+            'expires': None,
+        }
+        client.cookies[session_cookie].update(cookie_data)
+
+        return True
+    else:
+        return False
+

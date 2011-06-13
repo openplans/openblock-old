@@ -12,6 +12,7 @@ from django.utils import simplejson
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
+from ebpub.streets.models import PlaceType, Place, PlaceSynonym
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
 import datetime
@@ -474,6 +475,42 @@ def location_types_json(request):
 
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
                          content_type='application_json')
+
+
+def place_types_json(request):
+    typelist = PlaceType.objects.filter(is_mappable=True).order_by('plural_name').values(
+        'name', 'plural_name', 'slug')
+    typedict = {}
+    for typeinfo in typelist: 
+        slug = typeinfo.pop('slug')
+        typedict[slug] = typeinfo
+        typedict[slug]['geojson_url'] = reverse('place_detail_json', kwargs={'placetype': slug})
+
+    return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
+                         content_type='application_json')
+
+def place_detail_json(request, placetype):
+    try:
+        placetype_obj = PlaceType.objects.get(slug=placetype)
+    except (ValueError, PlaceType.DoesNotExist):
+        raise Http404("No such place type %r" % placetype)
+
+    result = {
+        'type': 'FeatureCollection',
+        'features': []
+    }
+    for place in Place.objects.filter(place_type=placetype_obj):
+        feature = {'type': 'Feature',
+                   'geometry': simplejson.loads(place.location.geojson),
+                   'properties': {'type': placetype,
+                                  'name': place.pretty_name,
+                                  'address': place.address,
+                                  }
+                   }
+        result['features'].append(feature)
+
+    geojson = simplejson.dumps(result, indent=1)
+    return APIGETResponse(request, geojson, content_type='application/json')
 
 
 class OpenblockAtomFeed(feedgenerator.Atom1Feed):

@@ -565,6 +565,7 @@ class TestGeocoderAPI(TestCase):
 
     fixtures = ('test-locationtypes', 
                 'test-locations.json',
+                'test-placetypes.json',
                 'test-places.json', 
                 'test-streets.json',)
 
@@ -743,6 +744,43 @@ class TestLocationsAPI(TestCase):
         self.assertEqual(t1['plural_name'], 'neighborhoods')
         self.assertEqual(t1['scope'], 'boston')
 
+
+class TestPlacesAPI(TestCase):
+
+    fixtures = ('test-placetypes.json', 'test-places.json')
+
+    def test_place_types_json(self):
+        response = self.client.get(reverse('place_types_json'))
+
+        types = simplejson.loads(response.content)
+        self.assertEqual(len(types), 2)
+        for typeinfo in types.values():
+            self.assertEqual(sorted(typeinfo.keys()),
+                             ['geojson_url', 'name', 'plural_name'])
+        t1 = types['poi']
+        self.assertEqual(t1['name'], 'Point of Interest')
+        self.assertEqual(t1['plural_name'], 'Points of Interest')
+
+        t1 = types['police']
+        self.assertEqual(t1['name'], 'Police Station')
+        self.assertEqual(t1['plural_name'], 'Police Stations')
+
+    def test_place_detail_json(self):
+        response = self.client.get(reverse('place_detail_json', kwargs={'placetype': 'poi'}))
+        places = simplejson.loads(response.content)
+        self.assertEqual(len(places['features']), 2)
+
+        names = set([x['properties']['name'] for x in places['features']])
+        self.assertTrue('Fake Monument' in names)
+        self.assertTrue('Fake Yards' in names)
+
+        response = self.client.get(reverse('place_detail_json', kwargs={'placetype': 'police'}))
+        places = simplejson.loads(response.content)
+        self.assertEqual(len(places['features']), 2)
+
+        names = set([x['properties']['name'] for x in places['features']])
+        self.assertTrue('Faketown Precinct 1' in names)
+        self.assertTrue('Faketown Precinct 2' in names)
 
 class TestOpenblockAtomFeed(TestCase):
 
