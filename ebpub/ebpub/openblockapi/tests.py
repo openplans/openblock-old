@@ -751,7 +751,7 @@ class TestPlacesAPI(TestCase):
         self.assertEqual(len(types), 2)
         for typeinfo in types.values():
             self.assertEqual(sorted(typeinfo.keys()),
-                             ['name', 'plural_name'])
+                             ['geojson_url', 'name', 'plural_name'])
         t1 = types['poi']
         self.assertEqual(t1['name'], 'Point of Interest')
         self.assertEqual(t1['plural_name'], 'Points of Interest')
