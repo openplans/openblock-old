@@ -46,14 +46,17 @@ class NewsItemAdmin(OSMModelAdmin):
     form = NewsItemForm
 
 class LocationTypeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'is_browsable', 'is_significant')
-    list_filter = ('is_browsable', 'is_significant')
+    list_display = ('name', 'is_significant')
+    list_filter = ('is_significant',)
+    exclude = ('is_browsable',)  # TODO: unused, use it or lose it.
+    prepopulated_fields = {'slug': ('plural_name',)}
 
 class LocationAdmin(OSMModelAdmin):
     form = LocationForm
     list_filter = ('location_type', 'city', 'is_public',)
     list_display = ('name', 'location_type', 'creation_date', 'area')
     search_fields = ('name',)
+    prepopulated_fields = {'slug': ('name',)}
 
     # This is populated by a trigger in ebpub/db/sql/location.sql.
     readonly_fields = ('area',)
@@ -62,6 +65,7 @@ class LocationAdmin(OSMModelAdmin):
 class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',
                     'has_newsitem_detail',)
+    prepopulated_fields = {'slug': ('plural_name',)}
 
 class SchemaFieldAdmin(admin.ModelAdmin):
     list_display = ('pretty_name',
@@ -81,6 +85,7 @@ class LookupAdmin(admin.ModelAdmin):
     # but that would require some custom wackiness.
     list_display = ('name', 'schema_field')
     search_fields = ('description', 'name', 'code')
+    prepopulated_fields = {'slug': ('name',)}
 
 class LocationSynonymAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'location')

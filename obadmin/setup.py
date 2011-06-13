@@ -25,12 +25,12 @@ except ImportError:
 
 setup(
     name='obadmin',
-    version="0.1",
+    version="1.0a1",
     description="",
     license="GPLv3",
     install_requires=[
-    "ebpub",
-    "ebdata",
+    "ebpub>=1.0a1",
+    "ebdata>=1.0a1",
     "PasteScript",
     "paver",
     ],

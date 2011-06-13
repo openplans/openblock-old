@@ -19,10 +19,14 @@
 import string
 import sys
 from django.contrib.gis.gdal import DataSource
+from django.core.exceptions import ValidationError
 from ebpub.streets.models import Block
 from ebpub.streets.name_utils import make_pretty_name
 from ebpub.streets.name_utils import make_block_numbers
 from ebpub.utils.text import slugify
+
+import logging
+logger = logging.getLogger('ebpub.streets.blockimport')
 
 class BlockImporter(object):
     def __init__(self, shapefile, layer_id=0, verbose=False, encoding='utf8'):
@@ -31,6 +35,7 @@ class BlockImporter(object):
         self.encoding = encoding
 
     def log(self, arg):
+        "Deprecated: user logger instead"
         if self.verbose:
             print >> sys.stderr, arg
 
@@ -84,20 +89,35 @@ class BlockImporter(object):
                                 try:
                                     value = int(value)
                                 except ValueError:
-                                    self.log("Omitting weird value %r for %r" % (value, addr_key))
+                                    logger.warn("Omitting weird value %r for %r" % (value, addr_key))
                                     value = None
                             else:
                                 value = None
                             block_fields[addr_key] = value
 
-                    block_fields['from_num'], block_fields['to_num'] = make_block_numbers(
-                        block_fields['left_from_num'],
-                        block_fields['left_to_num'],
-                        block_fields['right_from_num'],
-                        block_fields['right_to_num'])
+                    try:
+                        block_fields['from_num'], block_fields['to_num'] = \
+                            make_block_numbers(block_fields['left_from_num'],
+                                               block_fields['left_to_num'],
+                                               block_fields['right_from_num'],
+                                               block_fields['right_to_num'])
+                    except ValueError, e:
+                        logger.warn('Skipping %s: %s' % (block_fields['pretty_name'], e))
+                        continue
 
                     block = Block(**block_fields)
-                    block.full_clean()
+                    try:
+                        block.full_clean()
+                    except ValidationError:
+                        # odd bug: sometimes we get ValidationError even when
+                        # the data looks good, and then cleaning again works???
+                        try:
+                            block.full_clean()
+                        except ValidationError, e:
+                            logger.warn("validation error on %s, skipping" % str(block))
+                            logger.warn(e)
+                            continue
+
                     block.save()
                     if parent_id is None:
                         parent_id = block.id
@@ -105,7 +125,7 @@ class BlockImporter(object):
                         block.parent_id = parent_id
                         block.save()
                     num_created += 1
-                    self.log('%d\tCreated block %s for feature %d' % (num_created, block, feature.get('TLID')))
+                    logger.debug('%d\tCreated block %s for feature %d' % (num_created, block, feature.get('TLID')))
         return num_created
 
     def skip_feature(self, feature):

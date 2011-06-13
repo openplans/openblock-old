@@ -704,8 +704,8 @@ class FilterChain(SortedDict):
         end_date = pop_key('end_date')
         if start_date and end_date:
             try:
-                start_date = parse_date(start_date, '%m/%d/%Y')
-                end_date = parse_date(end_date, '%m/%d/%Y')
+                start_date = parse_date(start_date, '%Y/%m/%d')
+                end_date = parse_date(end_date, '%Y/%m/%d')
             except ValueError, e:
                 raise BadDateException(str(e))
             if start_date.year < 1900 or end_date.year < 1900:

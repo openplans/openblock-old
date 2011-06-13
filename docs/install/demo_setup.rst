@@ -3,7 +3,8 @@ Installing and Setting Up the Demo Site
 =========================================
 
 These instructions will install the software in a similar configuration to 
-`the OpenBlock demo site <http://demo.openblockproject.org>`_.  To start a custom application, please see :doc:`custom`
+`the OpenBlock demo site <http://demo.openblockproject.org>`_.  To
+start a custom application instead, please see :doc:`custom`.
 
 .. _demo_quickstart:
 
@@ -61,9 +62,9 @@ obdemo doesn't come with a settings.py; it comes with a
 
 At minimum, you should change the values of:
 
-* PASSWORD_CREATE_SALT - this is used when users create a new account.
-* PASSWORD_RESET_SALT - this is used when users reset their passwords.
-* STAFF_COOKIE_VALUE - this is used for allowing staff members to see
+* ``PASSWORD_CREATE_SALT`` - this is used when users create a new account.
+* ``PASSWORD_RESET_SALT`` - this is used when users reset their passwords.
+* ``STAFF_COOKIE_VALUE`` - this is used for allowing staff members to see
   some parts of the site that other users cannot, such as :doc:`types
   of news items <../main/schemas>` that you're still working on.
 
@@ -114,14 +115,11 @@ Loading Demo Data
 -----------------
 
 OpenBlock is pretty boring without data!  You'll want to load some
-:ref:`geographic data <locations>` and some local news.  We've
+:doc:`geographic data <geodata>` and some local news.  We've
 included some example data for Boston, MA, and scraper scripts you can
 use to start with if you don't have all of your local data on hand yet.
 
-Set your DJANGO_SETTINGS_MODULE environment variable before you begin.
-(If you are loading the data into a different project, set this
-variable accordingly -- e.g. ``myblock.settings`` instead of
-``obdemo.settings``):
+Set your DJANGO_SETTINGS_MODULE environment variable before you begin:
 
 .. code-block:: bash
 
@@ -144,8 +142,9 @@ Then fetch some news from the web, this will take several minutes:
 
 
 For testing with random data you might also want to try
-``obdemo/bin/random_news.py 10`` ...
-where 10 is the number of random articles to generate.  You must
+``obdemo/bin/random_news.py 10 local-news`` ...
+where 10 is the number of random articles to generate, and
+'local-news' is a :doc:`Schema slug <../main/schemas>`.  You must
 first have some blocks in the database; it will assign randomly
 generated local news articles to randomly chosen blocks.
 

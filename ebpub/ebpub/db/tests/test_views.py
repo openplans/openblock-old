@@ -496,15 +496,16 @@ class TestSchemaFilterView(TestCase):
         mock_chain.return_value = mock_chain
         mock_chain.apply.return_value = mock_chain
         mock_chain.__contains__ = lambda self, other: False
+        mock_chain.get.return_value = None
         mock_chain.validate.return_value = {}
         mock_chain.make_breadcrumbs.return_value = []
         mock_chain.values = []
         mock_chain.lookup_descriptions = []
         mock_chain.make_url.return_value = urllib.unquote(url)  # Avoid redirect.
-        newsitem = models.NewsItem.objects.all()[0]
         mock_chain.order_by.return_value = mock_qs
         mock_chain.filter.return_value = mock_qs
         # Finally, here's our list of stuff.
+        newsitem = models.NewsItem.objects.all()[0]
         mock_qs.filter.return_value = [newsitem] * 100
 
         response = self.client.get(url)

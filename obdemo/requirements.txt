@@ -1,1 +1,1 @@
-ebpub
+ebpub==1.0a1

@@ -108,7 +108,7 @@ METRO_LIST = (
         # Whether this should be displayed to the public.
         'is_public': True,
 
-        # Set this to True if the metro has multiple cities.
+        # Set this to True if the metro contains multiple cities.
         'multiple_cities': False,
 
         # The major city in the metro.
