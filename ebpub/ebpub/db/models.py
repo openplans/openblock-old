@@ -24,6 +24,7 @@ from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
 
+import re
 import datetime
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
@@ -33,6 +34,15 @@ ebpub.monkeypatches.patch_once()
 FREQUENCY_CHOICES = ('Hourly', 'Throughout the day', 'Daily', 'Twice a week', 'Weekly', 'Twice a month', 'Monthly', 'Quarterly', 'Sporadically', 'No longer updated')
 FREQUENCY_CHOICES = [(a, a) for a in FREQUENCY_CHOICES]
 
+
+def get_valid_real_names():
+    """
+    Field names of ``Attribute``, suitable for use as
+    ``SchemaField.real_name``.
+    """
+    for name in sorted(Attribute._meta.get_all_field_names()):
+        if re.search(r'\d\d$', name):
+            yield name
 
 def field_mapping(schema_id_list):
     """
@@ -170,6 +180,7 @@ class SchemaField(models.Model):
     real_name = models.CharField(
         max_length=10,
         help_text="Column name in the Attribute model. 'varchar01', 'varchar02', etc.",
+        choices=((name, name) for name in get_valid_real_names()),
         )
     display = models.BooleanField(
         default=True,
