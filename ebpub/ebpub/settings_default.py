@@ -169,9 +169,8 @@ required_settings.append('DEFAULT_MAP_ZOOM')
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
 
-EB_MEDIA_ROOT = EBPUB_DIR + '/media' # necessary for static media versioning
-EB_MEDIA_URL = '' # leave at '' for development
-required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
+EB_MEDIA_ROOT = EBPUB_DIR + '/media'
+required_settings.extend(['EB_MEDIA_ROOT'])
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
