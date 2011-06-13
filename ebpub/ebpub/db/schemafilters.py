@@ -641,8 +641,7 @@ class FilterChain(SortedDict):
                 try:
                     sf = filter_sf_dict.pop(sf_slug)
                 except KeyError:
-                    # XXX this will be a confusing error if we already popped it.
-                    raise FilterError('Invalid SchemaField slug %r' % sf_slug)
+                    raise FilterError('Invalid or duplicate SchemaField slug %r' % sf_slug)
                 self.add_by_schemafield(sf, *argvalues, _replace=True)
 
             else:
