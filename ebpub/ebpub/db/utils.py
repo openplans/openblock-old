@@ -20,7 +20,9 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from ebpub.db.models import AttributeDict
 from ebpub.db.models import Location
+from ebpub.db.models import field_mapping
 from ebpub.streets.models import Block
 from ebpub.streets.models import City
 from ebpub.metros.allmetros import get_metro
@@ -71,14 +73,18 @@ def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
 
 def populate_attributes_if_needed(newsitem_list, schema_list):
     """
-    Helper function that takes a list of NewsItems and sets ni.attribute_values
-    to a dictionary of attributes {field_name: value} for all NewsItems whose
+    Optimization helper function that takes a list of NewsItems and ensures
+    the ni.attributes pseudo-dictionary is populated, for all NewsItems whose
     schemas have uses_attributes_in_list=True. This is accomplished with a
     minimal amount of database queries.
 
-    The values in the attribute_values dictionary are Lookup instances in the
-    case of Lookup fields. Otherwise, they're the direct values from the
-    Attribute table.
+    The values in the NewsItem.attributes pseudo-dictionary are Lookup
+    instances in the case of Lookup fields. Otherwise, they're the
+    direct values from the Attribute table.  (Note this is different
+    than accessing NewsItem.attributes without this function, in which
+    case Lookups are not dereferenced automatically.  Client code such
+    as AttributesForTemplate should handle both cases - or really this
+    should be fixed.)
 
     schema_list should be a list of all Schemas that are referenced in
     newsitem_list.
@@ -91,11 +97,6 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     # attributes. Another way to do this would be to load all of the attributes
     # when loading the NewsItems in the first place (via a JOIN), but we want
     # to avoid joining such large tables.
-
-    # TODO: #72. This is an optimization that doesn't justify having a
-    # parallel API that isn't even documented in model code where it
-    # belongs. Rewrite to stuff the data in ni._attributes_cache
-    # instead.
 
     preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
     if not preload_schema_ids:
@@ -116,7 +117,7 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     att_dict = dict([(i['news_item'], i) for i in Attribute.objects.filter(news_item__id__in=[ni.id for ni in preloaded_nis]).values(*list(attribute_columns_to_select))])
 
-    if not fmap: 
+    if not fmap:
         return
 
     # Determine which Lookup objects need to be retrieved.
@@ -138,8 +139,8 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
         lookup_objs = Lookup.objects.in_bulk(lookup_ids)
     else:
         lookup_objs = {}
-        
-    # Set 'attribute_values' for each NewsItem in preloaded_nis.
+
+    # Cache attribute values for each NewsItem in preloaded_nis.
     for ni in preloaded_nis:
         if not ni.id in att_dict:
             # Fix for #38: Schemas may not have any SchemaFields, and
@@ -155,7 +156,10 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
                 else: # Many-to-many lookups are comma-separated strings.
                     value = [lookup_objs[int(i)] for i in value.split(',') if i]
             att_values[field_name] = value
-        ni.attribute_values = att_values
+        select_dict = field_mapping([ni.schema_id]).get(ni.schema_id, {})
+        ni._attributes_cache = AttributeDict(ni.id, ni.schema_id, select_dict)
+        ni._attributes_cache.cached = True
+        ni._attributes_cache.update(att_values)
 
 def populate_schema(newsitem_list, schema):
     for ni in newsitem_list:

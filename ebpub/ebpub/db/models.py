@@ -715,23 +715,25 @@ class NewsItem(models.Model):
         fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
         if not fields:
             return []
-
-        try:
-            attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
-        except (IndexError, KeyError):
-            return []
-        return [AttributeForTemplate(f, attribute_row) for f in fields]
+        return [AttributeForTemplate(f, self.attributes) for f in fields]
 
 
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
-        self.raw_value = attribute_row[schema_field.real_name]
+        self.raw_value = attribute_row[schema_field.slug]
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
         if self.is_lookup:
-            if self.raw_value == '':
+            # Earlier queries may have already looked up Lookup instances.
+            # Don't do unnecessary work.
+            if isinstance(self.raw_value, Lookup):
+                self.values = [self.raw_value]
+            elif (isinstance(self.raw_value, list) and self.raw_value
+                  and isinstance(self.raw_value[0], Lookup)):
+                self.values = self.raw_values
+            elif self.raw_value == '':
                 self.values = []
             elif self.sf.is_many_to_many_lookup():
                 try:

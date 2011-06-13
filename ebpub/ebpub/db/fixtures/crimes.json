@@ -378,7 +378,7 @@
    "can_collapse": false,
    "has_newsitem_detail": true,
    "allow_charting": true,
-   "uses_attributes_in_list": false,
+   "uses_attributes_in_list": true,
    "number_in_overview": 5,
    "is_special_report": false
   }
@@ -418,6 +418,28 @@
  },
  {
   "fields": {
+   "description": "A crime type.",
+   "code": "58",
+   "schema_field": 8,
+   "name": "Crime Type 58",
+   "slug": "crime-type-58"
+  },
+  "model": "db.lookup",
+  "pk": 58
+ },
+ {
+  "fields": {
+   "description": "A crime type.",
+   "code": "266",
+   "schema_field": 8,
+   "name": "Crime Type 266",
+   "slug": "crime-type-266"
+  },
+  "model": "db.lookup",
+  "pk": 266
+ },
+ {
+  "fields": {
    "description": "Location 66.",
    "code": "66",
    "schema_field": 9,
@@ -426,6 +448,28 @@
   },
   "model": "db.lookup",
   "pk": 66
+ },
+ {
+  "fields": {
+   "description": "Location 77.",
+   "code": "77",
+   "schema_field": 9,
+   "name": "Location 77",
+   "slug": "location-77"
+  },
+  "model": "db.lookup",
+  "pk": 77
+ },
+ {
+  "fields": {
+   "description": "Location 32.",
+   "code": "32",
+   "schema_field": 9,
+   "name": "Location 32",
+   "slug": "location-32"
+  },
+  "model": "db.lookup",
+  "pk": 32
  },
  {
   "fields": {
