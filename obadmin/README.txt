@@ -1,8 +1,9 @@
-=====
-ebpub
-=====
+=======
+obadmin
+=======
 
-A Django application that provides hyperlocal news.
+Setup and administrative scripts and utilities for
+`ebpub <http://pypi.python.org/pypi/ebpub>`_.
 
 This package is part of OpenBlock. Originally developed for EveryBlock.com.
 
