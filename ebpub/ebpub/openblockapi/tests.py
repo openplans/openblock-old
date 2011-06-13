@@ -44,8 +44,12 @@ class TestAPI(TestCase):
         self.assertEqual(response.status_code, 200)
 
         types = simplejson.loads(response.content)
-        # This includes schemas from db/migrations/0007_load_default_schemas.py
-        self.assertEqual(len(types), 8)
+
+        # The number of types includes any schemas loaded via
+        # migrations or initial_data fixtures from ebpub.db *and* any
+        # other apps in INSTALLED_APPS that load schemas. Ugh.
+        self.assert_(len(types) >= 1, "no schemas loaded")
+
         t1 = types['test-schema']
         self.assertEqual(sorted(t1.keys()),
                          ['attributes',
@@ -330,6 +334,7 @@ class TestItemSearchAPI(TestCase):
 
         response = self.client.get(reverse('items_atom'))
         self.assertEqual(response.status_code, 200)
+
         # Darn feedparser throws away nested extension elements. Gahhh.
         # Okay, let's parse the old-fashioned way.
         from lxml import etree
@@ -342,7 +347,7 @@ class TestItemSearchAPI(TestCase):
         for entry in entries:
             for key, value in sorted(ext_vals.items()):
                 attrs = entry.xpath(
-                    'openblock:attributes/openblock:attribute[@name="%s"]' % key,
+                    'openblock:attributes/openblock:attribute[@slug="%s"]' % key,
                     namespaces=ns)
                 if key == 'lookup':
                     self.assertEqual(len(attrs), 2)

@@ -137,7 +137,7 @@ def _item_post(request):
     # Everything else goes in .attributes.
     attributes = {}
     for key, val in props.items():
-        sf = models.SchemaField.objects.get(schema=schema, name=key)
+        sf = models.SchemaField.objects.get(schema=schema, slug=key)
         if sf.is_many_to_many_lookup():
             # TODO: get or create Lookups as needed
             pass
@@ -502,7 +502,7 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
         for key, datatype, val in item['attributes']:
             val = serialize_date_or_time(val) or val
             handler.addQuickElement('openblock:attribute', unicode(val),
-                                    {'name': key, 'type': datatype})
+                                    {'slug': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
 
 def normalize_datetime(dt):

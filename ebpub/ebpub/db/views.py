@@ -486,7 +486,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
     context = {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
-        'attribute_dict': dict((att.sf.name, att) for att in atts),
+        'attribute_dict': dict((att.sf.slug, att) for att in atts),
         'has_location': has_location,
         'locations_within': locations_within,
         'location_url': location_url,

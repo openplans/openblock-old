@@ -159,9 +159,9 @@ class AttributeFilter(NewsitemFilter):
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
-        self.slug = self.schemafield.name
-        self.argname = 'by-%s' % self.schemafield.name
-        self.url = 'by-%s=' % self.schemafield.slug
+        self.slug = self.schemafield.slug
+        self.argname = 'by-%s' % self.slug
+        self.url = 'by-%s=' % self.slug
         self.value = self.short_value = ''
         self.label = self.schemafield.pretty_name
         if args:
@@ -249,6 +249,8 @@ class BoolFilter(AttributeFilter):
 class LookupFilter(AttributeFilter):
     """
     Filters on Lookup attributes (see ebpub.db.models for more info).
+
+    TODO: currently handles only one lookup value
     """
 
     _sort_value = 900.0
@@ -714,11 +716,11 @@ class FilterChain(SortedDict):
 
             self.replace('date', start_date, end_date)
 
-        lookup_name = pop_key('textsearch').replace('-', '_')
+        sf_slug = pop_key('textsearch')
         search_string = pop_key('q')
-        if lookup_name and search_string:
+        if sf_slug and search_string:
             # Can raise DoesNotExist. Should that be FilterError?
-            schemafield = models.SchemaField.objects.get(name=lookup_name)
+            schemafield = models.SchemaField.objects.get(slug=sf_slug)
             self.replace(schemafield, search_string)
 
         # Stash away all query params we didn't consume.
@@ -866,7 +868,7 @@ class FilterChain(SortedDict):
     def add_by_schemafield(self, schemafield, *values, **kwargs):
         """Given a SchemaField, construct an appropriate
         NewsitemFilter with the values as arguments, and save it as
-        self[schemafield.name].
+        self[schemafield.slug].
 
         For convenience, returns self.
         """

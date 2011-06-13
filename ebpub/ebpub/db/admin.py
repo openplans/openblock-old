@@ -68,7 +68,9 @@ class SchemaAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('plural_name',)}
 
 class SchemaFieldAdmin(admin.ModelAdmin):
+
     list_display = ('pretty_name',
+                    'slug',
                     'schema',
                     'display',
                     'datatype',
@@ -78,6 +80,8 @@ class SchemaFieldAdmin(admin.ModelAdmin):
                     )
     list_filter = ('schema', 'display', 'is_lookup', 'is_filter',
                    'is_charted', 'is_searchable', 'real_name')
+
+    prepopulated_fields = {'slug': ('pretty_name',)}
 
 
 class LookupAdmin(admin.ModelAdmin):
