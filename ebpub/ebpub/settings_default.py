@@ -48,7 +48,7 @@ TEMPLATE_DIRS = (
     os.path.dirname(EBPUB_DIR)
 )
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader'
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
