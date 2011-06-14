@@ -151,6 +151,9 @@ class RestaurantScraper(NewsItemListDetailScraper):
             import traceback;
             self.logger.error("Error storing inspection for %s: %s" % (list_record.get('restaurant_name', 'Unknown'), traceback.format_exc())) 
             
-if __name__ == "__main__":
+def main():
     from ebdata.retrieval import log_debug
     RestaurantScraper().update()
+
+if __name__ == "__main__":
+    main()

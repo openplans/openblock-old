@@ -144,7 +144,10 @@ class Scraper(NewsItemListDetailScraper):
             location_name=list_record['location']
         )
 
-if __name__ == "__main__":
+def main():
     from ebdata.retrieval import log_debug
     start_date = datetime.date(2003, 1, 2)
     Scraper(start_date=start_date).update()
+
+if __name__ == "__main__":
+    main()
