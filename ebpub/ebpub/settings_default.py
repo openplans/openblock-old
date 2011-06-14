@@ -245,6 +245,10 @@ required_settings.append('EBPUB_CACHE_GEOCODER')
 # handlers more than once; see
 # http://stackoverflow.com/questions/342434/python-logging-in-django
 
+
+LOGGING_CONFIG=None # TODO: use dictConfig logging config?
+# see https://docs.djangoproject.com/en/dev/topics/logging
+
 import logging, threading
 _lock = threading.Lock()
 with _lock:
