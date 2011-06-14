@@ -1,22 +1,22 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        from django.core.management import call_command
-        import os
-        here = os.path.abspath(os.path.dirname(__file__))
-        call_command("loaddata", os.path.join(here, "0007_default_news_types.json"))
+        
+        # Adding field 'SchemaField.slug'
+        db.add_column('db_schemafield', 'slug', self.gf('django.db.models.fields.SlugField')(default='', max_length=32, db_index=True), keep_default=False)
+
 
     def backwards(self, orm):
-        "Write your backwards methods here."
-        # We can't safely remove the default schemas because users may
-        # have hand-modified them, added new ones, etc.
-        pass
+
+        # Deleting field 'SchemaField.slug'
+        db.delete_column('db_schemafield', 'slug')
+
 
     models = {
         'db.aggregateall': {
@@ -83,13 +83,14 @@ class Migration(DataMigration):
             'news_item': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['db.NewsItem']", 'unique': 'True', 'primary_key': 'True'}),
             'schema': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Schema']"}),
             'text01': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
+            'text02': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'time01': ('django.db.models.fields.TimeField', [], {'null': 'True', 'blank': 'True'}),
             'time02': ('django.db.models.fields.TimeField', [], {'null': 'True', 'blank': 'True'}),
-            'varchar01': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'varchar02': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'varchar03': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'varchar04': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'varchar05': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'})
+            'varchar01': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True', 'blank': 'True'}),
+            'varchar02': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True', 'blank': 'True'}),
+            'varchar03': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True', 'blank': 'True'}),
+            'varchar04': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True', 'blank': 'True'}),
+            'varchar05': ('django.db.models.fields.CharField', [], {'max_length': '4096', 'null': 'True', 'blank': 'True'})
         },
         'db.dataupdate': {
             'Meta': {'object_name': 'DataUpdate'},
@@ -133,8 +134,8 @@ class Migration(DataMigration):
         'db.locationtype': {
             'Meta': {'ordering': "('name',)", 'object_name': 'LocationType'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'is_browsable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_significant': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_browsable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'is_significant': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'plural_name': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
             'scope': ('django.db.models.fields.CharField', [], {'max_length': '64'}),
@@ -210,7 +211,8 @@ class Migration(DataMigration):
             'pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'pretty_name_plural': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'real_name': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
-            'schema': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Schema']"})
+            'schema': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Schema']"}),
+            'slug': ('django.db.models.fields.SlugField', [], {'default': "''", 'max_length': '32', 'db_index': 'True'})
         },
         'db.searchspecialcase': {
             'Meta': {'object_name': 'SearchSpecialCase'},
@@ -225,7 +227,7 @@ class Migration(DataMigration):
             'from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'geom': ('django.contrib.gis.db.models.fields.LineStringField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'left_city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'left_city': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
             'left_from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'left_state': ('django.contrib.localflavor.us.models.USStateField', [], {'max_length': '2', 'db_index': 'True'}),
             'left_to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
@@ -234,7 +236,7 @@ class Migration(DataMigration):
             'postdir': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '2', 'blank': 'True'}),
             'predir': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '2', 'blank': 'True'}),
             'pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'right_city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'right_city': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
             'right_from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'right_state': ('django.contrib.localflavor.us.models.USStateField', [], {'max_length': '2', 'db_index': 'True'}),
             'right_to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),

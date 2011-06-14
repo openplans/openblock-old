@@ -32,14 +32,20 @@ from distutils.core import Extension
 listdiffc = Extension('ebdata.templatemaker.listdiffc',
                       sources=['ebdata/templatemaker/listdiff.c'])
 
+import os.path
+here = os.path.dirname(__file__)
+with open(os.path.join(here, 'README.TXT')) as file:
+    long_description = file.read()
+
 setup(
     name='ebdata',
-    version="1.0a1",
-    description="",
+    version="1.0a2-dev",
+    description="Data scraper infrastructure for ebpub",
+    long_description=long_description,
     license="GPLv3",
     install_requires=[
     "django>=1.2",
-    "ebpub>=1.0a1",
+    "ebpub>=1.0a2-dev",
     "lxml",
     "chardet",
     "feedparser",
@@ -54,4 +60,14 @@ setup(
     entry_points="""
     """,
     ext_modules=[listdiffc],
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Web Environment',
+        'Framework :: Django',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Programming Language :: Python :: 2',
+        'Operating System :: POSIX',
+        'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary',
+        'Topic :: Internet :: WWW/HTTP :: Indexing/Search',
+        ],
 )

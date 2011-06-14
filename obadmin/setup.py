@@ -23,14 +23,20 @@ except ImportError:
     use_setuptools()
     from setuptools import setup, find_packages
 
+import os.path
+here = os.path.dirname(__file__)
+with open(os.path.join(here, 'README.txt')) as file:
+    long_description = file.read()
+
 setup(
     name='obadmin',
-    version="1.0a1",
-    description="",
+    version="1.0a2-dev",
+    description="Setup and administrative tools for ebpub",
+    long_description=long_description,
     license="GPLv3",
     install_requires=[
-    "ebpub>=1.0a1",
-    "ebdata>=1.0a1",
+    "ebpub>=1.0a2-dev",
+    "ebdata>=1.0a2-dev",
     "PasteScript",
     "paver",
     ],
@@ -45,4 +51,14 @@ setup(
     [paste.paster_create_template]
     openblock = obadmin.skel:OpenblockTemplate
     """,
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Web Environment',
+        'Framework :: Django',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Programming Language :: Python :: 2',
+        'Operating System :: POSIX',
+        'Topic :: Internet :: WWW/HTTP :: Dynamic Content :: News/Diary',
+        'Topic :: Internet :: WWW/HTTP :: Indexing/Search',
+        ],
 )

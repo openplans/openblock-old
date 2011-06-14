@@ -33,7 +33,7 @@
       "is_lookup": false,
       "pretty_name_plural": "Raw Addresses",
       "is_charted": false,
-      "name": "raw_address",
+      "slug": "raw-address",
       "display_order": 0,
       "is_searchable": false,
       "real_name": "varchar01",

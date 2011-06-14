@@ -156,3 +156,5 @@ def test_client_login(client, **credentials):
     else:
         return False
 
+
+test_client_login.__test__ = False  # Tell Nose this isn't a test case.
