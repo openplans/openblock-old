@@ -25,9 +25,6 @@ NUM_DAYS_AGGREGATE = 30
 FILTER_PER_PAGE = 30
 
 # Number of NewsItems to fetch for place_detail.
-# Gotcha/caveat: If there are more than this number of items in a given day,
-# then place_detail will ignore the day because of the smart_bunches()
-# logic.
 NUM_NEWS_ITEMS_PLACE_DETAIL = 300
 
 # Regular expression that parses block-page URLs. The last part of it is for

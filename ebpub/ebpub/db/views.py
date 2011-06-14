@@ -912,7 +912,6 @@ def place_detail_timeline(request, *args, **kwargs):
         select={'pub_date_date': 'date(db_newsitem.pub_date)'},
         order_by=('-pub_date_date', '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
-    #ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,

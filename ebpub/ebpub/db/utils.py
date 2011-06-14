@@ -32,46 +32,9 @@ from ebpub.utils.view_utils import make_pid
 from ebpub.savedplaces.models import SavedPlace
 import datetime
 
-def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
-    """
-    Helper function that takes a list of NewsItems, ordered descending by
-    pub_date, and returns a list of NewsItems that's been optimized for
-    display in timelines.
 
-    Assumes each NewsItem has a pub_date_date attribute!
-
-    The logic is:
-        * Go backwards in time until there are 5 full days' worth of news
-          (not necessarily 5 consecutive days).
-        * If, for any day, there are more than 100 items, stop at that day
-          (inclusive).
-        * Any NewsItems in the list with a pub_date equal to the oldest
-          pub_date in the list will be removed. This is because we cannot
-          assume *all* of the items with that pub_date are in the list.
-    """
-    if newsitem_list:
-        current_date = None
-        days_seen = 0
-        stop_at_next_day = False
-        end_index = None
-        oldest_pub_date = newsitem_list[-1].pub_date_date
-        for i, ni in enumerate(newsitem_list):
-            if ni.pub_date_date != current_date:
-                days_seen += 1
-                current_date = ni.pub_date_date
-                items_in_current_day = 1
-                if stop_at_next_day or days_seen > max_days or ni.pub_date_date == oldest_pub_date:
-                    end_index = i
-                    break
-            else:
-                items_in_current_day += 1
-                if items_in_current_day > max_items_per_day:
-                    stop_at_next_day = True
-        if end_index is not None:
-            del newsitem_list[end_index:]
-    return newsitem_list
-
-def populate_attributes_if_needed(newsitem_list, schema_list):
+def populate_attributes_if_needed(newsitem_list, schema_list,
+                                  get_lookups=True):
     """
     Optimization helper function that takes a list of NewsItems and ensures
     the ni.attributes pseudo-dictionary is populated, for all NewsItems whose
@@ -80,11 +43,13 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     The values in the NewsItem.attributes pseudo-dictionary are Lookup
     instances in the case of Lookup fields. Otherwise, they're the
-    direct values from the Attribute table.  (Note this is different
-    than accessing NewsItem.attributes without this function, in which
-    case Lookups are not dereferenced automatically.  Client code such
-    as AttributesForTemplate should handle both cases - or really this
-    should be fixed.)
+    direct values from the Attribute table.
+
+    (Note this is different than accessing NewsItem.attributes without
+    having called this function, in which case Lookups are not
+    dereferenced automatically.  Client code such as
+    AttributesForTemplate should handle both cases - or really .attributes
+    should be fixed to be consistent.)
 
     schema_list should be a list of all Schemas that are referenced in
     newsitem_list.
