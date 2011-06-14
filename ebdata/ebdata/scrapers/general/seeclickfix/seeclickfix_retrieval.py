@@ -59,7 +59,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
             yield self.fetch_data(feed_url)
 
     def existing_record(self, cleaned_list_record):
-        url = cleaned_list_record['id'].replace('https:', 'http:')
+        url = cleaned_list_record['id'].replace('http://seeclicktest.com/', 'http://seeclickfix.com/')
         qs = NewsItem.objects.filter(schema__id=self.schema.id, url=url)
         try:
             return qs[0]
@@ -118,8 +118,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
         self.create_or_update(old_record, attributes, **detail_record)
 
 
-
-if __name__ == "__main__":
+def main():
     TESTING = False
     if TESTING:
         from ebdata.retrieval import log_debug
@@ -127,3 +126,5 @@ if __name__ == "__main__":
     else:
         SeeClickFixNewsFeedScraper().update()
 
+if __name__ == "__main__":
+    main()
