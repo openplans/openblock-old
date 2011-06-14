@@ -40,7 +40,7 @@ setup(
     long_description=long_description,
     license="GPLv3",
     install_requires=[
-    "django>=1.2",
+    "django>=1.3",
     "django-static",
     "GDAL",
     "pyyaml",
