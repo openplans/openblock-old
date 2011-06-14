@@ -123,6 +123,7 @@ class TestAjaxViews(TestCase):
         # Hack so isinstance(mock_chain(), FilterChain) works
         from ebpub.db import schemafilters
         mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
+        mock_chain().return_value = mock_chain()
         mock_chain().make_url.return_value = 'foo'
         mock_chain().schema.url.return_value = 'bar'
         mock_chain().apply.return_value = models.NewsItem.objects.all()
@@ -147,6 +148,7 @@ class TestAjaxViews(TestCase):
         # Hack so isinstance(mock_chain(), FilterChain) works
         from ebpub.db import schemafilters
         mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
+        mock_chain().return_value = mock_chain()
         mock_chain().make_url.return_value = 'foo'
         mock_chain().schema.url.return_value = 'bar'
         mock_chain().apply.return_value = models.NewsItem.objects.all()
