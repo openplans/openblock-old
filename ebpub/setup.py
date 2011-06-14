@@ -48,7 +48,7 @@ setup(
     "slimmer",  # used by django-static.
     "pyrfc3339",
     "South",
-    "mock>=0.7.0rc1",
+    "mock>=0.8.0alpha1",
     'setuptools-git',  # Only needed if building packages for distribution.
     ],
     dependency_links=[

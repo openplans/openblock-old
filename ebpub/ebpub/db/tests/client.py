@@ -19,16 +19,7 @@
 from django.conf import settings
 from django.utils.importlib import import_module
 import django.test.client
-import mock
 
-def mock_with_attributes(attrs, *args, **kwargs):
-    """A convenience constructor to avoid needing a separate line for
-    each attribute you want to set on a mock instance.
-    """
-    _mock = mock.Mock(*args, **kwargs)
-    for k, v in attrs.items():
-        setattr(_mock, k, v)
-    return _mock
 
 class RequestFactory(django.test.client.RequestFactory):
     """Thin wrapper around django.test.client.RequestFactory that
