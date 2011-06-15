@@ -19,7 +19,6 @@
 from ebdata.templatemaker.brain import Brain
 from ebdata.templatemaker.hole import Hole, OrHole, IgnoreHole
 import unittest
-import everyblock
 
 class BrainTestCase(unittest.TestCase):
     def assertAsText(self, brain, marker, expected):
