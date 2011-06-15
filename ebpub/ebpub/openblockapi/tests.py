@@ -347,7 +347,7 @@ class TestItemSearchAPI(TestCase):
         for entry in entries:
             for key, value in sorted(ext_vals.items()):
                 attrs = entry.xpath(
-                    'openblock:attributes/openblock:attribute[@slug="%s"]' % key,
+                    'openblock:attributes/openblock:attribute[@name="%s"]' % key,
                     namespaces=ns)
                 if key == 'lookup':
                     self.assertEqual(len(attrs), 2)

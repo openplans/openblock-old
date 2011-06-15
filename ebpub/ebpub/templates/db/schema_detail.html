@@ -82,7 +82,8 @@
 				</div><!--/ #location-{{ location_chart.location_type.slug }} -->
 			{% endfor %}
 			{% for lookup in lookup_list %}
-				<div id="lookup-{{ lookup.sf.slug }}">
+
+				<div id="lookup-{{ lookup.sf.name }}">
 					<h2>By {{ lookup.sf.pretty_name }}</h2>
 					<table>
 						{% for value in lookup.top_values %}
@@ -109,7 +110,7 @@
 						</tr>
 					</table>
 					{% if lookup.sf.is_many_to_many_lookup %}<p>Percentages may add up to more than 100 because {{ schema.plural_name }} may have multiple {{ lookup.sf.pretty_name_plural }}.</p>{% endif %}
-				</div><!--/ #lookup-{{ lookup.sf.slug }} -->
+				</div><!--/ #lookup-{{ lookup.sf.name }} -->
 			{% endfor %}
 		{% else %}
 			{# If schema is uncharted, show a list of most recent items instead #}

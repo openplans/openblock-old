@@ -138,7 +138,7 @@ def _item_post(request):
     # Everything else goes in .attributes.
     attributes = {}
     for key, val in props.items():
-        sf = models.SchemaField.objects.get(schema=schema, slug=key)
+        sf = models.SchemaField.objects.get(schema=schema, name=key)
         if sf.is_many_to_many_lookup():
             # TODO: get or create Lookups as needed
             pass
@@ -216,7 +216,7 @@ def _item_json(item, encode=True):
         'geometry': geom,
         }
     for attr in item.attributes_for_template():
-        key = attr.sf.slug
+        key = attr.sf.name
         if attr.sf.is_many_to_many_lookup():
             props[key] = attr.values
         else:
@@ -294,7 +294,7 @@ def _items_atom(items):
             for val in attr.values:
                 if attr.sf.is_lookup:
                     val = val.name
-                attributes.append((attr.sf.slug, datatype, val))
+                attributes.append((attr.sf.name, datatype, val))
         atom.add_item(item.title,
                       item.url, # XXX should this be a local url?
                       item.description,
@@ -400,7 +400,7 @@ def list_types_json(request):
         attributes = {}
         for sf in schema.schemafield_set.all():
             fieldtype = get_datatype(sf)
-            attributes[sf.slug] = {
+            attributes[sf.name] = {
                 'pretty_name': sf.smart_pretty_name(),
                 'type': fieldtype,
                 # TODO: what else?
@@ -539,7 +539,7 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
         for key, datatype, val in item['attributes']:
             val = serialize_date_or_time(val) or val
             handler.addQuickElement('openblock:attribute', unicode(val),
-                                    {'slug': key, 'type': datatype})
+                                    {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
 
 def normalize_datetime(dt):

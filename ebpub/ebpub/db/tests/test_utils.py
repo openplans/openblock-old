@@ -35,7 +35,7 @@ class TestDoFilterUrl(TestCase):
         populate_attributes_if_needed(ni_list, schema_list)
         self.assert_(len(item.attributes) > 1)
         self.assertEqual(item.attributes['arrests'], False)
-        self.assertEqual(item.attributes['case-number'], 'case number 1')
+        self.assertEqual(item.attributes['case_number'], 'case number 1')
 
         # Get another reference to the same NewsItem and verify that
         # prepopulation and laziness give all the same results.

@@ -40,9 +40,9 @@ class DatabaseExtensionsTestCase(TestCase):
         settings.DEBUG = True
 
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case-number'], u'case number 1')
-        self.assertEquals(ni.attributes['crime-date'], datetime.date(2006, 9, 19))
-        self.assertEquals(ni.attributes['crime-time'], None)
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
+        self.assertEquals(ni.attributes['crime_date'], datetime.date(2006, 9, 19))
+        self.assertEquals(ni.attributes['crime_time'], None)
         self.assertEquals(len(connection.queries), 3)
 
         connection.queries = []
@@ -61,9 +61,8 @@ class DatabaseExtensionsTestCase(TestCase):
         # attribute. As soon as `attributes` is assigned-to, the UPDATE query
         # is executed in the database.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case-number'], u'case number 1')
-        ni.attributes = dict(ni.attributes)
-        ni.attributes['case-number'] =u'Hello'
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
+        ni.attributes = dict(ni.attributes, case_number=u'Hello')
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
     def testSetAllAttributes2(self):
@@ -72,16 +71,16 @@ class DatabaseExtensionsTestCase(TestCase):
         ni.attributes = {
             u'arrests': False,
             u'beat': 214,
-            u'block-id': 25916,
-            u'case-number': u'Hello',
-            u'crime-date': datetime.date(2006, 9, 19),
-            u'crime-time': None,
+            u'block_id': 25916,
+            u'case_number': u'Hello',
+            u'crime_date': datetime.date(2006, 9, 19),
+            u'crime_time': None,
             u'domestic': False,
-            u'is-outdated': True,
-            u'location-id': 66,
-            u'police-id': None,
+            u'is_outdated': True,
+            u'location_id': 66,
+            u'police_id': None,
             u'status': u'',
-            u'type-id': 97
+            u'type_id': 97
         }
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
@@ -95,44 +94,44 @@ class DatabaseExtensionsTestCase(TestCase):
         ni = NewsItem.objects.get(id=1)
         self.assertEquals(ni.attributes['arrests'], False)
         self.assertEquals(ni.attributes['beat'], None)
-        self.assertEquals(ni.attributes['block-id'], None)
-        self.assertEquals(ni.attributes['case-number'], None)
-        self.assertEquals(ni.attributes['crime-date'], None)
-        self.assertEquals(ni.attributes['crime-time'], None)
+        self.assertEquals(ni.attributes['block_id'], None)
+        self.assertEquals(ni.attributes['case_number'], None)
+        self.assertEquals(ni.attributes['crime_date'], None)
+        self.assertEquals(ni.attributes['crime_time'], None)
         self.assertEquals(ni.attributes['domestic'], None)
-        self.assertEquals(ni.attributes['is-outdated'], None)
-        self.assertEquals(ni.attributes['location-id'], None)
-        self.assertEquals(ni.attributes['police-id'], None)
+        self.assertEquals(ni.attributes['is_outdated'], None)
+        self.assertEquals(ni.attributes['location_id'], None)
+        self.assertEquals(ni.attributes['police_id'], None)
         self.assertEquals(ni.attributes['status'], None)
-        self.assertEquals(ni.attributes['type-id'], None)
+        self.assertEquals(ni.attributes['type_id'], None)
 
     def testSetSingleAttribute1(self):
         # Setting a single attribute will result in an immediate query setting
         # just that attribute.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case-number'], u'case number 1')
-        ni.attributes['case-number'] = u'Hello'
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
+        ni.attributes['case_number'] = u'Hello'
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
     def testSetSingleAttribute2(self):
         # Setting single attributes works even if you don't access them first.
         ni = NewsItem.objects.get(id=1)
-        ni.attributes['case-number'] = u'Hello'
+        ni.attributes['case_number'] = u'Hello'
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
     def testSetSingleAttribute3(self):
         # Setting a single attribute will result in the value being cached.
         ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case-number'], u'case number 1')
-        ni.attributes['case-number'] = u'Hello'
-        self.assertEquals(ni.attributes['case-number'], u'Hello')
+        self.assertEquals(ni.attributes['case_number'], u'case number 1')
+        ni.attributes['case_number'] = u'Hello'
+        self.assertEquals(ni.attributes['case_number'], u'Hello')
 
     def testSetSingleAttribute4(self):
         # Setting a single attribute will result in the value being cached, even
         # if you don't access the attribute first.
         ni = NewsItem.objects.get(id=1)
-        ni.attributes['case-number'] = u'Hello'
-        self.assertEquals(ni.attributes['case-number'], u'Hello')
+        ni.attributes['case_number'] = u'Hello'
+        self.assertEquals(ni.attributes['case_number'], u'Hello')
 
     def testSetSingleAttributeNumQueries(self):
         # When setting an attribute, the system will only use a single query --
@@ -147,7 +146,7 @@ class DatabaseExtensionsTestCase(TestCase):
         settings.DEBUG = True
 
         ni = NewsItem.objects.get(id=1)
-        ni.attributes['case-number'] = u'Hello'
+        ni.attributes['case_number'] = u'Hello'
         self.assertEquals(len(connection.queries), 3)
 
         connection.queries = []
@@ -169,16 +168,16 @@ class DatabaseExtensionsTestCase(TestCase):
         ni.attributes = {
             u'arrests': False,
             u'beat': 214,
-            u'block-id': 25916,
-            u'case-number': u'Hello',
-            u'crime-date': datetime.date(2006, 9, 19),
-            u'crime-time': None,
+            u'block_id': 25916,
+            u'case_number': u'Hello',
+            u'crime_date': datetime.date(2006, 9, 19),
+            u'crime_time': None,
             u'domestic': False,
-            u'is-outdated': True,
-            u'location-id': 66,
-            u'police-id': None,
+            u'is_outdated': True,
+            u'location_id': 66,
+            u'police_id': None,
             u'status': u'',
-            u'type-id': 97
+            u'type_id': 97
         }
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
@@ -188,7 +187,7 @@ class DatabaseExtensionsTestCase(TestCase):
         # statement instead of an UPDATE.
         Attribute.objects.filter(news_item__id=1).delete()
         ni = NewsItem.objects.get(id=1)
-        ni.attributes['case-number'] = u'Hello'
+        ni.attributes['case_number'] = u'Hello'
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
     def testAttributeFromBlankSanity(self):
@@ -196,13 +195,13 @@ class DatabaseExtensionsTestCase(TestCase):
         Attribute.objects.filter(news_item__id=1).delete()
         ni = NewsItem.objects.get(id=1)
         self.assertEquals(ni.attributes, {})
-        ni.attributes['case-number'] = u'Hello'
-        self.assertEquals(ni.attributes['case-number'], u'Hello')
+        ni.attributes['case_number'] = u'Hello'
+        self.assertEquals(ni.attributes['case_number'], u'Hello')
         self.assertEquals(Attribute.objects.get(news_item__id=1).varchar01, u'Hello')
 
     def test_top_lookups__int(self):
         from ebpub.db.models import SchemaField
-        sf = SchemaField.objects.get(slug='beat')
+        sf = SchemaField.objects.get(name='beat')
         qs = NewsItem.objects.all()
         top_lookups = list(qs.top_lookups(sf, 2))
         self.assertEqual(len(top_lookups), 2)
@@ -213,7 +212,7 @@ class DatabaseExtensionsTestCase(TestCase):
 
     def test_top_lookups__m2m(self):
         from ebpub.db.models import SchemaField
-        sf = SchemaField.objects.get(slug='tags-many-to-many')
+        sf = SchemaField.objects.get(name='tags many-to-many')
         # from ebpub.db.bin.update_aggregates import update_aggregates
         # update_aggregates(sf.schema.id)
         qs = NewsItem.objects.all()

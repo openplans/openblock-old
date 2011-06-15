@@ -148,7 +148,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "case-number",
+   "name": "case_number",
    "real_name": "varchar01",
    "pretty_name": "Case number",
    "pretty_name_plural": "Case numbers",
@@ -165,7 +165,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "crime-date",
+   "name": "crime_date",
    "real_name": "date01",
    "pretty_name": "Crime date",
    "pretty_name_plural": "Crime dates",
@@ -182,7 +182,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "crime-time",
+   "name": "crime_time",
    "real_name": "time01",
    "pretty_name": "Crime time",
    "pretty_name_plural": "Crime times",
@@ -199,7 +199,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "arrests",
+   "name": "arrests",
    "real_name": "bool01",
    "pretty_name": "Arrests",
    "pretty_name_plural": "Arrests",
@@ -216,7 +216,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "domestic",
+   "name": "domestic",
    "real_name": "bool02",
    "pretty_name": "Domestic",
    "pretty_name_plural": "Domestic",
@@ -233,7 +233,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "block-id",
+   "name": "block_id",
    "real_name": "int01",
    "pretty_name": "Block ID",
    "pretty_name_plural": "Block IDs",
@@ -250,7 +250,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "beat",
+   "name": "beat",
    "real_name": "int02",
    "pretty_name": "Beat",
    "pretty_name_plural": "Beats",
@@ -267,7 +267,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "type-id",
+   "name": "type_id",
    "real_name": "int03",
    "pretty_name": "Crime type",
    "pretty_name_plural": "Crime types",
@@ -284,7 +284,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "location-id",
+   "name": "location_id",
    "real_name": "int04",
    "pretty_name": "Location",
    "pretty_name_plural": "Locations",
@@ -301,7 +301,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "is-outdated",
+   "name": "is_outdated",
    "real_name": "bool03",
    "pretty_name": "Is outdated",
    "pretty_name_plural": "Is outdated",
@@ -318,7 +318,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "police-id",
+   "name": "police_id",
    "real_name": "int05",
    "pretty_name": "Police ID",
    "pretty_name_plural": "Police IDs",
@@ -335,7 +335,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "status",
+   "name": "status",
    "real_name": "varchar02",
    "pretty_name": "Status",
    "pretty_name_plural": "Statuses",
@@ -352,7 +352,7 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "slug": "tags-many-to-many",
+   "name": "tags many-to-many",
    "real_name": "varchar04",
    "pretty_name": "Tag",
    "pretty_name_plural": "Tags",

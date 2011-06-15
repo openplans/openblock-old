@@ -218,8 +218,8 @@ class TestBoolFilter(TestCase):
         url = filter_reverse('crime', [url_args])
         req = RequestFactory().get(url)
         context = {'schema': crime}
-        sf_slug = url_args[0][3:]   # 'by-foo' -> 'foo'
-        sf = models.SchemaField.objects.get(slug=sf_slug)
+        sf_name = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf = models.SchemaField.objects.get(name=sf_name)
         self.mock_qs = mock.Mock()
         filt = BoolFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
         return filt
@@ -254,8 +254,8 @@ class TestLookupFilter(TestCase):
         url = filter_reverse('crime', [url_args])
         req = RequestFactory().get(url)
         context = {'schema': crime}
-        sf_slug = url_args[0][3:]   # 'by-foo' -> 'foo'
-        sf = models.SchemaField.objects.get(slug=sf_slug)
+        sf_name = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf = models.SchemaField.objects.get(name=sf_name)
         self.mock_qs = mock.Mock()
         filt = LookupFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
         return filt
@@ -298,8 +298,8 @@ class TestTextFilter(TestCase):
         url = filter_reverse('crime', [url_args])
         req = RequestFactory().get(url)
         context = {'schema': crime}
-        sf_slug = url_args[0][3:]   # 'by-foo' -> 'foo'
-        sf = models.SchemaField.objects.get(slug=sf_slug)
+        sf_name = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf = models.SchemaField.objects.get(name=sf_name)
         self.mock_qs = mock.Mock()
         filt = TextSearchFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
         return filt
@@ -393,11 +393,11 @@ class TestFilterChain(TestCase):
         from ebpub.db.schemafilters import DateFilter
         all_filters = [
             TextSearchFilter(req, context, qs, 'hi',
-                             schemafield=mock_with_attributes({'slug': 'mock text sf'})),
+                             schemafield=mock_with_attributes({'name': 'mock text sf'})),
             BoolFilter(req, context, qs, 'yes',
-                       schemafield=mock_with_attributes({'slug': 'mock bool sf'})),
+                       schemafield=mock_with_attributes({'name': 'mock bool sf'})),
             LookupFilter(req, context, qs,
-                         schemafield=mock_with_attributes({'slug': 'mock lookup sf'})),
+                         schemafield=mock_with_attributes({'name': 'mock lookup sf'})),
             LocationFilter(req, context, qs, 'neighborhoods'),
             DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
             ]

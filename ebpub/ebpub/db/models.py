@@ -44,18 +44,19 @@ def get_valid_real_names():
         if re.search(r'\d\d$', name):
             yield name
 
+
 def field_mapping(schema_id_list):
     """
     Given a list of schema IDs, returns a dictionary of dictionaries, mapping
-    schema_ids to dictionaries mapping the fields' slug->real_name.
+    schema_ids to dictionaries mapping the fields' name->real_name.
     Example return value:
-        {1: {u'crime-type': 'varchar01', u'crime-date', 'date01'},
-         2: {u'permit-number': 'varchar01', 'to-date': 'date01'},
+        {1: {u'crime_type': 'varchar01', u'crime_date', 'date01'},
+         2: {u'permit_number': 'varchar01', 'to_date': 'date01'},
         }
     """
     result = {}
-    for sf in SchemaField.objects.filter(schema__id__in=(schema_id_list)).values('schema', 'slug', 'real_name'):
-        result.setdefault(sf['schema'], {})[sf['slug']] = sf['real_name']
+    for sf in SchemaField.objects.filter(schema__id__in=(schema_id_list)).values('schema', 'name', 'real_name'):
+        result.setdefault(sf['schema'], {})[sf['name']] = sf['real_name']
     return result
 
 
@@ -67,6 +68,7 @@ class SchemaManager(models.Manager):
     def get_query_set(self):
         """Warning: This breaks manage.py dumpdata.
         See bug #82.
+
         """
         return super(SchemaManager, self).get_query_set().defer(
             'short_description',
@@ -175,7 +177,8 @@ class SchemaField(models.Model):
         max_length=32,
         help_text="Plural human-readable name"
         )
-    slug = models.SlugField(max_length=32)
+
+    name = models.SlugField(max_length=32)
 
     real_name = models.CharField(
         max_length=10,
@@ -212,7 +215,7 @@ class SchemaField(models.Model):
         ordering = ('pretty_name',)
 
     def __unicode__(self):
-        return u'%s - %s' % (self.schema, self.slug)
+        return u'%s - %s' % (self.schema, self.name)
 
     @property
     def datatype(self):
@@ -417,7 +420,7 @@ class AttributeDict(dict):
         dict.__init__(self)
         self.news_item_id = news_item_id
         self.schema_id = schema_id
-        self.mapping = mapping # slug -> real_name dictionary
+        self.mapping = mapping # name -> real_name dictionary
         self.cached = False
 
     def __do_query(self):
@@ -442,14 +445,14 @@ class AttributeDict(dict):
         self.__do_query()
         return dict.get(self, *args, **kwargs)
 
-    def __getitem__(self, slug):
+    def __getitem__(self, name):
         self.__do_query()
-        return dict.__getitem__(self, slug)
+        return dict.__getitem__(self, name)
 
-    def __setitem__(self, slug, value):
+    def __setitem__(self, name, value):
         # TODO: refactor, code overlaps largely with AttributeDescriptor.__set__
         cursor = connection.cursor()
-        real_name = self.mapping[slug]
+        real_name = self.mapping[name]
         cursor.execute("""
             UPDATE %s
             SET %s = %%s
@@ -463,7 +466,7 @@ class AttributeDict(dict):
                 VALUES (%%s, %%s, %%s)""" % (Attribute._meta.db_table, real_name),
                 [self.news_item_id, self.schema_id, value])
         transaction.commit_unless_managed()
-        dict.__setitem__(self, slug, value)
+        dict.__setitem__(self, name, value)
 
 class NewsItemQuerySet(models.query.GeoQuerySet):
 
@@ -721,7 +724,7 @@ class NewsItem(models.Model):
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
-        self.raw_value = attribute_row[schema_field.slug]
+        self.raw_value = attribute_row[schema_field.name]
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter

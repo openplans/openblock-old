@@ -486,7 +486,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
     context = {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
-        'attribute_dict': dict((att.sf.slug, att) for att in atts),
+        'attribute_dict': dict((att.sf.name, att) for att in atts),
         'has_location': has_location,
         'locations_within': locations_within,
         'location_url': location_url,
@@ -664,7 +664,7 @@ def schema_filter(request, slug, args_from_url):
     textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
 
     # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.slug, sf) for sf in filter_sf_list] + [(sf.slug, sf) for sf in textsearch_sf_list])
+    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, context=context, schema=s)

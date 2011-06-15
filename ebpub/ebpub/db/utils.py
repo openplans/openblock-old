@@ -74,8 +74,8 @@ def populate_attributes_if_needed(newsitem_list, schema_list,
     fmap = {}
     attribute_columns_to_select = set(['news_item'])
 
-    for sf in SchemaField.objects.filter(schema__id__in=[s.id for s in schema_list]).values('schema', 'slug', 'real_name', 'is_lookup'):
-        fmap.setdefault(sf['schema'], {'fields': [], 'lookups': []})['fields'].append((sf['slug'], sf['real_name']))
+    for sf in SchemaField.objects.filter(schema__id__in=[s.id for s in schema_list]).values('schema', 'name', 'real_name', 'is_lookup'):
+        fmap.setdefault(sf['schema'], {'fields': [], 'lookups': []})['fields'].append((sf['name'], sf['real_name']))
         if sf['is_lookup']:
             fmap[sf['schema']]['lookups'].append(sf['real_name'])
         attribute_columns_to_select.add(str(sf['real_name']))

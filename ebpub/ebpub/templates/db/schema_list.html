@@ -13,7 +13,7 @@
 		<h3>Browse:</h3>
 		<ul>
 			{% if schemabunch.schema.allow_charting %}{% for schemafield in schemabunch.schemafield_list %}
-			  <li><a href="{{ schemabunch.schema.url }}by-{{ schemafield.slug }}/">By {{ schemafield.browse_by_title }}</a></li>
+			  <li><a href="{{ schemabunch.schema.url }}by-{{ schemafield.name }}/">By {{ schemafield.browse_by_title }}</a></li>
 			{% endfor %}{% endif %}
 			{% for locationtype in browsable_locationtype_list %}
 			  <li><a href="{{ schemabunch.schema.url }}locations/{{ locationtype.slug }}/">By {{ locationtype.name }}</a></li> 
