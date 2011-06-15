@@ -719,7 +719,8 @@ class FilterChain(SortedDict):
         search_string = pop_key('q')
         if lookup_name and search_string:
             # Can raise DoesNotExist. Should that be FilterError?
-            schemafield = models.SchemaField.objects.get(name=lookup_name)
+            schemafield = models.SchemaField.objects.get(name=lookup_name,
+                                                         schema=self.schema)
             self.replace(schemafield, search_string)
 
         # Stash away all query params we didn't consume.

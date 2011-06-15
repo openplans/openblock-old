@@ -213,13 +213,13 @@ class TestBoolFilter(TestCase):
     fixtures = ('crimes.json',)
 
     def _make_filter(self, *url_args):
-        crime = mock.Mock()
+        crime = models.Schema.objects.get(slug='crime')
         from ebpub.db.schemafilters import BoolFilter
         url = filter_reverse('crime', [url_args])
         req = RequestFactory().get(url)
         context = {'schema': crime}
         sf_name = url_args[0][3:]   # 'by-foo' -> 'foo'
-        sf = models.SchemaField.objects.get(name=sf_name)
+        sf = models.SchemaField.objects.get(name=sf_name, schema=crime)
         self.mock_qs = mock.Mock()
         filt = BoolFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
         return filt
@@ -293,13 +293,13 @@ class TestTextFilter(TestCase):
     fixtures = ('crimes.json',)
 
     def _make_filter(self, *url_args):
-        crime = mock.Mock()
+        crime = models.Schema.objects.get(slug='crime')
         from ebpub.db.schemafilters import TextSearchFilter
         url = filter_reverse('crime', [url_args])
         req = RequestFactory().get(url)
         context = {'schema': crime}
         sf_name = url_args[0][3:]   # 'by-foo' -> 'foo'
-        sf = models.SchemaField.objects.get(name=sf_name)
+        sf = models.SchemaField.objects.get(name=sf_name, schema=crime)
         self.mock_qs = mock.Mock()
         filt = TextSearchFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
         return filt
