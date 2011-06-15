@@ -28,7 +28,12 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        
+
+        # WARNING, blows up if any of these fields have a value > 255
+        # characters.
+        # Could do something like:
+        # update db_attribute set varchar01 = substring(varchar01 from 0 for 255) where octet_length(varchar01) > 255;
+
         # Deleting field 'Attribute.text02'
         db.delete_column('db_attribute', 'text02')
 
