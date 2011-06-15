@@ -1,0 +1,561 @@
+[
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Restaurant Inspections",
+      "last_updated": "2010-10-20",
+      "name": "Restaurant Inspection",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "restaurant-inspections",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.cityofboston.gov/isd/health/mfc/search.asp",
+      "summary": "Restaurant Inspections",
+      "source": "http://www.cityofboston.gov/isd/health/mfc/search.asp",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Restaurant Inspections",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Inspection IDs",
+      "is_charted": false,
+      "name": "inspection_id",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int02",
+      "pretty_name": "Inspection ID",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "restaurant-inspections"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Restaurant IDs",
+      "is_charted": false,
+      "name": "restaurant_id",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Restaurant ID",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "restaurant-inspections"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Restaurant Names",
+      "is_charted": false,
+      "name": "restaurant_name",
+      "display_order": 0,
+      "is_searchable": true,
+      "real_name": "varchar01",
+      "pretty_name": "Restaurant Name",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "restaurant-inspections"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Results",
+      "is_charted": false,
+      "name": "result",
+      "display_order": 1,
+      "is_searchable": false,
+      "real_name": "int03",
+      "pretty_name": "Result",
+      "is_filter": true,
+      "display": true,
+      "schema": [
+        "restaurant-inspections"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Violations",
+      "is_charted": true,
+      "name": "violation",
+      "display_order": 2,
+      "is_searchable": false,
+      "real_name": "varchar02",
+      "pretty_name": "Violation",
+      "is_filter": true,
+      "display": true,
+      "schema": [
+        "restaurant-inspections"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Violation Details",
+      "is_charted": false,
+      "name": "details",
+      "display_order": 2,
+      "is_searchable": false,
+      "real_name": "text01",
+      "pretty_name": "Violation Detail",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "restaurant-inspections"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Boston Police Department reports",
+      "last_updated": "2010-10-21",
+      "name": "Boston Police Department report",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "police-reports",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.bpdnews.com",
+      "summary": "Boston Police Department reports",
+      "source": "http://www.bpdnews.com",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Boston Police Department reports",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_special_report": false,
+      "plural_name": "Building Permits",
+      "last_updated": "2010-10-22",
+      "name": "Building Permit",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "building-permits",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://www.cityofboston.gov/isd/building/asofright/default.asp",
+      "summary": "Boston Building Permits",
+      "source": "http://www.cityofboston.gov/isd/building/asofright/default.asp",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Boston Building Permits",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Raw Addresses",
+      "is_charted": false,
+      "name": "raw_address",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "varchar01",
+      "pretty_name": "Raw Address",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "building-permits"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "last_updated": "2011-04-05",
+      "intro": "",
+      "update_frequency": "",
+      "has_newsitem_detail": true,
+      "grab_bag_headline": "",
+      "short_source": "",
+      "slug": "business-licenses",
+      "source": "",
+      "date_name": "Date",
+      "short_description": "",
+      "grab_bag": "",
+      "is_special_report": false,
+      "importance": 0,
+      "min_date": "1900-01-01",
+      "allow_charting": false,
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "date_name_plural": "Dates",
+      "plural_name": "Business Licenses",
+      "name": "Business License",
+      "uses_attributes_in_list": false,
+      "summary": "Business licenses in the city of Boston",
+      "can_collapse": false
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Business Types",
+      "is_charted": false,
+      "name": "business_type",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Business Type",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "business-licenses"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "File Numbers",
+      "is_charted": false,
+      "name": "file_number",
+      "display_order": 10,
+      "is_searchable": true,
+      "real_name": "varchar02",
+      "pretty_name": "File Number",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "business-licenses"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Names",
+      "is_charted": false,
+      "name": "name",
+      "display_order": 10,
+      "is_searchable": true,
+      "real_name": "varchar01",
+      "pretty_name": "Name",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "business-licenses"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Notes",
+      "is_charted": false,
+      "name": "notes",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "varchar03",
+      "pretty_name": "Notes",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "business-licenses"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+     "fields": {
+      "is_special_report": false,
+      "plural_name": "SeeClickFix Issues",
+      "last_updated": "2010-10-22",
+      "name": "SeeClickFix Issue",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "uses_attributes_in_list": true,
+      "min_date": "2009-01-01",
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "slug": "issues",
+      "date_name_plural": "Dates",
+      "grab_bag_headline": "",
+      "short_source": "http://seeclickfix.com",
+      "summary": "SeeClickFix Issues for Boston",
+      "source": "http://seeclickfix.com/boston",
+      "intro": "",
+      "update_frequency": "",
+      "short_description": "List of Issues in Boston, from SeeClickFix",
+      "grab_bag": ""
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Ratings",
+      "is_charted": false,
+      "name": "rating",
+      "display_order": 0,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Rating",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "issues"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Address IDs",
+      "is_charted": false,
+      "name": "address_id",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "varchar03",
+      "pretty_name": "Address ID",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Expected Completion Dates",
+      "is_charted": false,
+      "name": "expected_datetime",
+      "display_order": 4,
+      "is_searchable": false,
+      "real_name": "datetime02",
+      "pretty_name": "Expected Completion Date",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Media URLs",
+      "is_charted": false,
+      "name": "media_url",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "varchar04",
+      "pretty_name": "Media URL",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Request IDs",
+      "is_charted": false,
+      "name": "service_request_id",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "varchar01",
+      "pretty_name": "Request ID",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Request Times",
+      "is_charted": false,
+      "name": "requested_datetime",
+      "display_order": 5,
+      "is_searchable": false,
+      "real_name": "datetime01",
+      "pretty_name": "Request Time",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Responsible Agencies",
+      "is_charted": false,
+      "name": "agency_responsible",
+      "display_order": 6,
+      "is_searchable": false,
+      "real_name": "int02",
+      "pretty_name": "Responsible Agency",
+      "is_filter": true,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Service Codes",
+      "is_charted": false,
+      "name": "service_code",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "varchar02",
+      "pretty_name": "Service Code",
+      "is_filter": false,
+      "display": false,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Service Names",
+      "is_charted": false,
+      "name": "service_name",
+      "display_order": 1,
+      "is_searchable": false,
+      "real_name": "int01",
+      "pretty_name": "Service Name",
+      "is_filter": true,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Service Notices",
+      "is_charted": false,
+      "name": "service_notice",
+      "display_order": 10,
+      "is_searchable": false,
+      "real_name": "text01",
+      "pretty_name": "Service Notice",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": true,
+      "pretty_name_plural": "Statuses",
+      "is_charted": false,
+      "name": "status",
+      "display_order": 2,
+      "is_searchable": false,
+      "real_name": "int03",
+      "pretty_name": "Status",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "pretty_name_plural": "Status Notes",
+      "is_charted": false,
+      "name": "status_notes",
+      "display_order": 3,
+      "is_searchable": false,
+      "real_name": "varchar05",
+      "pretty_name": "Status Notes",
+      "is_filter": false,
+      "display": true,
+      "schema": [
+        "open311-service-requests"
+      ]
+    },
+    "model": "db.schemafield"
+  }
+]
