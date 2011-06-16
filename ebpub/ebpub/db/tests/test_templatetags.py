@@ -116,6 +116,8 @@ class TestDoFilterUrl(unittest.TestCase):
     def test_render(self):
         from ebpub.db.schemafilters import FilterChain
         mock_chain = mock.Mock(spec=FilterChain)
+        # Hack so mock_chain() also inherits FilterChain
+        mock_chain.return_value = mock_chain
         mock_chain.schema = mock.Mock()
         mock_chain.make_url.return_value = 'ok'
         mock_chain.schema.url.return_value = 'http://X/'

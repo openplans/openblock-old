@@ -48,7 +48,7 @@ TEMPLATE_DIRS = (
     os.path.dirname(EBPUB_DIR)
 )
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader'
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -245,24 +245,100 @@ required_settings.append('EBPUB_CACHE_GEOCODER')
 # handlers more than once; see
 # http://stackoverflow.com/questions/342434/python-logging-in-django
 
-import logging, threading
-_lock = threading.Lock()
-with _lock:
-    if getattr(logging, '_is_set_up', None) is None:
-        logging._is_set_up = True
-        if not logging.getLogger().handlers:
-            # TODO: configurable file handlers, level...
-            # maybe use syslog to avoid contention when running multiple
-            # processes under mod_wsgi!
-            logging.basicConfig(level=logging.INFO,
-                                format="%(asctime)-15s %(levelname)-8s %(message)s")
-            # Surprisingly, basicConfig in Python < 2.7 doesn't set
-            # the default handler level.  This lets non-root loggers
-            # log at ANY level. Fix that.
-            for handler in logging.getLogger().handlers:
-                handler.setLevel(logging.INFO)
-        # need to import this first so it doesn't wipe the level we set...
-        from south import logger
-        logging.getLogger('south').setLevel(logging.INFO)
+
+# Logging configuration. See https://docs.djangoproject.com/en/dev/topics/logging
+# We import this first because South annoyingly overrides its log level at import time.
+from south import logger as _unused
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            },
+        'simple': {
+            'format': '%(levelname)s %(module)s: %(message)s'
+            },
+        'debug': {'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s:%(pathname)s:%(lineno)d %(message)s'
+                  },
+        'verbose': {'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s: % %(message)s'
+                    },
+    },
+    'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+            },
+        'console':{
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple'
+            },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose'
+            },
+        },
+    'loggers': {
+        '': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'INFO',
+            },
+        'django': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'WARN',
+            },
+        'ebpub': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+            },
+        'ebdata': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+            },
+        # django.request logs all 404s at level WARN; not very useful
+        # and annoying during tests.
+        'django.request': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'ERROR',
+        },
+        # 'django.request': {
+        #     'handlers': ['mail_admins'],
+        #     'level': 'ERROR',
+        #     'propagate': False,
+        # },
+        'south': {
+            'handlers': ['console',],
+            'level': 'INFO',
+        }
+    }
+}
+
+#import logging, threading
+# _lock = threading.Lock()
+# with _lock:
+#     if getattr(logging, '_is_set_up', None) is None:
+#         logging._is_set_up = True
+#         if not logging.getLogger().handlers:
+#             # TODO: confiurable file handlers, level...
+#             # maybe use syslog to avoid contention when running multiple
+#             # processes under mod_wsgi!
+#             logging.basicConfig(level=logging.INFO,
+#                                 format="%(asctime)-15s %(levelname)-8s %(message)s")
+#             # Surprisingly, basicConfig in Python < 2.7 doesn't set
+#             # the default handler level.  This lets non-root loggers
+#             # log at ANY level. Fix that.
+#             for handler in logging.getLogger().handlers:
+#                 handler.setLevel(logging.INFO)
+#         # need to import this first so it doesn't wipe the level we set...
+#         from south import logger
+#         logging.getLogger('south').setLevel(logging.INFO)
 
 __doc__ = __doc__ % required_settings

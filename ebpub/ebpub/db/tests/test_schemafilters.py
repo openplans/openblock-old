@@ -20,10 +20,7 @@
 Unit tests for db.schemafilters.
 """
 
-
-# Once we are on django 1.3, this becomes "from django.test.client import RequestFactory"
 from client import RequestFactory
-from client import mock_with_attributes
 from django.core import urlresolvers
 from django.test import TestCase
 from ebpub.db.schemafilters import FilterChain
@@ -107,7 +104,7 @@ class TestLocationFilter(TestCase):
         # TODO: this exercises a lot of implementation details; mock
         # more things to make it more isolated unit test?
         filt = self._make_filter('neighborhoods', 'hood-1')
-        filt.request.user= mock_with_attributes({'is_anonymous': lambda: True})
+        filt.request.user = mock.Mock(is_anonymous=lambda: True)
         self.assertEqual(filt.validate(), {})
         filt.apply()
         expected_loc = models.Location.objects.get(slug='hood-1')
@@ -142,7 +139,7 @@ class TestBlockFilter(TestCase):
     def test_filter__ok(self, mock_url_to_block, mock_get_metro):
         def _mock_url_to_block(request, *args, **kwargs):
             from django.contrib.gis.geos import Point
-            block = mock_with_attributes(dict(
+            block = mock.Mock(**dict(
                     from_num=99, to_num=100, street_slug='something',
                     pretty_name='99-100 something st',
                     location=Point(60.0, 60.0)))
@@ -393,11 +390,11 @@ class TestFilterChain(TestCase):
         from ebpub.db.schemafilters import DateFilter
         all_filters = [
             TextSearchFilter(req, context, qs, 'hi',
-                             schemafield=mock_with_attributes({'name': 'mock text sf'})),
+                             schemafield=mock.Mock(name='mock text sf')),
             BoolFilter(req, context, qs, 'yes',
-                       schemafield=mock_with_attributes({'name': 'mock bool sf'})),
+                       schemafield=mock.Mock(name='mock bool sf')),
             LookupFilter(req, context, qs,
-                         schemafield=mock_with_attributes({'name': 'mock lookup sf'})),
+                         schemafield=mock.Mock(name='mock lookup sf')),
             LocationFilter(req, context, qs, 'neighborhoods'),
             DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
             ]

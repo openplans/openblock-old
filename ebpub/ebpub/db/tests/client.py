@@ -1,185 +1,42 @@
-"""
-RequestFactory copied from Django 1.3.
-This can go away once we require DJango >= 1.3...
-well, not until http://code.djangoproject.com/ticket/15736 is fixed.
+#   Copyright 2011 OpenPlans and contributors
+#
+#   This file is part of OpenBlock
+#
+#   OpenBlock is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   OpenBlock is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with OpenBlock.  If not, see <http://www.gnu.org/licenses/>.
+#
 
-"""
+from django.conf import settings
+from django.utils.importlib import import_module
+import django.test.client
 
-from django.test.client import *
-import mock
 
-def mock_with_attributes(attrs, *args, **kwargs):
-    """A convenience constructor to avoid needing a separate line for
-    each attribute you want to set on the mock instance.
+class RequestFactory(django.test.client.RequestFactory):
+    """Thin wrapper around django.test.client.RequestFactory that
+    adds a .session attribute to the request.
+    (Asked for this to be added upstream, but was closed WONTFIX
+    https://code.djangoproject.com/ticket/15736)
     """
-    _mock = mock.Mock(*args, **kwargs)
-    for k, v in attrs.items():
-        setattr(_mock, k, v)
-    return _mock
-
-class RequestFactory(object):
-    """
-    Class that lets you create mock Request objects for use in testing.
-
-    Usage:
-
-    rf = RequestFactory()
-    get_request = rf.get('/hello/')
-    post_request = rf.post('/submit/', {'foo': 'bar'})
-
-    Once you have a request object you can pass it to any view function,
-    just as if that view had been hooked up using a URLconf.
-    """
-    def __init__(self, **defaults):
-        self.defaults = defaults
-        self.cookies = SimpleCookie()
-        self.errors = StringIO()
-
-    def _base_environ(self, **request):
-        """
-        The base environment for a request.
-        """
-        environ = {
-            'HTTP_COOKIE':       self.cookies.output(header='', sep='; '),
-            'PATH_INFO':         '/',
-            'QUERY_STRING':      '',
-            'REMOTE_ADDR':       '127.0.0.1',
-            'REQUEST_METHOD':    'GET',
-            'SCRIPT_NAME':       '',
-            'SERVER_NAME':       'testserver',
-            'SERVER_PORT':       '80',
-            'SERVER_PROTOCOL':   'HTTP/1.1',
-            'wsgi.version':      (1,0),
-            'wsgi.url_scheme':   'http',
-            'wsgi.errors':       self.errors,
-            'wsgi.multiprocess': True,
-            'wsgi.multithread':  False,
-            'wsgi.run_once':     False,
-        }
-        environ.update(self.defaults)
-        environ.update(request)
-        return environ
 
     def request(self, **request):
-        "Construct a generic request object."
-        req = WSGIRequest(self._base_environ(**request))
+        """
+        Construct a generic request object, with a .session attribute
+        as if SessionMiddleware were active.
+        """
+        req = super(RequestFactory, self).request(**request)
         req.session = self._session()
         return req
 
-    def _get_path(self, parsed):
-        # If there are parameters, add them
-        if parsed[3]:
-            return urllib.unquote(parsed[2] + ";" + parsed[3])
-        else:
-            return urllib.unquote(parsed[2])
-
-    def get(self, path, data={}, **extra):
-        "Construct a GET request"
-
-        parsed = urlparse(path)
-        r = {
-            'CONTENT_TYPE':    'text/html; charset=utf-8',
-            'PATH_INFO':       self._get_path(parsed),
-            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
-            'REQUEST_METHOD': 'GET',
-            'wsgi.input':      FakePayload('')
-        }
-        r.update(extra)
-        return self.request(**r)
-
-    def post(self, path, data={}, content_type=MULTIPART_CONTENT,
-             **extra):
-        "Construct a POST request."
-
-        if content_type is MULTIPART_CONTENT:
-            post_data = encode_multipart(BOUNDARY, data)
-        else:
-            # Encode the content so that the byte representation is correct.
-            match = CONTENT_TYPE_RE.match(content_type)
-            if match:
-                charset = match.group(1)
-            else:
-                charset = settings.DEFAULT_CHARSET
-            post_data = smart_str(data, encoding=charset)
-
-        parsed = urlparse(path)
-        r = {
-            'CONTENT_LENGTH': len(post_data),
-            'CONTENT_TYPE':   content_type,
-            'PATH_INFO':      self._get_path(parsed),
-            'QUERY_STRING':   parsed[4],
-            'REQUEST_METHOD': 'POST',
-            'wsgi.input':     FakePayload(post_data),
-        }
-        r.update(extra)
-        return self.request(**r)
-
-    def head(self, path, data={}, **extra):
-        "Construct a HEAD request."
-
-        parsed = urlparse(path)
-        r = {
-            'CONTENT_TYPE':    'text/html; charset=utf-8',
-            'PATH_INFO':       self._get_path(parsed),
-            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
-            'REQUEST_METHOD': 'HEAD',
-            'wsgi.input':      FakePayload('')
-        }
-        r.update(extra)
-        return self.request(**r)
-
-    def options(self, path, data={}, **extra):
-        "Constrict an OPTIONS request"
-
-        parsed = urlparse(path)
-        r = {
-            'PATH_INFO':       self._get_path(parsed),
-            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
-            'REQUEST_METHOD': 'OPTIONS',
-            'wsgi.input':      FakePayload('')
-        }
-        r.update(extra)
-        return self.request(**r)
-
-    def put(self, path, data={}, content_type=MULTIPART_CONTENT,
-            **extra):
-        "Construct a PUT request."
-
-        if content_type is MULTIPART_CONTENT:
-            post_data = encode_multipart(BOUNDARY, data)
-        else:
-            post_data = data
-
-        # Make `data` into a querystring only if it's not already a string. If
-        # it is a string, we'll assume that the caller has already encoded it.
-        query_string = None
-        if not isinstance(data, basestring):
-            query_string = urlencode(data, doseq=True)
-
-        parsed = urlparse(path)
-        r = {
-            'CONTENT_LENGTH': len(post_data),
-            'CONTENT_TYPE':   content_type,
-            'PATH_INFO':      self._get_path(parsed),
-            'QUERY_STRING':   query_string or parsed[4],
-            'REQUEST_METHOD': 'PUT',
-            'wsgi.input':     FakePayload(post_data),
-        }
-        r.update(extra)
-        return self.request(**r)
-
-    def delete(self, path, data={}, **extra):
-        "Construct a DELETE request."
-
-        parsed = urlparse(path)
-        r = {
-            'PATH_INFO':       self._get_path(parsed),
-            'QUERY_STRING':    urlencode(data, doseq=True) or parsed[4],
-            'REQUEST_METHOD': 'DELETE',
-            'wsgi.input':      FakePayload('')
-        }
-        r.update(extra)
-        return self.request(**r)
 
     def _session(self):
         """
