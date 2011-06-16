@@ -24,8 +24,9 @@ from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
 from ebpub.utils.text import slugify
 
-import re
 import datetime
+import logging
+import re
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
 import ebpub.monkeypatches
@@ -34,6 +35,7 @@ ebpub.monkeypatches.patch_once()
 FREQUENCY_CHOICES = ('Hourly', 'Throughout the day', 'Daily', 'Twice a week', 'Weekly', 'Twice a month', 'Monthly', 'Quarterly', 'Sporadically', 'No longer updated')
 FREQUENCY_CHOICES = [(a, a) for a in FREQUENCY_CHOICES]
 
+logger = logging.getLogger('ebpub.db.models')
 
 def get_valid_real_names():
     """
@@ -717,6 +719,9 @@ class NewsItem(models.Model):
         """
         fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
         if not fields:
+            return []
+        if not self.attributes:
+            logger.warn("%s has fields in its schema, but no attributes!" % self)
             return []
         return [AttributeForTemplate(f, self.attributes) for f in fields]
 

@@ -92,6 +92,13 @@ def populate_attributes_if_needed(newsitem_list, schema_list,
         if not ni.schema_id in fmap:
             continue
         for real_name in fmap[ni.schema_id]['lookups']:
+            if ni.id not in att_dict:
+                # AFAICT this should not happen, but if you have
+                # newsitems created before a schema defined any
+                # schemafields, and schemafields were added later,
+                # then you might get some NewsItems that don't have a
+                # corresponding att_dict result.
+                continue
             value = att_dict[ni.id][real_name]
             if ',' in str(value):
                 lookup_ids.update(value.split(','))
