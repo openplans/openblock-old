@@ -388,13 +388,21 @@ class TestFilterChain(TestCase):
         from ebpub.db.schemafilters import TextSearchFilter, BoolFilter
         from ebpub.db.schemafilters import LookupFilter, LocationFilter
         from ebpub.db.schemafilters import DateFilter
+
+        def mock_schemafield(name):
+            # mock.Mock(name='foo') does something magic, but I just
+            # want to set the name attribute.
+            sf = mock.Mock()
+            sf.name = name
+            return sf
+
         all_filters = [
             TextSearchFilter(req, context, qs, 'hi',
-                             schemafield=mock.Mock(name='mock text sf')),
+                             schemafield=mock_schemafield(name='mock text sf')),
             BoolFilter(req, context, qs, 'yes',
-                       schemafield=mock.Mock(name='mock bool sf')),
+                       schemafield=mock_schemafield(name='mock bool sf')),
             LookupFilter(req, context, qs,
-                         schemafield=mock.Mock(name='mock lookup sf')),
+                         schemafield=mock_schemafield(name='mock lookup sf')),
             LocationFilter(req, context, qs, 'neighborhoods'),
             DateFilter(req, context, qs, '2011-04-11', '2011-04-12'),
             ]
