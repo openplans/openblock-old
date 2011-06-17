@@ -51,7 +51,10 @@ setup(
     "mock>=0.8.0alpha1",
     'setuptools-git',  # Only needed if building packages for distribution.
     ],
+    find_links=[
+    ],
     dependency_links=[
+    "http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1",
     ],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,

@@ -10,5 +10,6 @@ django-static==1.5.4
 psycopg2>=2.2,<2.3
 pyyaml>=3
 slimmer>=0.1.30
-hg+https://mock.googlecode.com/hg/#egg=mock-0.8.0alpha1
+http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1
 South>=0.7.3
+
