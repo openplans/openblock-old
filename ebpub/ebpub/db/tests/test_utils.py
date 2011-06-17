@@ -27,8 +27,10 @@ class TestDoFilterUrl(TestCase):
         from ebpub.db.models import NewsItem
         item = NewsItem.objects.get(title='crime title 1')
         ni_list = [item]
-        # It's lazy - populated when you get some keys.
-        self.assertEqual(len(item.attributes), 0)
+
+        # It's lazy - but just checking length is enough to trigger
+        # attribute population.
+        self.assert_(len(item.attributes) > 1)
 
         from ebpub.db.utils import populate_attributes_if_needed
         schema_list = list(set((ni.schema for ni in ni_list)))

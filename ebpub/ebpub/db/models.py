@@ -435,6 +435,11 @@ class AttributeDict(dict):
                 self.update(attr_values[0])
             self.cached = True
 
+    def __len__(self):
+        # So len(self) and bool(self) work.
+        self.__do_query()
+        return dict.__len__(self)
+
     def keys(self, *args, **kwargs):
         self.__do_query()        
         return dict.keys(self, *args, **kwargs)
