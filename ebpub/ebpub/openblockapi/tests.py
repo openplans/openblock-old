@@ -7,27 +7,30 @@ import feedparser
 import pytz
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+from ebpub.utils.django_testcase_backports import TestCase, override_settings
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
 from functools import wraps
 
-import ebpub.openblockapi.views
+from ebpub.openblockapi import views
 
-def monkeypatch(obj, attrname, value):
-    # Decorator for temporarily replacing an object
-    # during a test, with an arbitrary value.
-    # Unlike mock.patch, this allows the value to be
-    # things other than mock.Mock objects.
+def monkeypatch(obj, **patchkwargs):
+    """Decorator for temporarily replacing an object
+    during a test, with an arbitrary value.
+    Unlike mock.patch, this allows the value to be
+    things other than mock.Mock objects.
+    """
     def patch(method):
         @wraps(method)
         def patched(*args, **kw):
-            orig = getattr(obj, attrname)
-            try:
-                setattr(obj, attrname, value)
-                return method(*args, **kw)
-            finally:
-                setattr(obj, attrname, orig)
+            origdict = {}
+            for key, value in patchkwargs.items():
+                origdict[key] = getattr(obj, key)
+                try:
+                    setattr(obj, key, value)
+                    return method(*args, **kw)
+                finally:
+                    setattr(obj, key, origdict[key])
         return patched
     return patch
 
@@ -78,6 +81,7 @@ class TestAPI(TestCase):
         self.assertEqual(t1['attributes']['datetime'],
                          {'pretty_name': 'Datetime', 'type': 'datetime'})
 
+    @monkeypatch(views.settings, OPENBLOCKAPI_MAX_REQUESTS=2, OPENBLOCKAPI_TIMEOUT=100)
     def test_jsonp(self):
         # Quick test that API endpoints are respecting the jsonp query
         # parameter.
@@ -97,9 +101,12 @@ class TestAPI(TestCase):
         for e in endpoints:
             response = self.client.get(e)
             self.assertEqual(response.status_code, 200)
-            assert response.content.startswith('%s(' % wrapper)
-            assert response.content.endswith(");")
-            assert response.get('content-type', None).startswith('application/javascript')
+            self.assertEqual(response.content[:len(wrapper) + 1],
+                             '%s(' % wrapper)
+            self.assertEqual(response.content[-2:], ');')
+            self.assertEqual(response.get('content-type', '')[:22],
+                             'application/javascript')
+
 
     def test_items_redirect(self):
         url = reverse('items_index')
@@ -162,7 +169,7 @@ class TestQuickAPIErrors(TestCase):
         response = self.client.put(reverse('items_index'))
         self.assertEqual(response.status_code, 405)
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_date_invalid(self):
         qs = "?startdate=oops"
         response = self.client.get(reverse('items_json') + qs)
@@ -278,7 +285,8 @@ class TestItemSearchAPI(TestCase):
     # TODO: once DJango 1.4 is out, we might be able to remove this by
     # using # the TestCase.settings context manager as per
     # http://docs.djangoproject.com/en/dev/topics/testing/#overriding-settings
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    # ... or not; that's often too late.
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
         schema = Schema.objects.get(slug='test-schema')
 
@@ -311,7 +319,7 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_result(items, ritems)
 
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_extension_fields_atom(self):
         schema = Schema.objects.get(slug='test-schema')
         ext_vals = {
@@ -357,7 +365,7 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_xml_result(items, response.content)
 
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
         import pytz
@@ -399,7 +407,7 @@ class TestItemSearchAPI(TestCase):
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_daterange(self):
         # create some items, they will have
         # dates spaced apart by one day, newest first
