@@ -81,7 +81,6 @@ class TestAPI(TestCase):
         self.assertEqual(t1['attributes']['datetime'],
                          {'pretty_name': 'Datetime', 'type': 'datetime'})
 
-    @monkeypatch(views.settings, OPENBLOCKAPI_MAX_REQUESTS=2, OPENBLOCKAPI_TIMEOUT=100)
     def test_jsonp(self):
         # Quick test that API endpoints are respecting the jsonp query
         # parameter.
