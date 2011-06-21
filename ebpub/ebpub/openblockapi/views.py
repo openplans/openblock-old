@@ -16,6 +16,7 @@ from ebpub.openblockapi.itemquery import build_item_query, QueryError
 from ebpub.streets.models import PlaceType, Place, PlaceSynonym
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
+from ebpub.utils.geodjango import ensure_valid
 import datetime
 import logging
 import pyrfc3339
@@ -30,6 +31,10 @@ JAVASCRIPT_CONTENT_TYPE = 'application/javascript'
 LOCAL_TZ = pytz.timezone(settings.TIME_ZONE)
 
 logger = logging.getLogger('openblockapi')
+
+############################################################
+# Util functions.
+############################################################
 
 def APIGETResponse(request, body, **kw):
     """
@@ -53,6 +58,126 @@ def APIGETResponse(request, body, **kw):
         kw['content_type'] = JAVASCRIPT_CONTENT_TYPE
         return HttpResponse(body, **kw)
 
+def normalize_datetime(dt):
+    # XXX needs tests
+    if dt.tzinfo is None:
+        # Assume naive times are in local zone.
+        dt = dt.replace(tzinfo=LOCAL_TZ)
+    return dt.astimezone(LOCAL_TZ)
+
+def get_datatype(schemafield):
+    """
+    Human-readable datatype based on real_name; notably, use 'text',
+    not 'varchar'; Lookups are 'text'.
+    """
+    if schemafield.is_lookup:
+        datatype = 'text'
+    else:
+        datatype = schemafield.datatype
+        if datatype == 'varchar':
+            datatype = 'text'
+    return datatype
+
+def _copy_nomulti(d):
+    """
+    make a copy of django wack-o immutable query mulit-dict
+    making single item values non-lists.
+    """
+    r = {}
+    for k,v in d.items():
+        try:
+            if len(v) == 1:
+                r[k] = v[0]
+            else:
+                r[k] = v
+        except TypeError:
+            r[k] = v
+    return r
+
+def _item_geojson_dict(item):
+    props = {}
+    geom = simplejson.loads(item.location.geojson)
+    result = {
+        # 'id': i.id, # XXX ?
+        'type': 'Feature',
+        'geometry': geom,
+        }
+    for attr in item.attributes_for_template():
+        key = attr.sf.name
+        if attr.sf.is_many_to_many_lookup():
+            props[key] = attr.values
+        else:
+            props[key] = attr.values[0]
+
+    props.update(
+        {'type': item.schema.slug,
+         'title': item.title,
+         'description': item.description,
+         'url': item.url,
+         'pub_date': item.pub_date,
+         'item_date': item.item_date,
+         })
+    result['properties'] = props
+    return result
+
+def is_instance_of_model(obj, model):
+    # isinstance(foo, model) seems to work *sometimes* with django models,
+    # but not always; no idea what's going on there.
+    # This should always work.
+    return (isinstance(obj, model)
+            or type(obj) is model
+            or model in obj.__class__.__bases__)
+
+def _serialize_unknown(obj):
+    # Handle NewsItems and various other types that default json serializer
+    # doesn't know how to do.
+    if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
+        return serialize_date_or_time(obj)
+    elif is_instance_of_model(obj, models.Lookup):
+        return obj.name
+    elif is_instance_of_model(obj, models.NewsItem):
+        return _item_geojson_dict(obj)
+    return None
+
+def serialize_date_or_time(obj):
+    if isinstance(obj, datetime.datetime):
+        obj = normalize_datetime(obj)
+        return pyrfc3339.generate(obj, utc=False)
+    elif isinstance(obj, datetime.date):
+        return obj.strftime('%Y-%m-%d')
+    elif isinstance(obj, datetime.time):
+        # XXX super ugly
+        if obj.tzinfo is None:
+            obj = obj.replace(tzinfo=LOCAL_TZ)
+        dd = datetime.datetime.now()
+        dd = dd.replace(hour=obj.hour, minute=obj.minute,
+                        second=obj.second, tzinfo=obj.tzinfo)
+        dd = normalize_datetime(dd)
+        ss = pyrfc3339.generate(dd, utc=False)
+        return ss.split('T', 1)[1]
+    else:
+        return None
+
+def _get_location_info(geometry, location_name):
+    location = None
+    if geometry:
+        # geometry is a decoded geojson geometry dict.
+        # GEOSGeometry can already parse geojson geometries (as a string)...
+        # but not the whole geojson string... so we have to re-encode
+        # just the geometry :-P
+        from django.contrib.gis.geos import GEOSGeometry
+        location = GEOSGeometry(simplejson.dumps(geometry))
+        location = ensure_valid(location)
+        if not location_name:
+            raise NotImplementedError("Should do reverse-geocoding here")
+    elif location_name:
+        raise NotImplementedError("Should do geocoding here.")
+    return location, location_name
+
+
+############################################################
+# View functions.
+############################################################
 
 def check_api_available(request):
     """
@@ -159,25 +284,6 @@ def _item_post(request):
     created['location'] = reverse('single_item_json', kwargs={'id_': item_id})
     return created
 
-def _get_location_info(geometry, location_name):
-    location = None
-    if geometry:
-        from django.contrib.gis.geos import GEOSGeometry
-        # GEOSGeometry can already parse geojson geometries (as a string)...
-        # but not the whole geojson string... so we have to re-encode
-        # just the geometry :-P
-        location = GEOSGeometry(simplejson.dumps(geometry))
-        if not location.valid:
-            # Sometimes this will fix a bad geometry.
-            location = location.buffer(0.0)
-        if not location_name:
-            # TODO: reverse-geocode
-            pass
-    elif location_name:
-        # TODO: geocode
-        pass
-    return location, location_name
-
 
 def single_item_json(request, id_=None):
     """
@@ -189,87 +295,6 @@ def single_item_json(request, id_=None):
     item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
     return APIGETResponse(request, item, content_type=JSON_CONTENT_TYPE)
 
-
-def _copy_nomulti(d):
-    """
-    make a copy of django wack-o immutable query mulit-dict
-    making single item values non-lists.
-    """
-    r = {}
-    for k,v in d.items():
-        try:
-            if len(v) == 1:
-                r[k] = v[0]
-            else: 
-                r[k] = v
-        except TypeError:
-            r[k] = v
-    return r
-
-def _item_geojson_dict(item):
-    props = {}
-    geom = simplejson.loads(item.location.geojson)
-    result = {
-        # 'id': i.id, # XXX ?
-        'type': 'Feature',
-        'geometry': geom,
-        }
-    for attr in item.attributes_for_template():
-        key = attr.sf.name
-        if attr.sf.is_many_to_many_lookup():
-            props[key] = attr.values
-        else:
-            props[key] = attr.values[0]
-
-    props.update(
-        {'type': item.schema.slug,
-         'title': item.title,
-         'description': item.description,
-         'url': item.url,
-         'pub_date': item.pub_date,
-         'item_date': item.item_date,
-         })
-    result['properties'] = props
-    return result
-
-
-def is_instance_of_model(obj, model):
-    # isinstance(foo, model) seems to work *sometimes* with django models,
-    # but not always; no idea what's going on there.
-    # This should always work.
-    return (isinstance(obj, model)
-            or type(obj) is model
-            or model in obj.__class__.__bases__)
-
-def _serialize_unknown(obj):
-    # Handle NewsItems and various other types that default json serializer
-    # doesn't know how to do.
-    if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
-        return serialize_date_or_time(obj)
-    elif is_instance_of_model(obj, models.Lookup):
-        return obj.name
-    elif is_instance_of_model(obj, models.NewsItem):
-        return _item_geojson_dict(obj)
-    return None
-
-def serialize_date_or_time(obj):
-    if isinstance(obj, datetime.datetime):
-        obj = normalize_datetime(obj)
-        return pyrfc3339.generate(obj, utc=False)
-    elif isinstance(obj, datetime.date):
-        return obj.strftime('%Y-%m-%d')
-    elif isinstance(obj, datetime.time):
-        # XXX super ugly
-        if obj.tzinfo is None:
-            obj = obj.replace(tzinfo=LOCAL_TZ)
-        dd = datetime.datetime.now()
-        dd = dd.replace(hour=obj.hour, minute=obj.minute,
-                        second=obj.second, tzinfo=obj.tzinfo)
-        dd = normalize_datetime(dd)
-        ss = pyrfc3339.generate(dd, utc=False)
-        return ss.split('T', 1)[1]
-    else:
-        return None
 
 
 def _items_atom(items):
@@ -538,24 +563,3 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
             handler.addQuickElement('openblock:attribute', unicode(val),
                                     {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
-
-def normalize_datetime(dt):
-    # XXX needs tests
-    if dt.tzinfo is None:
-        # Assume naive times are in local zone.
-        dt = dt.replace(tzinfo=LOCAL_TZ)
-    return dt.astimezone(LOCAL_TZ)
-
-
-def get_datatype(schemafield):
-    """
-    Human-readable datatype based on real_name; notably, use 'text',
-    not 'varchar'; Lookups are 'text'.
-    """
-    if schemafield.is_lookup:
-        datatype = 'text'
-    else:
-        datatype = schemafield.datatype
-        if datatype == 'varchar':
-            datatype = 'text'
-    return datatype
