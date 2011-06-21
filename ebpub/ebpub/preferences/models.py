@@ -18,6 +18,7 @@
 
 from django.db import models
 from ebpub.db.models import Schema
+import ebpub.accounts.models
 
 class HiddenSchema(models.Model):
     user_id = models.IntegerField()
@@ -35,3 +36,20 @@ class HiddenSchema(models.Model):
 
     def __unicode__(self):
         return u'<HiddenSchema %s for user %s>' % (self.user_id, self.schema.slug)
+
+
+class Profile(models.Model):
+    """
+    Not a public-facing user profile really ... yet... but
+    django-apikey uses user profiles to associate keys with
+    accounts... just need a place to hang that.
+    """
+
+    user = models.ForeignKey(ebpub.accounts.models.User, unique=True)
+
+    def can_make_api_key(self):
+        return self.available_keys > 0
+
+    def available_keys(self):
+        # TODO
+        return 1

@@ -50,7 +50,7 @@ setup(
     "South",
     "mock>=0.8.0alpha1",
     'setuptools-git',  # Only needed if building packages for distribution.
-    'django-tastypie>=0.9.9',
+    'django-apikey',
     ],
     find_links=[
     ],

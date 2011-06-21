@@ -4,6 +4,7 @@ API tests
 import cgi
 import datetime
 import feedparser
+import mock
 import pytz
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
@@ -13,6 +14,7 @@ from ebpub.db.models import Location, NewsItem, Schema
 from functools import wraps
 
 from ebpub.openblockapi import views
+from ebpub.openblockapi import authentication
 
 def monkeypatch(obj, **patchkwargs):
     """Decorator for temporarily replacing an object
@@ -832,3 +834,52 @@ class TestUtilFunctions(TestCase):
         geom, name = views._get_location_info(geom_dict, 'anywhere')
         self.assertEqual(geom.coords, (100.0, 0.0))
         self.assertEqual(name, 'anywhere')
+
+
+    def test_check_api_auth__no_credentials(self):
+        ip = '1.2.3.4'
+        from django.core.exceptions import PermissionDenied
+        request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                               'META': {'REMOTE_ADDR': ip},
+                               'GET': {}, 'POST': {}})
+        self.assertRaises(PermissionDenied, authentication.check_api_authorization,
+                          request)
+
+    def test_check_api_auth__logged_in(self):
+        ip = '1.2.3.4'
+        request = mock.Mock(**{'user.is_authenticated.return_value': True,
+                               'META': {'REMOTE_ADDR': ip},
+                               'GET': {}, 'POST': {}})
+        self.assertEqual(True, authentication.check_api_authorization(request))
+
+    def test_check_api_auth__key_invalid(self):
+        from django.core.exceptions import PermissionDenied
+        key = '12345'
+        ip = '1.2.3.4'
+        get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                                   'META': {'REMOTE_ADDR': ip},
+                                   'GET': {'api_key': key}, 'POST': {}})
+        self.assertRaises(PermissionDenied, authentication.check_api_authorization,
+                          get_request)
+
+        post_request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                                    'META': {'REMOTE_ADDR': ip},
+                                    'GET': {}, 'POST': {'api_key': key}})
+        self.assertRaises(PermissionDenied, authentication.check_api_authorization,
+                          post_request)
+
+    def test_check_api_auth__key(self):
+        from key.models import generate_unique_api_key
+        ip = '1.2.3.4'
+        from ebpub.accounts.models import User
+        user = User.objects.create_user(email='bob@bob.com')
+        key = generate_unique_api_key(user)
+        get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                                   'META': {'REMOTE_ADDR': ip},
+                                   'GET': {'api_key': key}, 'POST': {}})
+        self.assertEqual(True, authentication.check_api_authorization(get_request))
+
+        post_request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                                    'META': {'REMOTE_ADDR': ip},
+                                    'GET': {}, 'POST': {'api_key': key}})
+        self.assertEqual(True, authentication.check_api_authorization(post_request))

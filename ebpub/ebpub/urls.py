@@ -51,6 +51,7 @@ urlpatterns += patterns('',
     url(r'^rss/locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/$', feeds.LocationFeed(), name='ebpub-location-rss'),
 
     (r'^accounts/', include('ebpub.accounts.urls')),
+    (r'^apikeys/', include('key.urls')),
     (r'^alerts/unsubscribe/(\d{1,10})/$', alert_views.unsubscribe),
     (r'^petitions/([-\w]{4,32})/$', petition_views.form_view, {'is_schema': False}),
     (r'^petitions/([-\w]{4,32})/thanks/$', petition_views.form_thanks, {'is_schema': False}),

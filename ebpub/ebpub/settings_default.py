@@ -84,7 +84,7 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'django.contrib.sessions',
     'django_static',
-    'tastypie',
+    'key',
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
@@ -242,10 +242,8 @@ DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 EBPUB_CACHE_GEOCODER = True
 required_settings.append('EBPUB_CACHE_GEOCODER')
 
-# Logging setup. There's a bit of hackery to make sure we don't set up
-# handlers more than once; see
-# http://stackoverflow.com/questions/342434/python-logging-in-django
-
+# Required by django-apikey to associate keys with user profiles.
+AUTH_PROFILE_MODULE = 'preferences.Profile'
 
 # Logging configuration. See https://docs.djangoproject.com/en/dev/topics/logging
 # We import this first because South annoyingly overrides its log level at import time.
