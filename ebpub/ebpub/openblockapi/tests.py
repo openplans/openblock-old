@@ -789,6 +789,12 @@ class TestPlacesAPI(TestCase):
         self.assertTrue('Faketown Precinct 1' in names)
         self.assertTrue('Faketown Precinct 2' in names)
 
+    def test_place_detail_json__bogus_type(self):
+        response = self.client.get(
+            reverse('place_detail_json', kwargs={'placetype': 'Oops'}))
+        self.assertEqual(response.status_code, 404)
+
+
 class TestOpenblockAtomFeed(TestCase):
 
     def test_root_attrs(self):
@@ -820,3 +826,9 @@ class TestUtilFunctions(TestCase):
         f = Foo()
         self.assertEqual(True, views.is_instance_of_model(f, Foo))
         self.assertRaises(TypeError, views.is_instance_of_model, f, Foo())
+
+    def test_get_location_info(self):
+        geom_dict = { "type": "Point", "coordinates": [100.0, 0.0] }
+        geom, name = views._get_location_info(geom_dict, 'anywhere')
+        self.assertEqual(geom.coords, (100.0, 0.0))
+        self.assertEqual(name, 'anywhere')
