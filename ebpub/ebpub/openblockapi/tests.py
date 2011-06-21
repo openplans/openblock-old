@@ -811,3 +811,12 @@ class TestUtilFunctions(TestCase):
         self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
                          {'a': 1, 'b': [1,2,3]})
 
+
+    def test_is_instance_of_model(self):
+        from django.contrib.gis.db import models
+        class Foo(models.Model):
+            class Meta:
+                app_label = 'openblockapi'
+        f = Foo()
+        self.assertEqual(True, views.is_instance_of_model(f, Foo))
+        self.assertRaises(TypeError, views.is_instance_of_model, f, Foo())

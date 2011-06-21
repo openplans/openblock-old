@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
+from django.db.models.query import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -32,28 +33,23 @@ logger = logging.getLogger('openblockapi')
 
 def APIGETResponse(request, body, **kw):
     """
-    constructs either a normal HTTPResponse using the 
-    keyword arguments given or a JSONP wrapped response
-    depending on the presence and validity of 
-    JSONP_QUERY_PARAM in the request. 
-    
-    This may alter the content type of the response 
+    constructs either a normal HTTPResponse using the
+    keyword arguments given or a JSONP / JSONPX wrapped response
+    depending on the presence and validity of
+    JSONP_QUERY_PARAM in the request.
+
+    This may alter the content type of the response
     if JSONP/JSONPX is triggered. Status is preserved.
     """
     jsonp = request.GET.get(JSONP_QUERY_PARAM)
+    format = kw.setdefault('content_type', JSON_CONTENT_TYPE)
+    if format == JSON_CONTENT_TYPE and not isinstance(body, basestring):
+        body = simplejson.dumps(body, indent=1, default=_serialize_unknown)
     if jsonp is None:
         return HttpResponse(body, **kw)
     else:
-        content_type = kw.get("mimetype", kw.get("content_type", "text/plain"))
         jsonp = re.sub(r'[^a-zA-Z0-9_]+', '', jsonp)
-        if content_type in (JSON_CONTENT_TYPE, ATOM_CONTENT_TYPE):
-            body = jsonp + "(" + body + ");" 
-        else: 
-            body = jsonp + "(" + simplejson.dumps(body, indent=1) + ");"
-        if 'content_type' in kw:
-            del kw['content_type']
-        if 'mimetype' in kw:
-            del kw['mimetype']
+        body = '%s(%s);' % (jsonp, body)
         kw['content_type'] = JAVASCRIPT_CONTENT_TYPE
         return HttpResponse(body, **kw)
 
@@ -76,7 +72,11 @@ def items_json(request):
     try:
         items, params = build_item_query(_copy_nomulti(request.GET))
         # could test for extra params aside from jsonp...
-        return APIGETResponse(request, _items_json(items), content_type=JSON_CONTENT_TYPE)
+        items = [item for item in items if item.location is not None]
+        items_geojson_dict = {'type': 'FeatureCollection',
+                              'features': items
+                              }
+        return APIGETResponse(request, items_geojson_dict, content_type=JSON_CONTENT_TYPE)
     except QueryError as err:
         return HttpResponse(err.message, status=400)
 
@@ -187,8 +187,7 @@ def single_item_json(request, id_=None):
     # TODO: handle PUT, DELETE?
     from ebpub.db.models import NewsItem
     item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
-    json = _item_json(item)
-    return APIGETResponse(request, json, content_type=JSON_CONTENT_TYPE)
+    return APIGETResponse(request, item, content_type=JSON_CONTENT_TYPE)
 
 
 def _copy_nomulti(d):
@@ -207,7 +206,7 @@ def _copy_nomulti(d):
             r[k] = v
     return r
 
-def _item_json(item, encode=True):
+def _item_geojson_dict(item):
     props = {}
     geom = simplejson.loads(item.location.geojson)
     result = {
@@ -227,32 +226,30 @@ def _item_json(item, encode=True):
          'title': item.title,
          'description': item.description,
          'url': item.url,
-         'pub_date': pyrfc3339.generate(normalize_datetime(item.pub_date), utc=False),
+         'pub_date': item.pub_date,
          'item_date': item.item_date,
          })
     result['properties'] = props
-    if encode:
-        return simplejson.dumps(result, default=_serialize_unknown, indent=1)
-    else:
-        return result
+    return result
 
-def _items_json(items):
-    result = {
-        'type': 'FeatureCollection',
-        'features': []
-    }
-    for i in items:
-        if i.location is None: 
-            continue
-        item = _item_json(i, encode=False)
-        result['features'].append(item)
-    return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+
+def is_instance_of_model(obj, model):
+    # isinstance(foo, model) seems to work *sometimes* with django models,
+    # but not always; no idea what's going on there.
+    # This should always work.
+    return (isinstance(obj, model)
+            or type(obj) is model
+            or model in obj.__class__.__bases__)
 
 def _serialize_unknown(obj):
+    # Handle NewsItems and various other types that default json serializer
+    # doesn't know how to do.
     if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
         return serialize_date_or_time(obj)
-    if isinstance(obj, models.Lookup):
+    elif is_instance_of_model(obj, models.Lookup):
         return obj.name
+    elif is_instance_of_model(obj, models.NewsItem):
+        return _item_geojson_dict(obj)
     return None
 
 def serialize_date_or_time(obj):
@@ -270,7 +267,7 @@ def serialize_date_or_time(obj):
                         second=obj.second, tzinfo=obj.tzinfo)
         dd = normalize_datetime(dd)
         ss = pyrfc3339.generate(dd, utc=False)
-        return ss[ss.index('T') + 1:]
+        return ss.split('T', 1)[1]
     else:
         return None
 
@@ -323,7 +320,7 @@ def geocode(request):
     else:
         status = 404
     return APIGETResponse(request, simplejson.dumps(collection, indent=1),
-                          mimetype="application/json", status=status)
+                          content_type=JSON_CONTENT_TYPE, status=status)
 
 def _geocode_geojson(query):
     if not query: 
@@ -416,7 +413,7 @@ def list_types_json(request):
                 }
 
     return APIGETResponse(request, simplejson.dumps(schemas, indent=1),
-                          content_type='application/json')
+                          content_type=JSON_CONTENT_TYPE)
 
 def locations_json(request):
     locations = models.Location.objects.filter(is_public=True)
@@ -436,7 +433,7 @@ def locations_json(request):
         for loc in locations]
 
     return APIGETResponse(request, simplejson.dumps(loc_objs, indent=1),
-                          content_type='application/json')
+                          content_type=JSON_CONTENT_TYPE)
 
 def location_detail_json(request, loctype, slug):
     # TODO: this will obsolete ebpub.db.views.ajax_location
@@ -464,7 +461,7 @@ def location_detail_json(request, loctype, slug):
                               }
                }
     geojson = simplejson.dumps(geojson, indent=1)
-    return APIGETResponse(request, geojson, content_type='application/json')
+    return APIGETResponse(request, geojson, content_type=JSON_CONTENT_TYPE)
 
 def location_types_json(request):
     typelist = models.LocationType.objects.order_by('plural_name').values(
@@ -474,7 +471,7 @@ def location_types_json(request):
         typedict[typeinfo.pop('slug')] = typeinfo
 
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
-                         content_type='application_json')
+                         content_type=JSON_CONTENT_TYPE)
 
 
 def place_types_json(request):
@@ -487,7 +484,7 @@ def place_types_json(request):
         typedict[slug]['geojson_url'] = reverse('place_detail_json', kwargs={'placetype': slug})
 
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
-                         content_type='application_json')
+                         content_type=JSON_CONTENT_TYPE)
 
 def place_detail_json(request, placetype):
     try:
@@ -510,7 +507,7 @@ def place_detail_json(request, placetype):
         result['features'].append(feature)
 
     geojson = simplejson.dumps(result, indent=1)
-    return APIGETResponse(request, geojson, content_type='application/json')
+    return APIGETResponse(request, geojson, content_type=JSON_CONTENT_TYPE)
 
 
 class OpenblockAtomFeed(feedgenerator.Atom1Feed):
