@@ -13,6 +13,7 @@ from django.utils import simplejson
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
+from ebpub.openblockapi.authentication import check_api_authorization
 from ebpub.streets.models import PlaceType, Place, PlaceSynonym
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
@@ -222,7 +223,6 @@ def items_index(request):
 
     POST: Takes a single JSON mapping describing a NewsItem, creates
     it, and redirects to a JSON view of the created item.
-    *Temporarily disabled until we have authorization in place*
 
     On errors, gives a 400 response.
 
@@ -230,13 +230,13 @@ def items_index(request):
     """
     if request.method == 'GET':
         return HttpResponseRedirect(reverse('items_json'))
-    # elif request.method == 'POST':
-    #     return _item_post(request)
+    elif request.method == 'POST':
+        check_api_authorization(request)
+        return _item_post(request)
     else:
-        # return HttpResponseNotAllowed(['GET', 'POST'])
         return HttpResponseNotAllowed(['GET'])
 
-#@permission_required('db.add_newsitem')
+@permission_required('db.add_newsitem')
 def _item_post(request):
     assert request.method == 'POST'
     info = simplejson.loads(request.raw_post_data)
@@ -260,6 +260,7 @@ def _item_post(request):
     if not item.location_name:
         logger.warn("Saving NewsItem %s with no location_name" % item)
     item.save()
+    props.pop('pub_date', None) # We set this one ourselves.
     # Everything else goes in .attributes.
     attributes = {}
     for key, val in props.items():
@@ -563,3 +564,22 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
             handler.addQuickElement('openblock:attribute', unicode(val),
                                     {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
+
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import condition
+from django.views.decorators.cache import cache_page
+
+# Override one view from django-apikey to ensure it doesn't try
+# to save a reference to our LazyUser proxy.
+from key.views import etag_func, latest_access, do_generate_key_list
+from key.models import generate_unique_api_key
+
+@login_required
+@condition( etag_func=etag_func, last_modified_func=latest_access )
+@cache_page( 1 )
+def generate_key( request ):
+    if request.method == 'POST':
+        # Trigger loading the real user object, and use it.
+        user = request.user.user
+        generate_unique_api_key( user )
+    return do_generate_key_list( request )

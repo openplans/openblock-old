@@ -242,6 +242,8 @@ DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 EBPUB_CACHE_GEOCODER = True
 required_settings.append('EBPUB_CACHE_GEOCODER')
 
+# API Keys.
+MAX_KEYS_PER_USER=3
 # Required by django-apikey to associate keys with user profiles.
 AUTH_PROFILE_MODULE = 'preferences.Profile'
 

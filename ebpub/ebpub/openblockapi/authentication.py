@@ -16,6 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from key.models import ApiKey
 
@@ -58,18 +59,28 @@ def check_api_authorization(request):
     Check API access based on the current request.
 
     Currently requires that either the user is logged in (eg. via
-    basic auth), or there is a valid API key in the 'api_key' request
+    basic auth), or there is a valid API key in the 'apikey' request
     parameter.  If either fails, raises ``PermissionDenied``.
 
     This should become more configurable.
     """
     if request.user.is_authenticated():
-        return True
-    ip_address = request.META['REMOTE_ADDR']
-    key = request.GET.get('api_key') or request.POST.get('api_key')
-    user = APIKeyBackend().authenticate(key=key, ip_address=ip_address)
-    if user is None:
-        raise PermissionDenied
-    request.user = user
-    return True
+        user = request.user
+        if user.is_active:
+            return True
+        else:
+            raise PermissionDenied("Your account is disabled.")
+    else:
+        ip_address = request.META['REMOTE_ADDR']
+        key = request.META.get('HTTP_X_OPENBLOCK_KEY')
+        user = APIKeyBackend().authenticate(key=key, ip_address=ip_address)
+        if user is None:
+            raise PermissionDenied("invalid key?")
+        if user.is_active:
+            # login() expects a dotted name at user.backend.
+            user.backend = 'ebpub.openblockapi.authentication.APIKeyBackend'
+            login(request, user)
+            return True
+        else:
+            raise PermissionDenied("Your account is disabled.")
 

@@ -48,8 +48,9 @@ class Profile(models.Model):
     user = models.ForeignKey(ebpub.accounts.models.User, unique=True)
 
     def can_make_api_key(self):
-        return self.available_keys > 0
+        return self.available_keys() > 0
 
     def available_keys(self):
-        # TODO
-        return 1
+        from django.conf import settings
+        allowed = getattr(settings, 'MAX_KEYS_PER_USER', 3)
+        return max(0, allowed - self.user.keys.count())

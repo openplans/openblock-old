@@ -857,16 +857,12 @@ class TestUtilFunctions(TestCase):
         key = '12345'
         ip = '1.2.3.4'
         get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
-                                   'META': {'REMOTE_ADDR': ip},
-                                   'GET': {'api_key': key}, 'POST': {}})
+                                   'META': {'REMOTE_ADDR': ip,
+                                            'HTTP_X_OPENBLOCK_KEY': key},
+                                   'GET': {}, 'POST': {}})
         self.assertRaises(PermissionDenied, authentication.check_api_authorization,
                           get_request)
 
-        post_request = mock.Mock(**{'user.is_authenticated.return_value': False,
-                                    'META': {'REMOTE_ADDR': ip},
-                                    'GET': {}, 'POST': {'api_key': key}})
-        self.assertRaises(PermissionDenied, authentication.check_api_authorization,
-                          post_request)
 
     def test_check_api_auth__key(self):
         from key.models import generate_unique_api_key
@@ -875,11 +871,8 @@ class TestUtilFunctions(TestCase):
         user = User.objects.create_user(email='bob@bob.com')
         key = generate_unique_api_key(user)
         get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
-                                   'META': {'REMOTE_ADDR': ip},
-                                   'GET': {'api_key': key}, 'POST': {}})
+                                   'META': {'REMOTE_ADDR': ip,
+                                            'HTTP_X_OPENBLOCK_KEY': key},
+                                   'session': mock.MagicMock(),
+                                   'GET': {}, 'POST': {}})
         self.assertEqual(True, authentication.check_api_authorization(get_request))
-
-        post_request = mock.Mock(**{'user.is_authenticated.return_value': False,
-                                    'META': {'REMOTE_ADDR': ip},
-                                    'GET': {}, 'POST': {'api_key': key}})
-        self.assertEqual(True, authentication.check_api_authorization(post_request))

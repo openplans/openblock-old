@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>API keys for {{ user.username }}</h1>
+
+<div>You have {{ keys|length }}. You can make {{ available_keys }} more.
+</div>
+
+{% if keys %}
+ <ul>
+  {% for key in keys %}
+    <li>{{ key }}</li>
+    <!-- TODO: deletion of keys -->
+  {% endfor %}
+ </ul>
+{% endif %}
+
+{% if can_make_api_key %}
+ <form method="POST" action="{% url api_create_key %}">
+   <input type="submit" value="Generate a new key" />
+ </form>
+{% endif %}
+
+{% endblock %}

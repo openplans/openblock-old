@@ -29,6 +29,7 @@ The OpenBlock API uses several standards for formats and protocols.  Please see 
 ------------------ ------------------------------------------------------------
      Atom                     http://www.atomenabled.org
 ------------------ ------------------------------------------------------------
+.. _georss:
      GeoRSS                   http://www.georss.org/Main_Page
 ------------------ ------------------------------------------------------------
      JSONP                    http://en.wikipedia.org/wiki/JSON#JSONP
@@ -48,8 +49,6 @@ Grab some 'articles' about Roxbury
 
     curl "http://bos.openblock.org/api/dev1/items.json?type=articles&locationid=neighborhoods/roxbury&limit=3" > items.json
 
-    
-
 
 API Overview
 ============
@@ -61,6 +60,20 @@ All calls to the OpenBlock API referenced in this document are prefixed by::
 
 	/api/dev1/
 
+
+Authentication and API Keys
+----------------------------
+
+Authentication for those methods which require it may currently be
+accomplished in two ways:
+
+ * HTTP Basic Auth headers
+
+ * sending your API key in the ``X-Openblock-Key`` HTTP header
+
+.. _apikey:
+
+An API key may be obtained by logging in and visiting your preferences page.
 
 Support for Cross Domain Access
 -------------------------------
@@ -74,6 +87,8 @@ providing the "jsonp" query parameter.
 The "jsonp" parameter may only contain letters, numbers, and
 underscores; other characters will be removed.
 
+GET methods supporting :ref:`Atom <atom>` output may also provide the "jsonp"
+parameter. In this case the output is `JSONP-X <http://www.ajaxwith.com/JSONP-X-Output.html>`_.
 
 
 Read API Endpoints
@@ -628,12 +643,10 @@ Write API Endpoints
 POST items/
 -----------
 
-*Not enabled yet.*
-
 Purpose
 ~~~~~~~
 
-Create a new NewsItem.  Authentication may be required.
+Create a new NewsItem.  :ref:`Authentication required <auth>`.
 
 
 Parameters
@@ -747,12 +760,16 @@ type if one exists, otherwise a formatted string is used.
 ================== ==========================================================================
 
 
+.. _atom:
+
 NewsItem Atom Format
 --------------------
 
-Generally follows Atom specification.
-location information is specified with GeoRSS-Simple
-Extended schema attributes are specified in "http://openblock.org/ns/0" namespace.
+Generally follows the :ref:`Atom <atom>` specification.
+Location information is specified with :ref:`GeoRSS-Simple <georss>`.
+
+Extended schema attributes are specified in the
+"http://openblock.org/ns/0" namespace.
 
 FIXME: more detail, example
 
