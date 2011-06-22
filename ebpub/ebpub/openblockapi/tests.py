@@ -121,33 +121,34 @@ class TestPushAPI(TestCase):
 
     fixtures = ('test-schema',)
 
-    # def test_create_basic(self):
-    #     #schema = Schema.objects.get(slug='test-schema')
-    #     info = {
-    #         "type": "Feature",
-    #         "geometry": {
-    #             "type": "Point",
-    #             "coordinates": [1.0, -1.0]
-    #             },
-    #         "properties": {
-    #             "description": "Bananas!",
-    #             "title": "All About Fruit",
-    #             "location_name": "somewhere",
-    #             "url": "http://example.com/bananas",
-    #             "item_date": "2011-01-01",
-    #             "type": "test-schema",
-    #             }
-    #         }
-    #     url = reverse('items_index')
-    #     json = simplejson.dumps(info)
-    #     response = self.client.post(url, json, content_type='application/json')
-    #     self.assertEqual(response.status_code, 201)
-    #     new_item = NewsItem.objects.get(title='All About Fruit')
-    #     self.assertEqual(
-    #         response['location'],
-    #         'http://testserver' + reverse('single_item_json', args=(), kwargs={'id_': new_item.id}))
-    #     self.assertEqual(new_item.url, info['properties']['url'])
-    #     # ... etc.
+    @monkeypatch(views, check_api_authorization=lambda request: True)
+    def test_create_basic(self):
+        #schema = Schema.objects.get(slug='test-schema')
+        info = {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [1.0, -1.0]
+                },
+            "properties": {
+                "description": "Bananas!",
+                "title": "All About Fruit",
+                "location_name": "somewhere",
+                "url": "http://example.com/bananas",
+                "item_date": "2011-01-01",
+                "type": "test-schema",
+                }
+            }
+        json = simplejson.dumps(info)
+        url = reverse('items_index')
+        response = self.client.post(url, json, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        new_item = NewsItem.objects.get(title='All About Fruit')
+        self.assertEqual(
+            response['location'],
+            'http://testserver' + reverse('single_item_json', args=(), kwargs={'id_': new_item.id}))
+        self.assertEqual(new_item.url, info['properties']['url'])
+        # ... etc.
 
 
 class TestQuickAPIErrors(TestCase):
@@ -876,3 +877,25 @@ class TestUtilFunctions(TestCase):
                                    'session': mock.MagicMock(),
                                    'GET': {}, 'POST': {}})
         self.assertEqual(True, authentication.check_api_authorization(get_request))
+
+    def test_responds_to(self):
+        from ebpub.openblockapi.views import responds_to
+        from django.http import HttpResponseNotAllowed
+
+        @responds_to(['HEAD', 'PUT'])
+        def foo(request):
+            return request.method
+
+        class stubrequest(object):
+            method = 'GET'
+
+        result = foo(stubrequest)
+        self.assert_(isinstance(result, HttpResponseNotAllowed))
+
+        stubrequest.method = 'HEAD'
+        self.assertEqual(foo(stubrequest), 'HEAD')
+        stubrequest.method = 'PUT'
+        self.assertEqual(foo(stubrequest), 'PUT')
+        stubrequest.method = 'ANYTHING ELSE'
+        result = foo(stubrequest)
+        self.assert_(isinstance(result, HttpResponseNotAllowed))
