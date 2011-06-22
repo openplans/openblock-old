@@ -261,29 +261,35 @@ def _item_post(info):
     assert info.pop('type') == 'Feature'
     props = info['properties']
     schema = get_object_or_404(models.Schema.objects, slug=props.pop('type'))
-    kwargs = {'schema': schema}
+    data = {'schema': schema.id}
     for key in ('title', 'description', 'url'):
-        kwargs[key] = props.pop(key, '')
-    item = models.NewsItem(**kwargs)
-
+        data[key] = props.pop(key, '')
     pub_date = props.pop('pub_date', None)
     if pub_date:
-        item.pub_date = normalize_datetime(pyrfc3339.parse(pub_date))
+        data['pub_date'] = normalize_datetime(pyrfc3339.parse(pub_date))
     else:
-        item.pub_date = normalize_datetime(datetime.datetime.utcnow())
+        data['pub_date'] = normalize_datetime(datetime.datetime.utcnow())
     item_date = props.pop('item_date', None)
     if item_date:
-        item.item_date = parse_date(item_date, '%Y-%m-%d', False)
+        data['item_date'] = parse_date(item_date, '%Y-%m-%d', False)
     else:
-        item.item_date = item.pub_date.date()
+        data['item_date'] = data['pub_date'].date()
 
-    item.location, item.location_name = _get_location_info(
+    data['location'], data['location_name'] = _get_location_info(
         info.get('geometry'), props.pop('location_name', None))
-    if not item.location:
-        logger.warn("Saving NewsItem %s with no geometry" % item)
-    if not item.location_name:
-        logger.warn("Saving NewsItem %s with no location_name" % item)
-    item.save()
+    if not data['location']:
+        logger.warn("Saving NewsItem %s with no geometry" % data['title'])
+    if not data['location_name']:
+        logger.warn("Saving NewsItem %s with no location_name" % data['title'])
+
+
+    from ebpub.db.forms import NewsItemForm
+    form = NewsItemForm(data)
+    if form.is_valid():
+        item = form.save()
+    else:
+        raise Exception("XXX errors ")
+
     # Everything else goes in .attributes.
     attributes = {}
     for key, val in props.items():
