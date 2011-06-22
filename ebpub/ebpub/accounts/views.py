@@ -75,6 +75,8 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
     else:
         form = forms.LoginForm(request, initial={'email': initial_email})
     request.session.set_test_cookie()
+    if request.GET.get('next'):
+        request.session['next_url'] = request.GET['next']
     custom_message = request.session.pop('login_message', custom_message)
     return eb_render(request, 'accounts/login_form.html', {'form': form, 'custom_message': custom_message})
 
