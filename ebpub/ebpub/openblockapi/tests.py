@@ -121,24 +121,28 @@ class TestPushAPI(TestCase):
 
     fixtures = ('test-schema',)
 
+    def _make_geojson(self, coords, **props):
+        return {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point", "coordinates": coords,
+                },
+            "properties": props
+            }
+
+
     @monkeypatch(views, check_api_authorization=lambda request: True)
     def test_create_basic(self):
         #schema = Schema.objects.get(slug='test-schema')
-        info = {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [1.0, -1.0]
-                },
-            "properties": {
-                "description": "Bananas!",
-                "title": "All About Fruit",
-                "location_name": "somewhere",
-                "url": "http://example.com/bananas",
-                "item_date": "2011-01-01",
-                "type": "test-schema",
-                }
-            }
+        info = self._make_geojson(coords=[1.0, -1.0],
+                                  description="Bananas!",
+                                  title="All About Fruit",
+                                  location_name="somewhere",
+                                  url="http://example.com/bananas",
+                                  item_date="2011-01-01",
+                                  type="test-schema",
+                                  )
+
         json = simplejson.dumps(info)
         url = reverse('items_index')
         response = self.client.post(url, json, content_type='application/json')
@@ -150,6 +154,48 @@ class TestPushAPI(TestCase):
         self.assertEqual(new_item.url, info['properties']['url'])
         # ... etc.
 
+
+    def test_create__no_schema(self):
+        info = self._make_geojson(coords=[1.0, 2.0])
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_post(info)
+        self.assertEqual(e.exception.errors,
+                         {'type': 'schema None does not exist'})
+
+    def test_create__no_geojson(self):
+        info = {'type': 'ouchie'}
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_post(info)
+        self.assertEqual(e.exception.errors,
+                         {'type': 'not a valid GeoJSON Feature'})
+
+    def test_create__bad_dates(self):
+        info = self._make_geojson(coords=[1.0, -1.0], type='test-schema',
+                                  name='hello', title='hello title',
+                                  description='hello descr',
+                                  item_date='ouch', location_name='here',
+                                  )
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_post(info)
+        self.assertEqual(e.exception.errors,
+                         {'item_date': [u'Enter a valid date.']})
+
+    def test_create__missing_required_fields(self):
+        info = self._make_geojson(coords=[1.0, -1.0], type='test-schema')
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_post(info)
+        self.assertEqual(e.exception.errors,
+                         {'item_date': 'something'})
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_post(info)
+        self.assertEqual(e.exception.errors, {})
+
+    # def test_create_with_existing_lookups(self):
+    #     info = self._make_geojson(coords=[1.0, -1.0],
+    #                               lookup=['Lookup 7700 Name', 'Lookup 7700 Name'],
+    #                               type='test-schema',
+    #                               )
+    #     views._item_post, info
 
 class TestQuickAPIErrors(TestCase):
     # Test errors that happen before filters get applied,

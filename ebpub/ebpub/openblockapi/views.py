@@ -100,7 +100,6 @@ def _item_geojson_dict(item):
     props = {}
     geom = simplejson.loads(item.location.geojson)
     result = {
-        # 'id': i.id, # XXX ?
         'type': 'Feature',
         'geometry': geom,
         }
@@ -251,29 +250,57 @@ def items_index(request):
     elif request.method == 'POST':
         check_api_authorization(request)
         info = simplejson.loads(request.raw_post_data)
-        item = _item_post(info)
+        try:
+            item = _item_post(info)
+        except InvalidNewsItem, e:
+            errors = e.errors
+            raise # XXX TODO: handle these somehow
         item_url = reverse('single_item_json', kwargs={'id_': str(item.id)})
         return HttpResponseCreated(item_url)
 
 
+class InvalidNewsItem(Exception):
+    def __init__(self, errors):
+        self.errors = errors
+
 #@permission_required('db.add_newsitem')
 def _item_post(info):
-    assert info.pop('type') == 'Feature'
-    props = info['properties']
-    schema = get_object_or_404(models.Schema.objects, slug=props.pop('type'))
+    try:
+        assert info.pop('type') == 'Feature'
+        props = info['properties']
+    except (KeyError, AssertionError):
+        raise InvalidNewsItem({'type': 'not a valid GeoJSON Feature'})
+    try:
+        slug = props.pop('type', None)
+        schema = models.Schema.objects.get(slug=slug)
+    except (models.Schema.DoesNotExist):
+        raise InvalidNewsItem({'type': 'schema %r does not exist' % slug})
+
     data = {'schema': schema.id}
     for key in ('title', 'description', 'url'):
         data[key] = props.pop(key, '')
+
+    # If there are errors parsing the dates, keep the raw data and let
+    # the ModelForm sort it out.
     pub_date = props.pop('pub_date', None)
     if pub_date:
-        data['pub_date'] = normalize_datetime(pyrfc3339.parse(pub_date))
+        try:
+            data['pub_date'] = normalize_datetime(pyrfc3339.parse(pub_date))
+        except Exception:
+            data['pub_date'] = pub_date
     else:
         data['pub_date'] = normalize_datetime(datetime.datetime.utcnow())
     item_date = props.pop('item_date', None)
     if item_date:
-        data['item_date'] = parse_date(item_date, '%Y-%m-%d', False)
+        try:
+            data['item_date'] = parse_date(item_date, '%Y-%m-%d', False)
+        except Exception:
+            data['item_date'] = item_date
     else:
-        data['item_date'] = data['pub_date'].date()
+        try:
+            data['item_date'] = data['pub_date'].date()
+        except Exception:
+            data['item_date'] = None
 
     data['location'], data['location_name'] = _get_location_info(
         info.get('geometry'), props.pop('location_name', None))
@@ -288,7 +315,7 @@ def _item_post(info):
     if form.is_valid():
         item = form.save()
     else:
-        raise Exception("XXX errors ")
+        raise InvalidNewsItem(form.errors)
 
     # Everything else goes in .attributes.
     attributes = {}
