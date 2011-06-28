@@ -14,7 +14,7 @@ from ebpub.db.models import Location, NewsItem, Schema
 from functools import wraps
 
 from ebpub.openblockapi import views
-from ebpub.openblockapi import authentication
+from ebpub.openblockapi import auth
 
 def monkeypatch(obj, **patchkwargs):
     """Decorator for temporarily replacing an object
@@ -908,7 +908,7 @@ class TestUtilFunctions(TestCase):
         request = mock.Mock(**{'user.is_authenticated.return_value': False,
                                'META': {'REMOTE_ADDR': ip},
                                'GET': {}, 'POST': {}})
-        self.assertRaises(PermissionDenied, authentication.check_api_authorization,
+        self.assertRaises(PermissionDenied, auth.check_api_authorization,
                           request)
 
     def test_check_api_auth__logged_in(self):
@@ -916,7 +916,7 @@ class TestUtilFunctions(TestCase):
         request = mock.Mock(**{'user.is_authenticated.return_value': True,
                                'META': {'REMOTE_ADDR': ip},
                                'GET': {}, 'POST': {}})
-        self.assertEqual(True, authentication.check_api_authorization(request))
+        self.assertEqual(True, auth.check_api_authorization(request))
 
     def test_check_api_auth__key_invalid(self):
         from django.core.exceptions import PermissionDenied
@@ -926,7 +926,7 @@ class TestUtilFunctions(TestCase):
                                    'META': {'REMOTE_ADDR': ip,
                                             'HTTP_X_OPENBLOCK_KEY': key},
                                    'GET': {}, 'POST': {}})
-        self.assertRaises(PermissionDenied, authentication.check_api_authorization,
+        self.assertRaises(PermissionDenied, auth.check_api_authorization,
                           get_request)
 
 
@@ -941,7 +941,7 @@ class TestUtilFunctions(TestCase):
                                             'HTTP_X_OPENBLOCK_KEY': key},
                                    'session': mock.MagicMock(),
                                    'GET': {}, 'POST': {}})
-        self.assertEqual(True, authentication.check_api_authorization(get_request))
+        self.assertEqual(True, auth.check_api_authorization(get_request))
 
     def test_responds_to(self):
         from ebpub.openblockapi.views import responds_to

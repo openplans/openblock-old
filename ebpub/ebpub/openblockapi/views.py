@@ -13,7 +13,7 @@ from django.utils import simplejson
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
-from ebpub.openblockapi.authentication import check_api_authorization
+from ebpub.openblockapi.auth import check_api_authorization
 from ebpub.streets.models import PlaceType, Place, PlaceSynonym
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
@@ -254,8 +254,8 @@ def items_index(request):
         try:
             item = _item_create(info)
         except InvalidNewsItem, e:
-            errors = e.errors
-            raise # XXX TODO: handle these somehow
+            errors = simplejson.dumps({'errors': e.errors}, indent=2)
+            return HttpResponseBadRequest(errors)
         item_url = reverse('single_item_json', kwargs={'id_': str(item.id)})
         return HttpResponseCreated(item_url)
 
