@@ -19,6 +19,7 @@ from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
 from ebpub.utils.geodjango import ensure_valid
 from functools import wraps
+import copy
 import datetime
 import logging
 import pyrfc3339
@@ -251,7 +252,7 @@ def items_index(request):
         check_api_authorization(request)
         info = simplejson.loads(request.raw_post_data)
         try:
-            item = _item_post(info)
+            item = _item_create(info)
         except InvalidNewsItem, e:
             errors = e.errors
             raise # XXX TODO: handle these somehow
@@ -264,7 +265,8 @@ class InvalidNewsItem(Exception):
         self.errors = errors
 
 #@permission_required('db.add_newsitem')
-def _item_post(info):
+def _item_create(info):
+    info = copy.deepcopy(info)
     try:
         assert info.pop('type') == 'Feature'
         props = info['properties']
@@ -322,11 +324,13 @@ def _item_post(info):
     for key, val in props.items():
         sf = models.SchemaField.objects.get(schema=schema, name=key)
         if sf.is_many_to_many_lookup():
-            # TODO: get or create Lookups as needed
-            pass
+            lookups = []
+            for lookup_name in val:
+                lookups.append(
+                    models.Lookup.objects.get_or_create_lookup(sf, lookup_name))
+            val = ','.join((str(lookup.id) for lookup in lookups))
         elif sf.is_lookup:
-            # likewise TODO.
-            pass
+            val = models.Lookup.objects.get_or_create_lookup(sf, val)
         elif sf.is_type('date'):
             val = normalize_datetime(parse_date(val, '%Y-%m-%d'))
         elif sf.is_type('time'):

@@ -158,14 +158,14 @@ class TestPushAPI(TestCase):
     def test_create__no_schema(self):
         info = self._make_geojson(coords=[1.0, 2.0])
         with self.assertRaises(views.InvalidNewsItem) as e:
-            views._item_post(info)
+            views._item_create(info)
         self.assertEqual(e.exception.errors,
                          {'type': 'schema None does not exist'})
 
     def test_create__no_geojson(self):
         info = {'type': 'ouchie'}
         with self.assertRaises(views.InvalidNewsItem) as e:
-            views._item_post(info)
+            views._item_create(info)
         self.assertEqual(e.exception.errors,
                          {'type': 'not a valid GeoJSON Feature'})
 
@@ -176,26 +176,45 @@ class TestPushAPI(TestCase):
                                   item_date='ouch', location_name='here',
                                   )
         with self.assertRaises(views.InvalidNewsItem) as e:
-            views._item_post(info)
+            views._item_create(info)
         self.assertEqual(e.exception.errors,
                          {'item_date': [u'Enter a valid date.']})
 
-    def test_create__missing_required_fields(self):
+    @mock.patch('ebpub.openblockapi.views._get_location_info')
+    def test_create__missing_required_fields(self, mock_get_loc_info):
+        mock_get_loc_info.return_value = (geos.Point(1,-1), 'somewhere')
         info = self._make_geojson(coords=[1.0, -1.0], type='test-schema')
         with self.assertRaises(views.InvalidNewsItem) as e:
-            views._item_post(info)
+            views._item_create(info)
         self.assertEqual(e.exception.errors,
-                         {'item_date': 'something'})
-        with self.assertRaises(views.InvalidNewsItem) as e:
-            views._item_post(info)
-        self.assertEqual(e.exception.errors, {})
+                         {'description': [u'This field is required.'],
+                          'title': [u'This field is required.']})
 
-    # def test_create_with_existing_lookups(self):
-    #     info = self._make_geojson(coords=[1.0, -1.0],
-    #                               lookup=['Lookup 7700 Name', 'Lookup 7700 Name'],
-    #                               type='test-schema',
-    #                               )
-    #     views._item_post, info
+    @mock.patch('ebpub.openblockapi.views._get_location_info')
+    def test_create_with_existing_lookups(self, mock_get_loc_info):
+        mock_get_loc_info.return_value = (geos.Point(1,-1), 'somewhere')
+        info = self._make_geojson(coords=[1.0, -1.0],
+                                  lookup=['Lookup 7700 Name', 'Lookup 7701 Name'],
+                                  type='test-schema',
+                                  title='I have lookups', description='yes i do',
+                                  )
+        views._item_create(info)
+        item = NewsItem.objects.get(title='I have lookups')
+        self.assertEqual(item.attributes['lookup'], u'7700,7701')
+
+
+    @mock.patch('ebpub.openblockapi.views._get_location_info')
+    def test_create_with_new_lookups(self, mock_get_loc_info):
+        mock_get_loc_info.return_value = (geos.Point(1,-1), 'somewhere')
+        info = self._make_geojson(coords=[1.0, -1.0],
+                                  lookup=['Lookup 7702 Name', 'Lookup 7703 Name'],
+                                  type='test-schema',
+                                  title='I have lookups too', description='yes i do',
+                                  )
+        views._item_create(info)
+        item = NewsItem.objects.get(title='I have lookups too')
+        self.assertEqual(item.attributes['lookup'], u'7702,7703')
+
 
 class TestQuickAPIErrors(TestCase):
     # Test errors that happen before filters get applied,
