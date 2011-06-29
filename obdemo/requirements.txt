@@ -1,2 +1,2 @@
-ebpub
-ebdata
+ebpub>=1.0a1
+ebdata>=1.0a1
