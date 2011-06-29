@@ -13,6 +13,7 @@ from django.utils import simplejson
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
+from ebpub.openblockapi.auth import KEY_HEADER
 from ebpub.openblockapi.auth import check_api_authorization
 from ebpub.streets.models import PlaceType, Place, PlaceSynonym
 from ebpub.streets.utils import full_geocode
@@ -185,6 +186,40 @@ def responds_to(methods):
             return func(request, *args, **kwargs)
         return wrapper
     return inner
+
+from ebpub.openblockapi.throttle import CacheThrottle
+
+
+# We could have more than one throttle instance to be more flexible.
+throttle = CacheThrottle(
+    throttle_at=getattr(settings, 'API_THROTTLE_AT', 150), # max requests per timeframe.
+    timeframe=getattr(settings, 'API_THROTTLE_TIMEFRAME', 60 * 60), # default 1 hour.
+    expiration=getattr(settings, 'API_EXPIRATION', 60 * 60 * 24 * 7)  # default 1 week.
+    )
+
+def throttle_check(request):
+    """
+    Handles checking if the request should be throttled.
+
+    Based on code from TastyPie, copyright Daniel Lindsley, BSD
+    license.
+    """
+    # First get best user identifier available.
+    if request.user.is_authenticated():
+        identifier = request.REQUEST.get('username')
+    elif request.META.get(KEY_HEADER, None) is not None:
+        identifier = request.META[KEY_HEADER]
+    else:
+        identifier = "%s_%s" % (request.META.get('REMOTE_ADDR', 'noaddr'),
+                                request.META.get('REMOTE_HOST', 'nohost'))
+    if throttle.should_be_throttled(identifier):
+        # Throttle limit exceeded.
+        return True
+
+    # Log throttle access.
+    throttle.accessed(identifier, url=request.get_full_path(),
+                      request_method=request.method.lower())
+    return False
 
 
 class HttpResponseCreated(HttpResponseRedirect):

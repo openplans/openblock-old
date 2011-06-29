@@ -20,6 +20,8 @@ from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
 from key.models import ApiKey
 
+KEY_HEADER = 'HTTP_X_OPENBLOCK_KEY'
+
 class APIKeyBackend(object):
     """
     Django authentication backend purely by API key.
@@ -72,7 +74,7 @@ def check_api_authorization(request):
             raise PermissionDenied("Your account is disabled.")
     else:
         ip_address = request.META['REMOTE_ADDR']
-        key = request.META.get('HTTP_X_OPENBLOCK_KEY')
+        key = request.META.get(KEY_HEADER)
         user = APIKeyBackend().authenticate(key=key, ip_address=ip_address)
         if user is None:
             raise PermissionDenied("invalid key?")

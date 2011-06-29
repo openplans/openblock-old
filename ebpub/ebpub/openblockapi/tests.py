@@ -924,7 +924,7 @@ class TestUtilFunctions(TestCase):
         ip = '1.2.3.4'
         get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
                                    'META': {'REMOTE_ADDR': ip,
-                                            'HTTP_X_OPENBLOCK_KEY': key},
+                                            auth.KEY_HEADER: key},
                                    'GET': {}, 'POST': {}})
         self.assertRaises(PermissionDenied, auth.check_api_authorization,
                           get_request)
@@ -938,7 +938,7 @@ class TestUtilFunctions(TestCase):
         key = generate_unique_api_key(user)
         get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
                                    'META': {'REMOTE_ADDR': ip,
-                                            'HTTP_X_OPENBLOCK_KEY': key},
+                                            auth.KEY_HEADER: key},
                                    'session': mock.MagicMock(),
                                    'GET': {}, 'POST': {}})
         self.assertEqual(True, auth.check_api_authorization(get_request))
@@ -964,3 +964,38 @@ class TestUtilFunctions(TestCase):
         stubrequest.method = 'ANYTHING ELSE'
         result = foo(stubrequest)
         self.assert_(isinstance(result, HttpResponseNotAllowed))
+
+    @mock.patch('ebpub.openblockapi.throttle.cache')
+    def test_cachethrottle(self, mock_cache):
+        import time
+        from ebpub.openblockapi.throttle import CacheThrottle
+        throttle_at=25
+        throttle = CacheThrottle(throttle_at=throttle_at)
+
+        mock_cache.get.return_value = []
+        self.assertEqual(False, throttle.should_be_throttled('some_id'))
+        mock_cache.get.return_value = [int(time.time())] * (throttle_at - 1)
+        self.assertEqual(False, throttle.should_be_throttled('some_id'))
+
+        mock_cache.get.return_value = [int(time.time())] * throttle_at
+        self.assertEqual(True, throttle.should_be_throttled('some_id'))
+        mock_cache.get.return_value = [int(time.time())] * (throttle_at + 1)
+        self.assertEqual(True, throttle.should_be_throttled('some_id'))
+
+    @mock.patch('ebpub.openblockapi.views.throttle')
+    def test_throttlecheck(self, mock_throttle):
+        from ebpub.openblockapi.views import throttle_check
+
+        request = mock.Mock(**{'user.is_authenticated.return_value': True,
+                               'REQUEST.get.return_value': 'anything'})
+        mock_throttle.should_be_throttled.return_value = True
+        self.assertEqual(True, throttle_check(request))
+
+        request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                               'META': {auth.KEY_HEADER: 'test-api-key',}})
+        self.assertEqual(True, throttle_check(request))
+
+        self.assertEqual(mock_throttle.accessed.call_count, 0)
+        mock_throttle.should_be_throttled.return_value = False
+        throttle_check(request)
+        self.assertEqual(mock_throttle.accessed.call_count, 1)
