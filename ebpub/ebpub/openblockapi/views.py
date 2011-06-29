@@ -177,12 +177,23 @@ def _get_location_info(geometry, location_name):
         raise NotImplementedError("Should do geocoding here.")
     return location, location_name
 
-def responds_to(methods):
+def rest_view(methods):
+    """
+    Decorator that applies throttling and restricts the available HTTP
+    methods.
+    """
     def inner(func):
         @wraps(func)
         def wrapper(request, *args, **kwargs):
             if request.method not in methods:
                 return HttpResponseNotAllowed(methods)
+            seconds_throttled = throttle_check(request)
+            if seconds_throttled > 0:
+                msg = u'Throttle limit exceeded. Try again in %d seconds.\n' % seconds_throttled
+                response = HttpResponse(msg, status=503)
+                response['Retry-After'] = str(seconds_throttled)
+                response['Content-Type'] = 'text/plain'
+                return response
             return func(request, *args, **kwargs)
         return wrapper
     return inner
@@ -191,18 +202,21 @@ from ebpub.openblockapi.throttle import CacheThrottle
 
 
 # We could have more than one throttle instance to be more flexible.
-throttle = CacheThrottle(
+_throttle = CacheThrottle(
     throttle_at=getattr(settings, 'API_THROTTLE_AT', 150), # max requests per timeframe.
     timeframe=getattr(settings, 'API_THROTTLE_TIMEFRAME', 60 * 60), # default 1 hour.
-    expiration=getattr(settings, 'API_EXPIRATION', 60 * 60 * 24 * 7)  # default 1 week.
+    expiration=getattr(settings, 'API_THROTTLE_EXPIRATION', 60 * 60 * 24 * 7)  # default 1 week.
     )
 
 def throttle_check(request):
     """
     Handles checking if the request should be throttled.
 
-    Based on code from TastyPie, copyright Daniel Lindsley, BSD
-    license.
+    If so, returns number of seconds after which user can try again.
+    If not, returns 0.
+
+    Based originally on code from TastyPie, copyright Daniel Lindsley,
+    BSD license.
     """
     # First get best user identifier available.
     if request.user.is_authenticated():
@@ -212,24 +226,27 @@ def throttle_check(request):
     else:
         identifier = "%s_%s" % (request.META.get('REMOTE_ADDR', 'noaddr'),
                                 request.META.get('REMOTE_HOST', 'nohost'))
-    if throttle.should_be_throttled(identifier):
+    if _throttle.should_be_throttled(identifier):
         # Throttle limit exceeded.
-        return True
+        return _throttle.seconds_till_unthrottling(identifier)
 
     # Log throttle access.
-    throttle.accessed(identifier, url=request.get_full_path(),
+    _throttle.accessed(identifier, url=request.get_full_path(),
                       request_method=request.method.lower())
-    return False
+    return 0
 
 
 class HttpResponseCreated(HttpResponseRedirect):
     status_code = 201
 
+class HttpResponseUnavailable(HttpResponse):
+    status_code = 503
+
 ############################################################
 # View functions.
 ############################################################
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def check_api_available(request):
     """
     endpoint to indicate that this version of the API
@@ -237,7 +254,7 @@ def check_api_available(request):
     """
     return HttpResponse(status=200)
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def items_json(request):
     """
     handles the items.json API endpoint
@@ -256,7 +273,7 @@ def items_json(request):
     except QueryError as err:
         return HttpResponseBadRequest(err.message)
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def items_atom(request):
     """
     handles the items.atom API endpoint
@@ -268,7 +285,7 @@ def items_atom(request):
     except QueryError as err:
         return HttpResponseBadRequest(err.message)
 
-@responds_to(['GET', 'POST'])
+@rest_view(['GET', 'POST'])
 def items_index(request):
     """
     GET: Redirects to a list of JSON items.
@@ -377,7 +394,7 @@ def _item_create(info):
     return item
 
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def single_item_json(request, id_=None):
     """
     GET a single item as GeoJSON.
@@ -423,7 +440,7 @@ def _items_atom(items):
     return atom.writeString('utf8')
 
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def geocode(request):
     # TODO: this will obsolete:
     # ebdata.geotagger.views.geocode and 
@@ -505,7 +522,7 @@ def _geocode_geojson(query):
 
     return features
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def list_types_json(request):
     """
     List the known NewsItem types (Schemas).
@@ -533,7 +550,7 @@ def list_types_json(request):
     return APIGETResponse(request, simplejson.dumps(schemas, indent=1),
                           content_type=JSON_CONTENT_TYPE)
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def locations_json(request):
     locations = models.Location.objects.filter(is_public=True)
     loctype = request.GET.get('type')
@@ -554,7 +571,7 @@ def locations_json(request):
     return APIGETResponse(request, simplejson.dumps(loc_objs, indent=1),
                           content_type=JSON_CONTENT_TYPE)
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def location_detail_json(request, loctype, slug):
     # TODO: this will obsolete ebpub.db.views.ajax_location
     try:
@@ -583,7 +600,7 @@ def location_detail_json(request, loctype, slug):
     geojson = simplejson.dumps(geojson, indent=1)
     return APIGETResponse(request, geojson, content_type=JSON_CONTENT_TYPE)
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def location_types_json(request):
     typelist = models.LocationType.objects.order_by('plural_name').values(
         'name', 'plural_name', 'scope', 'slug')
@@ -595,7 +612,7 @@ def location_types_json(request):
                          content_type=JSON_CONTENT_TYPE)
 
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def place_types_json(request):
     typelist = PlaceType.objects.filter(is_mappable=True).order_by('plural_name').values(
         'name', 'plural_name', 'slug')
@@ -608,7 +625,7 @@ def place_types_json(request):
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
                          content_type=JSON_CONTENT_TYPE)
 
-@responds_to(['GET'])
+@rest_view(['GET'])
 def place_detail_json(request, placetype):
     try:
         placetype_obj = PlaceType.objects.get(slug=placetype)

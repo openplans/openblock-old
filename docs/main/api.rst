@@ -61,19 +61,26 @@ All calls to the OpenBlock API referenced in this document are prefixed by::
 	/api/dev1/
 
 
+.. _api_auth:
+
 Authentication and API Keys
 ----------------------------
 
 Authentication for those methods which require it may currently be
 accomplished in two ways:
 
- * HTTP Basic Auth headers
+ * HTTP Basic Auth headers (any normal user account registered with
+   OpenBlock will work)
 
  * sending your API key in the ``X-Openblock-Key`` HTTP header
 
 .. _apikey:
 
-An API key may be obtained by logging in and visiting your preferences page.
+An API key may be obtained by logging in and visiting your preferences
+page, if the OpenBlock site makes that available to you; or the site
+administrators can create keys via the admin UI at
+``admin/key/apikey/``.
+
 
 Support for Cross Domain Access
 -------------------------------
@@ -89,6 +96,43 @@ underscores; other characters will be removed.
 
 GET methods supporting :ref:`Atom <atom>` output may also provide the "jsonp"
 parameter. In this case the output is `JSONP-X <http://www.ajaxwith.com/JSONP-X-Output.html>`_.
+
+
+.. _throttling:
+
+Rate Limits, AKA Throttling
+---------------------------
+
+The API may be configured to limit the number of API requests a user
+can perform during a certain time period.  This limit applies across
+all resources provided by the API.
+
+By default, the limit is 150 requests per hour.
+
+If the user is not authenticated and provides no API key, the user's
+IP address will be used.
+
+If this limit is reached, the server will return a ``503 SERVICE
+UNAVAILABLE`` response, with a ``Retry-After`` header indicating the
+number of seconds after which the user can try again.
+
+The site administrator controls throttling by changing several
+values in settings.py:
+
+.. code-block:: python
+
+  API_THROTTLE_AT=150  # max requests per timeframe.
+  API_THROTTLE_TIMEFRAME = 60 * 60  # Default 1 hour.
+  # How long to retain the times the user has accessed the API. Default 1 week.
+  API_THROTTLE_EXPIRATION = 60 * 60 * 24 * 7
+
+  # NOTE in order to enable throttling, you MUST also configure
+  # CACHES['default'] to something other than a DummyCache. Example:
+  CACHES = {
+      'default': {
+          'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+      }
+  }
 
 
 Read API Endpoints
@@ -109,9 +153,11 @@ Response
 ================== ============================================================
     Status                                Meaning
 ------------------ ------------------------------------------------------------
-      200             This version of the API is available
+      200             This version of the API is available.
 ------------------ ------------------------------------------------------------
-      404             This version of the API is not available
+      404             This version of the API is not available.
+------------------ ------------------------------------------------------------
+      503             You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -138,6 +184,8 @@ Response
                    that match the criteria.
 ------------------ ------------------------------------------------------------
       400          The request was invalid due to invalid criteria
+------------------ ------------------------------------------------------------
+      503             You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -188,6 +236,8 @@ Response
                    that match the criteria.
 ------------------ ------------------------------------------------------------
       400          The request was invalid due to invalid criteria
+------------------ ------------------------------------------------------------
+      503             You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -225,6 +275,8 @@ Response
                    :ref:`json`.
 ------------------ ------------------------------------------------------------
       404          The NewsItem does not exist.
+------------------ ------------------------------------------------------------
+      503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 GET geocode
@@ -257,6 +309,8 @@ Response
       404          No locations matching the query were found.
 ------------------ ------------------------------------------------------------
       400          Invalid input: missing or empty 'q' parameter.
+------------------ ------------------------------------------------------------
+      503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -646,7 +700,7 @@ POST items/
 Purpose
 ~~~~~~~
 
-Create a new NewsItem.  :ref:`Authentication required <auth>`.
+Create a new NewsItem.  :ref:`Authentication required <api_auth>`.
 
 
 Parameters
@@ -680,6 +734,8 @@ Response
                    should contain validation hints, format to be determined.
 ------------------ ------------------------------------------------------------
       401          Permission denied.
+------------------ ------------------------------------------------------------
+      503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 

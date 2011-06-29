@@ -72,6 +72,8 @@ INSTALLED_APPS = (
     'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
+    'key',
+    # openblockapi overrides admin for the 'key' app.
     'ebpub.openblockapi',
     'ebpub.db',
     'ebpub.geocoder',
@@ -84,7 +86,6 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'django.contrib.sessions',
     'django_static',
-    'key',
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
@@ -180,6 +181,7 @@ EB_TODAY_OVERRIDE = None
 required_settings.append('GENERIC_EMAIL_SENDER')
 
 # Map stuff.
+# XXX UNUSED?
 required_settings.append('MAP_SCALES')
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 
@@ -242,12 +244,47 @@ DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 EBPUB_CACHE_GEOCODER = True
 required_settings.append('EBPUB_CACHE_GEOCODER')
 
-# API Keys.
+######################################################################
+# API Keys for OpenBlock's REST API.
+# Warning, if you increase API_KEY_SIZE after running syncdb, you'll
+# have to modify the size of the 'key' field in the 'key_apikey' table
+# in your database.
+API_KEY_SIZE=32
 MAX_KEYS_PER_USER=3
+
+API_THROTTLE_AT=150  # max requests per timeframe.
+API_THROTTLE_TIMEFRAME = 60 * 60 # default 1 hour.
+# How long to retain the times the user has accessed the API. Default 1 week.
+API_THROTTLE_EXPIRATION = 60 * 60 * 24 * 7
+
+# NOTE in order to enable throttling, you MUST also configure
+# CACHES['default'] to something other than a DummyCache.  See CACHES
+# below.
+
+#########################################################################
+## For development & testing, DummyCache makes for easiest troubleshooting.
+## See https://docs.djangoproject.com/en/1.3/ref/settings/#std:setting-CACHES
+#
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    },
+    # File caching might be a reasonable choice for low-budget, memory-constrained
+    # hosting environments.
+    # 'default': {
+    #     'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    #     'LOCATION': 'file:///tmp/myblock_cache',
+    # }
+}
+
+
+
 # Required by django-apikey to associate keys with user profiles.
 AUTH_PROFILE_MODULE = 'preferences.Profile'
 
-# Logging configuration. See https://docs.djangoproject.com/en/dev/topics/logging
+###################################################################
+# Logging.
+# See https://docs.djangoproject.com/en/dev/topics/logging
 # We import this first because South annoyingly overrides its log level at import time.
 from south import logger as _unused
 

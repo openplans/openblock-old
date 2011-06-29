@@ -89,7 +89,7 @@ class CacheThrottle(BaseThrottle):
         
         # Weed out anything older than the timeframe.
         minimum_time = int(time.time()) - int(self.timeframe)
-        times_accessed = [access for access in cache.get(key) if access >= minimum_time]
+        times_accessed = [access for access in cache.get(key, ()) if access >= minimum_time]
         cache.set(key, times_accessed, self.expiration)
         
         if len(times_accessed) >= int(self.throttle_at):
@@ -110,31 +110,16 @@ class CacheThrottle(BaseThrottle):
         times_accessed.append(int(time.time()))
         cache.set(key, times_accessed, self.expiration)
 
-
-class CacheDBThrottle(CacheThrottle):
-    """
-    A throttling mechanism that uses the cache for actual throttling but
-    writes-through to the database.
-    
-    This is useful for tracking/aggregating usage through time, to possibly
-    build a statistics interface or a billing mechanism.
-    """
-    def accessed(self, identifier, **kwargs):
+    def seconds_till_unthrottling(self, identifier):
         """
-        Handles recording the user's access.
-        
-        Does everything the ``CacheThrottle`` class does, plus logs the
-        access within the database using the ``ApiAccess`` model.
+        New feature for OpenBlock: try to figure out when the user will be un-throttled.
         """
-        # Do the import here, instead of top-level, so that the model is
-        # only required when using this throttling mechanism.
-        from tastypie.models import ApiAccess
-        super(CacheDBThrottle, self).accessed(identifier, **kwargs)
-        # Write out the access to the DB for logging purposes.
-        ApiAccess.objects.create(
-            identifier=identifier,
-            url=kwargs.get('url', ''),
-            request_method=kwargs.get('request_method', '')
-        )
-
+        key = self.convert_identifier_to_key(identifier)
+        times_accessed = cache.get(key, [])
+        if not times_accessed:
+            return 0
+        # Assume we have already weeded out anything older than the timeframe.
+        oldest = times_accessed[0]
+        when = oldest + self.timeframe
+        return when - int(time.time())
 

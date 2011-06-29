@@ -8,7 +8,7 @@ import mock
 import pytz
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
-from ebpub.utils.django_testcase_backports import TestCase, override_settings
+from ebpub.utils.django_testcase_backports import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
 from functools import wraps
@@ -133,7 +133,6 @@ class TestPushAPI(TestCase):
 
     @monkeypatch(views, check_api_authorization=lambda request: True)
     def test_create_basic(self):
-        #schema = Schema.objects.get(slug='test-schema')
         info = self._make_geojson(coords=[1.0, -1.0],
                                   description="Bananas!",
                                   title="All About Fruit",
@@ -943,27 +942,46 @@ class TestUtilFunctions(TestCase):
                                    'GET': {}, 'POST': {}})
         self.assertEqual(True, auth.check_api_authorization(get_request))
 
-    def test_responds_to(self):
-        from ebpub.openblockapi.views import responds_to
+    @mock.patch('ebpub.openblockapi.views.throttle_check')
+    def test_rest_view_decorator__allowed_methods(self, throttle_check):
+        from ebpub.openblockapi.views import rest_view
         from django.http import HttpResponseNotAllowed
+        throttle_check.return_value = False
 
-        @responds_to(['HEAD', 'PUT'])
+        @rest_view(['HEAD', 'PUT'])
         def foo(request):
             return request.method
 
-        class stubrequest(object):
-            method = 'GET'
+        request = mock.Mock(method='GET')
 
-        result = foo(stubrequest)
+        result = foo(request)
         self.assert_(isinstance(result, HttpResponseNotAllowed))
 
-        stubrequest.method = 'HEAD'
-        self.assertEqual(foo(stubrequest), 'HEAD')
-        stubrequest.method = 'PUT'
-        self.assertEqual(foo(stubrequest), 'PUT')
-        stubrequest.method = 'ANYTHING ELSE'
-        result = foo(stubrequest)
+        request.method = 'HEAD'
+        self.assertEqual(foo(request), 'HEAD')
+        request.method = 'PUT'
+        self.assertEqual(foo(request), 'PUT')
+        request.method = 'ANYTHING ELSE'
+        result = foo(request)
         self.assert_(isinstance(result, HttpResponseNotAllowed))
+
+    @mock.patch('ebpub.openblockapi.views.throttle_check')
+    def test_rest_view_decorator__throttling(self, throttle_check):
+        from ebpub.openblockapi.views import rest_view
+        request = mock.Mock(method='GET')
+
+        @rest_view(['GET'])
+        def foo(request):
+            return 'ok'
+
+        throttle_check.return_value = 0
+        self.assertEqual('ok', foo(request))
+
+        throttle_check.return_value = 1234
+        result = foo(request)
+        self.assertEqual(result.status_code, 503)
+        self.assertEqual(result['Retry-After'], '1234')
+
 
     @mock.patch('ebpub.openblockapi.throttle.cache')
     def test_cachethrottle(self, mock_cache):
@@ -982,20 +1000,21 @@ class TestUtilFunctions(TestCase):
         mock_cache.get.return_value = [int(time.time())] * (throttle_at + 1)
         self.assertEqual(True, throttle.should_be_throttled('some_id'))
 
-    @mock.patch('ebpub.openblockapi.views.throttle')
+    @mock.patch('ebpub.openblockapi.views._throttle')
     def test_throttlecheck(self, mock_throttle):
         from ebpub.openblockapi.views import throttle_check
 
         request = mock.Mock(**{'user.is_authenticated.return_value': True,
                                'REQUEST.get.return_value': 'anything'})
         mock_throttle.should_be_throttled.return_value = True
-        self.assertEqual(True, throttle_check(request))
+        mock_throttle.seconds_till_unthrottling.return_value = 99
+        self.assertEqual(99, throttle_check(request))
 
         request = mock.Mock(**{'user.is_authenticated.return_value': False,
                                'META': {auth.KEY_HEADER: 'test-api-key',}})
-        self.assertEqual(True, throttle_check(request))
+        self.assertEqual(99, throttle_check(request))
 
         self.assertEqual(mock_throttle.accessed.call_count, 0)
         mock_throttle.should_be_throttled.return_value = False
-        throttle_check(request)
+        self.assertEqual(0, throttle_check(request))
         self.assertEqual(mock_throttle.accessed.call_count, 1)
