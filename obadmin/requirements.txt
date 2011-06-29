@@ -15,4 +15,4 @@ Paver==1.0.3
 
 http://pypi.python.org/packages/source/P/PasteScript/PasteScript-1.7.3.tar.gz
 
-ebpub==1.0a1
+ebpub
