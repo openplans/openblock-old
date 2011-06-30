@@ -77,6 +77,7 @@ INSTALLED_APPS = (
     'ebpub.geocoder',
     'ebpub.petitions',
     'ebpub.preferences',
+    'ebpub.richmaps',
     'ebpub.savedplaces',
     'ebpub.streets',
     'ebpub.widgets',

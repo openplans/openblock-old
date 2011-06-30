@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
+{% load eb humanize mapping %}
+
+{% block fulltitle %}OpenBlock{% endblock %}
+
+{% block extrahead %}
+<style>
+      
+  
+  #detailmap {
+    width: 100%;
+    height: 500px;
+  }
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+		<div id="mapwrapper" class="fullpage">
+		  <script type="text/javascript">
+	
+      function loadMap() {
+          var config = {
+            center: [{{default_lon}}, {{default_lat}}],
+            zoom: {{default_zoom}},
+            baselayer_type: "{{ MAP_BASELAYER_TYPE }}",
+            wms_url: "{{ WMS_URL }}"
+          };
+
+          var map = new OBMap(config);
+          map.map.addControl(new OpenLayers.Control.LayerSwitcher());
+          map.loadAllPlaceLayers();
+          map.loadAllNewsLayers();
+          return map;
+      }
+		  </script>
+		{% include "richmaps/richmap.html" %}
+		</div><!-- end mapwrapper -->
+{% endblock %}

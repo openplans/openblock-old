@@ -499,7 +499,8 @@ class PlaceType(models.Model):
     slug = models.CharField(max_length=255, db_index=True, unique=True)
     is_geocodable = models.BooleanField(default=True, help_text="Whether this type of place is searched by name during geocoding.")
     is_mappable = models.BooleanField(default=True, help_text="Whether this type is available as a map layer to users")
-    map_icon = models.FileField(upload_to='place_icons', blank=True, null=True)
+    map_icon_url = models.TextField(blank=True, null=True)
+    map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of place. eg #FF0000")
 
     def natural_key(self):
         return (self.slug, )
@@ -516,6 +517,8 @@ class Place(models.Model):
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
     place_type = models.ForeignKey(PlaceType)
     address = models.CharField(max_length=255, blank=True)
+    url = models.TextField(blank=True, null=True, db_index=True) # link to additional information
+
     location = models.PointField(blank=True)
     objects = models.GeoManager()
 

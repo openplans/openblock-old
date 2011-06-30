@@ -1,0 +1,8 @@
+<div class="popup-content">
+  <div class="title">
+    {% if place.url %}<a href="{{place.url}}">{{place.pretty_name|truncatewords_html:15}}</a>
+    {% else %}{{ place.pretty_name }}{% endif %}
+  </div>
+  <div class="location">{{place.address}}</div>
+  <div class="category">{{place_type.name}}</div>
+</div>

@@ -16,11 +16,17 @@ Required variables: nearby_locations, place, is_block
 	{% block map %}
 	<div id="mapwrapper">
 		<script type="text/javascript">
-		  var place_type = '{{ place.location_type.slug }}';
-		  var place_slug = '{{ place.slug }}';
-		  var map_bounds = new OpenLayers.Bounds{{ bbox }};
+      {% autoescape off %}
+		  function loadMap() {
+		    var config = {{map_configuration}};    			
+    		config.bounds = [{{bbox.0}}, {{bbox.1}}, {{bbox.2}}, {{bbox.3}}];
+        config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+        config.wms_url = "{{ WMS_URL }}";    
+        return new OBMap(config);        
+		  }
+      {% endautoescape %}
 		</script>
-		{% include "map.html" %}
+		{% include "richmaps/richmap.html" %}
 	</div><!--/ #mapwrapper -->
 	{% endblock map %}
 	<!-- end block map -->

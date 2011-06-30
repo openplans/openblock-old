@@ -17,11 +17,20 @@
 
 	<div id="mapwrapper">
 	  <script type="text/javascript">
-	    var map_center = new OpenLayers.LonLat({{map_center_x}}, {{map_center_y}});
-	    var map_zoom = 16;
-	    var newsitem = '{{newsitem.id}}';
+	  {% autoescape off %}
+	  
+	  function loadMap() {
+		  var config = {{map_configuration}};
+      config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+      config.wms_url = "{{ WMS_URL }}";
+      config.center = [{{map_center_x}}, {{map_center_y}}];
+      config.zoom = 16;
+      return new OBMap(config);        
+		}
+		
+		{% endautoescape %}
 	  </script>
-	  {% include "map.html" %}
+	  {% include "richmaps/richmap.html" %}
 	</div>
 
 	<table>

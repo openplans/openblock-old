@@ -581,6 +581,20 @@ div.popupnav {
 }
 
 
+/* Rich Map Popups */
+
+.popup-content .title {
+    font-size: 14px;
+} 
+
+.popup-content .title a {
+    text-decoration: none;
+}
+
+.popup-nav {
+    clear: both;
+}
+
 /* #################################### Timeline ############################ */
 
 .place-detail-timeline .info .date {
