@@ -821,18 +821,15 @@ margin : 0;
 
 
 .schema-detail #schemanav {
-float : right;
-width : 250px;
+float : none;
 }
-
-
 
 
 .schema-detail table.datechart a:link {
 text-decoration : none;
 }
- 
-.schema-detail table.datechart td, 
+
+.schema-detail table.datechart td,
 .schema-detail table.datechart th {
 vertical-align : bottom;
 padding : 0;

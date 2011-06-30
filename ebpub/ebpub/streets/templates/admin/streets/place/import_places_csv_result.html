@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load adminmedia i18n %}
+
+{% block breadcrumbs %}{% if not is_popup %}
+<div class="breadcrumbs">
+     <a href="../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../">{{ app_label|capfirst|escape }}</a> &rsaquo; 
+     {% if has_change_permission %}<a href="../">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %} &rsaquo; 
+     <a href="csv">Import</a> &rsaquo;
+     Results 
+</div>
+{% endif %}{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+{% url admin:jsi18n as jsi18nurl %}
+<script type="text/javascript" src="{{ jsi18nurl|default:"../../../jsi18n/" }}"></script>
+{{ media }}
+{% endblock %}
+
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/forms.css" />{% endblock %}
+
+{% block coltype %}{% if ordered_objects %}colMS{% else %}colM{% endif %}{% endblock %}
+
+{% block bodyclass %}{{ opts.app_label }}-{{ opts.object_name.lower }} import-form{% endblock %}
+
+
+
+{% block content %}<div id="content-main">
+
+{% if errors %}
+    <p class="errornote">
+{% blocktrans count errors|length as counter %}An Error was {% plural %}Errors were {% endblocktrans %}
+      encountered while processing file provided.
+    </p>
+
+    <ul class="errorlist">
+    {% for error in errors %}
+      <li>{{ error }}</li>
+    {% endfor %}
+    </ul>
+{% endif %}
+
+<ul>
+{%for action in actions_taken %}
+  <li>{{ action }}</li>
+{% endfor %}
+</ul>
+
+
+</div>
+</form></div>
+{% endblock %}
+
+
+
+

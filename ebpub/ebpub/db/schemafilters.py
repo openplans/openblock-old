@@ -160,8 +160,8 @@ class AttributeFilter(NewsitemFilter):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.schemafield = kwargs['schemafield']
         self.slug = self.schemafield.name
-        self.argname = 'by-%s' % self.schemafield.name
-        self.url = 'by-%s=' % self.schemafield.slug
+        self.argname = 'by-%s' % self.slug
+        self.url = 'by-%s=' % self.slug
         self.value = self.short_value = ''
         self.label = self.schemafield.pretty_name
         if args:
@@ -198,7 +198,7 @@ class TextSearchFilter(AttributeFilter):
         self.query = ', '.join(args)
         self.short_value = self.query
         self.value = self.query
-        self.url = 'by-%s=%s' % (self.schemafield.slug, self.query)
+        self.url = 'by-%s=%s' % (self.schemafield.name, self.query)
 
     def apply(self):
         self.qs = self.qs.text_search(self.schemafield, self.query)
@@ -223,7 +223,7 @@ class BoolFilter(AttributeFilter):
             self.real_val = {'yes': True, 'no': False, 'na': None}.get(self.boolslug, self.boolslug)
             if self.real_val not in (True, False, None):
                 raise FilterError('Invalid boolean value %r' % self.boolslug)
-            self.url = 'by-%s=%s' % (self.schemafield.slug, self.boolslug)
+            self.url = 'by-%s=%s' % (self.schemafield.name, self.boolslug)
             self._got_args = True
         else:
             # No args.
@@ -235,7 +235,7 @@ class BoolFilter(AttributeFilter):
             return {}
         return {
             'lookup_type': self.value[3:],
-            'lookup_type_slug': self.schemafield.slug,
+            'lookup_type_slug': self.schemafield.name,
             'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
             }
 
@@ -249,6 +249,8 @@ class BoolFilter(AttributeFilter):
 class LookupFilter(AttributeFilter):
     """
     Filters on Lookup attributes (see ebpub.db.models for more info).
+
+    TODO: currently handles only one lookup value
     """
 
     _sort_value = 900.0
@@ -273,7 +275,7 @@ class LookupFilter(AttributeFilter):
                     raise FilterError("No such lookup %r" % slug)
             self.value = self.look.name
             self.short_value = self.value
-            self.url = 'by-%s=%s' % (self.schemafield.slug, slug)
+            self.url = 'by-%s=%s' % (self.schemafield.name, slug)
 
     def validate(self):
         if self._got_args:
@@ -281,7 +283,7 @@ class LookupFilter(AttributeFilter):
         lookup_list = models.Lookup.objects.filter(schema_field__id=self.schemafield.id).order_by('name')
         return {
             'lookup_type': self.schemafield.pretty_name,
-            'lookup_type_slug': self.schemafield.slug,
+            'lookup_type_slug': self.schemafield.name,
             'lookup_list': lookup_list,
         }
 
@@ -589,7 +591,7 @@ class FilterChain(SortedDict):
         ``argstring`` is the portion of the path that describes the
         filters (or None, in the case of "/filter/").
 
-        ``filter_sf_dict`` is a mapping of slug -> SchemaField which have
+        ``filter_sf_dict`` is a mapping of name -> SchemaField which have
         either is_filter or is_searchable True.  We remove
         SchemaFields that we create filters for. (This is so that
         templates can display input widgets for the ones we're not
@@ -635,12 +637,11 @@ class FilterChain(SortedDict):
 
             # Attribute filtering
             elif argname.startswith('by-'):
-                sf_slug = argname[3:]
+                sf_name = argname[3:]
                 try:
-                    sf = filter_sf_dict.pop(sf_slug)
+                    sf = filter_sf_dict.pop(sf_name)
                 except KeyError:
-                    # XXX this will be a confusing error if we already popped it.
-                    raise FilterError('Invalid SchemaField slug %r' % sf_slug)
+                    raise FilterError('Invalid or duplicate SchemaField name %r' % sf_name)
                 self.add_by_schemafield(sf, *argvalues, _replace=True)
 
             else:
@@ -704,8 +705,8 @@ class FilterChain(SortedDict):
         end_date = pop_key('end_date')
         if start_date and end_date:
             try:
-                start_date = parse_date(start_date, '%m/%d/%Y')
-                end_date = parse_date(end_date, '%m/%d/%Y')
+                start_date = parse_date(start_date, '%Y/%m/%d')
+                end_date = parse_date(end_date, '%Y/%m/%d')
             except ValueError, e:
                 raise BadDateException(str(e))
             if start_date.year < 1900 or end_date.year < 1900:
@@ -718,7 +719,8 @@ class FilterChain(SortedDict):
         search_string = pop_key('q')
         if lookup_name and search_string:
             # Can raise DoesNotExist. Should that be FilterError?
-            schemafield = models.SchemaField.objects.get(name=lookup_name)
+            schemafield = models.SchemaField.objects.get(name=lookup_name,
+                                                         schema=self.schema)
             self.replace(schemafield, search_string)
 
         # Stash away all query params we didn't consume.
@@ -877,7 +879,7 @@ class FilterChain(SortedDict):
             raise TypeError("unexpected keyword args %s" % kwargs.keys())
 
         values = list(values)
-        key = schemafield.slug
+        key = schemafield.name
         if schemafield.is_lookup:
             filterclass = LookupFilter
         elif schemafield.is_type('bool'):

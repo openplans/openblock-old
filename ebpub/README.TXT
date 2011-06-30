@@ -2,7 +2,15 @@
 ebpub
 =====
 
-Publishing system for block-specific news, as used by EveryBlock.com.
+A Django application that provides hyperlocal news.
 
-For more information, see ../doc/packages/ebpub.rst or online at
-http://openblockproject.org/docs/packages/ebpub.html
+This package is part of OpenBlock. Originally developed for EveryBlock.com.
+
+For more information, see the
+`documentation <http://openblockproject.org/docs/>`_
+or the `project website <http://openblockproject.org>`_.
+
+Problems can be reported to the `issue tracker <http://developer.openblockproject.org>`_.
+
+Discussion is on the `ebcode google group <http://groups.google.com/group/ebcode>`_
+or the #openblock channel on freenode.

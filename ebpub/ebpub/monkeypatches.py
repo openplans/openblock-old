@@ -32,6 +32,8 @@ from django.core.serializers import base
 # See http://code.djangoproject.com/ticket/13252
 ####################################################################
 
+
+# django.core.serializers.base.build_instance
 def build_instance(Model, data, db):
     """
     Build a model instance.
@@ -50,7 +52,7 @@ def build_instance(Model, data, db):
             pass
     return obj
 
-
+# python.Serializer.end_object
 def end_object(self, obj):
     data = {
         "model": smart_unicode(obj._meta),
@@ -65,8 +67,7 @@ def end_object(self, obj):
 
 from django.db import models, DEFAULT_DB_ALIAS
 
-# Too bad this is so big, we only add a tiny bit of code
-# near the beginning and end; but not such that we can just wrap it.
+# django.core.serializers.python.Deserializer
 def Deserializer(object_list, **options):
     """
     Deserialize simple Python objects back into Django ORM instances.
@@ -74,6 +75,8 @@ def Deserializer(object_list, **options):
     It's expected that you pass the Python objects themselves (instead of a
     stream or a string) to the constructor
     """
+    # Too bad this is so big, we only add a tiny bit of code
+    # near the beginning and end; but not such that we can just wrap it.
     from django.conf import settings
     from django.core.serializers import python
     _get_model = python._get_model
@@ -131,9 +134,10 @@ def Deserializer(object_list, **options):
                 data[field.name] = field.to_python(field_value)
 
         obj = base.build_instance(Model, data, db)
+
         yield base.DeserializedObject(obj, m2m_data)
 
-
+# django.core.serializers.xml_serializer.Serializer.start_object
 def start_object(self, obj):
     """
     Called as each object is handled.
@@ -148,6 +152,8 @@ def start_object(self, obj):
     self.xml.startElement("object", object_data)
 
 
+
+# django.core.serializers.xml_serializer.Deserializer._handle_object
 def _handle_object(self, node):
     """
     Convert an <object> node to a DeserializedObject.
@@ -157,6 +163,7 @@ def _handle_object(self, node):
 
     # Look up the model using the model loading mechanism. If this fails,
     # bail.
+
     Model = self._get_model_from_node(node, "model")
 
     # Start building a data dictionary from the object.
@@ -198,7 +205,6 @@ def _handle_object(self, node):
 
     # Return a DeserializedObject so that the m2m data has a place to live.
     return base.DeserializedObject(obj, m2m_data)
-
 
 ####################################################################
 # End of "natural keys" fixture support.

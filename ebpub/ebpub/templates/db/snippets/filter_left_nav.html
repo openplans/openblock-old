@@ -50,11 +50,11 @@ start_date, end_date, lookup_list, search_list, search_url
 	{% if not date_filter_applied %}
 	<div class="filtergroup" id="date-filtergroup">
 		<h3>{{ schema.date_name|capfirst }}</h3>
-		<form action="" method="get">
+		<form action="{% filter_url filters %}" method="get">
 			<p>
-				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"n/j/Y" }}">
+				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"Y/m/d" }}">
 					 - 
-					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"n/j/Y" }}">
+					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"Y/m/d" }}">
 				<button type="submit">Search</button>
 			</p>
 		</form>
@@ -65,7 +65,7 @@ start_date, end_date, lookup_list, search_list, search_url
 			<h3>{{ schemafield.sf.pretty_name|capfirst }}</h3>
 			<ul>
 				{% for value in schemafield.top_values %}
-					<li><a href="{% filter_url filters +schemafield.sf.slug value.lookup %}" rel="nofollow">{{ value.lookup.name }}</a></li>
+					<li><a href="{% filter_url filters +schemafield.sf.name value.lookup %}" rel="nofollow">{{ value.lookup.name }}</a></li>
 
 				{% endfor %}
 				{% if schemafield.has_more %}<li class="more"><a href="{% filter_url filters +schemafield.sf %}" rel="nofollow">See all&hellip;</a></li>{% endif %}
@@ -77,7 +77,7 @@ start_date, end_date, lookup_list, search_list, search_url
 			<h3>{{ schemafield.pretty_name|capfirst }}</h3>
 			<form action="{{ search_url }}" method="get">
 				<p class="inlineform">
-					<input type="hidden" name="textsearch" value="{{ schemafield.slug }}">
+					<input type="hidden" name="textsearch" value="{{ schemafield.name }}">
 					<input type="text" name="q" value="">
 					<button type="submit">Search</button>
 				</p>
@@ -88,9 +88,9 @@ start_date, end_date, lookup_list, search_list, search_url
 		<div class="filtergroup">
 			<h3>{{ schemafield.pretty_name|capfirst }}</h3>
 			<ul>
-				<li><a href="by-{{ schemafield.slug }}/yes/" rel="nofollow">Yes</a></li>
-				<li><a href="by-{{ schemafield.slug }}/no/" rel="nofollow">No</a></li>
-				<li><a href="by-{{ schemafield.slug }}/na/" rel="nofollow">N/A</a></li>
+				<li><a href="by-{{ schemafield.name }}=yes/" rel="nofollow">Yes</a></li>
+				<li><a href="by-{{ schemafield.name }}=no/" rel="nofollow">No</a></li>
+				<li><a href="by-{{ schemafield.name }}=na/" rel="nofollow">N/A</a></li>
 			</ul>
 		</div>
 	{% endfor %}

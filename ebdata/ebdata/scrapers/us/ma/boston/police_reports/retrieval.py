@@ -32,6 +32,7 @@ from ebdata.textmining.treeutils import text_from_html
 from ebpub.db.models import NewsItem
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
+from ebpub.geocoder.parser.parsing import ParsingError
 from ebpub.utils.logutils import log_exception
 import logging
 import datetime
@@ -114,7 +115,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
             addr = addr.strip()
             try:
                 location = SmartGeocoder().geocode(addr)
-            except GeocodingException:
+            except (GeocodingException, ParsingError):
                 log_exception(level=logging.DEBUG)
                 continue
             location_name = location['address']
@@ -136,6 +137,9 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
         self.create_or_update(old_record, attributes, **kwargs)
 
 
-if __name__ == "__main__":
+def main():
     #from ebdata.retrieval import log_debug
-    BPDNewsFeedScraper().update()
+    BPDNewsFeedScraper().update()    
+
+if __name__ == "__main__":
+    main()

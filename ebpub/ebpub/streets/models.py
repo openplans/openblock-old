@@ -404,16 +404,8 @@ class Block(models.Model):
         self.right_state = _first_not_false(self.right_state, self.left_state)
 
         # We don't attempt to fix left_city and right_city as those are
-        # allowed to differ even if one's blank (I think).
-        # But you can't have *both* blank.
-        if not (self.left_city or self.right_city):
-            raise ValidationError("Must provide at least one of left_city, right_city")
-
-        # We don't attempt to fix left_city and right_city as those are
-        # allowed to differ even if one's blank (I think).
-        # But you can't have *both* blank.
-        if not (self.left_city or self.right_city):
-            raise ValidationError("Must provide at least one of left_city, right_city")
+        # allowed to differ, or even be blank;
+        # blank means it's an unincorporated area.
 
         # from_num and to_num are always calculated automatically.
         from ebpub.streets.name_utils import make_block_numbers
@@ -491,6 +483,29 @@ class StreetMisspelling(models.Model):
     def __unicode__(self):
         return self.incorrect
 
+class PlaceTypeManager(models.Manager):
+
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
+
+class PlaceType(models.Model):
+    objects = PlaceTypeManager()
+
+    name = models.CharField(max_length=255)
+    plural_name = models.CharField(max_length=255)
+    indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
+
+    slug = models.CharField(max_length=255, db_index=True, unique=True)
+    is_geocodable = models.BooleanField(default=True, help_text="Whether this type of place is searched by name during geocoding.")
+    is_mappable = models.BooleanField(default=True, help_text="Whether this type is available as a map layer to users")
+    map_icon = models.FileField(upload_to='place_icons', blank=True, null=True)
+
+    def natural_key(self):
+        return (self.slug, )
+        
+    def __unicode__(self):
+        return self.name
+
 class Place(models.Model):
     """
     A generic place, like "Millennium Park" or "Sears Tower".
@@ -498,6 +513,7 @@ class Place(models.Model):
     """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
+    place_type = models.ForeignKey(PlaceType)
     address = models.CharField(max_length=255, blank=True)
     location = models.PointField(blank=True)
     objects = models.GeoManager()
@@ -566,6 +582,7 @@ class City(object):
         return (self.name, self.slug, self.norm_name) == (
             other.name, other.slug, other.norm_name)
 
+
 class BlockIntersection(models.Model):
     """
     Relates two Blocks and an Intersection.
@@ -581,6 +598,7 @@ class BlockIntersection(models.Model):
 
     def __unicode__(self):
         return u'%s intersecting %s' % (self.block, self.intersecting_block)
+
 
 class IntersectionManager(models.GeoManager):
     def search(self, predir_a=None, street_a=None, suffix_a=None, postdir_a=None,

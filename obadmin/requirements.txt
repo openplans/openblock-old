@@ -14,3 +14,5 @@ Paver==1.0.3
 # See http://trac.pythonpaste.org/pythonpaste/ticket/458
 
 http://pypi.python.org/packages/source/P/PasteScript/PasteScript-1.7.3.tar.gz
+
+ebpub>=1.0a1

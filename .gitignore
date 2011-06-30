@@ -7,6 +7,8 @@
 ._*
 *#
 .#*
+*.orig
+*.rej
 .DS_Store
 /obdemo/obdemo/real_settings.py
 /obdemo/obdemo/settings.py

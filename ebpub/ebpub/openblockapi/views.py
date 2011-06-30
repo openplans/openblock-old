@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
+from django.db.models.query import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -12,8 +13,14 @@ from django.utils import simplejson
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, QueryError
+from ebpub.openblockapi.auth import KEY_HEADER
+from ebpub.openblockapi.auth import check_api_authorization
+from ebpub.streets.models import PlaceType, Place, PlaceSynonym
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
+from ebpub.utils.geodjango import ensure_valid
+from functools import wraps
+import copy
 import datetime
 import logging
 import pyrfc3339
@@ -29,166 +36,51 @@ LOCAL_TZ = pytz.timezone(settings.TIME_ZONE)
 
 logger = logging.getLogger('openblockapi')
 
+############################################################
+# Util functions.
+############################################################
+
 def APIGETResponse(request, body, **kw):
     """
-    constructs either a normal HTTPResponse using the 
-    keyword arguments given or a JSONP wrapped response
-    depending on the presence and validity of 
-    JSONP_QUERY_PARAM in the request. 
-    
-    This may alter the content type of the response 
+    constructs either a normal HTTPResponse using the
+    keyword arguments given or a JSONP / JSONPX wrapped response
+    depending on the presence and validity of
+    JSONP_QUERY_PARAM in the request.
+
+    This may alter the content type of the response
     if JSONP/JSONPX is triggered. Status is preserved.
     """
     jsonp = request.GET.get(JSONP_QUERY_PARAM)
+    format = kw.setdefault('content_type', JSON_CONTENT_TYPE)
+    if format == JSON_CONTENT_TYPE and not isinstance(body, basestring):
+        body = simplejson.dumps(body, indent=1, default=_serialize_unknown)
     if jsonp is None:
         return HttpResponse(body, **kw)
     else:
-        content_type = kw.get("mimetype", kw.get("content_type", "text/plain"))
         jsonp = re.sub(r'[^a-zA-Z0-9_]+', '', jsonp)
-        if content_type in (JSON_CONTENT_TYPE, ATOM_CONTENT_TYPE):
-            body = jsonp + "(" + body + ");" 
-        else: 
-            body = jsonp + "(" + simplejson.dumps(body, indent=1) + ");"
-        if 'content_type' in kw:
-            del kw['content_type']
-        if 'mimetype' in kw:
-            del kw['mimetype']
+        body = '%s(%s);' % (jsonp, body)
         kw['content_type'] = JAVASCRIPT_CONTENT_TYPE
         return HttpResponse(body, **kw)
 
+def normalize_datetime(dt):
+    # XXX needs tests
+    if dt.tzinfo is None:
+        # Assume naive times are in local zone.
+        dt = dt.replace(tzinfo=LOCAL_TZ)
+    return dt.astimezone(LOCAL_TZ)
 
-def check_api_available(request):
+def get_datatype(schemafield):
     """
-    endpoint to indicate that this version of the API
-    is available.
+    Human-readable datatype based on real_name; notably, use 'text',
+    not 'varchar'; Lookups are 'text'.
     """
-    return HttpResponse(status=200)
-
-
-def items_json(request):
-    """
-    handles the items.json API endpoint
-    """
-    # TODO: support filtering by block + radius, and somehow support
-    # adding extra info eg. popup html.  Together, that would allow
-    # this to replace ebub.db.views.newsitems_geojson. See #81
-    try:
-        items, params = build_item_query(_copy_nomulti(request.GET))
-        # could test for extra params aside from jsonp...
-        return APIGETResponse(request, _items_json(items), content_type=JSON_CONTENT_TYPE)
-    except QueryError as err:
-        return HttpResponse(err.message, status=400)
-
-def items_atom(request):
-    """
-    handles the items.atom API endpoint
-    """
-    try:
-        items, params = build_item_query(_copy_nomulti(request.GET))
-        # could test for extra params aside from jsonp...
-        return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
-    except QueryError as err:
-        return HttpResponse(err.message, status=400)
-
-def items_index(request):
-    """
-    GET: Redirects to a list of JSON items.
-
-    POST: Takes a single JSON mapping describing a NewsItem, creates
-    it, and redirects to a JSON view of the created item.
-    *Temporarily disabled until we have authorization in place*
-
-    On errors, gives a 400 response.
-
-    TODO: documentation in docs/
-    """
-    if request.method == 'GET':
-        return HttpResponseRedirect(reverse('items_json'))
-    # elif request.method == 'POST':
-    #     return _item_post(request)
+    if schemafield.is_lookup:
+        datatype = 'text'
     else:
-        # return HttpResponseNotAllowed(['GET', 'POST'])
-        return HttpResponseNotAllowed(['GET'])
-
-#@permission_required('db.add_newsitem')
-def _item_post(request):
-    assert request.method == 'POST'
-    info = simplejson.loads(request.raw_post_data)
-    assert info.pop('type') == 'Feature'
-    props = info['properties']
-    schema = get_object_or_404(models.Schema.objects, slug=props.pop('type'))
-    kwargs = {'schema': schema}
-    for key in ('title', 'description', 'url'):
-        kwargs[key] = props.pop(key, '')
-    item = models.NewsItem(**kwargs)
-    item.pub_date =  normalize_datetime(datetime.datetime.utcnow())
-    item_date = props.pop('item_date', None)
-    if item_date:
-        item.item_date = parse_date(item_date, '%Y-%m-%d', False)
-    else:
-        item.item_date = item.pub_date.date()
-    item.location, item.location_name = _get_location_info(
-        info.get('geometry'), props.pop('location_name', None))
-    if not item.location:
-        logger.warn("Saving NewsItem %s with no geometry" % item)
-    if not item.location_name:
-        logger.warn("Saving NewsItem %s with no location_name" % item)
-    item.save()
-    # Everything else goes in .attributes.
-    attributes = {}
-    for key, val in props.items():
-        sf = models.SchemaField.objects.get(schema=schema, name=key)
-        if sf.is_many_to_many_lookup():
-            # TODO: get or create Lookups as needed
-            pass
-        elif sf.is_lookup:
-            # likewise TODO.
-            pass
-        elif sf.is_type('date'):
-            val = normalize_datetime(parse_date(val, '%Y-%m-%d'))
-        elif sf.is_type('time'):
-            val = normalize_datetime(parse_time(val, '%H:%M'))
-        elif sf.is_type('datetime'):
-            val = normalize_datetime(pyrfc3339.parse(datetime))
-        attributes[key] = val
-
-    item.attributes = attributes
-    item_id = str(item.id)
-    created = HttpResponse(status=201)
-    created['location'] = reverse('single_item_json', kwargs={'id_': item_id})
-    return created
-
-def _get_location_info(geometry, location_name):
-    location = None
-    if geometry:
-        from django.contrib.gis.geos import GEOSGeometry
-        # GEOSGeometry can already parse geojson geometries (as a string)...
-        # but not the whole geojson string... so we have to re-encode
-        # just the geometry :-P
-        location = GEOSGeometry(simplejson.dumps(geometry))
-        if not location.valid:
-            # Sometimes this will fix a bad geometry.
-            location = location.buffer(0.0)
-        if not location_name:
-            # TODO: reverse-geocode
-            pass
-    elif location_name:
-        # TODO: geocode
-        pass
-    return location, location_name
-
-
-def single_item_json(request, id_=None):
-    """
-    GET a single item as GeoJSON.
-    """
-    assert request.method == 'GET'
-    # TODO: handle PUT, DELETE?
-    from ebpub.db.models import NewsItem
-    item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
-    json = _item_json(item)
-    return APIGETResponse(request, json, content_type=JSON_CONTENT_TYPE)
-
+        datatype = schemafield.datatype
+        if datatype == 'varchar':
+            datatype = 'text'
+    return datatype
 
 def _copy_nomulti(d):
     """
@@ -200,22 +92,21 @@ def _copy_nomulti(d):
         try:
             if len(v) == 1:
                 r[k] = v[0]
-            else: 
+            else:
                 r[k] = v
         except TypeError:
             r[k] = v
     return r
 
-def _item_json(item, encode=True):
+def _item_geojson_dict(item):
     props = {}
     geom = simplejson.loads(item.location.geojson)
     result = {
-        # 'id': i.id, # XXX ?
         'type': 'Feature',
         'geometry': geom,
         }
     for attr in item.attributes_for_template():
-        key = attr.sf.slug
+        key = attr.sf.name
         if attr.sf.is_many_to_many_lookup():
             props[key] = attr.values
         else:
@@ -226,32 +117,29 @@ def _item_json(item, encode=True):
          'title': item.title,
          'description': item.description,
          'url': item.url,
-         'pub_date': pyrfc3339.generate(normalize_datetime(item.pub_date), utc=False),
+         'pub_date': item.pub_date,
          'item_date': item.item_date,
          })
     result['properties'] = props
-    if encode:
-        return simplejson.dumps(result, default=_serialize_unknown, indent=1)
-    else:
-        return result
+    return result
 
-def _items_json(items):
-    result = {
-        'type': 'FeatureCollection',
-        'features': []
-    }
-    for i in items:
-        if i.location is None: 
-            continue
-        item = _item_json(i, encode=False)
-        result['features'].append(item)
-    return simplejson.dumps(result, default=_serialize_unknown, indent=1)
+def is_instance_of_model(obj, model):
+    # isinstance(foo, model) seems to work *sometimes* with django models,
+    # but not always; no idea what's going on there.
+    # This should always work.
+    return (isinstance(obj, model)
+            or type(obj) is model
+            or model in obj.__class__.__bases__)
 
 def _serialize_unknown(obj):
+    # Handle NewsItems and various other types that default json serializer
+    # doesn't know how to do.
     if isinstance(obj, (datetime.datetime, datetime.date, datetime.time)):
         return serialize_date_or_time(obj)
-    if isinstance(obj, models.Lookup):
+    elif is_instance_of_model(obj, models.Lookup):
         return obj.name
+    elif is_instance_of_model(obj, models.NewsItem):
+        return _item_geojson_dict(obj)
     return None
 
 def serialize_date_or_time(obj):
@@ -269,9 +157,254 @@ def serialize_date_or_time(obj):
                         second=obj.second, tzinfo=obj.tzinfo)
         dd = normalize_datetime(dd)
         ss = pyrfc3339.generate(dd, utc=False)
-        return ss[ss.index('T') + 1:]
+        return ss.split('T', 1)[1]
     else:
         return None
+
+def _get_location_info(geometry, location_name):
+    location = None
+    if geometry:
+        # geometry is a decoded geojson geometry dict.
+        # GEOSGeometry can already parse geojson geometries (as a string)...
+        # but not the whole geojson string... so we have to re-encode
+        # just the geometry :-P
+        from django.contrib.gis.geos import GEOSGeometry
+        location = GEOSGeometry(simplejson.dumps(geometry))
+        location = ensure_valid(location)
+        if not location_name:
+            raise NotImplementedError("Should do reverse-geocoding here")
+    elif location_name:
+        raise NotImplementedError("Should do geocoding here.")
+    return location, location_name
+
+def rest_view(methods):
+    """
+    Decorator that applies throttling and restricts the available HTTP
+    methods.
+    """
+    def inner(func):
+        @wraps(func)
+        def wrapper(request, *args, **kwargs):
+            if request.method not in methods:
+                return HttpResponseNotAllowed(methods)
+            seconds_throttled = throttle_check(request)
+            if seconds_throttled > 0:
+                msg = u'Throttle limit exceeded. Try again in %d seconds.\n' % seconds_throttled
+                response = HttpResponse(msg, status=503)
+                response['Retry-After'] = str(seconds_throttled)
+                response['Content-Type'] = 'text/plain'
+                return response
+            return func(request, *args, **kwargs)
+        return wrapper
+    return inner
+
+from ebpub.openblockapi.throttle import CacheThrottle
+
+
+# We could have more than one throttle instance to be more flexible.
+_throttle = CacheThrottle(
+    throttle_at=getattr(settings, 'API_THROTTLE_AT', 150), # max requests per timeframe.
+    timeframe=getattr(settings, 'API_THROTTLE_TIMEFRAME', 60 * 60), # default 1 hour.
+    expiration=getattr(settings, 'API_THROTTLE_EXPIRATION', 60 * 60 * 24 * 7)  # default 1 week.
+    )
+
+def throttle_check(request):
+    """
+    Handles checking if the request should be throttled.
+
+    If so, returns number of seconds after which user can try again.
+    If not, returns 0.
+
+    Based originally on code from TastyPie, copyright Daniel Lindsley,
+    BSD license.
+    """
+    # First get best user identifier available.
+    if request.user.is_authenticated():
+        identifier = request.REQUEST.get('username')
+    elif request.META.get(KEY_HEADER, None) is not None:
+        identifier = request.META[KEY_HEADER]
+    else:
+        identifier = "%s_%s" % (request.META.get('REMOTE_ADDR', 'noaddr'),
+                                request.META.get('REMOTE_HOST', 'nohost'))
+    if _throttle.should_be_throttled(identifier):
+        # Throttle limit exceeded.
+        return _throttle.seconds_till_unthrottling(identifier)
+
+    # Log throttle access.
+    _throttle.accessed(identifier, url=request.get_full_path(),
+                      request_method=request.method.lower())
+    return 0
+
+
+class HttpResponseCreated(HttpResponseRedirect):
+    status_code = 201
+
+class HttpResponseUnavailable(HttpResponse):
+    status_code = 503
+
+############################################################
+# View functions.
+############################################################
+
+@rest_view(['GET'])
+def check_api_available(request):
+    """
+    endpoint to indicate that this version of the API
+    is available.
+    """
+    return HttpResponse(status=200)
+
+@rest_view(['GET'])
+def items_json(request):
+    """
+    handles the items.json API endpoint
+    """
+    # TODO: support filtering by block + radius, and somehow support
+    # adding extra info eg. popup html.  Together, that would allow
+    # this to replace ebub.db.views.newsitems_geojson. See #81
+    try:
+        items, params = build_item_query(_copy_nomulti(request.GET))
+        # could test for extra params aside from jsonp...
+        items = [item for item in items if item.location is not None]
+        items_geojson_dict = {'type': 'FeatureCollection',
+                              'features': items
+                              }
+        return APIGETResponse(request, items_geojson_dict, content_type=JSON_CONTENT_TYPE)
+    except QueryError as err:
+        return HttpResponseBadRequest(err.message)
+
+@rest_view(['GET'])
+def items_atom(request):
+    """
+    handles the items.atom API endpoint
+    """
+    try:
+        items, params = build_item_query(_copy_nomulti(request.GET))
+        # could test for extra params aside from jsonp...
+        return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
+    except QueryError as err:
+        return HttpResponseBadRequest(err.message)
+
+@rest_view(['GET', 'POST'])
+def items_index(request):
+    """
+    GET: Redirects to a list of JSON items.
+
+    POST: Takes a single JSON mapping describing a NewsItem, creates
+    it, and redirects to a JSON view of the created item
+    (HTTP response 201).
+
+    On errors, gives a 400 response.
+
+    TODO: documentation in docs/
+    """
+    if request.method == 'GET':
+        return HttpResponseRedirect(reverse('items_json'))
+    elif request.method == 'POST':
+        check_api_authorization(request)
+        info = simplejson.loads(request.raw_post_data)
+        try:
+            item = _item_create(info)
+        except InvalidNewsItem, e:
+            errors = simplejson.dumps({'errors': e.errors}, indent=2)
+            return HttpResponseBadRequest(errors)
+        item_url = reverse('single_item_json', kwargs={'id_': str(item.id)})
+        return HttpResponseCreated(item_url)
+
+
+class InvalidNewsItem(Exception):
+    def __init__(self, errors):
+        self.errors = errors
+
+#@permission_required('db.add_newsitem')
+def _item_create(info):
+    info = copy.deepcopy(info)
+    try:
+        assert info.pop('type') == 'Feature'
+        props = info['properties']
+    except (KeyError, AssertionError):
+        raise InvalidNewsItem({'type': 'not a valid GeoJSON Feature'})
+    try:
+        slug = props.pop('type', None)
+        schema = models.Schema.objects.get(slug=slug)
+    except (models.Schema.DoesNotExist):
+        raise InvalidNewsItem({'type': 'schema %r does not exist' % slug})
+
+    data = {'schema': schema.id}
+    for key in ('title', 'description', 'url'):
+        data[key] = props.pop(key, '')
+
+    # If there are errors parsing the dates, keep the raw data and let
+    # the ModelForm sort it out.
+    pub_date = props.pop('pub_date', None)
+    if pub_date:
+        try:
+            data['pub_date'] = normalize_datetime(pyrfc3339.parse(pub_date))
+        except Exception:
+            data['pub_date'] = pub_date
+    else:
+        data['pub_date'] = normalize_datetime(datetime.datetime.utcnow())
+    item_date = props.pop('item_date', None)
+    if item_date:
+        try:
+            data['item_date'] = parse_date(item_date, '%Y-%m-%d', False)
+        except Exception:
+            data['item_date'] = item_date
+    else:
+        try:
+            data['item_date'] = data['pub_date'].date()
+        except Exception:
+            data['item_date'] = None
+
+    data['location'], data['location_name'] = _get_location_info(
+        info.get('geometry'), props.pop('location_name', None))
+    if not data['location']:
+        logger.warn("Saving NewsItem %s with no geometry" % data['title'])
+    if not data['location_name']:
+        logger.warn("Saving NewsItem %s with no location_name" % data['title'])
+
+
+    from ebpub.db.forms import NewsItemForm
+    form = NewsItemForm(data)
+    if form.is_valid():
+        item = form.save()
+    else:
+        raise InvalidNewsItem(form.errors)
+
+    # Everything else goes in .attributes.
+    attributes = {}
+    for key, val in props.items():
+        sf = models.SchemaField.objects.get(schema=schema, name=key)
+        if sf.is_many_to_many_lookup():
+            lookups = []
+            for lookup_name in val:
+                lookups.append(
+                    models.Lookup.objects.get_or_create_lookup(sf, lookup_name))
+            val = ','.join((str(lookup.id) for lookup in lookups))
+        elif sf.is_lookup:
+            val = models.Lookup.objects.get_or_create_lookup(sf, val)
+        elif sf.is_type('date'):
+            val = normalize_datetime(parse_date(val, '%Y-%m-%d'))
+        elif sf.is_type('time'):
+            val = normalize_datetime(parse_time(val, '%H:%M'))
+        elif sf.is_type('datetime'):
+            val = normalize_datetime(pyrfc3339.parse(datetime))
+        attributes[key] = val
+    item.attributes = attributes
+    return item
+
+
+@rest_view(['GET'])
+def single_item_json(request, id_=None):
+    """
+    GET a single item as GeoJSON.
+    """
+    assert request.method == 'GET'
+    # TODO: handle PUT, DELETE?
+    from ebpub.db.models import NewsItem
+    item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
+    return APIGETResponse(request, item, content_type=JSON_CONTENT_TYPE)
+
 
 
 def _items_atom(items):
@@ -293,7 +426,7 @@ def _items_atom(items):
             for val in attr.values:
                 if attr.sf.is_lookup:
                     val = val.name
-                attributes.append((attr.sf.slug, datatype, val))
+                attributes.append((attr.sf.name, datatype, val))
         atom.add_item(item.title,
                       item.url, # XXX should this be a local url?
                       item.description,
@@ -307,7 +440,7 @@ def _items_atom(items):
     return atom.writeString('utf8')
 
 
-
+@rest_view(['GET'])
 def geocode(request):
     # TODO: this will obsolete:
     # ebdata.geotagger.views.geocode and 
@@ -322,7 +455,7 @@ def geocode(request):
     else:
         status = 404
     return APIGETResponse(request, simplejson.dumps(collection, indent=1),
-                          mimetype="application/json", status=status)
+                          content_type=JSON_CONTENT_TYPE, status=status)
 
 def _geocode_geojson(query):
     if not query: 
@@ -389,7 +522,7 @@ def _geocode_geojson(query):
 
     return features
 
-
+@rest_view(['GET'])
 def list_types_json(request):
     """
     List the known NewsItem types (Schemas).
@@ -399,7 +532,7 @@ def list_types_json(request):
         attributes = {}
         for sf in schema.schemafield_set.all():
             fieldtype = get_datatype(sf)
-            attributes[sf.slug] = {
+            attributes[sf.name] = {
                 'pretty_name': sf.smart_pretty_name(),
                 'type': fieldtype,
                 # TODO: what else?
@@ -415,8 +548,9 @@ def list_types_json(request):
                 }
 
     return APIGETResponse(request, simplejson.dumps(schemas, indent=1),
-                          content_type='application/json')
+                          content_type=JSON_CONTENT_TYPE)
 
+@rest_view(['GET'])
 def locations_json(request):
     locations = models.Location.objects.filter(is_public=True)
     loctype = request.GET.get('type')
@@ -435,8 +569,9 @@ def locations_json(request):
         for loc in locations]
 
     return APIGETResponse(request, simplejson.dumps(loc_objs, indent=1),
-                          content_type='application/json')
+                          content_type=JSON_CONTENT_TYPE)
 
+@rest_view(['GET'])
 def location_detail_json(request, loctype, slug):
     # TODO: this will obsolete ebpub.db.views.ajax_location
     try:
@@ -463,8 +598,9 @@ def location_detail_json(request, loctype, slug):
                               }
                }
     geojson = simplejson.dumps(geojson, indent=1)
-    return APIGETResponse(request, geojson, content_type='application/json')
+    return APIGETResponse(request, geojson, content_type=JSON_CONTENT_TYPE)
 
+@rest_view(['GET'])
 def location_types_json(request):
     typelist = models.LocationType.objects.order_by('plural_name').values(
         'name', 'plural_name', 'scope', 'slug')
@@ -473,7 +609,45 @@ def location_types_json(request):
         typedict[typeinfo.pop('slug')] = typeinfo
 
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
-                         content_type='application_json')
+                         content_type=JSON_CONTENT_TYPE)
+
+
+@rest_view(['GET'])
+def place_types_json(request):
+    typelist = PlaceType.objects.filter(is_mappable=True).order_by('plural_name').values(
+        'name', 'plural_name', 'slug')
+    typedict = {}
+    for typeinfo in typelist: 
+        slug = typeinfo.pop('slug')
+        typedict[slug] = typeinfo
+        typedict[slug]['geojson_url'] = reverse('place_detail_json', kwargs={'placetype': slug})
+
+    return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
+                         content_type=JSON_CONTENT_TYPE)
+
+@rest_view(['GET'])
+def place_detail_json(request, placetype):
+    try:
+        placetype_obj = PlaceType.objects.get(slug=placetype)
+    except (ValueError, PlaceType.DoesNotExist):
+        raise Http404("No such place type %r" % placetype)
+
+    result = {
+        'type': 'FeatureCollection',
+        'features': []
+    }
+    for place in Place.objects.filter(place_type=placetype_obj):
+        feature = {'type': 'Feature',
+                   'geometry': simplejson.loads(place.location.geojson),
+                   'properties': {'type': placetype,
+                                  'name': place.pretty_name,
+                                  'address': place.address,
+                                  }
+                   }
+        result['features'].append(feature)
+
+    geojson = simplejson.dumps(result, indent=1)
+    return APIGETResponse(request, geojson, content_type=JSON_CONTENT_TYPE)
 
 
 class OpenblockAtomFeed(feedgenerator.Atom1Feed):
@@ -505,23 +679,21 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
                                     {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
 
-def normalize_datetime(dt):
-    # XXX needs tests
-    if dt.tzinfo is None:
-        # Assume naive times are in local zone.
-        dt = dt.replace(tzinfo=LOCAL_TZ)
-    return dt.astimezone(LOCAL_TZ)
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import condition
+from django.views.decorators.cache import cache_page
 
+# Override one view from django-apikey to ensure it doesn't try
+# to save a reference to our LazyUser proxy.
+from key.views import etag_func, latest_access, do_generate_key_list
+from key.models import generate_unique_api_key
 
-def get_datatype(schemafield):
-    """
-    Human-readable datatype based on real_name; notably, use 'text',
-    not 'varchar'; Lookups are 'text'.
-    """
-    if schemafield.is_lookup:
-        datatype = 'text'
-    else:
-        datatype = schemafield.datatype
-        if datatype == 'varchar':
-            datatype = 'text'
-    return datatype
+@login_required
+@condition( etag_func=etag_func, last_modified_func=latest_access )
+@cache_page( 1 )
+def generate_key( request ):
+    if request.method == 'POST':
+        # Trigger loading the real user object, and use it.
+        user = request.user.user
+        generate_unique_api_key( user )
+    return do_generate_key_list( request )

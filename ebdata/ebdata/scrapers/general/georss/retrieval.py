@@ -34,6 +34,7 @@ from ebpub.db.models import NewsItem, Schema
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
 from ebpub.utils.logutils import log_exception
+from ebpub.utils.geodjango import intersects_metro_bbox
 
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
@@ -50,7 +51,7 @@ class LocalNewsScraper(object):
         self.http = Http(http_cache)
 
     def update(self):
-        
+
         logger.info("Starting LocalNewsScraper update %s" % self.url)
 
         try:
@@ -61,7 +62,7 @@ class LocalNewsScraper(object):
 
         response, content = self.http.request(self.url)
         if response.fromcache:
-            log.info("Feed is unchanged since last update (cached)")
+            logger.info("Feed is unchanged since last update (cached)")
             return
 
         f = feedparser.parse(content)
@@ -102,6 +103,7 @@ class LocalNewsScraper(object):
                 x, y = None, None
                 if point:
                     x, y = point.split(' ')
+                _short_title = item.title[:30] + '...'
                 if True:
                     # Fall back on geocoding.
                     text = item.title + ' ' + item.description
@@ -121,14 +123,20 @@ class LocalNewsScraper(object):
                             logger.error('uncaught geocoder exception on %r\n' % addr)
                             log_exception()
                     if None in (x, y):
-                        logger.info("couldn't geocode '%s...'" % item.title[:30])
+                        logger.debug("couldn't geocode any addresses in item '%s...'"
+                                     % _short_title)
                         continue
                 item.location = Point((float(y), float(x)))
-                if item.location.x == 0.0 and item.location.y == 0.0:
-                    # There's a lot of these. Maybe attempt to
-                    # parse and geocode if we haven't already?
-                    logger.info("Skipping %r as it has bad location 0,0" % item.title)
-                    continue
+                if not intersects_metro_bbox(item.location):
+                    reversed_loc = Point((float(x), float(y)))
+                    if intersects_metro_bbox(reversed_loc):
+                        logger.info(
+                            "Got points in apparently reverse order, flipping them")
+                        item.location = reversed_loc
+                    else:
+                        logger.info("Skipping %r as %s,%s is out of bounds" %
+                                    (_short_title, y, x))
+                        continue
                 if not item.location_name:
                     # Fall back to reverse-geocoding.
                     from ebpub.geocoder import reverse
@@ -138,16 +146,16 @@ class LocalNewsScraper(object):
                         item.location_name = block.pretty_name
                         item.block = block
                     except reverse.ReverseGeocodeError:
-                        logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, item.title))
+                        logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, _short_title))
                         item.location_name = u''
                 item.save()
                 if status == 'added':
                     addcount += 1
                 else:
                     updatecount += 1
-                logger.info("%s: %s" % (status, item.title))
+                logger.info("%s: %s" % (status, _short_title))
             except:
-                logger.error("Warning: couldn't save %r. Traceback:" % item.title)
+                logger.error("Warning: couldn't save %r. Traceback:" % _short_title)
                 log_exception()
         logger.info("Finished LocalNewsScraper update: %d added, %d updated" % (addcount, updatecount))
 

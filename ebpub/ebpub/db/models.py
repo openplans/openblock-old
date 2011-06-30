@@ -29,6 +29,8 @@ from ebpub.utils.text import slugify
 
 import datetime
 import logging
+import re
+
 logger = logging.getLogger('ebpub.db.models')
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
@@ -38,6 +40,16 @@ ebpub.monkeypatches.patch_once()
 FREQUENCY_CHOICES = ('Hourly', 'Throughout the day', 'Daily', 'Twice a week', 'Weekly', 'Twice a month', 'Monthly', 'Quarterly', 'Sporadically', 'No longer updated')
 FREQUENCY_CHOICES = [(a, a) for a in FREQUENCY_CHOICES]
 
+logger = logging.getLogger('ebpub.db.models')
+
+def get_valid_real_names():
+    """
+    Field names of ``Attribute``, suitable for use as
+    ``SchemaField.real_name``.
+    """
+    for name in sorted(Attribute._meta.get_all_field_names()):
+        if re.search(r'\d\d$', name):
+            yield name
 
 
 def field_mapping(schema_id_list):
@@ -49,8 +61,6 @@ def field_mapping(schema_id_list):
          2: {u'permit_number': 'varchar01', 'to_date': 'date01'},
         }
     """
-    # schema_fields = [{'schema_id': 1, 'name': u'crime_type', 'real_name': u'varchar01'},
-    #                  {'schema_id': 1, 'name': u'crime_date', 'real_name': u'date01'}]
     result = {}
     for sf in SchemaField.objects.filter(schema__id__in=(schema_id_list)).values('schema', 'name', 'real_name'):
         result.setdefault(sf['schema'], {})[sf['name']] = sf['real_name']
@@ -165,16 +175,44 @@ class SchemaField(models.Model):
     objects = SchemaFieldManager()
 
     schema = models.ForeignKey(Schema)
-    name = models.CharField(max_length=32)
-    real_name = models.CharField(max_length=10) # Column name in the Attribute model. 'varchar01', 'varchar02', etc.
-    pretty_name = models.CharField(max_length=32) # human-readable name, for presentation
-    pretty_name_plural = models.CharField(max_length=32) # plural human-readable name
-    display = models.BooleanField(default=True) # whether to display value on the public site
-    is_lookup = models.BooleanField(default=False) # whether the value is a foreign key to Lookup
-    is_filter = models.BooleanField(default=False)  # whether to link to list of items with the same value in this field. Assumes is_lookup=True.
-    is_charted = models.BooleanField(default=False) # whether schema_detail displays a chart for this field; also see "trends" tabs on place_overview.html
+
+    pretty_name = models.CharField(
+        max_length=32,
+        help_text="Human-readable name of this field, for display."
+        )
+    pretty_name_plural = models.CharField(
+        max_length=32,
+        help_text="Plural human-readable name"
+        )
+
+    name = models.SlugField(max_length=32)
+
+    real_name = models.CharField(
+        max_length=10,
+        help_text="Column name in the Attribute model. 'varchar01', 'varchar02', etc.",
+        choices=((name, name) for name in get_valid_real_names()),
+        )
+    display = models.BooleanField(
+        default=True,
+        help_text='Whether to display value on the public site.'
+        )
+    is_lookup = models.BooleanField(
+        default=False,
+        help_text='Whether the value is a foreign key to Lookup.'
+        )
+    is_filter = models.BooleanField(
+        default=False,
+        help_text='Whether to link to list of items with the same value in this field. Assumes is_lookup=True.'
+        )
+    is_charted = models.BooleanField(
+        default=False,
+        help_text='Whether the schema detail view displays a chart for this field; also see "trends" tabs on place overview page.'
+        )
     display_order = models.SmallIntegerField(default=10)
-    is_searchable = models.BooleanField(default=False) # whether the value is searchable by content.  Probably doesn't make sense if is_lookup=True.
+    is_searchable = models.BooleanField(
+        default=False,
+        help_text="Whether the value is searchable by content. Doesn't make sense if is_lookup=True."
+        )
 
     def natural_key(self):
         return (self.schema.slug, self.real_name)
@@ -185,10 +223,6 @@ class SchemaField(models.Model):
 
     def __unicode__(self):
         return u'%s - %s' % (self.schema, self.name)
-
-    @property
-    def slug(self):
-        return self.name.replace('_', '-')
 
     @property
     def datatype(self):
@@ -237,10 +271,15 @@ class LocationTypeManager(models.Manager):
 class LocationType(models.Model):
     name = models.CharField(max_length=255) # e.g., "Ward" or "Congressional District"
     plural_name = models.CharField(max_length=64) # e.g., "Wards"
-    scope = models.CharField(max_length=64) # e.g., "Chicago" or "U.S.A."
+    scope = models.CharField(max_length=64,
+                             help_text='e.g., "Chicago" or "U.S.A."')
     slug = models.SlugField(max_length=32, unique=True)
-    is_browsable = models.BooleanField() # whether this is displayed on location_type_list.  XXX unused??
-    is_significant = models.BooleanField() # whether this is used to display aggregates, shows up in 'nearby locations', etc.
+    is_browsable = models.BooleanField(
+        default=True, help_text="Whether this is displayed on location_type_list.") #  XXX unused??
+    is_significant = models.BooleanField(
+        default=True,
+        help_text="Whether this is used to display aggregates, shows up in 'nearby locations', etc."
+        )
 
     def __unicode__(self):
         return u'%s, %s' % (self.name, self.scope)
@@ -370,7 +409,11 @@ class AttributesDescriptor(object):
             raise AttributeError("%s must be accessed via instance" % self.__class__.__name__)
         if not isinstance(value, dict):
             raise ValueError('Only a dictionary is allowed')
-        mapping = field_mapping([instance.schema_id])[instance.schema_id].items()
+        mapping = field_mapping([instance.schema_id]).get(instance.schema_id, {}).items()
+        if not mapping:
+            if value:
+                logger.warn("Can't save non-empty attributes dict with an empty schema")
+            return
         values = [value.get(k, None) for k, v in mapping]
         cursor = connection.cursor()
         cursor.execute("""
@@ -409,6 +452,11 @@ class AttributeDict(dict):
             if attr_values:
                 self.update(attr_values[0])
             self.cached = True
+
+    def __len__(self):
+        # So len(self) and bool(self) work.
+        self.__do_query()
+        return dict.__len__(self)
 
     def keys(self, *args, **kwargs):
         self.__do_query()        
@@ -476,7 +524,9 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         if not isinstance(att_value, (list, tuple)):
             att_value = [att_value]
         if is_lookup:
-            att_value = Lookup.objects.filter(schema_field__id=schema_field.id, code__in=att_value)
+            if not isinstance(att_value[0], Lookup):
+                # Assume all are Lookup.code values.
+                att_value = Lookup.objects.filter(schema_field__id=schema_field.id, code__in=att_value)
             if not att_value:
                 # If the lookup values don't exist, then there aren't any
                 # NewsItems with this attribute value. Note that we aren't
@@ -697,23 +747,28 @@ class NewsItem(models.Model):
         fields = SchemaField.objects.filter(schema__id=self.schema_id).select_related().order_by('display_order')
         if not fields:
             return []
-
-        try:
-            attribute_row = Attribute.objects.filter(news_item__id=self.id).values(*[f.real_name for f in fields])[0]
-        except (IndexError, KeyError):
+        if not self.attributes:
+            logger.warn("%s has fields in its schema, but no attributes!" % self)
             return []
-        return [AttributeForTemplate(f, attribute_row) for f in fields]
+        return [AttributeForTemplate(f, self.attributes) for f in fields]
 
 
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
-        self.raw_value = attribute_row[schema_field.real_name]
+        self.raw_value = attribute_row[schema_field.name]
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
         if self.is_lookup:
-            if self.raw_value == '':
+            # Earlier queries may have already looked up Lookup instances.
+            # Don't do unnecessary work.
+            if isinstance(self.raw_value, Lookup):
+                self.values = [self.raw_value]
+            elif (isinstance(self.raw_value, list) and self.raw_value
+                  and isinstance(self.raw_value[0], Lookup)):
+                self.values = self.raw_values
+            elif self.raw_value == '':
                 self.values = []
             elif self.sf.is_many_to_many_lookup():
                 try:

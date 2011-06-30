@@ -20,7 +20,9 @@ from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from ebpub.db.models import AttributeDict
 from ebpub.db.models import Location
+from ebpub.db.models import field_mapping
 from ebpub.streets.models import Block
 from ebpub.streets.models import City
 from ebpub.metros.allmetros import get_metro
@@ -30,55 +32,24 @@ from ebpub.utils.view_utils import make_pid
 from ebpub.savedplaces.models import SavedPlace
 import datetime
 
-def smart_bunches(newsitem_list, max_days=5, max_items_per_day=100):
-    """
-    Helper function that takes a list of NewsItems, ordered descending by
-    pub_date, and returns a list of NewsItems that's been optimized for
-    display in timelines.
 
-    Assumes each NewsItem has a pub_date_date attribute!
-
-    The logic is:
-        * Go backwards in time until there are 5 full days' worth of news
-          (not necessarily 5 consecutive days).
-        * If, for any day, there are more than 100 items, stop at that day
-          (inclusive).
-        * Any NewsItems in the list with a pub_date equal to the oldest
-          pub_date in the list will be removed. This is because we cannot
-          assume *all* of the items with that pub_date are in the list.
+def populate_attributes_if_needed(newsitem_list, schema_list,
+                                  get_lookups=True):
     """
-    if newsitem_list:
-        current_date = None
-        days_seen = 0
-        stop_at_next_day = False
-        end_index = None
-        oldest_pub_date = newsitem_list[-1].pub_date_date
-        for i, ni in enumerate(newsitem_list):
-            if ni.pub_date_date != current_date:
-                days_seen += 1
-                current_date = ni.pub_date_date
-                items_in_current_day = 1
-                if stop_at_next_day or days_seen > max_days or ni.pub_date_date == oldest_pub_date:
-                    end_index = i
-                    break
-            else:
-                items_in_current_day += 1
-                if items_in_current_day > max_items_per_day:
-                    stop_at_next_day = True
-        if end_index is not None:
-            del newsitem_list[end_index:]
-    return newsitem_list
-
-def populate_attributes_if_needed(newsitem_list, schema_list):
-    """
-    Helper function that takes a list of NewsItems and sets ni.attribute_values
-    to a dictionary of attributes {field_name: value} for all NewsItems whose
+    Optimization helper function that takes a list of NewsItems and ensures
+    the ni.attributes pseudo-dictionary is populated, for all NewsItems whose
     schemas have uses_attributes_in_list=True. This is accomplished with a
     minimal amount of database queries.
 
-    The values in the attribute_values dictionary are Lookup instances in the
-    case of Lookup fields. Otherwise, they're the direct values from the
-    Attribute table.
+    The values in the NewsItem.attributes pseudo-dictionary are Lookup
+    instances in the case of Lookup fields. Otherwise, they're the
+    direct values from the Attribute table.
+
+    (Note this is different than accessing NewsItem.attributes without
+    having called this function, in which case Lookups are not
+    dereferenced automatically.  Client code such as
+    AttributesForTemplate should handle both cases - or really .attributes
+    should be fixed to be consistent.)
 
     schema_list should be a list of all Schemas that are referenced in
     newsitem_list.
@@ -91,11 +62,6 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
     # attributes. Another way to do this would be to load all of the attributes
     # when loading the NewsItems in the first place (via a JOIN), but we want
     # to avoid joining such large tables.
-
-    # TODO: #72. This is an optimization that doesn't justify having a
-    # parallel API that isn't even documented in model code where it
-    # belongs. Rewrite to stuff the data in ni._attributes_cache
-    # instead.
 
     preload_schema_ids = set([s.id for s in schema_list if s.uses_attributes_in_list])
     if not preload_schema_ids:
@@ -116,7 +82,7 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
 
     att_dict = dict([(i['news_item'], i) for i in Attribute.objects.filter(news_item__id__in=[ni.id for ni in preloaded_nis]).values(*list(attribute_columns_to_select))])
 
-    if not fmap: 
+    if not fmap:
         return
 
     # Determine which Lookup objects need to be retrieved.
@@ -126,6 +92,13 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
         if not ni.schema_id in fmap:
             continue
         for real_name in fmap[ni.schema_id]['lookups']:
+            if ni.id not in att_dict:
+                # AFAICT this should not happen, but if you have
+                # newsitems created before a schema defined any
+                # schemafields, and schemafields were added later,
+                # then you might get some NewsItems that don't have a
+                # corresponding att_dict result.
+                continue
             value = att_dict[ni.id][real_name]
             if ',' in str(value):
                 lookup_ids.update(value.split(','))
@@ -138,8 +111,8 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
         lookup_objs = Lookup.objects.in_bulk(lookup_ids)
     else:
         lookup_objs = {}
-        
-    # Set 'attribute_values' for each NewsItem in preloaded_nis.
+
+    # Cache attribute values for each NewsItem in preloaded_nis.
     for ni in preloaded_nis:
         if not ni.id in att_dict:
             # Fix for #38: Schemas may not have any SchemaFields, and
@@ -155,7 +128,10 @@ def populate_attributes_if_needed(newsitem_list, schema_list):
                 else: # Many-to-many lookups are comma-separated strings.
                     value = [lookup_objs[int(i)] for i in value.split(',') if i]
             att_values[field_name] = value
-        ni.attribute_values = att_values
+        select_dict = field_mapping([ni.schema_id]).get(ni.schema_id, {})
+        ni._attributes_cache = AttributeDict(ni.id, ni.schema_id, select_dict)
+        ni._attributes_cache.cached = True
+        ni._attributes_cache.update(att_values)
 
 def populate_schema(newsitem_list, schema):
     for ni in newsitem_list:
@@ -207,6 +183,7 @@ def get_place_info_for_request(request, *args, **kwargs):
     if isinstance(place, Block):
         info['is_block'] = True
         xy_radius, block_radius, cookies_to_set = block_radius_value(request)
+        block_radius = kwargs.get('block_radius') or block_radius
         nearby, search_buf = get_locations_near_place(place, block_radius)
         info['nearby_locations'] = nearby
         info['bbox'] = search_buf.extent

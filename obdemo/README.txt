@@ -2,11 +2,20 @@
 obdemo
 ==========
 
-This package contains code, templates, and configuration specific to
-http://demo.openblockproject.org.
+A Django application containing configuration and overrides for
+`the openblock demo site <http://demo.openblockproject.org>`_.
 
-They are intended to serve as a useful example of how to set up a site
-based on the OpenBlock code.
+obdemo is intented to serve as a useful example of how to set up a site
+based on the OpenBlock code, in particular
+`ebpub <http://pypi.python.org/pypi/ebpub>`_.
 
-For more information, see ../docs/packages/obdemo.rst, or online at
-http://openblockproject.org/docs/packages/obdemo.html
+This package is part of OpenBlock. Originally developed for EveryBlock.com.
+
+For more information, see the
+`documentation <http://openblockproject.org/docs/>`_
+or the `project website <http://openblockproject.org>`_.
+
+Problems can be reported to the `issue tracker <http://developer.openblockproject.org>`_.
+
+Discussion is on the `ebcode google group <http://groups.google.com/group/ebcode>`_
+or the #openblock channel on freenode.

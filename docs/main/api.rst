@@ -29,6 +29,7 @@ The OpenBlock API uses several standards for formats and protocols.  Please see 
 ------------------ ------------------------------------------------------------
      Atom                     http://www.atomenabled.org
 ------------------ ------------------------------------------------------------
+.. _georss:
      GeoRSS                   http://www.georss.org/Main_Page
 ------------------ ------------------------------------------------------------
      JSONP                    http://en.wikipedia.org/wiki/JSON#JSONP
@@ -48,8 +49,6 @@ Grab some 'articles' about Roxbury
 
     curl "http://bos.openblock.org/api/dev1/items.json?type=articles&locationid=neighborhoods/roxbury&limit=3" > items.json
 
-    
-
 
 API Overview
 ============
@@ -60,6 +59,27 @@ URL prefix
 All calls to the OpenBlock API referenced in this document are prefixed by::
 
 	/api/dev1/
+
+
+.. _api_auth:
+
+Authentication and API Keys
+----------------------------
+
+Authentication for those methods which require it may currently be
+accomplished in two ways:
+
+ * HTTP Basic Auth headers (any normal user account registered with
+   OpenBlock will work)
+
+ * sending your API key in the ``X-Openblock-Key`` HTTP header
+
+.. _apikey:
+
+An API key may be obtained by logging in and visiting your preferences
+page, if the OpenBlock site makes that available to you; or the site
+administrators can create keys via the admin UI at
+``admin/key/apikey/``.
 
 
 Support for Cross Domain Access
@@ -74,6 +94,45 @@ providing the "jsonp" query parameter.
 The "jsonp" parameter may only contain letters, numbers, and
 underscores; other characters will be removed.
 
+GET methods supporting :ref:`Atom <atom>` output may also provide the "jsonp"
+parameter. In this case the output is `JSONP-X <http://www.ajaxwith.com/JSONP-X-Output.html>`_.
+
+
+.. _throttling:
+
+Rate Limits, AKA Throttling
+---------------------------
+
+The API may be configured to limit the number of API requests a user
+can perform during a certain time period.  This limit applies across
+all resources provided by the API.
+
+By default, the limit is 150 requests per hour.
+
+If the user is not authenticated and provides no API key, the user's
+IP address will be used.
+
+If this limit is reached, the server will return a ``503 SERVICE
+UNAVAILABLE`` response, with a ``Retry-After`` header indicating the
+number of seconds after which the user can try again.
+
+The site administrator controls throttling by changing several
+values in settings.py:
+
+.. code-block:: python
+
+  API_THROTTLE_AT=150  # max requests per timeframe.
+  API_THROTTLE_TIMEFRAME = 60 * 60  # Default 1 hour.
+  # How long to retain the times the user has accessed the API. Default 1 week.
+  API_THROTTLE_EXPIRATION = 60 * 60 * 24 * 7
+
+  # NOTE in order to enable throttling, you MUST also configure
+  # CACHES['default'] to something other than a DummyCache. Example:
+  CACHES = {
+      'default': {
+          'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+      }
+  }
 
 
 Read API Endpoints
@@ -94,9 +153,11 @@ Response
 ================== ============================================================
     Status                                Meaning
 ------------------ ------------------------------------------------------------
-      200             This version of the API is available
+      200             This version of the API is available.
 ------------------ ------------------------------------------------------------
-      404             This version of the API is not available
+      404             This version of the API is not available.
+------------------ ------------------------------------------------------------
+      503             You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -123,6 +184,8 @@ Response
                    that match the criteria.
 ------------------ ------------------------------------------------------------
       400          The request was invalid due to invalid criteria
+------------------ ------------------------------------------------------------
+      503             You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -173,6 +236,8 @@ Response
                    that match the criteria.
 ------------------ ------------------------------------------------------------
       400          The request was invalid due to invalid criteria
+------------------ ------------------------------------------------------------
+      503             You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -210,6 +275,8 @@ Response
                    :ref:`json`.
 ------------------ ------------------------------------------------------------
       404          The NewsItem does not exist.
+------------------ ------------------------------------------------------------
+      503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 GET geocode
@@ -242,6 +309,8 @@ Response
       404          No locations matching the query were found.
 ------------------ ------------------------------------------------------------
       400          Invalid input: missing or empty 'q' parameter.
+------------------ ------------------------------------------------------------
+      503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -446,6 +515,87 @@ Example::
      }
 
 
+GET places/types.json
+---------------------
+
+Purpose
+~~~~~~~
+Retrieve a list of place types, eg "points of interest", "police stations", etc. which can
+be used to access data about places in the system.
+
+Response
+~~~~~~~~
+
+A JSON object describing the place types available.
+
+Example::
+ 
+    {
+        "poi": {
+            "name": "Point of Interest",
+            "plural_name": "Points of Interest", 
+            "geojson_url": "/api/dev1/places/poi.json" 
+        },
+        "police": {
+            "name": "Police Station",
+            "plural_name": "Police Stations", 
+            "geojson_url": "/api/dev1/places/police.json"
+        } 
+    }
+
+
+
+GET places/<placetype>.json
+---------------------------
+
+Purpose
+~~~~~~~
+Retrieve a list of places of the specified type, eg "points of interest", "police stations", etc. 
+
+Response
+~~~~~~~~
+
+A GeoJSON feature collection object describing the places of the type specified.
+
+Example::
+
+    {
+     "type": "FeatureCollection", 
+     "features": [
+      {
+       "geometry": {
+        "type": "Point", 
+        "coordinates": [
+         -71.052149999999997, 
+         42.332369999999997
+        ]
+       }, 
+       "type": "Feature", 
+       "properties": {
+        "type": "poi", 
+        "name": "Fake Monument", 
+        "address": ""
+       }
+      }, 
+      {
+       "geometry": {
+        "type": "Point", 
+        "coordinates": [
+         -71.052149999999997, 
+         42.332369999999997
+        ]
+       }, 
+       "type": "Feature", 
+       "properties": {
+        "type": "poi", 
+        "name": "Fake Yards", 
+        "address": ""
+       }
+      }
+     ]
+    }
+
+
 .. _search_params:
 
 
@@ -547,12 +697,10 @@ Write API Endpoints
 POST items/
 -----------
 
-*Not enabled yet.*
-
 Purpose
 ~~~~~~~
 
-Create a new NewsItem.  Authentication may be required.
+Create a new NewsItem.  :ref:`Authentication required <api_auth>`.
 
 
 Parameters
@@ -586,6 +734,8 @@ Response
                    should contain validation hints, format to be determined.
 ------------------ ------------------------------------------------------------
       401          Permission denied.
+------------------ ------------------------------------------------------------
+      503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================
 
 
@@ -666,12 +816,16 @@ type if one exists, otherwise a formatted string is used.
 ================== ==========================================================================
 
 
+.. _atom:
+
 NewsItem Atom Format
 --------------------
 
-Generally follows Atom specification.
-location information is specified with GeoRSS-Simple
-Extended schema attributes are specified in "http://openblock.org/ns/0" namespace.
+Generally follows the :ref:`Atom <atom>` specification.
+Location information is specified with :ref:`GeoRSS-Simple <georss>`.
+
+Extended schema attributes are specified in the
+"http://openblock.org/ns/0" namespace.
 
 FIXME: more detail, example
 

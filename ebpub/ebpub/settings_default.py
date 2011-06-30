@@ -48,7 +48,7 @@ TEMPLATE_DIRS = (
     os.path.dirname(EBPUB_DIR)
 )
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader'
 )
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -72,6 +72,8 @@ INSTALLED_APPS = (
     'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
+    'key',
+    # openblockapi overrides admin for the 'key' app.
     'ebpub.openblockapi',
     'ebpub.db',
     'ebpub.geocoder',
@@ -170,9 +172,8 @@ required_settings.append('DEFAULT_MAP_ZOOM')
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
 
-EB_MEDIA_ROOT = EBPUB_DIR + '/media' # necessary for static media versioning
-EB_MEDIA_URL = '' # leave at '' for development
-required_settings.extend(['EB_MEDIA_URL', 'EB_MEDIA_ROOT'])
+EB_MEDIA_ROOT = EBPUB_DIR + '/media'
+required_settings.extend(['EB_MEDIA_ROOT'])
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
@@ -181,6 +182,7 @@ EB_TODAY_OVERRIDE = None
 required_settings.append('GENERIC_EMAIL_SENDER')
 
 # Map stuff.
+# XXX UNUSED?
 required_settings.append('MAP_SCALES')
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 
@@ -265,28 +267,119 @@ STATIC_URL='/'
 EBPUB_CACHE_GEOCODER = True
 required_settings.append('EBPUB_CACHE_GEOCODER')
 
-# Logging setup. There's a bit of hackery to make sure we don't set up
-# handlers more than once; see
-# http://stackoverflow.com/questions/342434/python-logging-in-django
+######################################################################
+# API Keys for OpenBlock's REST API.
+# Warning, if you increase API_KEY_SIZE after running syncdb, you'll
+# have to modify the size of the 'key' field in the 'key_apikey' table
+# in your database.
+API_KEY_SIZE=32
+MAX_KEYS_PER_USER=3
 
-import logging, threading
-_lock = threading.Lock()
-with _lock:
-    if getattr(logging, '_is_set_up', None) is None:
-        logging._is_set_up = True
-        if not logging.getLogger().handlers:
-            # TODO: configurable file handlers, level...
-            # maybe use syslog to avoid contention when running multiple
-            # processes under mod_wsgi!
-            logging.basicConfig(level=logging.INFO,
-                                format="%(asctime)-15s %(levelname)-8s %(message)s")
-            # Surprisingly, basicConfig in Python < 2.7 doesn't set
-            # the default handler level.  This lets non-root loggers
-            # log at ANY level. Fix that.
-            for handler in logging.getLogger().handlers:
-                handler.setLevel(logging.INFO)
-        # need to import this first so it doesn't wipe the level we set...
-        import south.logger
-        logging.getLogger('south').setLevel(logging.INFO)
+API_THROTTLE_AT=150  # max requests per timeframe.
+API_THROTTLE_TIMEFRAME = 60 * 60 # default 1 hour.
+# How long to retain the times the user has accessed the API. Default 1 week.
+API_THROTTLE_EXPIRATION = 60 * 60 * 24 * 7
+
+# NOTE in order to enable throttling, you MUST also configure
+# CACHES['default'] to something other than a DummyCache.  See CACHES
+# below.
+
+#########################################################################
+## For development & testing, DummyCache makes for easiest troubleshooting.
+## See https://docs.djangoproject.com/en/1.3/ref/settings/#std:setting-CACHES
+#
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    },
+    # File caching might be a reasonable choice for low-budget, memory-constrained
+    # hosting environments.
+    # 'default': {
+    #     'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+    #     'LOCATION': 'file:///tmp/myblock_cache',
+    # }
+}
+
+
+
+# Required by django-apikey to associate keys with user profiles.
+AUTH_PROFILE_MODULE = 'preferences.Profile'
+
+###################################################################
+# Logging.
+# See https://docs.djangoproject.com/en/dev/topics/logging
+# We import this first because South annoyingly overrides its log level at import time.
+from south import logger as _unused
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            },
+        'simple': {
+            'format': '%(levelname)s %(module)s: %(message)s'
+            },
+        'debug': {'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s:%(pathname)s:%(lineno)d %(message)s'
+                  },
+        'verbose': {'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s: % %(message)s'
+                    },
+    },
+    'handlers': {
+        'null': {
+            'level':'DEBUG',
+            'class':'django.utils.log.NullHandler',
+            },
+        'console':{
+            'level':'DEBUG',
+            'class':'logging.StreamHandler',
+            'formatter': 'simple'
+            },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose'
+            },
+        },
+    'loggers': {
+        '': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'INFO',
+            },
+        'django': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'WARN',
+            },
+        'ebpub': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+            },
+        'ebdata': {
+            'handlers': ['console'],
+            'propagate': True,
+            'level': 'INFO',
+            },
+        # django.request logs all 404s at level WARN; not very useful
+        # and annoying during tests.
+        'django.request': {
+            'handlers':['console'],
+            'propagate': True,
+            'level':'ERROR',
+        },
+        # 'django.request': {
+        #     'handlers': ['mail_admins'],
+        #     'level': 'ERROR',
+        #     'propagate': False,
+        # },
+        'south': {
+            'handlers': ['console',],
+            'level': 'INFO',
+        }
+    }
+}
 
 __doc__ = __doc__ % required_settings

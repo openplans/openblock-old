@@ -123,6 +123,7 @@ class TestAjaxViews(TestCase):
         # Hack so isinstance(mock_chain(), FilterChain) works
         from ebpub.db import schemafilters
         mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
+        mock_chain().return_value = mock_chain()
         mock_chain().make_url.return_value = 'foo'
         mock_chain().schema.url.return_value = 'bar'
         mock_chain().apply.return_value = models.NewsItem.objects.all()
@@ -147,6 +148,7 @@ class TestAjaxViews(TestCase):
         # Hack so isinstance(mock_chain(), FilterChain) works
         from ebpub.db import schemafilters
         mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
+        mock_chain().return_value = mock_chain()
         mock_chain().make_url.return_value = 'foo'
         mock_chain().schema.url.return_value = 'bar'
         mock_chain().apply.return_value = models.NewsItem.objects.all()
@@ -457,7 +459,10 @@ class TestSchemaFilterView(TestCase):
         # Using Mocks here causes eb_filter to call FilterChain.make_url
         # with additions that it doesn't understand. That's fine for this test,
         # but causes logging spew, hence we mock the logger too.
-        mock_aggr().select_related().order_by.return_value = [mock.Mock()] * 100
+        mock_item = mock.Mock()
+        mock_item.return_value = mock_item
+        mock_item.alters_data = False
+        mock_aggr().select_related().order_by.return_value = [mock_item] * 100
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -479,7 +484,7 @@ class TestSchemaFilterView(TestCase):
         self.assertEqual(response.status_code, 404)
 
     @mock.patch('ebpub.db.views.cluster_newsitems')
-    @mock.patch('ebpub.db.views.FilterChain')
+    @mock.patch('ebpub.db.views.FilterChain', spec=True)
     def test_filter__pagination__has_more(self, mock_chain, mock_cluster):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
         url += '?page=2'
@@ -489,23 +494,21 @@ class TestSchemaFilterView(TestCase):
         # also mocking a ton of methods used by schema_filter or filter.html.
         # (We can't just patch text_search() anymore because now there's more
         # filtering after that.)
-        # TODO: this is pretty brittle.
-        #mock_chain.from_request.return_value = mock_chain
-        #mock_chain.normalized_clone.return_value = mock_chain
+        # TODO: this is pretty brittle. Worth it?
         mock_qs = mock.Mock()
+        mock_qs.order_by.return_value = mock_qs
+        newsitem = models.NewsItem.objects.all()[0]
+        mock_qs.filter.return_value = [newsitem] * 100
+
         mock_chain.return_value = mock_chain
-        mock_chain.apply.return_value = mock_chain
+        mock_chain.apply.return_value = mock_qs
         mock_chain.__contains__ = lambda self, other: False
+        mock_chain.get.return_value = None
         mock_chain.validate.return_value = {}
         mock_chain.make_breadcrumbs.return_value = []
         mock_chain.values = []
         mock_chain.lookup_descriptions = []
         mock_chain.make_url.return_value = urllib.unquote(url)  # Avoid redirect.
-        newsitem = models.NewsItem.objects.all()[0]
-        mock_chain.order_by.return_value = mock_qs
-        mock_chain.filter.return_value = mock_qs
-        # Finally, here's our list of stuff.
-        mock_qs.filter.return_value = [newsitem] * 100
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)

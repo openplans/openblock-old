@@ -22,6 +22,7 @@ Utility functions for working with GeoDjango GDAL and GEOS data
 
 from django.contrib.gis import geos
 from django.contrib.gis.geos import Point, LineString, Polygon, GeometryCollection, MultiPoint, MultiLineString, MultiPolygon
+from ebpub.metros.allmetros import get_metro
 import logging
 
 logger = logging.getLogger('ebpub.utils.geodjango')
@@ -134,3 +135,17 @@ def ensure_valid(geom, name=''):
         if not geom.valid:
             logger.warn('invalid geometry for %s' % name)
     return geom
+
+def get_metro_bbox(short_name=None):
+    """
+    For the metro, return its bounding box as a polygon.
+    """
+    extent = get_metro(short_name)['extent']
+    return Polygon.from_bbox(extent)
+
+def intersects_metro_bbox(geom):
+    """
+    Return True if the geometry intersects with the bounding box of
+    the current metro.
+    """
+    return geom.intersects(get_metro_bbox())

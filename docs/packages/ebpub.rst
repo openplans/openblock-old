@@ -52,6 +52,8 @@ Geographic Models
 
 .. _locations:
 
+See also :doc:`../install/geodata`
+
 LocationTypes / Locations
 -------------------------
 
@@ -78,6 +80,7 @@ system, follow these steps:
 
 You'll need to create at least one LocationType with the slug "neighborhoods",
 because that's hard-coded in various places throughout the application.
+
 
 .. _blocks:
 

@@ -247,13 +247,11 @@ def newsitems_geojson(request):
         # More copy/paste from ebpub.db.views...
         # As an optimization, limit the NewsItems to those published in the
         # last few days.
-        end_date = today()
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-        # Bug http://developer.openblockproject.org/ticket/77:
-        # This is using pub_date, but Aggregates use item_date, so there's
-        # a visible disjoint between number of items on the map and the item
-        # count shown on the homepage and location detail page.
-        filters.add('pubdate', start_date, end_date)
+        filters.update_from_query_params(request)
+        if not filters.has_key('date'):
+            end_date = today()
+            start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+            filters.add('date', start_date, end_date)
         newsitem_qs = filters.apply()
         newsitem_qs = newsitem_qs
         if not has_staff_cookie(request):
@@ -649,7 +647,6 @@ def schema_filter(request, slug, args_from_url):
     List NewsItems for one schema, filtered by various criteria in the
     URL (date, location, or values of SchemaFields).
     """
-
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponsePermanentRedirect(s.url())
@@ -667,10 +664,7 @@ def schema_filter(request, slug, args_from_url):
     textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
 
     # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.slug, sf) for sf in filter_sf_list] + [(sf.slug, sf) for sf in textsearch_sf_list])
-
-    start_date = s.min_date
-    end_date = today()
+    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, context=context, schema=s)
@@ -705,7 +699,14 @@ def schema_filter(request, slug, args_from_url):
 
     # Finally, filter the newsitems.
     qs = filterchain.apply().order_by('-item_date')
-    if not ('date' in filterchain) or ('pubdate' in filterchain):
+
+    date_filter = filterchain.get('date') or filterchain.get('pubdate')
+    if date_filter:
+        start_date = date_filter.start_date
+        end_date = date_filter.end_date
+    else:
+        start_date = s.min_date
+        end_date = today()
         qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
 
     context['newsitem_qs'] = qs
@@ -766,7 +767,14 @@ def schema_filter(request, slug, args_from_url):
     populate_attributes_if_needed(ni_list, [s])
     bunches = cluster_newsitems(ni_list, 26)
 
-    if not context.get('bbox'):
+    # Need map parameters based on location/block, if there is one.
+    loc_filter = filterchain.get('location')
+    if loc_filter:
+        context.update(get_place_info_for_request(
+                request,
+                place=loc_filter.location_object,
+                block_radius=getattr(loc_filter, 'block_radius', None)))
+    else:
         # Whole city map.
         context.update({
                 'default_lon': settings.DEFAULT_MAP_CENTER_LON,
@@ -910,7 +918,6 @@ def place_detail_timeline(request, *args, **kwargs):
         select={'pub_date_date': 'date(db_newsitem.pub_date)'},
         order_by=('-pub_date_date', '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
-    #ni_list = smart_bunches(list(ni_list), max_days=5, max_items_per_day=100)
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
