@@ -399,7 +399,11 @@ class AttributesDescriptor(object):
             raise AttributeError("%s must be accessed via instance" % self.__class__.__name__)
         if not isinstance(value, dict):
             raise ValueError('Only a dictionary is allowed')
-        mapping = field_mapping([instance.schema_id])[instance.schema_id].items()
+        mapping = field_mapping([instance.schema_id]).get(instance.schema_id, {}).items()
+        if not mapping:
+            if value:
+                logger.warn("Can't save non-empty attributes dict with an empty schema")
+            return
         values = [value.get(k, None) for k, v in mapping]
         cursor = connection.cursor()
         cursor.execute("""

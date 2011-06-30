@@ -4,14 +4,35 @@ from south.db import db
 from south.v2 import DataMigration
 from django.db import models
 
+
+
 class Migration(DataMigration):
 
     def forwards(self, orm):
+
+        def _schema_get_by_natural_key(slug):
+            return orm['db.schema'].objects.get(slug=slug)
+
+        orm['db.schema']._default_manager.get_by_natural_key = _schema_get_by_natural_key
+
+        def _patched_get_model(model_identifier):
+            Model = orm.models.get(model_identifier)
+            if Model is None:
+                raise base.DeserializationError(u"Invalid model identifier: '%s'" % model_identifier)
+            return Model
+
         from django.core.management import call_command
         import os
         here = os.path.abspath(os.path.dirname(__file__))
-        call_command("loaddata", os.path.join(here, "0007_default_schemas.json"))
-
+        
+        from django.core.serializers import python
+        old_get_model = python._get_model
+        try:
+            python._get_model = _patched_get_model
+            call_command("loaddata", os.path.join(here, "0007_default_schemas.json"))
+        finally:
+            python._get_model = old_get_model
+            
     def backwards(self, orm):
         "Write your backwards methods here."
         # We can't safely remove the default schemas because users may

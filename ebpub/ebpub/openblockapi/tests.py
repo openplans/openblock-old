@@ -4,30 +4,35 @@ API tests
 import cgi
 import datetime
 import feedparser
+import mock
 import pytz
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+from ebpub.utils.django_testcase_backports import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
 from functools import wraps
 
-import ebpub.openblockapi.views
+from ebpub.openblockapi import views
+from ebpub.openblockapi import auth
 
-def monkeypatch(obj, attrname, value):
-    # Decorator for temporarily replacing an object
-    # during a test, with an arbitrary value.
-    # Unlike mock.patch, this allows the value to be
-    # things other than mock.Mock objects.
+def monkeypatch(obj, **patchkwargs):
+    """Decorator for temporarily replacing an object
+    during a test, with an arbitrary value.
+    Unlike mock.patch, this allows the value to be
+    things other than mock.Mock objects.
+    """
     def patch(method):
         @wraps(method)
         def patched(*args, **kw):
-            orig = getattr(obj, attrname)
-            try:
-                setattr(obj, attrname, value)
-                return method(*args, **kw)
-            finally:
-                setattr(obj, attrname, orig)
+            origdict = {}
+            for key, value in patchkwargs.items():
+                origdict[key] = getattr(obj, key)
+                try:
+                    setattr(obj, key, value)
+                    return method(*args, **kw)
+                finally:
+                    setattr(obj, key, origdict[key])
         return patched
     return patch
 
@@ -97,9 +102,12 @@ class TestAPI(TestCase):
         for e in endpoints:
             response = self.client.get(e)
             self.assertEqual(response.status_code, 200)
-            assert response.content.startswith('%s(' % wrapper)
-            assert response.content.endswith(");")
-            assert response.get('content-type', None).startswith('application/javascript')
+            self.assertEqual(response.content[:len(wrapper) + 1],
+                             '%s(' % wrapper)
+            self.assertEqual(response.content[-2:], ');')
+            self.assertEqual(response.get('content-type', '')[:22],
+                             'application/javascript')
+
 
     def test_items_redirect(self):
         url = reverse('items_index')
@@ -113,33 +121,98 @@ class TestPushAPI(TestCase):
 
     fixtures = ('test-schema',)
 
-    # def test_create_basic(self):
-    #     #schema = Schema.objects.get(slug='test-schema')
-    #     info = {
-    #         "type": "Feature",
-    #         "geometry": {
-    #             "type": "Point",
-    #             "coordinates": [1.0, -1.0]
-    #             },
-    #         "properties": {
-    #             "description": "Bananas!",
-    #             "title": "All About Fruit",
-    #             "location_name": "somewhere",
-    #             "url": "http://example.com/bananas",
-    #             "item_date": "2011-01-01",
-    #             "type": "test-schema",
-    #             }
-    #         }
-    #     url = reverse('items_index')
-    #     json = simplejson.dumps(info)
-    #     response = self.client.post(url, json, content_type='application/json')
-    #     self.assertEqual(response.status_code, 201)
-    #     new_item = NewsItem.objects.get(title='All About Fruit')
-    #     self.assertEqual(
-    #         response['location'],
-    #         'http://testserver' + reverse('single_item_json', args=(), kwargs={'id_': new_item.id}))
-    #     self.assertEqual(new_item.url, info['properties']['url'])
-    #     # ... etc.
+    def _make_geojson(self, coords, **props):
+        return {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point", "coordinates": coords,
+                },
+            "properties": props
+            }
+
+
+    @monkeypatch(views, check_api_authorization=lambda request: True)
+    def test_create_basic(self):
+        info = self._make_geojson(coords=[1.0, -1.0],
+                                  description="Bananas!",
+                                  title="All About Fruit",
+                                  location_name="somewhere",
+                                  url="http://example.com/bananas",
+                                  item_date="2011-01-01",
+                                  type="test-schema",
+                                  )
+
+        json = simplejson.dumps(info)
+        url = reverse('items_index')
+        response = self.client.post(url, json, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        new_item = NewsItem.objects.get(title='All About Fruit')
+        self.assertEqual(
+            response['location'],
+            'http://testserver' + reverse('single_item_json', args=(), kwargs={'id_': new_item.id}))
+        self.assertEqual(new_item.url, info['properties']['url'])
+        # ... etc.
+
+
+    def test_create__no_schema(self):
+        info = self._make_geojson(coords=[1.0, 2.0])
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_create(info)
+        self.assertEqual(e.exception.errors,
+                         {'type': 'schema None does not exist'})
+
+    def test_create__no_geojson(self):
+        info = {'type': 'ouchie'}
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_create(info)
+        self.assertEqual(e.exception.errors,
+                         {'type': 'not a valid GeoJSON Feature'})
+
+    def test_create__bad_dates(self):
+        info = self._make_geojson(coords=[1.0, -1.0], type='test-schema',
+                                  name='hello', title='hello title',
+                                  description='hello descr',
+                                  item_date='ouch', location_name='here',
+                                  )
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_create(info)
+        self.assertEqual(e.exception.errors,
+                         {'item_date': [u'Enter a valid date.']})
+
+    @mock.patch('ebpub.openblockapi.views._get_location_info')
+    def test_create__missing_required_fields(self, mock_get_loc_info):
+        mock_get_loc_info.return_value = (geos.Point(1,-1), 'somewhere')
+        info = self._make_geojson(coords=[1.0, -1.0], type='test-schema')
+        with self.assertRaises(views.InvalidNewsItem) as e:
+            views._item_create(info)
+        self.assertEqual(e.exception.errors,
+                         {'description': [u'This field is required.'],
+                          'title': [u'This field is required.']})
+
+    @mock.patch('ebpub.openblockapi.views._get_location_info')
+    def test_create_with_existing_lookups(self, mock_get_loc_info):
+        mock_get_loc_info.return_value = (geos.Point(1,-1), 'somewhere')
+        info = self._make_geojson(coords=[1.0, -1.0],
+                                  lookup=['Lookup 7700 Name', 'Lookup 7701 Name'],
+                                  type='test-schema',
+                                  title='I have lookups', description='yes i do',
+                                  )
+        views._item_create(info)
+        item = NewsItem.objects.get(title='I have lookups')
+        self.assertEqual(item.attributes['lookup'], u'7700,7701')
+
+
+    @mock.patch('ebpub.openblockapi.views._get_location_info')
+    def test_create_with_new_lookups(self, mock_get_loc_info):
+        mock_get_loc_info.return_value = (geos.Point(1,-1), 'somewhere')
+        info = self._make_geojson(coords=[1.0, -1.0],
+                                  lookup=['Lookup 7702 Name', 'Lookup 7703 Name'],
+                                  type='test-schema',
+                                  title='I have lookups too', description='yes i do',
+                                  )
+        views._item_create(info)
+        item = NewsItem.objects.get(title='I have lookups too')
+        self.assertEqual(item.attributes['lookup'], u'7702,7703')
 
 
 class TestQuickAPIErrors(TestCase):
@@ -162,7 +235,7 @@ class TestQuickAPIErrors(TestCase):
         response = self.client.put(reverse('items_index'))
         self.assertEqual(response.status_code, 405)
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_date_invalid(self):
         qs = "?startdate=oops"
         response = self.client.get(reverse('items_json') + qs)
@@ -278,7 +351,8 @@ class TestItemSearchAPI(TestCase):
     # TODO: once DJango 1.4 is out, we might be able to remove this by
     # using # the TestCase.settings context manager as per
     # http://docs.djangoproject.com/en/dev/topics/testing/#overriding-settings
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    # ... or not; that's often too late.
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
         schema = Schema.objects.get(slug='test-schema')
 
@@ -311,7 +385,7 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_result(items, ritems)
 
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_extension_fields_atom(self):
         schema = Schema.objects.get(slug='test-schema')
         ext_vals = {
@@ -357,7 +431,7 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_xml_result(items, response.content)
 
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
         import pytz
@@ -399,7 +473,7 @@ class TestItemSearchAPI(TestCase):
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
 
-    @monkeypatch(ebpub.openblockapi.views, 'LOCAL_TZ', pytz.timezone('US/Pacific'))
+    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_daterange(self):
         # create some items, they will have
         # dates spaced apart by one day, newest first
@@ -782,6 +856,12 @@ class TestPlacesAPI(TestCase):
         self.assertTrue('Faketown Precinct 1' in names)
         self.assertTrue('Faketown Precinct 2' in names)
 
+    def test_place_detail_json__bogus_type(self):
+        response = self.client.get(
+            reverse('place_detail_json', kwargs={'placetype': 'Oops'}))
+        self.assertEqual(response.status_code, 404)
+
+
 class TestOpenblockAtomFeed(TestCase):
 
     def test_root_attrs(self):
@@ -804,3 +884,137 @@ class TestUtilFunctions(TestCase):
         self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
                          {'a': 1, 'b': [1,2,3]})
 
+
+    def test_is_instance_of_model(self):
+        from django.contrib.gis.db import models
+        class Foo(models.Model):
+            class Meta:
+                app_label = 'openblockapi'
+        f = Foo()
+        self.assertEqual(True, views.is_instance_of_model(f, Foo))
+        self.assertRaises(TypeError, views.is_instance_of_model, f, Foo())
+
+    def test_get_location_info(self):
+        geom_dict = { "type": "Point", "coordinates": [100.0, 0.0] }
+        geom, name = views._get_location_info(geom_dict, 'anywhere')
+        self.assertEqual(geom.coords, (100.0, 0.0))
+        self.assertEqual(name, 'anywhere')
+
+
+    def test_check_api_auth__no_credentials(self):
+        ip = '1.2.3.4'
+        from django.core.exceptions import PermissionDenied
+        request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                               'META': {'REMOTE_ADDR': ip},
+                               'GET': {}, 'POST': {}})
+        self.assertRaises(PermissionDenied, auth.check_api_authorization,
+                          request)
+
+    def test_check_api_auth__logged_in(self):
+        ip = '1.2.3.4'
+        request = mock.Mock(**{'user.is_authenticated.return_value': True,
+                               'META': {'REMOTE_ADDR': ip},
+                               'GET': {}, 'POST': {}})
+        self.assertEqual(True, auth.check_api_authorization(request))
+
+    def test_check_api_auth__key_invalid(self):
+        from django.core.exceptions import PermissionDenied
+        key = '12345'
+        ip = '1.2.3.4'
+        get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                                   'META': {'REMOTE_ADDR': ip,
+                                            auth.KEY_HEADER: key},
+                                   'GET': {}, 'POST': {}})
+        self.assertRaises(PermissionDenied, auth.check_api_authorization,
+                          get_request)
+
+
+    def test_check_api_auth__key(self):
+        from key.models import generate_unique_api_key
+        ip = '1.2.3.4'
+        from ebpub.accounts.models import User
+        user = User.objects.create_user(email='bob@bob.com')
+        key = generate_unique_api_key(user)
+        get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                                   'META': {'REMOTE_ADDR': ip,
+                                            auth.KEY_HEADER: key},
+                                   'session': mock.MagicMock(),
+                                   'GET': {}, 'POST': {}})
+        self.assertEqual(True, auth.check_api_authorization(get_request))
+
+    @mock.patch('ebpub.openblockapi.views.throttle_check')
+    def test_rest_view_decorator__allowed_methods(self, throttle_check):
+        from ebpub.openblockapi.views import rest_view
+        from django.http import HttpResponseNotAllowed
+        throttle_check.return_value = False
+
+        @rest_view(['HEAD', 'PUT'])
+        def foo(request):
+            return request.method
+
+        request = mock.Mock(method='GET')
+
+        result = foo(request)
+        self.assert_(isinstance(result, HttpResponseNotAllowed))
+
+        request.method = 'HEAD'
+        self.assertEqual(foo(request), 'HEAD')
+        request.method = 'PUT'
+        self.assertEqual(foo(request), 'PUT')
+        request.method = 'ANYTHING ELSE'
+        result = foo(request)
+        self.assert_(isinstance(result, HttpResponseNotAllowed))
+
+    @mock.patch('ebpub.openblockapi.views.throttle_check')
+    def test_rest_view_decorator__throttling(self, throttle_check):
+        from ebpub.openblockapi.views import rest_view
+        request = mock.Mock(method='GET')
+
+        @rest_view(['GET'])
+        def foo(request):
+            return 'ok'
+
+        throttle_check.return_value = 0
+        self.assertEqual('ok', foo(request))
+
+        throttle_check.return_value = 1234
+        result = foo(request)
+        self.assertEqual(result.status_code, 503)
+        self.assertEqual(result['Retry-After'], '1234')
+
+
+    @mock.patch('ebpub.openblockapi.throttle.cache')
+    def test_cachethrottle(self, mock_cache):
+        import time
+        from ebpub.openblockapi.throttle import CacheThrottle
+        throttle_at=25
+        throttle = CacheThrottle(throttle_at=throttle_at)
+
+        mock_cache.get.return_value = []
+        self.assertEqual(False, throttle.should_be_throttled('some_id'))
+        mock_cache.get.return_value = [int(time.time())] * (throttle_at - 1)
+        self.assertEqual(False, throttle.should_be_throttled('some_id'))
+
+        mock_cache.get.return_value = [int(time.time())] * throttle_at
+        self.assertEqual(True, throttle.should_be_throttled('some_id'))
+        mock_cache.get.return_value = [int(time.time())] * (throttle_at + 1)
+        self.assertEqual(True, throttle.should_be_throttled('some_id'))
+
+    @mock.patch('ebpub.openblockapi.views._throttle')
+    def test_throttlecheck(self, mock_throttle):
+        from ebpub.openblockapi.views import throttle_check
+
+        request = mock.Mock(**{'user.is_authenticated.return_value': True,
+                               'REQUEST.get.return_value': 'anything'})
+        mock_throttle.should_be_throttled.return_value = True
+        mock_throttle.seconds_till_unthrottling.return_value = 99
+        self.assertEqual(99, throttle_check(request))
+
+        request = mock.Mock(**{'user.is_authenticated.return_value': False,
+                               'META': {auth.KEY_HEADER: 'test-api-key',}})
+        self.assertEqual(99, throttle_check(request))
+
+        self.assertEqual(mock_throttle.accessed.call_count, 0)
+        mock_throttle.should_be_throttled.return_value = False
+        self.assertEqual(0, throttle_check(request))
+        self.assertEqual(mock_throttle.accessed.call_count, 1)

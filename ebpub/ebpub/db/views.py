@@ -48,7 +48,7 @@ from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
 from ebpub.metros.allmetros import get_metro
-from ebpub.openblockapi.views import _items_json as _api_items_json
+from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
@@ -274,7 +274,7 @@ def newsitems_geojson(request):
         # We can't do it in the qs because we want to first slice the qs
         # by date, and we can't call order_by() after a slice.
         newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
-        output = _api_items_json(newsitem_list)
+        output = api_items_geojson(newsitem_list)
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
