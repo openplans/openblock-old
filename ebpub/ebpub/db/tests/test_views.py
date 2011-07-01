@@ -175,7 +175,6 @@ class TestAjaxViews(TestCase):
         feat = items['features'][0]
         self.assertEqual(feat['type'], 'Feature')
         self.assertEqual(feat['properties']['title'], 'crime title 3')
-        self.assert_('popup_html' in feat['properties'])
         self.assertEqual(feat['geometry']['type'], 'Point')
         self.assert_('coordinates' in feat['geometry'])
 
