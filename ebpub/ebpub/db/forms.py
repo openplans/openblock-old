@@ -23,4 +23,4 @@ class NewsItemForm(forms.ModelForm):
     class Meta:
         model = models.NewsItem
 
-    url = forms.URLField(widget=forms.TextInput(attrs={'size': 80}))
+    url = forms.URLField(widget=forms.TextInput(attrs={'size': 80}), required=False)
