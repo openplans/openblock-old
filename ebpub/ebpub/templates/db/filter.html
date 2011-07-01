@@ -56,7 +56,7 @@
         config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
         config.wms_url = "{{ WMS_URL }}";    
         {% if bbox %}
-        config.bbox = [{{bbox.0}},{{bbox.1}},{{bbox.2}},{{bbox.3}}];
+        config.bounds = [{{bbox.0}},{{bbox.1}},{{bbox.2}},{{bbox.3}}];
         {% else %}
         config.center = [{{default_lon}}, {{default_lat}}];
         config.zoom = {{default_zoom}};
