@@ -8,8 +8,24 @@ import os
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        from django.core.management import call_command
-        call_command("loaddata", os.path.join(os.path.dirname(__file__), "0006_initial_place_types.json"))
+        def _fx(model_id, key, attributes):
+            Model = orm[model_id]
+            params = {'defaults': attributes}
+            params.update(key)
+            ob, created = Model.objects.get_or_create(**params)
+            for k, v in attributes.items(): 
+                setattr(ob, k, v)
+            ob.save()
+        
+        
+        _fx('streets.placetype', {"slug": "poi"}, {
+            "is_geocodable": True, 
+            "plural_name": "Points of Interest", 
+            "indefinite_article": "a", 
+            "slug": "poi", 
+            "is_mappable": True, 
+            "name": "Point of Interest"
+         })
 
 
     def backwards(self, orm):

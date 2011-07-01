@@ -9,29 +9,228 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-
-        def _schema_get_by_natural_key(slug):
-            return orm['db.schema'].objects.get(slug=slug)
-
-        orm['db.schema']._default_manager.get_by_natural_key = _schema_get_by_natural_key
-
-        def _patched_get_model(model_identifier):
-            Model = orm.models.get(model_identifier)
-            if Model is None:
-                raise base.DeserializationError(u"Invalid model identifier: '%s'" % model_identifier)
-            return Model
-
-        from django.core.management import call_command
-        import os
-        here = os.path.abspath(os.path.dirname(__file__))
         
-        from django.core.serializers import python
-        old_get_model = python._get_model
-        try:
-            python._get_model = _patched_get_model
-            call_command("loaddata", os.path.join(here, "0007_default_schemas.json"))
-        finally:
-            python._get_model = old_get_model
+        def _fx(model_id, key, attributes):
+            Model = orm[model_id]
+            params = {'defaults': attributes}
+            params.update(key)
+            ob, created = Model.objects.get_or_create(**params)
+            for k, v in attributes.items(): 
+                setattr(ob, k, v)
+            ob.save()
+
+        _fx('db.schema', {"slug": "local-news"}, {
+            "allow_charting": True,
+            "can_collapse": True,
+            "date_name": "Date",
+            "date_name_plural": "Dates",
+            "grab_bag": "",
+            "grab_bag_headline": "",
+            "has_newsitem_detail": True,
+            "importance": 100,
+            "indefinite_article": "a",
+            "intro": "",
+            "is_public": True,
+            "is_special_report": False,
+            "last_updated": "2000-01-01",
+            "min_date": "2000-01-01",
+            "name": "Local News",
+            "number_in_overview": 5,
+            "plural_name": "Local News",
+            "short_description": "List of news in (TOWN NAME HERE)",
+            "short_source": "URL goes here",
+            "slug": "local-news",
+            "source": "URL goes here",
+            "summary": "Local News in (TOWN NAME HERE)",
+            "update_frequency": "",
+            "uses_attributes_in_list": False
+        })
+
+
+        _fx('db.schema', {'slug': 'open311-service-requests'}, {
+            "allow_charting": True,
+            "can_collapse": False,
+            "date_name": "Date",
+            "date_name_plural": "Dates",
+            "grab_bag": "",
+            "grab_bag_headline": "",
+            "has_newsitem_detail": True,
+            "importance": 0,
+            "indefinite_article": "an",
+            "intro": "",
+            "is_public": True,
+            "is_special_report": False,
+            "last_updated": "2000-01-01",
+            "min_date": "2000-01-01",
+            "name": "Open311 Service Request",
+            "number_in_overview": 5,
+            "plural_name": "Open311 Service Requests",
+            "short_description": "",
+            "short_source": "",
+            "slug": "open311-service-requests",
+            "source": "",
+            "summary": "",
+            "update_frequency": "",
+            "uses_attributes_in_list": True
+        })
+        
+        schema = orm['db.schema'].objects.get(slug="open311-service-requests")
+        
+        _fx("db.schemafield", {"schema": schema, "real_name": "datetime02"}, {
+            "display": True,
+            "display_order": 4,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "expected_datetime",
+            "pretty_name": "Expected Completion Date",
+            "pretty_name_plural": "Expected Completion Dates",
+            "real_name": "datetime02",
+            "schema": schema
+        })
+        
+        _fx("db.schemafield", {"schema": schema, "real_name": "varchar03"}, {
+            "display": False,
+            "display_order": 10,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "address_id",
+            "pretty_name": "Address ID",
+            "pretty_name_plural": "Address IDs",
+            "real_name": "varchar03",
+            "schema": schema
+        }) 
+        
+        _fx("db.schemafield", {"schema": schema, "real_name": "varchar04"}, {
+            "display": True,
+            "display_order": 10,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "media_url",
+            "pretty_name": "Media URL",
+            "pretty_name_plural": "Media URLs",
+            "real_name": "varchar04",
+            "schema": schema
+        })
+        
+
+        _fx("db.schemafield", {"schema": schema, "real_name": "varchar01"}, {
+            "display": True,
+            "display_order": 10,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "service_request_id",
+            "pretty_name": "Request ID",
+            "pretty_name_plural": "Request IDs",
+            "real_name": "varchar01",
+            "schema": schema
+        })
+
+        _fx("db.schemafield", {"schema": schema, "real_name": "datetime01"}, {
+            "display": True,
+            "display_order": 5,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "requested_datetime",
+            "pretty_name": "Request Time",
+            "pretty_name_plural": "Request Times",
+            "real_name": "datetime01",
+            "schema": schema
+        })
+
+        _fx("db.schemafield", {"schema": schema, "real_name": "int02"}, {
+            "display": True,
+            "display_order": 6,
+            "is_charted": False,
+            "is_filter": True,
+            "is_lookup": True,
+            "is_searchable": False,
+            "name": "agency_responsible",
+            "pretty_name": "Responsible Agency",
+            "pretty_name_plural": "Responsible Agencies",
+            "real_name": "int02",
+            "schema": schema
+        })
+
+        _fx("db.schemafield", {"schema": schema, "real_name": "varchar02"}, {
+            "display": False,
+            "display_order": 10,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "service_code",
+            "pretty_name": "Service Code",
+            "pretty_name_plural": "Service Codes",
+            "real_name": "varchar02",
+            "schema": schema
+        })
+
+        _fx("db.schemafield", {"schema": schema, "real_name": "int01"}, {
+            "display": True,
+            "display_order": 1,
+            "is_charted": False,
+            "is_filter": True,
+            "is_lookup": True,
+            "is_searchable": False,
+            "name": "service_name",
+            "pretty_name": "Service Name",
+            "pretty_name_plural": "Service Names",
+            "real_name": "int01",
+            "schema": schema
+        })
+        
+        _fx("db.schemafield", {"schema": schema, "real_name": "text01"}, {
+            "display": True,
+            "display_order": 10,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "service_notice",
+            "pretty_name": "Service Notice",
+            "pretty_name_plural": "Service Notices",
+            "real_name": "text01",
+            "schema": schema
+        })
+            
+        _fx("db.schemafield", {"schema": schema, "real_name": "int03"}, {
+            "display": True,
+            "display_order": 2,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": True,
+            "is_searchable": False,
+            "name": "status",
+            "pretty_name": "Status",
+            "pretty_name_plural": "Statuses",
+            "real_name": "int03",
+            "schema": schema
+        })
+        
+        _fx("db.schemafield", {"schema": schema, "real_name": "varchar05"}, {
+            "display": True,
+            "display_order": 3,
+            "is_charted": False,
+            "is_filter": False,
+            "is_lookup": False,
+            "is_searchable": False,
+            "name": "status_notes",
+            "pretty_name": "Status Notes",
+            "pretty_name_plural": "Status Notes",
+            "real_name": "varchar05",
+            "schema": schema
+        })
+
             
     def backwards(self, orm):
         "Write your backwards methods here."
