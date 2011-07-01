@@ -5,17 +5,24 @@
 <script type="text/javascript">
 OpenLayers.ImgPath = "{{ OPENLAYERS_IMG_PATH }}";
 
+{% comment %}
 /* this expects that a loadMap() function 
  * has been defined in the specific template. 
  * It should create and return an OBMap.
- */ 
+ */
+{% endcomment %}
+var _setupMap = function() {
+  var map = loadMap();
+  map.refresh();
+};
+
 if (jQuery.browser.msie) {
     jQuery(window).load(function() {
-        loadMap();
+        _setupMap();
     });
 } else {
     jQuery(document).ready(function() {
-        loadMap(); 
+        _setupMap(); 
     });
 }
 </script>

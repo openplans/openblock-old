@@ -103,7 +103,14 @@ OBMap.prototype.map_options = {
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 
-
+OBMap.prototype.refresh = function() {
+    for (var i=0; i < this.map.layers.length; i++) {
+        var layer = this.map.layers[i];
+        if (layer.refresh && typeof(layer.refresh) == "function") {
+            layer.refresh();
+        }
+    }
+};
 
 OBMap.prototype._initBasicMap = function() {
     /* initialize the map with base layer, bounds and 
@@ -350,7 +357,7 @@ OBMap.prototype.loadAllPlaceLayers = function() {
 };
 
 
-OBMap.prototype.featureSelected = function(feature) {
+OBMap.prototype._featureSelected = function(feature) {
     // close any existing popup
     this._closePopup();
     
@@ -452,7 +459,7 @@ OBMap.prototype.featureSelected = function(feature) {
     replaceHtml(0);
 };
 
-OBMap.prototype.featureUnselected = function(feature) {
+OBMap.prototype._featureUnselected = function(feature) {
     if (this.popup && this.popup.forCluster == feature) {
         this._closePopup();
     }
@@ -466,7 +473,7 @@ OBMap.prototype._closePopup = function() {
     }
 };
 
-OBMap.prototype.reloadSelectableLayers = function(event) {
+OBMap.prototype._reloadSelectableLayers = function(event) {
     if (event.layer != this.selectControl.layer) {
         var select_layers = [];
         for (var i in this.map.layers) {
@@ -487,12 +494,12 @@ OBMap.prototype.reloadSelectableLayers = function(event) {
 OBMap.prototype._configurePopup = function() {
 
     this.selectControl = new OpenLayers.Control.SelectFeature([], {
-        onSelect: this.featureSelected,
-        onUnselect: this.featureUnselected,
+        onSelect: this._featureSelected,
+        onUnselect: this._featureUnselected,
         scope: this
     });
     this.map.addControl(this.selectControl);    
-    this.map.events.on({'addlayer': this.reloadSelectableLayers,
+    this.map.events.on({'addlayer': this._reloadSelectableLayers,
                         'zoomend': function() {
                             if (this.popup != null) {
                                 this.popup.checkPosition();
