@@ -4,7 +4,7 @@ from django.contrib.admin import ModelAdmin
 from django.forms import ModelForm
 from django.forms import CharField
 from django.forms import IPAddressField
-from key.models import key_size
+from key.models import KEY_SIZE
 from key.models import ApiKey
 
 try:
@@ -20,7 +20,7 @@ class ApiKeyForm(ModelForm):
     class Meta:
         model = ApiKey
 
-    key = CharField(max_length=key_size, required=False,
+    key = CharField(max_length=KEY_SIZE, required=False,
                     help_text=u'If not provided, a random key will be generated.')
 
     logged_ip = IPAddressField(required=False)
@@ -33,7 +33,7 @@ class ApiKeyForm(ModelForm):
             # Note that we can't just define self.clean_key() because that's never
             # called if the key isn't provided.
             self._errors.pop('key', None)
-            while len(apikey) <= key_size:
+            while len(apikey) <= KEY_SIZE:
                 # From http://jetfar.com/simple-api-key-generation-in-python/
                 import base64
                 import hashlib
@@ -44,7 +44,7 @@ class ApiKeyForm(ModelForm):
                     apikey,
                     random.choice(['rA','aZ','gQ','hH','hG','aR','DD']))
                 apikey = apikey.rstrip('=')
-            apikey = apikey[:key_size]
+            apikey = apikey[:KEY_SIZE]
             self.cleaned_data['key'] = apikey
             if hasattr(self, 'clean_key'):
                 # NOW we can call this...
