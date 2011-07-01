@@ -36,6 +36,7 @@ def monkeypatch(obj, **patchkwargs):
         return patched
     return patch
 
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestAPI(TestCase):
 
     fixtures = ('test-schema', 'test-locationtypes', 'test-locations')
@@ -116,7 +117,7 @@ class TestAPI(TestCase):
         self.assertEqual(response['location'],
                          'http://testserver' + reverse('items_json'))
 
-
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestPushAPI(TestCase):
 
     fixtures = ('test-schema',)
@@ -171,7 +172,7 @@ class TestPushAPI(TestCase):
     def test_create__bad_dates(self):
         info = self._make_geojson(coords=[1.0, -1.0], type='test-schema',
                                   name='hello', title='hello title',
-                                  description='hello descr',
+                                  description='hello descr', url='http://foo.com',
                                   item_date='ouch', location_name='here',
                                   )
         with self.assertRaises(views.InvalidNewsItem) as e:
@@ -187,7 +188,8 @@ class TestPushAPI(TestCase):
             views._item_create(info)
         self.assertEqual(e.exception.errors,
                          {'description': [u'This field is required.'],
-                          'title': [u'This field is required.']})
+                          'title': [u'This field is required.'],
+                          })
 
     @mock.patch('ebpub.openblockapi.views._get_location_info')
     def test_create_with_existing_lookups(self, mock_get_loc_info):
@@ -196,6 +198,7 @@ class TestPushAPI(TestCase):
                                   lookup=['Lookup 7700 Name', 'Lookup 7701 Name'],
                                   type='test-schema',
                                   title='I have lookups', description='yes i do',
+                                  url='http://foo.com',
                                   )
         views._item_create(info)
         item = NewsItem.objects.get(title='I have lookups')
@@ -209,12 +212,14 @@ class TestPushAPI(TestCase):
                                   lookup=['Lookup 7702 Name', 'Lookup 7703 Name'],
                                   type='test-schema',
                                   title='I have lookups too', description='yes i do',
+                                  url='http://foo.com',
                                   )
         views._item_create(info)
         item = NewsItem.objects.get(title='I have lookups too')
         self.assertEqual(item.attributes['lookup'], u'7702,7703')
 
 
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestQuickAPIErrors(TestCase):
     # Test errors that happen before filters get applied,
     # so, no fixtures needed.
@@ -251,6 +256,8 @@ class TestQuickAPIErrors(TestCase):
         self.assertContains(response, "Invalid end date", status_code=400)
 
 
+
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestItemSearchAPI(TestCase):
 
     fixtures = ('test-item-search.json', 'test-schema.yaml')
@@ -635,6 +642,7 @@ def _make_items(number, schema):
         curdate += inc
     return items
 
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestGeocoderAPI(TestCase):
 
     fixtures = ('test-locationtypes', 
@@ -721,7 +729,7 @@ class TestGeocoderAPI(TestCase):
         assert "Chestnut Sq. & Chestnut Ave." in names
         assert "Chestnut Pl. & Chestnut Ave." in names
 
-
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestLocationsAPI(TestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json')
@@ -819,6 +827,7 @@ class TestLocationsAPI(TestCase):
         self.assertEqual(t1['scope'], 'boston')
 
 
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestPlacesAPI(TestCase):
 
     fixtures = ('test-placetypes.json', 'test-places.json')
@@ -862,6 +871,7 @@ class TestPlacesAPI(TestCase):
         self.assertEqual(response.status_code, 404)
 
 
+@mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestOpenblockAtomFeed(TestCase):
 
     def test_root_attrs(self):
