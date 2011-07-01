@@ -373,7 +373,7 @@ OBMap.prototype._featureSelected = function(feature) {
         true, // closeBox.
         function() {
             theMap._closePopup();
-            theMap.selectControl.unselect(feature);
+            theMap.selectControl.unselectAll({'except': null});
         }
     );
     popup.focalFeature = firstFeature;
