@@ -730,10 +730,24 @@ Response
                    'Location' header will be a URI to the JSON
                    representation of this NewsItem.
 ------------------ ------------------------------------------------------------
-      400          Invalid input.  In future versions of the API this
-                   should contain validation hints, format to be determined.
+      400          Invalid input.  Response will be a JSON object with
+                   an 'errors' key containing validation hints.
+
+                   For example, if the required 'url' field is not
+                   provided and the 'item_date' is in the wrong
+                   format, the response would be::
+                      {
+                        "errors": {
+                          "url": [
+                            "This field is required."
+                          ],
+                          "item_date": [
+                            "Enter a valid date."
+                          ]
+                        }
+                      }
 ------------------ ------------------------------------------------------------
-      401          Permission denied.
+      401          Permission denied. See :ref:`Authentication <api_auth>`.
 ------------------ ------------------------------------------------------------
       503          You have exceeded the :ref:`rate limit. <throttling>`
 ================== ============================================================

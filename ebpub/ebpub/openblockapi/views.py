@@ -226,6 +226,7 @@ def throttle_check(request):
     else:
         identifier = "%s_%s" % (request.META.get('REMOTE_ADDR', 'noaddr'),
                                 request.META.get('REMOTE_HOST', 'nohost'))
+
     if _throttle.should_be_throttled(identifier):
         # Throttle limit exceeded.
         return _throttle.seconds_till_unthrottling(identifier)
@@ -307,7 +308,7 @@ def items_index(request):
             item = _item_create(info)
         except InvalidNewsItem, e:
             errors = simplejson.dumps({'errors': e.errors}, indent=2)
-            return HttpResponseBadRequest(errors)
+            return HttpResponseBadRequest(errors, content_type=JSON_CONTENT_TYPE)
         item_url = reverse('single_item_json', kwargs={'id_': str(item.id)})
         return HttpResponseCreated(item_url)
 
