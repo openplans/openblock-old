@@ -36,6 +36,10 @@ DJANGO_DIR = imp.find_module('django')[1]
 
 required_settings=[
     'DEBUG',
+    # Database configuration as per
+    # http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
+    # There's an example in obdemo/settings.py.in
+    'DATABASES',
 ]
 
 TEMPLATE_DIRS = (
@@ -54,6 +58,7 @@ TEMPLATE_LOADERS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
     'django.contrib.auth.context_processors.auth',
+    'django.contrib.messages.context_processors.messages',
     'ebpub.db.context_processors.urls',
     'django.core.context_processors.request',
     #'django.core.context_processors.debug',
@@ -68,6 +73,7 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.admin',
+    'django.contrib.messages',
     'ebdata.blobs',
     'ebdata.geotagger',
     'ebpub.accounts',
@@ -123,6 +129,11 @@ INSTALLED_APPS = INSTALLED_APPS + APPS_FOR_TESTING + ('south',)
 
 TEST_RUNNER = 'obadmin.testrunner.TestSuiteRunner'
 
+# Messages backend. OpenBlock doesn't use it (yet) but this silences a
+# deprecationwarning from the admin UI in django 1.3.
+MESSAGE_STORAGE = 'django.contrib.messages.storage.fallback.FallbackStorage'
+
+
 # South - database migration config
 SKIP_SOUTH_TESTS = True
 SOUTH_TESTS_MIGRATE = True
@@ -132,6 +143,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'ebpub.accounts.middleware.UserMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
 )
 
@@ -152,11 +164,6 @@ required_settings.append('SHORT_NAME')
 # of '%s' each. Example: 'j8#%s%s' -- but don't use that, because it's not
 # secret.
 required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
-
-# Database configuration as per
-# http://docs.djangoproject.com/en/1.2/topics/db/multi-db/
-# There's an example in obdemo/settings.py.in
-required_settings.append('DATABASES')
 
 # The list of all metros this installation covers. This is a tuple of
 # dictionaries.  If your site only covers one city, there will be
