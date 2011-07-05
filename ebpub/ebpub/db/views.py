@@ -973,12 +973,18 @@ def _preconfigured_map(context):
     if item is not None: 
         layer_params['newsitem'] = item.id
 
-    # restricted to place, start or end date ?
-    for key in ['pid', 'start_date', 'end_date']:
+    # restricted to place?
+    for key in ['pid']:
         val = context.get(key)
         if val is not None: 
             layer_params[key] = val
-    
+
+    # restricted date range ?
+    for key in ['start_date', 'end_date']:
+        val = context.get(key)
+        if val is not None: 
+            layer_params[key] = val.strftime('%Y/%m/%d')
+
     # restricted by schema ?
     schema = context.get('schema_slug')
     if schema is not None: 

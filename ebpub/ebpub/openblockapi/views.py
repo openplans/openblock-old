@@ -104,7 +104,7 @@ def api_items_geojson(items):
     API in other contexts (not a view)
     """
     body = {'type': 'FeatureCollection',
-            'features': items}
+            'features': [item for item in items if item.location]}
     return simplejson.dumps(body, indent=1, default=_serialize_unknown)
 
 def _item_geojson_dict(item):

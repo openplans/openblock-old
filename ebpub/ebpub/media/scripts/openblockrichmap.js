@@ -103,8 +103,6 @@ OBMap.prototype.map_options = {
     maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 
-
-
 OBMap.prototype._initBasicMap = function() {
     /* initialize the map with base layer, bounds and 
      * other common settings.
@@ -258,33 +256,38 @@ OBMap.prototype.getLayerStyleMap = function() {
 
 OBMap.prototype.loadFeatureLayer = function(layerConfig) {
 
+    var layerStrategies = [
+        new OpenLayers.Strategy.Fixed({preload: true}),
+        new OpenblockCluster({
+            distance: this.clusterDistance,
+            clusterSignature: function(feature) {
+                // separate based on icon, then color
+                if (typeof(feature.attributes.icon) != 'undefined' && feature.attributes.icon) {
+                    return $.trim(feature.attributes.icon).toLowerCase();
+                }
+                else if (typeof(feature.attributes.color) != 'undefined' && feature.attributes.color) {
+                    return $.trim(feature.attributes.color).toLowerCase(); 
+                }
+                else {
+                    return null;
+                }
+            }
+        })
+    ];
+    if (layerConfig.bbox == true) {
+        layerStrategies.push(new OpenLayers.Strategy.BBOX(
+            {
+                ratio: 1.75,
+                resFactor: 3
+            }
+        ));
+    }
+
     var layer = new OpenLayers.Layer.Vector(layerConfig['title'], {
         allowSelection: true,
         projection: this.map.displayProjection,
         visibility: layerConfig['visible'],
-        strategies: [
-            new OpenLayers.Strategy.BBOX(
-                    {
-                        ratio: 1.75,
-                        resFactor: 3
-                    }
-                ),
-            new OpenblockCluster({
-                distance: this.clusterDistance,
-                clusterSignature: function(feature) {
-                    // separate based on icon, then color
-                    if (typeof(feature.attributes.icon) != 'undefined' && feature.attributes.icon) {
-                        return $.trim(feature.attributes.icon).toLowerCase();
-                    }
-                    else if (typeof(feature.attributes.color) != 'undefined' && feature.attributes.color) {
-                        return $.trim(feature.attributes.color).toLowerCase(); 
-                    }
-                    else {
-                        return null;
-                    }
-                }
-            })
-            ],
+        strategies: layerStrategies,
         protocol: new OpenLayers.Protocol.HTTP({
             url: layerConfig['url'],
             params: layerConfig['params'],
@@ -310,7 +313,8 @@ OBMap.prototype.loadAllNewsLayers = function() {
                     var layerConfig = {
                         title:  itemType["plural_name"],
                         url:    _obapi('/items.json'),
-                        params: {'type': slug, 'limit': 100},
+                        params: {'type': slug, limit: 150},
+                        bbox: true,
                         visible: true
                     };
                     this.loadFeatureLayer(layerConfig);
@@ -336,7 +340,8 @@ OBMap.prototype.loadAllPlaceLayers = function() {
                     var layerConfig = {
                         title: itemType["plural_name"],
                         url: _obapi('/places/' + slug +'.json'),
-                        params: {'limit': 100},
+                        params: {limit: 150},
+                        bbox: true,
                         visible: false
                     };
                     this.loadFeatureLayer(layerConfig);
@@ -350,7 +355,7 @@ OBMap.prototype.loadAllPlaceLayers = function() {
 };
 
 
-OBMap.prototype.featureSelected = function(feature) {
+OBMap.prototype._featureSelected = function(feature) {
     // close any existing popup
     this._closePopup();
     
@@ -366,7 +371,7 @@ OBMap.prototype.featureSelected = function(feature) {
         true, // closeBox.
         function() {
             theMap._closePopup();
-            theMap.selectControl.unselect(feature);
+            theMap.selectControl.unselectAll({'except': null});
         }
     );
     popup.focalFeature = firstFeature;
@@ -452,7 +457,7 @@ OBMap.prototype.featureSelected = function(feature) {
     replaceHtml(0);
 };
 
-OBMap.prototype.featureUnselected = function(feature) {
+OBMap.prototype._featureUnselected = function(feature) {
     if (this.popup && this.popup.forCluster == feature) {
         this._closePopup();
     }
@@ -466,7 +471,7 @@ OBMap.prototype._closePopup = function() {
     }
 };
 
-OBMap.prototype.reloadSelectableLayers = function(event) {
+OBMap.prototype._reloadSelectableLayers = function(event) {
     if (event.layer != this.selectControl.layer) {
         var select_layers = [];
         for (var i in this.map.layers) {
@@ -487,12 +492,12 @@ OBMap.prototype.reloadSelectableLayers = function(event) {
 OBMap.prototype._configurePopup = function() {
 
     this.selectControl = new OpenLayers.Control.SelectFeature([], {
-        onSelect: this.featureSelected,
-        onUnselect: this.featureUnselected,
+        onSelect: this._featureSelected,
+        onUnselect: this._featureUnselected,
         scope: this
     });
     this.map.addControl(this.selectControl);    
-    this.map.events.on({'addlayer': this.reloadSelectableLayers,
+    this.map.events.on({'addlayer': this._reloadSelectableLayers,
                         'zoomend': function() {
                             if (this.popup != null) {
                                 this.popup.checkPosition();
