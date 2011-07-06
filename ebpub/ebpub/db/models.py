@@ -130,6 +130,10 @@ class Schema(models.Model):
 
     # number of records to show on place_overview
     number_in_overview = models.SmallIntegerField(default=5)
+    
+    map_icon_url = models.TextField(blank=True, null=True)
+    map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of news. eg #FF0000")
+    
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()

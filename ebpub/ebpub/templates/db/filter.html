@@ -50,23 +50,22 @@
 
 		<div id="mapwrapper">
 		  <script type="text/javascript">
-		    var pid = '{{ pid }}';
-		    var schema_slug = '{{ schema.slug }}';
-		    var place_type = '{{ place.location_type.slug }}';
-		    var place_slug = '{{ place.slug }}';
-			{% if start_date %}
-			 var start_date = '{{ start_date|date:"Y/m/d" }}';
-			 var end_date = '{{ end_date|date:"Y/m/d" }}';
-            {% endif %}
-		    {% if bbox %}
-		      var map_bounds = new OpenLayers.Bounds{{ bbox }};
-		    {% else %}
-		      var map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
-		      var map_zoom = {{default_zoom}};
-		    {% endif %}
-
+		  {% autoescape off %}
+		  function loadMap() {
+  		  var config = {{map_configuration}};
+        config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+        config.wms_url = "{{ WMS_URL }}";    
+        {% if bbox %}
+        config.bounds = [{{bbox.0}},{{bbox.1}},{{bbox.2}},{{bbox.3}}];
+        {% else %}
+        config.center = [{{default_lon}}, {{default_lat}}];
+        config.zoom = {{default_zoom}};
+        {% endif %}
+        return new OBMap(config);
+  		}
+  		{% endautoescape %}
 		  </script>
-		  {% include "map.html" %}
+		  {% include "richmaps/richmap.html" %}
 		</div><!--/ #mapwrapper -->
 
 		<!--

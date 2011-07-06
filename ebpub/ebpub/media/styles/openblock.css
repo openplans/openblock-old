@@ -581,6 +581,20 @@ div.popupnav {
 }
 
 
+/* Rich Map Popups */
+
+.popup-content .title {
+    font-size: 14px;
+} 
+
+.popup-content .title a {
+    text-decoration: none;
+}
+
+.popup-nav {
+    clear: both;
+}
+
 /* #################################### Timeline ############################ */
 
 .place-detail-timeline .info .date {
@@ -1004,3 +1018,7 @@ font-weight : bold;
 border-bottom : 0;
 }
 
+img.schema-icon {
+  height: 20px; width: 20px;
+  padding: 0px; margin: 0px;
+}

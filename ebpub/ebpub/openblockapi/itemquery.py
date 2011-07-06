@@ -1,6 +1,7 @@
 from django.contrib.gis import geos
 from ebpub.utils.dates import parse_date
 from ebpub.db.models import NewsItem
+from ebpub.streets.models import Place
 import datetime
 import pyrfc3339
 
@@ -21,7 +22,8 @@ def build_item_query(params):
     # some different ordering may be more optimal here /
     # some index could be specifically created
     filters = [_schema_filter, _daterange_filter, _predefined_place_filter,
-               _radius_filter, _attributes_filter, _order_by, _object_limit]
+               _radius_filter, _bbox_filter, _attributes_filter, _order_by,
+               _object_limit]
 
     query = NewsItem.objects.all()
     params = dict(params)
@@ -30,6 +32,7 @@ def build_item_query(params):
         query, params, state = f(query, params, state)
 
     return query, params
+    
 
 # 
 # filters accept and return:
@@ -63,6 +66,7 @@ def _schema_filter(query, params, state):
         state['schema_slug'] = slug
         query = query.filter(schema__slug=slug)    
     return query, params, state
+
 
 def _attributes_filter(query, params, state):
     # not implemented yet
@@ -129,6 +133,35 @@ def _predefined_place_filter(query, params, state):
     
     return query, params, state
     
+def _bbox_filter(query, params, state):
+    """
+    handles filtering by a bounding box region
+    parameters: bbox 
+    comma separated lon1,lat1,lon2,lat2
+    eg bbox=-71.775184936525,42.077772745456,-70.541969604493,42.585381248024
+    """
+    
+    bbox = params.get('bbox')
+    if bbox is None: 
+        return query, params, state
+    
+    if state.get('has_geo_filter') == True: 
+        raise QueryError('Only one geographic filter may be specified')
+
+    try:
+        lon1,lat1,lon2,lat2 = (float(x.strip()) for x in bbox.split(','))
+        search_region = geos.Polygon.from_bbox([lon1,lat1,lon2,lat2])
+        search_region.srid = 4326
+        query = query.filter(location__contained=search_region)
+    except:
+        import traceback
+        traceback.print_exc()
+        raise QueryError("Invalid bounding box.")
+        
+    state['has_geo_filter'] = True
+    
+    return query, params, state
+
 def _radius_filter(query, params, state):
     """
     handles filtering by a 'circular' geographic region
@@ -180,9 +213,9 @@ def _object_limit(query, params, state):
         raise QueryError('Invalid offset')
     
     try: 
-        limit = int(params.get('limit', 25))
-        if limit > 200: 
-            limit = 200
+        limit = int(params.get('limit', 50))
+        if limit > 250: 
+            limit = 250
     except:
         raise QueryError('Invalid limit')
     
@@ -203,3 +236,38 @@ def _order_by(query, params, state):
     # it is always by item date currently
     query = query.order_by('-item_date')
     return query, params, state
+
+
+###################################
+# Some piggy-backing for Places API
+###################################
+
+def _placetype_filter(query, params, state):
+    """
+    handles filtering Places by placetype
+    """
+    query = query.filter(place_type__is_mappable=True)
+
+    slug = params.get('type')
+    if slug is not None:
+        del params['type']
+        state['placetype_slug'] = slug
+        query = query.filter(place_type__slug=slug)    
+    return query, params, state
+
+
+def build_place_query(params):
+    """
+    builds a Place QuerySet according to the request parameters given 
+    as specified in the API documentation. raises QueryError if 
+    invalid query parameters are specified. 
+    """
+    filters = [_placetype_filter, _radius_filter, _bbox_filter, _object_limit]
+
+    query = Place.objects.all()
+    params = dict(params)
+    state = {}
+    for f in filters: 
+        query, params, state = f(query, params, state)
+
+    return query, params

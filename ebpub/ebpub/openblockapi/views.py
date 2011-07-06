@@ -12,7 +12,7 @@ from django.utils import feedgenerator
 from django.utils import simplejson
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
-from ebpub.openblockapi.itemquery import build_item_query, QueryError
+from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
 from ebpub.openblockapi.auth import KEY_HEADER
 from ebpub.openblockapi.auth import check_api_authorization
 from ebpub.streets.models import PlaceType, Place, PlaceSynonym
@@ -98,6 +98,15 @@ def _copy_nomulti(d):
             r[k] = v
     return r
 
+def api_items_geojson(items):
+    """
+    helper to produce the geojson of the same form as the 
+    API in other contexts (not a view)
+    """
+    body = {'type': 'FeatureCollection',
+            'features': [item for item in items if item.location]}
+    return simplejson.dumps(body, indent=1, default=_serialize_unknown)
+
 def _item_geojson_dict(item):
     props = {}
     geom = simplejson.loads(item.location.geojson)
@@ -119,6 +128,10 @@ def _item_geojson_dict(item):
          'url': item.url,
          'pub_date': item.pub_date,
          'item_date': item.item_date,
+         'id': item.id,
+         'openblock_type': 'newsitem',
+         'icon': item.schema.map_icon_url,
+         'color': item.schema.map_color,
          })
     result['properties'] = props
     return result
@@ -596,6 +609,7 @@ def location_detail_json(request, loctype, slug):
                               'population': location.population,
                               'city': location.city,
                               'name': location.name,
+                              'openblock_type': 'location',
                               }
                }
     geojson = simplejson.dumps(geojson, indent=1)
@@ -629,20 +643,28 @@ def place_types_json(request):
 @rest_view(['GET'])
 def place_detail_json(request, placetype):
     try:
-        placetype_obj = PlaceType.objects.get(slug=placetype)
+        placetype_obj = PlaceType.objects.get(slug=placetype, is_mappable=True)
     except (ValueError, PlaceType.DoesNotExist):
-        raise Http404("No such place type %r" % placetype)
+        raise Http404("No mappable place type %r" % placetype)
 
     result = {
         'type': 'FeatureCollection',
         'features': []
     }
-    for place in Place.objects.filter(place_type=placetype_obj):
+    
+    params = _copy_nomulti(request.GET)
+    params['type'] = placetype
+    places, params = build_place_query(params)
+    for place in places:
         feature = {'type': 'Feature',
                    'geometry': simplejson.loads(place.location.geojson),
                    'properties': {'type': placetype,
                                   'name': place.pretty_name,
                                   'address': place.address,
+                                  'icon': place.place_type.map_icon_url,
+                                  'color': place.place_type.map_color,
+                                  'id': place.id,
+                                  'openblock_type': 'place'
                                   }
                    }
         result['features'].append(feature)

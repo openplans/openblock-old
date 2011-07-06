@@ -20,6 +20,7 @@ from django import template
 from django.conf import settings
 from django.contrib.gis.shortcuts import render_to_kml
 from django.core.cache import cache
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import Http404
 from django.http import HttpResponse
@@ -47,6 +48,7 @@ from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
 from ebpub.geocoder.parser.parsing import normalize, ParsingError
 from ebpub.metros.allmetros import get_metro
+from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
@@ -272,30 +274,7 @@ def newsitems_geojson(request):
         # We can't do it in the qs because we want to first slice the qs
         # by date, and we can't call order_by() after a slice.
         newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
-        popup_list = _map_popups(newsitem_list)
-
-        features = {'type': 'FeatureCollection', 'features': []}
-        for newsitem, popup_info in zip(newsitem_list, popup_list):
-            if newsitem.location is None:
-                # Can happen, see NewsItem docstring.
-                # TODO: We should probably allow for newsitems that have a
-                # location_object too?
-                continue
-
-            features['features'].append(
-                {'type': 'Feature',
-                 'geometry': {'type': 'Point',
-                              'coordinates': [newsitem.location.centroid.x,
-                                              newsitem.location.centroid.y],
-                              },
-                 'properties': {
-                        'title': newsitem.title,
-                        'id': popup_info[0],
-                        'popup_html': popup_info[1],
-                        'schema': popup_info[2],
-                        }
-                 })
-        output = simplejson.dumps(features, indent=1)
+        output = api_items_geojson(newsitem_list)
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
@@ -351,6 +330,7 @@ def homepage(request):
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
         'bodyclass': 'homepage',
         'breadcrumbs': breadcrumbs.home({}),
+        'map_configuration': _preconfigured_map({})
     })
 
 def search(request, schema_slug=''):
@@ -497,6 +477,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         'bodyid': schema_slug,
     }
     context['breadcrumbs'] = breadcrumbs.newsitem_detail(context)
+    context['map_configuration'] = _preconfigured_map(context)
     return eb_render(request, templates_to_try, context)
 
 def schema_list(request):
@@ -806,6 +787,7 @@ def schema_filter(request, slug, args_from_url):
         'start_date': start_date,
         'end_date': end_date,
     })
+    context['map_configuration'] = _preconfigured_map(context);
 
     return eb_render(request, 'db/filter.html', context)
 
@@ -950,11 +932,80 @@ def place_detail_timeline(request, *args, **kwargs):
 
 
     context['filtered_schema_list'] = s_list
-
+    context['map_configuration'] = _preconfigured_map(context);
     response = eb_render(request, 'db/place_detail.html', context)
     for k, v in context['cookies_to_set'].items():
         response.set_cookie(k, v)
     return response
+
+def _preconfigured_map(context):
+    """
+    helper to rig up a map configuration for 
+    templates based on the menagerie of
+    values provided in the template context.
+    
+    returns a json string with the layer configuration 
+    for the map that should be displayed on the page. 
+    """
+    
+    config = {
+        'locations': [],
+        'layers': []
+    };
+    
+    # load layer boundary if a Location is specified
+    location = context.get('location')
+    if location is not None:
+        loc_json_url = reverse('location_detail_json',
+                                 kwargs={'loctype': location.location_type.slug, 
+                                         'slug': location.slug})
+        loc_boundary = {
+            'url': loc_json_url,
+            'params': {},
+            'title': "%s Boundary" % location.pretty_name,
+            'visible': True
+        }
+        config['locations'].append(loc_boundary);
+
+    ###########################
+    # configure newsitem layer 
+    # 
+    # TODO filtering? via api? see ticket #121
+    ###########################
+    
+    # single news item ? 
+    layer_params = {}
+    item = context.get('newsitem')
+    if item is not None: 
+        layer_params['newsitem'] = item.id
+
+    # restricted to place?
+    for key in ['pid']:
+        val = context.get(key)
+        if val is not None: 
+            layer_params[key] = val
+
+    # restricted date range ?
+    for key in ['start_date', 'end_date']:
+        val = context.get(key)
+        if val is not None: 
+            layer_params[key] = val.strftime('%Y/%m/%d')
+
+    # restricted by schema ?
+    schema_slug = context.get('schema_slug')
+    if schema_slug is not None: 
+        layer_params['schema'] = schema_slug
+
+    items_layer = {
+        'url': reverse('ajax-newsitems-geojson'),
+        'params': layer_params,
+        'title': "News" ,
+        'visible': True
+    }
+    config['layers'].append(items_layer)
+    
+    return simplejson.dumps(config);
+
 
 
 def place_detail_overview(request, *args, **kwargs):

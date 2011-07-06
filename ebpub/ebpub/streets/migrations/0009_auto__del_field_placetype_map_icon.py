@@ -1,35 +1,21 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
-import os
 
-class Migration(DataMigration):
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        def _fx(model_id, key, attributes):
-            Model = orm[model_id]
-            params = {'defaults': attributes}
-            params.update(key)
-            ob, created = Model.objects.get_or_create(**params)
-            for k, v in attributes.items(): 
-                setattr(ob, k, v)
-            ob.save()
         
-        
-        _fx('streets.placetype', {"slug": "poi"}, {
-            "is_geocodable": True, 
-            "plural_name": "Points of Interest", 
-            "indefinite_article": "a", 
-            "slug": "poi", 
-            "is_mappable": True, 
-            "name": "Point of Interest"
-         })
+        # Deleting field 'PlaceType.map_icon'
+        db.delete_column('streets_placetype', 'map_icon')
 
 
     def backwards(self, orm):
-        "Write your backwards methods here."
+        
+        # Adding field 'PlaceType.map_icon'
+        db.add_column('streets_placetype', 'map_icon', self.gf('django.db.models.fields.files.FileField')(max_length=100, null=True, blank=True), keep_default=False)
 
 
     models = {
@@ -38,7 +24,7 @@ class Migration(DataMigration):
             'from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'geom': ('django.contrib.gis.db.models.fields.LineStringField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'left_city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'left_city': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
             'left_from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'left_state': ('django.contrib.localflavor.us.models.USStateField', [], {'max_length': '2', 'db_index': 'True'}),
             'left_to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
@@ -47,7 +33,7 @@ class Migration(DataMigration):
             'postdir': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '2', 'blank': 'True'}),
             'predir': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '2', 'blank': 'True'}),
             'pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'right_city': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
+            'right_city': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
             'right_from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
             'right_state': ('django.contrib.localflavor.us.models.USStateField', [], {'max_length': '2', 'db_index': 'True'}),
             'right_to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
@@ -97,7 +83,8 @@ class Migration(DataMigration):
             'location': ('django.contrib.gis.db.models.fields.PointField', [], {'blank': 'True'}),
             'normalized_name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'place_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['streets.PlaceType']"}),
-            'pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
+            'pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'url': ('django.db.models.fields.TextField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'})
         },
         'streets.placesynonym': {
             'Meta': {'object_name': 'PlaceSynonym'},
@@ -110,9 +97,8 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'PlaceType'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'indefinite_article': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
-            'is_geocodable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'is_mappable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'map_icon': ('django.db.models.fields.files.FileField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
+            'is_geocodable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'is_mappable': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'plural_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'slug': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255', 'db_index': 'True'})

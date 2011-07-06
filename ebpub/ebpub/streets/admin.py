@@ -95,8 +95,7 @@ class PlaceAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'place_type', 'address',)
     list_filter  = ('place_type',)
     search_fields = ('pretty_name', 'place_type')
-    fields = ('pretty_name', 'place_type', 'address', 'location')
-
+    fields = ('pretty_name', 'place_type', 'url', 'address', 'location')
     form = PlaceAdminForm
 
     def formfield_for_dbfield(self, db_field, **kwargs):
