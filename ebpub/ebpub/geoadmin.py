@@ -34,19 +34,19 @@ logger = logging.getLogger('ebpub.geoadmin')
 # Base options for olwidget, used by maps in the admin UI.
 # TODO: olwidget already checks for OLWIDGET_DEFAULT_OPTIONS in settings,
 # so this should move to default_settings; but it depends on other
-# settings are probably user-defined.
+# settings that are probably user-defined.
+
+OLWIDGET_LAYERS = getattr(settings, 'OLWIDGET_LAYERS', [])
+
+
 OLWIDGET_DEFAULT_OPTIONS = getattr(settings, 'OLWIDGET_DEFAULT_OPTIONS', None) or \
     {
     'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
     'default_lon': settings.DEFAULT_MAP_CENTER_LON,
     'default_zoom': settings.DEFAULT_MAP_ZOOM,
     'zoom_to_data_extent': True,
-    'layers': ['google.streets', 'osm.mapnik', 'osm.osmarender',
-               'cloudmade.36041'],
-    # TODO: We don't really want LayerSwitcher on all maps, just
-    # on one map that saves the chosen layer in some config somewhere.
-    'controls': ['LayerSwitcher', 'Navigation', 'PanZoom', 'Attribution'],
-
+    'layers': OLWIDGET_LAYERS,
+    'controls': ['Navigation', 'PanZoom', 'Attribution'],
     # Defaults for generic GeometryFields.
     'geometry': ['point', 'linestring', 'polygon'],
     'isCollection': True,

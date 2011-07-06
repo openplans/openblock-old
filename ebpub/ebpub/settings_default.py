@@ -210,6 +210,7 @@ required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
 OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
+
 # For compatibility with django-olwidget
 OL_API = OPENLAYERS_URL
 
@@ -231,22 +232,37 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
 
 # Javascript map options.
 # Options for MAP_BASELAYER_TYPE are 'google' or 'wms'.
+# TODO: merge this with olwidget config
 MAP_BASELAYER_TYPE='wms'
 required_settings.append('MAP_BASELAYER_TYPE')
 
 # If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
-# and point it to your WMS server.  The default gives you hosted OpenStreetMap tiles.
+# and point it to your WMS server.  This default gives you hosted OpenStreetMap tiles.
+# TODO: This isn't really functional, we've hardcoded the layer name to 'openstreetmap'
 WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
+
 # If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_API_KEY.
 GOOGLE_API_KEY='your API key here'
 
+# Which olwidget base layer options to allow switching between?
+# See http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display
+# for list of possible choices.
+# Example:
+OLWIDGET_LAYERS = ['google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
 
-# Hackery for customized django-olwidget to add extra WMS base layers:
+
+# Hackery to add custom base layers & other js data for customized django-olwidget.
+# Currently only applies to admin UI maps.
 EXTRA_OLWIDGET_CONTEXT = {
-    'extra_base_layers':
+    # Override this to set the default base layer.  eg:
+    #'default_base_layer': 'google.streets',
+    'default_base_layer': 'OpenStreetMap (OpenGeo)',
+
+    # Custom layers.
+    'custom_base_layers':
         [{"class": "WMS",
           "name": "OpenStreetMap (OpenGeo)",
-          "url": "http://maps.opengeo.org/geowebcache/service/wms",
+          "url": WMS_URL,
           "params": {"layers": "openstreetmap",
                      "format": "image/png",
                      "bgcolor": "#A1BDC4"
