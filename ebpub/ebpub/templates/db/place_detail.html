@@ -1,6 +1,6 @@
 {% extends "base_place.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
-{% load eb eb_filter %}
+{% load eb eb_filter mapping %}
 
 {% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %}, {{ place.city_object.name }}{% endif %}{% endblock title %}
 
@@ -146,11 +146,12 @@ window.onload = function() {
 				{% with schemagroup.list|length as num_newsitems %}
 					{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
 				<h4 class="{% if is_hidden %}hidden{% else %}visible{% endif %}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.pub_date|date:"Ymd" }}">
+					{% map_icon_img schemagroup.grouper %}
+
 					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
 					{% if USER %}<a class="toggle show" href="#">Show</a>{% endif %}
 				</h4>
 				<div class="{% if is_hidden %}hidden{% else %}visible{% endif %}">
-					<ul>
 					{% newsitem_list_by_schema schemagroup.list %}
 					</ul>
 				</div>
