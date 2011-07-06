@@ -5,22 +5,26 @@ Data Scraper Tutorial
 Currently, anybody using OpenBlock will have to write their own
 scraper scripts to import data.
 
-You have three options for how to write Python scraper scripts.
+You have at least four options for how to write Python scraper scripts.
 We'll look at each in turn:
 
-1. :ref:`Expediently hack something <scraping_hack>` that creates instances of
+1. :ref:`Use the OpenBlock REST API <scraping_rest_api>` to push data
+   in from any script in any language that can make HTTP connections.
+
+2. :ref:`Expediently hack a Python script <scraping_hack>` that creates instances of
    ebpub.db.NewsItem, in any way you like.
 
-2. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
+3. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
    (eg. an RSS feed, or an HTML index page), with optional separate
    linked pages providing more detail about each record -- you can
-   build on the infrastructure in
-   ebdata.retrieval.scrapers.newsitem_list_detail.
+   write a Python script that builds on the infrastructure in
+   ``ebdata.retrieval.scrapers.newsitem_list_detail``.
 
 
-3. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
+4. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
    consumption, eg. big piles of HTML and/or binary files such as PDF
-   or Excel - you can build on ebdata.blobs.
+   or Excel - you can write a Python script that builds on ``ebdata.blobs``.
+
 
 Let's look at each option in turn. But first, we need a Schema.
 
@@ -35,14 +39,38 @@ This is fully documented at :doc:`schemas`.  Our examples will use
 schemas that are bootstrapped by installing :doc:`../packages/obdemo`.
 
 
+.. _scraping_rest_api:
+
+Using the REST API
+==================
+
+This is an especially good solution if you mainly have experience with, or access to
+programmers experienced with, languages other than Python.
+
+You can use any programming language or tool that's able to make HTTP
+connections to your OpenBlock site, and work with JSON data.
+That's just about any modern language.
+
+The general approach will be the same regardless of language:
+
+* Fetch data from the source you're interested in source
+* Parse the data
+* For each news item you parsed:
+
+  * Massage the item data into :ref:`the GeoJSON format <newsitem_json>` required by our API
+  * Send a :ref:`POST request <post_items>` to push the news item into OpenBlock.
+
+TODO: write an example, maybe in something other than Python?
+
 .. _scraping_hack:
 
 "Expedient Hack" scraping
 =========================
 
 
-If you only have a couple hours for a proof of concept, and aren't yet
-deeply familiar with OpenBlock, this is a good way to start.
+If you only have a couple hours for a proof of concept, can write a
+little Python, and aren't yet deeply familiar with OpenBlock, this is
+a good way to start.
 
 You can always refactor it into something more robust later.
 
