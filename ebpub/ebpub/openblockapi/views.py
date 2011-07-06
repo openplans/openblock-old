@@ -233,7 +233,7 @@ def throttle_check(request):
     """
     # First get best user identifier available.
     if request.user.is_authenticated():
-        identifier = request.REQUEST.get('username')
+        identifier = request.user.username
     elif request.META.get(KEY_HEADER, None) is not None:
         identifier = request.META[KEY_HEADER]
     else:
