@@ -75,7 +75,7 @@ TASKS = (
     # doesn't already have it.
     #
     # Example:
-+    # (multiple_daily(12, 0), run_some_function, {'arg': 'foo'}, {'DJANGO_SETTINGS_MODULE': 'foo.settings'})
+    # (multiple_daily(12, 0), run_some_function, {'arg': 'foo'}, {'DJANGO_SETTINGS_MODULE': 'foo.settings'})
     (multiple_hourly(*range(0, 60, 20)), do_news, {}, env),
     (multiple_hourly(*range(5, 60, 20)), do_seeclickfix, {}, env),
     (multiple_hourly(*range(7, 60, 20)), do_georeport, {}, env),
