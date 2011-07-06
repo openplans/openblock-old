@@ -8,6 +8,8 @@ class Migration(DataMigration):
 
     depends_on = (
         ("db", "0014__undo_0009"),
+        ("db", "0015_auto__add_field_schema_map_icon_url__add_field_schema_map_color"),
+
     )
 
     def forwards(self, orm):
