@@ -17,7 +17,7 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         
-        def _fx(model_id, key, attributes):
+        def _create_or_update(model_id, key, attributes):
             Model = orm[model_id]
             params = {'defaults': attributes}
             params.update(key)
@@ -27,7 +27,7 @@ class Migration(DataMigration):
             ob.save()
         
         
-        _fx("db.schema", {"slug": "local-news"}, {
+        _create_or_update("db.schema", {"slug": "local-news"}, {
             "allow_charting": True,
             "can_collapse": True,
             "date_name": "Date",
@@ -54,7 +54,7 @@ class Migration(DataMigration):
             "uses_attributes_in_list": False
         })
   
-        _fx("db.schema", {"slug": "events"}, {
+        _create_or_update("db.schema", {"slug": "events"}, {
             "is_special_report": False,
             "plural_name": "Events",
             "last_updated": "2010-10-21",
@@ -80,8 +80,8 @@ class Migration(DataMigration):
             "short_description": "List of events in Boston",
             "grab_bag": ""
         })
-        
-        _fx("db.schema", {"slug": "open311-service-requests"},{
+
+        _create_or_update("db.schema", {"slug": "open311-service-requests"},{
             "allow_charting": True,
             "can_collapse": False,
             "date_name": "Date",

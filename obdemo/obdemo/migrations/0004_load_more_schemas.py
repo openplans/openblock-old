@@ -11,7 +11,7 @@ class Migration(DataMigration):
     )
 
     def forwards(self, orm):
-        def _fx(model_id, key, attributes):
+        def _create_or_update(model_id, key, attributes):
             Model = orm[model_id]
             params = {'defaults': attributes}
             params.update(key)
@@ -21,7 +21,7 @@ class Migration(DataMigration):
             ob.save()
         
         
-        _fx('db.schema', {'slug': 'restaurant-inspections'}, {
+        _create_or_update('db.schema', {'slug': 'restaurant-inspections'}, {
             "is_special_report": False,
             "plural_name": "Restaurant Inspections",
             "last_updated": "2010-10-20",
@@ -49,7 +49,7 @@ class Migration(DataMigration):
         })
 
         schema = orm['db.schema'].objects.get(slug='restaurant-inspections')
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int02'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int02'}, {
             "is_lookup": False,
             "pretty_name_plural": "Inspection IDs",
             "is_charted": False,
@@ -63,7 +63,7 @@ class Migration(DataMigration):
             "schema": schema
         })
         
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Restaurant IDs",
             "is_charted": False,
@@ -77,7 +77,7 @@ class Migration(DataMigration):
             "schema": schema
         })
             
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Restaurant Names",
             "is_charted": False,
@@ -91,7 +91,7 @@ class Migration(DataMigration):
             "schema": schema
         })
         
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int03'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int03'}, {
             "is_lookup": True,
             "pretty_name_plural": "Results",
             "is_charted": False,
@@ -105,7 +105,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar02'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar02'}, {
             "is_lookup": True,
             "pretty_name_plural": "Violations",
             "is_charted": True,
@@ -119,7 +119,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'text01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'text01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Violation Details",
             "is_charted": False,
@@ -133,7 +133,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schema", {"slug": "police-reports"}, {
+        _create_or_update("db.schema", {"slug": "police-reports"}, {
             "is_special_report": False,
             "plural_name": "Boston Police Department reports",
             "last_updated": "2010-10-21",
@@ -160,7 +160,7 @@ class Migration(DataMigration):
             "grab_bag": ""
         })
 
-        _fx("db.schema", {"slug": "building-permits"}, {
+        _create_or_update("db.schema", {"slug": "building-permits"}, {
             "is_special_report": False,
             "plural_name": "Building Permits",
             "last_updated": "2010-10-22",
@@ -189,7 +189,7 @@ class Migration(DataMigration):
 
         schema = orm['db.schema'].objects.get(slug='building-permits')
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Raw Addresses",
             "is_charted": False,
@@ -203,7 +203,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schema", {"slug": "business-licenses"}, {
+        _create_or_update("db.schema", {"slug": "business-licenses"}, {
             "last_updated": "2011-04-05",
             "intro": "",
             "update_frequency": "",
@@ -232,7 +232,7 @@ class Migration(DataMigration):
 
         schema = orm['db.schema'].objects.get(slug='business-licenses')
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
             "is_lookup": True,
             "pretty_name_plural": "Business Types",
             "is_charted": False,
@@ -246,7 +246,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar02'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar02'}, {
             "is_lookup": False,
             "pretty_name_plural": "File Numbers",
             "is_charted": False,
@@ -260,7 +260,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Names",
             "is_charted": False,
@@ -274,7 +274,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar03'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar03'}, {
             "is_lookup": False,
             "pretty_name_plural": "Notes",
             "is_charted": False,
@@ -288,7 +288,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schema", {"slug": "issues"}, {
+        _create_or_update("db.schema", {"slug": "issues"}, {
             "is_special_report": False,
             "plural_name": "SeeClickFix Issues",
             "last_updated": "2010-10-22",
@@ -317,7 +317,7 @@ class Migration(DataMigration):
 
         schema = orm['db.schema'].objects.get(slug='issues')
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Ratings",
             "is_charted": False,
@@ -334,7 +334,7 @@ class Migration(DataMigration):
 
         schema = orm['db.schema'].objects.get(slug='open311-service-requests')
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar03'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar03'}, {
             "is_lookup": False,
             "pretty_name_plural": "Address IDs",
             "is_charted": False,
@@ -348,7 +348,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'datetime02'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'datetime02'}, {
             "is_lookup": False,
             "pretty_name_plural": "Expected Completion Dates",
             "is_charted": False,
@@ -362,7 +362,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar04'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar04'}, {
             "is_lookup": False,
             "pretty_name_plural": "Media URLs",
             "is_charted": False,
@@ -376,7 +376,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Request IDs",
             "is_charted": False,
@@ -390,7 +390,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'datetime01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'datetime01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Request Times",
             "is_charted": False,
@@ -404,7 +404,7 @@ class Migration(DataMigration):
             "schema": schema
         })
         
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int02'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int02'}, {
             "is_lookup": True,
             "pretty_name_plural": "Responsible Agencies",
             "is_charted": False,
@@ -418,7 +418,7 @@ class Migration(DataMigration):
             "schema": schema
         })
     
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar02'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar02'}, {
             "is_lookup": False,
             "pretty_name_plural": "Service Codes",
             "is_charted": False,
@@ -432,7 +432,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int01'}, {
             "is_lookup": True,
             "pretty_name_plural": "Service Names",
             "is_charted": False,
@@ -446,7 +446,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'text01'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'text01'}, {
             "is_lookup": False,
             "pretty_name_plural": "Service Notices",
             "is_charted": False,
@@ -460,7 +460,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'int03'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'int03'}, {
             "is_lookup": True,
             "pretty_name_plural": "Statuses",
             "is_charted": False,
@@ -474,7 +474,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {'schema': schema, 'real_name': 'varchar05'}, {
+        _create_or_update("db.schemafield", {'schema': schema, 'real_name': 'varchar05'}, {
             "is_lookup": False,
             "pretty_name_plural": "Status Notes",
             "is_charted": False,

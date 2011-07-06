@@ -9,17 +9,17 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        
-        def _fx(model_id, key, attributes):
+
+        def _create_or_update(model_id, key, attributes):
             Model = orm[model_id]
             params = {'defaults': attributes}
             params.update(key)
             ob, created = Model.objects.get_or_create(**params)
-            for k, v in attributes.items(): 
+            for k, v in attributes.items():
                 setattr(ob, k, v)
             ob.save()
 
-        _fx('db.schema', {"slug": "local-news"}, {
+        _create_or_update('db.schema', {"slug": "local-news"}, {
             "allow_charting": True,
             "can_collapse": True,
             "date_name": "Date",
@@ -47,7 +47,7 @@ class Migration(DataMigration):
         })
 
 
-        _fx('db.schema', {'slug': 'open311-service-requests'}, {
+        _create_or_update('db.schema', {'slug': 'open311-service-requests'}, {
             "allow_charting": True,
             "can_collapse": False,
             "date_name": "Date",
@@ -73,10 +73,10 @@ class Migration(DataMigration):
             "update_frequency": "",
             "uses_attributes_in_list": True
         })
-        
+
         schema = orm['db.schema'].objects.get(slug="open311-service-requests")
-        
-        _fx("db.schemafield", {"schema": schema, "real_name": "datetime02"}, {
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "datetime02"}, {
             "display": True,
             "display_order": 4,
             "is_charted": False,
@@ -89,8 +89,8 @@ class Migration(DataMigration):
             "real_name": "datetime02",
             "schema": schema
         })
-        
-        _fx("db.schemafield", {"schema": schema, "real_name": "varchar03"}, {
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "varchar03"}, {
             "display": False,
             "display_order": 10,
             "is_charted": False,
@@ -102,9 +102,9 @@ class Migration(DataMigration):
             "pretty_name_plural": "Address IDs",
             "real_name": "varchar03",
             "schema": schema
-        }) 
-        
-        _fx("db.schemafield", {"schema": schema, "real_name": "varchar04"}, {
+        })
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "varchar04"}, {
             "display": True,
             "display_order": 10,
             "is_charted": False,
@@ -117,9 +117,9 @@ class Migration(DataMigration):
             "real_name": "varchar04",
             "schema": schema
         })
-        
 
-        _fx("db.schemafield", {"schema": schema, "real_name": "varchar01"}, {
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "varchar01"}, {
             "display": True,
             "display_order": 10,
             "is_charted": False,
@@ -133,7 +133,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {"schema": schema, "real_name": "datetime01"}, {
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "datetime01"}, {
             "display": True,
             "display_order": 5,
             "is_charted": False,
@@ -147,7 +147,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {"schema": schema, "real_name": "int02"}, {
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "int02"}, {
             "display": True,
             "display_order": 6,
             "is_charted": False,
@@ -161,7 +161,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {"schema": schema, "real_name": "varchar02"}, {
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "varchar02"}, {
             "display": False,
             "display_order": 10,
             "is_charted": False,
@@ -175,7 +175,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-        _fx("db.schemafield", {"schema": schema, "real_name": "int01"}, {
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "int01"}, {
             "display": True,
             "display_order": 1,
             "is_charted": False,
@@ -188,8 +188,8 @@ class Migration(DataMigration):
             "real_name": "int01",
             "schema": schema
         })
-        
-        _fx("db.schemafield", {"schema": schema, "real_name": "text01"}, {
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "text01"}, {
             "display": True,
             "display_order": 10,
             "is_charted": False,
@@ -202,8 +202,8 @@ class Migration(DataMigration):
             "real_name": "text01",
             "schema": schema
         })
-            
-        _fx("db.schemafield", {"schema": schema, "real_name": "int03"}, {
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "int03"}, {
             "display": True,
             "display_order": 2,
             "is_charted": False,
@@ -216,8 +216,8 @@ class Migration(DataMigration):
             "real_name": "int03",
             "schema": schema
         })
-        
-        _fx("db.schemafield", {"schema": schema, "real_name": "varchar05"}, {
+
+        _create_or_update("db.schemafield", {"schema": schema, "real_name": "varchar05"}, {
             "display": True,
             "display_order": 3,
             "is_charted": False,
@@ -231,7 +231,7 @@ class Migration(DataMigration):
             "schema": schema
         })
 
-            
+
     def backwards(self, orm):
         "Write your backwards methods here."
         # We can't safely remove the default schemas because users may
