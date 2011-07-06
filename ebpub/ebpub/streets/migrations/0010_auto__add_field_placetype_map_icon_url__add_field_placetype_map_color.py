@@ -16,7 +16,25 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
-        
+        import tempfile, os, sys
+        sys.stderr.write("WARNING, destroying PlaceType.map_icon_url column\n")
+        sys.stderr.write("WARNING, destroying PlaceType.map_color column\n")
+        # Want to dump a fixture here.  Can't just use
+        # call_command('dumpdata') because it knows about *current*
+        # model code, not South's own ORM state.
+        tmpdir = tempfile.mkdtemp()
+        tmpname = os.path.join(tmpdir, 'placetypes_icons_colors.json')
+        sys.stderr.write("... will try to save data in %s\n" % tmpname)
+        try:
+            dumpfile = open(tmpname, 'w')
+            ptypes = orm.PlaceType.objects.all()
+            from django.core import serializers
+            serializer = serializers.get_serializer('json')()
+            serializer.serialize(ptypes, stream=dumpfile)
+            sys.stderr.write("\n... saved\n")
+        except Exception, e:
+            sys.stderr.write("\n... failed to save data:\n%s\n" % e)
+
         # Deleting field 'PlaceType.map_icon_url'
         db.delete_column('streets_placetype', 'map_icon_url')
 
