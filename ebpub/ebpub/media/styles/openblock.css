@@ -1018,3 +1018,7 @@ font-weight : bold;
 border-bottom : 0;
 }
 
+img.schema-icon {
+  height: 20px; width: 20px;
+  padding: 0px; margin: 0px;
+}
