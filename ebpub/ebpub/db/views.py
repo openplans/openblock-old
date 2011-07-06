@@ -964,7 +964,7 @@ def _preconfigured_map(context):
     ###########################
     # configure newsitem layer 
     # 
-    # TODO filtering? via api?
+    # TODO filtering? via api? see ticket #121
     ###########################
     
     # single news item ? 
@@ -986,8 +986,8 @@ def _preconfigured_map(context):
             layer_params[key] = val.strftime('%Y/%m/%d')
 
     # restricted by schema ?
-    schema = context.get('schema_slug')
-    if schema is not None: 
+    schema_slug = context.get('schema_slug')
+    if schema_slug is not None: 
         layer_params['schema'] = schema_slug
 
     items_layer = {
