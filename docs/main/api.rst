@@ -167,7 +167,7 @@ GET items.json
 
 Purpose
 ~~~~~~~
-Retrieve details of a certain set of news items as :ref:`json`.
+Retrieve details of a certain set of news items as :ref:`newsitem_json`.
 
 Parameters
 ~~~~~~~~~~
@@ -190,12 +190,12 @@ Response
 
 
 A successful response returns a GeoJSON FeatureCollection containing a list of 
-:ref:`json` features.  Each resulting Feature in the collection represents a "NewsItem" 
+:ref:`newsitem_json` features.  Each resulting Feature in the collection represents a "NewsItem"
 that matches the specified search criteria ordered by item date.
 
-Example result
+Example result:
 
-::
+.. code-block:: javascript
 
     {"type": "FeatureCollection", 
      "features": [
@@ -258,7 +258,7 @@ GET items/<id>.json
 Purpose
 ~~~~~~~
 
-Get a single NewsItem as :ref:`json`.
+Get a single NewsItem as :ref:`newsitem_json`.
 
 Parameters
 ~~~~~~~~~~
@@ -272,7 +272,7 @@ Response
     Status                                Meaning
 ------------------ ------------------------------------------------------------
       200          Found. The body will be the NewsItem represented as
-                   :ref:`json`.
+                   :ref:`newsitem_json`.
 ------------------ ------------------------------------------------------------
       404          The NewsItem does not exist.
 ------------------ ------------------------------------------------------------
@@ -317,9 +317,9 @@ Response
 A successful response contains a GeoJSON FeatureCollection with Features corresponding to the query given.  The list will contain multiple results if
 the match was ambiguous.
 
-Example response
+Example response:
 
-:: 
+.. code-block:: javascript
 
      "type": "FeatureCollection", 
      "features": [
@@ -371,9 +371,9 @@ described in the 'attributes' mapping.  Each attribute has a
 'pretty_name' and a 'type' (one of 'text', 'bool', 'int', 'date',
 'time', 'datetime').
 
-Example
+Example:
 
-::
+.. code-block:: javascript
 
    [{'elvis-sightings': {
       'indefinite_article': 'an',
@@ -424,9 +424,9 @@ following keys:
 * city - name of the city.
 * type - a Location Type slug. See :ref:`get_location_types`.
 
-Example
+Example:
 
-::
+.. code-block:: javascript
 
     [
      {
@@ -464,9 +464,9 @@ Response
 
 A GeoJSON Feature object representing one named location.
 
-Example
+Example:
 
-::
+.. code-block:: javascript
 
      { "type": "Feature",
       "geometry": {
@@ -505,7 +505,9 @@ Response
 
 A JSON object describing the location types available.
 
-Example::
+Example:
+
+.. code-block:: javascript
 
      {
       "towns": {"name": "Town",
@@ -528,8 +530,10 @@ Response
 
 A JSON object describing the place types available.
 
-Example::
- 
+Example:
+
+.. code-block:: javascript
+
     {
         "poi": {
             "name": "Point of Interest",
@@ -557,7 +561,9 @@ Response
 
 A GeoJSON feature collection object describing the places of the type specified.
 
-Example::
+Example:
+
+.. code-block:: javascript
 
     {
      "type": "FeatureCollection", 
@@ -706,7 +712,7 @@ Create a new NewsItem.  :ref:`Authentication required <api_auth>`.
 Parameters
 ~~~~~~~~~~
 
-The body of the POST must be a :ref:`json` representation of
+The body of the POST must be a :ref:`newsitem_json` representation of
 a single NewsItem.
 
 Note that you must include either the ``geometry``, or
@@ -736,6 +742,7 @@ Response
                    For example, if the required 'url' field is not
                    provided and the 'item_date' is in the wrong
                    format, the response would be::
+
                       {
                         "errors": {
                           "url": [
@@ -761,29 +768,57 @@ Response
 News Item Formats
 =================
 
-.. _json:
+.. _newsitem_json:
 
 NewsItem JSON Format
 --------------------
 
 A NewsItem is represented by a GeoJSON Feature containing:
  * a "geometry" attribute representing its specific location, generally a Point.
- * a "properties" attribute containing details of the news item according to its schema.
  * a "type" attribute, which is always "Feature".
+ * a "properties" attribute containing details of the news item according to its schema.
 
 See the GeoJSON specification for additional information on GeoJSON: 
 http://geojson.org/geojson-spec.html
 
+Example:
+
+.. code-block:: javascript
+
+ {
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -71.055719999999994, 42.359819999999999
+    ]
+   },
+   "type": "Feature",
+   "properties": {
+     "title": "Looked kind of like Elvis",
+     "type": "elvis-sightings",
+     "description": "Witnesses reported someone who looked just like Elvis except eight feet tall and with long red hair and green skin.",
+     "url": "http://example.com/elvis123",
+     "item_date": "2010-12-10",
+     "pub_date": "2010-12-10T16:55:01-06:00",
+     "verified": false,
+   }
+  }
+
+
 Common Properties
 ~~~~~~~~~~~~~~~~~
 
-The following properties are common to all Schema and will always be
+The following ``properties`` are common to all Schema and will always be
 present:
 
 ============= ================== ==========================================
 Name          Type               Meaning
 ------------- ------------------ ------------------------------------------
 title         text               Headline or other title from the source.
+------------- ------------------ ------------------------------------------
+type          text               Name (slug) of the item's type; this
+                                 must correspond to one of the values
+                                 returned by :ref:`get_types`
 ------------- ------------------ ------------------------------------------
 description   text               Summary of the news item.
 ------------- ------------------ ------------------------------------------
@@ -841,5 +876,34 @@ Location information is specified with :ref:`GeoRSS-Simple <georss>`.
 Extended schema attributes are specified in the
 "http://openblock.org/ns/0" namespace.
 
-FIXME: more detail, example
+Example:
+
+.. code-block:: xml
+
+  <?xml version="1.0" encoding="utf8"?>
+  <feed xmlns="http://www.w3.org/2005/Atom"
+        xmlns:openblock="http://openblock.org/ns/0"
+        xmlns:georss="http://www.georss.org/georss">
+     <title>openblock news item atom feed</title>
+     <link href="/api/dev1/items.json" rel="alternate"></link>
+     <link href="/api/dev1/items.atom" rel="self"></link>
+     <id>/api/dev1/items.atom</id>
+     <updated>2010-12-10T16:55:01-06:00</updated>
+     <entry>
+        <title>Looked kind of like Elvis</title>
+        <link href="http://example.com/elvis123" rel="alternate"></link>
+        <updated>2010-12-10T16:55:01-06:00</updated>
+        <id>...</id>
+        <summary type="html">Witnesses reported someone who looked just
+           like Elvis except eight feet tall and with long red hair and green skin.
+        </summary>
+        <georss:point>42.3598199999999991 -71.0557199999999938</georss:point>
+        <georss:featureName>4 S. Market St.</georss:featureName>
+        <openblock:type>elvis-sightings</openblock:type>
+        <openblock:attributes>
+           <openblock:attribute type="bool" name="verified">False</openblock:attribute>
+        </openblock:attributes>
+     </entry>
+  </feed>
+
 
