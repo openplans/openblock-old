@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils import feedgenerator
 from django.utils import simplejson
+from django.utils.cache import patch_response_headers
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
@@ -190,10 +191,10 @@ def _get_location_info(geometry, location_name):
         raise NotImplementedError("Should do geocoding here.")
     return location, location_name
 
-def rest_view(methods):
+def rest_view(methods, cache_timeout=None):
     """
     Decorator that applies throttling and restricts the available HTTP
-    methods.
+    methods, and optionally adds some HTTP cache headers based on cache_timeout.
     """
     def inner(func):
         @wraps(func)
@@ -207,7 +208,11 @@ def rest_view(methods):
                 response['Retry-After'] = str(seconds_throttled)
                 response['Content-Type'] = 'text/plain'
                 return response
-            return func(request, *args, **kwargs)
+            response = func(request, *args, **kwargs)
+            if cache_timeout is not None:
+                patch_response_headers(response, cache_timeout=cache_timeout)
+            return response
+
         return wrapper
     return inner
 
@@ -260,7 +265,7 @@ class HttpResponseUnavailable(HttpResponse):
 # View functions.
 ############################################################
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout = 7 * 24 * 60 * 60)
 def check_api_available(request):
     """
     endpoint to indicate that this version of the API
@@ -408,7 +413,7 @@ def _item_create(info):
     return item
 
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout=3600)
 def single_item_json(request, id_=None):
     """
     GET a single item as GeoJSON.
@@ -454,7 +459,7 @@ def _items_atom(items):
     return atom.writeString('utf8')
 
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout=3600)
 def geocode(request):
     # TODO: this will obsolete:
     # ebdata.geotagger.views.geocode and 
@@ -536,7 +541,7 @@ def _geocode_geojson(query):
 
     return features
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout = 24 * 3600)
 def list_types_json(request):
     """
     List the known NewsItem types (Schemas).
@@ -564,7 +569,7 @@ def list_types_json(request):
     return APIGETResponse(request, simplejson.dumps(schemas, indent=1),
                           content_type=JSON_CONTENT_TYPE)
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout=24 * 3600)
 def locations_json(request):
     locations = models.Location.objects.filter(is_public=True)
     loctype = request.GET.get('type')
@@ -585,7 +590,7 @@ def locations_json(request):
     return APIGETResponse(request, simplejson.dumps(loc_objs, indent=1),
                           content_type=JSON_CONTENT_TYPE)
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout=24 * 3600)
 def location_detail_json(request, loctype, slug):
     # TODO: this will obsolete ebpub.db.views.ajax_location
     try:
@@ -615,7 +620,7 @@ def location_detail_json(request, loctype, slug):
     geojson = simplejson.dumps(geojson, indent=1)
     return APIGETResponse(request, geojson, content_type=JSON_CONTENT_TYPE)
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout = 24 * 3600)
 def location_types_json(request):
     typelist = models.LocationType.objects.order_by('plural_name').values(
         'name', 'plural_name', 'scope', 'slug')
@@ -627,7 +632,7 @@ def location_types_json(request):
                          content_type=JSON_CONTENT_TYPE)
 
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout = 24 * 3600)
 def place_types_json(request):
     typelist = PlaceType.objects.filter(is_mappable=True).order_by('plural_name').values(
         'name', 'plural_name', 'slug')
@@ -640,7 +645,7 @@ def place_types_json(request):
     return APIGETResponse(request, simplejson.dumps(typedict, indent=1),
                          content_type=JSON_CONTENT_TYPE)
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout = 24 * 3600)
 def place_detail_json(request, placetype):
     try:
         placetype_obj = PlaceType.objects.get(slug=placetype, is_mappable=True)
