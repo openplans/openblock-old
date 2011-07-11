@@ -41,20 +41,23 @@ class ZipImporter(import_locations.LocationImporter):
         ds = DataSource(shapefile)
         layer = ds[opts.layer_id]
         super(ZipImporter, self).__init__(layer, location_type, opts)
+        self.zipcodes = {}
+        self.collapse_zip_codes()
 
-    def save(self):
+    def collapse_zip_codes(self):
         # The ESRI ZIP Code layer breaks ZIP Codes up along county
         # boundaries, so we need to collapse them first before
         # proceeding
-        verbose = self.opts.verbose
         name_field = self.opts.name_field
-        source = self.opts.source
-        zipcodes = {}
+
+        if len(self.zipcodes) > 0:
+            return
+
         for feature in self.layer:
             zipcode = feature.get(name_field)
             geom = feature.geom.geos
-            if zipcode not in zipcodes:
-                zipcodes[zipcode] = geom
+            if zipcode not in self.zipcodes:
+                self.zipcodes[zipcode] = geom
             else:
                 # If it's a MultiPolygon geom we're adding to our
                 # existing geom, we need to "unroll" it into its
@@ -63,45 +66,57 @@ class ZipImporter(import_locations.LocationImporter):
                     subgeoms = list(geom)
                 else:
                     subgeoms = [geom]
-                existing_geom = zipcodes[zipcode]
+                existing_geom = self.zipcodes[zipcode]
                 if not isinstance(existing_geom, MultiPolygon):
                     new_geom = MultiPolygon([existing_geom])
                     new_geom.extend(subgeoms)
-                    zipcodes[zipcode] = new_geom
+                    self.zipcodes[zipcode] = new_geom
                 else:
                     existing_geom.extend(subgeoms)
 
-        sorted_zipcodes = sorted(zipcodes.iteritems(), key=lambda x: int(x[0]))
+    def create_location(self, zipcode, geom, display_order=0):
+        print "got display_order", display_order
+        verbose = self.opts.verbose
+        source = self.opts.source
         now = datetime.datetime.now()
-        num_created = 0
-        for i, (zipcode, geom) in enumerate(sorted_zipcodes):
+        if not geom.valid:
+            geom = geom.buffer(0.0)
             if not geom.valid:
-                geom = geom.buffer(0.0)
-                if not geom.valid:
-                    print >> sys.stderr, 'Warning: invalid geometry for %s' % zipcode
-            geom.srid = 4326
-            kwargs = dict(
-                name = zipcode,
-                normalized_name = zipcode,
-                slug = zipcode,
-                location_type = self.location_type,
-                location = geom,
-                centroid = geom.centroid,
-                display_order = i,
-                city = self.metro_name,
-                source = source,
-                area = geom.transform(3395, True).area,
-                is_public = True,
-                creation_date = now,
-                last_mod_date = now,
-            )
-            if not self.should_create_location(kwargs):
-                continue
-            zipcode_obj, created = Location.objects.get_or_create(**kwargs)
+                print >> sys.stderr, 'Warning: invalid geometry for %s' % zipcode
+        geom.srid = 4326
+        kwargs = dict(
+            name = zipcode,
+            normalized_name = zipcode,
+            slug = zipcode,
+            location_type = self.location_type,
+            display_order = display_order,
+        )
+        zipcode_obj, created = Location.objects.get_or_create(**kwargs)
+        zipcode_obj.location = geom
+        zipcode_obj.centroid = geom.centroid
+        zipcode_obj.city = self.metro_name
+        zipcode_obj.source = source
+        zipcode_obj.area = geom.transform(3395, True).area
+        zipcode_obj.is_public = True
+        zipcode_obj.creation_date = now
+        zipcode_obj.last_mod_date = now
+        zipcode_obj.save()
+        if not self.should_create_location(kwargs):
+            return
+        if verbose:
+            print >> sys.stderr, '%s ZIP Code %s ' % (created and 'Created' or 'Already had', zipcode_obj.name)
+        return created
+
+    def import_zip(self, zipcode):
+        self.create_location(zipcode, self.zipcodes[zipcode])
+
+    def save(self):
+        num_created = 0
+        sorted_zipcodes = sorted(self.zipcodes.iteritems(), key=lambda x: int(x[0]))
+        for i, (zipcode, geom) in enumerate(sorted_zipcodes):
+            created = self.create_location(zipcode, geom, display_order=i)
             if created:
                 num_created += 1
-            if verbose:
-                print >> sys.stderr, '%s ZIP Code %s ' % (created and 'Created' or 'Already had', zipcode_obj.name)
         return num_created
 
 usage = 'usage: %prog [options] /path/to/shapefile'
