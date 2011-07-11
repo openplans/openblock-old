@@ -75,7 +75,6 @@ class ZipImporter(import_locations.LocationImporter):
                     existing_geom.extend(subgeoms)
 
     def create_location(self, zipcode, geom, display_order=0):
-        print "got display_order", display_order
         verbose = self.opts.verbose
         source = self.opts.source
         now = datetime.datetime.now()
