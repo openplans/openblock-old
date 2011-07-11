@@ -27,11 +27,27 @@ from ebpub.db import models
 from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.views import BadAddressException
 import datetime
+import logging
 import mock
 import urllib
 
 
-class ViewTestCase(TestCase):
+class BaseTestCase(TestCase):
+
+    def setUp(self):
+        # Don't log 404 warnings, we expect a lot of them during these
+        # tests.
+        logger = logging.getLogger('django.request')
+        self._previous_level = logger.getEffectiveLevel()
+        logger.setLevel(logging.ERROR)
+
+    def tearDown(self):
+        # Restore old log level.
+        logger = logging.getLogger('django.request')
+        logger.setLevel(self._previous_level)
+
+
+class ViewTestCase(BaseTestCase):
     "Unit tests for views.py."
     fixtures = ('crimes',)
 
@@ -83,7 +99,7 @@ class ViewTestCase(TestCase):
 
 
 
-class LocationDetailTestCase(TestCase):
+class LocationDetailTestCase(BaseTestCase):
     fixtures = ('test-locationdetail-views.json',)
 
     def test_location_type_detail(self):
@@ -115,7 +131,7 @@ class LocationDetailTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class TestAjaxViews(TestCase):
+class TestAjaxViews(BaseTestCase):
     fixtures = ('crimes.json',)
 
     @mock.patch('ebpub.db.views.FilterChain')
@@ -191,7 +207,7 @@ class TestAjaxViews(TestCase):
         self.assertEqual(len(items['features']), 3)
 
 
-class TestSchemaFilterView(TestCase):
+class TestSchemaFilterView(BaseTestCase):
 
     fixtures = ('test-schemafilter-views.json',)
 
