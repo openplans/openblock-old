@@ -22,8 +22,15 @@ from ebdata.blobs.models import Seed
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from django import forms
 from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render_to_response
+from django.contrib.admin.helpers import Fieldset
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, render, render_to_response
+from django.template import RequestContext
+from django.views.decorators.csrf import csrf_protect
+from datetime import datetime
+from re import findall
+from tasks import CENSUS_STATES, download_state_shapefile
+from background_task.models import Task
 
 
 class SchemaLookupsForm(forms.Form):
@@ -41,6 +48,20 @@ class BlobSeedForm(forms.Form):
     pretty_name = forms.CharField(max_length=128, widget=forms.TextInput(attrs={'size': 80}))
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
+
+class ImportZipShapefilesForm(forms.Form):
+
+    state = forms.ChoiceField(required=True, choices=CENSUS_STATES)
+    zip_codes = forms.CharField(required=True, widget=forms.Textarea())
+
+    def save(self):
+        if not self.is_valid():
+            return False
+
+        zip_codes = findall('\d{5}', self.cleaned_data['zip_codes'])
+        download_state_shapefile(self.cleaned_data['state'], zip_codes)
+
+        return True
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -166,4 +187,28 @@ def newsitem_details(request, news_item_id):
         })
     return render_to_response('obadmin/news_item_detail.html', {
         'news_item': ni, 'attributes': attributes
+    })
+
+def jobs_status(request):
+    pending = Task.objects.filter(run_at__lte=datetime.now(), failed_at=None)
+    download_count = pending.filter(task_name=u'obadmin.admin.tasks.download_state_shapefile').count()
+    import_count = pending.filter(task_name=u'obadmin.admin.tasks.import_zip_from_shapefile').count()
+
+    if download_count > 0 or import_count > 0:
+        return render(request, 'obadmin/location/jobs_status.html', {
+          'download_count': download_count,
+          'import_count': import_count,
+        })
+    else:
+        return HttpResponse("")
+
+@csrf_protect
+def import_zip_shapefiles(request):
+    form = ImportZipShapefilesForm(request.POST or None)
+    if form.save():
+        return HttpResponseRedirect('../')
+    fieldset = Fieldset(form, fields=('state', 'zip_codes',))
+    return render(request, 'obadmin/location/import_zip_shapefiles.html', {
+      'fieldset': fieldset,
+      'form': form,
     })
