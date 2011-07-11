@@ -40,3 +40,8 @@ docs/_build
 .ropeproject
 *,cover
 cover
+ebpub/build/*
+ebpub/dist/*
+obdemo/bin/tiger_data/*
+obdemo/bin/neighborhood_data/*
+obdemo/bin/zip_data/*
