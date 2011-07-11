@@ -19,6 +19,7 @@
 from django.test import TestCase
 from django.contrib.gis.geos import Point
 from ebpub.metros.models import Metro
+import logging
 
 pt_in_chicago = Point((-87.68489561595398, 41.852929331184384)) # point in center of Chicago
 pt_in_chi_bbox = Point((-87.83384627077956, 41.85365447332586)) # point just west of Chicago's border but due south of O'Hare
@@ -42,6 +43,18 @@ class MetroTest(TestCase):
 class MetroViewsTest(TestCase):
     fixtures = ['metros.json']
     urls = 'ebpub.metros.urls'
+
+    def setUp(self):
+        # Don't log 404 warnings, we expect a lot of them during these
+        # tests.
+        logger = logging.getLogger('django.request')
+        self._previous_level = logger.getEffectiveLevel()
+        logger.setLevel(logging.ERROR)
+
+    def tearDown(self):
+        # Restore old log level.
+        logger = logging.getLogger('django.request')
+        logger.setLevel(self._previous_level)
 
     def test_lookup_metro_success(self):
         # Tests getting a successful JSON response from a lng/lat query
