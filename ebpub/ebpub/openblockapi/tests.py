@@ -4,6 +4,7 @@ API tests
 import cgi
 import datetime
 import feedparser
+import logging
 import mock
 import pytz
 from django.contrib.gis import geos
@@ -11,33 +12,26 @@ from django.core.urlresolvers import reverse
 from ebpub.utils.django_testcase_backports import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
-from functools import wraps
-
 from ebpub.openblockapi import views
 from ebpub.openblockapi import auth
 
-def monkeypatch(obj, **patchkwargs):
-    """Decorator for temporarily replacing an object
-    during a test, with an arbitrary value.
-    Unlike mock.patch, this allows the value to be
-    things other than mock.Mock objects.
-    """
-    def patch(method):
-        @wraps(method)
-        def patched(*args, **kw):
-            origdict = {}
-            for key, value in patchkwargs.items():
-                origdict[key] = getattr(obj, key)
-                try:
-                    setattr(obj, key, value)
-                    return method(*args, **kw)
-                finally:
-                    setattr(obj, key, origdict[key])
-        return patched
-    return patch
+
+class BaseTestCase(TestCase):
+    def setUp(self):
+        # Don't log 404 warnings, we expect a lot of them during these
+        # tests.
+        logger = logging.getLogger('django.request')
+        self._previous_level = logger.getEffectiveLevel()
+        logger.setLevel(logging.ERROR)
+
+    def tearDown(self):
+        # Restore old log level.
+        logger = logging.getLogger('django.request')
+        logger.setLevel(self._previous_level)
+
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestAPI(TestCase):
+class TestAPI(BaseTestCase):
 
     fixtures = ('test-schema', 'test-locationtypes', 'test-locations')
 
@@ -118,7 +112,7 @@ class TestAPI(TestCase):
                          'http://testserver' + reverse('items_json'))
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestPushAPI(TestCase):
+class TestPushAPI(BaseTestCase):
 
     fixtures = ('test-schema',)
 
@@ -132,7 +126,8 @@ class TestPushAPI(TestCase):
             }
 
 
-    @monkeypatch(views, check_api_authorization=lambda request: True)
+    @mock.patch('ebpub.openblockapi.views.check_api_authorization',
+                mock.Mock(return_value=True))
     def test_create_basic(self):
         info = self._make_geojson(coords=[1.0, -1.0],
                                   description="Bananas!",
@@ -220,7 +215,7 @@ class TestPushAPI(TestCase):
 
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestQuickAPIErrors(TestCase):
+class TestQuickAPIErrors(BaseTestCase):
     # Test errors that happen before filters get applied,
     # so, no fixtures needed.
 
@@ -240,7 +235,7 @@ class TestQuickAPIErrors(TestCase):
         response = self.client.put(reverse('items_index'))
         self.assertEqual(response.status_code, 405)
 
-    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
+    @mock.patch('ebpub.openblockapi.views.LOCAL_TZ', pytz.timezone('US/Pacific'))
     def test_items_filter_date_invalid(self):
         qs = "?startdate=oops"
         response = self.client.get(reverse('items_json') + qs)
@@ -257,8 +252,9 @@ class TestQuickAPIErrors(TestCase):
 
 
 
+@mock.patch('ebpub.openblockapi.views.LOCAL_TZ', pytz.timezone('US/Pacific'))
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestItemSearchAPI(TestCase):
+class TestItemSearchAPI(BaseTestCase):
 
     fixtures = ('test-item-search.json', 'test-schema.yaml')
 
@@ -355,11 +351,6 @@ class TestItemSearchAPI(TestCase):
             assert item['openblock_type'] == u'type2'
 
 
-    # TODO: once DJango 1.4 is out, we might be able to remove this by
-    # using # the TestCase.settings context manager as per
-    # http://docs.djangoproject.com/en/dev/topics/testing/#overriding-settings
-    # ... or not; that's often too late.
-    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_extension_fields_json(self):
         schema = Schema.objects.get(slug='test-schema')
 
@@ -392,7 +383,6 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_result(items, ritems)
 
 
-    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_extension_fields_atom(self):
         schema = Schema.objects.get(slug='test-schema')
         ext_vals = {
@@ -438,7 +428,6 @@ class TestItemSearchAPI(TestCase):
         assert self._items_exist_in_xml_result(items, response.content)
 
 
-    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
         import pytz
@@ -480,7 +469,6 @@ class TestItemSearchAPI(TestCase):
         assert len(ritems['features']) == 3
         assert self._items_exist_in_result(items[1:], ritems)
 
-    @monkeypatch(views, LOCAL_TZ=pytz.timezone('US/Pacific'))
     def test_items_filter_daterange(self):
         # create some items, they will have
         # dates spaced apart by one day, newest first
@@ -643,7 +631,7 @@ def _make_items(number, schema):
     return items
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestGeocoderAPI(TestCase):
+class TestGeocoderAPI(BaseTestCase):
 
     fixtures = ('test-locationtypes', 
                 'test-locations.json',
@@ -729,8 +717,9 @@ class TestGeocoderAPI(TestCase):
         assert "Chestnut Sq. & Chestnut Ave." in names
         assert "Chestnut Pl. & Chestnut Ave." in names
 
+
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestLocationsAPI(TestCase):
+class TestLocationsAPI(BaseTestCase):
 
     fixtures = ('test-locationtypes.json', 'test-locations.json')
 
@@ -828,7 +817,7 @@ class TestLocationsAPI(TestCase):
 
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestPlacesAPI(TestCase):
+class TestPlacesAPI(BaseTestCase):
 
     fixtures = ('test-placetypes.json', 'test-places.json')
 
@@ -872,7 +861,7 @@ class TestPlacesAPI(TestCase):
 
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
-class TestOpenblockAtomFeed(TestCase):
+class TestOpenblockAtomFeed(BaseTestCase):
 
     def test_root_attrs(self):
         from ebpub.openblockapi.views import OpenblockAtomFeed
