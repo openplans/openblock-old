@@ -348,13 +348,6 @@ LOGGING = {
             'propagate': True,
             'level': 'INFO',
             },
-        # django.request logs all 404s at level WARN; not very useful
-        # and annoying during tests.
-        'django.request': {
-            'handlers':['console'],
-            'propagate': True,
-            'level':'ERROR',
-        },
         # 'django.request': {
         #     'handlers': ['mail_admins'],
         #     'level': 'ERROR',
