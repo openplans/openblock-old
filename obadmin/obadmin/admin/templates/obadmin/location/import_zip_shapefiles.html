@@ -21,12 +21,14 @@ Import Zip Shapefiles
 
     <div id="content-main">
         <p>
-            List what ZIP codes your site will cover, separated by spaces, commas,
-            or newlines, in the box below. OpenBlock with download and install
+            Paste in a list of ZIP codes your site will cover. (This form will
+            ignore any text, commas, etc., it just extracts any 5-digit codes
+            to use.) OpenBlock with download and install
             <a href="http://www2.census.gov/cgi-bin/shapefiles2009/national-files">shapefiles
-            from the U.S. Census Bureau</a> for them. (ZIP+4 is OK to paste in
-            here but only the first five digits will be used.) This is usually
-            only needed during the initial install of OpenBlock.
+            from the U.S. Census Bureau</a> for them. This is usually
+            only needed during the initial install of OpenBlock, but you can
+            run it multiple times for multiple states or to add more zips
+            later.
         </p>
 
         <form action="" method="post">{% csrf_token %}
