@@ -27,7 +27,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_protect
-from datetime import datetime
+from datetime import datetime, timedelta
 from re import findall
 from tasks import CENSUS_STATES, download_state_shapefile
 from background_task.models import Task
@@ -190,7 +190,14 @@ def newsitem_details(request, news_item_id):
     })
 
 def jobs_status(request):
-    pending = Task.objects.filter(run_at__lte=datetime.now(), failed_at=None)
+    pending = Task.objects.find_available()
+
+    # if there are old jobs and nothing's running, tell user to run tasks
+    old_time = datetime.now() - timedelta(seconds=(60 * 15))
+    stalled_count = pending.filter(run_at__lt=old_time).count()
+    if stalled_count > 0 and pending.filter(locked_at__isnull=False).count() == 0:
+        return HttpResponse("Queued jobs aren't being run. Is 'django-admin.py process_tasks' running?")
+
     download_count = pending.filter(task_name=u'obadmin.admin.tasks.download_state_shapefile').count()
     import_count = pending.filter(task_name=u'obadmin.admin.tasks.import_zip_from_shapefile').count()
 
