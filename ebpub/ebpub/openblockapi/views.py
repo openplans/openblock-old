@@ -236,6 +236,7 @@ def throttle_check(request):
     Based originally on code from TastyPie, copyright Daniel Lindsley,
     BSD license.
     """
+    
     # First get best user identifier available.
     if request.user.is_authenticated():
         identifier = request.user.username
