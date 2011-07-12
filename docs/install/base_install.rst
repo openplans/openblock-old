@@ -31,11 +31,11 @@ right directory.
 We'll be using ``pip`` to install some software, so make sure it's
 installed. Recent versions of virtualenv do this for you, but virtualenv 
 < 1.4.1 does not, so we need to make sure.  We also recommend that you 
-ensure that the latest version of distribute is installed:
+ensure that the latest versions of ``pip`` and ``distribute`` are installed:
 
 .. code-block:: bash
 
-    $ easy_install pip
+    $ easy_install --upgrade pip
     $ hash -r
     $ easy_install --upgrade distribute
 
