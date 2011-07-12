@@ -28,11 +28,11 @@ var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
     initialize: function(options) {
         OpenLayers.Strategy.Cluster.prototype.initialize.call(this, options);
         this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
-        
+
         if (typeof(options.eventListeners) != "undefined") {
             this.events.on(options.eventListeners)
         }
-        
+
         if (typeof(options.clusterSignature) != "undefined") {
             this.clusterSignature = options.clusterSignature;
         }
@@ -63,6 +63,207 @@ var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
     }
 });
 
+/****************************************
+*
+* obmap is the owning OBMap object
+*
+* center is the cluster center point lon,lat
+* 
+* features is a list of feature info objects containing:
+*
+* id - feature id
+* openblock_type - type of feature
+* lonlat - center lon,lat 
+* 
+****************************************/
+var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
+    initialize: function(obmap, center, features) {
+        this.featureInfo = features;
+        if (center != null) {
+            this.clusterCenter = center;
+        }
+        else {
+            this.clusterCenter = this.featureInfo[0].lonlat;
+        }
+
+        var initialHTML = '<div class="popup-container"><div class="popup-content"></div>';
+        if (this.featureInfo.length > 1) {
+            // Add next/previous nav links to the popup.
+            initialHTML += '<div class="popup-nav"><a class="popup-nav-prev" href="#">&larr;prev</a>&nbsp;<span id="clusteridx">1</span>&nbsp;of&nbsp;' + this.featureInfo.length
+              + '&nbsp;<a class="popup-nav-next" href="#">next&rarr;</a></div>';
+        }
+        initialHTML += '</div>';
+        
+        OpenLayers.Popup.FramedCloud.prototype.initialize.call(this, 
+            null, this.clusterCenter, null, initialHTML, {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(0, 0)},
+            true, // closeBox.
+            function() {
+                obmap._closePopup();
+                obmap.selectControl.unselectAll({'except': null});
+            }
+        );
+        
+        this.obmap = obmap;
+        this.featureIndex = 0;
+        this.maxSize = new OpenLayers.Size(320, 320);
+        this.contentDiv.className = "openblockFramedCloudPopupContent";
+        this.panMapIfOutOfView = true;
+
+        this.replaceHTML(0);
+    }
+});
+
+OpenblockPopup.prototype.draw = function()  {
+    var rc = OpenLayers.Popup.FramedCloud.prototype.draw.apply(this, arguments);
+    
+    var prev = $(this.contentDiv).find("a.popup-nav-prev");
+    var next = $(this.contentDiv).find("a.popup-nav-next");
+    // Clicking next or previous replaces the nav links html.
+    var thisPopup = this;
+    prev.click(function(e) {
+       e.preventDefault();
+       thisPopup.previousFeature();
+    });
+    next.click(function(e) {
+       e.preventDefault();
+       thisPopup.nextFeature();
+    });  
+
+    return rc;
+};
+
+OpenblockPopup.prototype.nextFeature = function() {
+    this.featureIndex = (this.featureIndex + 1) % this.featureInfo.length;
+    this.replaceHTML(this.featureIndex);
+};
+OpenblockPopup.prototype.previousFeature = function() {  
+    this.featureIndex = (this.featureIndex == 0) ? this.featureInfo.length - 1 : this.featureIndex - 1;
+    this.replaceHTML(this.featureIndex);
+};
+
+OpenblockPopup.prototype.checkPosition = function() {
+    /* determine where the popup should point.  If the new position 
+     * is still within the radius of the cluster, don't move.  It 
+     * may be far away though if the map was zoomed -- if this is the 
+     * case, move the popup over the new location.
+     */
+    var clonlat = this.clusterCenter;
+    var flonlat = this.featureInfo[this.featureIndex].lonlat;
+
+    var cpx = this.map.getLayerPxFromLonLat(clonlat);
+    var fpx = this.map.getLayerPxFromLonLat(flonlat);
+    var dx = cpx.x-fpx.x;
+    var dy = cpx.y-fpx.y;
+    var squaredDistance = dx*dx+dy*dy;
+    if (squaredDistance <= this.obmap.clusterDistance*this.obmap.clusterDistance) {
+        // use cluster center
+        this.lonlat = clonlat; 
+    }
+    else {
+        // use feature position
+        this.lonlat = flonlat;
+    }
+    this.updatePosition();
+    this.obmap.events.triggerEvent("popupchanged", {});
+};
+
+OpenblockPopup.prototype.replaceHTML = function(i) {
+    var feature = this.featureInfo[i];
+    var _setContent = function(html) {
+        if (this.featureIndex == i) { /* if still current */
+            $(this.contentDiv).find(".popup-content").replaceWith(html);
+            if (this.featureInfo.length > 1) {
+                $(this.contentDiv).find("#clusteridx").text(i+1);
+            }
+            this.checkPosition();
+            this.updateSize();
+            this.obmap.events.triggerEvent("popupchanged", {});
+        }
+    };
+    var popup_url = '/maps/popup/' + feature.openblock_type + '/' + feature.id;
+    jQuery.ajax({
+       url: popup_url,
+       dataType: 'html',
+       success: _setContent,
+       context: this
+    });
+};
+
+OpenblockPopup.prototype.getFocalFeature = function() {
+    return this.featureInfo[this.featureIndex];
+};
+
+
+/*************************************
+ * specialized permalink creator 
+ * adds popup state and a different encoding for layers 
+ *************************************/
+var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
+    initialize: function(obmap, options) {
+        var base_url = location.href;
+        var qsi = base_url.lastIndexOf('?');
+        if (qsi != -1) {
+            base_url = base_url.substring(0,qsi);
+        }    
+        OpenLayers.Control.Permalink.prototype.initialize.call(this, {'base': base_url});
+        this.obmap = obmap;
+        this.obmap.events.on({"popupchanged": this.updateLink, "scope": this});
+    },
+    
+    createParams: function(center, zoom, layers) {
+        var layers = '';
+        for (var i = 0; i < this.map.layers.length; i++) {
+            var layer = this.map.layers[i];
+            if (layer.getVisibility() == true && typeof(layer.layerConfig) != "undefined") {
+                var layerid = layer.layerConfig.id; 
+                if (typeof(layerid) != "undefined") {
+                    layers += layerid;
+                }
+            }
+        }
+        
+        
+        var params = {
+            'c': this._encodeLonLat(this.map.center),
+            'z': this.map.getZoom(),
+            'l': layers
+        };
+
+        var popup = this.obmap.popup;         
+        if (popup != null) {
+            // add some encoding for the popup state...
+            params.p = this._encodeLonLat(popup.lonlat);
+            params.f = this._encodeFeature(popup.getFocalFeature());
+        }
+        return params;
+    }, 
+    
+    _encodeFeature: function(feature) {
+        var fid = ''; 
+        if (feature.openblock_type == "place") {
+            fid = 'p' + feature.id;
+        }
+        else {
+            fid = 't' + feature.id;
+        }
+        return fid;
+    },
+    
+    _encodeLonLat: function(lonlat) {
+        var lat = lonlat.lat;
+        var lon = lonlat.lon;
+        
+        if (this.displayProjection) {
+            var mapPosition = OpenLayers.Projection.transform(
+              { x: lon, y: lat }, 
+              this.map.getProjectionObject(), 
+              this.displayProjection );
+            lon = mapPosition.x;  
+            lat = mapPosition.y;  
+        }      
+        return '' + Math.round(lon*100000)/100000 + '_' + Math.round(lat*100000)/100000; 
+    }
+});
 
 var OBMap = function(options) {
     /*
@@ -75,7 +276,8 @@ var OBMap = function(options) {
     * layers : list of layer configurations
     * baselayer_type : one of 'google', 'wms'
     * wms_url : if using a WMS baselayer, url 
-    *
+    * popup: initial popup configuration  
+    * 
     * layer configuration is an object with the follow attributes: 
     *  
     * url: url to a geojson layer 
@@ -83,14 +285,24 @@ var OBMap = function(options) {
     * title: string representing layer title
     * visible: boolean whether the layer is initially visible
     *
+    * popup configuration object has: 
+    * id: feature id
+    * openblock_type: feature type
+    * lonlat: [longitude, latitude]
+    * 
     */
+    this.popup = null; 
+    this.clusterDistance = 38;
+    this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
+
     this.options = options; 
     this._initBasicMap();
     this._configurePopup();
     this._configureLayers();
-    this.popup = null; 
-    this.clusterDistance = 38;
 };
+
+OBMap.prototype.events = null;
+OBMap.prototype.EVENT_TYPES = ["popupchanged"];
 
 /* default map options */
 OBMap.prototype.map_options = {
@@ -295,6 +507,7 @@ OBMap.prototype.loadFeatureLayer = function(layerConfig) {
         }),
         styleMap: this.getLayerStyleMap()
     });
+    layer.layerConfig = layerConfig;
     this.map.addLayers([layer]);
 };
 
@@ -309,7 +522,7 @@ OBMap.prototype.loadAllNewsLayers = function() {
         success: function(data, status, request) {
             for (var slug in data) {
                 if (data.hasOwnProperty(slug)) {
-                    var itemType = data[slug];                    
+                    var itemType = data[slug];
                     var layerConfig = {
                         title:  itemType["plural_name"],
                         url:    _obapi('/items.json'),
@@ -355,110 +568,28 @@ OBMap.prototype.loadAllPlaceLayers = function() {
 };
 
 
-OBMap.prototype._featureSelected = function(feature) {
+OBMap.prototype._featureSelected = function(feature) {    
+    var clusterCenter = feature.geometry.getBounds().getCenterLonLat();
+    var featureInfo = [];
+    for (var i = 0; i < feature.cluster.length; i++) {
+        var cur = feature.cluster[i];
+        featureInfo.push({id: cur.attributes.id, 
+                          openblock_type: cur.attributes.openblock_type, 
+                          lonlat: cur.geometry.getBounds().getCenterLonLat()});
+    }    
+    var popup = new OpenblockPopup(this, clusterCenter, featureInfo);
+    this.setPopup(popup);
+};
+
+OBMap.prototype.setPopup = function(popup) {
     // close any existing popup
     this._closePopup();
-    
-    var cluster = feature.cluster;
-    var clusterIdx = 0;
-    var firstFeature = cluster[0];
-    var initialHTML = '<div class="popup-container"><div class="popup-content"></div></div>';
-    
-    var theMap = this;
-    var popup = new OpenLayers.Popup.FramedCloud(
-        null, feature.geometry.getBounds().getCenterLonLat(), null, initialHTML,
-        {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(0, 0)},
-        true, // closeBox.
-        function() {
-            theMap._closePopup();
-            theMap.selectControl.unselectAll({'except': null});
-        }
-    );
-    popup.focalFeature = firstFeature;
-    popup.forCluster = feature;
-    popup.contentDiv.className = "openblockFramedCloudPopupContent";
-    popup.maxSize = new OpenLayers.Size(320, 320);
-    popup.panMapIfOutOfView = true;
     this.popup = popup;
     this.map.addPopup(popup);
-    
-    
-    popup.checkPosition = function() {
-        /* determine where the popup should point.  If the new position 
-         * is still within the radius of the cluster, don't move.  It 
-         * may be far away though if the map was zoomed -- if this is the 
-         * case, move the popup over the new location.
-         */
-        var clonlat = this.forCluster.geometry.getBounds().getCenterLonLat();
-        var flonlat = this.focalFeature.geometry.getBounds().getCenterLonLat();
-        var cpx = this.map.getLayerPxFromLonLat(clonlat);
-        var fpx = this.map.getLayerPxFromLonLat(flonlat);
-        var dx = cpx.x-fpx.x;
-        var dy = cpx.y-fpx.y;
-        var squaredDistance = dx*dx+dy*dy;
-        if (squaredDistance <= clusterSquaredDistance) {
-            // use cluster center
-            this.lonlat = clonlat; 
-        }
-        else {
-            // use feature position
-            this.lonlat = flonlat;
-        }
-        this.updatePosition();
-    };
-
-    var clusterSquaredDistance = this.clusterDistance*this.clusterDistance;
-    var replaceHtml = function(i) {
-        var f = cluster[i];
-
-        var _setContent = function(html) {
-            if (clusterIdx == i) { /* if still current */
-                popup.focalFeature = f;
-                $(popup.contentDiv).find(".popup-content").replaceWith(html);
-                if (cluster.length > 1) {
-                    $(popup.contentDiv).find("#clusteridx").text(i + 1);
-                }
-                popup.checkPosition(); 
-                popup.updateSize();
-                popup.panIntoView();
-            }
-        };
-
-        var popup_url = '/maps/popup/' + f.attributes.openblock_type + '/' + f.attributes.id;
-        jQuery.ajax({
-            url: popup_url,
-            dataType: 'html',
-            success: _setContent,
-            error: function(request, status, err) {
-                _setContent('<div class="popup-content">'+ status + '</div>');
-            }
-        });
-    };
-
-    if (cluster.length > 1) {
-        // Add next/previous nav links to the popup.
-        var navHtml = '<div class="popup-nav"><a class="popup-nav-prev" href="#">&larr;prev</a>&nbsp;<span id="clusteridx">1</span>&nbsp;of&nbsp;' + cluster.length
-		  + '&nbsp;<a class="popup-nav-next" href="#">next&rarr;</a></div>';
-        $(popup.contentDiv).find('.popup-container').append(navHtml);
-        var prev = $(popup.contentDiv).find("a.popup-nav-prev");
-        var next = $(popup.contentDiv).find("a.popup-nav-next");
-        // Clicking next or previous replaces the nav links html.
-        prev.click(function(e) {
-            e.preventDefault();
-            clusterIdx = (clusterIdx == 0) ? cluster.length - 1 : clusterIdx - 1;
-            replaceHtml(clusterIdx);
-        });
-        next.click(function(e) {
-            e.preventDefault();
-            clusterIdx = (clusterIdx + 1) % cluster.length;
-            replaceHtml(clusterIdx);
-        });
-    }
-    replaceHtml(0);
 };
 
 OBMap.prototype._featureUnselected = function(feature) {
-    if (this.popup && this.popup.forCluster == feature) {
+    if (this.popup != null) {
         this._closePopup();
     }
 }; 
@@ -468,6 +599,7 @@ OBMap.prototype._closePopup = function() {
         this.map.removePopup(this.popup);
         this.popup.destroy();
         this.popup = null;
+        this.events.triggerEvent("popupchanged", {});
     }
 };
 
@@ -487,8 +619,6 @@ OBMap.prototype._reloadSelectableLayers = function(event) {
 };
 
 
-
-
 OBMap.prototype._configurePopup = function() {
 
     this.selectControl = new OpenLayers.Control.SelectFeature([], {
@@ -504,6 +634,17 @@ OBMap.prototype._configurePopup = function() {
                             }
                         },
                         'scope': this});
-    
+
+    if (this.options.popup) {
+        var popup_center = new OpenLayers.LonLat(this.options.popup.lonlat[0], 
+                                                 this.options.popup.lonlat[1]);
+        popup_center.transform(this.map.displayProjection, this.map.projection);
+        var popup_feature = {
+            id: this.options.popup.id,
+            openblock_type: this.options.popup.openblock_type,
+            lonlat: popup_center
+        };
+        this.setPopup(new OpenblockPopup(this, popup_center, [popup_feature]));
+    }
 };
 
