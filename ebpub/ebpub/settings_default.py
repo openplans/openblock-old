@@ -209,9 +209,8 @@ required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
-OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
-#OPENLAYERS_URL = '/scripts/openlayers-2.9.1/OpenLayers.js'
-OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
+OPENLAYERS_URL = '/scripts/OpenLayers-2.11-rc1/OpenLayers.js'
+OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11-rc1/img/'
 
 # For local development you might try this:
 #JQUERY_URL = '/media/js/jquery.js'
