@@ -18,11 +18,12 @@
 # -*- coding: utf-8 -*-
 
 from background_task import background
-from django.contrib.auth.models import User
 from urllib import urlretrieve
 from string import maketrans
 from zipfile import ZipFile
 from ebpub.db.bin.import_zips import parse_args, ZipImporter
+import tempfile
+import os
 
 # These may look suspiciously like numbers, but we're matching identifiers
 # by the Census, and who knows what they'll do. Extracted from the source of
@@ -90,11 +91,18 @@ CENSUS_STATES = (
 def download_state_shapefile(state, zipcodes):
     n = dict(CENSUS_STATES)[state].upper().translate(maketrans(' ', '_'))
     url = "http://tigerline.census.gov/geo/tiger/TIGER2009/%(id)s_%(name)s/tl_2009_%(id)s_zcta5.zip" % { 'id': state, 'name': n }
+    # TODO: handle network errors, etc
+    # TODO: cache downloads?
     filename, headers = urlretrieve(url)
-    shapefile = 'tl_2009_%s_zcta5.shp' % state
-    ZipFile(filename, 'r').extract(shapefile, '/tmp')
+    tmp = tempfile.gettempdir()  # usually /tmp, but respects $TMPDIR
+    name = 'tl_2009_%s_zcta5' % state
+    files = [name + ext for ext in ('.shp', '.dbf', '.prj', '.shp.xml', '.shx')]
+    shapefile = os.path.join(tmp, '%s.shp' % name)
+    # TODO: handle errors (permission, tmp doesn't exist, zipfile corrupt,
+    # expected files aren't in the archive ...)
+    ZipFile(filename, 'r').extractall(tmp, files)
     for zipcode in zipcodes:
-      import_zip_from_shapefile("/tmp/%s" % shapefile, zipcode)
+        import_zip_from_shapefile(shapefile, zipcode)
 
 #@background
 def import_zip_from_shapefile(filename, zipcode):
@@ -102,9 +110,8 @@ def import_zip_from_shapefile(filename, zipcode):
     # so this zip importer creates a fake option block to call it with rather
     # than risk a big restructuring.
     opts, args = parse_args()
-
     importer = ZipImporter(filename, opts)
     try:
-      importer.import_zip(zipcode)
+        importer.import_zip(zipcode)
     except KeyError:
-        next # zip file not in shapefile
+        next # zip file not in shapefile. TODO: report error somehow
