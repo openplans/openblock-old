@@ -63,6 +63,16 @@ class ImportZipShapefilesForm(forms.Form):
 
         return True
 
+class UploadShapefileForm(forms.Form):
+    shapefile = forms.FileField()
+
+    def save(self):
+        if not self.is_valid():
+            return False
+
+        # store file to disk
+        # create object? background task?
+
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
 request_username = lambda request: request.META.get('REMOTE_USER', '') or request.META.get('HTTP_X_REMOTE_USER', '')
@@ -219,3 +229,21 @@ def import_zip_shapefiles(request):
       'fieldset': fieldset,
       'form': form,
     })
+
+@csrf_protect
+def upload_shapefile(request):
+    if request.method == 'POST':
+        form = UploadShapefileForm(request.POST, request.FILES)
+        if form.save():
+            return HttpResponseRedirect('../')
+    else:
+        form = UploadShapefileForm()
+
+    fieldset = Fieldset(form, fields=('shapefile',))
+    return render(request, 'obadmin/location/upload_shapefile.html', {
+      'fieldset': fieldset,
+      'form': form,
+    })
+
+def upload_file(request):
+    return render_to_response('upload.html', {'form': form})
