@@ -35,9 +35,8 @@ ensure that the latest versions of ``pip`` and ``distribute`` are installed:
 
 .. code-block:: bash
 
-    $ easy_install --upgrade pip
+    $ easy_install --upgrade pip distribute
     $ hash -r
-    $ easy_install --upgrade distribute
 
 Note that it's *very* important that ``pip`` is installed *in the
 virtualenv*.  If you only have pip installed globally on your system,
