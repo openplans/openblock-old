@@ -274,7 +274,7 @@ def check_api_available(request):
     """
     return HttpResponse(status=200)
 
-@rest_view(['GET'])
+@rest_view(['GET'], cache_timeout=3600)
 def items_json(request):
     """
     handles the items.json API endpoint

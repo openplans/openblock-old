@@ -214,8 +214,8 @@ def _object_limit(query, params, state):
     
     try: 
         limit = int(params.get('limit', 50))
-        if limit > 250: 
-            limit = 250
+        if limit > 1000: 
+            limit = 1000
     except:
         raise QueryError('Invalid limit')
     

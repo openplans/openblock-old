@@ -63,6 +63,55 @@ var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
     }
 });
 
+var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
+
+    merge: function(resp) {
+        
+        var existingFeatureIds = {};
+        var newFeatures = [];
+        for (var i = 0; i < this.layer.features.length; i++) {
+            for (var j = 0; j < this.layer.features[i].cluster.length; j++) {
+                var feature = this.layer.features[i].cluster[j];
+                existingFeatureIds[feature.attributes.id] = true;
+                // collect the old ones and re-add them, otherwise
+                // clustering goes bonkers. ;_;
+                newFeatures.push(feature);
+            }
+        }
+        
+        var features = resp.features;
+        if(features && features.length > 0) {
+            var remote = this.layer.projection;
+            var local = this.layer.map.getProjectionObject();
+            if(!local.equals(remote)) {
+                var geom;
+                for(var i=0, len=features.length; i<len; ++i) {
+                    geom = features[i].geometry;
+                    if(geom) {
+                        geom.transform(remote, local);
+                    }
+                }
+            }
+
+            for (var i = 0; i < features.length; i++) {
+                var feature = features[i];
+                if (existingFeatureIds[feature.attributes.id] != true) {
+                    newFeatures.push(feature);
+                }
+            }
+            
+            if (newFeatures.length > 0) {
+                this.layer.destroyFeatures();
+                this.layer.addFeatures(newFeatures);
+            }
+        }
+        this.response = null;
+        this.layer.events.triggerEvent("loadend");
+    }
+
+});
+
+
 /****************************************
 *
 * obmap is the owning OBMap object
@@ -228,6 +277,10 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
             'z': this.map.getZoom(),
             'l': layers
         };
+        extra_params = this.obmap.options.permalink_params; 
+        if (typeof(extra_params) != 'undefined') {
+            OpenLayers.Util.extend(params, extra_params);
+        }
 
         var popup = this.obmap.popup;         
         if (popup != null) {
@@ -277,6 +330,9 @@ var OBMap = function(options) {
     * baselayer_type : one of 'google', 'wms'
     * wms_url : if using a WMS baselayer, url 
     * popup: initial popup configuration  
+    * permalink_params: optional dictionary of global permalink parameters
+    * that should be included to link to this map. (many are constructed based
+    * on the map state, this applies only to other non-dynamic global options)
     * 
     * layer configuration is an object with the follow attributes: 
     *  
@@ -289,7 +345,7 @@ var OBMap = function(options) {
     * id: feature id
     * openblock_type: feature type
     * lonlat: [longitude, latitude]
-    * 
+    *
     */
     this.popup = null; 
     this.clusterDistance = 38;
@@ -415,11 +471,12 @@ OBMap.prototype.getLayerStyleMap = function() {
                feature.cluster[0].attributes.icon;  
     };
     
+    
     var defaultStyle = new OpenLayers.Style({
         pointRadius: "${radius}",
         externalGraphic: "${iconUrl}",
         fillColor: "${fillColor}",
-        fillOpacity: 0.8,
+        fillOpacity: "${fillOpacity}",
         strokeColor: defaultStrokeColor,
         strokeWidth: 2,
         strokeOpacity: 0.8,
@@ -438,6 +495,14 @@ OBMap.prototype.getLayerStyleMap = function() {
                 else {
                     // colored circle
                     return 8 + Math.min(feature.attributes.count * 0.7, 14);
+                }
+            },
+            fillOpacity: function(feature) {
+                if (_hasIcon(feature)) {
+                    return 1.0;
+                }
+                else {
+                    return 0.8;
                 }
             },
             iconUrl: function(feature) {
@@ -469,7 +534,7 @@ OBMap.prototype.getLayerStyleMap = function() {
 OBMap.prototype.loadFeatureLayer = function(layerConfig) {
 
     var layerStrategies = [
-        new OpenLayers.Strategy.Fixed({preload: true}),
+        new OpenLayers.Strategy.Fixed({preload: layerConfig['visible']}),
         new OpenblockCluster({
             distance: this.clusterDistance,
             clusterSignature: function(feature) {
@@ -487,15 +552,15 @@ OBMap.prototype.loadFeatureLayer = function(layerConfig) {
         })
     ];
     if (layerConfig.bbox == true) {
-        layerStrategies.push(new OpenLayers.Strategy.BBOX(
+        layerStrategies.push(new OpenblockMergeBBOX(
             {
-                ratio: 1.75,
-                resFactor: 3
+                ratio: 1.0,
+                resFactor: 1.0
             }
         ));
     }
 
-    var layer = new OpenLayers.Layer.Vector(layerConfig['title'], {
+    var cfg = {
         allowSelection: true,
         projection: this.map.displayProjection,
         visibility: layerConfig['visible'],
@@ -506,7 +571,13 @@ OBMap.prototype.loadFeatureLayer = function(layerConfig) {
             format: new OpenLayers.Format.GeoJSON()
         }),
         styleMap: this.getLayerStyleMap()
-    });
+    };
+    if (layerConfig.minZoom) {
+        cfg['restrictedMinZoom'] = layerConfig.minZoom;
+        cfg['alwaysInRange'] = false;
+    }
+
+    var layer = new OpenLayers.Layer.Vector(layerConfig['title'], cfg);
     layer.layerConfig = layerConfig;
     this.map.addLayers([layer]);
 };
