@@ -18,7 +18,8 @@
 # -*- coding: utf-8 -*-
 
 from background_task import background
-from urllib import urlretrieve
+from django.conf import settings
+from ebdata.retrieval.retrievers import Retriever
 from string import maketrans
 from zipfile import ZipFile
 from ebpub.db.bin.import_zips import parse_args, ZipImporter
@@ -90,17 +91,19 @@ CENSUS_STATES = (
 @background
 def download_state_shapefile(state, zipcodes):
     n = dict(CENSUS_STATES)[state].upper().translate(maketrans(' ', '_'))
-    url = "http://tigerline.census.gov/geo/tiger/TIGER2009/%(id)s_%(name)s/tl_2009_%(id)s_zcta5.zip" % { 'id': state, 'name': n }
-    # TODO: handle network errors, etc
-    # TODO: cache downloads?
-    filename, headers = urlretrieve(url)
-    tmp = tempfile.gettempdir()  # usually /tmp, but respects $TMPDIR
-    name = 'tl_2009_%s_zcta5' % state
+    name         = "tl_2009_%s_zcta5" % state
+    zip_filename = "%s.zip" % name
+    cache_dir    = getattr(settings, 'HTTP_CACHE', tempfile.gettempdir())
+    path         = os.path.join(cache_dir, zip_filename)
+    url = "http://tigerline.census.gov/geo/tiger/TIGER2009/%(id)s_%(name)s/%(zip_filename)s" % { 'id': state, 'name': n, 'zip_filename': zip_filename }
+
+    Retriever().cached_get_to_file(url, path)
+
     files = [name + ext for ext in ('.shp', '.dbf', '.prj', '.shp.xml', '.shx')]
-    shapefile = os.path.join(tmp, '%s.shp' % name)
-    # TODO: handle errors (permission, tmp doesn't exist, zipfile corrupt,
+    shapefile = os.path.join(cache_dir, '%s.shp' % name)
+    # TODO: handle corrupt/incomplete/missing files zipfile
     # expected files aren't in the archive ...)
-    ZipFile(filename, 'r').extractall(tmp, files)
+    ZipFile(path, 'r').extractall(cache_dir, files)
     for zipcode in zipcodes:
         import_zip_from_shapefile(shapefile, zipcode)
 
