@@ -25,7 +25,7 @@ Import From Shapefile
             select a layer to import.
         </p>
 
-        <form action="" method="post">{% csrf_token %}
+        <form action="" enctype="multipart/form-data" method="post">{% csrf_token %}
             {% include "admin/includes/fieldset.html" %}
             <div class="submit-row"><input class="button default" type="submit" value="Upload" /></div>
         </form>
