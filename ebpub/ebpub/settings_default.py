@@ -172,10 +172,6 @@ required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 # There's an example in obdemo/settings.py.in
 required_settings.append('METRO_LIST')
 
-# Where to center citywide maps by default.
-required_settings.append('DEFAULT_MAP_CENTER_LON')
-required_settings.append('DEFAULT_MAP_CENTER_LAT')
-required_settings.append('DEFAULT_MAP_ZOOM')
 
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
@@ -188,11 +184,6 @@ EB_TODAY_OVERRIDE = None
 
 # This is used as a "From:" in e-mails sent to users.
 required_settings.append('GENERIC_EMAIL_SENDER')
-
-# Map stuff.
-# XXX UNUSED?
-required_settings.append('MAP_SCALES')
-MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
 
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
@@ -208,29 +199,26 @@ required_settings.append('SCRAPER_LOGFILE_NAME')
 required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
 
+####################
+# MAP CONFIGURATION
+####################
+
+# Where to center citywide maps by default.
+required_settings.append('DEFAULT_MAP_CENTER_LON')
+required_settings.append('DEFAULT_MAP_CENTER_LAT')
+required_settings.append('DEFAULT_MAP_ZOOM')
+
+# XXX UNUSED?
+required_settings.append('MAP_SCALES')
+MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
+
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
-#OPENLAYERS_URL = '/scripts/openlayers-r10972/OpenLayers.js'
-#OPENLAYERS_IMG_PATH = '/scripts/openlayers-r10972/img/'
 OPENLAYERS_URL = '/scripts/OpenLayers-2.11-rc1/OpenLayers.js'
 OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11-rc1/img/'
 
 # For compatibility with django-olwidget
 OL_API = OPENLAYERS_URL
-
-# For local development you might try this:
-#JQUERY_URL = '/media/js/jquery.js'
-JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'
-
-# Static media optimizations: whitespace slimming, URL timestamping.
-# see https://github.com/peterbe/django-static#readme
-# This supercedes the everyblock-specific template tags in
-# everyblock.templatetags.staticmedia.
-DJANGO_STATIC = True
-DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
-                             EB_MEDIA_ROOT + '/styles',
-                             EB_MEDIA_ROOT + '/scripts',
-                             ]
 
 # Javascript map options.
 # TODO: merge this with olwidget config
@@ -293,6 +281,24 @@ MAP_CUSTOM_BASE_LAYERS = {
          }
 }
 
+##################
+# MEDIA
+##################
+
+# For local development you might try this:
+#JQUERY_URL = '/media/js/jquery.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'
+
+# Static media optimizations: whitespace slimming, URL timestamping.
+# see https://github.com/peterbe/django-static#readme
+# This supercedes the everyblock-specific template tags in
+# everyblock.templatetags.staticmedia.
+DJANGO_STATIC = True
+DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
+                             EB_MEDIA_ROOT + '/styles',
+                             EB_MEDIA_ROOT + '/scripts',
+                             ]
+
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
@@ -303,15 +309,10 @@ DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
 # but olwidget needs this set:
 STATIC_URL='/'
 
-# Geocoding.
-# Set this True to cache geocoder results in the database;
-# it's faster but makes troubleshooting harder.
-# (Why doesn't it just use the normal django caching framework?)
-EBPUB_CACHE_GEOCODER = True
-required_settings.append('EBPUB_CACHE_GEOCODER')
+###############
+# REST API
+###############
 
-######################################################################
-# API Keys for OpenBlock's REST API.
 # Warning, if you increase API_KEY_SIZE after running syncdb, you'll
 # have to modify the size of the 'key' field in the 'key_apikey' table
 # in your database.
@@ -324,10 +325,13 @@ API_THROTTLE_TIMEFRAME = 60 * 60 # default 1 hour.
 API_THROTTLE_EXPIRATION = 60 * 60 * 24 * 7
 
 # NOTE in order to enable throttling, you MUST also configure
-# CACHES['default'] to something other than a DummyCache.  See CACHES
-# below.
+# CACHES['default'] to something other than a DummyCache.  See the CACHES
+# setting.
 
-#########################################################################
+
+###########
+# Caching.
+###########
 ## For development & testing, DummyCache makes for easiest troubleshooting.
 ## See https://docs.djangoproject.com/en/1.3/ref/settings/#std:setting-CACHES
 #
@@ -344,9 +348,19 @@ CACHES = {
 }
 
 
+#############
+# OTHER
+#############
+
+# Set this True to cache geocoder results in the database;
+# it's faster but makes troubleshooting harder.
+# (Why doesn't it just use the normal django caching framework?)
+EBPUB_CACHE_GEOCODER = True
+required_settings.append('EBPUB_CACHE_GEOCODER')
 
 # Required by django-apikey to associate keys with user profiles.
 AUTH_PROFILE_MODULE = 'preferences.Profile'
+
 
 ###################################################################
 # Logging.
