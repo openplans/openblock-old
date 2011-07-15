@@ -65,11 +65,8 @@ class OBMapWidget(Map):
         context so we can provide extra data to our customized
         map template.
         """
-        raw = getattr(settings, 'EXTRA_OLWIDGET_CONTEXT', {})
-        context = {}
-        for key, val in raw.items():
-            context[key] = simplejson.dumps(val)
-        return context
+        from ebpub.db.context_processors import _get_extra_layers
+        return {'MAP_CUSTOM_BASE_LAYERS': _get_extra_layers}
 
 class OBMapField(MapField):
     """

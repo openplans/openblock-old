@@ -1,31 +1,19 @@
 <div id="{{ id }}"></div>
+<!-- Need this to load in our custom base layer constructor, at
+     least until/unless olwidget gains this feature. -->
+<script type="text/javascript" src="/scripts/openblockrichmap.js" charset="utf-8"></script>
+
 {{ layer_html|join:"" }}
 <script type="text/javascript">
+
+    // Custom base layers hook for OpenBlock:
+    var customBaseLayers = {{ MAP_CUSTOM_BASE_LAYERS|safe|default:'{}' }};
+
     var olwidget_map_{{id}} = new olwidget.Map("{{ id }}", [
             {{ layer_js|join:"," }}
         ], 
         {{ map_opts|safe }}
     );
-
-    // Hook to add more base layers.
-    var custom_layers = {{ custom_base_layers|default:"[]"|safe }};
-
-    for (var i=0, len=custom_layers.length; i < len; ++i) {
-        olwidget_map_{{id}}.addLayer(new OpenLayers.Layer[custom_layers[i].class] (
-          custom_layers[i].name, custom_layers[i].url,
-          custom_layers[i].params, custom_layers[i].options));
-    };
-
-    // Hook to use any named layer, even custom, as the default base layer.
-    var default_base_layer = {{ default_base_layer|default:"''"|safe }};
-    if (default_base_layer != '') {
-        new_base = olwidget_map_{{id}}.getLayersByName(default_base_layer);
-        if (new_base.length > 0) {
-            olwidget_map_{{id}}.setBaseLayer(new_base[0]);
-        };
-    };
-
-    olwidget_map_{{id}}.initCenter();
 
     // Open up the editing control by default.
     for (var i = 0; i < olwidget_map_{{id}}.controls.length; i++) {

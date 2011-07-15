@@ -20,7 +20,8 @@ Required variables: nearby_locations, place, is_block
 		  function loadMap() {
 		    var config = {{map_configuration}};
     		config.bounds = [{{bbox.0}}, {{bbox.1}}, {{bbox.2}}, {{bbox.3}}];
-		    return new OBMap(config);
+    		config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+    		return new OBMap(config);
 		  }
 	 	{% endautoescape %}
 		</script>

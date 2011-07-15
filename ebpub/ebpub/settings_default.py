@@ -220,57 +220,30 @@ OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11-rc1/img/'
 # For compatibility with django-olwidget
 OL_API = OPENLAYERS_URL
 
-# Javascript map options.
-# TODO: merge this with olwidget config
-# TODO update docs
+# Which base layer to use on maps.
+# May be any of the default olwidget base layers,
+# as per http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display
+# or you may use 'custom.X' where X is a key in MAP_CUSTOM_BASE_LAYERS, see below.
 
-# Which olwidget layer constructor to use for the public site's maps.
-#MAP_BASELAYER_TYPE = 've.shaded'
-#MAP_BASELAYER_TYPE = 'custom.opengeo_osm'
-MAP_BASELAYER_TYPE = 'custom.opengeo_osm'
+MAP_BASELAYER_TYPE = 'google.streets' #'custom.opengeo_osm'
 required_settings.append('MAP_BASELAYER_TYPE')
 
-_WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
 
 # If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
-# TODO consolidate this in one section, update docs.
 GOOGLE_API_KEY='your API key here'
 
-# XXX this affects ONLY the admin UI for now.
-# Which olwidget base layer options to allow switching between?
-# See http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display
-# for list of possible choices.
-# Example:
-OLWIDGET_LAYERS = ['google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
+# This affects ONLY the admin UI.
+# TODO: only need one "layer selecting" view showing ALL the layers,
+# and then once it's chosen, all other views will just use the selected base layer.
+OLWIDGET_LAYERS = ['custom.opengeo_osm',
+                   'google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
 
-# Hackery to add custom base layers & other js data for customized django-olwidget.
-# Currently only applies to admin UI maps.
-EXTRA_OLWIDGET_CONTEXT = {
-    # Override this to set the default base layer.  eg:
-    #'default_base_layer': 'google.streets',
-    'default_base_layer': MAP_BASELAYER_TYPE,  #'OpenStreetMap (OpenGeo)',
-
-    # Custom layers. TODO: hack django-olwidget and/or richmaps to support this
-    'custom_base_layers':
-        [{"class": "WMS",
-          "name": "OpenStreetMap (OpenGeo)",
-          "url": _WMS_URL,
-          "params": {"layers": "openstreetmap",
-                     "format": "image/png",
-                     "bgcolor": "#A1BDC4"
-                     },
-          "options": {"wrapDateLine": True}
-          }
-         ]
-    }
-
-# XXX TESTING
 MAP_CUSTOM_BASE_LAYERS = {
     'opengeo_osm':
         {"class": "WMS",
          "args": [
             "OpenStreetMap (OpenGeo)",
-            _WMS_URL,
+            "http://maps.opengeo.org/geowebcache/service/wms",
             {"layers": "openstreetmap",
              "format": "image/png",
              "bgcolor": "#A1BDC4",

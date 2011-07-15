@@ -40,9 +40,9 @@ def map_context(request):
     # XXX TODO: can we slim or at least version the olwidget JS & CSS?
     # note they are set as settings.OLWIDGET_JS and settings.OLWIDGET_CSS,
     # could possibly munge those?
-
     return {'OPENLAYERS_IMG_PATH': settings.OPENLAYERS_IMG_PATH,
             'JQUERY_URL': settings.JQUERY_URL,
             'MAP_MEDIA_HTML': _get_map_media,
             'MAP_CUSTOM_BASE_LAYERS': _get_extra_layers,
+            'MAP_BASELAYER_TYPE': settings.MAP_BASELAYER_TYPE,
             }
