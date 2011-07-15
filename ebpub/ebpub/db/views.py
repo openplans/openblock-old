@@ -950,9 +950,9 @@ def _preconfigured_map(context):
     
     config = {
         'locations': [],
-        'layers': []
-    };
-    
+        'layers': [],
+    }
+
     # load layer boundary if a Location is specified
     location = context.get('location')
     if location is not None:
@@ -1003,8 +1003,7 @@ def _preconfigured_map(context):
         'visible': True
     }
     config['layers'].append(items_layer)
-    
-    return simplejson.dumps(config);
+    return simplejson.dumps(config, indent=2)
 
 
 

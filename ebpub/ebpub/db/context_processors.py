@@ -21,12 +21,28 @@ obdemo-specific stuff we might need in templates.
 """
 
 from django.conf import settings
+import simplejson
 
-def urls(request):
-    return {'OPENLAYERS_URL': settings.OPENLAYERS_URL,
-            'OPENLAYERS_IMG_PATH': settings.OPENLAYERS_IMG_PATH,
-            'MAP_BASELAYER_TYPE': settings.MAP_BASELAYER_TYPE,
-            'GOOGLE_API_KEY': getattr(settings, 'GOOGLE_API_KEY', '') or '',
-            'WMS_URL': getattr(settings, 'WMS_URL', '') or '',
+def _get_map_media():
+    from olwidget.widgets import Map
+    layers = [settings.MAP_BASELAYER_TYPE]
+    map_media = Map([], options={'layers': layers}).media
+    return map_media.render()
+
+def _get_extra_layers():
+    layers = getattr(settings, 'MAP_CUSTOM_BASE_LAYERS', [])
+    return simplejson.dumps(layers, indent=2)
+
+def map_context(request):
+    """
+    Context variables needed on pages that use maps.
+    """
+    # XXX TODO: can we slim or at least version the olwidget JS & CSS?
+    # note they are set as settings.OLWIDGET_JS and settings.OLWIDGET_CSS,
+    # could possibly munge those?
+
+    return {'OPENLAYERS_IMG_PATH': settings.OPENLAYERS_IMG_PATH,
             'JQUERY_URL': settings.JQUERY_URL,
+            'MAP_MEDIA_HTML': _get_map_media,
+            'MAP_CUSTOM_BASE_LAYERS': _get_extra_layers,
             }

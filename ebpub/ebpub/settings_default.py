@@ -59,7 +59,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
     'django.contrib.auth.context_processors.auth',
     'django.contrib.messages.context_processors.messages',
-    'ebpub.db.context_processors.urls',
+    'ebpub.db.context_processors.map_context',
     'django.core.context_processors.request',
     #'django.core.context_processors.debug',
 )
@@ -233,38 +233,40 @@ DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
                              ]
 
 # Javascript map options.
-# Options for MAP_BASELAYER_TYPE are 'google' or 'wms'.
 # TODO: merge this with olwidget config
-MAP_BASELAYER_TYPE='wms'
+# TODO update docs
+
+# Which olwidget layer constructor to use for the public site's maps.
+#MAP_BASELAYER_TYPE = 've.shaded'
+#MAP_BASELAYER_TYPE = 'custom.opengeo_osm'
+MAP_BASELAYER_TYPE = 'custom.opengeo_osm'
 required_settings.append('MAP_BASELAYER_TYPE')
 
-# If you set MAP_BASELAYER_TYPE='wms', you must also set WMS_URL
-# and point it to your WMS server.  This default gives you hosted OpenStreetMap tiles.
-# TODO: This isn't really functional, we've hardcoded the layer name to 'openstreetmap'
-WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
+_WMS_URL="http://maps.opengeo.org/geowebcache/service/wms"
 
-# If you set MAP_BASELAYER_TYPE='google', you must also set GOOGLE_API_KEY.
+# If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
+# TODO consolidate this in one section, update docs.
 GOOGLE_API_KEY='your API key here'
 
+# XXX this affects ONLY the admin UI for now.
 # Which olwidget base layer options to allow switching between?
 # See http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display
 # for list of possible choices.
 # Example:
 OLWIDGET_LAYERS = ['google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
 
-
 # Hackery to add custom base layers & other js data for customized django-olwidget.
 # Currently only applies to admin UI maps.
 EXTRA_OLWIDGET_CONTEXT = {
     # Override this to set the default base layer.  eg:
     #'default_base_layer': 'google.streets',
-    'default_base_layer': 'OpenStreetMap (OpenGeo)',
+    'default_base_layer': MAP_BASELAYER_TYPE,  #'OpenStreetMap (OpenGeo)',
 
-    # Custom layers.
+    # Custom layers. TODO: hack django-olwidget and/or richmaps to support this
     'custom_base_layers':
         [{"class": "WMS",
           "name": "OpenStreetMap (OpenGeo)",
-          "url": WMS_URL,
+          "url": _WMS_URL,
           "params": {"layers": "openstreetmap",
                      "format": "image/png",
                      "bgcolor": "#A1BDC4"
@@ -274,6 +276,22 @@ EXTRA_OLWIDGET_CONTEXT = {
          ]
     }
 
+# XXX TESTING
+MAP_CUSTOM_BASE_LAYERS = {
+    'opengeo_osm':
+        {"class": "WMS",
+         "args": [
+            "OpenStreetMap (OpenGeo)",
+            _WMS_URL,
+            {"layers": "openstreetmap",
+             "format": "image/png",
+             "bgcolor": "#A1BDC4",
+             },
+            {"wrapDateLine": True
+             },
+            ],
+         }
+}
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,

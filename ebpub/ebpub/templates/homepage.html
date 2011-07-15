@@ -22,7 +22,6 @@
 		  function loadMap() {
   		  var config = {{map_configuration}};
         config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
-        config.wms_url = "{{ WMS_URL }}";    
         config.center = [{{default_lon}}, {{default_lat}}];
         config.zoom = {{default_zoom}};
         return new OBMap(config);        

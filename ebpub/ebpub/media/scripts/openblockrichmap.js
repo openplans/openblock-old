@@ -8,23 +8,23 @@ function _obapi(path) {
 }
 
 function _report_error(error) {
-    /* FIXME */ 
+    /* FIXME */
 }
 
 var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
-    /* inherits fro the OpenLayers.Strategy.Cluster class and 
+    /* inherits fro the OpenLayers.Strategy.Cluster class and
      * adds a pre-reclustering notification and splitting of clusters
      * based on characteristics of a feature.
-     * 
-     * options: 
-     * 
-     * clusterSignature: a function accepting a feature and returning a string that 
+     *
+     * options:
+     *
+     * clusterSignature: a function accepting a feature and returning a string that
      *   characerizes the cluster 'type' it belongs to.
      */
     events: null,
 
     EVENT_TYPES: ["beforecluster"],
-                  
+
     initialize: function(options) {
         OpenLayers.Strategy.Cluster.prototype.initialize.call(this, options);
         this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
@@ -50,12 +50,12 @@ var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
         }
         return OpenLayers.Strategy.Cluster.prototype.cluster.call(this, event);
     },
-    
+
     shouldCluster: function(cluster, feature) {
-        return OpenLayers.Strategy.Cluster.prototype.shouldCluster.call(this, cluster, feature) && 
+        return OpenLayers.Strategy.Cluster.prototype.shouldCluster.call(this, cluster, feature) &&
                this.clusterSignature(feature) == cluster.signature;
-    }, 
-    
+    },
+
     createCluster: function(feature) {
         var cluster = OpenLayers.Strategy.Cluster.prototype.createCluster.call(this, feature);
         cluster.signature = this.clusterSignature(feature);
@@ -66,7 +66,7 @@ var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
 var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
 
     merge: function(resp) {
-        
+
         var existingFeatureIds = {};
         var newFeatures = [];
         for (var i = 0; i < this.layer.features.length; i++) {
@@ -78,7 +78,7 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
                 newFeatures.push(feature);
             }
         }
-        
+
         var features = resp.features;
         if(features && features.length > 0) {
             var remote = this.layer.projection;
@@ -99,7 +99,7 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
                     newFeatures.push(feature);
                 }
             }
-            
+
             if (newFeatures.length > 0) {
                 this.layer.destroyFeatures();
                 this.layer.addFeatures(newFeatures);
@@ -117,13 +117,13 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
 * obmap is the owning OBMap object
 *
 * center is the cluster center point lon,lat
-* 
+*
 * features is a list of feature info objects containing:
 *
 * id - feature id
 * openblock_type - type of feature
-* lonlat - center lon,lat 
-* 
+* lonlat - center lon,lat
+*
 ****************************************/
 var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
     initialize: function(obmap, center, features) {
@@ -142,8 +142,8 @@ var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
               + '&nbsp;<a class="popup-nav-next" href="#">next&rarr;</a></div>';
         }
         initialHTML += '</div>';
-        
-        OpenLayers.Popup.FramedCloud.prototype.initialize.call(this, 
+
+        OpenLayers.Popup.FramedCloud.prototype.initialize.call(this,
             null, this.clusterCenter, null, initialHTML, {size: new OpenLayers.Size(1, 1), offset: new OpenLayers.Pixel(0, 0)},
             true, // closeBox.
             function() {
@@ -151,7 +151,7 @@ var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
                 obmap.selectControl.unselectAll({'except': null});
             }
         );
-        
+
         this.obmap = obmap;
         this.featureIndex = 0;
         this.maxSize = new OpenLayers.Size(320, 320);
@@ -164,7 +164,7 @@ var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
 
 OpenblockPopup.prototype.draw = function()  {
     var rc = OpenLayers.Popup.FramedCloud.prototype.draw.apply(this, arguments);
-    
+
     var prev = $(this.contentDiv).find("a.popup-nav-prev");
     var next = $(this.contentDiv).find("a.popup-nav-next");
     // Clicking next or previous replaces the nav links html.
@@ -176,7 +176,7 @@ OpenblockPopup.prototype.draw = function()  {
     next.click(function(e) {
        e.preventDefault();
        thisPopup.nextFeature();
-    });  
+    });
 
     return rc;
 };
@@ -185,15 +185,15 @@ OpenblockPopup.prototype.nextFeature = function() {
     this.featureIndex = (this.featureIndex + 1) % this.featureInfo.length;
     this.replaceHTML(this.featureIndex);
 };
-OpenblockPopup.prototype.previousFeature = function() {  
+OpenblockPopup.prototype.previousFeature = function() {
     this.featureIndex = (this.featureIndex == 0) ? this.featureInfo.length - 1 : this.featureIndex - 1;
     this.replaceHTML(this.featureIndex);
 };
 
 OpenblockPopup.prototype.checkPosition = function() {
-    /* determine where the popup should point.  If the new position 
-     * is still within the radius of the cluster, don't move.  It 
-     * may be far away though if the map was zoomed -- if this is the 
+    /* determine where the popup should point.  If the new position
+     * is still within the radius of the cluster, don't move.  It
+     * may be far away though if the map was zoomed -- if this is the
      * case, move the popup over the new location.
      */
     var clonlat = this.clusterCenter;
@@ -206,7 +206,7 @@ OpenblockPopup.prototype.checkPosition = function() {
     var squaredDistance = dx*dx+dy*dy;
     if (squaredDistance <= this.obmap.clusterDistance*this.obmap.clusterDistance) {
         // use cluster center
-        this.lonlat = clonlat; 
+        this.lonlat = clonlat;
     }
     else {
         // use feature position
@@ -244,8 +244,8 @@ OpenblockPopup.prototype.getFocalFeature = function() {
 
 
 /*************************************
- * specialized permalink creator 
- * adds popup state and a different encoding for layers 
+ * specialized permalink creator
+ * adds popup state and a different encoding for layers
  *************************************/
 var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
     initialize: function(obmap, options) {
@@ -253,46 +253,46 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
         var qsi = base_url.lastIndexOf('?');
         if (qsi != -1) {
             base_url = base_url.substring(0,qsi);
-        }    
+        }
         OpenLayers.Control.Permalink.prototype.initialize.call(this, {'base': base_url});
         this.obmap = obmap;
         this.obmap.events.on({"popupchanged": this.updateLink, "scope": this});
     },
-    
+
     createParams: function(center, zoom, layers) {
         var layers = '';
         for (var i = 0; i < this.map.layers.length; i++) {
             var layer = this.map.layers[i];
             if (layer.getVisibility() == true && typeof(layer.layerConfig) != "undefined") {
-                var layerid = layer.layerConfig.id; 
+                var layerid = layer.layerConfig.id;
                 if (typeof(layerid) != "undefined") {
                     layers += layerid;
                 }
             }
         }
-        
-        
+
+
         var params = {
             'c': this._encodeLonLat(this.map.center),
             'z': this.map.getZoom(),
             'l': layers
         };
-        extra_params = this.obmap.options.permalink_params; 
+        extra_params = this.obmap.options.permalink_params;
         if (typeof(extra_params) != 'undefined') {
             OpenLayers.Util.extend(params, extra_params);
         }
 
-        var popup = this.obmap.popup;         
+        var popup = this.obmap.popup;
         if (popup != null) {
             // add some encoding for the popup state...
             params.p = this._encodeLonLat(popup.lonlat);
             params.f = this._encodeFeature(popup.getFocalFeature());
         }
         return params;
-    }, 
-    
+    },
+
     _encodeFeature: function(feature) {
-        var fid = ''; 
+        var fid = '';
         if (feature.openblock_type == "place") {
             fid = 'p' + feature.id;
         }
@@ -301,57 +301,56 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
         }
         return fid;
     },
-    
+
     _encodeLonLat: function(lonlat) {
         var lat = lonlat.lat;
         var lon = lonlat.lon;
-        
+
         if (this.displayProjection) {
             var mapPosition = OpenLayers.Projection.transform(
-              { x: lon, y: lat }, 
-              this.map.getProjectionObject(), 
+              { x: lon, y: lat },
+              this.map.getProjectionObject(),
               this.displayProjection );
-            lon = mapPosition.x;  
-            lat = mapPosition.y;  
-        }      
-        return '' + Math.round(lon*100000)/100000 + '_' + Math.round(lat*100000)/100000; 
+            lon = mapPosition.x;
+            lat = mapPosition.y;
+        }
+        return '' + Math.round(lon*100000)/100000 + '_' + Math.round(lat*100000)/100000;
     }
 });
 
 var OBMap = function(options) {
     /*
-    * options: 
+    * options:
     *
     * center : pair of floating point values [lon, lat]
     * zoom : floating point value representing map scale
     * bounds : list of 4 floating point values [minlon,minlat,maxlon,maxlat]
     * locations : list of layer configurations
     * layers : list of layer configurations
-    * baselayer_type : one of 'google', 'wms'
-    * wms_url : if using a WMS baselayer, url 
-    * popup: initial popup configuration  
+    * baselayer_type : any of OLWidget's constructor names, eg 'google.streets'
+    * popup: initial popup configuration
     * permalink_params: optional dictionary of global permalink parameters
     * that should be included to link to this map. (many are constructed based
     * on the map state, this applies only to other non-dynamic global options)
-    * 
-    * layer configuration is an object with the follow attributes: 
-    *  
-    * url: url to a geojson layer 
-    * params: dictionary of parameters to use when fetching the layer 
+    *
+    * layer configuration is an object with the follow attributes:
+    *
+    * url: url to a geojson layer
+    * params: dictionary of parameters to use when fetching the layer
     * title: string representing layer title
     * visible: boolean whether the layer is initially visible
     *
-    * popup configuration object has: 
+    * popup configuration object has:
     * id: feature id
     * openblock_type: feature type
     * lonlat: [longitude, latitude]
     *
     */
-    this.popup = null; 
+    this.popup = null;
     this.clusterDistance = 38;
     this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
 
-    this.options = options; 
+    this.options = options;
     this._initBasicMap();
     this._configurePopup();
     this._configureLayers();
@@ -362,44 +361,25 @@ OBMap.prototype.EVENT_TYPES = ["popupchanged"];
 
 /* default map options */
 OBMap.prototype.map_options = {
-    projection: new OpenLayers.Projection("EPSG:900913"), // meters
-    displayProjection: new OpenLayers.Projection("EPSG:4326"), // lon/lat
-    units: "m",
     numZoomLevels: 19,
-    // Max boundaries = whole world.
-    maxResolution: 156543.03390625,
-    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+    maxResolution: 156543.03390625
 };
 
 OBMap.prototype._initBasicMap = function() {
-    /* initialize the map with base layer, bounds and 
+    /* initialize the map with base layer, bounds and
      * other common settings.
      */
-    this.map = new OpenLayers.Map("detailmap", this.map_options);
-    if ( this.options.baselayer_type == "google" ) {
-        var google = new OpenLayers.Layer.Google("Google", {
-            wrapDateLine: true, sphericalMercator: true,
-            displayInLayerSwitcher: false
-        });
-        this.map.addLayers([google]);
-    }
-    else if ( this.options.baselayer_type == "wms" ) {
-        var osm = new OpenLayers.Layer.WMS("OpenStreetMap", this.options.wms_url, {
-             layers: "openstreetmap",
-             format: "image/png",
-             bgcolor: "#A1BDC4"
-        }, {
-             wrapDateLine: true,
-             displayInLayerSwitcher: false
-        });
-        this.map.addLayers([osm]);
-    }
-    else {
-        alert("Map type must be one of 'wms' or 'google', got " + this.options.baselayer_type);
-    }
+    var olwidget_options = {
+        mapOptions: this.map_options,
+        layers: [this.options.baselayer_type],
+        // Hack to force NOT setting width/height on the div, let our CSS apply instead.
+        mapDivStyle: {width: '', height: ''}
+    };
+    this.map = new olwidget.Map("detailmap", [], olwidget_options);
+
 
     if (typeof(this.options.center) != "undefined") {
-        var map_center = new OpenLayers.LonLat(this.options.center[0], this.options.center[1]); 
+        var map_center = new OpenLayers.LonLat(this.options.center[0], this.options.center[1]);
         map_center.transform(this.map.displayProjection, this.map.projection);
         this.map.setCenter(map_center, this.options.zoom);
     }
@@ -457,7 +437,7 @@ OBMap.prototype.loadLocationBorder = function(layerConfig) {
 
 OBMap.prototype.getLayerStyleMap = function() {
     /* returns the default StyleMap for news / place layers */
-    var defaultStrokeColor, defaultFillColor; 
+    var defaultStrokeColor, defaultFillColor;
     if (this.options.baselayer_type == "google") {
         defaultStrokeColor = "#0041F4";
         defaultFillColor = "#00A66C";
@@ -468,10 +448,10 @@ OBMap.prototype.getLayerStyleMap = function() {
 
     var _hasIcon = function(feature) {
         return typeof(feature.cluster[0].attributes.icon) != 'undefined' &&
-               feature.cluster[0].attributes.icon;  
+               feature.cluster[0].attributes.icon;
     };
-    
-    
+
+
     var defaultStyle = new OpenLayers.Style({
         pointRadius: "${radius}",
         externalGraphic: "${iconUrl}",
@@ -488,7 +468,7 @@ OBMap.prototype.getLayerStyleMap = function() {
             radius: function(feature) {
                 // Size of cluster, in pixels.
                 if (_hasIcon(feature)) {
-                    // icon size bonus for number of features in the cluster. 
+                    // icon size bonus for number of features in the cluster.
                     // 0 for 1, growing logarithmically to a max of 8 for 10 features.
                     return 10 + Math.min(3.474*Math.log(feature.attributes.count), 8);
                 }
@@ -543,7 +523,7 @@ OBMap.prototype.loadFeatureLayer = function(layerConfig) {
                     return $.trim(feature.attributes.icon).toLowerCase();
                 }
                 else if (typeof(feature.attributes.color) != 'undefined' && feature.attributes.color) {
-                    return $.trim(feature.attributes.color).toLowerCase(); 
+                    return $.trim(feature.attributes.color).toLowerCase();
                 }
                 else {
                     return null;
@@ -639,15 +619,15 @@ OBMap.prototype.loadAllPlaceLayers = function() {
 };
 
 
-OBMap.prototype._featureSelected = function(feature) {    
+OBMap.prototype._featureSelected = function(feature) {
     var clusterCenter = feature.geometry.getBounds().getCenterLonLat();
     var featureInfo = [];
     for (var i = 0; i < feature.cluster.length; i++) {
         var cur = feature.cluster[i];
-        featureInfo.push({id: cur.attributes.id, 
-                          openblock_type: cur.attributes.openblock_type, 
+        featureInfo.push({id: cur.attributes.id,
+                          openblock_type: cur.attributes.openblock_type,
                           lonlat: cur.geometry.getBounds().getCenterLonLat()});
-    }    
+    }
     var popup = new OpenblockPopup(this, clusterCenter, featureInfo);
     this.setPopup(popup);
 };
@@ -663,7 +643,7 @@ OBMap.prototype._featureUnselected = function(feature) {
     if (this.popup != null) {
         this._closePopup();
     }
-}; 
+};
 
 OBMap.prototype._closePopup = function() {
     if (this.popup != null) {
@@ -679,7 +659,7 @@ OBMap.prototype._reloadSelectableLayers = function(event) {
         var select_layers = [];
         for (var i in this.map.layers) {
             var layer = this.map.layers[i];
-            if (typeof(layer.allowSelection) != 'undefined' && 
+            if (typeof(layer.allowSelection) != 'undefined' &&
                 layer.allowSelection == true) {
                 select_layers.push(layer);
             }
@@ -697,7 +677,7 @@ OBMap.prototype._configurePopup = function() {
         onUnselect: this._featureUnselected,
         scope: this
     });
-    this.map.addControl(this.selectControl);    
+    this.map.addControl(this.selectControl);
     this.map.events.on({'addlayer': this._reloadSelectableLayers,
                         'zoomend': function() {
                             if (this.popup != null) {
@@ -707,7 +687,7 @@ OBMap.prototype._configurePopup = function() {
                         'scope': this});
 
     if (this.options.popup) {
-        var popup_center = new OpenLayers.LonLat(this.options.popup.lonlat[0], 
+        var popup_center = new OpenLayers.LonLat(this.options.popup.lonlat[0],
                                                  this.options.popup.lonlat[1]);
         popup_center.transform(this.map.displayProjection, this.map.projection);
         var popup_feature = {
@@ -719,3 +699,25 @@ OBMap.prototype._configurePopup = function() {
     }
 };
 
+// Hack to better support custom base layer constructors in OLWidget.
+olwidget['custom'] = {
+    map: function(type) {
+        var classname = customBaseLayers[type]['class'];
+        var class_ = OpenLayers.Layer[classname];
+        var args = customBaseLayers[type].args;
+        // Can't use .apply() directly with an OL constructor, because we don't have
+        // a suitable `this` argument.
+        // Here's the magic: Use a constructor function with a .prototype
+        // property the same as our class.prototype.
+        // The `new` keyword creates an instance from that prototype
+        // which will be used as `this` in the constructor call.
+        // Has to be done this way because the instance's actual prototype is a
+        // magical hidden value that JS doesn't expose, and `new` is the only way
+        // to set it. Thanks Tim Schaub for explaining javascript OOP to me.
+        var constructor = function() {
+            class_.prototype.initialize.apply(this, args);
+        };
+        constructor.prototype = class_.prototype;
+        return new constructor();
+    }
+};

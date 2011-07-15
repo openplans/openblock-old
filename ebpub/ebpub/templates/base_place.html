@@ -16,15 +16,13 @@ Required variables: nearby_locations, place, is_block
 	{% block map %}
 	<div id="mapwrapper">
 		<script type="text/javascript">
-      {% autoescape off %}
+		{% autoescape off %}
 		  function loadMap() {
-		    var config = {{map_configuration}};    			
+		    var config = {{map_configuration}};
     		config.bounds = [{{bbox.0}}, {{bbox.1}}, {{bbox.2}}, {{bbox.3}}];
-        config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
-        config.wms_url = "{{ WMS_URL }}";    
-        return new OBMap(config);        
+		    return new OBMap(config);
 		  }
-      {% endautoescape %}
+	 	{% endautoescape %}
 		</script>
 		{% include "richmaps/richmap.html" %}
 	</div><!--/ #mapwrapper -->

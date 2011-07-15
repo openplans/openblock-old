@@ -52,18 +52,16 @@
 		  <script type="text/javascript">
 		  {% autoescape off %}
 		  function loadMap() {
-  		  var config = {{map_configuration}};
-        config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
-        config.wms_url = "{{ WMS_URL }}";    
-        {% if bbox %}
-        config.bounds = [{{bbox.0}},{{bbox.1}},{{bbox.2}},{{bbox.3}}];
-        {% else %}
-        config.center = [{{default_lon}}, {{default_lat}}];
-        config.zoom = {{default_zoom}};
-        {% endif %}
-        return new OBMap(config);
-  		}
-  		{% endautoescape %}
+		  var config = {{map_configuration}};
+		  {% if bbox %}
+		  config.bounds = [{{bbox.0}},{{bbox.1}},{{bbox.2}},{{bbox.3}}];
+		  {% else %}
+		  config.center = [{{default_lon}}, {{default_lat}}];
+		  config.zoom = {{default_zoom}};
+		  {% endif %}
+		  return new OBMap(config);
+		  }
+		  {% endautoescape %}
 		  </script>
 		  {% include "richmaps/richmap.html" %}
 		</div><!--/ #mapwrapper -->

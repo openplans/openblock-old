@@ -24,13 +24,6 @@
 var $j = $;
 </script>
 
-{% comment %} we don't use slimall or slimfile for OpenLayers because
-we've got an already-minified openlayers build; and we don't use
-staticall because we break image URLs then.  And it's not needed
-anyway since our openlayers directory is versioned already.
-{% endcomment %}
-<script charset="utf-8" type="text/javascript" src="{{ OPENLAYERS_URL }}"></script>
-
 <!-- begin block extrahead -->
 {% block extrahead %}{% endblock %}
 <!-- end block extrahead -->

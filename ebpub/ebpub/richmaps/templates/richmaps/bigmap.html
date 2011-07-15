@@ -24,7 +24,6 @@
           var config = {{map_config}};
 
           config['baselayer_type']  = "{{ MAP_BASELAYER_TYPE }}";
-          config['wms_url'] = "{{ WMS_URL }}";
 
           var map = new OBMap(config);
           map.map.addControl(new OpenLayers.Control.LayerSwitcher());

@@ -1,18 +1,22 @@
 {% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 {% load django_static %}
 <!-- richmap.html  -->
-{% if OPENLAYERS_IMG_PATH %}
-<script type="text/javascript">
-OpenLayers.ImgPath = "{{ OPENLAYERS_IMG_PATH }}";
 
+<script type="text/javascript">
 {% comment %}
 /* this expects that a loadMap() function 
  * has been defined in the specific template. 
  * It should create and return an OBMap.
  */
 {% endcomment %}
+/* Hook for providing named custom base layers via settings. */
+var customBaseLayers = {{ MAP_CUSTOM_BASE_LAYERS|safe|default:'{}' }}
+
 var _setupMap = function() {
-  var map = loadMap();
+    {% if OPENLAYERS_IMG_PATH %}
+    OpenLayers.ImgPath = "{{ OPENLAYERS_IMG_PATH }}";
+    {% endif %}
+    var map = loadMap();
 };
 
 if (jQuery.browser.msie) {
@@ -21,18 +25,20 @@ if (jQuery.browser.msie) {
     });
 } else {
     jQuery(document).ready(function() {
-        _setupMap(); 
+        _setupMap();
     });
 }
-</script>
-{% endif %}
-{% ifequal MAP_BASELAYER_TYPE 'google' %} 
-<script src="http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key={{ GOOGLE_MAPS_KEY }}" type="text/javascript"></script>
-{% endifequal %}
 
-{%comment%}{% slimall %}{%endcomment%}
+
+</script>
+
+{{ MAP_MEDIA_HTML|safe }}
+{% slimall %}
 <script type="text/javascript" src="/scripts/openblockrichmap.js" charset="utf-8"></script>
-{%comment%}{% endslimall %}{%endcomment%}
+{% endslimall %}
 
 <div id="detailmap"></div>
+
+
 <!-- end richmap.html -->
+
