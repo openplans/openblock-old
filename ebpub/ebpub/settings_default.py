@@ -225,19 +225,25 @@ OL_API = OPENLAYERS_URL
 # as per http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display
 # or you may use 'custom.X' where X is a key in MAP_CUSTOM_BASE_LAYERS, see below.
 
-MAP_BASELAYER_TYPE = 'google.streets' #'custom.opengeo_osm'
+# For example:
+#MAP_BASELAYER_TYPE = 'google.streets'
+MAP_BASELAYER_TYPE = 'custom.opengeo_osm'
 required_settings.append('MAP_BASELAYER_TYPE')
 
 
 # If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
 GOOGLE_API_KEY='your API key here'
+# TODO: document Yahoo & other base layers requiring keys
 
-# This affects ONLY the admin UI.
-# TODO: only need one "layer selecting" view showing ALL the layers,
-# and then once it's chosen, all other views will just use the selected base layer.
+# This affects ONLY the admin UI, so it's not very useful.
+# TODO: admin UI really only needs one "layer selecting" view showing ALL the layers,
+# and then once it's chosen, it writes that config somewhere and
+# *all* other views will just use the selected base layer.
 OLWIDGET_LAYERS = ['custom.opengeo_osm',
                    'google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
 
+# You can use ANY OpenLayers base layer configuration, with a little extra work,
+# like so:
 MAP_CUSTOM_BASE_LAYERS = {
     'opengeo_osm':
         {"class": "WMS",
@@ -253,6 +259,8 @@ MAP_CUSTOM_BASE_LAYERS = {
             ],
          }
 }
+# TODO: update docs to reflect that!!
+
 
 ##################
 # MEDIA
