@@ -21,13 +21,15 @@ from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from django import forms
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.conf import settings
 from django.contrib.admin.helpers import Fieldset
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.template import RequestContext
-from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from datetime import datetime, timedelta
+import os
 from re import findall
 from tasks import CENSUS_STATES, download_state_shapefile
 from background_task.models import Task
@@ -64,14 +66,15 @@ class ImportZipShapefilesForm(forms.Form):
         return True
 
 class UploadShapefileForm(forms.Form):
-    shapefile = forms.FileField()
+    shapefile = forms.FileField(required=True)
 
     def save(self):
         if not self.is_valid():
             return False
 
-        # store file to disk
-        # create object? background task?
+        print self.cleaned_data['shapefile'].__class__
+
+        # create object
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -230,14 +233,17 @@ def import_zip_shapefiles(request):
       'form': form,
     })
 
+@csrf_exempt
+def upload_shapefile_wrapper(request):
+    # only stream shapefile to disk, must be done before csrf
+    request.upload_handlers = [TemporaryFileUploadHandler()]
+    return upload_shapefile(request)
+
 @csrf_protect
 def upload_shapefile(request):
-    if request.method == 'POST':
-        form = UploadShapefileForm(request.POST, request.FILES)
-        if form.save():
-            return HttpResponseRedirect('../')
-    else:
-        form = UploadShapefileForm()
+    form = UploadShapefileForm(request.POST or None, request.FILES or None)
+    if form.save():
+        return HttpResponseRedirect('../')
 
     fieldset = Fieldset(form, fields=('shapefile',))
     return render(request, 'obadmin/location/upload_shapefile.html', {
