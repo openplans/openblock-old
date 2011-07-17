@@ -27,6 +27,7 @@ from django.contrib.admin.helpers import Fieldset
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.template import RequestContext
+from django.utils.http import urlquote  as django_urlquote
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from datetime import datetime, timedelta
 import os
@@ -72,9 +73,7 @@ class UploadShapefileForm(forms.Form):
         if not self.is_valid():
             return False
 
-        print self.cleaned_data['shapefile'].__class__
-
-        # create object
+        return True
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -243,7 +242,7 @@ def upload_shapefile_wrapper(request):
 def upload_shapefile(request):
     form = UploadShapefileForm(request.POST or None, request.FILES or None)
     if form.save():
-        return HttpResponseRedirect('../')
+        return HttpResponseRedirect('../pick-shapefile-layers/?shapefile=%s' % django_urlquote(form.cleaned_data['shapefile'].temporary_file_path()))
 
     fieldset = Fieldset(form, fields=('shapefile',))
     return render(request, 'obadmin/location/upload_shapefile.html', {
