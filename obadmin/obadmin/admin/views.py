@@ -32,6 +32,7 @@ from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from datetime import datetime, timedelta
 import os
 from re import findall
+from tempfile import mkstemp
 from tasks import CENSUS_STATES, download_state_shapefile
 from background_task.models import Task
 
@@ -73,7 +74,16 @@ class UploadShapefileForm(forms.Form):
         if not self.is_valid():
             return False
 
+        self.shapefile_path = self.save_shapefile(self.cleaned_data['shapefile'])
         return True
+
+    def save_shapefile(self, f):
+        fd, name = mkstemp('.shp')
+        fp = os.fdopen(fd, 'wb')
+        for chunk in f.chunks():
+            fp.write(chunk)
+        fp.close()
+        return name
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -232,17 +242,11 @@ def import_zip_shapefiles(request):
       'form': form,
     })
 
-@csrf_exempt
-def upload_shapefile_wrapper(request):
-    # only stream shapefile to disk, must be done before csrf
-    request.upload_handlers = [TemporaryFileUploadHandler()]
-    return upload_shapefile(request)
-
 @csrf_protect
 def upload_shapefile(request):
     form = UploadShapefileForm(request.POST or None, request.FILES or None)
     if form.save():
-        return HttpResponseRedirect('../pick-shapefile-layers/?shapefile=%s' % django_urlquote(form.cleaned_data['shapefile'].temporary_file_path()))
+        return HttpResponseRedirect('../pick-shapefile-layers/?shapefile=%s' % form.shapefile_path)
 
     fieldset = Fieldset(form, fields=('shapefile',))
     return render(request, 'obadmin/location/upload_shapefile.html', {
