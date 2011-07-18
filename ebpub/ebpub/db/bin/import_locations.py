@@ -156,6 +156,11 @@ def location_type(slug, name, name_plural, verbose):
             )
     return location_type
 
+def check_for_shapefile(path):
+    if not os.path.exists(path):
+        optparser.error('file does not exist')
+    return path
+
 def parse_args(optparser, argv):
     # Add some options that aren't relevant to scripts that import our optparser.
     optparser.add_option('--type-name', dest='type_name', default='', help='specifies the location type name')
@@ -166,16 +171,14 @@ def parse_args(optparser, argv):
         optparser.error('must supply type slug and path to shapefile')
     type_slug = args[0]
 
-    shapefile = args[1]
-    if not os.path.exists(shapefile):
-        optparser().error('file does not exist')
+    shapefile = check_for_shapefile(args[1])
     ds = DataSource(shapefile)
     layer = ds[opts.layer_id]
 
-    return opts, type_slug, layer
+    return type_slug, layer, opts
 
 def main():
-    opts, type_slug, layer = parse_args(optparser, sys.argv[1:])
+    type_slug, layer, opts = parse_args(optparser, sys.argv[1:])
     location_type = location_type(type_slug, opts.type_name, opts.type_name_plural, opts.verbose)
 
     importer = LocationImporter(

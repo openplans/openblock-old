@@ -24,26 +24,22 @@ from ebpub.db.models import LocationType
 from ebpub.db.bin import import_locations
 from ebpub.metros.allmetros import get_metro
 
-usage = 'usage: %prog [options] /path/to/shapefile'
-
 optparser = import_locations.optparser
 
-def parse_args(argv=None):
-    optparser.set_usage(usage)
-    if argv is None:
-        argv = sys.argv[1:]
-    return optparser.parse_args(argv)
+def parse_args(optparser, argv):
+    optparser.set_usage('usage: %prog [options] /path/to/shapefile')
+    opts, args = optparser.parse_args(argv)
 
-def main():
-    opts, args = parse_args()
     if len(args) != 1:
         optparser.error('must give path to shapefile')
-    shapefile = args[0]
-    if not os.path.exists(shapefile):
-        optparser.error('file does not exist')
+    shapefile = import_locations.check_for_shapefile(args[0])
+
     ds = DataSource(shapefile)
     layer = ds[opts.layer_id]
 
+    return layer, opts
+
+def location_type():
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
     location_type, _ = LocationType.objects.get_or_create(
@@ -54,8 +50,11 @@ def main():
         is_browsable = True,
         is_significant = True,
     )
+    return location_type
 
-    importer = import_locations.LocationImporter(layer, location_type, opts)
+def main():
+    layer, opts = parse_args(optparser, sys.argv[1:])
+    importer = import_locations.LocationImporter(layer, location_type(), opts)
     num_created = importer.save()
     if opts.verbose:
         print >> sys.stderr, 'Created %s neighborhoods.' % num_created
