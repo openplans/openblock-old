@@ -50,20 +50,21 @@ def populate_ni_loc(location):
         i += 200
 
 class LocationImporter(object):
-    def __init__(self, layer, location_type, opts):
+    def __init__(self, layer, location_type, source='UNKNOWN', verbose=False):
         self.layer = layer
         metro = get_metro()
         self.metro_name = metro['metro_name'].upper()
         self.now = datetime.datetime.now()
         self.location_type = location_type
-        self.opts = opts
-        if self.opts.filter_bounds:
-            self.bounds = Polygon.from_bbox(metro['extent'])
+        self.source = source
+        self.verbose = verbose
 
-    def save(self):
-        verbose = self.opts.verbose
-        name_field = self.opts.name_field
-        source = self.opts.source
+    def save(self, name_field, filter_bounds):
+        verbose = self.verbose
+        name_field = self.name_field
+        source = self.source
+        if self.filter_bounds:
+            self.bounds = Polygon.from_bbox(metro['extent'])
         locs = []
         for feature in self.layer:
             name = feature.get(name_field)
@@ -118,9 +119,9 @@ class LocationImporter(object):
         return num_created
 
     def should_create_location(self, fields):
-        if self.opts.filter_bounds:
+        if self.filter_bounds:
             if not fields['location'].intersects(self.bounds):
-                if self.opts.verbose:
+                if self.verbose:
                     print >> sys.stderr, "Skipping %s, out of bounds" % fields['name']
                 return False
         return True
@@ -137,19 +138,19 @@ optparser.add_option('-b', '--filter-bounds', action='store_true', default=False
                      help="exclude locations not within the lon/lat bounds of "
                      " your metro's extent (from your settings.py) (default false)")
 
-def location_type(type_slug, opts):
+def location_type(slug, name, name_plural, verbose):
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
     try:
-        location_type = LocationType.objects.get(slug = type_slug)
-        if opts.verbose:
-            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % type_slug
+        location_type = LocationType.objects.get(slug = slug)
+        if verbose:
+            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % slug
     except LocationType.DoesNotExist:
         location_type, _ = LocationType.objects.get_or_create(
-            name = opts.type_name,
-            plural_name = opts.type_name_plural,
+            name = name,
+            plural_name = name_plural,
             scope = metro_name,
-            slug = type_slug,
+            slug = slug,
             is_browsable = True,
             is_significant = True,
             )
@@ -171,14 +172,22 @@ def parse_args(optparser, argv):
     ds = DataSource(shapefile)
     layer = ds[opts.layer_id]
 
-    return opts, layer
+    return opts, type_slug, layer
 
 def main():
-    opts, layer = parse_args(optparser, sys.argv[1:])
-    location_type = location_type(type_slug, opts)
+    opts, type_slug, layer = parse_args(optparser, sys.argv[1:])
+    location_type = location_type(type_slug, opts.type_name, opts.type_name_plural, opts.verbose)
 
-    importer = LocationImporter(layer, location_type, opts)
-    num_created = importer.save()
+    importer = LocationImporter(
+        layer,
+        location_type,
+        opts.source,
+        opts.verbose
+    )
+    num_created = importer.save(
+        name_field=opts.name_field,
+        filter_bounds=opts.filter_bounds
+    )
 
     if opts.verbose:
         print >> sys.stderr, 'Created %s %s.' % (num_created, location_type.plural_name)
