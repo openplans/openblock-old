@@ -139,20 +139,22 @@ optparser.add_option('-b', '--filter-bounds', action='store_true', default=False
                      help="exclude locations not within the lon/lat bounds of "
                      " your metro's extent (from your settings.py) (default false)")
 
-def parse_args(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
+def parse_args(optparser, argv):
     # Add some options that aren't relevant to scripts that import our optparser.
     optparser.add_option('--type-name', dest='type_name', default='', help='specifies the location type name')
     optparser.add_option('--type-name-plural', dest='type_name_plural', default='', help='specifies the location type plural name')
-    return optparser.parse_args(argv)
+    opts, args = optparser.parse_args(argv)
 
-def main():
-    opts, args = parse_args()
     if len(args) != 2:
         optparser.error('must supply type slug and path to shapefile')
     type_slug = args[0]
     shapefile = args[1]
+
+    return opts
+
+def main():
+    opts = parse_args(optparser, sys.argv[1:])
+
     if not os.path.exists(shapefile):
         optparser().error('file does not exist')
     ds = DataSource(shapefile)
