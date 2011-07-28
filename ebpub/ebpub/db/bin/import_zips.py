@@ -29,7 +29,7 @@ import sys
 
 
 class ZipImporter(import_locations.LocationImporter):
-    def __init__(self, shapefile, opts):
+    def __init__(self, layer, name_field, source, verbose):
         location_type, _ = LocationType.objects.get_or_create(
             name = 'ZIP Code',
             plural_name = 'ZIP Codes',
@@ -38,9 +38,8 @@ class ZipImporter(import_locations.LocationImporter):
             is_browsable = True,
             is_significant = True,
         )
-        ds = DataSource(shapefile)
-        layer = ds[opts.layer_id]
-        super(ZipImporter, self).__init__(layer, location_type, opts)
+        self.name_field = name_field
+        super(ZipImporter, self).__init__(layer, location_type, source, verbose)
         self.zipcodes = {}
         self.collapse_zip_codes()
 
@@ -48,13 +47,12 @@ class ZipImporter(import_locations.LocationImporter):
         # The ESRI ZIP Code layer breaks ZIP Codes up along county
         # boundaries, so we need to collapse them first before
         # proceeding
-        name_field = self.opts.name_field
 
         if len(self.zipcodes) > 0:
             return
 
         for feature in self.layer:
-            zipcode = feature.get(name_field)
+            zipcode = feature.get(self.name_field)
             geom = feature.geom.geos
             if zipcode not in self.zipcodes:
                 self.zipcodes[zipcode] = geom
@@ -75,8 +73,8 @@ class ZipImporter(import_locations.LocationImporter):
                     existing_geom.extend(subgeoms)
 
     def create_location(self, zipcode, geom, display_order=0):
-        verbose = self.opts.verbose
-        source = self.opts.source
+        verbose = self.verbose
+        source = self.source
         now = datetime.datetime.now()
         if not geom.valid:
             geom = geom.buffer(0.0)
@@ -129,13 +127,15 @@ def parse_args(optparser, argv):
         optparser.error('must give path to shapefile')
 
     shapefile = import_locations.check_for_shapefile(args[0])
+    ds = DataSource(shapefile)
+    layer = ds[opts.layer_id]
 
-    return shapefile, opts
+    return layer, opts
 
 def main():
     opts, args = parse_args(import_locations.optparser, sys.argv[1:])
 
-    importer = ZipImporter(shapefile, opts)
+    importer = ZipImporter(layer, opts.name_field, opts.source, opts.verbose)
     num_created = importer.save()
     if opts.verbose:
         print >> sys.stderr, 'Created %s zipcodes.' % num_created
