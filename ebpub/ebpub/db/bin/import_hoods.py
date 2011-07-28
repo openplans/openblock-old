@@ -24,8 +24,6 @@ from ebpub.db.models import LocationType
 from ebpub.db.bin import import_locations
 from ebpub.metros.allmetros import get_metro
 
-optparser = import_locations.optparser
-
 def parse_args(optparser, argv):
     optparser.set_usage('usage: %prog [options] /path/to/shapefile')
     opts, args = optparser.parse_args(argv)
@@ -53,9 +51,17 @@ def location_type():
     return location_type
 
 def main():
-    layer, opts = parse_args(optparser, sys.argv[1:])
-    importer = import_locations.LocationImporter(layer, location_type(), opts)
-    num_created = importer.save()
+    layer, opts = parse_args(import_locations.optparser, sys.argv[1:])
+    importer = import_locations.LocationImporter(
+        layer,
+        location_type(),
+        opts.source,
+        opts.verbose
+    )
+    num_created = importer.save(
+        name_field=opts.name_field,
+        filter_bounds=opts.filter_bounds
+    )
     if opts.verbose:
         print >> sys.stderr, 'Created %s neighborhoods.' % num_created
 
