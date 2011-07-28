@@ -118,26 +118,23 @@ class ZipImporter(import_locations.LocationImporter):
                 num_created += 1
         return num_created
 
-usage = 'usage: %prog [options] /path/to/shapefile'
-
-optparser = import_locations.optparser
-
-def parse_args(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
-    optparser.set_usage(usage)
+def parse_args(optparser, argv):
+    optparser.set_usage('usage: %prog [options] /path/to/shapefile')
     optparser.remove_option('-n')
     optparser.add_option('-n', '--name-field', dest='name_field', default='ZCTA5CE',
                          help='field that contains the zipcode\'s name')
-    return optparser.parse_args(argv)
+    opts, args = optparser.parse_args(argv)
 
-def main():
-    opts, args = parse_args()
     if len(args) != 1:
         optparser.error('must give path to shapefile')
-    shapefile = args[0]
-    if not os.path.exists(shapefile):
-        optparser.error('file does not exist')
+
+    shapefile = import_locations.check_for_shapefile(args[0])
+
+    return shapefile, opts
+
+def main():
+    opts, args = parse_args(import_locations.optparser, sys.argv[1:])
+
     importer = ZipImporter(shapefile, opts)
     num_created = importer.save()
     if opts.verbose:
