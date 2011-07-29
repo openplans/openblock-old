@@ -62,7 +62,6 @@ class LocationImporter(object):
 
     def save(self, name_field):
         verbose = self.verbose
-        name_field = self.name_field
         source = self.source
         if self.filter_bounds:
             self.bounds = Polygon.from_bbox(metro['extent'])
@@ -139,7 +138,7 @@ optparser.add_option('-b', '--filter-bounds', action='store_true', default=False
                      help="exclude locations not within the lon/lat bounds of "
                      " your metro's extent (from your settings.py) (default false)")
 
-def location_type(slug, name, name_plural, verbose):
+def get_or_create_location_type(slug, name, name_plural, verbose):
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
     try:
@@ -179,7 +178,7 @@ def parse_args(optparser, argv):
 
 def main():
     type_slug, layer, opts = parse_args(optparser, sys.argv[1:])
-    location_type = location_type(type_slug, opts.type_name, opts.type_name_plural, opts.verbose)
+    location_type = get_or_create_location_type(type_slug, opts.type_name, opts.type_name_plural, opts.verbose)
 
     importer = LocationImporter(
         layer,
