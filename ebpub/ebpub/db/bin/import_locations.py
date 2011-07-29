@@ -159,7 +159,7 @@ def location_type(slug, name, name_plural, verbose):
 
 def layer_from_shapefile(path, layer_id):
     if not os.path.exists(path):
-        optparser.error('file does not exist')
+        optparser.error('file does not exist: ' + path)
     ds = DataSource(path)
     return ds[layer_id]
 
@@ -173,7 +173,7 @@ def parse_args(optparser, argv):
         optparser.error('must supply type slug and path to shapefile')
     type_slug = args[0]
 
-    layer = layer_from_shapefile(args[0], opts.layer_id)
+    layer = layer_from_shapefile(args[1], opts.layer_id)
 
     return type_slug, layer, opts
 
