@@ -50,16 +50,17 @@ def populate_ni_loc(location):
         i += 200
 
 class LocationImporter(object):
-    def __init__(self, layer, location_type, source='UNKNOWN', verbose=False):
+    def __init__(self, layer, location_type, source='UNKNOWN', filter_bounds=False, verbose=False):
         self.layer = layer
         metro = get_metro()
         self.metro_name = metro['metro_name'].upper()
         self.now = datetime.datetime.now()
         self.location_type = location_type
         self.source = source
+        self.filter_bounds = filter_bounds
         self.verbose = verbose
 
-    def save(self, name_field, filter_bounds):
+    def save(self, name_field):
         verbose = self.verbose
         name_field = self.name_field
         source = self.source
@@ -156,10 +157,11 @@ def location_type(slug, name, name_plural, verbose):
             )
     return location_type
 
-def check_for_shapefile(path):
+def layer_from_shapefile(path, layer_id):
     if not os.path.exists(path):
         optparser.error('file does not exist')
-    return path
+    ds = DataSource(path)
+    return ds[layer_id]
 
 def parse_args(optparser, argv):
     # Add some options that aren't relevant to scripts that import our optparser.
@@ -171,9 +173,7 @@ def parse_args(optparser, argv):
         optparser.error('must supply type slug and path to shapefile')
     type_slug = args[0]
 
-    shapefile = check_for_shapefile(args[1])
-    ds = DataSource(shapefile)
-    layer = ds[opts.layer_id]
+    layer = layer_from_shapefile(args[0], opts.layer_id)
 
     return type_slug, layer, opts
 
@@ -185,12 +185,10 @@ def main():
         layer,
         location_type,
         opts.source,
+        opts.filter_bounds,
         opts.verbose
     )
-    num_created = importer.save(
-        name_field=opts.name_field,
-        filter_bounds=opts.filter_bounds
-    )
+    num_created = importer.save(opts.name_field)
 
     if opts.verbose:
         print >> sys.stderr, 'Created %s %s.' % (num_created, location_type.plural_name)

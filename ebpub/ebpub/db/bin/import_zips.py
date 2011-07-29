@@ -29,7 +29,7 @@ import sys
 
 
 class ZipImporter(import_locations.LocationImporter):
-    def __init__(self, layer, name_field, source, verbose):
+    def __init__(self, layer, name_field, source='UNKNOWN', filter_bounds=False, verbose=False):
         location_type, _ = LocationType.objects.get_or_create(
             name = 'ZIP Code',
             plural_name = 'ZIP Codes',
@@ -39,7 +39,7 @@ class ZipImporter(import_locations.LocationImporter):
             is_significant = True,
         )
         self.name_field = name_field
-        super(ZipImporter, self).__init__(layer, location_type, source, verbose)
+        super(ZipImporter, self).__init__(layer, location_type, source, filter_bounds, verbose)
         self.zipcodes = {}
         self.collapse_zip_codes()
 
@@ -126,16 +126,14 @@ def parse_args(optparser, argv):
     if len(args) != 1:
         optparser.error('must give path to shapefile')
 
-    shapefile = import_locations.check_for_shapefile(args[0])
-    ds = DataSource(shapefile)
-    layer = ds[opts.layer_id]
+    layer = import_locations.layer_from_shapefile(args[0], opts.layer_id)
 
     return layer, opts
 
 def main():
     opts, args = parse_args(import_locations.optparser, sys.argv[1:])
 
-    importer = ZipImporter(layer, opts.name_field, opts.source, opts.verbose)
+    importer = ZipImporter(layer, opts.name_field, opts.source, opts.filter_bounds, opts.verbose)
     num_created = importer.save()
     if opts.verbose:
         print >> sys.stderr, 'Created %s zipcodes.' % num_created

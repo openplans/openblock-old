@@ -30,10 +30,8 @@ def parse_args(optparser, argv):
 
     if len(args) != 1:
         optparser.error('must give path to shapefile')
-    shapefile = import_locations.check_for_shapefile(args[0])
 
-    ds = DataSource(shapefile)
-    layer = ds[opts.layer_id]
+    layer = import_locations.layer_from_shapefile(args[0], opts.layer_id)
 
     return layer, opts
 
@@ -56,12 +54,10 @@ def main():
         layer,
         location_type(),
         opts.source,
+        opts.filter_bounds,
         opts.verbose
     )
-    num_created = importer.save(
-        name_field=opts.name_field,
-        filter_bounds=opts.filter_bounds
-    )
+    num_created = importer.save(opts.name_field)
     if opts.verbose:
         print >> sys.stderr, 'Created %s neighborhoods.' % num_created
 
