@@ -699,7 +699,10 @@ OBMap.prototype._configurePopup = function() {
     }
 };
 
-// Hack to better support custom base layer constructors in OLWidget.
+// Hack to better support arbitrary OpenLayers base layer constructors in OLWidget.
+// To use this, ensure that customBaseLayers[type] exists, and
+// has both  a 'class' string (name of the OL constructor) and an 'args' array
+// to pass to that constructor.
 olwidget['custom'] = {
     map: function(type) {
         var classname = customBaseLayers[type]['class'];
