@@ -361,22 +361,32 @@ OBMap.prototype.EVENT_TYPES = ["popupchanged"];
 
 /* default map options */
 OBMap.prototype.map_options = {
+    projection: new OpenLayers.Projection("EPSG:900913"), // meters
+    displayProjection: new OpenLayers.Projection("EPSG:4326"), // lon/lat
+    units: "m",
     numZoomLevels: 19,
-    maxResolution: 156543.03390625
+    maxResolution: 156543.03390625,
+    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
 };
 
 OBMap.prototype._initBasicMap = function() {
     /* initialize the map with base layer, bounds and
      * other common settings.
      */
-    var olwidget_options = {
-        mapOptions: this.map_options,
-        layers: [this.options.baselayer_type],
-        // Hack to force NOT setting width/height on the div, let our CSS apply instead.
-        mapDivStyle: {width: '', height: ''}
-    };
-    this.map = new olwidget.Map("detailmap", [], olwidget_options);
+    this.map = new OpenLayers.Map("detailmap", this.map_options);
 
+    // Using olwidget base layer constructors without the rest of olwidget,
+    // because olwidget doesn't offer much else of interest for this map.
+    var parts = this.options.baselayer_type.split(".");
+    var baselayer = olwidget[parts[0]].map(parts[1]);
+    // workaround for problems with Microsoft layers and vector layer
+    // drift (see http://openlayers.com/dev/examples/ve-novibrate.html)
+    if (parts[0] == "ve") {
+        if (opts.mapOptions.panMethod === undefined) {
+            opts.mapOptions.panMethod = OpenLayers.Easing.Linear.easeOut;
+        }
+    }
+    this.map.addLayers([baselayer]);
 
     if (typeof(this.options.center) != "undefined") {
         var map_center = new OpenLayers.LonLat(this.options.center[0], this.options.center[1]);
