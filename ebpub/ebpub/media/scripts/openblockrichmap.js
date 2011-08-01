@@ -30,7 +30,7 @@ var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
         this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
 
         if (typeof(options.eventListeners) != "undefined") {
-            this.events.on(options.eventListeners)
+            this.events.on(options.eventListeners);
         }
 
         if (typeof(options.clusterSignature) != "undefined") {
