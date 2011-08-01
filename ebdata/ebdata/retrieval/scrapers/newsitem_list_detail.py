@@ -21,9 +21,10 @@ from django.db import transaction
 from ebdata.retrieval.scrapers.list_detail import ListDetailScraper
 from ebdata.retrieval.utils import locations_are_close
 from ebpub.db.models import Schema, NewsItem, Lookup, DataUpdate, field_mapping
-from ebpub.geocoder import SmartGeocoder, GeocodingException, ParsingError
+from ebpub.geocoder import SmartGeocoder, GeocodingException, ParsingError, AmbiguousResult
 from ebpub.utils.text import address_to_block
 import datetime
+import traceback
 
 class NewsItemListDetailScraper(ListDetailScraper):
     """
@@ -147,6 +148,9 @@ class NewsItemListDetailScraper(ListDetailScraper):
             location_name
         For any other kwargs whose values aren't provided, this will use
         sensible defaults.
+        
+        kwargs MAY have the following keys: 
+            zipcode - used to disambiguate geocoded locations
 
         kwargs may optionally contain a 'convert_to_block' boolean. If True,
         this will convert the given kwargs['location_name'] to a block level
@@ -162,7 +166,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
         location_name = kwargs.get('location_name')
         assert location or location_name, "At least one of location or location_name must be provided"
         if location is None:
-            location = self.geocode(kwargs['location_name'])
+            location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
             if location:
                 block = location['block']
                 location = location['point']
@@ -171,7 +175,7 @@ class NewsItemListDetailScraper(ListDetailScraper):
             # If the exact address couldn't be geocoded, try using the
             # normalized location name.
             if location is None:
-                location = self.geocode(kwargs['location_name'])
+                location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
                 if location:
                     block = location['block']
                     location = location['point']
@@ -289,14 +293,36 @@ class NewsItemListDetailScraper(ListDetailScraper):
                     got_error=got_error,
                 )
 
-    def geocode(self, location_name):
+    def geocode(self, location_name, zipcode=None):
         """
         Tries to geocode the given location string, returning a Point object
         or None.
         """
+
+        # try to lookup the adress, if it is ambiguous, attempt to use 
+        # any provided zipcode information to resolve the ambiguity. 
+        # the zipcode is not included in the initial pass because it 
+        # is often too picky yeilding no results when there is a 
+        # legitimate nearby zipcode identified in either the address
+        # or street number data.
         try:
             return self._geocoder.geocode(location_name)
+        except AmbiguousResult as result: 
+            # try to resolve based on zipcode...
+            if zipcode is None: 
+                self.logger.warning("Ambiguous results for address %s. (no zipcode to resolve dispute)" % (location_name, ))
+                return None
+            in_zip = [r for r in result.choices if r['zip'] == zipcode]
+            if len(in_zip) == 0: 
+                self.logger.warning("Ambiguous results for address %s, but none in specified zipcode %s" % (location_name, zipcode))
+                return None
+            if len(in_zip) > 1:
+                self.logger.warning("Ambiguous results for address %s in zipcode %s, guessing first." % (location_name, zipcode))
+                return in_zip[0]
+            else: 
+                return in_zip[0]             
         except (GeocodingException, ParsingError):
+            self.logger.warning("Could not geocode location: %s: %s" % (location_name, traceback.format_exc()))
             return None
 
 

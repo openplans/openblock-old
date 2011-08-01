@@ -42,6 +42,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
     # we have no choice but to crawl the entire site every time.
 
     schema_slugs = ('restaurant-inspections',)
+    detail_address_re = re.compile(r"View Inspections[^<]*</div>[^<]*<b>(?P<restaurant_name>[^<]*)</b>[^<]*<br/>(?P<address_1>[^<]*)<br/>(?P<address_2>[^<]*)(?P<zipcode>\d\d\d\d\d)[^<]*<br/>")
     parse_list_re = re.compile(r"<a href='viewinsp\.asp\?inspno=(?P<inspection_id>\d+)'>(?P<inspection_date>[^<]*)</a></span> - <span[^>]*>(?P<result>[^<]*)</span>")
     parse_detail_re = re.compile(r"<tr><th[^>]*>[^<]*</th><th[^>]*>Status</th><th[^>]*>Code Violation</th><th[^>]*>Description</th><th[^>]*>Location</th><th[^>]*>Comment</th></tr>(?P<body>.*?)</table>", re.DOTALL)
     sleep = 5
@@ -75,6 +76,15 @@ class RestaurantScraper(NewsItemListDetailScraper):
 
     def parse_list(self, record_html):
         list_record, html = record_html
+        
+        # a better version of the restaurant address is available on this page, 
+        # attempt to extract additional location details to resolve ambiguities.
+        try:
+            info = self.detail_address_re.search(html).groupdict()
+            list_record['zipcode'] = info['zipcode']
+        except:
+            self.logger.warning("Could not get detailed address information for record %s" % list_record['restaurant_id'])
+
         for record in NewsItemListDetailScraper.parse_list(self, html):
             yield dict(list_record, **record)
 
@@ -146,6 +156,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
                 url=detail_url(list_record['inspection_id']),
                 item_date=list_record['inspection_date'],
                 location_name=list_record['address'],
+                zipcode=list_record.get('zipcode')
             )
         except:
             import traceback;
