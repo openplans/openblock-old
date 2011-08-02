@@ -26,10 +26,17 @@ def map_icon_img(obj):
     """
     Returns an image tag with a URL for a map icon for the given
     object, which may be a db.Schema, or streets.PlaceType.
+
+    (If there's no image configured but there's a fill color, makes a
+    little box of the right color.)
     """
     url = getattr(obj, 'map_icon_url', '') or ''
     url = url.strip()
     if url:
         alt = '%s icon' % (obj.name or obj.slug)
         return '<img class="schema-icon" src="%s" alt="%s" />' % (url, alt)
+    color = getattr(obj, 'map_color', '') or ''
+    color = color.strip()
+    if color:
+        return '<div class="schema-colorsample" style="background: %s">&nbsp;</div>' % color
     return ''

@@ -1022,3 +1022,10 @@ img.schema-icon {
   height: 20px; width: 20px;
   padding: 0px; margin: 0px;
 }
+
+div.schema-colorsample {
+  display: inline-block;
+  height: 20px; width: 20px;
+  padding: 0px; margin: 0px;
+  border: 1px solid #CCCCCC;
+}

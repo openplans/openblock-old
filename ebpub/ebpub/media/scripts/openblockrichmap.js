@@ -448,13 +448,10 @@ OBMap.prototype.loadLocationBorder = function(layerConfig) {
 OBMap.prototype.getLayerStyleMap = function() {
     /* returns the default StyleMap for news / place layers */
     var defaultStrokeColor, defaultFillColor;
-    if (this.options.baselayer_type == "google") {
-        defaultStrokeColor = "#0041F4";
-        defaultFillColor = "#00A66C";
-    } else {
-        defaultStrokeColor = "#CC6633";
-        defaultFillColor = "#EDBC22";
-    }
+    // TODO: stroke color really needs to be configurable, looks awful
+    //   or invisible on some base layers.
+    defaultStrokeColor = "#CC6633";
+    defaultFillColor = "#EDBC22";
 
     var _hasIcon = function(feature) {
         return typeof(feature.cluster[0].attributes.icon) != 'undefined' &&
@@ -469,8 +466,8 @@ OBMap.prototype.getLayerStyleMap = function() {
         fillOpacity: "${fillOpacity}",
         strokeColor: defaultStrokeColor,
         strokeWidth: 2,
-        strokeOpacity: 0.8,
-        label: "",
+        strokeOpacity: 1.0,
+        label: "${getLabel}",
         fontColor: "#ffffff",
         fontSize: 14
     }, {
@@ -486,6 +483,12 @@ OBMap.prototype.getLayerStyleMap = function() {
                     // colored circle
                     return 8 + Math.min(feature.attributes.count * 0.7, 14);
                 }
+            },
+            getLabel: function(feature) {
+                if (_hasIcon(feature)) {
+                    return "";
+                }
+                return feature.attributes.count;
             },
             fillOpacity: function(feature) {
                 if (_hasIcon(feature)) {
