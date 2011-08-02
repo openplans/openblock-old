@@ -142,10 +142,10 @@ def populate_block_intersections(*args, **kwargs):
     for block in Block.objects.all():
         logger.debug('Calculating the blocks that intersect %s' % block)
         for iblock, intersection_pt in intersecting_blocks(block):
-            BlockIntersection.objects.create(
+            BlockIntersection.objects.get_or_create(
                 block=block,
                 intersecting_block=iblock,
-                location=intersection_pt
+                defaults={'location': intersection_pt}
             )
     return BlockIntersection.objects.all().count()
 

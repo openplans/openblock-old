@@ -425,6 +425,17 @@ class TestFilterChain(TestCase):
         self.assertEqual(len(chain.filters_for_display()), 2)
         self.assert_(all([f.label for f in chain.filters_for_display()]))
 
+    def test_add_date__whole_month(self):
+        # Special syntax for adding a whole month, convenient for templates
+        # where you don't want to have to calculate the end date.
+        chain = FilterChain()
+        import datetime
+        chain.add('date', datetime.date(2011, 8, 13), 'month')
+        self.assertEqual(chain['date'].start_date, datetime.date(2011, 8, 1))
+        self.assertEqual(chain['date'].end_date, datetime.date(2011, 8, 31))
+
+
+
 
 class TestUrlNormalization(TestCase):
 

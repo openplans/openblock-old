@@ -832,9 +832,10 @@ class FilterChain(SortedDict):
                 # start and end are the same date.
                 values.append(values[0])
             if values[1] == 'month':
+                # Whole month, regardless of precise day of first value.
                 # TODO: document this!!
-                start, end = calendar.monthrange(values[0].year, values[0].month)
-                values[0] = values[0].replace(day=start)
+                _unused, end = calendar.monthrange(values[0].year, values[0].month)
+                values[0] = values[0].replace(day=1)
                 values[1] = values[0].replace(day=end)
             if key == 'pubdate':
                 key = 'date'
