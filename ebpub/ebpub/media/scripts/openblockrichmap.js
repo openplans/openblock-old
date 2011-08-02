@@ -386,6 +386,7 @@ OBMap.prototype._initBasicMap = function() {
             opts.mapOptions.panMethod = OpenLayers.Easing.Linear.easeOut;
         }
     }
+    baselayer.displayInLayerSwitcher = false;
     this.map.addLayers([baselayer]);
 
     if (typeof(this.options.center) != "undefined") {
@@ -670,7 +671,7 @@ OBMap.prototype._closePopup = function() {
 OBMap.prototype._reloadSelectableLayers = function(event) {
     if (event.layer != this.selectControl.layer) {
         var select_layers = [];
-        for (var i in this.map.layers) {
+        for (var i = 0; i < this.map.layers.length; i++ ) {
             var layer = this.map.layers[i];
             if (typeof(layer.allowSelection) != 'undefined' &&
                 layer.allowSelection == true) {
