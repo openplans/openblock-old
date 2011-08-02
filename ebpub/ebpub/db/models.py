@@ -313,7 +313,8 @@ class Location(models.Model):
     display_order = models.SmallIntegerField()
     city = models.CharField(max_length=255)
     source = models.CharField(max_length=64)
-    area = models.FloatField(blank=True, null=True) # in square meters
+    # In square meters. This is populated by a trigger in ebpub/db/migrations/0004_st_intersects_patch.py
+    area = models.FloatField(blank=True, null=True)
     population = models.IntegerField(blank=True, null=True) # from the 2000 Census
     user_id = models.IntegerField(blank=True, null=True)
     is_public = models.BooleanField()
