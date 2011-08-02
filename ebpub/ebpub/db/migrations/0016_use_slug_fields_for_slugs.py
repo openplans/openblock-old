@@ -216,6 +216,8 @@ class Migration(SchemaMigration):
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             'is_special_report': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'last_updated': ('django.db.models.fields.DateField', [], {}),
+            'map_color': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'map_icon_url': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'min_date': ('django.db.models.fields.DateField', [], {}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'number_in_overview': ('django.db.models.fields.SmallIntegerField', [], {'default': '5'}),
