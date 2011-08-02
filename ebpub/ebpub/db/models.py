@@ -310,7 +310,6 @@ class Location(models.Model):
     slug = models.SlugField(max_length=32, db_index=True)
     location_type = models.ForeignKey(LocationType)
     location = models.GeometryField(null=True)
-    centroid = models.PointField(blank=True, null=True)
     display_order = models.SmallIntegerField()
     city = models.CharField(max_length=255)
     source = models.CharField(max_length=64)
@@ -323,14 +322,20 @@ class Location(models.Model):
     last_mod_date = models.DateTimeField(blank=True, null=True)
     objects = LocationManager()
 
+    @property
+    def centroid(self):
+        # For backward compatibility.
+        import warnings
+        warnings.warn(
+            "Location.centroid is deprecated. Use Location.location.centroid instead.",
+            DeprecationWarning)
+        return self.location.centroid
+
     def clean(self):
         try:
             self.location = ensure_valid(flatten_geomcollection(self.location))
         except ValueError, e:
             raise ValidationError(str(e))
-
-        if self.centroid != self.location.centroid:
-            self.centroid = self.location.centroid
 
     class Meta:
         unique_together = (('slug', 'location_type'),)

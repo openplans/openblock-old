@@ -78,7 +78,6 @@ class LocationImporter(object):
                 slug = slugify(name),
                 location_type = self.get_location_type(feature),
                 location = geom,
-                centroid = geom.centroid,
                 city = self.metro_name,
                 source = source,
                 area = geom.transform(3395, True).area,

@@ -555,7 +555,7 @@ class TestItemSearchAPI(BaseTestCase):
 
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
-        pt = loc.centroid
+        pt = loc.location.centroid
         items2 = _make_items(5, schema1)
         for item in items1:
             item.location = pt
@@ -578,7 +578,7 @@ class TestItemSearchAPI(BaseTestCase):
 
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
-        pt = loc.centroid
+        pt = loc.location.centroid
         items2 = _make_items(5, schema1)
         for item in items1:
             item.location = pt

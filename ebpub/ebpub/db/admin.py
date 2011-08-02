@@ -58,8 +58,6 @@ class LocationAdmin(OSMModelAdmin):
 
     # This is populated by a trigger in ebpub/db/sql/location.sql.
     readonly_fields = ('area',)
-    # This is populated via clean().
-    exclude = ('centroid',)
 
 
 class SchemaAdmin(admin.ModelAdmin):

@@ -85,7 +85,6 @@ class ZipImporter(import_locations.LocationImporter):
                 slug = zipcode,
                 location_type = self.location_type,
                 location = geom,
-                centroid = geom.centroid,
                 display_order = i,
                 city = self.metro_name,
                 source = source,

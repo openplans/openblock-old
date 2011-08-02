@@ -107,7 +107,7 @@ def _build_json_result(query, result, results):
             'type': result.location_type.name,
             'name': result.name,
             'city': result.city,
-            'latlng': [result.centroid.y, result.centroid.x]
+            'latlng': [result.location.centroid.y, result.location.centroid.x]
         }
     if results['type'] == 'place': 
         return {

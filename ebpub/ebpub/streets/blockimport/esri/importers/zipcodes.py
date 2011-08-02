@@ -77,7 +77,6 @@ class EsriImporter(object):
                 slug = zipcode,
                 location_type = self.location_type,
                 location = geom,
-                centroid = geom.centroid,
                 display_order = i,
                 city = self.city,
                 source = 'ESRI',

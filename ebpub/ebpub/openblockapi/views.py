@@ -494,7 +494,7 @@ def _geocode_geojson(query):
         for r in res['result']: 
             feature = {
                 'type': 'Feature',
-                'geometry': simplejson.loads(r.centroid.geojson),
+                'geometry': simplejson.loads(r.location.centroid.geojson),
                 'properties': {
                     'type': r.location_type.slug,
                     'name': r.name,
@@ -610,7 +610,7 @@ def location_detail_json(request, loctype, slug):
                               'slug': location.slug,
                               'source': location.source,
                               'description': location.description,
-                              'centroid': (location.centroid or location.location.centroid).wkt,
+                              'centroid': location.location.centroid.wkt,
                               'area': location.area,
                               'population': location.population,
                               'city': location.city,
