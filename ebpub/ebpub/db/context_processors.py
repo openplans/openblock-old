@@ -21,7 +21,7 @@ obdemo-specific stuff we might need in templates.
 """
 
 from django.conf import settings
-import simplejson
+from django.utils import simplejson
 
 def _get_map_media():
     from olwidget.widgets import Map
