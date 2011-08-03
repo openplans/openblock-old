@@ -75,6 +75,7 @@ You'll also want to think about :ref:`base_layer_configs`.
 Database Initialization
 -----------------------
 
+You should already have taken care of :ref:`database_installation`.
 Create the (empty) database, and a postgres user for it, with these commands:
 
 .. code-block:: bash

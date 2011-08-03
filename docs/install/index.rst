@@ -14,8 +14,8 @@ Contents
    common_install_problems
    demo_setup
    custom
-   geodata
    configuration
+   geodata
 
 
 Indices and tables

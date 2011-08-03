@@ -54,7 +54,10 @@ and make adjustments based on your setup::
 
 Read more about :doc:`important settings you can/should customize <configuration>`.
 
-If you plan to use a remote database or have other changes to database connection information, make sure you change them in your settings.py.
+If you plan to use a remote database or have other changes to database
+connection information, make sure you change them in your settings.py.
+See :ref:`postgres_auth` and be sure everything works
+before you proceed.
 
 Create and Initialize the Database
 ----------------------------------
@@ -65,6 +68,10 @@ database settings, and if you've followed the :ref:`template_setup`
 instructions, then the database creation command would simply be::
 
     $ sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock
+
+If you have a different postgresql setup, for example you're using a
+different user than ``openblock``, just change the -U option
+accordingly.
 
 Now initialize your database tables::
 

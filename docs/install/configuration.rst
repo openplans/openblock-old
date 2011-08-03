@@ -26,9 +26,10 @@ public place eg. a public version control system.
 Choosing Your Map Base Layer
 ============================
 
-In your settings file, you have a couple of options for what you want
-to use for your map base layer - the tiled images that give your map
-street lines, geographic features, place names, etc.
+If you don't like the look of OpenBlock's default maps, you have many
+options for your *base layer* - the tiled images that give your map
+its street lines, geographic features, place names, etc.
+
 
 Default: OpenStreetMap tiles hosted by OpenGeo
 ----------------------------------------------
@@ -39,10 +40,10 @@ from OpenStreetMap data.  It is free for use for any purpose, but note
 that there have been some reliability issues with this server in the
 past.
 
-Other Publically Available Layers
+Other Publicly Available Layers
 ---------------------------------
 
-We support any base layer supported by `olwidget
+It's easy to use any base layer supported by `olwidget
 <http://olwidget.org/olwidget/v0.4/doc/django-olwidget.html#general-map-display>`_.
 More specifically:
 
@@ -86,11 +87,6 @@ Other public WMS servers
 Set ``MAP_BASELAYER_TYPE`` to either 'wms.map' (not very useful for
 OpenBlock) or 'wms.nasa'.
 
-Blank (no base layer)
-~~~~~~~~~~~~~~~~~~~~~~
-
-Try ``MAP_BASELAYER_TYPE = 'wms.blank'``
-
 CloudMade
 ~~~~~~~~~
 
@@ -106,8 +102,13 @@ To find interesting cloudmade style numbers, browse at
 http://maps.cloudmade.com/editor ; the style number is at bottom right
 of each style.
 
+Blank (no base layer)
+~~~~~~~~~~~~~~~~~~~~~~
 
-Custom or Other Base Layers
+Try ``MAP_BASELAYER_TYPE = 'wms.blank'``
+
+
+Any Other Base Layers
 ---------------------------
 
 Do you have your own tile server running, or have a URL to something
@@ -166,7 +167,8 @@ with configuration about your local region.
 Most of the items in this dictionary are fairly self
 explanatory. Here's an example for Boston:
 
-.. code-block: python::
+.. code-block:: python
+
    METRO_LIST = [
     {
         # Extent of the metro, as a longitude/latitude bounding box.
@@ -245,6 +247,9 @@ list.
 When would you put more than one dictionary in METRO_LIST?
 ----------------------------------------------------------
 
+The only dictionary in ``METRO_LIST`` that has any effect is the one whose
+``short_name`` matches ``settings.SHORT_NAME.``
+
 The purpose of having more than one metro dictionary in ``METRO_LIST``
 would be to run multiple OpenBlock sites for multiple metro areas with
 some shared configuration.
@@ -252,10 +257,10 @@ some shared configuration.
 To do this, you'd have one settings file containing the master
 ``METRO_LIST``, and then for each site you'd have its own settings
 file that imports ``METRO_LIST`` (and any other shared stuff you like)
-from the master file.  The site-specific settings file would also set
+from the master settings file.  The site-specific settings file would also set
 ``settings.SHORT_NAME`` to match the ``'short_name'`` key of one of
 the dictionaries.
 
 Most people will probably not be doing that. This feature serves the
-needs of `everyblock.com <http://everyblock.com>`_, which runs sites
-for many cities.
+needs of `everyblock.com <http://everyblock.com>`_, which runs
+separate sites for many cities across the USA.
