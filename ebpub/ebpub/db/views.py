@@ -844,7 +844,7 @@ def block_list(request, city_slug, street_slug):
         city_filter = Q()
     blocks = Block.objects.filter(city_filter, **kwargs).order_by('postdir', 'predir', 'from_num', 'to_num')
     if not blocks:
-        raise Http404
+        raise Http404('This street has no blocks')
     context = {
         'block_list': blocks,
         'first_block': blocks[0],
