@@ -238,13 +238,6 @@ YAHOO_APP_ID=''
 # If you want MAP_BASELAYER_TYPE='cloudmade.*', you must also set CLOUDMADE_API_KEY.
 CLOUDMADE_API_KEY=''
 
-# This affects ONLY the admin UI, so it's not very useful.
-# TODO: admin UI really only needs one "layer selecting" view showing ALL the layers,
-# and then once it's chosen, it writes that config somewhere and
-# *all* other views will just use the selected base layer.
-OLWIDGET_LAYERS = ['custom.opengeo_osm',
-                   'google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
-
 # You can use ANY OpenLayers base layer configuration, with a little extra work,
 # like so:
 MAP_CUSTOM_BASE_LAYERS = {

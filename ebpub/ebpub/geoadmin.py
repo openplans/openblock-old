@@ -36,16 +36,13 @@ logger = logging.getLogger('ebpub.geoadmin')
 # so this should move to default_settings; but it depends on other
 # settings that are probably user-defined.
 
-OLWIDGET_LAYERS = getattr(settings, 'OLWIDGET_LAYERS', [])
-
-
 OLWIDGET_DEFAULT_OPTIONS = getattr(settings, 'OLWIDGET_DEFAULT_OPTIONS', None) or \
     {
     'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
     'default_lon': settings.DEFAULT_MAP_CENTER_LON,
     'default_zoom': settings.DEFAULT_MAP_ZOOM,
     'zoom_to_data_extent': True,
-    'layers': OLWIDGET_LAYERS,
+    'layers': [settings.MAP_BASELAYER_TYPE],
     'controls': ['Navigation', 'PanZoom', 'Attribution'],
     # Defaults for generic GeometryFields.
     'geometry': ['point', 'linestring', 'polygon'],

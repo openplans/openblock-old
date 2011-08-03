@@ -455,6 +455,8 @@ class Street(models.Model):
         if self.state:
             self.state = self.state.upper().strip()
         if self.city:
+            # TODO: validate that there's a matching metro setting?
+            # (or Location object, if the metro is multi-city)?
             self.city = self.city.upper().strip()
 
         self.street = normalize(self.pretty_name)
