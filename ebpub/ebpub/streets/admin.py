@@ -388,6 +388,8 @@ class StreetAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'suffix', 'city', 'state',)
     list_filter = ('suffix', 'city', 'state',)
     search_fields = ('pretty_name',)
+    readonly_fields = ('street',)
+    prepopulated_fields = {'street_slug': ('pretty_name',)}
 
 class BlockIntersectionAdmin(OSMModelAdmin):
     list_display = ('block', 'intersecting_block', 'intersection',)
@@ -409,6 +411,7 @@ class StreetMisspellingAdmin(OSMModelAdmin):
 class PlaceSynonymAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'place')
     search_fields = ('pretty_name', 'place')
+    readonly_fields = ('normalized_name',)
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(Street, StreetAdmin)

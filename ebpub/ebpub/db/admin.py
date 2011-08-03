@@ -56,8 +56,8 @@ class LocationAdmin(OSMModelAdmin):
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
 
-    # This is populated by a trigger in ebpub/db/sql/location.sql.
-    readonly_fields = ('area',)
+    # area is populated by a database trigger; normalized_name is set during cleaning.
+    readonly_fields = ('area', 'normalized_name')
 
 
 class SchemaAdmin(admin.ModelAdmin):
@@ -92,6 +92,7 @@ class LookupAdmin(admin.ModelAdmin):
 class LocationSynonymAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'location')
     search_fields = ('pretty_name', 'location')
+    readonly_fields = ('normalized_name',)
 
 admin.site.register(Schema, SchemaAdmin)
 admin.site.register(SchemaField, SchemaFieldAdmin)

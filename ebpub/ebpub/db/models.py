@@ -337,6 +337,10 @@ class Location(models.Model):
             self.location = ensure_valid(flatten_geomcollection(self.location))
         except ValueError, e:
             raise ValidationError(str(e))
+        if self.normalized_name:
+            self.normalized_name = normalize(self.normalized_name)
+        else:
+            self.normalized_name = normalize(self.name)
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
