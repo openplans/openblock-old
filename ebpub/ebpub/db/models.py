@@ -19,14 +19,19 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
+from django.core.exceptions import ValidationError
 from django.db import connection, transaction
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Block
+from ebpub.utils.geodjango import flatten_geomcollection
+from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.text import slugify
 
 import datetime
 import logging
 import re
+
+logger = logging.getLogger('ebpub.db.models')
 
 # Need these monkeypatches for "natural key" support during fixture load/dump.
 import ebpub.monkeypatches
@@ -101,7 +106,7 @@ class Schema(models.Model):
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
     indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
-    slug = models.CharField(max_length=32, unique=True)
+    slug = models.SlugField(max_length=32, unique=True)
     min_date = models.DateField() # the earliest available NewsItem.pub_date for this Schema
     last_updated = models.DateField()
     date_name = models.CharField(max_length=32, default='Date') # human-readable name for the NewsItem.item_date field
@@ -125,6 +130,10 @@ class Schema(models.Model):
 
     # number of records to show on place_overview
     number_in_overview = models.SmallIntegerField(default=5)
+    
+    map_icon_url = models.TextField(blank=True, null=True)
+    map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of news. eg #FF0000")
+    
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
@@ -268,7 +277,7 @@ class LocationType(models.Model):
     plural_name = models.CharField(max_length=64) # e.g., "Wards"
     scope = models.CharField(max_length=64,
                              help_text='e.g., "Chicago" or "U.S.A."')
-    slug = models.CharField(max_length=32, unique=True)
+    slug = models.SlugField(max_length=32, unique=True)
     is_browsable = models.BooleanField(
         default=True, help_text="Whether this is displayed on location_type_list.") #  XXX unused??
     is_significant = models.BooleanField(
@@ -298,14 +307,14 @@ class LocationManager(models.GeoManager):
 class Location(models.Model):
     name = models.CharField(max_length=255) # e.g., "35th Ward"
     normalized_name = models.CharField(max_length=255, db_index=True)
-    slug = models.CharField(max_length=32, db_index=True)
+    slug = models.SlugField(max_length=32, db_index=True)
     location_type = models.ForeignKey(LocationType)
     location = models.GeometryField(null=True)
-    centroid = models.PointField(blank=True, null=True)
     display_order = models.SmallIntegerField()
     city = models.CharField(max_length=255)
     source = models.CharField(max_length=64)
-    area = models.FloatField(blank=True, null=True) # in square meters
+    # In square meters. This is populated by a trigger in ebpub/db/migrations/0004_st_intersects_patch.py
+    area = models.FloatField(blank=True, null=True)
     population = models.IntegerField(blank=True, null=True) # from the 2000 Census
     user_id = models.IntegerField(blank=True, null=True)
     is_public = models.BooleanField()
@@ -313,6 +322,21 @@ class Location(models.Model):
     creation_date = models.DateTimeField(blank=True, null=True)
     last_mod_date = models.DateTimeField(blank=True, null=True)
     objects = LocationManager()
+
+    @property
+    def centroid(self):
+        # For backward compatibility.
+        import warnings
+        warnings.warn(
+            "Location.centroid is deprecated. Use Location.location.centroid instead.",
+            DeprecationWarning)
+        return self.location.centroid
+
+    def clean(self):
+        try:
+            self.location = ensure_valid(flatten_geomcollection(self.location))
+        except ValueError, e:
+            raise ValidationError(str(e))
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
@@ -696,6 +720,10 @@ class NewsItem(models.Model):
     objects = NewsItemManager()
     attributes = AttributesDescriptor()  # Treat it like a dict.
 
+
+    def clean(self):
+        self.location = ensure_valid(flatten_geomcollection(self.location))
+
     class Meta:
         ordering = ('title',)
 
@@ -915,7 +943,7 @@ class Lookup(models.Model):
     # in that case, because we've massaged `name` to use a "prettier"
     # formatting than exists in the data source.
     code = models.CharField(max_length=255, blank=True)
-    slug = models.CharField(max_length=32, db_index=True)
+    slug = models.SlugField(max_length=32, db_index=True)
     description = models.TextField(blank=True)
 
     objects = LookupManager()

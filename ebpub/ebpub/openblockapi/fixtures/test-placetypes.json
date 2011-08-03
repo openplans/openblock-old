@@ -3,7 +3,6 @@
     "fields": {
       "plural_name": "Points of Interest", 
       "is_geocodable": true, 
-      "map_icon": "", 
       "indefinite_article": "a", 
       "slug": "poi", 
       "is_mappable": true, 
@@ -15,7 +14,6 @@
     "fields": {
       "plural_name": "Police Stations", 
       "is_geocodable": true, 
-      "map_icon": "", 
       "indefinite_article": "a", 
       "slug": "police", 
       "is_mappable": true, 

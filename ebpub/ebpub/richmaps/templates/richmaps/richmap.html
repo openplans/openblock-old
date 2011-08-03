@@ -1,0 +1,44 @@
+{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+{% load django_static %}
+<!-- richmap.html  -->
+
+<script type="text/javascript">
+{% comment %}
+/* this expects that a loadMap() function 
+ * has been defined in the specific template. 
+ * It should create and return an OBMap.
+ */
+{% endcomment %}
+/* Hook for providing named custom base layers via settings. */
+var customBaseLayers = {{ MAP_CUSTOM_BASE_LAYERS|safe|default:'{}' }};
+
+var _setupMap = function() {
+    {% if OPENLAYERS_IMG_PATH %}
+    OpenLayers.ImgPath = "{{ OPENLAYERS_IMG_PATH }}";
+    {% endif %}
+    var map = loadMap();
+};
+
+if (jQuery.browser.msie) {
+    jQuery(window).load(function() {
+        _setupMap();
+    });
+} else {
+    jQuery(document).ready(function() {
+        _setupMap();
+    });
+}
+
+
+</script>
+
+{{ MAP_MEDIA_HTML|safe }}
+{% slimall %}
+<script type="text/javascript" src="/scripts/openblockrichmap.js" charset="utf-8"></script>
+{% endslimall %}
+
+<div id="detailmap"></div>
+
+
+<!-- end richmap.html -->
+

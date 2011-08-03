@@ -22,6 +22,7 @@ from django.conf import settings
 from ebdata.retrieval.retrievers import Retriever
 from string import maketrans
 from zipfile import ZipFile
+from ebpub.db.bin.import_locations import layer_from_shapefile
 from ebpub.db.bin.import_zips import parse_args, ZipImporter
 import tempfile
 import os
@@ -107,13 +108,10 @@ def download_state_shapefile(state, zipcodes):
     for zipcode in zipcodes:
         import_zip_from_shapefile(shapefile, zipcode)
 
-#@background
+@background
 def import_zip_from_shapefile(filename, zipcode):
-    # Location importing is unfortunately tightly coupled to option parsing,
-    # so this zip importer creates a fake option block to call it with rather
-    # than risk a big restructuring.
-    opts, args = parse_args()
-    importer = ZipImporter(filename, opts)
+    layer = layer_from_shapefile(filename, 0)
+    importer = ZipImporter(layer, 'ZCTA5CE')
     try:
         importer.import_zip(zipcode)
     except KeyError:

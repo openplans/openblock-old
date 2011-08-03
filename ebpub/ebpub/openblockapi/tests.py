@@ -555,7 +555,7 @@ class TestItemSearchAPI(BaseTestCase):
 
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
-        pt = loc.centroid
+        pt = loc.location.centroid
         items2 = _make_items(5, schema1)
         for item in items1:
             item.location = pt
@@ -578,7 +578,7 @@ class TestItemSearchAPI(BaseTestCase):
 
         # make some items that are centered on a location
         loc = Location.objects.get(slug='hood-1')
-        pt = loc.centroid
+        pt = loc.location.centroid
         items2 = _make_items(5, schema1)
         for item in items1:
             item.location = pt
@@ -779,7 +779,7 @@ class TestLocationsAPI(BaseTestCase):
         props = detail['properties']
         self.assertEqual(type(props), dict)
         self.assertEqual(sorted(props.keys()),
-                         ['area', 'centroid', 'city', 'description', 'name', 'population', 'slug', 'source', 'type'])
+                         ['area', 'centroid', 'city', 'description', 'name', 'openblock_type', 'population', 'slug', 'source', 'type'])
         self.assertEqual(type(props['area']), float)
         self.assert_(isinstance(props['city'], basestring))
         self.assert_(isinstance(props['description'], basestring))

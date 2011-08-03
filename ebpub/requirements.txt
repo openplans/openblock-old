@@ -8,8 +8,13 @@ GDAL
 django-static==1.5.4
 # 2.2 is minimum version that has extensions.ISOLATION_LEVEL_AUTOCOMMIT
 psycopg2>=2.2,<2.3
-pyyaml>=3
 slimmer>=0.1.30
+-e git://github.com/openplans/olwidget.git#egg=django-olwidget
+pyRFC3339>=0.1
+pytz>=2011g
+PyYAML==3.09
 http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1
 South>=0.7.3
 git+git://github.com/scoursen/django-apikey.git@134005185814ea33d2ef#egg=django-apikey
+
+

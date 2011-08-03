@@ -1,0 +1,25 @@
+<div id="{{ id }}"></div>
+<!-- Need this to load in our custom base layer constructor, at
+     least until/unless olwidget gains this feature. -->
+<script type="text/javascript" src="/scripts/openblockrichmap.js" charset="utf-8"></script>
+
+{{ layer_html|join:"" }}
+<script type="text/javascript">
+
+    // Custom base layers hook for OpenBlock:
+    var customBaseLayers = {{ MAP_CUSTOM_BASE_LAYERS|safe|default:'{}' }};
+
+    var olwidget_map_{{id}} = new olwidget.Map("{{ id }}", [
+            {{ layer_js|join:"," }}
+        ], 
+        {{ map_opts|safe }}
+    );
+
+    // Open up the editing control by default.
+    for (var i = 0; i < olwidget_map_{{id}}.controls.length; i++) {
+        if (olwidget_map_{{id}}.controls[i] && olwidget_map_{{id}}.controls[i].CLASS_NAME == "olwidget.EditableLayerSwitcher") {
+           olwidget_map_{{id}}.controls[i].setEditing(olwidget_map_{{id}}.vectorLayers[0]);
+           break;
+        }
+    }
+</script>

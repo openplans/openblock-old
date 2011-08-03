@@ -49,6 +49,7 @@ setup(
     "pyrfc3339",
     "South",
     "mock>=0.8.0alpha1",
+    "django-olwidget",
     'setuptools-git',  # Only needed if building packages for distribution.
     'django-apikey',
     ],

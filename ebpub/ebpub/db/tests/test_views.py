@@ -191,7 +191,6 @@ class TestAjaxViews(BaseTestCase):
         feat = items['features'][0]
         self.assertEqual(feat['type'], 'Feature')
         self.assertEqual(feat['properties']['title'], 'crime title 3')
-        self.assert_('popup_html' in feat['properties'])
         self.assertEqual(feat['geometry']['type'], 'Point')
         self.assert_('coordinates' in feat['geometry'])
 
@@ -401,7 +400,7 @@ class TestSchemaFilterView(BaseTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_filter__by_location__unknown(self):
+    def test_filter__by_location__not_found(self):
         url = filter_reverse('crime', [('locations', 'anything')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)

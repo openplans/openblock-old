@@ -72,7 +72,6 @@ def add_location(name, wkt, loc_type, source='UNKNOWN'):
         normalized_name=normalize(name),
         location_type=loc_type,
         location=geom,
-        centroid=geom.centroid,
         display_order=0,
         city=get_metro()['city_name'].upper(),
         source=source

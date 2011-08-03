@@ -1,0 +1,9 @@
+<div class="popup-content">
+  <div class="title">
+    {% if newsitem.item_url %}<a href="{{newsitem.item_url}}">{{newsitem.title|truncatewords_html:15}}</a>
+    {% else %}{{ newsitem.title }}{% endif %}
+  </div>
+  <div class="location">{{ newsitem.location_name.title }}</div>
+  <div class="date">{{ newsitem.item_date|date:"M j" }}</div>
+  <div class="category">{{schema.name}}</div>
+</div>

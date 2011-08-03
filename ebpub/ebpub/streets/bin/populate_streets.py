@@ -60,7 +60,7 @@ from django.contrib.gis.geos import fromstr
 from django.db import connection, transaction
 from ebpub.db.models import Location
 from ebpub.metros.allmetros import get_metro
-from ebpub.streets.models import Block, BlockIntersection, Intersection
+from ebpub.streets.models import Block, BlockIntersection, Intersection, Street
 from ebpub.streets.name_utils import make_dir_street_name, pretty_name_from_blocks, slug_from_blocks
 
 logger = logging.getLogger()
@@ -131,22 +131,23 @@ def populate_streets(*args, **kwargs):
         FROM blocks
     """)
     connection._commit()
-
     #logger.info("Deleting extraneous cities...")
     #metro = get_metro()
     #cities = [l.name.upper() for l in Location.objects.filter(location_type__slug=metro['city_location_type']).exclude(location_type__name__startswith='Unknown')]
     #Street.objects.exclude(city__in=cities).delete()
+    return Street.objects.all().count()
 
 @transaction.commit_on_success
 def populate_block_intersections(*args, **kwargs):
     for block in Block.objects.all():
         logger.debug('Calculating the blocks that intersect %s' % block)
         for iblock, intersection_pt in intersecting_blocks(block):
-            BlockIntersection.objects.create(
+            BlockIntersection.objects.get_or_create(
                 block=block,
                 intersecting_block=iblock,
-                location=intersection_pt
+                defaults={'location': intersection_pt}
             )
+    return BlockIntersection.objects.all().count()
 
 @transaction.commit_on_success
 def populate_intersections(*args, **kwargs):
@@ -207,6 +208,7 @@ def populate_intersections(*args, **kwargs):
                 bi.save()
             logger.debug("Already seen intersection %s" % " / ".join(seen_intersection))
     logger.info("Finished populating intersections")
+    return Intersection.objects.all().count()
 
 LOG_VERBOSITY = (logging.CRITICAL,
                  logging.ERROR,
@@ -247,7 +249,9 @@ def main(argv=None):
 
 
     # Call the action
-    valid_actions[args[0]](**opts.__dict__)
+    count = valid_actions[args[0]](**opts.__dict__)
+    if count is not None:
+        print "%s: created: %d" % (args[0], count)
 
 if __name__ == '__main__':
     sys.exit(main())

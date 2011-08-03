@@ -6,8 +6,12 @@
 <div id="content">
 	<h1>Cities</h1>
 	<ul>
-	{% for city in city_list %}
-	<li><a href="{{ city.slug }}/">{{ city.name }}</a></li>
+	{% for city in all_cities %}
+	  {% if city.slug in cities_with_streets %}
+	    <li><a href="{% url ebpub-street-list city.slug %}">{{city.name }}</a></li>
+	  {% else %}
+	    <!-- <li>{{city.name }} <i>(0 blocks)</i></li> -->
+	  {% endif %}
 	{% endfor %}
 	</ul>
 </div>

@@ -1,0 +1,16 @@
+{% extends "admin/change_form.html" %}
+
+{% block after_field_sets %}
+{% if original.map_icon_url %}
+<div>
+Current Icon:
+<div><img src="{{ original.map_icon_url }}" alt="current icon preview" /></div>
+</div>
+{% endif %}
+
+{% if original.map_color %}
+<div>
+Current Color: <div style="width: 50px; height: 50px; background-color: {{ original.map_color }};">&nbsp;</div>
+</div>
+{% endif %}
+{% endblock %}

@@ -26,12 +26,21 @@ from ebpub.metros.allmetros import get_metro
 
 
 if settings.DEBUG:
+    # This stuff can probably go away if/when we switch to Django 1.3,
+    # not sure yet how that interacts with django-static.
+    import olwidget
+    import os
+    olwidget_media_path=os.path.join(
+        os.path.abspath(os.path.dirname(olwidget.__file__)), 'static')
+
     urlpatterns = patterns('',
+        (r'^(?P<path>(?:olwidget).*)$',
+         'django.views.static.serve', {'document_root': olwidget_media_path}),
         (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
          'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
-    )
-    urlpatterns += patterns('',
         (r'^(?P<path>(?:images|scripts|styles|openlayers).*)$', 'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
+        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
     )
 else:
     urlpatterns = patterns('')
@@ -63,7 +72,8 @@ urlpatterns += patterns('',
     url(r'^place-date-chart/$', views.ajax_place_date_chart, name='ajax-place-date-chart'),
     url(r'^newsitems.geojson/$', views.newsitems_geojson, name='ajax-newsitems-geojson'),
     (r'^api/dev1/', include('ebpub.openblockapi.urls')),
-    (r'^widgets/', include('ebpub.widgets.urls'))
+    (r'^widgets/', include('ebpub.widgets.urls')),
+    (r'^maps/', include('ebpub.richmaps.urls'))
 )
 
 if get_metro()['multiple_cities']:

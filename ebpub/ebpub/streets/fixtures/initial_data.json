@@ -2,7 +2,6 @@
   {
     "fields": {
       "is_geocodable": true, 
-      "map_icon": "", 
       "plural_name": "Points of Interest", 
       "indefinite_article": "a", 
       "slug": "poi", 

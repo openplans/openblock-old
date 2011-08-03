@@ -125,7 +125,11 @@ def Deserializer(object_list, **options):
                             value = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
                         data[field.attname] = value
                     else:
-                        data[field.attname] = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
+                        try: 
+                            data[field.attname] = field.rel.to._meta.get_field(field.rel.field_name).to_python(field_value)
+                        except: 
+                            import pdb; pdb.set_trace()
+                            print "foo"
                 else:
                     data[field.attname] = None
 
