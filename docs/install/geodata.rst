@@ -335,3 +335,27 @@ clicking.  Finish by double-clicking.   Afterward you can modify
 points by clicking the "Modify" control, then dragging points as needed.
 
 (TODO: screenshots?)
+
+
+Places
+======
+
+TODO: document what Places are, how they differ from Locations, and why
+you'd care.
+
+Alternate Names / Misspellings
+==============================
+
+Often users will want to search your site for an address or location,
+but they may spell it wrong - or it may have multiple names.
+
+OpenBlock provides a simple way that you can support these searches.
+
+You can use the admin UI at ``/admin/streets/streetmisspelling/`` to
+enter alternate street names. Click the "Add street misspelling"
+button, then type in the incorrect (alternate) and correct version of
+the street name.
+
+Likewise, you can use the ``/admin/db/locationsynonym/`` page to add
+alternate names for Locations, and the ``/admin/db/placesynonym`` page
+to add alternate names for Places.

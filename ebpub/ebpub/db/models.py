@@ -394,7 +394,11 @@ class LocationSynonym(models.Model):
     objects = LocationSynonymManager()
 
     def save(self):
-        if not self.normalized_name:
+        # Not doing this in clean() because we really don't want there to be
+        # any way to get this wrong.
+        if self.normalized_name:
+            self.normalized_name = normalize(self.normalized_name)
+        else:
             self.normalized_name = normalize(self.pretty_name)
         super(LocationSynonym, self).save()
 
