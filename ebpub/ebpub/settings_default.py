@@ -232,8 +232,11 @@ required_settings.append('MAP_BASELAYER_TYPE')
 
 
 # If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
-GOOGLE_API_KEY='your API key here'
-# TODO: document Yahoo & other base layers requiring keys
+GOOGLE_API_KEY=''
+# If you set MAP_BASELAYER_TYPE='yahoo', you must also set YAHOO_APP_ID.
+YAHOO_APP_ID=''
+# If you want MAP_BASELAYER_TYPE='cloudmade.*', you must also set CLOUDMADE_API_KEY.
+CLOUDMADE_API_KEY=''
 
 # This affects ONLY the admin UI, so it's not very useful.
 # TODO: admin UI really only needs one "layer selecting" view showing ALL the layers,
@@ -245,9 +248,9 @@ OLWIDGET_LAYERS = ['custom.opengeo_osm',
 # You can use ANY OpenLayers base layer configuration, with a little extra work,
 # like so:
 MAP_CUSTOM_BASE_LAYERS = {
-    'opengeo_osm':
-        {"class": "WMS",
-         "args": [
+    'opengeo_osm':  # to use this, set MAP_BASELAYER_TYPE='custom.opengeo_osm'
+        {"class": "WMS",  # The OpenLayers.Layer subclass to use.
+         "args": [  # These are passed as arguments to the constructor.
             "OpenStreetMap (OpenGeo)",
             "http://maps.opengeo.org/geowebcache/service/wms",
             {"layers": "openstreetmap",
@@ -259,8 +262,6 @@ MAP_CUSTOM_BASE_LAYERS = {
             ],
          }
 }
-# TODO: update docs to reflect that!!
-
 
 ##################
 # MEDIA
