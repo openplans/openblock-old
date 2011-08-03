@@ -21,6 +21,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
 from django.core import urlresolvers
 from django.db.models import Q
+from ebpub.geocoder.parser.parsing import normalize
 from ebpub.metros.allmetros import get_metro
 import logging
 import operator
@@ -454,7 +455,6 @@ class Misspelling(models.Model):
     places to track general misspellings. Use LocationSynonym, PlaceSynonym and
     StreetMisspelling to represent specific types of "misspellings"
     """
-    
     incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
     correct = models.CharField(max_length=255, db_index=True)
 
@@ -467,9 +467,10 @@ class StreetMisspellingManager(models.Manager):
         Returns the correct spelling of the given street name. If the given
         street name is already correctly spelled, then it's returned as-is.
 
-        Note that the given street name will be converted to all caps.
+        Note that the given street name will be converted to all caps,
+        and spaces normalized.
         """
-        street_name = street_name.upper()
+        street_name = ' '.join(street_name.upper().strip().split())
         try:
             return self.get(incorrect=street_name).correct
         except self.model.DoesNotExist:
@@ -480,8 +481,18 @@ class StreetMisspelling(models.Model):
     correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
     objects = StreetMisspellingManager()
 
+    def save(self):
+        """Ensure everything's normalized (uppercase, normalized whitespace).
+        Doing this on the model so it happens regardless of whether
+        data comes from admin UI or a script or whatever.
+        """
+        self.incorrect = normalize(self.incorrect or '')
+        self.correct = normalize(self.correct or '')
+        super(StreetMisspelling, self).save()
+
     def __unicode__(self):
         return self.incorrect
+
 
 class PlaceTypeManager(models.Manager):
 
@@ -558,7 +569,6 @@ class PlaceSynonym(models.Model):
 
     def save(self):
         if not self.normalized_name:
-            from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(PlaceSynonym, self).save()
 
