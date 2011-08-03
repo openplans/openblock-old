@@ -413,4 +413,9 @@ LOGGING = {
     }
 }
 
+
+# Batch jobs (django-background-task): how long (in seconds) can a job
+# be locked before we decide it's dead?
+MAX_RUN_TIME = 60 * 15
+
 __doc__ = __doc__ % required_settings

@@ -52,20 +52,21 @@ def populate_ni_loc(location):
         i += 200
 
 class LocationImporter(object):
-    def __init__(self, layer, location_type, opts):
+    def __init__(self, layer, location_type, source='UNKNOWN', filter_bounds=False, verbose=False):
         self.layer = layer
         metro = get_metro()
         self.metro_name = metro['metro_name'].upper()
         self.now = datetime.datetime.now()
         self.location_type = location_type
-        self.opts = opts
-        if self.opts.filter_bounds:
-            self.bounds = Polygon.from_bbox(metro['extent'])
+        self.source = source
+        self.filter_bounds = filter_bounds
+        self.verbose = verbose
 
-    def save(self):
-        verbose = self.opts.verbose
-        name_field = self.opts.name_field
-        source = self.opts.source
+    def save(self, name_field):
+        verbose = self.verbose
+        source = self.source
+        if self.filter_bounds:
+            self.bounds = Polygon.from_bbox(metro['extent'])
         locs = []
         for feature in self.layer:
             name = feature.get(name_field)
@@ -117,9 +118,9 @@ class LocationImporter(object):
         return num_created
 
     def should_create_location(self, fields):
-        if self.opts.filter_bounds:
+        if self.filter_bounds:
             if not fields['location'].intersects(self.bounds):
-                if self.opts.verbose:
+                if self.verbose:
                     print >> sys.stderr, "Skipping %s, out of bounds" % fields['name']
                 return False
         return True
@@ -127,9 +128,7 @@ class LocationImporter(object):
     def get_location_type(self, feature):
         return self.location_type
 
-usage = 'usage: %prog [options] type_slug /path/to/shapefile'
-
-optparser = OptionParser(usage=usage)
+optparser = OptionParser(usage= 'usage: %prog [options] type_slug /path/to/shapefile')
 optparser.add_option('-n', '--name-field', dest='name_field', default='name', help='field that contains location\'s name')
 optparser.add_option('-i', '--layer-index', dest='layer_id', default=0, help='index of layer in shapefile')
 optparser.add_option('-s', '--source', dest='source', default='UNKNOWN', help='source metadata of the shapefile')
@@ -138,42 +137,57 @@ optparser.add_option('-b', '--filter-bounds', action='store_true', default=False
                      help="exclude locations not within the lon/lat bounds of "
                      " your metro's extent (from your settings.py) (default false)")
 
-def parse_args(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
-    # Add some options that aren't relevant to scripts that import our optparser.
-    optparser.add_option('--type-name', dest='type_name', default='', help='specifies the location type name')
-    optparser.add_option('--type-name-plural', dest='type_name_plural', default='', help='specifies the location type plural name')
-    return optparser.parse_args(argv)
-
-def main():
-    opts, args = parse_args()
-    if len(args) != 2:
-        optparser.error('must supply type slug and path to shapefile')
-    type_slug = args[0]
-    shapefile = args[1]
-    if not os.path.exists(shapefile):
-        optparser().error('file does not exist')
-    ds = DataSource(shapefile)
-    layer = ds[opts.layer_id]
-
+def get_or_create_location_type(slug, name, name_plural, verbose):
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
     try:
-        location_type = LocationType.objects.get(slug = type_slug)
-        if opts.verbose:
-            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % type_slug
+        location_type = LocationType.objects.get(slug = slug)
+        if verbose:
+            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % slug
     except LocationType.DoesNotExist:
         location_type, _ = LocationType.objects.get_or_create(
-            name = opts.type_name,
-            plural_name = opts.type_name_plural,
+            name = name,
+            plural_name = name_plural,
             scope = metro_name,
-            slug = type_slug,
+            slug = slug,
             is_browsable = True,
             is_significant = True,
             )
-    importer = LocationImporter(layer, location_type, opts)
-    num_created = importer.save()
+    return location_type
+
+def layer_from_shapefile(path, layer_id):
+    if not os.path.exists(path):
+        optparser.error('file does not exist: ' + path)
+    ds = DataSource(path)
+    return ds[layer_id]
+
+def parse_args(optparser, argv):
+    # Add some options that aren't relevant to scripts that import our optparser.
+    optparser.add_option('--type-name', dest='type_name', default='', help='specifies the location type name')
+    optparser.add_option('--type-name-plural', dest='type_name_plural', default='', help='specifies the location type plural name')
+    opts, args = optparser.parse_args(argv)
+
+    if len(args) != 2:
+        optparser.error('must supply type slug and path to shapefile')
+    type_slug = args[0]
+
+    layer = layer_from_shapefile(args[1], opts.layer_id)
+
+    return type_slug, layer, opts
+
+def main():
+    type_slug, layer, opts = parse_args(optparser, sys.argv[1:])
+    location_type = get_or_create_location_type(type_slug, opts.type_name, opts.type_name_plural, opts.verbose)
+
+    importer = LocationImporter(
+        layer,
+        location_type,
+        opts.source,
+        opts.filter_bounds,
+        opts.verbose
+    )
+    num_created = importer.save(opts.name_field)
+
     if opts.verbose:
         print >> sys.stderr, 'Created %s %s.' % (num_created, location_type.plural_name)
 

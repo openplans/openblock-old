@@ -19,6 +19,8 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('obadmin.admin.views',
+    url(r'^db/location/import-zip-shapefiles/$', 'import_zip_shapefiles'),
+    url(r'^db/location/jobs-status/$', 'jobs_status'),
     url(r'^old/$', 'index'),
     url(r'^old/schemas/$', 'schema_list'),
 #    url(r'^old/schemas/(\d{1,6})/$', 'edit_schema'),

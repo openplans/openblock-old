@@ -38,8 +38,28 @@ several people currently trying it in other countries.
 ZIP Codes
 =========
 
-Finding ZIP Codes
------------------
+If you have a list of the ZIP codes you'd like to install, you can run your
+server and in another terminal run::
+
+    $ export DJANGO_SETTINGS_MODULE=myblock.settings
+    $ django-admin.py process_tasks
+
+Like the `runserver` command, this won't immediately exit. It will sit quietly
+until there are background jobs to process for installing the ZIP codes.
+
+Surf to http://127.0.0.1:8000/admin/db/location/ and click the link "Import
+ZIP Shapefiles".  You can pick your state, paste your list of ZIPs, and wait
+for the import to finish.  When this is done, type `control-c` to stop
+process_tasks, then skip down to the "Verifying ZIP Codes" section below.
+
+
+Finding ZIP Codes To Install By Hand
+------------------------------------
+
+Alternately, you can use command-line scripts to install ZIP codes. This
+may be more convenient if you have configured your
+:ref:`metro extent <metro_extent>` and your list of ZIP codes crosses
+state boundaries.
 
 The US Census Bureau has shapefiles for all USA zip codes.  Go to
 http://www2.census.gov/cgi-bin/shapefiles2009/national-files, select
