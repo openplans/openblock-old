@@ -39,7 +39,8 @@ install the demo package ``obdemo``:
 .. code-block:: bash
 
   $ cd $VIRTUAL_ENV/src/openblock
-  $ pip install -r obdemo/requirements.txt -e obdemo
+  $ pip install -r obdemo/requirements.txt
+  $ pip install -e obdemo
 
 
 Editing Settings

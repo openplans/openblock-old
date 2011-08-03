@@ -60,11 +60,14 @@ commands:
 .. code-block:: bash
 
   $ cd $VIRTUAL_ENV/src/openblock
-  $ pip install -r ebpub/requirements.txt -e ebpub
-  $ pip install -r ebdata/requirements.txt -e ebdata
-  $ pip install -r obadmin/requirements.txt -e obadmin
+  $ pip install -r ebpub/requirements.txt
+  $ pip install -e ebpub
+  $ pip install -r ebdata/requirements.txt
+  $ pip install -e ebdata
+  $ pip install -r obadmin/requirements.txt
+  $ pip install -e obadmin
 
-If you encounter errors during package installation, please see :doc:`common_install_problems`
+If you encounter errors during package installation, please see :doc:`common_install_problems`.
 
 
 .. _postinstall:
