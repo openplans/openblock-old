@@ -34,26 +34,29 @@ listdiffc = Extension('ebdata.templatemaker.listdiffc',
 
 import os.path
 here = os.path.dirname(__file__)
-with open(os.path.join(here, 'README.TXT')) as file:
+with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
 
-VERSION="1.0a2-dev"
+VERSION="1.0a2"
 
 setup(
     name='ebdata',
     version=VERSION,
-    description="Data scraper infrastructure for ebpub",
+    description="Data scraper infrastructure for OpenBlock (hyperlocal news for Django)",
     long_description=long_description,
     license="GPLv3",
+    maintainer="Paul Winkler (for OpenPlans)",
+    maintainer_email="ebcode@groups.google.com",
+    url="http://openblockproject.org/docs",
     install_requires=[
-    "django>=1.2",
-    "ebpub>=%s" % VERSION,   # Assumes ebpub and ebdata are versioned together.
-    "lxml",
-    "chardet",
-    "feedparser",
-    "httplib2",
-    "python-dateutil",
-    "xlrd",
+        "django>=1.3",
+        "ebpub>=%s" % VERSION,   # Assumes ebpub and ebdata are versioned together.
+        "lxml",
+        "chardet",
+        "feedparser",
+        "httplib2",
+        "python-dateutil",
+        "xlrd",
     ],
     dependency_links=[
     ],

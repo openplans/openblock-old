@@ -30,32 +30,33 @@ except ImportError:
 
 import os.path
 here = os.path.dirname(__file__)
-with open(os.path.join(here, 'README.TXT')) as file:
+with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
 
-VERSION="1.0a2-dev"
+VERSION="1.0a2"
 
 setup(
     name='ebpub',
     version=VERSION,
-    description="Core models and views for OpenBlock (Hyperlocal news Django app)",
+    description="Core models and views for OpenBlock (hyperlocal news for Django)",
     long_description=long_description,
+    maintainer="Paul Winkler (for OpenPlans)",
+    maintainer_email="ebcode@groups.google.com",
+    url="http://openblockproject.org/docs",
     license="GPLv3",
     install_requires=[
-    "django>=1.3",
-    "django-static",
-    "GDAL",
-    "pyyaml",
-    "psycopg2>=2.0",
-    "slimmer",  # used by django-static.
-    "pyrfc3339",
-    "South",
-    "mock>=0.8.0alpha1",
-    "django-olwidget",
-    'setuptools-git',  # Only needed if building packages for distribution.
-    'django-apikey',
-    ],
-    find_links=[
+        "django>=1.3",
+        "django-static",
+        "GDAL",
+        "pyyaml",
+        "psycopg2>=2.0",
+        "slimmer",  # used by django-static.
+        "pyrfc3339",
+        "South",
+        "mock>=0.8.0alpha1",
+        "django-olwidget",
+        'setuptools-git',  # Only needed if building packages for distribution.
+        'django-apikey',
     ],
     dependency_links=[
     "http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1",

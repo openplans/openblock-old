@@ -28,14 +28,17 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
 
-VERSION="1.0a2-dev",
+VERSION="1.0a2"
 
 setup(
     name='obdemo',
     version=VERSION,
-    description="Demo website configuration for ebpub",
+    description="Demo website configuration for OpenBlock (hyperlocal news for Django)",
     long_description=long_description,
     license="GPLv3",
+    maintainer="Paul Winkler (for OpenPlans)",
+    maintainer_email="ebcode@groups.google.com",
+    url="http://openblockproject.org/docs",
     install_requires=[
         # Assume all these packages are versioned together.
         "ebpub>=%s" % VERSION,
