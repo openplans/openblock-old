@@ -115,7 +115,6 @@ def download_state_shapefile(state, zipcodes):
 
 @task
 def import_zip_from_shapefile(filename, zipcode):
-    print "XXX BlAH"; import time; time.sleep(60)
     layer = layer_from_shapefile(filename, 0)
     importer = ZipImporter(layer, 'ZCTA5CE')
     print "ZIP %s IMPORT STARTING" % zipcode

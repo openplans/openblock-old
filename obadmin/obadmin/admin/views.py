@@ -63,7 +63,6 @@ class ImportZipShapefilesForm(forms.Form):
             return False
 
         zip_codes = findall('\d{5}', self.cleaned_data['zip_codes'])
-        import pdb; pdb.set_trace()
         download_state_shapefile.delay(self.cleaned_data['state'], zip_codes)
 
         return True
