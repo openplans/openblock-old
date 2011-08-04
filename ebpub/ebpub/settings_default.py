@@ -94,12 +94,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django_static',
     'olwidget',
-    # Only need these 2 for some admin tasks, eg. configuration for
-    # some scraper-related stuff for the everyblock package.  But I
-    # haven't tried to figure out yet which scrapers this might be
-    # useful for.
-#    'everyblock.admin',
-#    'everyblock.staticmedia',
 )
 
 APPS_FOR_TESTING = (
