@@ -17,7 +17,8 @@
 #
 # -*- coding: utf-8 -*-
 
-from background_task import background
+#from background_task import background
+from celery.task import task
 from django.conf import settings
 from ebdata.retrieval.retrievers import Retriever
 from string import maketrans
@@ -89,8 +90,10 @@ CENSUS_STATES = (
     ("56", "Wyoming"),
 )
 
-@background
+
+@task
 def download_state_shapefile(state, zipcodes):
+    print "DOWNLOAD STARTING"
     n = dict(CENSUS_STATES)[state].upper().translate(maketrans(' ', '_'))
     name         = "tl_2009_%s_zcta5" % state
     zip_filename = "%s.zip" % name
@@ -106,13 +109,18 @@ def download_state_shapefile(state, zipcodes):
     # expected files aren't in the archive ...)
     ZipFile(path, 'r').extractall(cache_dir, files)
     for zipcode in zipcodes:
-        import_zip_from_shapefile(shapefile, zipcode)
+        print "PUSHING ZIPCODE %s ONTO TASK QUEUE" % zipcode
+        import_zip_from_shapefile.delay(shapefile, zipcode)
+    print "DOWNLOAD DONE"
 
-@background
+@task
 def import_zip_from_shapefile(filename, zipcode):
+    print "XXX BlAH"; import time; time.sleep(60)
     layer = layer_from_shapefile(filename, 0)
     importer = ZipImporter(layer, 'ZCTA5CE')
+    print "ZIP %s IMPORT STARTING" % zipcode
     try:
         importer.import_zip(zipcode)
     except KeyError:
-        next # zip file not in shapefile. TODO: report error somehow
+        return # zip file not in shapefile. TODO: report error somehow
+    print "ZIP %s IMPORT DONE" % zipcode

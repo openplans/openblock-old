@@ -52,6 +52,8 @@ setup(
     "django-olwidget",
     'setuptools-git',  # Only needed if building packages for distribution.
     'django-apikey',
+    'celery',
+    'django-kombu',
     ],
     find_links=[
     ],

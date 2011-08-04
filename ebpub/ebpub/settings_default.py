@@ -94,6 +94,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django_static',
     'olwidget',
+    'djcelery',
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
@@ -414,8 +415,10 @@ LOGGING = {
 }
 
 
-# Batch jobs (django-background-task): how long (in seconds) can a job
-# be locked before we decide it's dead?
-MAX_RUN_TIME = 60 * 15
+# Celery config. Use the main sql database by default.
+BROKER_BACKEND = "django"
+CELERY_RESULT_BACKEND = 'database'
+import djcelery
+djcelery.setup_loader()
 
 __doc__ = __doc__ % required_settings

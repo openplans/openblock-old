@@ -31,6 +31,9 @@ else:
 os.environ['DJANGO_SETTINGS_MODULE'] = 'obdemo.settings'
 os.environ['PYTHON_EGG_CACHE'] = '/tmp/obdemo-python-eggs'
 
+# Per http://pypi.python.org/pypi/django-celery
+os.environ["CELERY_LOADER"] = "django"
+
 import django.core.handlers.wsgi
 application = django.core.handlers.wsgi.WSGIHandler()
 

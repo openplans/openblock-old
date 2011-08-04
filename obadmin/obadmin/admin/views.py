@@ -63,7 +63,8 @@ class ImportZipShapefilesForm(forms.Form):
             return False
 
         zip_codes = findall('\d{5}', self.cleaned_data['zip_codes'])
-        download_state_shapefile(self.cleaned_data['state'], zip_codes)
+        import pdb; pdb.set_trace()
+        download_state_shapefile.delay(self.cleaned_data['state'], zip_codes)
 
         return True
 
@@ -212,6 +213,7 @@ def newsitem_details(request, news_item_id):
     })
 
 def jobs_status(request):
+    # XXX TODO: rewrite to use Celery
     pending = Task.objects.find_available()
 
     # if there are old jobs and nothing's running, tell user to run tasks

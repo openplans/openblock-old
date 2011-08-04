@@ -17,4 +17,8 @@ http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alph
 South>=0.7.3
 git+git://github.com/scoursen/django-apikey.git@134005185814ea33d2ef#egg=django-apikey
 
+kombu==1.2.1
+celery==2.2.7
+django-kombu==0.9.4
+django-celery==2.2.4
 
