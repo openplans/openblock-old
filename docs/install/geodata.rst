@@ -42,7 +42,7 @@ If you have a list of the ZIP codes you'd like to install, you can run your
 server and in another terminal run::
 
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
-    $ django-admin.py celeryd
+    $ django-admin.py celeryd -B -E
 
 Like the `runserver` command, this won't immediately exit. It will sit quietly
 until there are background jobs to process for installing the ZIP codes.

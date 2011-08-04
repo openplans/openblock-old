@@ -21,4 +21,4 @@ kombu==1.2.1
 celery==2.2.7
 django-kombu==0.9.4
 django-celery==2.2.4
-
+ghettoq==0.4.5

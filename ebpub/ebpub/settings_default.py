@@ -95,6 +95,7 @@ INSTALLED_APPS = (
     'django_static',
     'olwidget',
     'djcelery',
+    'ghettoq',
     # Only need these 2 for some admin tasks, eg. configuration for
     # some scraper-related stuff for the everyblock package.  But I
     # haven't tried to figure out yet which scrapers this might be
@@ -414,10 +415,18 @@ LOGGING = {
     }
 }
 
-
-# Celery config. Use the main sql database by default.
+###############################################################
+# Celery config - for background jobs, scheduled jobs, etc.
+#
+# Use the main sql database to avoid forcing openblock users
+# to install/configure/run rabbitmq.
+# Of course, if you *want* to use rabbitmq,
+# go right ahead :)
 BROKER_BACKEND = "django"
 CELERY_RESULT_BACKEND = 'database'
+# For scheduled jobs.
+CARROT_BACKEND = "ghettoq.taproot.Database"
+
 import djcelery
 djcelery.setup_loader()
 

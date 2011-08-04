@@ -54,6 +54,7 @@ setup(
     'django-apikey',
     'celery',
     'django-kombu',
+    'ghettoq',
     ],
     find_links=[
     ],
