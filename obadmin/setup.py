@@ -28,17 +28,20 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
 
+VERSION="1.0a2-dev"
+
 setup(
     name='obadmin',
-    version="1.0a2-dev",
+    version=VERSION,
     description="Setup and administrative tools for ebpub",
     long_description=long_description,
     license="GPLv3",
     install_requires=[
-    "ebpub>=1.0a2-dev",
-    "ebdata>=1.0a2-dev",
-    "PasteScript",
-    "paver",
+        # Assume openblock packages are versioned together.
+        "ebpub>=%s" % VERSION,
+        "ebdata>=%s" % VERSION,
+        "PasteScript",
+        "paver",
     ],
     dependency_links=[
     ],

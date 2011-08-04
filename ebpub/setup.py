@@ -33,9 +33,11 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.TXT')) as file:
     long_description = file.read()
 
+VERSION="1.0a2-dev"
+
 setup(
     name='ebpub',
-    version="1.0a2-dev",
+    version=VERSION,
     description="Core models and views for OpenBlock (Hyperlocal news Django app)",
     long_description=long_description,
     license="GPLv3",

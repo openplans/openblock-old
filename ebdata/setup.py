@@ -37,15 +37,17 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.TXT')) as file:
     long_description = file.read()
 
+VERSION="1.0a2-dev"
+
 setup(
     name='ebdata',
-    version="1.0a2-dev",
+    version=VERSION,
     description="Data scraper infrastructure for ebpub",
     long_description=long_description,
     license="GPLv3",
     install_requires=[
     "django>=1.2",
-    "ebpub>=1.0a2-dev",
+    "ebpub>=%s" % VERSION,   # Assumes ebpub and ebdata are versioned together.
     "lxml",
     "chardet",
     "feedparser",

@@ -28,16 +28,19 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
 
+VERSION="1.0a2-dev",
+
 setup(
     name='obdemo',
-    version="1.0a2-dev",
+    version=VERSION,
     description="Demo website configuration for ebpub",
     long_description=long_description,
     license="GPLv3",
     install_requires=[
-    "ebpub>=1.0a2-dev",
-    "ebdata>=1.0a2-dev",
-    "obadmin>=1.0a2-dev",
+        # Assume all these packages are versioned together.
+        "ebpub>=%s" % VERSION,
+        "ebdata>=%s" % VERSION,
+        "obadmin>=%s" % VERSION,
     ],
     dependency_links=[
     ],
