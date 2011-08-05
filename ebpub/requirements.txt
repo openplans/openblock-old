@@ -13,8 +13,8 @@ slimmer>=0.1.30
 pyRFC3339>=0.1
 pytz>=2011g
 PyYAML==3.09
-http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1
+http://www.voidspace.org.uk/downloads/mock-0.8.0alpha2.tar.gz#egg=mock-0.8.0alpha2
 South>=0.7.3
-git+git://github.com/scoursen/django-apikey.git@134005185814ea33d2ef#egg=django-apikey
+
 
 
