@@ -19,10 +19,10 @@ for PKGDIR in ebpub ebdata obadmin obdemo; do
     sed -i -e "s/VERSION=.*\$/VERSION=\"${VERSION}\"/" setup.py
     python setup.py sdist > /dev/null || exit 1
     FULLNAME=`python setup.py --fullname`
-    echo -n "Does this status look right for $FULLNAME? "
+    echo "Full package name: $FULLNAME"
     python setup.py --classifiers | grep -i status
     if [ -e dist/${FULLNAME}.tar.gz ]; then
-	echo $FULLNAME package is at $PKGDIR/dist/${FULLNAME}.tar.gz
+	echo package is at $PKGDIR/dist/${FULLNAME}.tar.gz
 	echo
     else
 	echo Failed to build $FULLNAME sdist. Try re-running python setup.py sdist to see why
