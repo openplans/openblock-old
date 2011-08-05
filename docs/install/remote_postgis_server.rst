@@ -16,6 +16,3 @@ You will need to modify the DATABASES setting in your application to reflect the
 prior to running any django administrative commands.  Settings are located in the python 
 package corresponding to the application, eg: myblock/myblock/settings.py or obdemo/obdemo/settings.py
 
-See `Django's settings documentation
-<https://docs.djangoproject.com/en/dev/topics/settings/>`_ and `Django's DATABASES setting documentation
-<https://docs.djangoproject.com/en/dev/ref/settings/#databases>`_ for more information

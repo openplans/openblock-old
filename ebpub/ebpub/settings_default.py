@@ -94,12 +94,6 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django_static',
     'olwidget',
-    # Only need these 2 for some admin tasks, eg. configuration for
-    # some scraper-related stuff for the everyblock package.  But I
-    # haven't tried to figure out yet which scrapers this might be
-    # useful for.
-#    'everyblock.admin',
-#    'everyblock.staticmedia',
 )
 
 APPS_FOR_TESTING = (
@@ -232,22 +226,18 @@ required_settings.append('MAP_BASELAYER_TYPE')
 
 
 # If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
-GOOGLE_API_KEY='your API key here'
-# TODO: document Yahoo & other base layers requiring keys
-
-# This affects ONLY the admin UI, so it's not very useful.
-# TODO: admin UI really only needs one "layer selecting" view showing ALL the layers,
-# and then once it's chosen, it writes that config somewhere and
-# *all* other views will just use the selected base layer.
-OLWIDGET_LAYERS = ['custom.opengeo_osm',
-                   'google.streets', 'osm.mapnik', 'osm.osmarender', 'cloudmade.36041']
+GOOGLE_API_KEY=''
+# If you set MAP_BASELAYER_TYPE='yahoo', you must also set YAHOO_APP_ID.
+YAHOO_APP_ID=''
+# If you want MAP_BASELAYER_TYPE='cloudmade.*', you must also set CLOUDMADE_API_KEY.
+CLOUDMADE_API_KEY=''
 
 # You can use ANY OpenLayers base layer configuration, with a little extra work,
 # like so:
 MAP_CUSTOM_BASE_LAYERS = {
-    'opengeo_osm':
-        {"class": "WMS",
-         "args": [
+    'opengeo_osm':  # to use this, set MAP_BASELAYER_TYPE='custom.opengeo_osm'
+        {"class": "WMS",  # The OpenLayers.Layer subclass to use.
+         "args": [  # These are passed as arguments to the constructor.
             "OpenStreetMap (OpenGeo)",
             "http://maps.opengeo.org/geowebcache/service/wms",
             {"layers": "openstreetmap",
@@ -259,8 +249,6 @@ MAP_CUSTOM_BASE_LAYERS = {
             ],
          }
 }
-# TODO: update docs to reflect that!!
-
 
 ##################
 # MEDIA
@@ -412,5 +400,10 @@ LOGGING = {
         }
     }
 }
+
+
+# Batch jobs (django-background-task): how long (in seconds) can a job
+# be locked before we decide it's dead?
+MAX_RUN_TIME = 60 * 15
 
 __doc__ = __doc__ % required_settings

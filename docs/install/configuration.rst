@@ -26,9 +26,10 @@ public place eg. a public version control system.
 Choosing Your Map Base Layer
 ============================
 
-In your settings file, you have a couple of options for what you want
-to use for your map base layer - the tiled images that give your map
-street lines, geographic features, place names, etc.
+If you don't like the look of OpenBlock's default maps, you have many
+options for your *base layer* - the tiled images that give your map
+its street lines, geographic features, place names, etc.
+
 
 Default: OpenStreetMap tiles hosted by OpenGeo
 ----------------------------------------------
@@ -39,42 +40,107 @@ from OpenStreetMap data.  It is free for use for any purpose, but note
 that there have been some reliability issues with this server in the
 past.
 
-Any WMS Server
---------------
+Other Publicly Available Layers
+---------------------------------
 
-If you have access to any other
-`Web Map Service <http://en.wikipedia.org/wiki/Web_Map_Service>`_
-server that would be suitable for your site, you can use it by doing
-this in your ``settings.py``:
-
-.. code-block:: python
-
-  MAP_BASELAYER_TYPE='wms'
-  WMS_URL="http://example.com/wms"  # insert the real URL here
-
-Note we assume that the base layer uses
-`spherical mercator projection <http://docs.openlayers.org/library/spherical_mercator.html>`_
-(known variously as "EPSG:900913" or "PSG:3785").
+It's easy to use any base layer supported by `olwidget
+<http://olwidget.org/olwidget/v0.4/doc/django-olwidget.html#general-map-display>`_.
+More specifically:
 
 Google Maps
------------
+~~~~~~~~~~~~
+
 
 If your intended usage on your website meets Google's
 `Terms of Service <http://code.google.com/apis/maps/faq.html#tos>`_, or
 if you have a Premier account, you may be able to use Google Maps for
 your base layer.
 
-You'll need this in your settings.py:
+In your settings.py, set ``MAP_BASELAYER_TYPE`` to any of
+'google.streets', 'google.physical', 'google.satellite', or 'google.hybrid'.
+Then be sure to get an API key from Google and put it in your settings
+file as ``GOOGLE_API_KEY``.
+
+
+Open Street Map
+~~~~~~~~~~~~~~~~~
+
+Set ``MAP_BASELAYER_TYPE`` to either 'osm.mapnik' or 'osm.osmarender'.
+
+
+Microsoft VirtualEarth / Bing Maps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set ``MAP_BASELAYER_TYPE`` to any of 've.road', 've.shaded',
+'ve.aerial', or 've.hybrid'.
+
+Yahoo Maps
+~~~~~~~~~~~
+
+Set ``MAP_BASELAYER_TYPE = 'yahoo'``
+and be sure to set ``YAHOO_APP_ID`` to your Yahoo app id.
+
+
+Other public WMS servers
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Set ``MAP_BASELAYER_TYPE`` to either 'wms.map' (not very useful for
+OpenBlock) or 'wms.nasa'.
+
+CloudMade
+~~~~~~~~~
+
+Cloudmade hosts a *lot* of community-designed map base layers.
+You can even design your own online using their tools.
+
+Get an API key from them and put it in your settings as
+``CLOUDMADE_API_KEY``.  Then set ``MAP_BASELAYER_TYPE = 'cloudmade.<num>'``
+(where <num> is the number for a cloudmade style).
+For example, 'cloudmade.998'.
+
+To find interesting cloudmade style numbers, browse at
+http://maps.cloudmade.com/editor ; the style number is at bottom right
+of each style.
+
+Blank (no base layer)
+~~~~~~~~~~~~~~~~~~~~~~
+
+Try ``MAP_BASELAYER_TYPE = 'wms.blank'``
+
+
+Any Other Base Layers
+---------------------------
+
+Do you have your own tile server running, or have a URL to something
+else not in the above list? Great! You can use that with a few extra
+settings.  This option takes a little more work; you will have to know
+which `OpenLayers layer subclass
+<http://dev.openlayers.org/docs/files/OpenLayers/Layer-js.html>`_ is
+appropriate, and what parameters to pass to it.
+
+In fact, this is how our default OpenGeo / OpenStreetMap layer is
+configured, so let's use that as an example:
 
 .. code-block:: python
 
-  MAP_BASELAYER_TYPE='google'
-  GOOGLE_MAPS_KEY='your API key goes here'
+ MAP_BASELAYER_TYPE = 'custom.opengeo_osm'
+ 
+ MAP_CUSTOM_BASE_LAYERS = {
+    'opengeo_osm':  # to use this, set MAP_BASELAYER_TYPE='custom.opengeo_osm'
+        {"class": "WMS",  # The OpenLayers.Layer subclass to use.
+         "args": [  # These are passed as arguments to the constructor.
+            "OpenStreetMap (OpenGeo)",
+            "http://maps.opengeo.org/geowebcache/service/wms",
+            {"layers": "openstreetmap",
+             "format": "image/png",
+             "bgcolor": "#A1BDC4",
+             },
+            {"wrapDateLine": True
+             },
+            ],
+         }
+ }
 
-Other base layers
------------------
-
-Patches welcome :)
 
 
 Multiple databases?
@@ -101,7 +167,8 @@ with configuration about your local region.
 Most of the items in this dictionary are fairly self
 explanatory. Here's an example for Boston:
 
-.. code-block: python::
+.. code-block:: python
+
    METRO_LIST = [
     {
         # Extent of the metro, as a longitude/latitude bounding box.
@@ -180,6 +247,9 @@ list.
 When would you put more than one dictionary in METRO_LIST?
 ----------------------------------------------------------
 
+The only dictionary in ``METRO_LIST`` that has any effect is the one whose
+``short_name`` matches ``settings.SHORT_NAME.``
+
 The purpose of having more than one metro dictionary in ``METRO_LIST``
 would be to run multiple OpenBlock sites for multiple metro areas with
 some shared configuration.
@@ -187,10 +257,10 @@ some shared configuration.
 To do this, you'd have one settings file containing the master
 ``METRO_LIST``, and then for each site you'd have its own settings
 file that imports ``METRO_LIST`` (and any other shared stuff you like)
-from the master file.  The site-specific settings file would also set
+from the master settings file.  The site-specific settings file would also set
 ``settings.SHORT_NAME`` to match the ``'short_name'`` key of one of
 the dictionaries.
 
 Most people will probably not be doing that. This feature serves the
-needs of `everyblock.com <http://everyblock.com>`_, which runs sites
-for many cities.
+needs of `everyblock.com <http://everyblock.com>`_, which runs
+separate sites for many cities across the USA.

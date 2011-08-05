@@ -313,7 +313,8 @@ class Location(models.Model):
     display_order = models.SmallIntegerField()
     city = models.CharField(max_length=255)
     source = models.CharField(max_length=64)
-    area = models.FloatField(blank=True, null=True) # in square meters
+    # In square meters. This is populated by a trigger in ebpub/db/migrations/0004_st_intersects_patch.py
+    area = models.FloatField(blank=True, null=True)
     population = models.IntegerField(blank=True, null=True) # from the 2000 Census
     user_id = models.IntegerField(blank=True, null=True)
     is_public = models.BooleanField()
@@ -336,6 +337,10 @@ class Location(models.Model):
             self.location = ensure_valid(flatten_geomcollection(self.location))
         except ValueError, e:
             raise ValidationError(str(e))
+        if self.normalized_name:
+            self.normalized_name = normalize(self.normalized_name)
+        else:
+            self.normalized_name = normalize(self.name)
 
     class Meta:
         unique_together = (('slug', 'location_type'),)
@@ -393,7 +398,11 @@ class LocationSynonym(models.Model):
     objects = LocationSynonymManager()
 
     def save(self):
-        if not self.normalized_name:
+        # Not doing this in clean() because we really don't want there to be
+        # any way to get this wrong.
+        if self.normalized_name:
+            self.normalized_name = normalize(self.normalized_name)
+        else:
             self.normalized_name = normalize(self.pretty_name)
         super(LocationSynonym, self).save()
 

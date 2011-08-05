@@ -38,8 +38,28 @@ several people currently trying it in other countries.
 ZIP Codes
 =========
 
-Finding ZIP Codes
------------------
+If you have a list of the ZIP codes you'd like to install, you can run your
+server and in another terminal run::
+
+    $ export DJANGO_SETTINGS_MODULE=myblock.settings
+    $ django-admin.py process_tasks
+
+Like the `runserver` command, this won't immediately exit. It will sit quietly
+until there are background jobs to process for installing the ZIP codes.
+
+Surf to http://127.0.0.1:8000/admin/db/location/ and click the link "Import
+ZIP Shapefiles".  You can pick your state, paste your list of ZIPs, and wait
+for the import to finish.  When this is done, type `control-c` to stop
+process_tasks, then skip down to the "Verifying ZIP Codes" section below.
+
+
+Finding ZIP Codes To Install By Hand
+------------------------------------
+
+Alternately, you can use command-line scripts to install ZIP codes. This
+may be more convenient if you have configured your
+:ref:`metro extent <metro_extent>` and your list of ZIP codes crosses
+state boundaries.
 
 The US Census Bureau has shapefiles for all USA zip codes.  Go to
 http://www2.census.gov/cgi-bin/shapefiles2009/national-files, select
@@ -315,3 +335,27 @@ clicking.  Finish by double-clicking.   Afterward you can modify
 points by clicking the "Modify" control, then dragging points as needed.
 
 (TODO: screenshots?)
+
+
+Places
+======
+
+TODO: document what Places are, how they differ from Locations, and why
+you'd care.
+
+Alternate Names / Misspellings
+==============================
+
+Often users will want to search your site for an address or location,
+but they may spell it wrong - or it may have multiple names.
+
+OpenBlock provides a simple way that you can support these searches.
+
+You can use the admin UI at ``/admin/streets/streetmisspelling/`` to
+enter alternate street names. Click the "Add street misspelling"
+button, then type in the incorrect (alternate) and correct version of
+the street name.
+
+Likewise, you can use the ``/admin/db/locationsynonym/`` page to add
+alternate names for Locations, and the ``/admin/db/placesynonym`` page
+to add alternate names for Places.

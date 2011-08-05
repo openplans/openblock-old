@@ -382,9 +382,7 @@ OBMap.prototype._initBasicMap = function() {
     // workaround for problems with Microsoft layers and vector layer
     // drift (see http://openlayers.com/dev/examples/ve-novibrate.html)
     if (parts[0] == "ve") {
-        if (opts.mapOptions.panMethod === undefined) {
-            opts.mapOptions.panMethod = OpenLayers.Easing.Linear.easeOut;
-        }
+        this.map.panMethod = OpenLayers.Easing.Linear.easeOut;
     }
     baselayer.displayInLayerSwitcher = false;
     this.map.addLayers([baselayer]);

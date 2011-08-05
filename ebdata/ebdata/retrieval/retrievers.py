@@ -23,6 +23,7 @@ A Retriever class simply knows how to retrieve a resource off of the Web. It
 knows nothing about *scraping*, i.e., parsing the contents of Web pages.
 """
 
+import os
 import httplib2
 from Cookie import SimpleCookie, CookieError
 from urllib import urlencode
@@ -165,12 +166,22 @@ class Retriever(object):
         """
         return self.fetch_data(*args, **kwargs)
 
-    def get_to_file(self, *args, **kwargs):
+    def cached_get_to_file(self, uri, filename):
         """
         Downloads the given URI and saves it to a temporary file. Returns the
         full filename of the temporary file.
         """
-        import os
+        fp = open(filename, 'wb')
+        fp.write(self.fetch_data(uri))
+        fp.close()
+        return filename
+
+    def get_to_tempfile(self, *args, **kwargs):
+        """
+        Downloads the given URI and saves it to a temporary file. Passes
+        all options on to fetch_data(). Returns the full filename of the
+        temporary file.
+        """
         from tempfile import mkstemp
         fd, name = mkstemp()
         fp = os.fdopen(fd, 'wb')

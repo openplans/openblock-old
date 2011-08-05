@@ -84,6 +84,8 @@ You (or your database admin) should follow the instructions for `Creating a Spat
 <http://docs.djangoproject.com/en/1.2/ref/contrib/gis/install/#creating-a-spatial-database-template-for-postgis>`_ in the GeoDjango documentation and be sure to heed the **Note** about varying names and locations of the relevant files.
 
 
+.. _postgres_auth:
+
 Database Access Settings
 ------------------------
 
@@ -106,9 +108,12 @@ this:
 
  local   all    all  trust
 
-Then restart postgresql.  **This is not suitable for production** 
+Then restart postgresql.  **This is not suitable for production**.
 
-See `Postgres pg_hba.conf documentation <http://developer.postgresql.org/pgdocs/postgres/auth-pg-hba-conf.html>`_ for more information.
+See `Postgres pg_hba.conf documentation
+<http://developer.postgresql.org/pgdocs/postgres/auth-pg-hba-conf.html>`_
+or the `postgres wiki <http://wiki.postgresql.org/wiki/Client_Authentication>`_
+for more information.
 
 Testing Database Access
 ~~~~~~~~~~~~~~~~~~~~~~~

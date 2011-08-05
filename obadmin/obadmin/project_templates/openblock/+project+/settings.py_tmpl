@@ -86,7 +86,8 @@ DEFAULT_MAP_ZOOM = 12
 # or you'll likely have "File name too long" errors.)
 HTTP_CACHE = '/tmp/openblock_scraper_cache_${project}'
 
-# Metros.
+# Metros. You almost certainly only want one dictionary in this list.
+# See the configuration docs for more info.
 METRO_LIST = (
     {
         # Extent of the metro, as a longitude/latitude bounding box.

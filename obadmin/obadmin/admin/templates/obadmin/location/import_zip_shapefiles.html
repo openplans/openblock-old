@@ -1,0 +1,40 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block title %}Import ZIP Shapefiles{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="../../../">Home</a>
+&rsaquo;
+<a href="../../">Db</a>
+&rsaquo;
+<a href="../">Locations</a>
+&rsaquo;
+Import Zip Shapefiles
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content">
+    <h1>Import ZIP Shapefiles</h1>
+
+    <div id="content-main">
+        <p>
+            Paste in a list of ZIP codes your site will cover. (This form will
+            ignore any text, commas, etc., it just extracts any 5-digit codes
+            to use.) OpenBlock with download and install
+            <a href="http://www2.census.gov/cgi-bin/shapefiles2009/national-files">shapefiles
+            from the U.S. Census Bureau</a> for them. This is usually
+            only needed during the initial install of OpenBlock, but you can
+            run it multiple times for multiple states or to add more zips
+            later.
+        </p>
+
+        <form action="" method="post">{% csrf_token %}
+            {% include "admin/includes/fieldset.html" %}
+            <div class="submit-row"><input class="button default" type="submit" value="Import" /></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

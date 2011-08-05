@@ -39,7 +39,8 @@ install the demo package ``obdemo``:
 .. code-block:: bash
 
   $ cd $VIRTUAL_ENV/src/openblock
-  $ pip install -r obdemo/requirements.txt -e obdemo
+  $ pip install -r obdemo/requirements.txt
+  $ pip install -e obdemo
 
 
 Editing Settings
@@ -74,6 +75,7 @@ You'll also want to think about :ref:`base_layer_configs`.
 Database Initialization
 -----------------------
 
+You should already have taken care of :ref:`database_installation`.
 Create the (empty) database, and a postgres user for it, with these commands:
 
 .. code-block:: bash

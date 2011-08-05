@@ -7,6 +7,27 @@ Please feel free to drop a line to the `ebcode google group <http://groups.googl
 or visit the IRC channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.  
 
 
+Python Package Conflicts / Failures
+-------------------------------------
+
+Some quick things to check if you have any problems installing any of
+the Python package dependencies:
+
+* Make sure your virtualenv is activated. ``$VIRTUAL_ENV`` should
+  point to the right directory.
+
+* You should have at least version 1.0 of pip.  Check ``pip --version``
+
+* Make sure pip is installed *in the virtualenv*.  Check the output of
+  ``which pip``.
+
+* You should have a recent version of distribute. Try ``easy_install --version``. If it says at least 'distribute 0.6.14', you're OK.
+
+* Don't try to combine the ``pip install -r`` and ``pip install -e``
+  commands.  Doing so can result in the wrong version of a dependency.
+  (This is a `pip bug <https://github.com/pypa/pip/issues/318>`_.)
+
+
 
 .. _lxml:
 
@@ -39,6 +60,11 @@ you can do:
 .. code-block:: bash
 
     $ sudo apt-get install libxml2 libxml2-dev libxslt libxslt-dev
+
+And once you have those, on any platform you can do:
+
+.. code-block:: bash
+
     $ sudo ldconfig
     $ sudo pip install lxml
 

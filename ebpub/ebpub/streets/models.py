@@ -21,6 +21,7 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
 from django.core import urlresolvers
 from django.db.models import Q
+from ebpub.geocoder.parser.parsing import normalize
 from ebpub.metros.allmetros import get_metro
 import logging
 import operator
@@ -448,13 +449,28 @@ class Street(models.Model):
     def city_object(self):
         return City.from_norm_name(self.city)
 
+    def save(self):
+        if self.suffix:
+            self.suffix = self.suffix.upper().strip()
+        if self.state:
+            self.state = self.state.upper().strip()
+        if self.city:
+            # TODO: validate that there's a matching metro setting?
+            # (or Location object, if the metro is multi-city)?
+            self.city = self.city.upper().strip()
+
+        self.street = normalize(self.pretty_name)
+        if self.suffix:
+            self.street = re.sub(r' %s$' % self.suffix.upper(), '', self.street)
+        super(Street, self).save()
+
+
 class Misspelling(models.Model):
     """
     A generalized mapping between two normalized forms used in some 
     places to track general misspellings. Use LocationSynonym, PlaceSynonym and
     StreetMisspelling to represent specific types of "misspellings"
     """
-    
     incorrect = models.CharField(max_length=255, unique=True) # Always uppercase, single spaces
     correct = models.CharField(max_length=255, db_index=True)
 
@@ -467,9 +483,10 @@ class StreetMisspellingManager(models.Manager):
         Returns the correct spelling of the given street name. If the given
         street name is already correctly spelled, then it's returned as-is.
 
-        Note that the given street name will be converted to all caps.
+        Note that the given street name will be converted to all caps,
+        and spaces normalized.
         """
-        street_name = street_name.upper()
+        street_name = ' '.join(street_name.upper().strip().split())
         try:
             return self.get(incorrect=street_name).correct
         except self.model.DoesNotExist:
@@ -480,8 +497,18 @@ class StreetMisspelling(models.Model):
     correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
     objects = StreetMisspellingManager()
 
+    def save(self):
+        """Ensure everything's normalized (uppercase, normalized whitespace).
+        Doing this on the model so it happens regardless of whether
+        data comes from admin UI or a script or whatever.
+        """
+        self.incorrect = normalize(self.incorrect or '')
+        self.correct = normalize(self.correct or '')
+        super(StreetMisspelling, self).save()
+
     def __unicode__(self):
         return self.incorrect
+
 
 class PlaceTypeManager(models.Manager):
 
@@ -528,7 +555,6 @@ class Place(models.Model):
 
     def save(self):
         if not self.normalized_name:
-            from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(Place, self).save()
 
@@ -558,7 +584,6 @@ class PlaceSynonym(models.Model):
 
     def save(self):
         if not self.normalized_name:
-            from ebpub.geocoder.parser.parsing import normalize
             self.normalized_name = normalize(self.pretty_name)
         super(PlaceSynonym, self).save()
 
@@ -690,6 +715,14 @@ class Suburb(models.Model):
     """
     name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, unique=True)
+
+    def save(self):
+        """Ensure everything's normalized (uppercase, normalized whitespace).
+        Doing this on the model so it happens regardless of whether
+        data comes from admin UI or a script or whatever.
+        """
+        self.normalized_name = normalize(self.name)
+        super(Suburb, self).save()
 
     def __unicode__(self):
         return self.name
