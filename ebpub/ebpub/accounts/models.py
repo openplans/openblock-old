@@ -87,10 +87,12 @@ class UserManager(DjangoUserManager):
         return None
 
 class User(DjangoUser):
+    """ A very thin multi-table-inheritance wrapper around the default User class.
+    """
 
-
-    # The SHORT_NAME for the user's metro when they created the account.
-    main_metro = models.CharField(max_length=32)
+    main_metro = models.CharField(
+        max_length=32,
+        help_text="The SHORT_NAME for the user's metro when they created the account. Only useful if you have multiple metros.")
 
     objects = UserManager()
 
