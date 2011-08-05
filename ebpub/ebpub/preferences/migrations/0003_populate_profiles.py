@@ -8,7 +8,7 @@ class Migration(DataMigration):
 
     def forwards(self, orm):
         "Write your forwards methods here."
-        for user in orm['auth.User'].objects.all():
+        for user in orm['accounts.user'].objects.all():
             profile, created = orm['preferences.Profile'].objects.get_or_create(
                 user_id=user.id)
 
