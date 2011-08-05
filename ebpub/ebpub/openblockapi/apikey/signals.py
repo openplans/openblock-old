@@ -12,15 +12,15 @@ from .models import ApiKey
 
 def save_api_key( sender, instance, created, **kwargs ):
     try:
-        instance.user.get_profile( ).save( )
+        instance.user.get_profile().save()
     except:
         pass
 post_save.connect(save_api_key, sender=ApiKey)
 
 
-def post_save_api_key( sender, instance, **kwargs ):
+def post_delete_api_key( sender, instance, **kwargs ):
     try:
-        instance.user.get_profile( ).save( )
+        instance.user.get_profile().save()
     except:
         pass
-post_delete.connect(post_save_api_key, sender=ApiKey)
+post_delete.connect(post_delete_api_key, sender=ApiKey)
