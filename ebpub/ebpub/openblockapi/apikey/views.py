@@ -65,13 +65,11 @@ def list_keys(request):
 def do_generate_key_list(request):
     # Trigger loading the real user object (not a LazyUser proxy),
     # and use it.
-    import pdb; pdb.set_trace()
-
     user = request.user.user
     profile = user.get_profile()
     keys = ApiKey.objects.filter(user=user)
     cmak = profile.can_make_api_key()
-    ak = profile.profile.available_keys()
+    ak = profile.available_keys()
     return render_to_response('key/key.html',
                               { 'keys': keys, 'user': user,
                                 'can_make_api_key': cmak,
