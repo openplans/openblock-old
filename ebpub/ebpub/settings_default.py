@@ -73,7 +73,6 @@ INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.admin',
-    'django.contrib.messages',
     'ebdata.blobs',
     'ebdata.geotagger',
     'ebpub.accounts',
@@ -115,8 +114,11 @@ APPS_NOT_FOR_TESTING = (
         'django.contrib.contenttypes',
         # these tests break with some settings, see https://github.com/peterbe/django-static/issues#issue/8 and 9
         'django_static',
+        # these tests break under django 1.3, unsure why.
+        'django.contrib.messages',
         # the rest are just not of interest.
         'django.contrib.sessions',
+
 )
 
 
