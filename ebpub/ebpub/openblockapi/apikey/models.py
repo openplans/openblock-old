@@ -15,30 +15,10 @@ from datetime import datetime
 KEY_SIZE = 32
 
 try:
-    MAX_KEYS = settings.API_MAX_KEYS
+    MAX_KEYS = settings.MAX_KEYS_PER_USER
 except AttributeError:
     MAX_KEYS = -1
 
-class ApiKeyProfile(models.Model):
-    user = models.OneToOneField(User, related_name='key_profile',
-                                )
-    max_keys = models.IntegerField(default=MAX_KEYS)
-
-    class Meta:
-        db_table = 'key_apikeyprofile'
-
-    def available_keys(self):
-        if self.max_keys == -1:
-            return 'Unlimited'
-        return self.max_keys - self.keys.count()
-
-    def can_make_api_key(self):
-        if self.available_keys() > 0:
-            return True
-
-    def __unicode__(self):
-        return "ApiKeyProfile: %s, %s" % (self.keys.count(),
-                                          self.max_keys)
 
 class ApiKey(models.Model):
     user = models.ForeignKey(User, related_name='keys')

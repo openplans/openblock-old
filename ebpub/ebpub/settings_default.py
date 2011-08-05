@@ -325,7 +325,7 @@ EBPUB_CACHE_GEOCODER = True
 required_settings.append('EBPUB_CACHE_GEOCODER')
 
 # Required by openblockapi.apikey to associate keys with user profiles.
-AUTH_PROFILE_MODULE = 'apikey.ApiKeyProfile'
+AUTH_PROFILE_MODULE = 'preferences.Profile'
 
 
 ###################################################################
