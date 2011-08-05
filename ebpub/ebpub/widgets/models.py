@@ -25,12 +25,13 @@ class Widget(models.Model):
     name = models.CharField(max_length=128)
     slug = models.CharField(max_length=128, unique=True)
     description = models.TextField(blank=True)
-    extra_link_parameters = models.CharField(max_length=256, blank=True, null=True, help_text="If specified, this string is appended to item links shown in this widget. eg source=somewidget&context=somelocation")
 
     template = models.ForeignKey(Template)
     max_items = models.IntegerField(default=10)
     types = models.ManyToManyField(Schema, blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
+    item_link_template = models.TextField(blank=True, null=True, help_text="If specified, this simple URL template is used to determine the url for items with openblock 'detail' pages, eg: 'http://mypublicsite.com/openblock/{{schema.name}}/{{id}}/'. For detailed information, see documentation.")
+
     #...
     
     def __unicode__(self):
