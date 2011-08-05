@@ -45,6 +45,9 @@ Currently items are always ordered by date.
    types              Restrict the output to only the selected
                       :doc:`Schema <schemas>` types.
                       If none are specified, any type is allowed.
+-------------------- ------------------------------------------------------------
+ item link template   If specified, links to item detail pages will use this 
+                      template to determine where to link to.  
 ==================== ============================================================
 
 
@@ -63,7 +66,8 @@ Server Side Inclusion
 
 A request to the "Server Side Include URL" produces the output of the widget directly.
 This URL is suitable for use with any CMS or web server that can stitch pages
-together from content residing at different URLs.
+together from content residing at different URLs or via sub-requests.
+
 
 
 Templates
@@ -104,10 +108,13 @@ Basic Fields
 ==================== ============================================================
     Field			    Meaning
 -------------------- ------------------------------------------------------------
+  item.id             Openblock's unique identifier for this item.
+-------------------- ------------------------------------------------------------
   item.title          The headline or title of the item.
 -------------------- ------------------------------------------------------------
   item.internal_url   If the item is hosted by OpenBlock, this is a link to the
-                      OpenBlock page about the item.
+                      OpenBlock page about the item.  This value can be overridden
+                      via the "Item Link Template" setting on a widget.
 -------------------- ------------------------------------------------------------
   item.external_url   If the item is hosted by an outside site, this is a link to
                       the item.
@@ -182,3 +189,43 @@ The context variable ``widget`` provides information about the widget. The ``wid
 ------------------ ------------------------------------------------------------
   widget.slug      a unique identifier for the widget
 ================== ============================================================
+
+
+Item Link Templates
+===================
+
+An item link template can be specified to override the url used to link to 
+detail pages for items listed in a widget by adjusting the 'item.internal_url' 
+value available to the widget template.
+
+For example, if your site has a different public url or url scheme than openblock uses internally, you can use this value to rewrite item links accordingly.
+
+You may reference any of the fields of an item as shown above in your url template. 
+URL templates follow the same django template syntax above, but should evaluate to 
+a single url.  
+
+
+
+Example::
+
+    http://mypublicsite.com/xzy/openblock/items/{{id}}/
+    
+This will link items to mypublicsite and fill in the identifier for the item being 
+linked to depending on the item.
+
+**Note** unless you have a specific reason not to, use the urlencode filter on any value that may contain unsafe characters for urls.
+
+
+Example:: 
+
+    http://mypublicsite.com/track_click_and_redirect?realurl={{external_url|urlencode}}
+    
+Here, we link to a theoretical redirector on mypublicsite to capture a click through to an externally hosted (3rd party) detail page.
+
+You are free to use django's full template syntax as long as the result contains a single url.  Here for example, we perform some logic to determine whether to link internally, or use the redirector based on the item's schema::
+
+    {% if schema.slug == "restaurant-inspections" %}
+        http://mypublicsite.com/xzy/openblock/inspections/{{id}}/
+    {% else %}
+        http://mypublicsite.com/track_click_and_redirect?realurl={{external_url|urlencode}}
+    {% endif %}

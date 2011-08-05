@@ -61,6 +61,7 @@ def template_context_for_item(newsitem):
         ctx['attributes_by_name'][att.sf.name] = attr
 
     # newsitem fields
+    ctx['id'] = newsitem.id
     ctx['schema'] = newsitem.schema
     ctx['title'] = newsitem.title
     ctx['description'] = newsitem.description
@@ -80,23 +81,16 @@ def template_context_for_item(newsitem):
 
 def _template_ctx(newsitem, widget):
     ctx = template_context_for_item(newsitem)
+
     # now to extra widgety-stuff
-    ctx['external_url'] = _mutate_link(newsitem.url, widget)
-    if newsitem.schema.has_newsitem_detail:
-        ctx['internal_url'] = _mutate_link('http://' + settings.EB_DOMAIN + newsitem.item_url(), widget)
+    if widget.item_link_template and widget.item_link_template.strip():
+        try:
+            ctx['internal_url'] = _eval_item_link_template(widget.item_link_template, ctx)
+        except: 
+            return '#error'
+    
     return ctx
-    
-def _mutate_link(url, widget): 
-    if not widget.extra_link_parameters:
-        return url 
-    
-    suffix = widget.extra_link_parameters
-    pr = list(urlparse.urlsplit(url))
-    
-    # if there is a query string already, append with &
-    if len(pr[3]):
-        pr[3] = '%s&%s' % (pr[3], suffix)
-    else: 
-        pr[3] = suffix
-        
-    return urlparse.urlunsplit(pr)
+
+def _eval_item_link_template(template, context): 
+    t = Template(template)
+    return t.render(Context(context)).strip()
