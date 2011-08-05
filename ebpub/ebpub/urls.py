@@ -59,9 +59,7 @@ urlpatterns += patterns('',
 
     url(r'^rss/locations/([-a-z0-9]{1,32})/([-a-z0-9]{1,32})/$', feeds.LocationFeed(), name='ebpub-location-rss'),
 
-    url(r'^accounts/apikeys/create_key/$', 'ebpub.openblockapi.views.generate_key',
-        name='api_create_key'),
-    (r'^accounts/apikeys/', include('key.urls')),
+    (r'^accounts/apikeys/', include('ebpub.openblockapi.apikey.urls')),
 
     (r'^accounts/', include('ebpub.accounts.urls')),
 

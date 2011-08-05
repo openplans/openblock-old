@@ -1,7 +1,22 @@
+#   Copyright 2011 OpenPlans and contributors
+#
+#   This file is part of ebpub
+#
+#   ebpub is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   ebpub is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
+
 from django.conf import settings
-from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
-from django.db.models.query import QuerySet
 from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseBadRequest
@@ -14,9 +29,9 @@ from django.utils.cache import patch_response_headers
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
-from ebpub.openblockapi.auth import KEY_HEADER
-from ebpub.openblockapi.auth import check_api_authorization
-from ebpub.streets.models import PlaceType, Place, PlaceSynonym
+from .apikey.auth import KEY_HEADER
+from .apikey.auth import check_api_authorization
+from ebpub.streets.models import PlaceType
 from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
 from ebpub.utils.geodjango import ensure_valid
@@ -707,22 +722,3 @@ class OpenblockAtomFeed(feedgenerator.Atom1Feed):
             handler.addQuickElement('openblock:attribute', unicode(val),
                                     {'name': key, 'type': datatype})
         handler.endElement(u'openblock:attributes')
-
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import condition
-from django.views.decorators.cache import cache_page
-
-# Override one view from django-apikey to ensure it doesn't try
-# to save a reference to our LazyUser proxy.
-from key.views import etag_func, latest_access, do_generate_key_list
-from key.models import generate_unique_api_key
-
-@login_required
-@condition( etag_func=etag_func, last_modified_func=latest_access )
-@cache_page( 1 )
-def generate_key( request ):
-    if request.method == 'POST':
-        # Trigger loading the real user object, and use it.
-        user = request.user.user
-        generate_unique_api_key( user )
-    return do_generate_key_list( request )

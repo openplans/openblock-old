@@ -18,7 +18,7 @@
 
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied
-from key.models import ApiKey
+from .models import ApiKey
 
 KEY_HEADER = 'HTTP_X_OPENBLOCK_KEY'
 

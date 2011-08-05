@@ -1,3 +1,20 @@
+#   Copyright 2011 OpenPlans and contributors
+#
+#   This file is part of ebpub
+#
+#   ebpub is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   ebpub is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 API tests
 """
@@ -13,7 +30,7 @@ from ebpub.utils.django_testcase_backports import TestCase
 from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
 from ebpub.openblockapi import views
-from ebpub.openblockapi import auth
+from ebpub.openblockapi.apikey import auth
 
 
 class BaseTestCase(TestCase):
@@ -929,11 +946,13 @@ class TestUtilFunctions(TestCase):
 
 
     def test_check_api_auth__key(self):
-        from key.models import generate_unique_api_key
-        ip = '1.2.3.4'
+        from ebpub.openblockapi.apikey.models import generate_unique_api_key
+        from ebpub.openblockapi.apikey.models import ApiKey
         from ebpub.accounts.models import User
+        ip = '1.2.3.4'
         user = User.objects.create_user(email='bob@bob.com')
-        key = generate_unique_api_key(user)
+        key = ApiKey(key=generate_unique_api_key(), user=user)
+        key.save()
         get_request = mock.Mock(**{'user.is_authenticated.return_value': False,
                                    'META': {'REMOTE_ADDR': ip,
                                             auth.KEY_HEADER: key},

@@ -77,10 +77,9 @@ INSTALLED_APPS = (
     'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
-    'key',
-    # openblockapi overrides admin for the 'key' app.
-    'ebpub.openblockapi',
     'ebpub.db',
+    'ebpub.openblockapi',
+    'ebpub.openblockapi.apikey',
     'ebpub.geocoder',
     'ebpub.petitions',
     'ebpub.preferences',
@@ -284,10 +283,6 @@ STATIC_URL='/'
 # REST API
 ###############
 
-# Warning, if you increase API_KEY_SIZE after running syncdb, you'll
-# have to modify the size of the 'key' field in the 'key_apikey' table
-# in your database.
-API_KEY_SIZE=32
 MAX_KEYS_PER_USER=3
 
 API_THROTTLE_AT=150  # max requests per timeframe.
@@ -329,8 +324,8 @@ CACHES = {
 EBPUB_CACHE_GEOCODER = True
 required_settings.append('EBPUB_CACHE_GEOCODER')
 
-# Required by django-apikey to associate keys with user profiles.
-AUTH_PROFILE_MODULE = 'preferences.Profile'
+# Required by openblockapi.apikey to associate keys with user profiles.
+AUTH_PROFILE_MODULE = 'apikey.ApiKeyProfile'
 
 
 ###################################################################
