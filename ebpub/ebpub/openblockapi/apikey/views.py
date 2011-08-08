@@ -88,6 +88,7 @@ def delete_key(request):
     user = request.user.user
     to_delete = request.POST.get('key')
     if to_delete:
+        # TODO: verify that there actually was a matching key.
         ApiKey.objects.filter(user=user, key=to_delete).delete()
         messages.add_message(request, messages.INFO, 'Key %s deleted.' % to_delete)
     else:
