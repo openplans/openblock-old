@@ -1029,3 +1029,11 @@ div.schema-colorsample {
   padding: 0px; margin: 0px;
   border: 1px solid #CCCCCC;
 }
+
+/* messages */
+.messages .info {
+color: #00BB00;
+}
+.messages .error {
+color: #C53300
+}

@@ -6,12 +6,15 @@
 </div>
 
 {% if keys %}
- <ul>
+<form method="POST" action="{% url api_delete_key %}"
+ <div>
   {% for key in keys %}
-    <li>{{ key }}</li>
-    <!-- TODO: deletion of keys -->
+    <div><input type="radio" name="key" value="{{key}}" /> {{ key }}
+    </div>
   {% endfor %}
- </ul>
+ </div>
+ <input type="submit" value="Delete selected key" />
+</form>
 {% endif %}
 
 {% if can_make_api_key %}

@@ -7,13 +7,16 @@ BSD license.
 http://pypi.python.org/pypi/django-apikey
 """
 
-from django.template import RequestContext
-from django.shortcuts import render_to_response
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import condition
-from django.views.decorators.cache import cache_page
-from django.core.cache import cache
 from .models import ApiKey, generate_unique_api_key
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import condition
 import datetime
 
 
@@ -53,6 +56,8 @@ def generate_key(request):
         apikey = ApiKey(user=user, key=key)
         apikey.clean()
         apikey.save()
+        messages.add_message(request, messages.INFO, 'Key %s created.' % key)
+
     return do_generate_key_list(request)
 
 
@@ -81,8 +86,10 @@ def do_generate_key_list(request):
 @cache_page(1)
 def delete_key(request):
     user = request.user.user
-    keys = ApiKey.objects.filter(user=user)
-    return render_to_response('key/key.html',
-                              { 'keys': keys,
-                                'user': user },
-                              context_instance=RequestContext(request))
+    to_delete = request.POST.get('key')
+    if to_delete:
+        ApiKey.objects.filter(user=user, key=to_delete).delete()
+        messages.add_message(request, messages.INFO, 'Key %s deleted.' % to_delete)
+    else:
+        messages.add_message(request, messages.ERROR, 'No key to delete was specified.')
+    return HttpResponseRedirect(reverse(list_keys))

@@ -67,6 +67,17 @@ var $j = $;
 		<!-- end block breadcrumbs -->
 	</div><!-- / #header -->
 	<div id="main">
+	  <!-- begin block messages -->
+		{% block messages %}
+	    {% if messages %}
+	    <ul class="messages">
+		  {% for message in messages %}
+		  <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+		  {% endfor %}
+		</ul>
+		{% endif %}
+		{% endblock messages %}
+        <!-- end block messages -->
 		<!-- begin block content -->
 		{% block content %}{% endblock content %}
 		<!-- end block content -->
