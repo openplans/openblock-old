@@ -12,7 +12,7 @@ def widget_javascript(request, slug):
     except Widget.DoesNotExist:
         return HttpResponse(status=404)
 
-    payload = json.dumps(_render_widget(widget))
+    payload = json.dumps(render_widget(widget))
     return render_to_response('widgets/widget.js', {'payload': payload, 'target': widget.target_id},
                               mimetype="text/javascript")
     
@@ -22,12 +22,14 @@ def widget_content(request, slug):
     except Widget.DoesNotExist:
         return HttpResponse(status=404)
         
-    return HttpResponse(_render_widget(widget), status=200,
+    return HttpResponse(render_widget(widget), status=200,
                         mimetype=widget.template.content_type)
 
-def _render_widget(widget):
+def render_widget(widget, items=None):
+    if items is None:
+        items = widget.fetch_items()
     info = {
-        'items': [_template_ctx(x, widget) for x in widget.fetch_items()],
+        'items': [_template_ctx(x, widget) for x in items], 
         'widget': widget
     }
     # TODO: cache template compilation
