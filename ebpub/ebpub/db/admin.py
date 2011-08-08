@@ -52,7 +52,7 @@ class LocationTypeAdmin(admin.ModelAdmin):
 
 class LocationAdmin(OSMModelAdmin):
     list_filter = ('location_type', 'city', 'is_public',)
-    list_display = ('name', 'location_type', 'creation_date', 'area')
+    list_display = ('name', 'slug', 'location_type', 'creation_date', 'area')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
 
