@@ -21,14 +21,11 @@ from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from django import forms
-from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.conf import settings
 from django.contrib.admin.helpers import Fieldset
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
-from django.template import RequestContext
-from django.utils.http import urlquote  as django_urlquote
-from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.csrf import csrf_protect
 from datetime import datetime, timedelta
 import os
 from re import findall
