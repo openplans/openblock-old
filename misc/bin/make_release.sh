@@ -26,7 +26,13 @@ for PKGDIR in ebpub ebdata obadmin obdemo; do
 	echo
     else
 	echo Failed to build $FULLNAME sdist. Try re-running python setup.py sdist to see why
+	exit 1
     fi
 done
+
+echo Building html docs
+cd $SOURCE_ROOT/docs
+sed -r -i -e "s/^release[[:space:]]*=[[:space:]]* ['\"].*['\"].*/release = \'${VERSION}\'/" conf.py
+make -s clean html SPHINXOPTS=-q || exit 1
 cd $SOURCE_ROOT
 
