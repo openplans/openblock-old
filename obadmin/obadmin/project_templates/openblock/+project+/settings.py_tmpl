@@ -31,7 +31,6 @@ DATABASES = {
     },
 }
 
-
 #########################
 # CUSTOM EBPUB SETTINGS #
 #########################
@@ -90,22 +89,23 @@ HTTP_CACHE = '/tmp/openblock_scraper_cache_${project}'
 # See the configuration docs for more info.
 METRO_LIST = (
     {
-        # Extent of the metro, as a longitude/latitude bounding box.
+        # Extent of the region, as a longitude/latitude bounding box.
         'extent': (-71.191153, 42.227865, -70.986487, 42.396978),
 
-        # Whether this should be displayed to the public.
+        # Whether this region should be displayed to the public.
         'is_public': True,
 
-        # Set this to True if the metro has multiple cities.
+        # Set this to True if the region has multiple cities.
+        # You will also need to set 'city_location_type'.
         'multiple_cities': False,
 
-        # The major city in the metro.
+        # The major city in the region.
         'city_name': 'Your City',
 
-        # The SHORT_NAME in the settings file (also the subdomain).
+        # The SHORT_NAME in the settings file.
         'short_name': SHORT_NAME,
 
-        # The name of the metro, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
+        # The name of the region, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
         'metro_name': 'Your City',
 
         # USPS abbreviation for the state.
@@ -116,6 +116,10 @@ METRO_LIST = (
 
         # Time zone, as required by Django's TIME_ZONE setting.
         'time_zone': 'America/New_York',
+
+        # Slug of an ebpub.db.LocationType that represents cities.
+        # Only needed if multiple_cities = True.
+        'city_location_type': None,
     },
 )
 

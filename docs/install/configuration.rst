@@ -175,19 +175,19 @@ explanatory. Here's an example for Boston:
         # Extent of the metro, as a longitude/latitude bounding box.
         'extent': (-71.191153, 42.227865, -70.986487, 42.396978),
 
-        # Whether this should be displayed to the public.
+        # Whether this area should be displayed to the public.
         'is_public': True,
 
-        # Set this to True if the metro has multiple cities.
+        # Set this to True if the region has multiple cities.
         'multiple_cities': False,
 
-        # The major city in the metro.
+        # The major city in the region.
         'city_name': 'Boston',
 
-        # The SHORT_NAME in the settings file (also the subdomain).
+        # The SHORT_NAME in the settings file.
         'short_name': SHORT_NAME,
 
-        # The name of the metro, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
+        # The name of the metro or region, as opposed to the city (e.g., "Miami-Dade" instead of "Miami").
         'metro_name': 'Boston',
 
         # USPS abbreviation for the state.
@@ -198,6 +198,10 @@ explanatory. Here's an example for Boston:
 
         # Time zone, as required by Django's TIME_ZONE setting.
         'time_zone': 'America/New_York',
+
+        # Only needed if multiple_cities = True.
+        'city_location_type': 'city',
+
     },
  ]
 
@@ -208,8 +212,8 @@ More information on a few of these follows.
 short_name
 ----------
 
-This is how OpenBlock knows which dictionary in METRO_LIST to use.
-It must exactly match the value of settings.SHORT_NAME.
+This is how OpenBlock knows which dictionary in ``METRO_LIST`` to use.
+It must exactly match the value of ``settings.SHORT_NAME``.
 
 .. _metro_extent:
 
@@ -234,16 +238,33 @@ relevant to your area.
 multiple_cities
 ---------------
 
-Set 'multiple_cities' to True if you want OpenBlock to serve multiple
-cities or towns. For example, you might be setting it up for a
-county. In this example you could use the county name for 'city_name'
-and 'metro_name'.  Or you might be somewhere like the San Francisco
-Bay Area and wanting to include San Francisco, Oakland, Berkeley, and
-so on.
+Set ``multiple_cities`` to ``True`` if you want one OpenBlock site to serve
+multiple cities or towns in the same region.
 
-Multi-city configuration has not been fully thought out yet; more
-experimentation and documentation is needed. Please ask on the mailing
-list.
+For example, you might be setting it up for a county. In this example
+you could use the county name for ``city_name`` and ``metro_name``.  Or
+you might be somewhere like the San Francisco Bay Area and wanting to
+include San Francisco, Oakland, Berkeley, and so on.  So ``city_name``
+might be 'San Francisco' and ``metro_name`` might be something like
+'Bay Area'.
+
+If ``multiple_cities`` is True, you must also set
+``city_location_type``, see below.
+
+This option affects numerous URLs on the site; users will be able to
+browse first by city, then by street, then by block, and so on.
+If it's ``False``, the city browsing page will be left out of the site
+structure.
+
+city_location_type
+------------------
+
+You only need this if ``multiple_cities`` is True.  In that case you
+will need to create a :ref:`LocationType <locationtype>` for cities,
+and ``city_location_type`` should be set to that ``LocationType``'s slug.
+
+You will then want to create a ``Location`` for each city in your
+region. See :ref:`loading_locations` for more.
 
 When would you put more than one dictionary in METRO_LIST?
 ----------------------------------------------------------
@@ -253,12 +274,12 @@ The only dictionary in ``METRO_LIST`` that has any effect is the one whose
 
 The purpose of having more than one metro dictionary in ``METRO_LIST``
 would be to run multiple OpenBlock sites for multiple metro areas with
-some shared configuration.
+some shared configuration. *You are probably not doing this.*
 
-To do this, you'd have one settings file containing the master
+The idea is that you could have one settings file containing the master
 ``METRO_LIST``, and then for each site you'd have its own settings
 file that imports ``METRO_LIST`` (and any other shared stuff you like)
-from the master settings file.  The site-specific settings file would also set
+from the master settings file.  Each site-specific settings file would also set
 ``settings.SHORT_NAME`` to match the ``'short_name'`` key of one of
 the dictionaries.
 

@@ -211,6 +211,8 @@ radius.
 Other Locations: Neighborhoods, Etc.
 ====================================
 
+.. _locationtype:
+
 What kinds of locations?
 ------------------------
 
@@ -218,7 +220,7 @@ Aside from ZIP codes, what kinds of geographic regions are you
 interested in?
 
 OpenBlock can handle any number of types of locations.  You can use
-the admin UI to create as many location types as you want, by visiting
+the admin UI to create as many ``LocationTypes`` as you want, by visiting
 http://localhost:8000/admin/db/locationtype/ and click "Add".  Fill
 out the fields as desired.  You'll want to enable both 'is_browsable'
 and 'is_significant'.
@@ -241,6 +243,9 @@ data. This means it's scattered all over the web, and we can't just
 tell you where to find it.
 
 Try googling for the name of your area plus "shapefiles".
+
+
+.. _loading_locations:
 
 Loading Location Data
 ----------------------
@@ -336,6 +341,12 @@ points by clicking the "Modify" control, then dragging points as needed.
 
 (TODO: screenshots?)
 
+Can I load KML, GeoJSON, OpenStreetMap XML, or other kinds of files?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+No, at this time the only files we can directly import are shapefiles.
+Try using tools like `ogr2ogr <http://www.gdal.org/ogr2ogr.html>`_ to
+convert your data into shapefiles.
 
 Places
 ======
