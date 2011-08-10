@@ -112,6 +112,25 @@ and reach an (empty) listing using your slug by visiting http://localhost:8000/c
 assuming you are running the web server.
 
 
+Making Maps Prettier
+====================
+
+If you want your different NewsItem types to stand out from each other
+on maps, you have two options.
+
+You can set your schema's ``map_color`` to a hex color code
+(eg. ``#FF0000``), and markers for that news type will be filled with
+that color.
+
+Or, you can set your schema's ``map_icon_url`` to the URL of an image
+to use for its markers. Should be roughly 35x35 pixels.  (If you are
+hosting your own map icons, it's fine to use a relative URL here.)
+
+OpenBlock does not currently ship with any map icons.  One source of
+good free (Creative Commons 3.0 BY-SA) map icons is
+http://mapicons.nicolasmollet.com/ .
+
+
 Adding Custom Fields
 ====================
 

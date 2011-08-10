@@ -193,6 +193,16 @@ fields:
       extensible metadata, described in the section on
       `SchemaFields and Attributes`_.
 
+    map_icon_url
+      A URL (can be relative) to an image to use as this news type's
+      icon on maps.  Should be roughly 40x40 pixels. Optional.
+
+    map_color
+      A color hex code (eg. #FF0000) to use for marking this news type
+      on maps.  Only used if map_icon_url is not provided. Optional.
+
+
+
 The difference between ``pub_date`` and ``item_date`` might be confusing. The
 distinction is intended for data sets where there's a lag in publishing or
 where the data is updated infrequently or irregularly. For example, on
