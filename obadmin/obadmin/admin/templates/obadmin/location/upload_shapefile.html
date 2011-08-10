@@ -1,0 +1,34 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block title %}Import From Shapefile{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="../../../">Home</a>
+&rsaquo;
+<a href="../../">Db</a>
+&rsaquo;
+<a href="../">Locations</a>
+&rsaquo;
+Import From Shapefile
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content">
+    <h1>Import From Shapefile</h1>
+
+    <div id="content-main">
+        <p>
+            Select and upload your shapefile below. In the next step you'll
+            select a layer to import.
+        </p>
+
+        <form action="" enctype="multipart/form-data" method="post">{% csrf_token %}
+            {% include "admin/includes/fieldset.html" %}
+            <div class="submit-row"><input class="button default" type="submit" value="Upload" /></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

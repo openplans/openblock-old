@@ -21,14 +21,18 @@ from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from django import forms
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.conf import settings
 from django.contrib.admin.helpers import Fieldset
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.template import RequestContext
-from django.views.decorators.csrf import csrf_protect
+from django.utils.http import urlquote  as django_urlquote
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
 from datetime import datetime, timedelta
+import os
 from re import findall
+from tempfile import mkstemp
 from tasks import CENSUS_STATES, download_state_shapefile
 from background_task.models import Task
 
@@ -62,6 +66,24 @@ class ImportZipShapefilesForm(forms.Form):
         download_state_shapefile(self.cleaned_data['state'], zip_codes)
 
         return True
+
+class UploadShapefileForm(forms.Form):
+    shapefile = forms.FileField(required=True)
+
+    def save(self):
+        if not self.is_valid():
+            return False
+
+        self.shapefile_path = self.save_shapefile(self.cleaned_data['shapefile'])
+        return True
+
+    def save_shapefile(self, f):
+        fd, name = mkstemp('.shp')
+        fp = os.fdopen(fd, 'wb')
+        for chunk in f.chunks():
+            fp.write(chunk)
+        fp.close()
+        return name
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -219,3 +241,18 @@ def import_zip_shapefiles(request):
       'fieldset': fieldset,
       'form': form,
     })
+
+@csrf_protect
+def upload_shapefile(request):
+    form = UploadShapefileForm(request.POST or None, request.FILES or None)
+    if form.save():
+        return HttpResponseRedirect('../pick-shapefile-layers/?shapefile=%s' % form.shapefile_path)
+
+    fieldset = Fieldset(form, fields=('shapefile',))
+    return render(request, 'obadmin/location/upload_shapefile.html', {
+      'fieldset': fieldset,
+      'form': form,
+    })
+
+def upload_file(request):
+    return render_to_response('upload.html', {'form': form})
