@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Script (hacky) to help with releasing a new version of the openblock packages.
+# This assumes that all the packages have the same version number.
 
 HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
 SOURCE_ROOT=`cd $HERE/../.. && pwd`
@@ -13,8 +14,8 @@ if [ -z "$VERSION" ]; then
 fi
 
 cd $SOURCE_ROOT
-
-for PKGDIR in ebpub ebdata obadmin obdemo; do
+PKGS="ebpub ebdata obadmin obdemo"
+for PKGDIR in $PKGS; do
     cd $SOURCE_ROOT/$PKGDIR
     sed -i -e "s/VERSION=.*\$/VERSION=\"${VERSION}\"/" setup.py
     python setup.py sdist > /dev/null || exit 1
@@ -36,3 +37,19 @@ sed -r -i -e "s/^release[[:space:]]*=[[:space:]]* ['\"].*['\"].*/release = \'${V
 make -s clean html SPHINXOPTS=-q || exit 1
 cd $SOURCE_ROOT
 
+echo
+echo Building composite requirements file
+REQFILE=openblock-requirements-${VERSION}.txt
+cd $SOURCE_ROOT
+
+find . -name requirements.txt | xargs cat | sort | grep -v "^#" | uniq > $REQFILE
+
+echo "Note, the requirements file won't work until you push your openblock packages"
+echo "to pypi (or comment them out from the file)"
+echo "Note also that it's sorted alphabetically, so packages that are sensitive"
+echo "to installation order may be problematic."
+for PKGDIR in $PKGS; do
+    echo ${PKGDIR}==${VERSION} >> $REQFILE
+done
+
+echo Output is at $REQFILE
