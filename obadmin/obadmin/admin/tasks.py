@@ -23,7 +23,7 @@ from ebdata.retrieval.retrievers import Retriever
 from string import maketrans
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
-from ebpub.db.bin.import_zips import parse_args, ZipImporter
+from ebpub.db.bin.import_zips import ZipImporter
 import tempfile
 import os
 

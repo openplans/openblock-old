@@ -36,7 +36,6 @@ from tempfile import mkstemp
 from tasks import CENSUS_STATES, download_state_shapefile
 from background_task.models import Task
 
-
 class SchemaLookupsForm(forms.Form):
     def __init__(self, lookup_ids, *args, **kwargs):
         super(SchemaLookupsForm, self).__init__(*args, **kwargs)
@@ -253,6 +252,3 @@ def upload_shapefile(request):
       'fieldset': fieldset,
       'form': form,
     })
-
-def upload_file(request):
-    return render_to_response('upload.html', {'form': form})
