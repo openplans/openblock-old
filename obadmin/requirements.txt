@@ -12,7 +12,6 @@ Paver==1.0.3
 # leads to problems like the wrong set of entry points being found, so
 # 'paster create -t openblock' doesn't work (the template isn't found). UGH.
 # See http://trac.pythonpaste.org/pythonpaste/ticket/458
-
 http://pypi.python.org/packages/source/P/PasteScript/PasteScript-1.7.3.tar.gz
 
-git+git://github.com/lilspikey/django-background-task.git#egg=django-background-task
+django-background-task>=0.1.3

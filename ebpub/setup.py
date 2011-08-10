@@ -56,7 +56,6 @@ setup(
         "mock>=0.8.0alpha1",
         "django-olwidget",
         'setuptools-git',  # Only needed if building packages for distribution.
-        'django-background-task',
     ],
     dependency_links=[
     "http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1",

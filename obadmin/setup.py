@@ -45,6 +45,7 @@ setup(
         "ebdata>=%s" % VERSION,
         "PasteScript",
         "paver",
+        "django-background-task",
     ],
     dependency_links=[
     ],
