@@ -102,13 +102,14 @@ To find interesting cloudmade style numbers, browse at
 http://maps.cloudmade.com/editor ; the style number is at bottom right
 of each style.
 
+
 Blank (no base layer)
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Try ``MAP_BASELAYER_TYPE = 'wms.blank'``
 
 
-Any Other Base Layers
+Custom or Other Base Layers
 ---------------------------
 
 Do you have your own tile server running, or have a URL to something
