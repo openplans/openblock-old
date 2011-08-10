@@ -21,6 +21,12 @@
         })(django.jQuery);
     </script>
 
+    <!-- map tag copied from django-olwidget's olwidget_change_list.html -->
+    {% if not is_popup %}
+        {{ map }}
+    {% endif %}
+    <!-- end map tag -->
+
     {{ block.super }}
 {% endblock %}
 
