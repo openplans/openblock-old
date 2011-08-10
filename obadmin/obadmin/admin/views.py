@@ -208,6 +208,10 @@ def newsitem_details(request, news_item_id):
     })
 
 def jobs_status(request):
+    """
+    Returns HTML fragment about current background tasks, intended for
+    use via AJAX.
+    """
     pending = Task.objects.find_available()
 
     # if there are old jobs and nothing's running, tell user to run tasks
@@ -225,7 +229,7 @@ def jobs_status(request):
           'import_count': import_count,
         })
     else:
-        return HttpResponse("")
+        return HttpResponse("No background tasks running.")
 
 @csrf_protect
 def import_zip_shapefiles(request):

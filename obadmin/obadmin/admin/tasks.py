@@ -24,6 +24,7 @@ from string import maketrans
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
 from ebpub.db.bin.import_zips import ZipImporter
+from ebpub.utils.logutils import log_exception
 import tempfile
 import os
 
@@ -104,7 +105,11 @@ def download_state_shapefile(state, zipcodes):
     shapefile = os.path.join(cache_dir, '%s.shp' % name)
     # TODO: handle corrupt/incomplete/missing files zipfile
     # expected files aren't in the archive ...)
-    ZipFile(path, 'r').extractall(cache_dir, files)
+    try:
+        ZipFile(path, 'r').extractall(cache_dir, files)
+    except:
+        log_exception()
+        return
     for zipcode in zipcodes:
         import_zip_from_shapefile(shapefile, zipcode)
 
@@ -114,5 +119,6 @@ def import_zip_from_shapefile(filename, zipcode):
     importer = ZipImporter(layer, 'ZCTA5CE')
     try:
         importer.import_zip(zipcode)
-    except KeyError:
-        next # zip file not in shapefile. TODO: report error somehow
+    except:
+        log_exception()
+        return

@@ -92,6 +92,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django_static',
     'olwidget',
+    'background_task',
 )
 
 APPS_FOR_TESTING = (
@@ -402,5 +403,7 @@ LOGGING = {
 # Batch jobs (django-background-task): how long (in seconds) can a job
 # be locked before we decide it's dead?
 MAX_RUN_TIME = 60 * 15
+# How many failures to retry?
+MAX_ATTEMPTS = 4
 
 __doc__ = __doc__ % required_settings
