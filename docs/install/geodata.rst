@@ -47,6 +47,9 @@ server and in another terminal run::
 Like the `runserver` command, this won't immediately exit. It will sit quietly
 until there are background jobs to process for installing the ZIP codes.
 
+TODO: move that to its own section somewhere in the install &
+deployment pages
+
 Surf to http://127.0.0.1:8000/admin/db/location/ and click the link "Import
 ZIP Shapefiles".  You can pick your state, paste your list of ZIPs, and wait
 for the import to finish.  When this is done, type `control-c` to stop

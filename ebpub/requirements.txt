@@ -15,6 +15,7 @@ pytz>=2011g
 PyYAML==3.09
 http://www.voidspace.org.uk/downloads/mock-0.8.0alpha2.tar.gz#egg=mock-0.8.0alpha2
 South>=0.7.3
+django-background-task==0.1.3
 
 
 
