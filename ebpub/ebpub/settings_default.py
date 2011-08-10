@@ -69,30 +69,30 @@ AUTHENTICATION_BACKENDS = (
 )
 
 INSTALLED_APPS = (
-    'obadmin.admin',
+    'background_task',
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.admin',
+    'django.contrib.gis',
+    'django.contrib.humanize',
+    'django.contrib.sessions',
+    'django_static',
     'ebdata.blobs',
     'ebdata.geotagger',
     'ebpub.accounts',
     'ebpub.alerts',
     'ebpub.db',
+    'ebpub.geocoder',
     'ebpub.openblockapi',
     'ebpub.openblockapi.apikey',
-    'ebpub.geocoder',
     'ebpub.petitions',
     'ebpub.preferences',
     'ebpub.richmaps',
     'ebpub.savedplaces',
     'ebpub.streets',
     'ebpub.widgets',
-    'django.contrib.gis',
-    'django.contrib.humanize',
-    'django.contrib.sessions',
-    'django_static',
+    'obadmin.admin',
     'olwidget',
-    'background_task',
 )
 
 APPS_FOR_TESTING = (

@@ -6,8 +6,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (('accounts', '0001_initial'),
+                  )
+
     def forwards(self, orm):
-        
         # Adding model 'Profile'
         db.create_table('preferences_profile', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
