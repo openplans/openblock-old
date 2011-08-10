@@ -55,7 +55,9 @@ OLWIDGET_DEFAULT_OPTIONS = getattr(settings, 'OLWIDGET_DEFAULT_OPTIONS', None) o
 
 
 class OBMapWidget(Map):
-    def get_extra_context(self):
+
+    @classmethod
+    def get_extra_context(klass):
         """
         Hook provided by our hacked version of django-olwidget.
         Stuffs a dict of JSON-encoded values into the template
@@ -64,6 +66,10 @@ class OBMapWidget(Map):
         """
         from ebpub.db.context_processors import _get_extra_layers
         return {'MAP_CUSTOM_BASE_LAYERS': _get_extra_layers}
+
+# Need this for changelist maps and other places that aren't convenient to
+# override via subclassing.
+Map.get_extra_context = OBMapWidget.get_extra_context
 
 class OBMapField(MapField):
     """
@@ -94,3 +100,12 @@ class OSMModelAdmin(GeoModelAdmin):
 
     # This relies on a hack in our forked version of olwidget.
     default_field_class = OBMapField
+
+    list_map_options = deepcopy(options)
+    list_map_options['zoom_to_data_extent'] = False
+
+    def changelist_view(self, request, extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+        extra_context.update(OBMapWidget.get_extra_context())
+        return super(OSMModelAdmin, self).changelist_view(request, extra_context)
