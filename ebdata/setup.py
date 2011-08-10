@@ -55,7 +55,6 @@ setup(
         "chardet",
         "feedparser",
         "httplib2",
-        "python-dateutil",
         "xlrd",
     ],
     dependency_links=[
