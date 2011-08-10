@@ -9,14 +9,16 @@
 <form method="POST" action="{% url api_delete_key %}"
  <div>
   {% for key in keys %}
-    <div><input type="radio" name="key" value="{{key}}" /> {{ key }}
+    <div><input type="checkbox" name="key" value="{{key}}" /> {{ key }}
     </div>
   {% endfor %}
  </div>
- <input type="submit" value="Delete selected key" />
+ <input type="submit" value="Delete selected keys" />
 </form>
 {% endif %}
 
+<p />
+ 
 {% if can_make_api_key %}
  <form method="POST" action="{% url api_create_key %}">
    <input type="submit" value="Generate a new key" />

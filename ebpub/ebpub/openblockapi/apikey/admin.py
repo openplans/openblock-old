@@ -16,13 +16,15 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from django.contrib.gis import admin
 from django.contrib.admin import ModelAdmin
-from django.forms import ModelForm
+from django.contrib.gis import admin
 from django.forms import CharField
 from django.forms import IPAddressField
+from django.forms import ModelForm
+from django.forms import ValidationError
 from .models import KEY_SIZE
 from .models import ApiKey
+from .models import generate_unique_api_key
 
 class ApiKeyForm(ModelForm):
     """
@@ -38,14 +40,20 @@ class ApiKeyForm(ModelForm):
     logged_ip = IPAddressField(required=False)
 
     def clean(self):
+        profile = self.cleaned_data.get('user').user.get_profile()
+        if self.instance.pk is None:
+            # We're creating a new instance
+            if not profile.can_make_api_key():
+                raise ValidationError("User already has max number of keys")
+
         apikey = self.cleaned_data.get('key') or ''
+
         if not apikey:
             # 'key' is required, but we want to allow generating it server-side.
             # so we remove its errors if it's not provided.
             # Note that we can't just define self.clean_key() because that's never
             # called if the key isn't provided.
             self._errors.pop('key', None)
-            from ebpub.openblockapi.models import generate_unique_api_key
             apikey = generate_unique_api_key()
             self.cleaned_data['key'] = apikey
             if hasattr(self, 'clean_key'):

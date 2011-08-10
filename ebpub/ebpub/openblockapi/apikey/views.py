@@ -52,11 +52,16 @@ def generate_key(request):
         # Trigger loading the real user object (not a LazyUser proxy),
         # and use it.
         user = request.user.user
-        key = generate_unique_api_key()
-        apikey = ApiKey(user=user, key=key)
-        apikey.clean()
-        apikey.save()
-        messages.add_message(request, messages.INFO, 'Key %s created.' % key)
+        profile = user.get_profile()
+        if profile.can_make_api_key():
+            key = generate_unique_api_key()
+            apikey = ApiKey(user=user, key=key)
+            apikey.clean()
+            apikey.save()
+            messages.add_message(request, messages.INFO, 'Key %s created.' % key)
+        else:
+            messages.add_message(request, messages.ERROR,
+                                 "You can't have more keys unless you delete some.")
 
     return do_generate_key_list(request)
 
@@ -86,11 +91,12 @@ def do_generate_key_list(request):
 @cache_page(1)
 def delete_key(request):
     user = request.user.user
-    to_delete = request.POST.get('key')
+    to_delete = request.POST.getlist('key')
     if to_delete:
         # TODO: verify that there actually was a matching key.
-        ApiKey.objects.filter(user=user, key=to_delete).delete()
-        messages.add_message(request, messages.INFO, 'Key %s deleted.' % to_delete)
+        ApiKey.objects.filter(user=user, key__in=to_delete).delete()
+        for key in to_delete:
+            messages.add_message(request, messages.INFO, 'Key %s deleted.' % key)
     else:
         messages.add_message(request, messages.ERROR, 'No key to delete was specified.')
     return HttpResponseRedirect(reverse(list_keys))
