@@ -27,6 +27,7 @@ from ebpub.db.models import NewsItem
 from ebpub.db.models import Schema
 from ebpub.db.models import SchemaField
 from ebpub.geoadmin import OSMModelAdmin
+import copy
 
 class AttributeInline(admin.StackedInline):
     # TODO: this badly needs a custom Form that takes into account the
@@ -44,6 +45,10 @@ class NewsItemAdmin(OSMModelAdmin):
     search_fields = ('title', 'description',)
     form = NewsItemForm
 
+    list_map = ['location']
+    list_map_options = copy.deepcopy(OSMModelAdmin.list_map_options)
+    list_map_options['cluster'] = True
+
 class LocationTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_significant')
     list_filter = ('is_significant',)
@@ -58,6 +63,9 @@ class LocationAdmin(OSMModelAdmin):
 
     # area is populated by a database trigger; normalized_name is set during cleaning.
     readonly_fields = ('area', 'normalized_name')
+
+    # olwidget uses this
+    list_map = ['location']
 
 
 class SchemaAdmin(admin.ModelAdmin):
@@ -94,6 +102,16 @@ class LocationSynonymAdmin(OSMModelAdmin):
     search_fields = ('pretty_name', 'location')
     readonly_fields = ('normalized_name',)
 
+
+# Hack to ensure that the templates in obadmin get used, if it's installed.
+# This is because olwidget defines its own olwidget_change_list.html
+# template for GeoModelAdmin, which LocationAdmin inherits.
+try:
+    import obadmin.admin
+    LocationAdmin.change_list_template = 'admin/db/location/change_list.html'
+except ImportError:
+    pass
+
 admin.site.register(Schema, SchemaAdmin)
 admin.site.register(SchemaField, SchemaFieldAdmin)
 admin.site.register(NewsItem, NewsItemAdmin)
@@ -101,3 +119,4 @@ admin.site.register(LocationType, LocationTypeAdmin)
 admin.site.register(Location, LocationAdmin)
 admin.site.register(LocationSynonym, LocationSynonymAdmin)
 admin.site.register(Lookup, LookupAdmin)
+
