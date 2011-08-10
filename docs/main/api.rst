@@ -801,6 +801,7 @@ Example:
      "item_date": "2010-12-10",
      "pub_date": "2010-12-10T16:55:01-06:00",
      "verified": false,
+     "location_name": "123 Main St, Springfield, MA",
    }
   }
 

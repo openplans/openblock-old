@@ -124,6 +124,7 @@ def api_items_geojson(items):
     return simplejson.dumps(body, indent=1, default=_serialize_unknown)
 
 def _item_geojson_dict(item):
+    # Prepare a single NewsItem as a structure that can be JSON-encoded.
     props = {}
     geom = simplejson.loads(item.location.geojson)
     result = {
@@ -148,6 +149,7 @@ def _item_geojson_dict(item):
          'openblock_type': 'newsitem',
          'icon': item.schema.map_icon_url,
          'color': item.schema.map_color,
+         'location_name': item.location_name,
          })
     result['properties'] = props
     return result
