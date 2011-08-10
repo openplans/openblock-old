@@ -126,7 +126,12 @@ METRO_LIST = (
 # Use whatever Django cache backend you like;
 # 'file' may be a reasonable choice if you're deploying on
 # a fairly constrained server.
-CACHE_BACKEND = 'file:///tmp/${project}_cache'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/tmp/${project}_cache'
+    }
+}
 
 if DEBUG:
     for _name in required_settings:
