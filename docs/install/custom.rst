@@ -83,6 +83,8 @@ openblock depends on including stored procedures, and some default
 :doc:`Schemas <../main/schemas>` that you can try out, modify, and delete as
 needed.)
 
+This will also prompt you to create an administrative user, which is a
+good idea.
 
 Starting the Test Server
 ------------------------
