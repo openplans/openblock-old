@@ -73,7 +73,8 @@ urlpatterns += patterns('',
     url(r'^newsitems.geojson/$', views.newsitems_geojson, name='ajax-newsitems-geojson'),
     (r'^api/dev1/', include('ebpub.openblockapi.urls')),
     (r'^widgets/', include('ebpub.widgets.urls')),
-    (r'^maps/', include('ebpub.richmaps.urls'))
+    (r'^maps/', include('ebpub.richmaps.urls')),
+    (r'^neighbornews/', include('ebpub.neighbornews.urls')),
 )
 
 if get_metro()['multiple_cities']:

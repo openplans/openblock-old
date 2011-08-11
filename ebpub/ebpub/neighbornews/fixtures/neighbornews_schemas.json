@@ -1,0 +1,100 @@
+[
+  {
+    "fields": {
+      "last_updated": "2011-08-03", 
+      "map_color": "", 
+      "intro": "", 
+      "update_frequency": "", 
+      "has_newsitem_detail": true, 
+      "grab_bag_headline": "", 
+      "short_source": "", 
+      "slug": "neighbor-events", 
+      "source": "", 
+      "date_name": "Date", 
+      "short_description": "User contributed events", 
+      "grab_bag": "", 
+      "is_special_report": false, 
+      "map_icon_url": "", 
+      "importance": 0, 
+      "min_date": "2011-08-03", 
+      "allow_charting": false, 
+      "indefinite_article": "a", 
+      "is_public": true, 
+      "number_in_overview": 5, 
+      "date_name_plural": "Dates", 
+      "plural_name": "Neighbor Events", 
+      "name": "Neighbor Event", 
+      "uses_attributes_in_list": false, 
+      "summary": "", 
+      "can_collapse": false
+    }, 
+    "model": "db.schema"
+  }, 
+  {
+    "fields": {
+      "last_updated": "2011-08-03", 
+      "map_color": "", 
+      "intro": "", 
+      "update_frequency": "", 
+      "has_newsitem_detail": true, 
+      "grab_bag_headline": "", 
+      "short_source": "", 
+      "slug": "neighbor-messages", 
+      "source": "", 
+      "date_name": "Date", 
+      "short_description": "User contributed messages and news", 
+      "grab_bag": "", 
+      "is_special_report": false, 
+      "map_icon_url": "", 
+      "importance": 0, 
+      "min_date": "2011-08-03", 
+      "allow_charting": false, 
+      "indefinite_article": "a", 
+      "is_public": true, 
+      "number_in_overview": 5, 
+      "date_name_plural": "Dates", 
+      "plural_name": "Neighbor Messages", 
+      "name": "Neighbor Message", 
+      "uses_attributes_in_list": false, 
+      "summary": "", 
+      "can_collapse": false
+    }, 
+    "model": "db.schema"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "End Times", 
+      "is_charted": false, 
+      "name": "end_time", 
+      "display_order": 25, 
+      "is_searchable": false, 
+      "real_name": "time02", 
+      "pretty_name": "End Time", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "neighbor-events"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Start Times", 
+      "is_charted": false, 
+      "name": "start_time", 
+      "display_order": 24, 
+      "is_searchable": false, 
+      "real_name": "time01", 
+      "pretty_name": "Start Time", 
+      "is_filter": false, 
+      "display": true, 
+      "schema": [
+        "neighbor-events"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }
+]
