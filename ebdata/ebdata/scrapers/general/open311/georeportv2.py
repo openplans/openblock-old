@@ -1,8 +1,7 @@
 from django.contrib.gis.geos import Point
-from django.contrib.gis.geos import Polygon
+from ebpub.utils.geodjango import get_default_bounds
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup
 from ebpub.geocoder.reverse import reverse_geocode
-from ebpub.metros.allmetros import get_metro
 from httplib2 import Http
 from lxml import etree
 import datetime
@@ -53,8 +52,7 @@ class GeoReportV2Scraper(object):
         self.bounds = bounds
         if bounds is None:
             log.info("Calculating geographic boundaries from the extent in settings.METRO_LIST")
-            extent = get_metro()['extent']
-            self.bounds = Polygon.from_bbox(extent)
+            self.bounds = get_default_bounds()
         self.html_url_template = html_url_template
 
     def service_requests_url(self, start_date, end_date):
@@ -228,7 +226,10 @@ class GeoReportV2Scraper(object):
         lo = Lookup.objects.get_or_create_lookup(sf, value, make_text_slug=False)
         return lo.slug
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     usage = "usage: %prog [options] <api url>"
     parser = OptionParser(usage=usage)
@@ -256,13 +257,13 @@ def main():
         "--jurisdiction-id", help='jurisdiction identifier to provide to api',
         action='store'
         )
-    options, args = parser.parse_args(sys.argv)
+    options, args = parser.parse_args(argv)
     
-    if len(args) < 2:
+    if len(args) < 1:
         parser.print_usage()
         return 1
     
-    scraper = GeoReportV2Scraper(api_url=args[1], api_key=options.api_key,
+    scraper = GeoReportV2Scraper(api_url=args[0], api_key=options.api_key,
                                  jurisdiction_id=options.jurisdiction_id,
                                  schema_slug=options.schema,
                                  days_prior=options.days_prior,

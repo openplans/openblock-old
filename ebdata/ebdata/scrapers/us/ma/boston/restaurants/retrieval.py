@@ -163,8 +163,15 @@ class RestaurantScraper(NewsItemListDetailScraper):
             self.logger.error("Error storing inspection for %s: %s" % (list_record.get('restaurant_name', 'Unknown'), traceback.format_exc())) 
             
 def main():
+    print "WARNING, this is a VERY slow scraper, it typically takes hours!"
+    import time
+    start = time.time()
     from ebdata.retrieval import log_debug
     RestaurantScraper().update()
+    elapsed = time.time() - start
+    hours, elapsed = divmod(elapsed, 3600)
+    mins, secs = divmod(elapsed, 60)
+    print "Done scraping restaurants in %02d:%02d:%02d" % (hours, mins, secs)
 
 if __name__ == "__main__":
     main()

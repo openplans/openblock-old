@@ -159,7 +159,11 @@ class LocalNewsScraper(object):
                 log_exception()
         logger.info("Finished LocalNewsScraper update: %d added, %d updated" % (addcount, updatecount))
 
-def main():
+def main(argv=None):
+    import sys
+    if argv is None:
+        argv = sys.argv[1:]
+
     from optparse import OptionParser
     usage = "usage: %prog [options] <feed url>"
     parser = OptionParser(usage=usage)
@@ -172,15 +176,14 @@ def main():
         "--http-cache", help='location to use as an http cache.  If a cached value is seen, no update is performed.', 
         action='store'
         )
+
+    options, args = parser.parse_args(argv)
     
-    import sys
-    options, args = parser.parse_args(sys.argv)
-    
-    if len(args) < 2:
+    if len(args) < 1:
         parser.print_usage()
         sys.exit(0)
     
-    scraper = LocalNewsScraper(url=args[1],  schema_slug=options.schema, http_cache=options.http_cache)
+    scraper = LocalNewsScraper(url=args[0],  schema_slug=options.schema, http_cache=options.http_cache)
 
     scraper.update()
 
