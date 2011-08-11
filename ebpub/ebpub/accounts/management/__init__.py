@@ -26,7 +26,6 @@ and ebpub.preferences models in the database.
 from django.db.models import signals as django_signals
 from south import signals as south_signals
 from django.contrib.auth import models as auth_app
-from django.contrib.auth.management import create_superuser
 
 _state = {'created_apps': set(), 'interactive': True, 'superuser_created': False}
 

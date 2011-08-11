@@ -17,7 +17,12 @@
 #
 
 """
-Management utility to create superusers.
+Management utility to create superusers for OpenBlock,
+with email address instead of username.
+
+In order for this to override the default createsuperuser command,
+ebpub.accounts needs to be in INSTALLED_APPS later than
+django.contrib.*.
 """
 
 import getpass
