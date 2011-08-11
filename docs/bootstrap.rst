@@ -42,12 +42,16 @@ Now get the OpenBlock code:
  $ mkdir src
  $ git clone git://github.com/openplans/openblock.git src/openblock
 
-The obdemo package contains a shell script that builds the rest of the
+The reason we fetch the code from git is that the bootstrap scripts
+aren't part of a python package, and they assume that the whole source
+tree is there.
+
+The ``misc`` directory in the openblock source code contains a shell script that builds the rest of the
 system and loads demonstration data (for Boston, MA) into the system:
 
 .. code-block:: bash
 
- $ src/openblock/obdemo/bin/bootstrap_demo.sh
+ $ src/openblock/misc/bin/bootstrap_demo.sh
 
 Wait 10 minutes or so; a lot of output will scroll by.
 If it finishes successfully, you should see a message like::
@@ -97,5 +101,3 @@ work on your system!  Try the :ref:`detailed_demo_instructions` below.
 For more help, you can try the ebcode group:
 http://groups.google.com/group/ebcode
 or look for us in the #openblock IRC channel on irc.freenode.net.
-
-

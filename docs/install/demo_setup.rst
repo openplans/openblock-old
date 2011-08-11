@@ -31,10 +31,18 @@ if you haven't yet:
 .. _pythonreqs:
 
 
-Installing Python packages
---------------------------
+Installing obdemo - stable release
+----------------------------------
 
-install the demo package ``obdemo``:
+
+ TODO - where do the requirements live
+
+Installing obdemo for development
+---------------------------------
+
+You can get the latest development code of ``obdemo`` and its
+dependencies like this, assuming you've already taken care of
+:ref:`development_base_install`.
 
 .. code-block:: bash
 
@@ -52,13 +60,17 @@ configured.  There is also some :doc:`configuration documentation <configuration
 you should look at.
 
 
-obdemo doesn't come with a settings.py; it comes with a
-``settings.py.in`` template that you can copy and edit:
+``obdemo`` doesn't come with a settings.py; it comes with a
+``settings.py.in`` template that you can copy and edit.
+
+(If you've installed OpenBlock sources from git, this file will be at
+``$VIRTUAL_ENV/src/openblock/obdemo/obdemo/settings.py.in``. If you've
+installed a stable package, it will be at
+``$VIRTUAL_ENV/lib/python2.*/site-packages/obdemo/settings.py.in``.)
 
 .. code-block:: bash
 
-    $ cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
-    $ cp settings.py.in settings.py
+    $ cp path/to/settings.py.in settings.py
     $ favorite_editor settings.py
 
 At minimum, you should change the values of:
@@ -133,21 +145,24 @@ First you'll want to load Boston geographies. This will take several minutes:
 
 .. code-block:: bash
 
-  $ cd src/openblock
-  $ obdemo/bin/import_boston_zips.sh
-  $ obdemo/bin/import_boston_hoods.sh
-  $ obdemo/bin/import_boston_blocks.sh
+  $ django-admin.py import_boston_zips
+  $ django-admin.py import_boston_hoods
+  $ django-admin.py import_boston_blocks
 
 Then fetch some news from the web, this will take several minutes:
 
 .. code-block:: bash
 
-  $ obdemo/bin/import_boston_news.sh
+  $ django-admin.py import_boston_news
 
 
-For testing with random data you might also want to try
-``obdemo/bin/random_news.py 10 local-news`` ...
-where 10 is the number of random articles to generate, and
+For testing with random data you might also want to get the
+``misc`` directory from the OpenBlock source code, and try the
+``random-news`` script like so::
+
+  $ src/openblock/misc/bin/random_news.py 10 local-news
+
+... where 10 is the number of random articles to generate, and
 'local-news' is a :doc:`Schema slug <../main/schemas>`.  You must
 first have some blocks in the database; it will assign randomly
 generated local news articles to randomly chosen blocks.

@@ -46,6 +46,21 @@ version conflicts, permission failures, etc.
 Installing OpenBlock Packages
 =============================
 
+You can install either stable releases of the OpenBlock software,
+or check out the latest development code if you're a developer.
+
+.. _stable_base_install:
+
+Installing Stable Packages
+---------------------------
+
+ TODO, pip install -r ... where does the master file go?
+
+.. _development_base_install:
+
+Installing Development Code
+---------------------------
+
 Download the openblock software:
 
 .. code-block:: bash
@@ -54,7 +69,7 @@ Download the openblock software:
    $ mkdir -p src/
    $ git clone git://github.com/openplans/openblock.git src/openblock
 
-``Pip`` can install OpenBlock and the rest of our Python dependencies with a few
+It takes a few more ``Pip`` commands to install for development, like so
 commands:
 
 .. code-block:: bash
@@ -68,7 +83,6 @@ commands:
   $ pip install -e obadmin
 
 If you encounter errors during package installation, please see :doc:`common_install_problems`.
-
 
 .. _postinstall:
 
