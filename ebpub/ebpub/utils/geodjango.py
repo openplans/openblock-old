@@ -149,3 +149,10 @@ def intersects_metro_bbox(geom):
     the current metro.
     """
     return geom.intersects(get_metro_bbox())
+
+
+def get_default_bounds():
+    """Returns the bounding box of the metro, as a Polygon.
+    """
+    from django.contrib.gis.geos import Polygon
+    return Polygon.from_bbox(get_metro()['extent']).ogr
