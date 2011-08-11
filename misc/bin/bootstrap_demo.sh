@@ -82,14 +82,14 @@ echo
 echo =========================================================
 echo Importing Boston geographic data...
 export DJANGO_SETTINGS_MODULE=obdemo.settings
-$HERE/import_boston_zips.sh || exit 1
-$HERE/import_boston_hoods.sh || exit 1
+django-admin.py import_boston_zips || exit 1
+django-admin.py import_boston_hoods || exit 1
 # Note, it's important that blocks comes after zips.
-$HERE/import_boston_blocks.sh || exit 1
+django-admin.py import_boston_blocks || exit 1
 echo
 echo =========================================================
 echo Importing Boston news...
-$HERE/import_boston_news.sh || exit 1
+django-admin.py import_boston_news || exit 1
 
 echo 'Demo bootstrap succeeded!'
-echo To start up the demo, try: $VIRTUAL_ENV/manage.py runserver
+echo To start up the demo, try: django-admin.py runserver
