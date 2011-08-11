@@ -85,17 +85,17 @@ class ZipImporter(import_locations.LocationImporter):
             normalized_name = zipcode,
             slug = zipcode,
             location_type = self.location_type,
-            display_order = display_order,
             location = geom,
             city = self.metro_name,
             source = source,
-            area = geom.transform(3395, True).area,
             is_public = True,
-            creation_date = now,
-            last_mod_date = now,
         )
         if not self.should_create_location(kwargs):
             return
+        kwargs['defaults'] = {'display_order': display_order,
+                              'last_mod_date': now,
+                              'area': kwargs['location'].transform(3395, True).area,
+                              }
         zipcode_obj, created = Location.objects.get_or_create(**kwargs)
         if verbose:
             print >> sys.stderr, '%s ZIP Code %s ' % (created and 'Created' or 'Already had', zipcode_obj.name)
@@ -127,8 +127,10 @@ def parse_args(optparser, argv):
 
     return layer, opts
 
-def main():
-    layer, opts = parse_args(import_locations.optparser, sys.argv[1:])
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    layer, opts = parse_args(import_locations.optparser, argv)
     importer = ZipImporter(layer, opts.name_field, opts.source, opts.filter_bounds, opts.verbose)
     num_created = importer.save()
     if opts.verbose:

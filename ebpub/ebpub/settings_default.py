@@ -184,6 +184,12 @@ required_settings.append('GENERIC_EMAIL_SENDER')
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
 
+# Edit this if you want to control where
+# scraper scripts will put their HTTP cache.
+# (Warning, don't put it in a directory encrypted with ecryptfs
+# or you'll likely have "File name too long" errors.)
+HTTP_CACHE = '/tmp/openblock_scraper_cache'
+
 # XXX Unused?
 #DATA_HARVESTER_CONFIG = {}
 

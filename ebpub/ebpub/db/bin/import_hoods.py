@@ -48,8 +48,10 @@ def location_type():
     )
     return location_type
 
-def main():
-    layer, opts = parse_args(import_locations.optparser, sys.argv[1:])
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    layer, opts = parse_args(import_locations.optparser, argv)
     importer = import_locations.LocationImporter(
         layer,
         location_type(),

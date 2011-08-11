@@ -260,9 +260,9 @@ def main(argv=None):
     if len(args) != 4:
         return parser.error('must provide 4 arguments, see usage')
 
-    from django.contrib.gis.geos import Polygon
     if options.filter_bounds:
-        filter_bounds = Polygon.from_bbox(get_metro()['extent']).ogr
+        from ebpub.utils.geodjango import get_default_bounds
+        filter_bounds = get_default_bounds()
     else:
         filter_bounds = None
     tiger = TigerImporter(*args, verbose=options.verbose,

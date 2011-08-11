@@ -66,7 +66,8 @@ class LocationImporter(object):
         verbose = self.verbose
         source = self.source
         if self.filter_bounds:
-            self.bounds = Polygon.from_bbox(metro['extent'])
+            from ebpub.utils.geodjango import get_default_bounds
+            self.bounds = get_default_bounds()
         locs = []
         for feature in self.layer:
             name = feature.get(name_field)
@@ -75,22 +76,27 @@ class LocationImporter(object):
             geom = flatten_geomcollection(geom)
             fields = dict(
                 name = name,
-                normalized_name = normalize(name),
                 slug = slugify(name),
                 location_type = self.get_location_type(feature),
                 location = geom,
                 city = self.metro_name,
                 source = source,
-                area = geom.transform(3395, True).area,
                 is_public = True,
-                display_order = 0, # This is overwritten in the next loop
             )
             if not self.should_create_location(fields):
                 continue
             locs.append(fields)
         num_created = 0
         for i, loc_fields in enumerate(sorted(locs, key=lambda h: h['name'])):
-            kwargs = dict(loc_fields, defaults={'creation_date': self.now, 'last_mod_date': self.now, 'display_order': i})
+            kwargs = dict(
+                loc_fields,
+                defaults={
+                    'creation_date': self.now,
+                    'last_mod_date': self.now,
+                    'display_order': i,
+                    'normalized_name': normalize(loc_fields['name']),
+                    'area': loc_fields['location'].transform(3395, True).area,
+                    })
             try:
                 loc, created = Location.objects.get_or_create(**kwargs)
             except IntegrityError:
@@ -108,6 +114,7 @@ class LocationImporter(object):
                     raise
             if created:
                 num_created += 1
+
             if verbose:
                 print >> sys.stderr, '%s %s %s' % (created and 'Created' or 'Already had', self.location_type.name, loc)
             if verbose:
