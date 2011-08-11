@@ -1,0 +1,219 @@
+{% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+
+{% comment %}
+{% endcomment %}
+
+<!-- begin block content -->
+{% block content %}
+<h1>Create a {{schema.name}}</h1>
+  
+<div id="nav-location">
+	<!-- begin block map -->
+	{% block map %}
+	<div id="mapwrapper" class="neighbornews">
+		<script type="text/javascript">
+		{% autoescape off %}
+    function loadMap() {
+		  var config = {{map_configuration}};
+    	config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+		  config.center = [{{default_lon}}, {{default_lat}}];
+      config.zoom = {{default_zoom}};
+      var map = new OBMap(config); 
+      _setupMessagePage(map);
+    	return map;
+		}
+		  
+    function _setupMessagePage(obmap) {
+      var map = obmap.map;
+      var default_map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
+      default_map_center.transform(map.displayProjection, map.projection);
+
+      var default_map_zoom = {{default_zoom}};
+      var result_layer = new OpenLayers.Layer.Vector();
+	    map.addLayer(result_layer);
+
+      function setPoint(feature) {
+        result_layer.removeFeatures(result_layer.features);
+        result_layer.addFeatures(feature);
+        var pt = new OpenLayers.Geometry.Point(feature.geometry.x, feature.geometry.y);
+        pt.transform(map.projection, map.displayProjection);
+        $j('#id_longitude').val(pt.x);
+        $j('#id_latitude').val(pt.y);
+      }
+      
+      function recenterOn(lon, lat) {
+        var pt = new OpenLayers.Geometry.Point(lon, lat);
+        pt.transform(map.displayProjection, map.projection);
+        setPoint(new OpenLayers.Feature.Vector(pt));
+
+        var new_center = new OpenLayers.LonLat(lon, lat);
+        new_center.transform(map.displayProjection, map.projection);
+        map.setCenter(new_center, 15);
+      }
+	    
+      var selectResult = function(result) {
+        var r = $j(result).closest('div');
+        $j('.geocoder-result').removeClass('selected-result');
+        r.addClass('selected-result');
+
+        var reslat = parseFloat(r.find('span.lat').text())
+        var reslon = parseFloat(r.find('span.lon').text())
+
+        recenterOn(reslon, reslat);
+      };
+
+      var selectNone = function() {
+        $j('.geocoder-result').removeClass('selected-result');        
+      };
+
+      $j('.geocoder-result').live('click', function(evt) {
+        evt.preventDefault();
+        selectResult(evt.target);
+      });
+
+      var handleNoGeocoderResult = function(xhr, status, err) {
+        var results = $j('#geocoder-results');
+        results.html('');
+        var error_div = $j("#location_name_error");
+          
+        if (xhr.status == 404) {
+          error_div.html('No matching locations were found.');
+        }
+        else {
+          error_div.html('An error occurred looking up this location.');
+        }
+      };
+      
+      var handleGeocoderResult = function(data, status, req) {
+        var error_div = $j("#location_name_error");
+        error_div.html('');
+        
+        var results = $j('#geocoder-results');
+        results.html('');
+        for (var i = 0 ; i < data.features.length; i++) {
+          var result = data.features[i]; 
+          var result_title = "";
+
+          if (result.properties.name) {
+            result_title = result.properties.name + ' ';
+          }
+          if (result.properties.address) {
+            result_title += result.properties.address + ' ';
+          }
+          if (result.properties.zip) {
+            result_title += result.properties.zip;
+          }
+
+          var result_html = '<div class="geocoder-result">';
+          result_html += result_title;
+          result_html += '<span class="lon">';
+          result_html += result.geometry.coordinates[0];
+          result_html += '</span>';
+          result_html += '<span class="lat">';
+          result_html += result.geometry.coordinates[1];
+          result_html += '</span>';
+          result_html += '</div>';
+          results.append(result_html);
+        }
+
+        if (data.features.length > 0) {
+          selectResult($j('.geocoder-result').get(0));
+        }
+        else {
+          selectNone();
+        }
+      };
+
+      $j('.mapit-link').click(function(evt) {
+        evt.preventDefault();
+        
+        var addressToGeocode = $('#id_location_name').val().trim();
+        if (addressToGeocode == '') {
+            $j('#geocoder-results').html('');
+            $j('#location_name_error').html('Please specify a location.');
+            selectNone();
+            return;
+        }
+  
+        $j.ajax({url: '/api/dev1/geocode/',
+                type: 'GET',
+                data: {'q': addressToGeocode},
+                dataType: 'json',
+                success: handleGeocoderResult, 
+                error: handleNoGeocoderResult
+        });
+      });
+      
+      
+      var drawpt = new OpenLayers.Control.DrawFeature(result_layer, 
+	                                                    OpenLayers.Handler.Point);
+	    drawpt.events.on(
+	      {'featureadded': function(evt) {
+          selectNone();
+          setPoint(evt.feature);
+	      }, 
+	      scope: this
+	    });
+	    map.addControl(drawpt);
+      drawpt.activate();
+
+      var initLon = $j('#id_longitude').val().trim();
+      var initLat = $j('#id_latitude').val().trim();
+      if (initLat != '' && initLon != '') {
+        initLon = parseFloat(initLon);
+        initLat = parseFloat(initLat);
+        recenterOn(initLon, initLat);
+      }
+	    
+	    $j('#neighbornews_form').submit(function(evt) {
+        var lon = $j('#id_longitude').val().trim();
+        var lat = $j('#id_latitude').val().trim();
+        if (lat == '' || lon == '') {
+          $j('#general_error').html('Please specify a location on the map.');
+          evt.preventDefault();
+        }
+      });
+      
+    }
+	 	{% endautoescape %}
+		</script>
+		{% include "richmaps/richmap.html" %}
+	</div><!--/ #mapwrapper -->
+	{% endblock map %}
+	<!-- end block map -->
+  <span class="map_note">Click to specify location</span>
+  <div id="geocoder-results"></div>
+</div><!--/ #nav-location -->
+
+
+<div id="content">
+  <form id="neighbornews_form" class="neighbornews" action="" method="POST">
+
+    {% csrf_token %}
+
+    <div id="general_error" class="form-error">{{form.non_field_errors}}</div>
+
+    {% for field in form %}
+      <div class="form-input">
+        {% if not field.is_hidden %}
+        {{field.label_tag}}
+        {% endif %}
+        
+        {{field}}
+        {% if field.name == "location_name" %}
+        <a href="#" class="mapit-link">map it</a>
+        {% endif %}
+        
+        <div id="{{field.name}}_error" class="form-error">{{field.errors}}</div>
+      </div>
+    {% endfor %}
+    
+    <div>
+      <input type="submit" value="Submit" />
+    </div>
+
+  </form>
+</div> <!--/ #content -->
+
+{% endblock content %}
+

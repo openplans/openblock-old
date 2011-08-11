@@ -539,7 +539,7 @@ def _geocode_geojson(query):
                 'type': 'Feature',
                 'geometry': {
                     'type': 'Point',
-                    'coordinates': [r.lat, r.lng],
+                    'coordinates': [r.lng, r.lat],
                 },
                 'properties': {
                     'type': 'address',

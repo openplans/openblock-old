@@ -1030,6 +1030,7 @@ div.schema-colorsample {
   border: 1px solid #CCCCCC;
 }
 
+<<<<<<< HEAD
 /* messages */
 .messages .info {
 color: #00B000;
@@ -1037,3 +1038,56 @@ color: #00B000;
 .messages .error {
 color: #C53300
 }
+=======
+/* ########################### Neighbor News #################################### */
+
+.neighbornews #detailmap {
+    width: 392px;
+}
+
+.geocoder-result .lon,
+.geocoder-result .lat {
+    display: none;
+}
+
+div.geocoder-result {
+   padding: .75em;
+   border: 1px solid #a0a0a0; 
+}
+
+div.selected-result {
+    background-color: #d0d0d0;
+}
+
+form.neighbornews {
+    width: 100%;
+}
+
+form.neighbornews label {
+    display: block;
+    margin-top: 1em;
+}
+
+form.neighbornews div.form-input input {
+    width: 75%;
+}
+
+form.neighbornews textarea {
+    width: 100%;
+}
+
+.map_note {
+    font-size: 80%;
+    font-color: #cfcfcf;
+}
+
+form.neighbornews .form-error {
+    font-size: 80%;
+    color: #ff2020;
+}
+
+ul.errorlist {
+    margin-left: 0;
+    list-style-type: none;
+}
+>>>>>>> d9db669be9d4c5504c09084d41c1f37069fcbb98

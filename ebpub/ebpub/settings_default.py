@@ -83,6 +83,7 @@ INSTALLED_APPS = (
     'ebpub.alerts',
     'ebpub.db',
     'ebpub.geocoder',
+    'ebpub.neighbornews',
     'ebpub.openblockapi',
     'ebpub.openblockapi.apikey',
     'ebpub.petitions',

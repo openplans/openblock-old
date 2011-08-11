@@ -40,11 +40,24 @@ class BaseTestCase(TestCase):
         logger = logging.getLogger('django.request')
         self._previous_level = logger.getEffectiveLevel()
         logger.setLevel(logging.ERROR)
+        
+        from ebpub.metros.allmetros import get_metro
+        metro = get_metro()        
+        self.old_multiple = metro['multiple_cities']
+        self.old_city = metro['city_name']
+        metro['multiple_cities'] = False
+        metro['city_name'] = 'Boston'
 
     def tearDown(self):
         # Restore old log level.
+        from ebpub.metros.allmetros import get_metro
+        metro = get_metro()
+        metro['multiple_cities'] = self.old_multiple
+        metro['city_name'] = self.old_city
+
         logger = logging.getLogger('django.request')
         logger.setLevel(self._previous_level)
+
 
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
