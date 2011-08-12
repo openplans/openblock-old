@@ -6,6 +6,11 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ("db", "0017_del_location_centroid.py"),
+    )
+
+
     def forwards(self, orm):
         
         # Deleting field 'Widget.extra_link_parameters'
