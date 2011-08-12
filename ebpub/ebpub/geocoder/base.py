@@ -19,6 +19,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
+from ebpub.streets.models import Intersection
 import logging
 import re
 

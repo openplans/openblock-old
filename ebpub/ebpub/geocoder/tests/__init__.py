@@ -17,6 +17,6 @@
 #
 
 # Needed so the stock test runner can find these tests.
-# But watch out for files named test*py - this tricks django-noseinto loading those twice.
+# But watch out for files named test*py - this tricks django-nose into loading those twice.
 from .parser import *
 from .geocoder import *
