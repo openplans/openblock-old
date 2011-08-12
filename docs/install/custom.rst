@@ -121,7 +121,7 @@ To get anything useful out of your site, at minimum you will need the following:
     See the ebpub docs for :ref:`custom-look-feel`.
 
 Gathering all this data and feeding it into the database can be a bit
-of work at this point.  The ``misc/bin/bootstrap_demo.sh`` script
+of work at this point.  The ``obdemo/bin/bootstrap_demo.sh`` script
 in the openblock source code
 does all this for the demo site with Boston data, by calling other
 scripts; together, they should serve as a decent example of how to do

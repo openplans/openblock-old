@@ -46,12 +46,13 @@ The reason we fetch the code from git is that the bootstrap scripts
 aren't part of a python package, and they assume that the whole source
 tree is there.
 
-The ``misc`` directory in the openblock source code contains a shell script that builds the rest of the
-system and loads demonstration data (for Boston, MA) into the system:
+The ``obdemo`` directory in the openblock source code contains a shell script that builds the rest of the
+system and loads demonstration data (for Boston, MA) into the system.
+If you have checkout out the openblock source, the command would be:
 
 .. code-block:: bash
 
- $ src/openblock/misc/bin/bootstrap_demo.sh
+ $ src/openblock/obdemo/bin/bootstrap_demo.sh
 
 Wait 10 minutes or so; a lot of output will scroll by.
 If it finishes successfully, you should see a message like::
