@@ -109,7 +109,7 @@ follow these steps:
        pre-made import scripts:
 
            * If you're using TIGER/Line data, you can use the script
-             ``ebpub/streets/blockimport/tiger/import_blocks.py.``
+             ``import_blocks_tiger`` which should be on your $PATH.
 
            * If you're using data from ESRI, you can use the script
 	     ``ebpub/streets/blockimport/esri/importers/blocks.py.``

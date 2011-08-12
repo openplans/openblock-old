@@ -90,3 +90,4 @@ class EsriImporter(object):
             if verbose:
                 print >> sys.stderr, '%s ZIP Code %s ' % (created and 'Created' or 'Already had', zipcode_obj.name)
         return num_created
+

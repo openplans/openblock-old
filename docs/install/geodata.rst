@@ -161,7 +161,7 @@ the current directory):
 
 .. code-block:: bash
 
-  $ ebpub/ebpub/streets/blockimport/tiger/import_blocks.py \
+  $ import_blocks_tiger \
     --city=BOSTON tl_2009_25025_edges.shp tl_2009_25025_featnames.dbf tl_2009_25025_faces.dbf tl_2009_25_place.shp
 
 The order of file arguments is important. First give the
