@@ -19,13 +19,11 @@
 
 
 import datetime
-from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.geos import MultiPolygon
 from ebpub.db.models import Location, LocationType
 from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.geodjango import flatten_geomcollection
 from ebpub.db.bin import import_locations
-import os
 import sys
 
 

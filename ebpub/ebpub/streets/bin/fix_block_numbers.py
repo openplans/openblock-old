@@ -35,6 +35,9 @@ def update_all_block_numbers(verbose=False):
             if verbose:
                 print "Updating numbers for %s to %s-%s" % (b, from_num, to_num)
 
+def main():
+    update_all_block_numbers(verbose=True)
 
 if __name__ == "__main__":
-    update_all_block_numbers(verbose=True)
+    main()
+

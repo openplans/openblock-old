@@ -66,6 +66,7 @@ populate_ni_loc = swallow_out(populate_ni_loc, 'Populating newsitemlocations ...
 
 def add_location(name, wkt, loc_type, source='UNKNOWN'):
     geom = fromstr(wkt, srid=4326)
+    name = name.strip().title()
     loc, created = Location.objects.get_or_create(
         name=name,
         slug=slugify(name),
@@ -83,17 +84,22 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    usage = 'usage: %prog [options] name wkt'
+    usage = 'usage: %prog [options] NAME WKT'
+    usage += '\n\n WKT is the geometry in "Well-Known Text" format.'
+    usage += '\n\n NAME is the human-readable name.'
+    usage += '\n The slug and normalized_name will be derived from it.'
+
     p = OptionParser(usage=usage)
     p.add_option('-l', '--location_type', dest='loc_type_slug',
-                 default='neighborhoods', help='location type slug')
+                 default='neighborhoods', help='location type slug (default: neighborhoods)')
     p.add_option('-s', '--source', dest='source',
-                 default='UNKNOWN', help='source of data')
+                 default='UNKNOWN',
+                 help='source of data - name or URL of the place you found it.')
 
     opts, args = p.parse_args(argv)
 
     if len(args) != 2:
-        p.error('required arguments `name`, `wkt`')
+        p.error('required arguments `NAME`, `WKT`')
 
     try:
         loc_type = LocationType.objects.get(slug=opts.loc_type_slug)

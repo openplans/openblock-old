@@ -56,6 +56,9 @@ def print_schema_creation(schema_slug):
         print get_insert_sql(sf._meta.db_table, cols, vals)
     print "COMMIT;"
 
-if __name__ == "__main__":
+def main():
     import sys
     print_schema_creation(sys.argv[1])
+
+if __name__ == "__main__":
+    main()

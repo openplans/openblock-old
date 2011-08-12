@@ -97,7 +97,7 @@ configured your :ref:`metro extent <metro_extent>`.
 
 .. code-block:: bash
 
-  $ ebpub/ebpub/db/bin/import_zips.py -v -b /path/to/where/you/unzipped/the/files/
+  $ import_zips -v -b /path/to/where/you/unzipped/the/files/
 
 The ``-b`` option tells it to filter out zip codes outside your
 metro extent, and ``-v`` tells it to give verbose output.
@@ -259,15 +259,16 @@ populating them.
 Importing Locations From Shapefiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is a script that can import any kind of location from a
+There is a script ``import_locations`` that can import any kind of location from a
 shapefile.  If a LocationType with the given slug doesn't exist, it will be
 created when you run the script.
 
 If you run it with the ``--help`` option, it will tell you how to use it::
 
- $ ./ebpub/ebpub/db/bin/import_locations.py  --help
- Usage: import_locations.py [options] type_slug /path/to/shapefile
-
+ $ import_locations  --help
+ 
+ Usage: import_locations [options] type_slug /path/to/shapefile
+ 
  Options:
   -h, --help            show this help message and exit
   -n NAME_FIELD, --name-field=NAME_FIELD
@@ -285,7 +286,6 @@ If you run it with the ``--help`` option, it will tell you how to use it::
   --type-name-plural=TYPE_NAME_PLURAL
                         specifies the location type plural name
 
-
 All of these are optional. The defaults often work fine, although
 ``--filter-bounds`` is usually a good idea, to exclude areas that
 don't overlap with your metro extent.
@@ -302,8 +302,9 @@ would be a LocationType with slug="neighborhoods".
 Again, if you run this script with the ``--help`` option, it will tell you
 how to use it::
 
- $ ./ebpub/ebpub/db/bin/import_hoods.py  --helpUsage: import_hoods.py [options] /path/to/shapefile
-
+ $ import_neighborhoods  --help
+ Usage: import_neighborhoods [options] /path/to/shapefile
+ 
  Options:
   -h, --help            show this help message and exit
   -n NAME_FIELD, --name-field=NAME_FIELD
@@ -317,6 +318,7 @@ how to use it::
                         your metro's extent (from your settings.py) (default
                         false)
 
+ 
 
 Again, all of the options are really optional. The defaults often work
 fine, although ``--filter-bounds`` is usually a good idea, to exclude

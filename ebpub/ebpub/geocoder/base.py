@@ -19,8 +19,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
-from ebpub.geocoder.models import GeocoderCache
-from ebpub.streets.models import Block, StreetMisspelling, Intersection
 import logging
 import re
 
@@ -127,7 +125,10 @@ class Geocoder(object):
 
         # Get the result (an Address instance), either from the cache or by
         # calling _do_geocode().
-        # TODO: Why does this not use the normal Django caching framework?
+        # TODO: Why does this not use the normal Django caching
+        # framework?
+        # Defer import to avoid cyclical imports.
+        from ebpub.geocoder.models import GeocoderCache
         if self.use_cache:
             try:
                 cached = GeocoderCache.objects.filter(normalized_location=location)[0]
@@ -177,7 +178,10 @@ class AddressGeocoder(Geocoder):
         for loc in locations:
             logger.debug('AddressGeocoder: Trying %r' % loc)
             loc_results = self._db_lookup(loc)
-            # If none were found, maybe the street was misspelled. Check that.
+            # If none were found, maybe the street was
+            # misspelled. Check that.
+            # Defer import to avoid cyclical import.
+            from ebpub.streets.models import StreetMisspelling
             if not loc_results and loc['street']:
                 logger.debug('AddressGeocoder: checking for alternate spellings of %r'
                              % loc['street'])
@@ -204,6 +208,8 @@ class AddressGeocoder(Geocoder):
                     if loc['city']:
                         city_filter = Q(left_city=loc['city']) | Q(right_city=loc['city'])
                         sided_filters.append(city_filter)
+                    # Defer this to avoid import cycle.
+                    from ebpub.streets.models import Block
                     b_list = Block.objects.filter(*sided_filters, **kwargs).order_by('predir', 'from_num', 'to_num')
                     if b_list:
                         logger.debug("Street %r exists but block %r doesn't"
@@ -233,6 +239,8 @@ class AddressGeocoder(Geocoder):
 
         # Query the blocks database.
         try:
+            # Defer this to avoid import cycle.
+            from ebpub.streets.models import Block
             blocks = Block.objects.search(
                 street=location['street'],
                 number=location['number'],
@@ -282,6 +290,8 @@ class IntersectionGeocoder(Geocoder):
 
         all_results = []
         seen_intersections = set()
+        # Defer to avoid cyclical import.
+        from ebpub.streets.models import StreetMisspelling
         for street_a in left_side:
             street_a['street'] = StreetMisspelling.objects.make_correction(street_a['street'])
             for street_b in right_side:

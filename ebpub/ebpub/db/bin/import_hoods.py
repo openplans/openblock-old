@@ -39,8 +39,8 @@ def location_type():
     metro = get_metro()
     metro_name = metro['metro_name'].upper()
     location_type, _ = LocationType.objects.get_or_create(
-        name = 'neighborhood',
-        plural_name = 'neighborhoods',
+        name = 'Neighborhood',
+        plural_name = 'Neighborhoods',
         scope = metro_name,
         slug = 'neighborhoods',
         is_browsable = True,

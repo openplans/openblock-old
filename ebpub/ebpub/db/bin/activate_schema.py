@@ -57,7 +57,7 @@ def activate_schema(schema):
     schema.is_public = True
     schema.save()
 
-if __name__ == '__main__':
+def main():
     try:
         schema = Schema.objects.get(slug__exact=sys.argv[1])
     except Schema.DoesNotExist:
@@ -65,3 +65,6 @@ if __name__ == '__main__':
         sys.exit(-1)
     activate_schema(schema)
     print "%s: fixed schema.min_date, associated pub_dates, and set is_public=True." % schema.slug
+
+if __name__ == '__main__':
+    main()

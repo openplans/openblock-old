@@ -64,7 +64,20 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
+            'activate_schema = ebpub.db.bin.activate_schema:main',
+            'add_location = ebpub.db.bin.add_location:main',
+            'alphabetize_locations = ebpub.db.bin.alphabetize_locations:main',
+            'export_schema = ebpub.db.bin.export_schema:main',
+            'geocode_newsitems = ebpub.db.bin.geocode_newsitems:main',
+            'import_locations = ebpub.db.bin.import_locations:main',
+            'import_neighborhoods = ebpub.db.bin.import_hoods:main',
+            'import_zips = ebpub.db.bin.import_zips:main',
             'update_aggregates = ebpub.db.bin.update_aggregates:main',
+            'populate_streets = ebpub.streets.bin.populate_streets:main',
+            'populate_suburbs = ebpub.streets.bin.populate_suburbs:main',
+            'fix_block_numbers = ebpub.streets.bin.fix_block_numbers:main',
+            'update_block_pretty_names = ebpub.streets.bin.update_block_pretty_names:update_block_pretty_names',
+            'delete_blocks_outside_city = ebpub.streets.bin.delete_blocks_outside_city:delete_blocks_outside_city',
             ],
         },
     classifiers=[

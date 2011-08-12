@@ -16,6 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.streets.models import Suburb
 
@@ -23,7 +24,18 @@ def populate_suburbs(suburb_list):
     for suburb in suburb_list:
         Suburb.objects.create(name=suburb, normalized_name=normalize(suburb))
 
-if __name__ == "__main__":
+def main():
     import sys
+    import os
+    if (not len(sys.argv) > 1) or (not os.path.exists(sys.argv[1])):
+        sys.stderr.write("Usage: %s FILE\n\n" % sys.argv[0])
+        sys.stderr.write("The file should be a text file with one suburb name per line.\n")
+        sys.stderr.write("For openblock's purposes, a 'suburb' is just a\n"
+                         "nearby city that we don't care about importing.\n")
+
+        sys.exit(1)
     suburb_list = [line for line in open(sys.argv[1], 'r').read().split('\n') if line]
     populate_suburbs(suburb_list)
+
+if __name__ == "__main__":
+    sys.exit(main())

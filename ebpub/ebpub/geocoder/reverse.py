@@ -20,7 +20,6 @@ import unittest
 from psycopg2 import Binary
 from django.contrib.gis.geos import Point
 from django.db import connection
-from ebpub.streets.models import Block
 
 class ReverseGeocodeError(Exception):
     pass
@@ -32,6 +31,9 @@ def reverse_geocode(point):
     Argument can be either a Point instance, or an (x, y) tuple, or a
     WKT string.
     """
+    # Defer import to avoid cyclical import.
+    from ebpub.streets.models import Block
+
     if isinstance(point, basestring):
         from django.contrib.gis.geos import fromstr
         point = fromstr(point, srid=4326)

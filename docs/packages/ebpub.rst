@@ -74,9 +74,14 @@ system, follow these steps:
 
     3. With the geographic representation, create a row in the "db_location"
        table that describes the Location. See the Location model code in
-       ebpub/db/models.py for information on the fields and what they mean.
-       You can use the script ebpub/db/bin/add_location.py, use the Django
-       database API or do a manual SQL INSERT statement.
+       ``ebpub/db/models.py`` for information on the fields and what
+       they mean.
+
+       You can create them in various ways: use the admin UI;
+       use the script ``add_location`` to create one by
+       specifying its geometry in well-known text (WKT) format;
+       use the script ``import_locations`` to import them from shapefiles;
+       or use the Django model API; or do a manual SQL INSERT statement.
 
 You'll need to create at least one LocationType with the slug "neighborhoods",
 because that's hard-coded in various places throughout the application.
@@ -367,7 +372,7 @@ Several parts of ebpub display aggregate totals of NewsItems for a particular
 Schema. Because these calculations can be expensive, there's an infrastructure
 for caching the aggregate numbers regularly in separate tables (db_aggregate*).
 
-To do this, just run ebpub/db/bin/update_aggregates.py.
+To do this, just run ``update_aggregates`` on the command line.
 
 You'll want to do this on a regular basis, depending on how often you update
 your data. Some parts of the site (such as charts) will not be visible until

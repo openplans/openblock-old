@@ -75,7 +75,7 @@ def geocode(schema=None):
     print "Parse errors:   %s" % parsing_error_count
     print "Invalid blocks: %s" % invalid_block_count
 
-if __name__ == "__main__":
+def main():
     import sys
     try:
         schema_slug = sys.argv[1]
@@ -83,3 +83,6 @@ if __name__ == "__main__":
         geocode()
     else:
         geocode(schema_slug)
+
+if __name__ == "__main__":
+    main()
