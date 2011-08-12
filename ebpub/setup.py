@@ -62,8 +62,11 @@ setup(
     ],
     packages=find_packages(exclude=['ez_setup']),
     include_package_data=True,
-    entry_points="""
-    """,
+    entry_points={
+        'console_scripts': [
+            'update_aggregates = ebpub.db.bin.update_aggregates:main',
+            ],
+        },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',

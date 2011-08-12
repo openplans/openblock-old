@@ -173,9 +173,15 @@ def update_all_aggregates(verbose=False):
         logger.info('Updating %s aggregates' % schema.plural_name)
         update_aggregates(schema.id)
 
-if __name__ == "__main__":
+def main(argv=None):
     import sys
-    if len(sys.argv) == 2:
-        update_aggregates(sys.argv[1])
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv:
+        update_aggregates(argv[0])
     else:
         update_all_aggregates(verbose=True)
+
+
+if __name__ == "__main__":
+    main()
