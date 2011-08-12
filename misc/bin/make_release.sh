@@ -42,7 +42,10 @@ echo Building composite requirements file
 REQFILE=openblock-requirements-${VERSION}.txt
 cd $SOURCE_ROOT
 
-find . -name requirements.txt | xargs cat | sort | grep -v "^#" | uniq > $REQFILE
+echo "# AUTO-GENERATED" > $REQFILE
+echo "# Pip requirements for installing all OpenBlock ${VERSION} packages" >> $REQFILE
+echo >> $REQFILE
+find . -name requirements.txt | xargs cat | sort | grep -v "^#" | uniq >> $REQFILE
 
 echo "Note, the requirements file won't work until you push your openblock packages"
 echo "to pypi (or comment them out from the file)"
