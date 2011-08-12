@@ -192,9 +192,9 @@ The following commands must be run *once*, in exactly this order:
 
 .. code-block:: bash
 
- $ ebpub/ebpub/streets/bin/populate_streets.py -v -v -v -v streets
- $ ebpub/ebpub/streets/bin/populate_streets.py -v -v -v -v block_intersections
- $ ebpub/ebpub/streets/bin/populate_streets.py -v -v -v -v intersections
+ $ populate_streets -v -v -v -v streets
+ $ populate_streets -v -v -v -v block_intersections
+ $ populate_streets -v -v -v -v intersections
 
 The ``-v`` argument controls verbosity; give it fewer times for less output.
 
