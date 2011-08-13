@@ -79,7 +79,7 @@ setup(
             'fix_block_numbers = ebpub.streets.bin.fix_block_numbers:main',
             'update_block_pretty_names = ebpub.streets.bin.update_block_pretty_names:update_block_pretty_names',
             'delete_blocks_outside_city = ebpub.streets.bin.delete_blocks_outside_city:delete_blocks_outside_city',
-            'import_blocks_tiger = ebpub.streets.blockimport.tiger.import_blocks:main'
+            'import_blocks_tiger = ebpub.streets.blockimport.tiger.import_blocks:main',
             'import_blocks_esri = ebpub.streets.blockimport.esri.importers.blocks:main',
             ],
         },
