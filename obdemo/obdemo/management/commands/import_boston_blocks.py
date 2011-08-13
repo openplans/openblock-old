@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 "Could not download %s/%s" % (BASEURL, fname))
 
         import glob
-        for fname in glob.glob('*zip'):
+        for fname in glob.glob(os.path.join(OUTDIR, '*zip')):
             unzip(fname, cwd=OUTDIR) or die("Could not unzip %s" % fname)
         print "Shapefiles unzipped in %s" % OUTDIR
 
