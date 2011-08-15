@@ -145,7 +145,7 @@ echo Setting up DBs
 cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
 echo Syncing DB...
 
-DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=obdemo.settings django-admin.py"
+DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=obdemo.settings $VIRTUAL_ENV/bin/django-admin.py"
 yes no | $DJADMIN syncdb --migrate || exit 1
 echo OK
 
