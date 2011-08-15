@@ -217,8 +217,8 @@ MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 120
 
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
-OPENLAYERS_URL = '/scripts/OpenLayers-2.11-rc1/OpenLayers.js'
-OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11-rc1/img/'
+OPENLAYERS_URL = '/scripts/OpenLayers-2.11-rc2/OpenLayers.js'
+OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11-rc2/img/'
 
 # For compatibility with django-olwidget
 OL_API = OPENLAYERS_URL

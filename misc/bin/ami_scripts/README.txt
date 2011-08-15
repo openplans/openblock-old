@@ -102,7 +102,7 @@ Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/
 
 WSGIScriptAlias / /home/openblock/openblock/src/openblock/obdemo/obdemo/wsgi/obdemo.wsgi
 
-WSGIDaemonProcess obdemo_org user=openblock group=www-data
+WSGIDaemonProcess obdemo_org user=openblock group=www-data processes=10 threads=1
 WSGIProcessGroup obdemo_org
 
 CustomLog /var/log/apache2/openblock-access.log combined
