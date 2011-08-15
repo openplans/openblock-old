@@ -49,7 +49,8 @@ echo
 # exiting out of the subshell.
 #source bin/activate || exit 1
 
-$SUDO bin/easy_install pip || exit 1
+$SUDO bin/easy_install --upgrade pip distribute || exit 1
+$SUDO hash -r
 
 # Speed up pip if we run again
 export PIP_DOWNLOAD_CACHE=/home/openblock/pip-download-cache
@@ -103,10 +104,15 @@ echo Installing openblock packages in `pwd`...
 cd $VIRTUAL_ENV/src/openblock || exit 1
 
 
-$SUDO $PIP install -r ebpub/requirements.txt -e ebpub || exit 1
-$SUDO $PIP install -r ebdata/requirements.txt -e ebdata  || exit 1
-$SUDO $PIP install -r obadmin/requirements.txt -e obadmin || exit 1
-$SUDO $PIP install -r obdemo/requirements.txt -e obdemo || exit 1
+SRC=$VIRTUAL_ENV/src/openblock
+$SUDO $PIP install -r $SRC/ebpub/requirements.txt
+$SUDO $PIP install -e $SRC/ebpub
+$SUDO $PIP install -r $SRC/ebdata/requirements.txt
+$SUDO $PIP install -e $SRC/ebdata
+$SUDO $PIP install -r $SRC/obadmin/requirements.txt
+$SUDO $PIP install -e $SRC/obadmin
+$SUDO $PIP install -r $SRC/obdemo/requirements.txt
+$SUDO $PIP install -e $SRC/obdemo
 echo all packages installed
 
 echo Setting up obdemo config file
@@ -135,13 +141,17 @@ echo Creating db
 sudo -u postgres createdb -U openblock --template template_postgis openblock || exit 1
 
 echo Setting up DBs
-#sudo su - openblock || exit 1
-#echo I am now `whoami`
-#cd /home/openblock/openblock
-#source bin/activate
 
 cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
 echo Syncing DB...
 
-yes no | $SUDO $VIRTUAL_ENV/bin/python ./manage.py syncdb --migrate || exit 1
+DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=obdemo.settings django-admin.py"
+yes no | $DJADMIN syncdb --migrate || exit 1
 echo OK
+
+$DJADMIN import_boston_zips || exit 1
+$DJADMIN import_boston_hoods || exit 1
+$DJADMIN import_boston_blocks || exit 1
+$DJADMIN import_boston_news || exit 1
+
+
