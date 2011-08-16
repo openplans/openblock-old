@@ -53,6 +53,12 @@ class GeoReportV2Scraper(object):
         if bounds is None:
             log.info("Calculating geographic boundaries from the extent in settings.METRO_LIST")
             self.bounds = get_default_bounds()
+            try:
+                # Make sure it's a geos geometry, not an ogr/gdal geometry,
+                # so we can test for intersecting geos Points.
+                self.bounds = self.bounds.geos
+            except AttributeError:
+                pass
         self.html_url_template = html_url_template
 
     def service_requests_url(self, start_date, end_date):

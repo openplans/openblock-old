@@ -17,7 +17,7 @@ but we are not trying to make it work on all possible variations of linux,
 OSX, etc. - so, *caveat emptor*.
 
 Or, if you prefer to have control of how everything's done, follow the
-:ref:`detailed_demo_instructions` below.
+:ref:`detailed_demo_instructions` instead.
 
 
 Installation
@@ -47,8 +47,7 @@ aren't part of a python package, and they assume that the whole source
 tree is there.
 
 The ``obdemo`` directory in the openblock source code contains a shell script that builds the rest of the
-system and loads demonstration data (for Boston, MA) into the system.
-If you have checkout out the openblock source, the command would be:
+system and loads demonstration data (for Boston, MA) into the system:
 
 .. code-block:: bash
 
@@ -96,7 +95,7 @@ Note that this will completely and permanently wipe out your openblock
 database, so think twice!
 
 Finally, be aware (again) that ``bootstrap_demo.sh`` may simply not
-work on your system!  Try the :ref:`detailed_demo_instructions` below.
+work on your system!  Try the :ref:`detailed_demo_instructions` instead.
 
 
 For more help, you can try the ebcode group:

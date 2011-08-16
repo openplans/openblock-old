@@ -63,9 +63,11 @@ def wget(url, cwd=None, options="-N"):
     return shell_command('wget', args='%s %s' % (options, url), cwd=cwd)
 
 def unzip(filename, cwd=None):
+    """Unzip filename, write extracted files into cwd (default is the current dir).
+    """
     try:
         zfile = zipfile.ZipFile(filename)
-        zfile.extractall(pwd=cwd or os.getcwd())
+        zfile.extractall(path=cwd)
         return True
     except:
         log_exception()

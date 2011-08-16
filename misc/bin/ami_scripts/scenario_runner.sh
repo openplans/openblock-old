@@ -39,18 +39,21 @@ SETUP_SCRIPT=$4
 
 SSH="ssh -i $HOME/.ssh/openblock.pem"
 echo Running base script $BASE_SCRIPT...
-$SSH ubuntu@$REMOTE < $BASE_SCRIPT || exit 1
+$SSH $REMOTE < $BASE_SCRIPT || exit 1
 echo OK
-#echo Waiting for it to come back up...
-#sleep 20
+echo Waiting for it to come back up...
 # Unfortunately EC2 servers don't seem to accept pinging.
+while true; do
+    sleep 4
+    ssh -i ~/.ssh/openblock.pem $EC2HOST "cat /etc/issue" && break
+done
 echo
 echo Running SQL setup with $DB_CONFIG ...
-cat $DB_CONFIG db_postinstall | $SSH ubuntu@$REMOTE  || exit 1
+cat $DB_CONFIG db_postinstall | $SSH $REMOTE  || exit 1
 echo OK
 
 echo Running scenario $SCENARIO_SCRIPT...
-$SSH ubuntu@$REMOTE < $SETUP_SCRIPT || exit 1
+$SSH $REMOTE < $SETUP_SCRIPT || exit 1
 echo All OK
 
 

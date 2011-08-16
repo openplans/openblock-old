@@ -95,7 +95,7 @@ You can create an openblock user by running:
 
 .. code-block:: bash
 
-    $ sudo -u postgres createuser --createdb openblock
+    $ sudo -u postgres createuser --createrole --createdb openblock
 
 Depending on your database security setup, you may need to adjust the instructions, settings of postgres and/or settings of openblock.
 
