@@ -25,6 +25,7 @@ from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
 from ebpub.db.bin.import_zips import ZipImporter
 from ebpub.streets.blockimport.tiger.import_blocks import TigerImporter
+from ebpub.streets.bin import populate_streets as populate
 from ebpub.utils.logutils import log_exception
 import tempfile
 import os
@@ -139,8 +140,21 @@ def import_blocks(edges, featnames, faces, place, city=None):
     os.unlink(featnames)
     os.unlink(faces)
     os.unlink(place)
-    # queue populate_streets_streets
-    # queue populate_streets_block_intersections
-    # queue populate_streets_intersections
+
+    populate_streets()
 
     return num_created
+
+@background
+def populate_streets()
+    populate.populate_streets()
+    populate_block_intersections()
+
+@background
+def populate_block_intersections():
+    populate.populate_block_intersections()
+    populate_intersections()
+
+@background
+def populate_intersections():
+    populate.populate_intersections()
