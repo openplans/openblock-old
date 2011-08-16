@@ -30,7 +30,7 @@ from datetime import datetime, timedelta
 import os
 from re import findall
 from tempfile import mkstemp
-from tasks import CENSUS_STATES, download_state_shapefile
+from tasks import CENSUS_STATES, download_state_shapefile, import_blocks
 from background_task.models import Task
 
 class SchemaLookupsForm(forms.Form):
@@ -48,6 +48,14 @@ class BlobSeedForm(forms.Form):
     pretty_name = forms.CharField(max_length=128, widget=forms.TextInput(attrs={'size': 80}))
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
+
+def save_file(self, f):
+    fd, name = mkstemp()
+    fp = os.fdopen(fd, 'wb')
+    for chunk in f.chunks():
+        fp.write(chunk)
+    fp.close()
+    return name
 
 class ImportZipShapefilesForm(forms.Form):
 
@@ -70,16 +78,8 @@ class UploadShapefileForm(forms.Form):
         if not self.is_valid():
             return False
 
-        self.shapefile_path = self.save_shapefile(self.cleaned_data['shapefile'])
+        self.shapefile_path = save_file(self.cleaned_data['shapefile'])
         return True
-
-    def save_shapefile(self, f):
-        fd, name = mkstemp('.shp')
-        fp = os.fdopen(fd, 'wb')
-        for chunk in f.chunks():
-            fp.write(chunk)
-        fp.close()
-        return name
 
 class ImportBlocksForm(forms.Form):
     city =      forms.CharField(max_length=30, help_text="Optional: skip features that don't include this name", required=False)
@@ -92,6 +92,13 @@ class ImportBlocksForm(forms.Form):
         if not self.is_valid():
             return False
 
+        import_blocks(
+            self.cleaned_data['city'],
+            save_file(self.cleaned_data['edges']),
+            save_file(self.cleaned_data['featnames']),
+            save_file(self.cleaned_data['faces']),
+            save_file(self.cleaned_data['place'])
+        )
         # queue job
 
         return True
