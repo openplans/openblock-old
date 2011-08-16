@@ -81,6 +81,21 @@ class UploadShapefileForm(forms.Form):
         fp.close()
         return name
 
+class ImportBlocksForm(forms.Form):
+    city =      forms.CharField(max_length=30, help_text="Optional: skip features that don't include this name", required=False)
+    edges =     forms.FileField(label='_edges.shp',     required=True)
+    featnames = forms.FileField(label='_featnames.dbf', required=True)
+    faces =     forms.FileField(label='_faces.shp',     required=True)
+    place =     forms.FileField(label='_place.shp',     required=True)
+
+    def save(self):
+        if not self.is_valid():
+            return False
+
+        # queue job
+
+        return True
+
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
 request_username = lambda request: request.META.get('REMOTE_USER', '') or request.META.get('HTTP_X_REMOTE_USER', '')
@@ -252,4 +267,16 @@ def upload_shapefile(request):
     return render(request, 'obadmin/location/upload_shapefile.html', {
       'fieldset': fieldset,
       'form': form,
+    })
+
+def import_blocks(request):
+    print request.FILES
+    form = ImportBlocksForm(request.POST or None, request.FILES or None)
+    if form.save():
+        return HttpResponseRedirect('../')
+
+    fieldset = Fieldset(form, fields=('city', 'edges', 'featnames', 'faces', 'place',))
+    return render(request, 'obadmin/location/import_blocks.html', {
+        'fieldset': fieldset,
+        'form': form,
     })
