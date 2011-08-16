@@ -1,0 +1,75 @@
+{% extends "admin/change_form.html" %}
+
+{% block title %}Pick Shapefile Layer to Import{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="../../../">Home</a>
+&rsaquo;
+<a href="../../">Db</a>
+&rsaquo;
+<a href="../">Locations</a>
+&rsaquo;
+Pick Shapefile Layer to Import
+</div>
+{% endblock %}
+
+{% block content %}
+<style type="text/css">
+.fields ol {
+    list-style-type: none;
+}
+</style>
+
+<div id="content">
+    <h1>Pick Shapefile Layer to Import Locations From</h1>
+
+    <div id="content-main">
+        <form action="" enctype="multipart/form-data" method="post">{% csrf_token %}
+
+            {% include "admin/includes/fieldset.html" %}
+
+            <p>Select which layer you'd like to import.</p>
+
+            <input name="shapefile" type="hidden" value="{{ shapefile }}" />
+            <ol class="layers">
+            {% for layer in layers %}
+                <li>
+                    <input type="radio" name="layer" value="{{ forloop.counter0 }}">
+                    {{ layer.name }} ({{ layer.num_feat }} {{ layer.geom_type.name }}):
+
+                    <div class="fields">
+                        <p>Use which field for Location name?</p>
+
+                        <ol>
+                        {% for field in layer.0 %}
+                            <li>
+                                <input type="radio" name="name_field" value="{{ field.name }}">
+                                {{ field.name }} (ex: {{ field.value }})
+                            </li>
+                        {% endfor %}
+                        </ol>
+                    </div>
+                </li>
+            {% endfor %}
+            </ol>
+            <div class="submit-row"><input class="button default" type="submit" value="Select" /></div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript" src="/static/admin/js/jquery.min.js"></script>
+<script type="text/javascript" src="/static/admin/js/jquery.init.js"></script>
+<script>
+    (function($) {
+        var show_selected_layer_fields = function () {
+            $('.fields').hide();
+            $('input[name=layer]:checked ~ .fields').show();
+        };
+        $('input[name=layer]').click(show_selected_layer_fields);
+        $().ready(function () {
+            show_selected_layer_fields();
+        });
+    })(django.jQuery);
+</script>
+{% endblock %}

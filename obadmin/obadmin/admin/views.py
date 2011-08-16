@@ -20,9 +20,12 @@
 from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
+from ebpub.db.bin import import_locations
+from ebpub.db.models import LocationType
 from django import forms
 from django.conf import settings
 from django.contrib.admin.helpers import Fieldset
+from django.contrib.gis.gdal import DataSource
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.views.decorators.csrf import csrf_protect
@@ -50,7 +53,6 @@ class BlobSeedForm(forms.Form):
     strip_noise = forms.BooleanField(required=False)
 
 class ImportZipShapefilesForm(forms.Form):
-
     state = forms.ChoiceField(required=True, choices=CENSUS_STATES)
     zip_codes = forms.CharField(required=True, widget=forms.Textarea())
 
@@ -80,6 +82,28 @@ class UploadShapefileForm(forms.Form):
             fp.write(chunk)
         fp.close()
         return name
+
+class PickShapefileLayerForm(forms.Form):
+    shapefile = forms.CharField(required=True)
+    location_type = forms.ModelChoiceField(queryset=LocationType.objects.all(), required=True, empty_label=None)
+    layer = forms.IntegerField(required=True)
+    name_field = forms.CharField(required=True)
+
+    def save(self):
+        if not self.is_valid():
+              return False
+
+        layer = import_locations.layer_from_shapefile(self.cleaned_data['shapefile'], self.cleaned_data['layer'])
+        location_type = self.cleaned_data['location_type']
+        field_name = self.cleaned_data['name_field']
+
+        importer = import_locations.LocationImporter(layer, location_type)
+        if importer.save(field_name) > 0:
+            os.unlink(self.cleaned_data['shapefile'])
+            return True
+        else:
+            # TODO: would be nice to pass some errors back to page
+            return False
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -246,10 +270,33 @@ def import_zip_shapefiles(request):
 def upload_shapefile(request):
     form = UploadShapefileForm(request.POST or None, request.FILES or None)
     if form.save():
-        return HttpResponseRedirect('../pick-shapefile-layers/?shapefile=%s' % form.shapefile_path)
+        return HttpResponseRedirect('../pick-shapefile-layer/?shapefile=%s' % form.shapefile_path)
 
     fieldset = Fieldset(form, fields=('shapefile',))
     return render(request, 'obadmin/location/upload_shapefile.html', {
       'fieldset': fieldset,
       'form': form,
+    })
+
+@csrf_protect
+def pick_shapefile_layer(request):
+    form = PickShapefileLayerForm(request.POST or None)
+    shapefile = request.GET.get('shapefile', False)
+    error = ''
+    if not shapefile:
+        shapefile = request.POST.get('shapefile', False)
+    if not shapefile:
+        return HttpResponseRedirect('../upload-shapefile/')
+
+    if form.save():
+        return HttpResponseRedirect('../')
+
+    ds = DataSource(shapefile)
+
+    fieldset = Fieldset(form, fields=('location_type',))
+    return render(request, 'obadmin/location/pick_shapefile_layer.html', {
+        'shapefile': shapefile,
+        'layers': ds,
+        'location_types': LocationType.objects.all(),
+        'fieldset': fieldset,
     })
