@@ -1003,6 +1003,7 @@ def _preconfigured_map(context):
         'visible': True
     }
     config['layers'].append(items_layer)
+    config['baselayer_type'] = settings.MAP_BASELAYER_TYPE
     return simplejson.dumps(config, indent=2)
 
 

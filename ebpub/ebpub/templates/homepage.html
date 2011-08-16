@@ -21,7 +21,6 @@
 		  
 		  function loadMap() {
   		  var config = {{map_configuration}};
-        config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
         config.center = [{{default_lon}}, {{default_lat}}];
         config.zoom = {{default_zoom}};
         return new OBMap(config);        

@@ -36,6 +36,8 @@ def _new_usertype(request, schema, FormType, create_item):
     mapconfig = {
         'locations': [],
         'layers': [],
+        'baselayer_type': settings.MAP_BASELAYER_TYPE,
+
     }
     ctx = {
         'form': form,

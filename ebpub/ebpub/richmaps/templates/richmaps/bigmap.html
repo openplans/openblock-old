@@ -22,7 +22,6 @@
 	    {% autoescape off %}
       function loadMap() {
           var config = {{map_config}};
-
           config['baselayer_type']  = "{{ MAP_BASELAYER_TYPE }}";
 
           var map = new OBMap(config);
