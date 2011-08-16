@@ -135,7 +135,10 @@ def import_blocks(edges, featnames, faces, place, city=None):
     )
     num_created = tiger.save()
 
-    # unlink?
+    os.unlink(edges)
+    os.unlink(featnames)
+    os.unlink(faces)
+    os.unlink(place)
     # queue populate_streets_streets
     # queue populate_streets_block_intersections
     # queue populate_streets_intersections
