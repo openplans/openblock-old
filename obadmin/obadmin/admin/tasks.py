@@ -126,7 +126,7 @@ def import_zip_from_shapefile(filename, zipcode):
         return
 
 @background
-def import_blocks(edges, featnames, faces, place, city=None):
+def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None):
     tiger = TigerImporter(
         edges,
         featnames,
@@ -146,7 +146,7 @@ def import_blocks(edges, featnames, faces, place, city=None):
     return num_created
 
 @background
-def populate_streets()
+def populate_streets():
     populate.populate_streets()
     populate_block_intersections()
 

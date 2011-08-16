@@ -30,7 +30,7 @@ from datetime import datetime, timedelta
 import os
 from re import findall
 from tempfile import mkstemp
-from tasks import CENSUS_STATES, download_state_shapefile, import_blocks
+from tasks import CENSUS_STATES, download_state_shapefile, import_blocks_from_shapefiles
 from background_task.models import Task
 
 class SchemaLookupsForm(forms.Form):
@@ -49,7 +49,7 @@ class BlobSeedForm(forms.Form):
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
 
-def save_file(self, f):
+def save_file(f):
     fd, name = mkstemp()
     fp = os.fdopen(fd, 'wb')
     for chunk in f.chunks():
@@ -92,14 +92,13 @@ class ImportBlocksForm(forms.Form):
         if not self.is_valid():
             return False
 
-        import_blocks(
+        import_blocks_from_shapefiles(
             save_file(self.cleaned_data['edges']),
             save_file(self.cleaned_data['featnames']),
             save_file(self.cleaned_data['faces']),
             save_file(self.cleaned_data['place']),
             self.cleaned_data['city']
         )
-        # queue job
 
         return True
 
@@ -242,13 +241,25 @@ def jobs_status(request):
     if stalled_count > 0 and pending.filter(locked_at__isnull=False).count() == 0:
         return HttpResponse("Queued jobs aren't being run. Is 'django-admin.py process_tasks' running?")
 
-    download_count = pending.filter(task_name=u'obadmin.admin.tasks.download_state_shapefile').count()
-    import_count = pending.filter(task_name=u'obadmin.admin.tasks.import_zip_from_shapefile').count()
+    # list instead of dict because tasks run in sequence, confusing otherwise
+    counts = [
+        [ 'Download state shapefile',     u'obadmin.admin.tasks.download_state_shapefile' ],
+        [ 'Import ZIP codes',             u'obadmin.admin.tasks.import_zip_from_shapefile' ],
+        [ 'Import blocks from shapefile', u'obadmin.admin.tasks.import_blocks' ],
+        [ 'Populate streets',             u'obadmin.admin.tasks.populate_streets' ],
+        [ 'Populate block intersections', u'obadmin.admin.tasks.populate_block_intersections' ],
+        [ 'Populate intersections',       u'obadmin.admin.tasks.populate_intersections' ],
+    ]
+    display_counts = False
+    for task in counts:
+        count = pending.filter(task_name=task[1]).count()
+        task.append(count)
+        if count > 0:
+            display_counts = True
 
-    if download_count > 0 or import_count > 0:
+    if display_counts:
         return render(request, 'obadmin/location/jobs_status.html', {
-          'download_count': download_count,
-          'import_count': import_count,
+          'counts': counts,
         })
     else:
         return HttpResponse("No background tasks running.")
