@@ -36,7 +36,7 @@ Pick Shapefile Layer to Import
             {% for layer in layers %}
                 <li>
                     <input type="radio" name="layer" value="{{ forloop.counter0 }}">
-                    {{ layer.name }} ({{ layer.num_feat }} {{ layer.geom_type.name }}):
+                    {{ layer.name }} ({{ layer.geom_type.name }} x{{ layer.num_feat }}):
 
                     <div class="fields">
                         <p>Use which field for Location name?</p>
