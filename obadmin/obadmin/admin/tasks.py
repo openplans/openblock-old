@@ -24,6 +24,7 @@ from string import maketrans
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
 from ebpub.db.bin.import_zips import ZipImporter
+from ebpub.streets.blockimport.tiger.import_blocks import TigerImporter
 from ebpub.utils.logutils import log_exception
 import tempfile
 import os
@@ -122,3 +123,21 @@ def import_zip_from_shapefile(filename, zipcode):
     except:
         log_exception()
         return
+
+@background
+def import_blocks(edges, featnames, faces, place, city=None):
+    tiger = TigerImporter(
+        edges,
+        featnames,
+        faces,
+        place,
+        filter_city=city
+    )
+    num_created = tiger.save()
+
+    # unlink?
+    # queue populate_streets_streets
+    # queue populate_streets_block_intersections
+    # queue populate_streets_intersections
+
+    return num_created

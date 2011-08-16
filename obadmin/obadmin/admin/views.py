@@ -93,11 +93,11 @@ class ImportBlocksForm(forms.Form):
             return False
 
         import_blocks(
-            self.cleaned_data['city'],
             save_file(self.cleaned_data['edges']),
             save_file(self.cleaned_data['featnames']),
             save_file(self.cleaned_data['faces']),
-            save_file(self.cleaned_data['place'])
+            save_file(self.cleaned_data['place']),
+            self.cleaned_data['city']
         )
         # queue job
 
