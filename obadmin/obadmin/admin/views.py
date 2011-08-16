@@ -66,22 +66,30 @@ class ImportZipShapefilesForm(forms.Form):
         return True
 
 class UploadShapefileForm(forms.Form):
-    shapefile = forms.FileField(required=True)
+    shp = forms.FileField(required=True)
+    shx = forms.FileField(required=True)
 
     def save(self):
         if not self.is_valid():
             return False
 
-        self.shapefile_path = self.save_shapefile(self.cleaned_data['shapefile'])
+        self.shp_path = self.save_shapefile(self.cleaned_data['shp'], self.cleaned_data['shx'])
         return True
 
-    def save_shapefile(self, f):
-        fd, name = mkstemp('.shp')
-        fp = os.fdopen(fd, 'wb')
+    def save_shapefile(self, shp, shx):
+        # GDAL requries shp and shx to have same filename but for extension
+        fd, shp_name = mkstemp('.shp')
+        shx_name = shp_name[0:-1] + 'x'
+
+        self.write_chunks(os.fdopen(fd, 'wb'),  shp)
+        self.write_chunks(open(shx_name, 'wb'), shx)
+
+        return shp_name
+
+    def write_chunks(self, fp, f):
         for chunk in f.chunks():
             fp.write(chunk)
         fp.close()
-        return name
 
 class PickShapefileLayerForm(forms.Form):
     shapefile = forms.CharField(required=True)
@@ -100,6 +108,7 @@ class PickShapefileLayerForm(forms.Form):
         importer = import_locations.LocationImporter(layer, location_type)
         if importer.save(field_name) > 0:
             os.unlink(self.cleaned_data['shapefile'])
+            os.unlink(self.cleaned_data['shapefile'][0:-1] + 'x')
             return True
         else:
             # TODO: would be nice to pass some errors back to page
@@ -270,9 +279,9 @@ def import_zip_shapefiles(request):
 def upload_shapefile(request):
     form = UploadShapefileForm(request.POST or None, request.FILES or None)
     if form.save():
-        return HttpResponseRedirect('../pick-shapefile-layer/?shapefile=%s' % form.shapefile_path)
+        return HttpResponseRedirect('../pick-shapefile-layer/?shapefile=%s' % form.shp_path)
 
-    fieldset = Fieldset(form, fields=('shapefile',))
+    fieldset = Fieldset(form, fields=('shp', 'shx',))
     return render(request, 'obadmin/location/upload_shapefile.html', {
       'fieldset': fieldset,
       'form': form,
