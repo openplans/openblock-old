@@ -3,6 +3,11 @@
 {% comment %}
 {% endcomment %}
 
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
+<script src="/scripts/jquery.calendrical.js"></script>
+{% endblock %}
+
 <!-- begin block content -->
 {% block content %}
 <h1>Create a {{schema.name}}</h1>
@@ -24,6 +29,8 @@
 		}
 		  
     function _setupMessagePage(obmap) {
+      $j('#id_item_date').calendricalDate();
+      $j('#id_start_time, #id_end_time').calendricalTimeRange();
       var map = obmap.map;
       var default_map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
       default_map_center.transform(map.displayProjection, map.projection);
