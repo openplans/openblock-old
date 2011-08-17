@@ -163,12 +163,6 @@ class Schema(models.Model):
     def url(self):
         return urlresolvers.reverse('ebpub-schema-detail', args=(self.slug,))
 
-    def icon_slug(self):
-        if self.is_special_report:
-            return 'special-report'
-        return self.slug
-
-
     # Metadata fields moved from SchemaInfo
     short_description = models.TextField(blank=True, default='')
     summary = models.TextField(blank=True, default='')
