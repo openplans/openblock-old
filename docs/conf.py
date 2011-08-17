@@ -70,7 +70,7 @@ copyright = u'2011 The OpenBlock Team, packages docs original copyright 2007-200
 # The full version, including alpha/beta/rc tags.
 # OPENBLOCK NOTE:
 # this can be populated by the openblock/misc/bin/make_release.sh script
-release = '1.0a2'
+release = '1.0-beta1'
 
 # The short X.Y version.
 # Automatically derived from release to make it easier to script releases.

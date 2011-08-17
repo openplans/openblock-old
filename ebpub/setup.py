@@ -33,7 +33,7 @@ here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
 
-VERSION="1.0a2"
+VERSION="1.0-beta1"
 
 setup(
     name='ebpub',
@@ -84,7 +84,7 @@ setup(
             ],
         },
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Framework :: Django',
         'License :: OSI Approved :: GNU General Public License (GPL)',
