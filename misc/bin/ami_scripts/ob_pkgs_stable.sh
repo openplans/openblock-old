@@ -28,15 +28,18 @@ echo Virtual env is in $VIRTUAL_ENV
 export PIP=$VIRTUAL_ENV/bin/pip
 echo
 
-export REQ_URL=http://openplans.github.com/openblock/requirements/openblock-requirements-1.0a2.txt
+export REQ_URL=http://openplans.github.com/openblock/requirements/openblock-requirements-1.0-beta1.txt
 echo Installing dependencies from $REQ_URL
-# Filter out our own packages since for testing they may not be on pypi
-wget $REQ_URL -O - | egrep -v "ebpub|ebdata|obadmin|obdemo" > all-reqs.txt
-$SUDO $PIP install -r all-reqs.txt
+$SUDO $PIP install -r $REQ_URL || exit 1
+## For testing not-yet-released packages:
+## Filter out our own packages since for testing they may not be on pypi
+#wget $REQ_URL -O - | egrep -v "ebpub|ebdata|obadmin|obdemo" > all-reqs.txt
+#$SUDO $PIP install -r all-reqs.txt || exit 1
+#$SUDO $PIP install http://slinkp.com/~paul/ebpub-1.0a2.tar.gz
+#$SUDO $PIP install http://slinkp.com/~paul/ebdata-1.0a2.tar.gz
+#$SUDO $PIP install http://slinkp.com/~paul/obadmin-1.0a2.tar.gz
+#$SUDO $PIP install http://slinkp.com/~paul/obdemo-1.0a2.tar.gz
 
-$SUDO $PIP install http://slinkp.com/~paul/ebpub-1.0a2.tar.gz
-$SUDO $PIP install http://slinkp.com/~paul/ebdata-1.0a2.tar.gz
-$SUDO $PIP install http://slinkp.com/~paul/obadmin-1.0a2.tar.gz
-$SUDO $PIP install http://slinkp.com/~paul/obdemo-1.0a2.tar.gz
 
 echo all packages installed
+
