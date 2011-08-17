@@ -1,5 +1,5 @@
 # AUTO-GENERATED
-# Pip requirements for installing all OpenBlock 1.0a2 packages
+# Pip requirements for installing all OpenBlock 1.0-beta1 packages
 
 
 chardet==1.0.1
@@ -24,7 +24,7 @@ PyYAML==3.09
 slimmer>=0.1.30
 South>=0.7.3
 xlrd==0.7.1
-ebpub==1.0a2
-ebdata==1.0a2
-obadmin==1.0a2
-obdemo==1.0a2
+ebpub==1.0-beta1
+ebdata==1.0-beta1
+obadmin==1.0-beta1
+obdemo==1.0-beta1
