@@ -56,6 +56,7 @@ setup(
     description="Data scraper infrastructure for OpenBlock (hyperlocal news for Django)",
     long_description=long_description,
     license="GPLv3",
+    keywords="openblock",
     maintainer="Paul Winkler (for OpenPlans)",
     maintainer_email="ebcode@groups.google.com",
     url="http://openblockproject.org/docs",

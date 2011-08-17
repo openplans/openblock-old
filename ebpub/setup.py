@@ -55,6 +55,7 @@ setup(
     maintainer_email="ebcode@groups.google.com",
     url="http://openblockproject.org/docs",
     license="GPLv3",
+    keywords="openblock",
     install_requires=[
         "django>=1.3",
         "django-static",

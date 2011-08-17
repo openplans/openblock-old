@@ -34,15 +34,17 @@ if you haven't yet:
 Installing obdemo - stable release
 ----------------------------------
 
+``obdemo`` is included as part of :ref:`stable_base_install`.
 
- TODO - where do the requirements live
+You'll then want to make a copy of the skeleton settings file for
+editing, which lives at ``$VIRTUAL_ENV/lib/python2.*/site-packages/obdemo/settings.py.in``.
 
 Installing obdemo for development
 ---------------------------------
 
-You can get the latest development code of ``obdemo`` and its
+You can work on the latest development code of ``obdemo`` and its
 dependencies like this, assuming you've already taken care of
-:ref:`development_base_install`.
+:ref:`development_base_install`:
 
 .. code-block:: bash
 
@@ -65,12 +67,13 @@ you should look at.
 
 (If you've installed OpenBlock sources from git, this file will be at
 ``$VIRTUAL_ENV/src/openblock/obdemo/obdemo/settings.py.in``. If you've
-installed a stable package, it will be at
+installed a stable release from pypi, it will be at
 ``$VIRTUAL_ENV/lib/python2.*/site-packages/obdemo/settings.py.in``.)
 
 .. code-block:: bash
 
-    $ cp path/to/settings.py.in settings.py
+    $ cd path/to/obdemo
+    $ cp settings.py.in settings.py
     $ favorite_editor settings.py
 
 At minimum, you should change the values of:
