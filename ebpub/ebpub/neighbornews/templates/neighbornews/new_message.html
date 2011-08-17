@@ -1,11 +1,13 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-
+{% load django_static %}
 {% comment %}
 {% endcomment %}
 
 {% block extrahead %}
+{% slimall %}
 <link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
 <script src="/scripts/jquery.calendrical.js"></script>
+{% endslimall %}
 {% endblock %}
 
 <!-- begin block content -->
