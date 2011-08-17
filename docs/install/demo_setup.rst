@@ -88,7 +88,7 @@ Database Initialization
 -----------------------
 
 You should already have taken care of :ref:`database_installation`.
-Create the (empty) database, and a postgres user for it, with these commands:
+Create the (empty) database with this command:
 
 .. code-block:: bash
 
