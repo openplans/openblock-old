@@ -105,35 +105,51 @@ class Schema(models.Model):
     """
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
-    indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
+    indefinite_article = models.CharField(max_length=2,
+                                          help_text="eg.'a' or 'an'")
     slug = models.SlugField(max_length=32, unique=True)
-    min_date = models.DateField() # the earliest available NewsItem.pub_date for this Schema
+    min_date = models.DateField(
+        help_text="The earliest available pub_date for this Schema")
     last_updated = models.DateField()
-    date_name = models.CharField(max_length=32, default='Date') # human-readable name for the NewsItem.item_date field
+    date_name = models.CharField(
+        max_length=32, default='Date',
+        help_text='Human-readable name for the item_date field')
     date_name_plural = models.CharField(max_length=32, default='Dates')
-    importance = models.SmallIntegerField(default=0) # bigger number is more important
-    is_public = models.BooleanField(db_index=True, default=False)
+    importance = models.SmallIntegerField(
+        default=0,
+        help_text='Bigger number is more important; used for sorting in some places.')
+    is_public = models.BooleanField(
+        db_index=True, default=False,
+        help_text="Set False if you want only people with the staff cookie to be able to see it.")
     is_special_report = models.BooleanField(default=False)
 
-    # whether RSS feed should collapse many of these into one
-    can_collapse = models.BooleanField(default=False)
+    can_collapse = models.BooleanField(
+        default=False,
+        help_text="Whether RSS feed should collapse many of these into one.")
 
-    # whether a newsitem_detail page exists for NewsItems of this Schema
-    has_newsitem_detail = models.BooleanField(default=False)
+    has_newsitem_detail = models.BooleanField(
+        default=False,
+        help_text="Whether to show a detail page for NewsItems of this schema, or redirect to the NewsItem's source URL instead.")
 
-    # whether aggregate charts are allowed for this Schema
-    allow_charting = models.BooleanField(default=False)
+    allow_charting = models.BooleanField(
+        default=False,
+        help_text="Whether aggregate charts are displayed on the home page of this Schema")
 
-    # whether attributes should be preloaded for NewsItems of this
-    # Schema, in the list view
-    uses_attributes_in_list = models.BooleanField(default=False)
+    uses_attributes_in_list = models.BooleanField(
+        default=False,
+        help_text="Whether attributes should be preloaded for NewsItems of this Schema, in the list view")
 
-    # number of records to show on place_overview
-    number_in_overview = models.SmallIntegerField(default=5)
-    
-    map_icon_url = models.TextField(blank=True, null=True)
-    map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of news. eg #FF0000")
-    
+
+    number_in_overview = models.SmallIntegerField(
+        default=5,
+        help_text="Number of records to show on place_overview")
+
+    map_icon_url = models.TextField(
+        blank=True, null=True,
+        help_text="Set this to a URL to a small image icon and it will be displayed on maps.")
+    map_color = models.CharField(
+        max_length=255, blank=True, null=True,
+        help_text="CSS Color used on maps to display this type of news. eg #FF0000.  Only used if map_icon_url is not set.")
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
@@ -156,7 +172,8 @@ class Schema(models.Model):
     # Metadata fields moved from SchemaInfo
     short_description = models.TextField(blank=True, default='')
     summary = models.TextField(blank=True, default='')
-    source = models.TextField(blank=True, default='')
+    source = models.TextField(blank=True, default='',
+                              help_text='Where this information came from, eg. a URL.')
     grab_bag_headline = models.CharField(max_length=128, blank=True, default='')
     grab_bag = models.TextField(blank=True, default='')  # TODO: what does this field mean?
     short_source = models.CharField(max_length=128, blank=True, default='')
