@@ -163,7 +163,8 @@ class Schema(models.Model):
     def url(self):
         return urlresolvers.reverse('ebpub-schema-detail', args=(self.slug,))
 
-    # Metadata fields moved from SchemaInfo
+    ######################################################################
+    # Metadata fields that used to live in a separate SchemaInfo model.
     short_description = models.TextField(blank=True, default='')
     summary = models.TextField(blank=True, default='')
     source = models.TextField(blank=True, default='',
