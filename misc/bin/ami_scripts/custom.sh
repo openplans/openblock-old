@@ -17,7 +17,7 @@
 #
 
 # Script that does everything after virtualenv setup, based on base_install.rst
-# and demo_setup.rst.
+# and custom.rst.
 
 export SUDO="sudo -H -E -u openblock"
 
@@ -25,47 +25,27 @@ export VIRTUAL_ENV=/home/openblock/openblock
 cd $VIRTUAL_ENV || exit 1
 source bin/activate
 
-echo Setting up obdemo config file
+mkdir src
+cd src || exit 1
 
-OBDEMO_DIR=`python -c "import obdemo, os; print os.path.dirname(obdemo.__file__)"`
-cd $OBDEMO_DIR || exit 1
-
-echo Randomizing salts and cookies
-$SUDO $VIRTUAL_ENV/bin/python - <<EOPYTHON
-import string, random
-text = open('settings.py.in', 'r').read()
-out = open('settings.py', 'w')
-while text.count('REPLACE_ME'):
-    text = text.replace(
-        '<REPLACE_ME>',
-        ''.join([random.choice(string.letters + string.digits) for i in range(25)]),
-        1)
-out.write(text)
-out.close()
-
-EOPYTHON
-
-cd -
+echo Creating project from paster template
+$SUDO $VIRTUAL_ENV/bin/paster create --no-interactive -t openblock myblock || exit 1
 echo OK
-echo
 
-sudo -u postgres createdb -U openblock --template template_postgis openblock || exit 1
+echo Installing myblock package...
+cd myblock
+$SUDO $VIRTUAL_ENV/bin/python setup.py develop || exit 1
+echo OK
 
-echo Setting up DBs
+echo Creating DB...
+sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock || exit 1
+echo OK
 
-cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
 echo Syncing DB...
-
-DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=obdemo.settings $VIRTUAL_ENV/bin/django-admin.py"
+DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=myblock.settings $VIRTUAL_ENV/bin/django-admin.py"
 # Skip creating superuser.
 $DJADMIN syncdb --noinput --migrate || exit 1
 echo OK
-
-echo Importing demo data...
-$DJADMIN import_boston_zips || exit 1
-$DJADMIN import_boston_hoods || exit 1
-$DJADMIN import_boston_blocks || exit 1
-$DJADMIN import_boston_news || exit 1
 
 echo Testing...
 $DJADMIN test db openblockapi
