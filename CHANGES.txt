@@ -1,0 +1,87 @@
+
+
+OpenBlock 1.0a2
+===============
+
+Upgrade Notes
+-------------
+
+* If you have an existing database that was built with 1.0a1 or
+  earlier, you'll need to run this command to deal with the removal
+  of the "django-apikey" dependency: ``django-admin.py migrate apikey 0001 --fake``
+
+* As usual, you should run after upgrading:
+  ``django-admin.py syncdb --migrate``
+
+  If you were unlucky and had last migrated with a git checkout
+  including migrations that later got renamed or removed, you may get
+  errors from migrating. In that case try adding the
+  ``--delete-ghost-migrations`` option.
+
+* Production webserver configurations will need a line added to get the
+  django-olwidget javascript and CSS to show up.
+  For example, for Apache you'd add a line like (adjust path as needed):
+  ``Alias /olwidget/ /home/openblock/openblock/src/django-olwidget/``
+
+* We now require Django 1.3. This probably doesn't have any impact on you.
+
+* Settings changes:
+
+  - MAP_BASELAYER_TYPE can now be any base layer supported by
+    olwidget, eg. "google.streets".  (Some require other settings for
+    eg. API keys; see ebpub/settings_default.py for comments and
+    examples.)
+
+  - You can add custom base layers to your maps by creating
+    the dictionary settings.MAP_CUSTOM_BASE_LAYERS.
+    See ebpub/settings_default.py for an example.
+
+    This replaces the WMS_URL setting from openblock 1.0a1 which is no
+    longer supported.
+
+
+New Features
+------------
+
+ * Maps now support configurable icons or colors for each Schema.
+   To use this, you can use the admin UI to configure "map icon url"
+   or "map color" for a Schema.
+
+ * REST API allows creating NewsItems via POST, with either API keys
+   or HTTP Basic auth; see docs/main/api.rst
+
+ * Configurable throttling of REST API.
+
+ * Import US Zip Codes as Locations, via the admin UI.
+
+ * Work-in-progress: user-submitted content. See code in the
+   ebpub/neighbornews app.
+
+ * Work-in-progress: Maps you can share just by copy/pasting a URL.
+   For a sneak preview, browse to /maps/.
+
+Bug fixes
+---------
+
+ * Importers should now not blow up if run more than once.
+
+
+
+OpenBlock 1.0 alpha 1  (June 9, 2011)
+=======================================
+
+This was the first numbered release; too many changes since the
+"ebcode" source dump to enumerate.
+
+Highlights
+-----------
+
+ * Out-of-the-box theme, with maps.
+
+ * REST API
+
+ * Enable the Django admin UI
+
+ * Embeddable widgets that you can configure via the admin UI
+
+ * Lots more documentation
