@@ -1043,11 +1043,24 @@ class AggregateFieldLookup(AggregateBaseClass):
     lookup = models.ForeignKey(Lookup)
 
 class SearchSpecialCase(models.Model):
-    # TODO: This model appears to be unused. Delete it??
-    query = models.CharField(max_length=64, unique=True)
-    redirect_to = models.CharField(max_length=255, blank=True)
-    title = models.CharField(max_length=128, blank=True)
-    body = models.TextField(blank=True)
+    """
+    Used as a fallback for location searches that don't match
+    any Location, Intersection, etc.
+    """
+    query = models.CharField(
+        max_length=64, unique=True,
+        help_text='Normalized form of search queries that match this special case.'
+        )  # TODO: normalize this on save
+    redirect_to = models.CharField(
+        max_length=255, blank=True,
+        help_text='Optional absolute URL to redirect to on searches that match the query.')
+    title = models.CharField(
+        max_length=128, blank=True,
+        help_text="Title to display on the results page if we don't redirect."
+        )
+    body = models.TextField(
+        blank=True,
+        help_text="Body to display on the result page if we don't redirect. HTML is OK.")
 
     def __unicode__(self):
         return self.query
