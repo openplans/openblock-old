@@ -52,6 +52,7 @@ Adjust the paths according to your installation.
  Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
  Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
  Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
+ Alias /olwidget/  /home/openblock/openblock/src/django-olwidget/
  
  <Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/media/ >
    # I'm assuming everything here safely has a version-specific URL
