@@ -36,6 +36,17 @@ import os.path
 here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
+    # Add the generic OpenBlock README and the changelog.
+    openblock_readme = os.path.join(here, '..', 'README.txt')
+    if os.path.exists(openblock_readme):
+        with open(openblock_readme) as openblock_readme:
+            long_description += '\n\n'
+            long_description += openblock_readme.read()
+    release_notes = os.path.join(here, '..', 'docs', 'release_notes.rst')
+    if os.path.exists(release_notes):
+        with open(release_notes) as release_notes:
+            long_description += '\n\n'
+            long_description += release_notes.read()
 
 VERSION="1.0-beta1"
 

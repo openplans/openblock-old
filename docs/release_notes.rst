@@ -1,5 +1,5 @@
-OpenBlock 1.0 beta 1
-====================
+OpenBlock 1.0 beta 1  release notes
+====================================
 
 Upgrade Notes
 -------------
@@ -10,7 +10,12 @@ Upgrade Notes
 
    django-admin.py migrate apikey 0001 --fake
 
-* As usual, you should always run after upgrading:
+* Many data-loading scripts that were scattered all over the source
+  tree are now installed into your environment's ``bin``
+  directory, so they should be on your ``$PATH``.
+  Documentation has been updated accordingly.
+
+* As usual, you should always run after upgrading::
 
    django-admin.py syncdb --migrate
 
@@ -121,24 +126,7 @@ Other
    at https://github.com/openplans/openblock-extras )
 
 
+Older Changes
+==============
 
-OpenBlock 1.0 alpha 1  (June 9, 2011)
-=======================================
-
-This was the first numbered release; too many changes since the
-"ebcode" source dump to enumerate.
-
-Highlights
------------
-
- * Out-of-the-box theme, with maps.
-
- * REST API
-
- * Enable the Django admin UI
-
- * Embeddable widgets that you can configure via the admin UI
-
- * Lots more documentation
-
-g
+See :doc:`history`.

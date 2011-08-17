@@ -7,7 +7,7 @@ echo Cleanup...
 sudo apt-get -y remove libgdal1-1.6.0 \
     libgdal1-dev \
     libxml2 libxml2-dev \
-    libxslt1 libxslt1.1-dev
+    libxslt1.1 libxslt1-dev
 
 # echo More cleanup...
 # sudo apt-get autoremove

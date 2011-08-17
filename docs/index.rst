@@ -113,7 +113,8 @@ Contents
    install/index
    main/index
    packages/index
-
+   release_notes
+   history
 
 Indices and tables
 ==================

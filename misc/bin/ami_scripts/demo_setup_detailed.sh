@@ -53,7 +53,6 @@ sudo -u postgres createdb -U openblock --template template_postgis openblock || 
 
 echo Setting up DBs
 
-cd $VIRTUAL_ENV/src/openblock/obdemo/obdemo
 echo Syncing DB...
 
 DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=obdemo.settings $VIRTUAL_ENV/bin/django-admin.py"
