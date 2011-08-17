@@ -51,7 +51,6 @@ def _new_usertype(request, schema, FormType, create_item):
 
 def _create_event(request, schema, form):
     item = _create_item(request, schema, form)
-    import pdb; pdb.set_trace()
     item.attributes['start_time'] = form.cleaned_data['start_time']
     item.attributes['end_time'] = form.cleaned_data['end_time']
     item.save()
