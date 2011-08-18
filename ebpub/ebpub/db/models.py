@@ -352,10 +352,11 @@ class Location(models.Model):
         return self.location.centroid
 
     def clean(self):
-        try:
-            self.location = ensure_valid(flatten_geomcollection(self.location))
-        except ValueError, e:
-            raise ValidationError(str(e))
+        if self.location:
+            try:
+                self.location = ensure_valid(flatten_geomcollection(self.location))
+            except ValueError, e:
+                raise ValidationError(str(e))
         if self.normalized_name:
             self.normalized_name = normalize(self.normalized_name)
         else:
