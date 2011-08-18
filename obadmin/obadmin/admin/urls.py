@@ -19,7 +19,7 @@
 from django.conf.urls.defaults import *
 
 urlpatterns = patterns('obadmin.admin.views',
-    url(r'^db/location/import-zip-shapefiles/$', 'import_zip_shapefiles'),
+    url(r'^db/location/import-zip-shapefiles/$', 'import_zipcode_shapefiles'),
     url(r'^db/location/jobs-status/$', 'jobs_status'),
     url(r'^db/location/upload-shapefile/$', 'upload_shapefile'),
     url(r'^db/location/pick-shapefile-layer/$', 'pick_shapefile_layer'),

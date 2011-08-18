@@ -32,7 +32,7 @@ from django.views.decorators.csrf import csrf_protect
 from datetime import datetime, timedelta
 import os
 from re import findall
-from tempfile import mkstemp
+from tempfile import mkstemp, mkdtemp
 from tasks import CENSUS_STATES, download_state_shapefile
 from background_task.models import Task
 
@@ -52,7 +52,7 @@ class BlobSeedForm(forms.Form):
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
 
-class ImportZipShapefilesForm(forms.Form):
+class ImportZipcodeShapefilesForm(forms.Form):
     state = forms.ChoiceField(required=True, choices=CENSUS_STATES)
     zip_codes = forms.CharField(required=True, widget=forms.Textarea())
 
@@ -66,30 +66,45 @@ class ImportZipShapefilesForm(forms.Form):
         return True
 
 class UploadShapefileForm(forms.Form):
-    shp = forms.FileField(required=True)
-    shx = forms.FileField(required=True)
+
+    zipped_shapefile = forms.FileField(
+        required=True,
+        help_text=('Note that self-extracting .exe files are not supported. If you '
+                   'have one of those, extract it, then create a normal zip file '
+                   'from its contents. Sorry for the inconvenience.'))
 
     def save(self):
         if not self.is_valid():
             return False
 
-        self.shp_path = self.save_shapefile(self.cleaned_data['shp'], self.cleaned_data['shx'])
+        self.shp_path = self.save_shapefile(self.cleaned_data['zipped_shapefile'])
         return True
 
-    def save_shapefile(self, shp, shx):
-        # GDAL requries shp and shx to have same filename but for extension
-        fd, shp_name = mkstemp('.shp')
-        shx_name = shp_name[0:-1] + 'x'
-
-        self.write_chunks(os.fdopen(fd, 'wb'),  shp)
-        self.write_chunks(open(shx_name, 'wb'), shx)
-
-        return shp_name
+    def save_shapefile(self, zipped_shapefile):
+        # Just save it; the layer picker form will take care of unzipping.
+        # GDAL requries everything to have same filename but for extension,
+        # and live in the same directory.
+        fd, zip_name = mkstemp('.zip')
+        self.write_chunks(os.fdopen(fd, 'wb'),  zipped_shapefile)
+        import zipfile
+        import glob
+        zfile = zipfile.ZipFile(zip_name)
+        outdir = mkdtemp(suffix='-shapefiles')
+        zfile.extractall(path=outdir)
+        os.unlink(zip_name)
+        # TODO: Some zipped shapefiles contain multiple .shp files!
+        # We'll just assume you want the first one.
+        shapefiles = glob.glob(os.path.join(outdir, '*shp'))
+        assert shapefiles
+        shapefile = shapefiles[0]
+        return os.path.abspath(shapefile)
 
     def write_chunks(self, fp, f):
-        for chunk in f.chunks():
-            fp.write(chunk)
-        fp.close()
+        try:
+            for chunk in f.chunks():
+                fp.write(chunk)
+        finally:
+            fp.close()
 
 class PickShapefileLayerForm(forms.Form):
     shapefile = forms.CharField(required=True)
@@ -101,14 +116,17 @@ class PickShapefileLayerForm(forms.Form):
         if not self.is_valid():
               return False
 
-        layer = import_locations.layer_from_shapefile(self.cleaned_data['shapefile'], self.cleaned_data['layer'])
+        shapefile = os.path.abspath(self.cleaned_data['shapefile'])
+        layer = import_locations.layer_from_shapefile(shapefile, self.cleaned_data['layer'])
         location_type = self.cleaned_data['location_type']
-        field_name = self.cleaned_data['name_field']
+        name_field = self.cleaned_data['name_field']
 
+        # TODO: Run this as a background task
         importer = import_locations.LocationImporter(layer, location_type)
-        if importer.save(field_name) > 0:
-            os.unlink(self.cleaned_data['shapefile'])
-            os.unlink(self.cleaned_data['shapefile'][0:-1] + 'x')
+        if importer.save(name_field) > 0:
+            # TODO: validate this directory!
+            import shutil
+            shutil.rmtree(os.path.dirname(shapefile))
             return True
         else:
             # TODO: would be nice to pass some errors back to page
@@ -265,8 +283,8 @@ def jobs_status(request):
         return HttpResponse("No background tasks running.")
 
 @csrf_protect
-def import_zip_shapefiles(request):
-    form = ImportZipShapefilesForm(request.POST or None)
+def import_zipcode_shapefiles(request):
+    form = ImportZipcodeShapefilesForm(request.POST or None)
     if form.save():
         return HttpResponseRedirect('../')
     fieldset = Fieldset(form, fields=('state', 'zip_codes',))
@@ -281,7 +299,7 @@ def upload_shapefile(request):
     if form.save():
         return HttpResponseRedirect('../pick-shapefile-layer/?shapefile=%s' % form.shp_path)
 
-    fieldset = Fieldset(form, fields=('shp', 'shx',))
+    fieldset = Fieldset(form, fields=('zipped_shapefile',))
     return render(request, 'obadmin/location/upload_shapefile.html', {
       'fieldset': fieldset,
       'form': form,
