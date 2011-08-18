@@ -52,8 +52,6 @@ from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.streets.utils import full_geocode
-from ebpub.utils.clustering.json import ClusterJSON
-from ebpub.utils.clustering.shortcuts import cluster_newsitems
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
@@ -115,18 +113,6 @@ def get_date_chart(schemas, start_date, end_date, counts):
             })
     return result
 
-
-def has_clusters(cluster_dict):
-    """
-    Determines whether the cluster_dict has any actual clusters.
-
-    Catches the case where a queryset has no items that have been geocoded.
-
-    Cluster dicts have keys which are scales, and values which are lists of
-    Bunch objects, so this function simply tests to see if any of the lists are
-    not empty.
-    """
-    return any(cluster_dict.values())
 
 def block_bbox(block, radius):
     """
@@ -595,7 +581,6 @@ def schema_detail_special_report(request, schema):
     ni_list = NewsItem.objects.filter(schema__id=schema.id)
     populate_schema(ni_list, schema)
     populate_attributes_if_needed(ni_list, [schema])
-    bunches = cluster_newsitems(ni_list, 26)
 
     if schema.allow_charting:
         browsable_locationtype_list = LocationType.objects.filter(is_significant=True)
@@ -608,8 +593,6 @@ def schema_detail_special_report(request, schema):
     return eb_render(request, templates_to_try, {
         'schema': schema,
         'newsitem_list': ni_list,
-        'nothing_geocoded': not has_clusters(bunches),
-        'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
         'browsable_locationtype_list': browsable_locationtype_list,
         'schemafield_list': schemafield_list,
         'bodyclass': 'schema-detail-special-report',
@@ -746,7 +729,6 @@ def schema_filter(request, slug, args_from_url):
 
     populate_schema(ni_list, s)
     populate_attributes_if_needed(ni_list, [s])
-    bunches = cluster_newsitems(ni_list, 26)
 
     # Need map parameters based on location/block, if there is one.
     loc_filter = filterchain.get('location')
@@ -774,9 +756,6 @@ def schema_filter(request, slug, args_from_url):
         'next_page_number': page + 1,
         'page_start_index': idx_start + 1,
         'page_end_index': idx_end,
-
-        'nothing_geocoded': not has_clusters(bunches),
-        'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
         'lookup_list': lookup_list,
         'boolean_lookup_list': boolean_lookup_list,
         'search_list': search_list,
@@ -908,7 +887,6 @@ def place_detail_timeline(request, *args, **kwargs):
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
-    bunches = cluster_newsitems(ni_list, 26)
     if ni_list:
         next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
     else:
@@ -920,8 +898,6 @@ def place_detail_timeline(request, *args, **kwargs):
 
     context.update({
         'newsitem_list': ni_list,
-        'nothing_geocoded': not has_clusters(bunches),
-        'all_bunches': simplejson.dumps(bunches, cls=ClusterJSON),
         'next_day': next_day,
         'is_latest_page': is_latest_page,
         'hidden_schema_list': hidden_schema_list,
