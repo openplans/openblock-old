@@ -43,6 +43,10 @@ with open(os.path.join(here, 'README.txt')) as file:
         with open(release_notes) as release_notes:
             long_description += '\n\n'
             long_description += release_notes.read()
+    # Remove stuff that breaks vanilla rst (no sphinx)
+    # and doesn't belong on a pypi page anyway.
+    long_description = long_description.split('Older Changes')[0]
+    open('/tmp/thing.rst', 'w').write(long_description)
 
 VERSION="1.0-beta1"
 
