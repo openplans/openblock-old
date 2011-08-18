@@ -402,7 +402,12 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         raise Http404('Not public')
 
     if not ni.schema.has_newsitem_detail:
-        return HttpResponsePermanentRedirect(ni.url)
+        # Don't show detail pages.
+        if ni.url:
+            return HttpResponsePermanentRedirect(ni.url)
+        else:
+            # We have nothing to show the user; ticket #110.
+            raise Http404("This news item needs an external URL and doesn't have one")
 
     atts = ni.attributes_for_template()
 
