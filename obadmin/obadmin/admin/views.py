@@ -291,7 +291,6 @@ def upload_shapefile(request):
 def pick_shapefile_layer(request):
     form = PickShapefileLayerForm(request.POST or None)
     shapefile = request.GET.get('shapefile', False)
-    error = ''
     if not shapefile:
         shapefile = request.POST.get('shapefile', False)
     if not shapefile:
