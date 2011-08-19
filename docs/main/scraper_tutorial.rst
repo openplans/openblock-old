@@ -171,8 +171,9 @@ record might have its own page -- a "detail" page -- or the list/feed
 might include all the information you need.
 
 Here's an example that doesn't use detail pages. This is a slightly
-simplified version of the ``obdemo/scrapers/bpdnews_retrieval.py``
-script.  It uses a Schema that's loaded when bootstrapping obdemo.
+simplified version of the ``ebdata/scrapers/us/ma/boston/police_reports/retrieval.py``
+script.  It uses a Schema that's loaded when bootstrapping the
+``obdemo`` package.
 
 Since this feed doesn't provide locations, we'll use ebdata's code for
 address extraction and ebpub's geocoder:
@@ -278,13 +279,13 @@ methods. It's highly recommended that you read the source code for
 
 For a more complex example that does use detail pages and custom
 attributes, see
-``obdemo/scrapers/seeclickfix_retrieval.py``.
+``ebdata/scrapers/general/seeclickfix/seeclickfix_retrieval.py``.
 
 What does this framework buy you? The advantage of using
 ebdata.retrieval.scrapers.newsitem_list_detail for such sites is that
 you get code and a framework for dealing with a lot of common cases:
 
-* There's an RssListDetailScraper mix-in base class that handles both
+* There's an ``RssListDetailScraper`` mix-in base class that handles both
   RSS and Atom feeds for the list page, with some support for
   pagination. (That saves us having to implement parse_list()).
 
@@ -292,21 +293,21 @@ you get code and a framework for dealing with a lot of common cases:
   Schemas, eg. arbitrary Attributes, Lookups, and the like (although
   this example doesn't use them).
 
-* The create_newsitem() method can automatically geocode addresses if
+* The ``create_newsitem()`` method can automatically geocode addresses if
   you have a single good address but no geographic location provided.
 
-* The display_data() method allows allows you to test your feed
+* The ``display_data()`` method allows you to test your feed
   without saving any data (or even without having a Schema created
   yet).  Call this instead of update() during testing.
 
-* The safe_location() method (not shown) can verify that a location
+* The ``safe_location()`` method (not shown) can verify that a location
   name (address) matches a provided latitude/longitude.
 
-* The last_updated_time() method (not shown) keeps track of the last
+* The ``last_updated_time()`` method (not shown) keeps track of the last
   time you ran the scraper (very useful if your source data provides a
   way to limit the list to items newer than a date/time).
 
-* There are hooks for cleaning up the data, see the various clean*
+* There are hooks for cleaning up the data, see the various ``clean*``
   methods.
 
 Disadvantage:
@@ -317,16 +318,16 @@ Disadvantage:
   parsing (for things other than RSS or Atom feeds), and so forth.
 
 * It requires you to understand the base classes
-  (NewsItemListDetailScraper and ListDetailScraper), because it has a
-  lot of inversion of control -- meaning, you use it by subclassing
+  (``NewsItemListDetailScraper`` and ``ListDetailScraper``), because it has a
+  lot of "inversion of control" -- meaning, you use it by subclassing
   one or more of the base classes, and overriding various methods and
-  attributes that get will get called by the base class as
+  attributes that get called by the base class as
   needed. Until you fully understand those base classes, this can be
   quite confusing.
 
 
-For another example that uses detail pages and some of those other
-features, see ``obdemo/scrapers/seeclickfix_retrieval.py``.
+For a more complete example that uses detail pages and some of those other
+features, see ``ebdata/scrapers/general/seeclickfix/seeclickfix_retrieval.py``.
 
 .. _scraping_blobs:
 
@@ -339,8 +340,9 @@ ebdata.blobs.
 
 We haven't done one of these yet.
 
-Some examples you can peruse from the everyblock package (note that we
-lack Schemas for any of these):
+Some examples you can peruse from the ``everyblock`` part of the
+`the openblock-extras code <https://github.com/openplans/openblock-extras/tree/master/everyblock>`_
+(note that we lack Schemas for any of these):
 
 .. code-block:: text
 

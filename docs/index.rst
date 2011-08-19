@@ -87,6 +87,9 @@ A few modules were borrowed from other packages with other free
 software licenses, e.g. "Modified BSD"-style licenses; these are
 identified as such in the source code.
 
+This documentation is licensed under the Creative Commons BY-SA 3.0
+license.
+
 For Developers
 ==============
 
@@ -113,7 +116,8 @@ Contents
    install/index
    main/index
    packages/index
-
+   release_notes
+   history
 
 Indices and tables
 ==================

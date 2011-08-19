@@ -20,9 +20,9 @@ About the Project
 OpenBlock began life as the open-source code released by
 Everyblock.com in June 2009.  Originally created by Adrian Holovaty
 and the Everyblock team, it is now developed as an open-source (GPL)
-project at http://openblockproject.org.
+project by at http://openblockproject.org.
 
 Funding for the initial creation of Everyblock and the ongoing
-development of OpenBlock is provided by the Knight Foundation
+development of OpenBlock has been provided by the Knight Foundation
 (http://www.knightfoundation.org/).
 

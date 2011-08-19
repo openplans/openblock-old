@@ -1,7 +1,14 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-
+{% load django_static %}
 {% comment %}
 {% endcomment %}
+
+{% block extrahead %}
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
+<script src="/scripts/jquery.calendrical.js"></script>
+{% endslimall %}
+{% endblock %}
 
 <!-- begin block content -->
 {% block content %}
@@ -24,6 +31,8 @@
 		}
 		  
     function _setupMessagePage(obmap) {
+      $j('#id_item_date').calendricalDate();
+      $j('#id_start_time, #id_end_time').calendricalTimeRange();
       var map = obmap.map;
       var default_map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
       default_map_center.transform(map.displayProjection, map.projection);

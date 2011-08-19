@@ -105,35 +105,51 @@ class Schema(models.Model):
     """
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
-    indefinite_article = models.CharField(max_length=2) # 'a' or 'an'
+    indefinite_article = models.CharField(max_length=2,
+                                          help_text="eg.'a' or 'an'")
     slug = models.SlugField(max_length=32, unique=True)
-    min_date = models.DateField() # the earliest available NewsItem.pub_date for this Schema
+    min_date = models.DateField(
+        help_text="The earliest available pub_date for this Schema")
     last_updated = models.DateField()
-    date_name = models.CharField(max_length=32, default='Date') # human-readable name for the NewsItem.item_date field
+    date_name = models.CharField(
+        max_length=32, default='Date',
+        help_text='Human-readable name for the item_date field')
     date_name_plural = models.CharField(max_length=32, default='Dates')
-    importance = models.SmallIntegerField(default=0) # bigger number is more important
-    is_public = models.BooleanField(db_index=True, default=False)
+    importance = models.SmallIntegerField(
+        default=0,
+        help_text='Bigger number is more important; used for sorting in some places.')
+    is_public = models.BooleanField(
+        db_index=True, default=False,
+        help_text="Set False if you want only people with the staff cookie to be able to see it.")
     is_special_report = models.BooleanField(default=False)
 
-    # whether RSS feed should collapse many of these into one
-    can_collapse = models.BooleanField(default=False)
+    can_collapse = models.BooleanField(
+        default=False,
+        help_text="Whether RSS feed should collapse many of these into one.")
 
-    # whether a newsitem_detail page exists for NewsItems of this Schema
-    has_newsitem_detail = models.BooleanField(default=False)
+    has_newsitem_detail = models.BooleanField(
+        default=False,
+        help_text="Whether to show a detail page for NewsItems of this schema, or redirect to the NewsItem's source URL instead.")
 
-    # whether aggregate charts are allowed for this Schema
-    allow_charting = models.BooleanField(default=False)
+    allow_charting = models.BooleanField(
+        default=False,
+        help_text="Whether aggregate charts are displayed on the home page of this Schema")
 
-    # whether attributes should be preloaded for NewsItems of this
-    # Schema, in the list view
-    uses_attributes_in_list = models.BooleanField(default=False)
+    uses_attributes_in_list = models.BooleanField(
+        default=False,
+        help_text="Whether attributes should be preloaded for NewsItems of this Schema, in the list view")
 
-    # number of records to show on place_overview
-    number_in_overview = models.SmallIntegerField(default=5)
-    
-    map_icon_url = models.TextField(blank=True, null=True)
-    map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of news. eg #FF0000")
-    
+
+    number_in_overview = models.SmallIntegerField(
+        default=5,
+        help_text="Number of records to show on place_overview")
+
+    map_icon_url = models.TextField(
+        blank=True, null=True,
+        help_text="Set this to a URL to a small image icon and it will be displayed on maps.")
+    map_color = models.CharField(
+        max_length=255, blank=True, null=True,
+        help_text="CSS Color used on maps to display this type of news. eg #FF0000.  Only used if map_icon_url is not set.")
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
@@ -147,16 +163,12 @@ class Schema(models.Model):
     def url(self):
         return urlresolvers.reverse('ebpub-schema-detail', args=(self.slug,))
 
-    def icon_slug(self):
-        if self.is_special_report:
-            return 'special-report'
-        return self.slug
-
-
-    # Metadata fields moved from SchemaInfo
+    ######################################################################
+    # Metadata fields that used to live in a separate SchemaInfo model.
     short_description = models.TextField(blank=True, default='')
     summary = models.TextField(blank=True, default='')
-    source = models.TextField(blank=True, default='')
+    source = models.TextField(blank=True, default='',
+                              help_text='Where this information came from, eg. a URL.')
     grab_bag_headline = models.CharField(max_length=128, blank=True, default='')
     grab_bag = models.TextField(blank=True, default='')  # TODO: what does this field mean?
     short_source = models.CharField(max_length=128, blank=True, default='')
@@ -273,8 +285,9 @@ class LocationTypeManager(models.Manager):
         return self.get(slug=slug)
 
 class LocationType(models.Model):
-    name = models.CharField(max_length=255) # e.g., "Ward" or "Congressional District"
-    plural_name = models.CharField(max_length=64) # e.g., "Wards"
+    name = models.CharField(max_length=255,
+                            help_text='for example, "Ward" or "Congressional District"')
+    plural_name = models.CharField(max_length=64)
     scope = models.CharField(max_length=64,
                              help_text='e.g., "Chicago" or "U.S.A."')
     slug = models.SlugField(max_length=32, unique=True)
@@ -282,7 +295,7 @@ class LocationType(models.Model):
         default=True, help_text="Whether this is displayed on location_type_list.") #  XXX unused??
     is_significant = models.BooleanField(
         default=True,
-        help_text="Whether this is used to display aggregates, shows up in 'nearby locations', etc."
+        help_text="Whether this can be used to filter NewsItems, shows up in 'nearby locations', etc."
         )
 
     def __unicode__(self):
@@ -313,11 +326,17 @@ class Location(models.Model):
     display_order = models.SmallIntegerField()
     city = models.CharField(max_length=255)
     source = models.CharField(max_length=64)
-    # In square meters. This is populated by a trigger in ebpub/db/migrations/0004_st_intersects_patch.py
-    area = models.FloatField(blank=True, null=True)
+    area = models.FloatField(
+        blank=True, null=True,
+        help_text="In square meters. This is populated automatically."
+        # the db trigger is created by ebpub/db/migrations/0004_st_intersects_patch.py.
+        )
     population = models.IntegerField(blank=True, null=True) # from the 2000 Census
-    user_id = models.IntegerField(blank=True, null=True)
-    is_public = models.BooleanField()
+    user_id = models.IntegerField(
+        blank=True, null=True,
+        help_text="Used for 'custom' Locations created by end users.")
+    is_public = models.BooleanField(
+        help_text='Whether this is publically visible, or requires the staff cookie')
     description = models.TextField(blank=True)
     creation_date = models.DateTimeField(blank=True, null=True)
     last_mod_date = models.DateTimeField(blank=True, null=True)
@@ -395,7 +414,8 @@ class LocationSynonym(models.Model):
     """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True)
-    location = models.ForeignKey(Location)
+    location = models.ForeignKey(Location,
+                                 help_text='Location this is a synonym for.')
     objects = LocationSynonymManager()
 
     def save(self):
@@ -673,6 +693,10 @@ class NewsItem(models.Model):
 
     NewsItems have several distinct notions of location:
 
+    * self.location_name is a human-readable version of the location;
+      it can be anything, but typically it describes an address,
+      block, geographic area, or landmark.
+
     * The NewsItemLocation model is for fast lookups of NewsItems to
       all Locations where the .location fields overlap.  This is set
       by a sql trigger whenever self.location changes; not set by any
@@ -695,11 +719,6 @@ class NewsItem(models.Model):
     * self.block is optionally one Block. Also set during
       scraping/geocoding.  So far can't find anything that actually
       uses these.
-
-    * self.location_name is a human-readable version of the location;
-      it can be anything, but typically it describes an address,
-      block, geographic area, or landmark.
-
     """
 
     # We don't have a natural_key() method because we don't know for
@@ -969,6 +988,10 @@ class Lookup(models.Model):
         return u'%s - %s' % (self.schema_field, self.name)
 
 class NewsItemLocation(models.Model):
+    """
+    Many-to-many mapping of NewsItems to Locations where the geometries intersect.
+    Populated by triggers.
+    """
     news_item = models.ForeignKey(NewsItem)
     location = models.ForeignKey(Location)
 
@@ -978,6 +1001,12 @@ class NewsItemLocation(models.Model):
     def __unicode__(self):
         return u'%s - %s' % (self.news_item, self.location)
 
+
+#############################################################################
+# Aggregates.
+# These provide for quick lookups of NewsItems by various buckets,
+# eg. number of NewsItems added on one day.
+
 class AggregateBaseClass(models.Model):
     schema = models.ForeignKey(Schema)
     total = models.IntegerField()
@@ -986,43 +1015,66 @@ class AggregateBaseClass(models.Model):
         abstract = True
 
 class AggregateAll(AggregateBaseClass):
-    # Total items in the schema.
+    """Total items in the schema.
+    """
     pass
 
 class AggregateDay(AggregateBaseClass):
-    # Total items in the schema with item_date on the given day
+    """Total items in the schema with item_date on the given day
+    """
     date_part = models.DateField(db_index=True)
 
 class AggregateLocation(AggregateBaseClass):
-    # Total items in the schema in location, summed over that last 30 days
+    """Total items in the schema in location, summed over that last 30 days
+    """
     location_type = models.ForeignKey(LocationType)
     location = models.ForeignKey(Location)
 
 class AggregateLocationDay(AggregateBaseClass):
-    # Total items in the schema in location with item_date on the given day
+    """Total items in the schema in location with item_date on the given day
+    """
     location_type = models.ForeignKey(LocationType)
     location = models.ForeignKey(Location)
     date_part = models.DateField(db_index=True)
 
 class AggregateFieldLookup(AggregateBaseClass):
-    # Total items in the schema with schema_field's value = lookup
+    """Total items in the schema with schema_field's value = lookup
+    """
     schema_field = models.ForeignKey(SchemaField)
     lookup = models.ForeignKey(Lookup)
 
 class SearchSpecialCase(models.Model):
-    query = models.CharField(max_length=64, unique=True)
-    redirect_to = models.CharField(max_length=255, blank=True)
-    title = models.CharField(max_length=128, blank=True)
-    body = models.TextField(blank=True)
+    """
+    Used as a fallback for location searches that don't match
+    any Location, Intersection, etc.
+    """
+    query = models.CharField(
+        max_length=64, unique=True,
+        help_text='Normalized form of search queries that match this special case.'
+        )  # TODO: normalize this on save
+    redirect_to = models.CharField(
+        max_length=255, blank=True,
+        help_text='Optional absolute URL to redirect to on searches that match the query.')
+    title = models.CharField(
+        max_length=128, blank=True,
+        help_text="Title to display on the results page if we don't redirect."
+        )
+    body = models.TextField(
+        blank=True,
+        help_text="Body to display on the result page if we don't redirect. HTML is OK.")
 
     def __unicode__(self):
         return self.query
 
 class DataUpdate(models.Model):
-    # Keeps track of each time we update our data.
+    """Scraper scripts can use this to keep track of
+    each time we populate NewsItems of a given Schema.
+    """
     schema = models.ForeignKey(Schema)
-    update_start = models.DateTimeField()  # When the scraper/importer started running.
-    update_finish = models.DateTimeField() # When the scraper/importer finished.
+    update_start = models.DateTimeField(
+        help_text="When the scraper/importer started running.")
+    update_finish = models.DateTimeField(
+        help_text="When the scraper/importer finished.")
     num_added = models.IntegerField()
     num_changed = models.IntegerField()
     num_deleted = models.IntegerField()

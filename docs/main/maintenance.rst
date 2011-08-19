@@ -4,10 +4,18 @@ Maintaining an OpenBlock Site
 
 .. _migrations:
 
-Database Migrations
-===================
+Upgrades
+=========
 
-When upgrading your copy of the OpenBlock code, there can occasionally
+
+Check the Release Notes
+-----------------------
+
+
+Database Migrations
+-------------------
+
+When upgrading your copy of the OpenBlock code, there may sometimes
 be updates to Model code which require corresponding changes to your
 existing database.
 
@@ -33,5 +41,4 @@ how they work.  Then look in the ``migrations/`` subdirectories
 located under the various app directories, notably
 ``ebpub/ebpub/db/migrations/`` to see what the existing migration
 scripts look like.
-
 

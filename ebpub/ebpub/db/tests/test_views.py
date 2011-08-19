@@ -498,12 +498,10 @@ class TestSchemaFilterView(BaseTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    @mock.patch('ebpub.db.views.cluster_newsitems')
     @mock.patch('ebpub.db.views.FilterChain', spec=True)
-    def test_filter__pagination__has_more(self, mock_chain, mock_cluster):
+    def test_filter__pagination__has_more(self, mock_chain):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
         url += '?page=2'
-        mock_cluster.return_value = {}
         # We can mock the FilterChain to get a very long list of NewsItems
         # without actually creating them in the db, but it means
         # also mocking a ton of methods used by schema_filter or filter.html.

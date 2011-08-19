@@ -16,3 +16,12 @@ Problems can be reported to the `issue tracker <http://developer.openblockprojec
 
 Discussion is on the `ebcode google group <http://groups.google.com/group/ebcode>`_
 or the #openblock channel on freenode.
+
+Installation
+============
+
+Do *not* just try to easy_install or pip install ebdata.  It has a lot
+of specific dependencies which can't/shouldn't be captured by
+setup.py.
+
+Instead, see the full documentation at http://openblockproject.org/docs/install/index.html

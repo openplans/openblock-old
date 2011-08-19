@@ -56,3 +56,9 @@ for PKGDIR in $PKGS; do
 done
 
 echo Output is at $REQFILE
+echo
+echo "Don't forget to update your changelogs!"
+echo ========================================
+echo "Be sure that recent changes are in docs/release_notes.rst"
+echo "and older changes have been moved from docs/release_notes.txt to the top of"
+echo "docs/history.rst."

@@ -1,4 +1,7 @@
 # -*- mode: sh; -*-
+
+# This takes care of db installation & template setup, as per docs/install/setup.rst.
+
 # Need to have set before running this:
 # PG_INITSCRIPT
 # POSTGIS_SQL
@@ -8,6 +11,9 @@ echo Fixing postgres auth config...
 sudo sed -i.BAK -r -e "s/local\s+all\s+all\s+ident(\s+sameuser)?/local all all trust/" `sudo find /etc/postgresql -name pg_hba.conf`
 sudo $PG_INITSCRIPT restart || exit 1
 echo OK
+echo Sometimes takes a while for postgresql to come back up...
+sleep 12
+echo hopefully up now?
 
 # TODO: factor the template stuff out; when running the demo
 # quickstart scenario, the obadmin pavement stuff should do this for us.
@@ -27,4 +33,11 @@ echo
 echo Fixing template permissions...
 sudo -u postgres psql -d template_postgis -c "GRANT ALL ON geometry_columns TO PUBLIC;" || exit 1
 sudo -u postgres psql -d template_postgis -c "GRANT ALL ON spatial_ref_sys TO PUBLIC;" || exit 1
+echo OK
+
+echo Remove database and user, if necessary...
+sudo -u postgres dropdb openblock
+sudo -u postgres dropuser openblock
+echo Creating user...
+sudo -u postgres createuser --createrole --createdb --no-superuser openblock
 echo OK

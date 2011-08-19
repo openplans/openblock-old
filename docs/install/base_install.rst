@@ -47,14 +47,31 @@ Installing OpenBlock Packages
 =============================
 
 You can install either stable releases of the OpenBlock software,
-or check out the latest development code if you're a developer.
+or check out the latest development code.
 
 .. _stable_base_install:
 
 Installing Stable Packages
 ---------------------------
 
- TODO, pip install -r ... where does the master file go?
+The latest stable releases of ``ebpub``, ``ebdata``, and ``obadmin``
+can be found on `the Python Package Index
+<http://pypi.python.org/pypi?%3Aaction=search&term=openblock&submit=search>`_.  To install from these packages, we
+will publish a consolidated pip requirements file that will install
+*all* the necessary python packages.  These requirements files will be
+listed for each release at http://openplans.github.com/openblock/ .
+
+For example, the 1.0-beta1 release is at:
+http://openplans.github.com/openblock/requirements/openblock-requirements-1.0-beta1.txt
+and can be installed with this command:
+
+.. code-block:: bash
+
+  $ $VIRTUAL_ENV/bin/pip install -r http://openplans.github.com/openblock/requirements/openblock-requirements-1.0-beta1.txt
+
+If you encounter errors during package installation, please see
+:doc:`common_install_problems`.
+
 
 .. _development_base_install:
 

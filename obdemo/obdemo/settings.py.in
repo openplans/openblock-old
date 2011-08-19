@@ -138,11 +138,17 @@ METRO_LIST = (
     },
 )
 
-# Use whatever Django cache backend you like;
-# 'file' may be a reasonable choice if you're deploying on
-# a fairly constrained server.
-CACHE_BACKEND = 'file:///tmp/obdemo_cache'
-
+CACHES = {
+    # Use whatever Django cache backend you like;
+    # FileBasedCache is a reasonable choice for low-budget, memory-constrained
+    # hosting environments.
+    'default': {
+         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+         'LOCATION': 'file:///tmp/obdemo_cache',
+          # # Use this to disable caching.
+          #'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+     },
+}
 
 if DEBUG:
     for _name in required_settings:

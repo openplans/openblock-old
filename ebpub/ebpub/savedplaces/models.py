@@ -21,6 +21,10 @@ from ebpub.db.models import Location
 from ebpub.streets.models import Block
 
 class SavedPlace(models.Model):
+    """
+    Either a db.Location or streets.Block that a user saves a reference to
+    so they can easily find it later.
+    """
     user_id = models.IntegerField()
     block = models.ForeignKey(Block, blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
@@ -44,6 +48,8 @@ class SavedPlace(models.Model):
     user = property(_get_user)
 
     def pid(self):
+        """Place ID as used by ebpub.db.views
+        """
         if self.block_id:
             return 'b:%s.8' % self.block_id
         else:

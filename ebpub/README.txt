@@ -17,3 +17,13 @@ or the #openblock channel on freenode.
 
 Licensed under the GNU General Public License version 3, except where
 otherwise noted.
+
+
+Installation
+============
+
+Do *not* just try to easy_install or pip install ebpub.  It has a lot
+of specific dependencies which can't/shouldn't be captured by
+setup.py.
+
+Instead, see the full documentation at http://openblockproject.org/docs/install/index.html
