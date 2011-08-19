@@ -20,7 +20,7 @@ System Requirements
 ===================
 **Note:** See `System Specific Prerequisites <http://developer.openblockproject.org/wiki/InstallationRequirements>`_ for specific lists of packages to install based on your distribution or OS.
 
-Linux, OSX, or some other Unix flavor is required.  Windows is not supported by the OpenBlock team, and may never be; but patches are welcome :)
+Linux, OSX, or some other Unix flavor is required.  **Windows is not supported** by the OpenBlock team, and may never be; but patches are welcome :)
 
 Generally, you need:
 

@@ -12,6 +12,7 @@
 	<div id="content">
 		<h1>{{ schema.plural_name|capfirst }}</h1>
 		<p>{{ schema.short_description }}</p>
+		{% block extradescription %}{%endblock%}
 		<h2>About this section</h2>
 		<dl>
 			<dt>Source</dt>

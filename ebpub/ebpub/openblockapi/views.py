@@ -333,7 +333,6 @@ def items_index(request):
 
     On errors, gives a 400 response.
 
-    TODO: documentation in docs/
     """
     if request.method == 'GET':
         return HttpResponseRedirect(reverse('items_json'))

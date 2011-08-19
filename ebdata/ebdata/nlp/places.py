@@ -20,48 +20,86 @@ import re
 from ebpub.db.models import Location, LocationSynonym
 from ebpub.streets.models import Place, PlaceSynonym
 
-def phrase_tagger(phrases, pre='<span>', post='</span>'):
-    # Sort the phrases and then reverse them so, for example, Lake View East
-    # will come before Lake View in the regex, and will match more greedily.
-    phrases.sort(key=len, reverse=True)
 
-    # Use a closure here to cache the value for phrases.
-    # TODO: cache the compiled regex, and the usage of _re_handle_match?
+def loose_phrase_grabber(phrases):
+    """
+    phrase grabber that does not care about 
+    existing tagging.
+    """
+    def grab_phrases(text):
+        phrases.sort(key=len, reverse=True)
+
+        tags = []
+        def handle_match(m):
+            tags.append((m.start(), m.end(), m.group()))
+            return ' '*(m.end() - m.start())
+
+        for phrase in phrases:
+            # don't bother buiding and exhaustively searching unless
+            # we at least weakly see this phrase in the text, 
+            # re compiling and searching is not cheap added up 
+            # over all locations.
+            if phrase in text:
+                text = re.sub(r'\b%s\b' % phrase, handle_match, text)
+
+        tags.sort()
+        return tags
+
+    return grab_phrases
+
+def paranoid_phrase_grabber(phrases, pre, post):
+    """
+    phrase grabber that tries not to tag inside of 
+    existing pre/post tags.
+    """
+    
+    def handle_match(m):
+        return ' ' * len(m.group())
+    nuke_tags = re.compile('%s.*?%s' % (re.escape(pre), re.escape(post)))
+    loose_grabber = loose_phrase_grabber(phrases)
+    
+    def grab_phrases(text):
+        text = nuke_tags.sub(handle_match, text)
+        return loose_grabber(text)
+
+    return grab_phrases
+
+def phrase_tagger(phrases, pre='<span>', post='</span>', paranoid=True):
+    
+    if paranoid:
+        grabber = paranoid_phrase_grabber(phrases, pre, post)
+    else: 
+        grabber = loose_phrase_grabber(phrases)
+
     def tag_phrases(text):
-        """
-        Returns text with any matches from phrases wrapped with pre and post.
-        """
-        # If no phrases were provided, just return the text we received.
-        if len(phrases) == 0:
-            return text
-
-        def _re_handle_match(m):
-            output = (m.group(1) or '') + m.group(2) + (m.group(3) or '')
-            if m.group(1) and m.group(3):
-                return output
-            return pre + output + post
-        phrases_re = '|'.join([r'\b%s\b' % re.escape(p) for p in phrases])
-
-        # In addition to identifying every phrase, this regex grabs the "pre"
-        # and "post" before the phrase, optionally. Then the _re_handle_match()
-        # function checks whether the "pre" and "post" were provided. If both
-        # were found, that means this phrase was already tagged (perhaps by
-        # tag_addresses(), and thus the new tags aren't inserted. Note that
-        # this assumes that each tagging of the text (whether it's
-        # tag_addresses(), place_tagger() or location_tagger()) uses a
-        # consistent "pre" and "post".
-        return re.sub('(?i)(%s[^<]*)?(%s)([^<]*%s)?' % \
-            (re.escape(pre), phrases_re, re.escape(post)), _re_handle_match, text)
+        out_text = []
+        curpos = 0
+        for tag in grabber(text):
+            out_text += [text[curpos:tag[0]], pre, tag[2], post]
+            curpos = tag[1]
+        out_text.append(text[curpos:])
+        return ''.join(out_text)
 
     return tag_phrases
 
-def place_tagger(pre='<addr>', post='</addr>'):
+def place_tagger(pre='<addr>', post='</addr>', paranoid=True):
     phrases = [p['pretty_name'] for p in Place.objects.filter(place_type__is_geocodable=True).values('pretty_name').order_by('-pretty_name')]
     synonyms = [m['pretty_name'] for m in PlaceSynonym.objects.values('pretty_name').order_by('-pretty_name')]
-    return phrase_tagger(phrases + synonyms, pre, post)
+    return phrase_tagger(phrases + synonyms, pre, post, paranoid)
 
-def location_tagger(pre='<addr>', post='</addr>'):
+def location_tagger(pre='<addr>', post='</addr>', paranoid=True):
     location_qs = Location.objects.values('name').order_by('-name').exclude(location_type__slug__in=('boroughs', 'cities'))
     locations = [p['name'] for p in location_qs]
     synonyms = [m['pretty_name'] for m in LocationSynonym.objects.values('pretty_name').order_by('-pretty_name')]
-    return phrase_tagger(locations + synonyms, pre, post)
+    return phrase_tagger(locations + synonyms, pre, post, paranoid)
+
+def place_grabber():
+    phrases = [p['pretty_name'] for p in Place.objects.filter(place_type__is_geocodable=True).values('pretty_name').order_by('-pretty_name')]
+    synonyms = [m['pretty_name'] for m in PlaceSynonym.objects.values('pretty_name').order_by('-pretty_name')]
+    return loose_phrase_grabber(phrases + synonyms)
+
+def location_grabber():
+    location_qs = Location.objects.values('name').order_by('-name').exclude(location_type__slug__in=('boroughs', 'cities'))
+    locations = [p['name'] for p in location_qs]
+    synonyms = [m['pretty_name'] for m in LocationSynonym.objects.values('pretty_name').order_by('-pretty_name')]
+    return loose_phrase_grabber(locations + synonyms)

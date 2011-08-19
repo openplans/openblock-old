@@ -27,8 +27,23 @@ import os.path
 here = os.path.dirname(__file__)
 with open(os.path.join(here, 'README.txt')) as file:
     long_description = file.read()
+    # Add the generic OpenBlock README and the changelog.
+    openblock_readme = os.path.join(here, '..', 'README.txt')
+    if os.path.exists(openblock_readme):
+        with open(openblock_readme) as openblock_readme:
+            long_description += '\n\n'
+            long_description += openblock_readme.read()
+    release_notes = os.path.join(here, '..', 'docs', 'release_notes.rst')
+    if os.path.exists(release_notes):
+        with open(release_notes) as release_notes:
+            long_description += '\n\n'
+            long_description += release_notes.read()
+    # Remove stuff that breaks vanilla rst (no sphinx)
+    # and doesn't belong on a pypi page anyway.
+    long_description = long_description.split('Older Changes')[0]
+    open('/tmp/thing.rst', 'w').write(long_description)
 
-VERSION="1.0a2"
+VERSION="1.0-beta1"
 
 setup(
     name='obadmin',
@@ -36,6 +51,7 @@ setup(
     description="Setup and administrative tools for OpenBlock (hyperlocal news for Django)",
     long_description=long_description,
     license="GPLv3",
+    keywords="openblock",
     maintainer="Paul Winkler (for OpenPlans)",
     maintainer_email="ebcode@groups.google.com",
     url="http://openblockproject.org/docs",
@@ -59,7 +75,7 @@ setup(
     openblock = obadmin.skel:OpenblockTemplate
     """,
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Framework :: Django',
         'License :: OSI Approved :: GNU General Public License (GPL)',

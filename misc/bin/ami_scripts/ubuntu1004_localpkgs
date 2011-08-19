@@ -1,24 +1,24 @@
 #!/bin/bash
 
-sudo apt-get update || exit 1
+sudo apt-get -y update || exit 1
 
 # cleanup in case we've run the other scenario before...
-sudo apt-get remove libggdal \
+sudo apt-get -y remove libgdal1-1.6.0 \
     libgdal1-dev \
     libxml2 libxml2-dev \
-    libxslt libxslt-dev
+    libxslt1.1 libxslt1-dev
 
-sudo apt-get install \
+sudo apt-get -y install \
     build-essential \
     git-core \
     libgdal1-dev \
-    libggdal \
+    libgdal1-1.6.0 \
     libproj-dev \
     libproj0 \
     libxml2 \
     libxml2-dev \
-    libxslt \
-    libxslt-dev \
+    libxslt1.1 \
+    libxslt1-dev \
     postgresql-8.4-postgis \
     postgresql-server-dev-8.4 \
     python-distribute  \

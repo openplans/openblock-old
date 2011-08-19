@@ -1,0 +1,6 @@
+{% extends "db/schema_detail.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+
+
+{% block extradescription %}
+<a class="add-content-link" href="{% url new_event %}">Add Your Own {{schema.name}}</a>
+{%endblock%}

@@ -47,11 +47,10 @@ def _new_usertype(request, schema, FormType, create_item):
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
         'schema': schema
     }
-    return eb_render(request, "new_message.html", ctx)
+    return eb_render(request, "neighbornews/new_message.html", ctx)
 
 def _create_event(request, schema, form):
     item = _create_item(request, schema, form)
-    import pdb; pdb.set_trace()
     item.attributes['start_time'] = form.cleaned_data['start_time']
     item.attributes['end_time'] = form.cleaned_data['end_time']
     item.save()
