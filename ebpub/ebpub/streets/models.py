@@ -537,7 +537,8 @@ class PlaceType(models.Model):
 class Place(models.Model):
     """
     A generic place, like "Millennium Park" or "Sears Tower".
-    This is just a Point with a name and an address.
+    This is just a Point with a name and an address
+    (and maybe a URL).
     """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
