@@ -33,7 +33,7 @@ from datetime import datetime, timedelta
 import os
 from re import findall
 from tempfile import mkstemp, mkdtemp
-from tasks import CENSUS_STATES, download_state_shapefile
+from tasks import CENSUS_STATES, download_state_shapefile, import_blocks_from_shapefiles
 from background_task.models import Task
 
 class SchemaLookupsForm(forms.Form):
@@ -51,8 +51,17 @@ class BlobSeedForm(forms.Form):
     pretty_name = forms.CharField(max_length=128, widget=forms.TextInput(attrs={'size': 80}))
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
+def save_file(f):
+    fd, name = mkstemp()
+    fp = os.fdopen(fd, 'wb')
+    for chunk in f.chunks():
+        fp.write(chunk)
+    fp.close()
+    return name
+
 
 class ImportZipcodeShapefilesForm(forms.Form):
+
     state = forms.ChoiceField(required=True, choices=CENSUS_STATES)
     zip_codes = forms.CharField(required=True, widget=forms.Textarea())
 
@@ -76,14 +85,12 @@ class UploadShapefileForm(forms.Form):
     def save(self):
         if not self.is_valid():
             return False
-
         self.shp_path = self.save_shapefile(self.cleaned_data['zipped_shapefile'])
         return True
 
     def save_shapefile(self, zipped_shapefile):
-        # Just save it; the layer picker form will take care of unzipping.
-        # GDAL requries everything to have same filename but for extension,
-        # and live in the same directory.
+        # Unpack the zipped shapefile archive, gdal needs all
+        # the files to be extracted and in the same directory.
         fd, zip_name = mkstemp('.zip')
         self.write_chunks(os.fdopen(fd, 'wb'),  zipped_shapefile)
         import zipfile
@@ -131,6 +138,28 @@ class PickShapefileLayerForm(forms.Form):
         else:
             # TODO: would be nice to pass some errors back to page
             return False
+
+
+class ImportBlocksForm(forms.Form):
+    city =      forms.CharField(max_length=30, help_text="Optional: skip features that don't include this name", required=False)
+    edges =     forms.FileField(label='_edges.shp',     required=True)
+    featnames = forms.FileField(label='_featnames.dbf', required=True)
+    faces =     forms.FileField(label='_faces.shp',     required=True)
+    place =     forms.FileField(label='_place.shp',     required=True)
+
+    def save(self):
+        if not self.is_valid():
+            return False
+
+        import_blocks_from_shapefiles(
+            save_file(self.cleaned_data['edges']),
+            save_file(self.cleaned_data['featnames']),
+            save_file(self.cleaned_data['faces']),
+            save_file(self.cleaned_data['place']),
+            self.cleaned_data['city']
+        )
+
+        return True
 
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
@@ -271,13 +300,25 @@ def jobs_status(request):
     if stalled_count > 0 and pending.filter(locked_at__isnull=False).count() == 0:
         return HttpResponse("Queued jobs aren't being run. Is 'django-admin.py process_tasks' running?")
 
-    download_count = pending.filter(task_name=u'obadmin.admin.tasks.download_state_shapefile').count()
-    import_count = pending.filter(task_name=u'obadmin.admin.tasks.import_zip_from_shapefile').count()
+    # list instead of dict because tasks run in sequence, confusing otherwise
+    counts = [
+        [ 'Download state shapefile',     u'obadmin.admin.tasks.download_state_shapefile' ],
+        [ 'Import ZIP codes',             u'obadmin.admin.tasks.import_zip_from_shapefile' ],
+        [ 'Import blocks from shapefile', u'obadmin.admin.tasks.import_blocks' ],
+        [ 'Populate streets',             u'obadmin.admin.tasks.populate_streets' ],
+        [ 'Populate block intersections', u'obadmin.admin.tasks.populate_block_intersections' ],
+        [ 'Populate intersections',       u'obadmin.admin.tasks.populate_intersections' ],
+    ]
+    display_counts = False
+    for task in counts:
+        count = pending.filter(task_name=task[1]).count()
+        task.append(count)
+        if count > 0:
+            display_counts = True
 
-    if download_count > 0 or import_count > 0:
+    if display_counts:
         return render(request, 'obadmin/location/jobs_status.html', {
-          'download_count': download_count,
-          'import_count': import_count,
+          'counts': counts,
         })
     else:
         return HttpResponse("No background tasks running.")
@@ -305,6 +346,7 @@ def upload_shapefile(request):
       'form': form,
     })
 
+
 @csrf_protect
 def pick_shapefile_layer(request):
     form = PickShapefileLayerForm(request.POST or None)
@@ -325,4 +367,17 @@ def pick_shapefile_layer(request):
         'layers': ds,
         'location_types': LocationType.objects.all(),
         'fieldset': fieldset,
+    })
+
+@csrf_protect
+def import_blocks(request):
+    print request.FILES
+    form = ImportBlocksForm(request.POST or None, request.FILES or None)
+    if form.save():
+        return HttpResponseRedirect('../')
+
+    fieldset = Fieldset(form, fields=('city', 'edges', 'featnames', 'faces', 'place',))
+    return render(request, 'obadmin/location/import_blocks.html', {
+        'fieldset': fieldset,
+        'form': form,
     })

@@ -1,0 +1,43 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block title %}Import Blocks From Shapefiles{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="../../../">Home</a>
+&rsaquo;
+<a href="../../">Db</a>
+&rsaquo;
+<a href="../">Locations</a>
+&rsaquo;
+Import Blocks From Shapefiles
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content">
+    <h1>Import Blocks From Shapefiles</h1>
+
+    <div id="content-main">
+        <p>
+            Visit the <a href="http://www2.census.gov/cgi-bin/shapefiles2009/national-files">Census TIGER/Line Shapefiles</a> page,
+            you will need several files. First select the State you’re
+            interested in. Download the file labeled “Place (Current)”.
+
+            Next, select the County you’re interested in. From the county’s
+            page, download the files labeled “All Lines”, “Topological Faces
+            (Polygons With All Geocodes)”, and “Feature Names Relationship
+            File”. 
+
+            Unzip all those files, then upload the four that end with these
+            names:
+        </p>
+
+        <form action="" enctype="multipart/form-data" method="post">{% csrf_token %}
+            {% include "admin/includes/fieldset.html" %}
+            <div class="submit-row"><input class="button default" type="submit" value="Import" /></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

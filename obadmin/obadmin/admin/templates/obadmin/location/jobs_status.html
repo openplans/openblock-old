@@ -1,3 +1,6 @@
-<p>
-  Pending: {{ download_count }} download jobs, {{ import_count }} import jobs
-</p>
+Pending jobs:
+<ol style="list-style-type: none">
+  {% for title, task_name, count in counts %}
+      <li><b>{{ count }}</b> {{ title }}</li>
+  {% endfor %}
+</ol>
