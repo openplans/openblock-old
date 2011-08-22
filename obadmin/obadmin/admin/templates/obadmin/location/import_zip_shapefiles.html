@@ -1,7 +1,7 @@
 {% extends "admin/change_form.html" %}
 {% load i18n %}
 
-{% block title %}Import ZIP Shapefiles{% endblock %}
+{% block title %}Import US ZIP Code Shapefiles{% endblock %}
 
 {% block breadcrumbs %}
 <div class="breadcrumbs">
@@ -23,7 +23,7 @@ Import Zip Shapefiles
         <p>
             Paste in a list of ZIP codes your site will cover. (This form will
             ignore any text, commas, etc., it just extracts any 5-digit codes
-            to use.) OpenBlock with download and install
+            to use.) OpenBlock will download and install
             <a href="http://www2.census.gov/cgi-bin/shapefiles2009/national-files">shapefiles
             from the U.S. Census Bureau</a> for them. This is usually
             only needed during the initial install of OpenBlock, but you can
