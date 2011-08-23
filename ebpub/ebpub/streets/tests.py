@@ -1,11 +1,11 @@
-import csv
 from django.contrib.gis import geos
 from django.test import TestCase
 from ebpub.streets.models import Block, Place, PlaceSynonym, PlaceType
 from ebpub.accounts.models import User
 from ebpub.accounts.utils import test_client_login
-import mock
 from StringIO import StringIO
+import mock
+import csv
 
 class TestPlaces(TestCase):
     
@@ -26,9 +26,9 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nDonut House,124 Fakey St.,1.001,2.001")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nDonut House,124 Fakey St.,1.001,2.001")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -50,9 +50,9 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -86,9 +86,9 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -115,9 +115,9 @@ class TestPlaces(TestCase):
         assert 'HOUSE OF D' in synonyms
 
         # now change one synonym of each
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Ole Doughy, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,Dunky H, D House")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Ole Doughy, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,Dunky H, D House")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -152,9 +152,9 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nFlapper Jacks,,,,\nDonut House,124 Fakey St.,1.001,2.001\nSoup Sacks,,,")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nFlapper Jacks,,,,\nDonut House,124 Fakey St.,1.001,2.001\nSoup Sacks,,,")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -181,10 +181,10 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Arms Hotel, 205 South Wabash St.,,")
-        csv.name = 'test.csv'
+        csv_file = StringIO("Donut Arms Hotel, 205 South Wabash St.,,")
+        csv_file.name = 'test.csv'
 
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 1
@@ -206,10 +206,10 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Arms Hotel, 205 South Wabash St.,1.0,2.0")
-        csv.name = 'test.csv'
+        csv_file = StringIO("Donut Arms Hotel, 205 South Wabash St.,1.0,2.0")
+        csv_file.name = 'test.csv'
 
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 1
@@ -227,9 +227,9 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 1
@@ -245,9 +245,9 @@ class TestPlaces(TestCase):
                              is_geocodable=False, is_mappable=True)
         new_type.save()
         
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '%d' % new_type.id, 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '%d' % new_type.id, 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 1
@@ -355,9 +355,9 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nFlapper Jacks,,,,\nDonut House,124 Fakey St.,1.001,2.001\nSoup Sacks,,,")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nFlapper Jacks,,,,\nDonut House,124 Fakey St.,1.001,2.001\nSoup Sacks,,,")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -378,9 +378,9 @@ class TestPlaces(TestCase):
         Place.objects.all().delete()
         assert Place.objects.all().count() == 0
 
-        csv = StringIO(response.content)
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO(response.content)
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -407,9 +407,9 @@ class TestPlaces(TestCase):
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
 
-        csv = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
@@ -442,9 +442,9 @@ class TestPlaces(TestCase):
         Place.objects.all().delete()
         assert Place.objects.all().count() == 0
 
-        csv = StringIO(response.content)
-        csv.name = 'test.csv'
-        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv})
+        csv_file = StringIO(response.content)
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
         
         assert Place.objects.all().count() == 2
