@@ -86,10 +86,16 @@ class PlaceAdminForm(forms.ModelForm):
 
 class PlaceImportForm(forms.Form):
     place_type = forms.ModelChoiceField(queryset=PlaceType.objects.all())
-    csv_file = forms.FileField(required=True)
+    csv_file = forms.FileField(
+        required=True,
+        help_text='These fields are required for each row: pretty_name, address, lat, lon, &lt;synonym&gt;, &lt;synonym&gt;, ...')
+
 
 class PlaceExportForm(forms.Form):
-    place_type = forms.ModelChoiceField(queryset=PlaceType.objects.all())
+    place_type = forms.ModelChoiceField(
+        queryset=PlaceType.objects.all(),
+        help_text='These fields will be exported in each row: pretty_name, address, lat, lon, &lt;synonym&gt;, &lt;synonym&gt;, ...')
+
 
 class PlaceAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'place_type', 'address',)
@@ -412,6 +418,17 @@ class PlaceSynonymAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'place')
     search_fields = ('pretty_name', 'place')
     readonly_fields = ('normalized_name',)
+
+# Hack to ensure that the templates in obadmin get used, if it's installed
+# and the relevant template exists.
+# This is because olwidget defines its own olwidget_change_list.html
+# template for GeoModelAdmin, which OSMModelAdmin inherits.
+try:
+    import obadmin.admin
+    BlockAdmin.change_list_template = 'admin/streets/block/change_list.html'
+    PlaceAdmin.change_list_template = 'admin/streets/place/change_list.html'
+except ImportError:
+    pass
 
 admin.site.register(Block, BlockAdmin)
 admin.site.register(Street, StreetAdmin)
