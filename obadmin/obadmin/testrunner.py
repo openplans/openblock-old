@@ -31,6 +31,10 @@ class TestSuiteRunner(DjangoTestSuiteRunner):
 #    def setup_databases(self, **kwargs):
 #    def teardown_databases(self, old_config, **kwargs):
 
+    # If you use Nose, you don't want it to think this class & its
+    # methods are tests:
+    __test__ = False
+
     def build_suite(self, test_labels, extra_tests=None, **kwargs):
         suite = unittest.TestSuite()
         if test_labels:
@@ -55,3 +59,6 @@ class TestSuiteRunner(DjangoTestSuiteRunner):
                 suite.addTest(test)
 
         return reorder_suite(suite, (TestCase,))
+
+# Don't let Nose think this is a test case either:
+build_test.__test__ = False
