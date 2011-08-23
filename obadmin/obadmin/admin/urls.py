@@ -20,10 +20,10 @@ from django.conf.urls.defaults import *
 
 urlpatterns = patterns('obadmin.admin.views',
     url(r'^db/location/import-zip-shapefiles/$', 'import_zipcode_shapefiles'),
-    url(r'^db/location/jobs-status/$', 'jobs_status'),
+    url(r'^(?P<appname>\w+)/(?P<modelname>\w+)/jobs-status/$', 'jobs_status'),
     url(r'^db/location/upload-shapefile/$', 'upload_shapefile'),
     url(r'^db/location/pick-shapefile-layer/$', 'pick_shapefile_layer'),
-    url(r'^db/location/import-blocks/$', 'import_blocks'),
+    url(r'^streets/block/import-blocks/$', 'import_blocks'),
     url(r'^old/$', 'index'),
     url(r'^old/schemas/$', 'schema_list'),
 #    url(r'^old/schemas/(\d{1,6})/$', 'edit_schema'),

@@ -7,9 +7,9 @@
 <div class="breadcrumbs">
 <a href="../../../">Home</a>
 &rsaquo;
-<a href="../../">Db</a>
+<a href="../../">Streets</a>
 &rsaquo;
-<a href="../">Locations</a>
+<a href="../">Blocks</a>
 &rsaquo;
 Import Blocks From Shapefiles
 </div>
@@ -21,17 +21,18 @@ Import Blocks From Shapefiles
 
     <div id="content-main">
         <p>
-            Visit the <a href="http://www2.census.gov/cgi-bin/shapefiles2009/national-files">Census TIGER/Line Shapefiles</a> page,
+            Visit the <a
+        href="http://www2.census.gov/cgi-bin/shapefiles2009/national-files">US
+            Census TIGER/Line Shapefiles</a> page;
             you will need several files. First select the State you’re
             interested in. Download the file labeled “Place (Current)”.
 
             Next, select the County you’re interested in. From the county’s
             page, download the files labeled “All Lines”, “Topological Faces
             (Polygons With All Geocodes)”, and “Feature Names Relationship
-            File”. 
+            File”.
 
-            Unzip all those files, then upload the four that end with these
-            names:
+            Upload all four of those files using this form:
         </p>
 
         <form action="" enctype="multipart/form-data" method="post">{% csrf_token %}

@@ -17,11 +17,8 @@
 #
 
 # -*- coding: utf-8 -*-
-from ebdata.blobs.create_seeds import create_rss_seed
-from ebdata.blobs.models import Seed
-from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
-from ebpub.db.bin import import_locations
-from ebpub.db.models import LocationType
+from background_task.models import Task
+from datetime import datetime, timedelta
 from django import forms
 from django.conf import settings
 from django.contrib.admin.helpers import Fieldset
@@ -29,12 +26,18 @@ from django.contrib.gis.gdal import DataSource
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
 from django.views.decorators.csrf import csrf_protect
-from datetime import datetime, timedelta
-import os
+from ebdata.blobs.create_seeds import create_rss_seed
+from ebdata.blobs.models import Seed
+from ebpub.db.bin import import_locations
+from ebpub.db.models import LocationType
+from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from re import findall
-from tempfile import mkstemp, mkdtemp
 from tasks import CENSUS_STATES, download_state_shapefile, import_blocks_from_shapefiles
-from background_task.models import Task
+from tempfile import mkstemp, mkdtemp
+import glob
+import os
+import zipfile
+
 
 class SchemaLookupsForm(forms.Form):
     def __init__(self, lookup_ids, *args, **kwargs):
@@ -51,8 +54,9 @@ class BlobSeedForm(forms.Form):
     pretty_name = forms.CharField(max_length=128, widget=forms.TextInput(attrs={'size': 80}))
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
-def save_file(f):
-    fd, name = mkstemp()
+
+def save_file(f, suffix=None):
+    fd, name = mkstemp(suffix)
     fp = os.fdopen(fd, 'wb')
     for chunk in f.chunks():
         fp.write(chunk)
@@ -93,10 +97,8 @@ class UploadShapefileForm(forms.Form):
         # the files to be extracted and in the same directory.
         fd, zip_name = mkstemp('.zip')
         self.write_chunks(os.fdopen(fd, 'wb'),  zipped_shapefile)
-        import zipfile
-        import glob
         zfile = zipfile.ZipFile(zip_name)
-        outdir = mkdtemp(suffix='-shapefiles')
+        outdir = mkdtemp(suffix='-location-shapefiles')
         zfile.extractall(path=outdir)
         os.unlink(zip_name)
         # TODO: Some zipped shapefiles contain multiple .shp files!
@@ -141,21 +143,24 @@ class PickShapefileLayerForm(forms.Form):
 
 
 class ImportBlocksForm(forms.Form):
-    city =      forms.CharField(max_length=30, help_text="Optional: skip features that don't include this name", required=False)
-    edges =     forms.FileField(label='_edges.shp',     required=True)
-    featnames = forms.FileField(label='_featnames.dbf', required=True)
-    faces =     forms.FileField(label='_faces.shp',     required=True)
-    place =     forms.FileField(label='_place.shp',     required=True)
+    edges = forms.FileField(label='All Lines (tl...edges.zip)',
+                            required=True)
+    featnames = forms.FileField(label='Feature Names Relationship (tl...featnames.zip)',
+                                required=True)
+    faces = forms.FileField(label='Topological Faces (tl...faces.zip)', required=True)
+    place = forms.FileField(label='Place (Current) (tl..._place.zip)', required=True)
+
+    city = forms.CharField(max_length=30, help_text="Optional: skip features that don't include this city name", required=False)
 
     def save(self):
         if not self.is_valid():
             return False
 
         import_blocks_from_shapefiles(
-            save_file(self.cleaned_data['edges']),
-            save_file(self.cleaned_data['featnames']),
-            save_file(self.cleaned_data['faces']),
-            save_file(self.cleaned_data['place']),
+            save_file(self.cleaned_data['edges'], suffix='.zip'),
+            save_file(self.cleaned_data['featnames'], suffix='.zip'),
+            save_file(self.cleaned_data['faces'], suffix='.zip'),
+            save_file(self.cleaned_data['place'], suffix='.zip'),
             self.cleaned_data['city']
         )
 
@@ -287,7 +292,7 @@ def newsitem_details(request, news_item_id):
         'news_item': ni, 'attributes': attributes
     })
 
-def jobs_status(request):
+def jobs_status(request, appname, modelname):
     """
     Returns HTML fragment about current background tasks, intended for
     use via AJAX.
@@ -301,14 +306,23 @@ def jobs_status(request):
         return HttpResponse("Queued jobs aren't being run. Is 'django-admin.py process_tasks' running?")
 
     # list instead of dict because tasks run in sequence, confusing otherwise
-    counts = [
-        [ 'Download state shapefile',     u'obadmin.admin.tasks.download_state_shapefile' ],
-        [ 'Import ZIP codes',             u'obadmin.admin.tasks.import_zip_from_shapefile' ],
-        [ 'Import blocks from shapefile', u'obadmin.admin.tasks.import_blocks' ],
-        [ 'Populate streets',             u'obadmin.admin.tasks.populate_streets' ],
-        [ 'Populate block intersections', u'obadmin.admin.tasks.populate_block_intersections' ],
-        [ 'Populate intersections',       u'obadmin.admin.tasks.populate_intersections' ],
-    ]
+    if appname == 'db':
+        counts = [
+            [ 'Download state shapefile', u'obadmin.admin.tasks.download_state_shapefile' ],
+            [ 'Import ZIP codes',         u'obadmin.admin.tasks.import_zip_from_shapefile' ],
+            ]
+    elif appname == 'streets':
+        # Don't bother discriminating further based on modelname;
+        # the models here are closely related anyway.
+        counts = [
+            [ 'Import blocks from shapefile', u'obadmin.admin.tasks.import_blocks' ],
+            [ 'Populate streets',             u'obadmin.admin.tasks.populate_streets_task' ],
+            [ 'Populate block intersections', u'obadmin.admin.tasks.populate_block_intersections' ],
+            [ 'Populate intersections',       u'obadmin.admin.tasks.populate_intersections' ],
+            ]
+    else:
+        raise ValueError("No known tasks for %s/%s" % (appname, modelname))
+
     display_counts = False
     for task in counts:
         count = pending.filter(task_name=task[1]).count()
@@ -317,7 +331,7 @@ def jobs_status(request):
             display_counts = True
 
     if display_counts:
-        return render(request, 'obadmin/location/jobs_status.html', {
+        return render(request, 'obadmin/jobs_status.html', {
           'counts': counts,
         })
     else:
@@ -377,7 +391,7 @@ def import_blocks(request):
         return HttpResponseRedirect('../')
 
     fieldset = Fieldset(form, fields=('city', 'edges', 'featnames', 'faces', 'place',))
-    return render(request, 'obadmin/location/import_blocks.html', {
+    return render(request, 'obadmin/block/import_blocks.html', {
         'fieldset': fieldset,
         'form': form,
     })

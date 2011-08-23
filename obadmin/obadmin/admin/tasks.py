@@ -21,14 +21,17 @@ from background_task import background
 from django.conf import settings
 from ebdata.retrieval.retrievers import Retriever
 from string import maketrans
+from tempfile import mkdtemp
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
 from ebpub.db.bin.import_zips import ZipImporter
 from ebpub.streets.blockimport.tiger.import_blocks import TigerImporter
-from ebpub.streets.bin import populate_streets as populate
+from ebpub.streets.bin import populate_streets
 from ebpub.utils.logutils import log_exception
-import tempfile
+import glob
 import os
+import shutil
+import tempfile
 
 # These may look suspiciously like numbers, but we're matching identifiers
 # by the Census, and who knows what they'll do. Extracted from the source of
@@ -127,34 +130,50 @@ def import_zip_from_shapefile(filename, zipcode):
 
 @background
 def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None):
-    tiger = TigerImporter(
-        edges,
-        featnames,
-        faces,
-        place,
-        filter_city=city
-    )
-    num_created = tiger.save()
-
-    os.unlink(edges)
-    os.unlink(featnames)
-    os.unlink(faces)
-    os.unlink(place)
-
-    populate_streets()
-
+    # File args are paths to zip files.
+    
+    outdir = mkdtemp(suffix='-block-shapefiles')
+    try:
+        for path in (edges, featnames, faces, place):
+            ZipFile(path, 'r').extractall(outdir)
+    except:
+        # TODO: display error in UI
+        log_exception()
+        shutil.rmtree(outdir)
+        raise
+    finally:
+        os.unlink(edges)
+        os.unlink(featnames)
+        os.unlink(faces)
+        os.unlink(place)
+    try:
+        edges = glob.glob(os.path.join(outdir, '*edges.shp'))[0]
+        featnames = glob.glob(os.path.join(outdir, '*featnames.dbf'))[0]
+        faces = glob.glob(os.path.join(outdir, '*faces.dbf'))[0]
+        place = glob.glob(os.path.join(outdir, '*place.shp'))[0]
+        tiger = TigerImporter(
+            edges,
+            featnames,
+            faces,
+            place,
+            filter_city=city
+            )
+        num_created = tiger.save()
+    finally:
+        shutil.rmtree(outdir)
+    populate_streets_task()
     return num_created
 
 @background
-def populate_streets():
-    populate.populate_streets()
+def populate_streets_task():
+    populate_streets.populate_streets()
     populate_block_intersections()
 
 @background
 def populate_block_intersections():
-    populate.populate_block_intersections()
+    populate_streets.populate_block_intersections()
     populate_intersections()
 
 @background
 def populate_intersections():
-    populate.populate_intersections()
+    populate_streets.populate_intersections()
