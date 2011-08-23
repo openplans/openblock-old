@@ -105,7 +105,7 @@ class LocationSynonymAdmin(OSMModelAdmin):
 
 # Hack to ensure that the templates in obadmin get used, if it's installed.
 # This is because olwidget defines its own olwidget_change_list.html
-# template for GeoModelAdmin, which LocationAdmin inherits.
+# template for GeoModelAdmin, which OSMModelAdmin inherits.
 try:
     import obadmin.admin
     LocationAdmin.change_list_template = 'admin/db/location/change_list.html'
