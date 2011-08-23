@@ -1,13 +1,16 @@
 {% extends "admin/change_list.html" %}
 
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+      <a href="import-zip-shapefiles/" class="addlink">Add US Zip Codes</a>
+    </li>
+    <li>
+      <a href="upload-shapefile/" class="addlink">Upload Shapefile</a>
+    </li>
+{% endblock %}
+
 {% block content %}
-    <p>
-      <a href="import-zip-shapefiles/">Import Zip Shapefiles</a>
-      |
-      <a href="upload-shapefile/">Upload a Shapefile</a>
-      |
-      <a href="import-blocks/">Import Block Shapefiles</a>
-    </p>
     <div class="jobs-status"></div>
     <script>
         (function($) {

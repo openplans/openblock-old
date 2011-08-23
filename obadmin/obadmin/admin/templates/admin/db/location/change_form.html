@@ -1,0 +1,12 @@
+{% extends "admin/change_form.html" %}
+{% block content %}
+{% if add %}
+<div>
+  You can also <a href="../import-zip-shapefiles/">add US Zip codes</a>
+  or
+  <a href="../upload-shapefile/">upload a shapefile</a>
+  to create multiple locations.
+</div>
+{% endif %}
+{{ block.super }}
+{% endblock %}
