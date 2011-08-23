@@ -94,6 +94,10 @@ New Features in 1.0 beta 1
 Bug fixes
 ---------
 
+ * ticket #110: Fix infinite loop if
+   newsitem.schema.has_newsitem_detail is False but newsitem.url is
+   empty; give 404 instead.
+
  * Importers should now not blow up if run more than once.
 
  * ticket #22: Scraper scripts in everyblock/cities/boston mostly
@@ -121,6 +125,9 @@ Documentation
 
  * ticket #197: documentation for deploying static media
 
+ * Fix outdated paths to example scrapers.
+
+
 
 Other
 -----
@@ -130,6 +137,8 @@ Other
  * ticket #83: Split out non-core packages into a separate download
    (``ebblog``, ``ebwiki``, ``ebgeo``, ``ebinternal``, and ``everyblock`` are now
    at https://github.com/openplans/openblock-extras )
+
+ * ticket #156: Removing lots of clustering code that's totally unused.
 
 
 Older Changes
