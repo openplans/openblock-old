@@ -97,7 +97,7 @@ configured your :ref:`metro extent <metro_extent>`.
 
 .. code-block:: bash
 
-  $ import_zips -v -b /path/to/where/you/unzipped/the/files/
+  $ import_zips_tiger -v -b /path/to/where/you/unzipped/the/files/
 
 The ``-b`` option tells it to filter out zip codes outside your
 metro extent, and ``-v`` tells it to give verbose output.
