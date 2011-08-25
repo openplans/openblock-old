@@ -126,9 +126,9 @@ class LocalNewsScraper(object):
                         logger.debug("couldn't geocode any addresses in item '%s...'"
                                      % _short_title)
                         continue
-                item.location = Point((float(y), float(x)))
+                item.location = Point((float(x), float(y)))
                 if not intersects_metro_bbox(item.location):
-                    reversed_loc = Point((float(x), float(y)))
+                    reversed_loc = Point((float(y), float(x)))
                     if intersects_metro_bbox(reversed_loc):
                         logger.info(
                             "Got points in apparently reverse order, flipping them")
