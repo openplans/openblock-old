@@ -1,0 +1,103 @@
+[
+  {
+    "fields": {
+      "last_updated": "2011-08-25",
+      "intro": "",
+      "update_frequency": "",
+      "has_newsitem_detail": true,
+      "grab_bag_headline": "",
+      "short_source": "http://flickr.com",
+      "slug": "photos",
+      "source": "http://flickr.com",
+      "date_name": "Date",
+      "short_description": "Photos from Flickr",
+      "grab_bag": "",
+      "is_special_report": false,
+      "importance": 0,
+      "min_date": "2011-01-01",
+      "allow_charting": true,
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "date_name_plural": "Dates",
+      "plural_name": "Photos from Flickr",
+      "name": "Photo from Flickr",
+      "uses_attributes_in_list": true,
+      "summary": "",
+      "can_collapse": false
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": true,
+      "name": "username",
+      "display_order": 1,
+      "real_name": "varchar01",
+      "pretty_name": "User Name",
+      "pretty_name_plural": "User Names",
+      "display": true,
+      "schema": [
+        "photos"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": false,
+      "name": "user_id",
+      "display_order": 2,
+      "real_name": "varchar02",
+      "pretty_name": "User ID",
+      "pretty_name_plural": "User IDs",
+      "display": false,
+      "schema": [
+        "photos"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": false,
+      "name": "source.name",
+      "display_order": 3,
+      "real_name": "varchar03",
+      "pretty_name": "Source Site Name",
+      "pretty_name_plural": "Source Site Names",
+      "display": true,
+      "schema": [
+        "photos"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": false,
+      "name": "photo_href",
+      "display_order": 4,
+      "real_name": "varchar04",
+      "pretty_name": "Thumbnail URL",
+      "pretty_name_plural": "Thumbnail URLs",
+      "display": false,
+      "schema": [
+        "photos"
+      ]
+    },
+    "model": "db.schemafield"
+  }
+]
