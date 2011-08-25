@@ -225,8 +225,8 @@ class ListDetailScraper(BaseScraper):
 
     def parse_list(self, page):
         """
-        Given the full HTML of a list page, yields a dictionary of data for
-        each record on the page.
+        Given the full HTML (or XML, or whatever) of a list page,
+        yields a dictionary of data for each record on the page.
 
         You must either override this method, or define a parse_list_re
         attribute. If you define a parse_list_re attribute, it should be set
