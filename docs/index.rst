@@ -101,6 +101,9 @@ the free `Django Book <http://www.djangobook.com/>`_.
 Before you dive in, it's *highly* recommended you spend a little bit of
 time browsing around http://demo.openblockproject.org and/or
 http://EveryBlock.com to get a feel for what this software does.
+(But note that the code has diverged considerably since 2009, so
+everyblock.com has features not present in OpenBlock, and vice
+versa; the visual design is quite different as well.)
 
 Also, for a light conceptual background on some of this, particularly
 the data storage aspect of :doc:`packages/ebpub`, watch the video "Behind the
