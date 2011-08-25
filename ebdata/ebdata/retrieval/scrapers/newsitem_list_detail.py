@@ -22,9 +22,14 @@ from ebdata.retrieval.scrapers.list_detail import ListDetailScraper
 from ebdata.retrieval.utils import locations_are_close
 from ebpub.db.models import Schema, NewsItem, Lookup, DataUpdate, field_mapping
 from ebpub.geocoder import SmartGeocoder, GeocodingException, ParsingError, AmbiguousResult
+from ebpub.geocoder.reverse import reverse_geocode
+
 from ebpub.utils.text import address_to_block
 import datetime
+import pytz
 import traceback
+
+local_tz = pytz.timezone(settings.TIME_ZONE)
 
 class NewsItemListDetailScraper(ListDetailScraper):
     """
@@ -213,6 +218,10 @@ class NewsItemListDetailScraper(ListDetailScraper):
         newsitem_updated = False
         # First, check the NewsItem's values.
         for k, v in new_values.items():
+            if isinstance(v, datetime.datetime) and v.tzinfo is not None:
+                # Django datetime fields are not timezone-aware, so we
+                # can't compare them without stripping the zone.
+                v = v.astimezone(local_tz).replace(tzinfo=None)
             if getattr(newsitem, k) != v:
                 self.logger.info('ID %s %s changed from %r to %r' % (newsitem.id, k, getattr(newsitem, k), v))
                 setattr(newsitem, k, v)
@@ -223,6 +232,10 @@ class NewsItemListDetailScraper(ListDetailScraper):
             self.logger.debug("No change to %s <%s>" % (newsitem.id, newsitem))
         # Next, check the NewsItem's attributes.
         for k, v in new_attributes.items():
+            if isinstance(v, datetime.datetime) and v.tzinfo is not None:
+                # Django datetime fields are not timezone-aware, so we
+                # can't compare them without stripping the zone.
+                v = v.astimezone(local_tz).replace(tzinfo=None)
             if newsitem.attributes.get(k) == v:
                 continue
             elif k not in newsitem.attributes:
