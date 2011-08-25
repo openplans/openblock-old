@@ -1,0 +1,27 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+      <a href="import-blocks/" class="addlink">Import Block Shapefiles</a>
+    </li>
+{% endblock %}
+
+{% block content %}
+    <div class="jobs-status"></div>
+    <script>
+        (function($) {
+            var poll_jobs_status = function () {
+                $('.jobs-status').html('...').load('jobs-status/');
+            }
+            $().ready(function () {
+                poll_jobs_status();
+                setInterval(function() {
+                    poll_jobs_status();
+                }, 20000);
+            });
+        })(django.jQuery);
+    </script>
+    {{ block.super }}
+{% endblock %}
+
