@@ -338,7 +338,7 @@ To do this, set ``SchemaField.is_lookup=True`` and make sure to use an 'int' col
 for SchemaField.real_name. Then, for each record, get or create a Lookup
 object (see the model in ``ebpub/db/models.py``) that represents the data, and use
 the Lookup's id in the appropriate db_attribute column. The helper function
-``Lookup.get_or_create_lookup()`` is a convenient shortcut here (see the
+``Lookup.objects.get_or_create_lookup()`` is a convenient shortcut here (see the
 code/docstring of that function).
 
 Many-to-many Lookups
