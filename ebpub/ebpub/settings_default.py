@@ -119,7 +119,12 @@ APPS_NOT_FOR_TESTING = (
         'django.contrib.messages',
         # the rest are just not of interest.
         'django.contrib.sessions',
-
+        'django.contrib.admin',
+        'django.contrib.gis',
+        'olwidget',
+        'olwidget.models',
+        'south',
+        'background_task',
 )
 
 
