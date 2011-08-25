@@ -736,6 +736,11 @@ class NewsItem(models.Model):
     item_date = models.DateField(
         db_index=True,
         help_text='Date (no time) this Item occurred, or was published on the original source site.')  # TODO: default to now()
+
+    # automatic last modification tracking.  Note: if changing only attributes, the the
+    # NewsItem should also be save()'d to update last_modification when complete. 
+    last_modification = models.DateTimeField(db_index=True, auto_now=True)
+    
     location = models.GeometryField(blank=True, null=True, spatial_index=True,
                                     help_text="Coordinates where this news occurred.")
     location_name = models.CharField(max_length=255,
