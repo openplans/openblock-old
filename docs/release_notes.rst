@@ -8,6 +8,11 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+* Flickr scraper (ticket #26).
+  It's at ebdata/scrapers/general/flickr/flickr_retrieval.py
+  and the associated schema can be loaded like so:
+  ``django-admin.py loaddata ebdata/scrapers/general/flickr/photos_schema.json``
+
 * Import locations from shapefiles in the admin UI (ticket #59)
 
 * Import blocks from shapefiles in the admin UI.
