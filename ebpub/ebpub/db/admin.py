@@ -45,9 +45,11 @@ class NewsItemAdmin(OSMModelAdmin):
     search_fields = ('title', 'description',)
     form = NewsItemForm
 
-    list_map = ['location']
-    list_map_options = copy.deepcopy(OSMModelAdmin.list_map_options)
-    list_map_options['cluster'] = True
+    ## This really slows down the UI if there's lots of NewsItems,
+    ## and olwidget doesn't seem to paginate them along with the change list?
+    # list_map = ['location']
+    # list_map_options = copy.deepcopy(OSMModelAdmin.list_map_options)
+    # list_map_options['cluster'] = True
 
 class LocationTypeAdmin(admin.ModelAdmin):
     list_display = ('name', 'is_significant')
