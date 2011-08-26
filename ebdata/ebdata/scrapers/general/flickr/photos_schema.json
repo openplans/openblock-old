@@ -70,7 +70,7 @@
       "is_charted": false,
       "is_filter": false,
       "is_searchable": false,
-      "name": "source.name",
+      "name": "sourcename",
       "display_order": 3,
       "real_name": "varchar03",
       "pretty_name": "Source Site Name",

@@ -5,7 +5,7 @@
 #   photo_href = the 75x75 small square
 #   username
 #   user_id
-#   source.name  ... either 'Flickr' or 'Panoramio'
+#   sourcename  ... either 'Flickr' or 'Panoramio'
 
 
 """
@@ -67,8 +67,9 @@ class FlickrScraper(NewsItemListDetailScraper):
                                         max_taken_date=None, #XXX timestamp
                                         per_page='400',
                                         page=str(pagenum),
-                                        extras='date_taken,date_upload,url_sq,description,geo',
+                                        extras='date_taken,date_upload,url_sq,description,geo,owner_name',
                                         format='json',
+                                        content_type='1', # photos only.
                                         nojsoncallback='1',
                                         )
 
@@ -121,9 +122,10 @@ class FlickrScraper(NewsItemListDetailScraper):
         cleaned['url'] = 'http://www.flickr.com/photos/%(owner)s/%(id)s' % record
 
         attributes = {}
-        attributes['source.name'] = 'Flickr'
+        attributes['sourcename'] = 'Flickr'
         #attributes['photo_id'] = record['id']
         attributes['user_id'] = record['owner']
+        attributes['username'] = record['ownername']
         # Thumbnail. 'Small square' photos are 75x75.
         attributes['photo_href'] = record['url_sq']
         cleaned['_attributes'] = attributes
