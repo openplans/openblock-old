@@ -61,13 +61,13 @@ class LocationImporter(object):
         self.source = source
         self.filter_bounds = filter_bounds
         self.verbose = verbose
-
-    def save(self, name_field):
-        verbose = self.verbose
-        source = self.source
         if self.filter_bounds:
             from ebpub.utils.geodjango import get_default_bounds
             self.bounds = get_default_bounds()
+            
+    def save(self, name_field):
+        verbose = self.verbose
+        source = self.source
         locs = []
         for feature in self.layer:
             name = feature.get(name_field)
