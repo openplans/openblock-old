@@ -155,4 +155,4 @@ def get_default_bounds():
     """Returns the bounding box of the metro, as a Polygon.
     """
     from django.contrib.gis.geos import Polygon
-    return Polygon.from_bbox(get_metro()['extent']).ogr
+    return Polygon.from_bbox(get_metro()['extent'])
