@@ -151,14 +151,14 @@ def main(argv=None):
         argv = sys.argv[1:]
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option(
-        "--start-date", help="Start date for photo search. Default is 30 days ago.",
-        action='store', default=None,
-        )
-    parser.add_option(
-        "--end-date", help="Stop date for photo search. Default is now",
-        action='store', default=None,
-        )
+    # parser.add_option(
+    #     "--start-date", help="Start date for photo search. Default is 30 days ago.",
+    #     action='store', default=None,
+    #     )
+    # parser.add_option(
+    #     "--end-date", help="Stop date for photo search. Default is now",
+    #     action='store', default=None,
+    #     )
     parser.add_option(
         "--schema", help="Slug of schema to use. Default is 'photos'.",
         action='store', default='photos',
