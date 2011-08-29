@@ -43,7 +43,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     long_description = long_description.split('Older Changes')[0]
     open('/tmp/thing.rst', 'w').write(long_description)
 
-VERSION="1.0-beta1"
+VERSION="1.0.0"
 
 setup(
     name='obdemo',
@@ -69,7 +69,8 @@ setup(
     entry_points="""
     """,
     classifiers=[
-        'Development Status :: 4 - Beta',
+        #'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
         'License :: OSI Approved :: GNU General Public License (GPL)',
