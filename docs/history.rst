@@ -5,11 +5,14 @@ OpenBlock change history
 For more recent changes, see :doc:`release_notes`.
 
 ====================================
-OpenBlock 1.0.0 (TODO date here)
+OpenBlock 1.0.0 (August 30, 2011)
 ====================================
 
 Upgrade Notes
 -------------
+
+* If you originally installed, or already upgraded to, OpenBlock 1.0
+  Beta, you may skip the rest of this section.
 
 * If you have an existing database that was built with 1.0a1 or
   earlier, you'll need to run this command to deal with the removal
@@ -95,6 +98,19 @@ New Features in 1.0
 Bug fixes
 ---------
 
+This is not a complete list; not all bugs fixed in this release were
+ticketed.
+
+ * Fix bug where scrapers that create timezone-aware datetimes blow up
+
+ * Fix errors in bounds checking in location importers, thanks to Bret
+   Walker.
+
+ * Fix missing import in Place admin
+
+ * Fixed several bugs where django-nose (optional) would try to run
+   some things that aren't tests.
+
  * ticket #110: Fix infinite loop if
    newsitem.schema.has_newsitem_detail is False but newsitem.url is
    empty; give 404 instead.
@@ -110,6 +126,7 @@ Bug fixes
 
  * ticket #200: "obdemo bin scripts are documented, but don't get
    installed when installing obdemo non-editable"
+
 
 Documentation
 -------------
@@ -127,8 +144,10 @@ Documentation
 
  * Fix outdated paths to example scrapers.
 
+ * Fix location of get_or_create_lookup
 
-
+ * Note differences from everyblock
+ 
 Other
 -----
 
