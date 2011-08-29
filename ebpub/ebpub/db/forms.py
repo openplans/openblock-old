@@ -60,39 +60,50 @@ class SchemaFieldInlineOnSchemaForm(forms.ModelForm):
         initial='character',
     )
 
-    def save(self, commit=True):
-        # TODO: this should really happen during clean(),
-        # we can't raise ValidationError during save
-        instance = super(forms.ModelForm, self).save(commit)
-        # Transform form field_type back into model real_name
-        # find next open real_name to assign to
-        if instance.pk is None:
-            field_type = self.cleaned_data['field_type']
-            instance.real_name = self.determine_next_real_name(instance, field_type)
+    # Can't just set this as ModelAdmin.readonly_fields because then
+    # it's not actually an input so the value doesn't end up in
+    # cleaned_data, and we need it.
+    real_name = forms.CharField(required=False, label='real_name (Attributes column)',
+                                initial='(none)',
+                                widget=forms.TextInput(attrs={'readonly': 'readonly',
+                                                              'style': 'border: none'}))
+
+    def clean(self, commit=True):
+
+        if self.is_bound and self.instance.pk:
+            # On edits, make sure we don't change real_name.
+            # TODO: it's allowed iff there are no NewsItems with this schema?
+            if self.instance.real_name != self.cleaned_data['real_name']:
+                raise forms.ValidationError(
+                    "Can't change field_type, would require migrating all existing NewsItems' Attributes")
+            return self.cleaned_data
         else:
-            # this should move to a form custom validation
-            raise forms.ValidationError(
-                "Can't change field_type, would require migrating all previous Attributes")
+            # On creation, derive real_name from the chosen field type.
+            field_type = self.cleaned_data['field_type']
+            self.cleaned_data['real_name'] = self.determine_next_real_name(field_type)
+            return self.cleaned_data
 
-        return instance
-
-    # helper method for real_name presentation
-    def determine_next_real_name(self, instance, field_type):
+    def determine_next_real_name(self, field_type):
+        """
+        Given a field_type, find the next available real_name we can use.
+        """
+        # Count how many of this field_type are in use.
         in_use = 0
-        # count how many of this field_type are in use
-        for field in instance.schema.schemafield_set.all():
+        for field in models.SchemaField.objects.filter(schema=self.cleaned_data['schema']):
             if field.real_name[:len(field_type)] == field_type:
                 in_use += 1
         # generate the next real_name for this field_type
         real_name = "%s%02d" % (field_type, in_use + 1)
-        if instance.schema.schemafield_set.filter(real_name=real_name).count():
+        if models.SchemaField.objects.filter(schema=self.cleaned_data['schema'],
+                                             real_name=real_name).count():
             raise forms.ValidationError(
                 "There is already a SchemaField with real_name=%r." % real_name)
             # TODO: could check if there is a lower number available?
+
         # Check that the field exists (less error-prone than this code knowing
         # there can be five varchars, two times, four datetimes...)
         if real_name in models.Attribute._meta.get_all_field_names():
             return real_name
         else:
             raise forms.ValidationError(
-                "We can't store any more SchemaFields of type %d" % field_type)
+                "We can't store any more SchemaFields of type %s" % field_type)

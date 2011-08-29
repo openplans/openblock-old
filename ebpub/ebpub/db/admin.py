@@ -72,7 +72,6 @@ class SchemaFieldInlineOnSchema(admin.TabularInline):
     model = SchemaField
     form = SchemaFieldInlineOnSchemaForm
     prepopulated_fields = {'name': ('pretty_name',)}
-    readonly_fields = ('real_name',)
     fields = ('pretty_name', 'pretty_name_plural', 'name', 'field_type', 'real_name')
     extra = 0
     # probably will end up needing a custom template to add JS to enforce
