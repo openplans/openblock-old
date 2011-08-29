@@ -1,14 +1,15 @@
 ====================================
-OpenBlock 1.0.0 release notes
+OpenBlock 1.0.0 (August 30, 2011)
 ====================================
-
-UNRELEASED
 
 (This is essentially unchanged from OpenBlock 1.0-beta1, so this is
 just a repeat of the release notes from that version.)
 
 Upgrade Notes
 -------------
+
+* If you originally installed, or already upgraded to, OpenBlock 1.0
+  Beta, you may skip the rest of this section.
 
 * If you have an existing database that was built with 1.0a1 or
   earlier, you'll need to run this command to deal with the removal
