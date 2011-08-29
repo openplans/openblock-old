@@ -18,6 +18,8 @@
 
 """
 Utility functions for working with GeoDjango GDAL and GEOS data
+
+
 """
 
 from django.contrib.gis import geos
@@ -81,6 +83,10 @@ def make_geomcoll(geom_list):
     return GeometryCollection(flattened)
 
 def make_multi(geom_list, collapse_single=False):
+    """
+    Convert a list of Geometries (of the same type) into a single
+    Multi(Point|Linestring|Polygon).
+    """
     if len(geom_list) == 1 and collapse_single:
         return geom_list[0]
 
@@ -136,23 +142,24 @@ def ensure_valid(geom, name=''):
             logger.warn('invalid geometry for %s' % name)
     return geom
 
-def get_metro_bbox(short_name=None):
-    """
-    For the metro, return its bounding box as a polygon.
-    """
-    extent = get_metro(short_name)['extent']
-    return Polygon.from_bbox(extent)
-
 def intersects_metro_bbox(geom):
     """
     Return True if the geometry intersects with the bounding box of
     the current metro.
     """
-    return geom.intersects(get_metro_bbox())
+    return geom.intersects(get_default_bounds())
 
 
 def get_default_bounds():
     """Returns the bounding box of the metro, as a Polygon.
+
+    >>> import mock
+    >>> metrodict = {'extent': (-10.0, 15.0, -5.0, 20.0)}
+    >>> with mock.patch('ebpub.utils.geodjango.get_metro', lambda: metrodict) as get_metro:
+    ...     bounds = get_default_bounds()
+    >>> bounds  #doctest: +ELLIPSIS
+    <Polygon object at ...>
+    >>> bounds.extent
+    (-10.0, 15.0, -5.0, 20.0)
     """
-    from django.contrib.gis.geos import Polygon
     return Polygon.from_bbox(get_metro()['extent'])
