@@ -17,11 +17,11 @@
 #
 
 from ebpub.db.models import NewsItem
-from ebpub.utils.geodjango import get_metro_bbox, intersects_metro_bbox
+from ebpub.utils.geodjango import get_default_bounds, intersects_metro_bbox
 from django.contrib.gis.geos import Point
 
 def main(dry_run=True):
-    items_outside = list(NewsItem.objects.exclude(location__intersects=get_metro_bbox()))
+    items_outside = list(NewsItem.objects.exclude(location__intersects=get_default_bounds()))
     print "Items outside bounds: %s" % len(items_outside)
     for item in items_outside:
         fix_newsitem_coords(item, dry_run)

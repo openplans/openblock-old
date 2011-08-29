@@ -123,7 +123,8 @@ def suite():
     suite.addTest(doctest.DocTestSuite(ebpub.utils.bunch))
     import ebpub.utils.dates
     suite.addTest(doctest.DocTestSuite(ebpub.utils.dates))
-
+    import ebpub.utils.dates
+    suite.addTest(doctest.DocTestSuite(ebpub.utils.geodjango))
     return suite
 
 if __name__ == '__main__':
