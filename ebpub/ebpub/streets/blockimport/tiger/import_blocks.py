@@ -98,7 +98,7 @@ class TigerImporter(BlockImporter):
     If `filter_city` is passed, we will skip features which don't have
     at least one of left_city or right_city matching the string.
 
-    If `filter_bounds` is passed, it will be treated as a geometry
+    If `filter_bounds` is passed, it will be treated as an OGR geometry
     to use for filtering out features outside the geometry.
 
     `edges_shp` contains all the feature edges (i.e. street segment
@@ -146,6 +146,8 @@ class TigerImporter(BlockImporter):
             values = dict(zip(fields, map(feature.get, fields)))
             places[fips] = values
         self.filter_city = filter_city and filter_city.upper() or None
+        if hasattr(filter_bounds, 'ogr'):
+            filter_bounds = filter_bounds.ogr
         self.filter_bounds = filter_bounds
         self.tlids_with_blocks = set()
 
