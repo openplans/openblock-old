@@ -379,7 +379,9 @@ class TestItemSearchAPI(BaseTestCase):
 
         assert len(feed['entries']) == len(items2)
         for item in feed['entries']:
-            assert item['openblock_type'] == u'type2'
+            # Yay feedparser, we don't know how it will spell the
+            # openblock:type element, varies depending on... something.
+            assert item.get('openblock_type', item.get('type')) == u'type2'
 
 
     def test_extension_fields_json(self):
