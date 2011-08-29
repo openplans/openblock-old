@@ -66,8 +66,8 @@ class SchemaFieldInlineOnSchemaForm(forms.ModelForm):
         # Transform form field_type back into model real_name
         # find next open real_name to assign to
         if instance.pk is None:
-          field_type = self.cleaned_data['field_type']
-          instance.real_name = determine_next_real_name('field_type')
+            field_type = self.cleaned_data['field_type']
+            instance.real_name = self.determine_next_real_name(field_type)
         else:
             # this should move to a form custom validation
             # which should also check that determine_next_real_name doesn't fail
@@ -76,7 +76,7 @@ class SchemaFieldInlineOnSchemaForm(forms.ModelForm):
         return instance
 
     # helper method for real_name presentation
-    def determine_next_real_name(field_type):
+    def determine_next_real_name(self, field_type):
         in_use = 0
         instance = super(forms.ModelForm, self).save(commit)
         # count how many of this field_type are in use
