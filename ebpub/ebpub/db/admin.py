@@ -66,7 +66,7 @@ class LocationAdmin(OSMModelAdmin):
     # area is populated by a database trigger; normalized_name is set during cleaning.
     readonly_fields = ('area', 'normalized_name')
 
-    # olwidget uses this
+    # Display a map of items on the change list page. (olwidget)
     list_map = ['location']
 
 class SchemaFieldInlineOnSchema(admin.TabularInline):
