@@ -27,7 +27,6 @@ from ebpub.db.models import NewsItem
 from ebpub.db.models import Schema
 from ebpub.db.models import SchemaField
 from ebpub.geoadmin import OSMModelAdmin
-import copy
 
 class AttributeInline(admin.StackedInline):
     # TODO: this badly needs a custom Form that takes into account the
@@ -73,7 +72,9 @@ class SchemaFieldInlineOnSchema(admin.TabularInline):
     model = SchemaField
     form = SchemaFieldInlineOnSchemaForm
     prepopulated_fields = {'name': ('pretty_name',)}
-    fields = ('pretty_name', 'pretty_name_plural', 'name', 'field_type', )
+    readonly_fields = ('real_name',)
+    fields = ('pretty_name', 'pretty_name_plural', 'name', 'field_type', 'real_name')
+    extra = 0
     # probably will end up needing a custom template to add JS to enforce
     # relationships between the booleans
     # django/contrib/admin/templates/admin/edit_inline/tabular.html (or stacked.html)
