@@ -57,37 +57,42 @@ class SchemaFieldInlineOnSchemaForm(forms.ModelForm):
         label="Field Type",
         required=True,
         choices=FIELD_TYPE_CHOICES,
-        initial='text',
+        initial='character',
     )
 
     def save(self, commit=True):
+        # TODO: this should really happen during clean(),
+        # we can't raise ValidationError during save
         instance = super(forms.ModelForm, self).save(commit)
-
         # Transform form field_type back into model real_name
         # find next open real_name to assign to
         if instance.pk is None:
             field_type = self.cleaned_data['field_type']
-            instance.real_name = self.determine_next_real_name(field_type)
+            instance.real_name = self.determine_next_real_name(instance, field_type)
         else:
             # this should move to a form custom validation
-            # which should also check that determine_next_real_name doesn't fail
-            raise "Can't change field_type, would require migrating all previous Attributes"
+            raise forms.ValidationError(
+                "Can't change field_type, would require migrating all previous Attributes")
 
         return instance
 
     # helper method for real_name presentation
-    def determine_next_real_name(self, field_type):
+    def determine_next_real_name(self, instance, field_type):
         in_use = 0
-        instance = super(forms.ModelForm, self).save(commit)
         # count how many of this field_type are in use
         for field in instance.schema.schemafield_set.all():
-            if field.real_name[0:len(field_type)]:
+            if field.real_name[:len(field_type)] == field_type:
                 in_use += 1
         # generate the next real_name for this field_type
-        real_name = "%s%02d" % (field_type, in_use - 1)
-        # check that the field exists (less error-prone than this code knowing
+        real_name = "%s%02d" % (field_type, in_use + 1)
+        if instance.schema.schemafield_set.filter(real_name=real_name).count():
+            raise forms.ValidationError(
+                "There is already a SchemaField with real_name=%r." % real_name)
+            # TODO: could check if there is a lower number available?
+        # Check that the field exists (less error-prone than this code knowing
         # there can be five varchars, two times, four datetimes...)
         if real_name in models.Attribute._meta.get_all_field_names():
             return real_name
         else:
-            return False
+            raise forms.ValidationError(
+                "We can't store any more SchemaFields of type %d" % field_type)
