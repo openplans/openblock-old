@@ -495,14 +495,14 @@ def schema_detail(request, slug):
         return schema_detail_special_report(request, s)
 
     location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
-
     if s.allow_charting:
         # For the date range, the end_date is the last non-future date
         # with at least one NewsItem.
         try:
             end_date = NewsItem.objects.filter(schema__id=s.id, item_date__lte=today()).values_list('item_date', flat=True).order_by('-item_date')[0]
         except IndexError:
-            latest_dates = date_chart = ()
+            latest_dates = ()
+            date_chart = {}
             start_date = end_date = None
         else:
             start_date = end_date - datetime.timedelta(days=constants.NUM_DAYS_AGGREGATE)
@@ -541,12 +541,13 @@ def schema_detail(request, slug):
 
             if ni_totals:  # This runs the query.
                 known_count = reduce(operator.add, (n.total for n in ni_totals))
-                unknown_count = date_chart['total_count'] - known_count
+                total_count = date_chart.get('total_count', 0)
+                unknown_count = max(0, total_count - known_count)
                 location_chartfield_list.append({'location_type': lt, 'locations': ni_totals[:9], 'unknown': unknown_count})
         ni_list = ()
     else:
-
-        latest_dates = schemafield_list = date_chart = lookup_list = location_chartfield_list = ()
+        date_chart = {}
+        latest_dates = schemafield_list = lookup_list = location_chartfield_list = ()
         ni_list = list(NewsItem.objects.filter(schema__id=s.id).order_by('-item_date')[:30])
         populate_schema(ni_list, s)
         populate_attributes_if_needed(ni_list, [s])
