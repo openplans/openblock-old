@@ -98,6 +98,15 @@ Bug fixes
 This is not a complete list; not all bugs fixed in this release were
 ticketed.
 
+ * Fix #172: schema_detail view blows up (TypeError) if there are no
+   NewsItems in the last 30 days, but there is a matching
+   AggregateLocation. (That shouldn't happen, but evidently did with
+   some boston demo schemas; also fixed a related possible off-by-one
+   error that may have been a factor.)
+
+ * Schema filter page: don't say 'You might want to try...' if there's
+   nothing to try.
+
  * Fix bug where scrapers that create timezone-aware datetimes blow up
 
  * Fix errors in bounds checking in location importers, thanks to Bret
@@ -144,7 +153,7 @@ Documentation
  * Fix location of get_or_create_lookup
 
  * Note differences from everyblock
- 
+
 Other
 -----
 
@@ -156,6 +165,8 @@ Other
 
  * ticket #156: Removing lots of clustering code that's totally unused.
 
+ * remove a redundant get_metro_bbox function from
+   ebpub.utils.geodjango;  use get_default_bounds(), does the same thing.
 
 Older Changes
 ==============
