@@ -146,7 +146,10 @@ class TigerImporter(BlockImporter):
             values = dict(zip(fields, map(feature.get, fields)))
             places[fips] = values
         self.filter_city = filter_city and filter_city.upper() or None
-        self.filter_bounds = filter_bounds
+        if hasattr(filter_bounds, 'ogr'):
+            self.filter_bounds = filter_bounds.ogr
+        else:
+            self.filter_bounds = filter_bounds
         self.tlids_with_blocks = set()
 
 
