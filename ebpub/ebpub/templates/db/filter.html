@@ -39,12 +39,15 @@
 			{% endif %}
 		{% else %}
 			<h2>No {{ schema.plural_name }} were found for the given search criteria.</h2>
+            {% if filters.filters_for_display %}
 			<p>You might want to try&hellip;</p>
 			<ul>
 				{% for filter in filters.filters_for_display %}
 				<li><a href="{% filter_url filters -filter.slug %}" rel="nofollow">Removing the “{{ filter.label }}” filter</a></li>
 				{% endfor %}
 			</ul>
+            {% endif %}
+
 		{% endif %}
 		</div> <!-- maintext -->
 
