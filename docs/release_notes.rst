@@ -2,8 +2,9 @@
 OpenBlock 1.0.0 (August 30, 2011)
 ====================================
 
-(This is essentially unchanged from OpenBlock 1.0-beta1, so this is
-just a repeat of the release notes from that version.)
+(This is largely unchanged from OpenBlock 1.0-beta1, so this is
+just a repeat of the release notes from that version, modulo a few
+small bug fixes.)
 
 Upgrade Notes
 -------------
