@@ -37,9 +37,10 @@ cd myblock
 $SUDO $VIRTUAL_ENV/bin/python setup.py develop || exit 1
 echo OK
 
-# echo Creating DB...
-# sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock || exit 1
-# echo OK
+echo Creating DB...
+sudo -u postgres dropdb openblock 2> /dev/null
+sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock || exit 1
+echo OK
 
 echo Syncing DB...
 DJADMIN="$SUDO env DJANGO_SETTINGS_MODULE=myblock.settings $VIRTUAL_ENV/bin/django-admin.py"
