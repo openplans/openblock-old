@@ -59,7 +59,7 @@
 		</ul>
 		{% endif %}
 		{% if empty_date_charts %}
-		<ul>More: {% for chart in empty_date_charts %}
+		<ul>Older: {% for chart in empty_date_charts %}
             <li><a href="{{ chart.schema.url }}">{% map_icon_img chart.schema %}{{ chart.schema.plural_name|capfirst }}</a>
             </li>{% endfor %}
         </ul>
