@@ -61,13 +61,13 @@ will publish a consolidated pip requirements file that will install
 *all* the necessary python packages.  These requirements files will be
 listed for each release at http://openplans.github.com/openblock/ .
 
-For example, the 1.0-beta1 release is at:
-http://openplans.github.com/openblock/requirements/openblock-requirements-1.0-beta1.txt
+For example, the 1.0 release is at:
+http://openplans.github.com/openblock/requirements/openblock-requirements-1.0.0.txt
 and can be installed with this command:
 
 .. code-block:: bash
 
-  $ $VIRTUAL_ENV/bin/pip install -r http://openplans.github.com/openblock/requirements/openblock-requirements-1.0-beta1.txt
+  $ $VIRTUAL_ENV/bin/pip install -r http://openplans.github.com/openblock/requirements/openblock-requirements-1.0.0.txt
 
 If you encounter errors during package installation, please see
 :doc:`common_install_problems`.
