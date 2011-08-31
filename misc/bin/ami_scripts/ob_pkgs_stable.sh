@@ -28,8 +28,7 @@ echo Virtual env is in $VIRTUAL_ENV
 export PIP=$VIRTUAL_ENV/bin/pip
 echo
 
-#export REQ_URL=http://openplans.github.com/openblock/requirements/openblock-requirements-1.0.0.txt
-export REQ_URL=http://slinkp.com/~paul/openblock-requirements-1.0.0.txt
+export REQ_URL=http://openplans.github.com/openblock/requirements/openblock-requirements-1.0.0.txt
 
 echo Installing dependencies from $REQ_URL
 $SUDO $PIP install -r $REQ_URL || exit 1
