@@ -1,0 +1,8 @@
+{% extends "db/newsitem_detail.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+
+
+{% block extracontent %}
+{% if newsitem.newsitemcreator_set.all %}
+Created by {{ newsitem.newsitemcreator_set.all.0.user.first_name }}
+{% endif %}
+{%endblock%}

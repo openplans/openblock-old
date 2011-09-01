@@ -3,8 +3,10 @@ from django.conf import settings
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from ebpub.accounts.models import User
 from ebpub.accounts.utils import login_required
 from ebpub.db.models import Schema, NewsItem, SchemaField, Lookup
+from ebpub.neighbornews.models import NewsItemCreator
 from ebpub.utils.view_utils import eb_render
 from ebpub.neighbornews.forms import NeighborMessageForm, NeighborEventForm
 from ebpub.neighbornews.utils import if_disabled404, NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
@@ -93,6 +95,12 @@ def _create_item(request, schema, form):
             lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
             lookups.add(lu.id)
         item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
+    
+    # add a NewsItemCreator association
+    # un-lazy the User.
+    user = User.objects.get(id=request.user.id)
+    creator = NewsItemCreator(news_item=item, user=user)
+    creator.save()
     
     return item
 

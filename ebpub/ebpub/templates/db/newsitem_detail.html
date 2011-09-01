@@ -82,6 +82,10 @@
 			{% endfor %}
 		{% endblock %}
 	</table>
+
+  {% block extracontent %}
+  {% endblock %}
+
 	
 	<p>Published on <strong>{{ newsitem.pub_date|date:"F j, Y" }}</strong>.</p>
 	
@@ -91,6 +95,7 @@
 		    <li><a href="{{ newsitem.schema.url }}">More {{ newsitem.schema.plural_name }} in {% METRO_NAME %}</a></li>
 		</ul>
 	{% endif %}
+
 	
 	{% block similaritems %}
 		{% if not newsitem.schema.is_special_report %}
