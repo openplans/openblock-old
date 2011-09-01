@@ -811,7 +811,7 @@ class AttributeForTemplate(object):
             elif (isinstance(self.raw_value, list) and self.raw_value
                   and isinstance(self.raw_value[0], Lookup)):
                 self.values = self.raw_values
-            elif self.raw_value == '':
+            elif self.raw_value is None or self.raw_value == '':
                 self.values = []
             elif self.sf.is_many_to_many_lookup():
                 try:
