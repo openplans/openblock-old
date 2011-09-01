@@ -213,6 +213,7 @@
         <a href="#" class="mapit-link">map it</a>
         {% endif %}
         
+        <div class="form-help">{{ field.help_text }}</div>
         <div id="{{field.name}}_error" class="form-error">{{field.errors}}</div>
       </div>
     {% endfor %}

@@ -1091,6 +1091,11 @@ form.neighbornews .form-error {
     color: #ff2020;
 }
 
+form.neighbornews .form-help {
+    font-size: 80%;
+    color: #8f8f8f;
+}
+
 ul.errorlist {
     margin-left: 0;
     list-style-type: none;

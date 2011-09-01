@@ -4,10 +4,11 @@ from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from ebpub.accounts.utils import login_required
-from ebpub.db.models import Schema, NewsItem
+from ebpub.db.models import Schema, NewsItem, SchemaField, Lookup
 from ebpub.utils.view_utils import eb_render
 from ebpub.neighbornews.forms import NeighborMessageForm, NeighborEventForm
 from ebpub.neighbornews.utils import if_disabled404, NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
+import re
 
 @if_disabled404(NEIGHBOR_MESSAGE_SLUG)
 @login_required
@@ -64,7 +65,8 @@ def _create_item(request, schema, form):
 
     # common attributes
     for attr in ('title', 'description', 'location_name', 'url'): 
-        setattr(item, attr, form.cleaned_data[attr])
+        setattr(item, attr, form.cleaned_data[attr])        
+    
     
     # location 
     lon = form.cleaned_data['longitude']
@@ -80,6 +82,32 @@ def _create_item(request, schema, form):
     item.pub_date = datetime.datetime.now()
     item.save()
     
+    # 'categories'
+    cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
+    if len(cats): 
+        cat_field = SchemaField.objects.get(schema=schema, name='categories')
+        lookups = set()
+        for cat in cats:
+            code = _category_code(cat)
+            nice_name = _category_nice_name(cat)
+            lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
+            lookups.add(lu.id)
+        item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
+    
     return item
 
+def _category_code(cat):
+    code = cat
+    code = code.strip()
+    code = code.lower()
+    code = re.sub('\s+', ' ', code)
+    code = re.sub('[^\w]', '-', code)
+    return code
 
+def _category_nice_name(cat):
+    nice = cat
+    nice = nice.strip()
+    nice = re.sub('\s+', ' ', nice)
+    nice = nice.lower()
+    return nice
+    

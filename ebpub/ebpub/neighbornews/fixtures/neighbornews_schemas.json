@@ -17,7 +17,7 @@
       "map_icon_url": "", 
       "importance": 0, 
       "min_date": "2011-08-03", 
-      "allow_charting": false, 
+      "allow_charting": true, 
       "indefinite_article": "a", 
       "is_public": true, 
       "number_in_overview": 5, 
@@ -48,7 +48,7 @@
       "map_icon_url": "", 
       "importance": 0, 
       "min_date": "2011-08-03", 
-      "allow_charting": false, 
+      "allow_charting": true, 
       "indefinite_article": "a", 
       "is_public": true, 
       "number_in_overview": 5, 
@@ -60,6 +60,42 @@
       "can_collapse": false
     }, 
     "model": "db.schema"
+  }, 
+  {
+    "fields": {
+      "is_lookup": true, 
+      "pretty_name_plural": "Categories", 
+      "is_charted": false, 
+      "name": "categories", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar01", 
+      "pretty_name": "Categories", 
+      "is_filter": true, 
+      "display": true, 
+      "schema": [
+        "neighbor-messages"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": true, 
+      "pretty_name_plural": "Categories", 
+      "is_charted": false, 
+      "name": "categories", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "varchar01", 
+      "pretty_name": "Categories", 
+      "is_filter": true, 
+      "display": true, 
+      "schema": [
+        "neighbor-events"
+      ]
+    }, 
+    "model": "db.schemafield"
   }, 
   {
     "fields": {
