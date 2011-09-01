@@ -6,6 +6,8 @@ These instructions will install the software in a similar configuration to
 `the OpenBlock demo site <http://demo.openblockproject.org>`_.  To
 start a custom application instead, please see :doc:`custom`.
 
+(You can skip this if you are :doc:`cloning an OpenBlock AMI <aws>`.)
+
 .. _demo_quickstart:
 
 .. _detailed_demo_instructions:

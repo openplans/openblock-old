@@ -17,7 +17,9 @@ cd $SOURCE_ROOT
 PKGS="ebpub ebdata obadmin obdemo"
 for PKGDIR in $PKGS; do
     cd $SOURCE_ROOT/$PKGDIR
-    sed -i -e "s/VERSION=.*\$/VERSION=\"${VERSION}\"/" setup.py
+    if [ ! grep -q "no autoversion" setup.py ]; then
+        sed -i -e "s/VERSION=.*\$/VERSION=\"${VERSION}\"/" setup.py
+    fi
     python setup.py sdist > /dev/null || exit 1
     FULLNAME=`python setup.py --fullname`
     echo "Full package name: $FULLNAME"

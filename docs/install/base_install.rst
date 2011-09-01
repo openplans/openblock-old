@@ -5,6 +5,8 @@ Installing the Openblock Software
 These steps assume you have fulfilled the requirements and followed the instructions 
 in the section :doc:`setup`.
 
+(You can skip this if you are :doc:`cloning an OpenBlock AMI <aws>`.)
+
 Creating a virtualenv
 =====================
 
