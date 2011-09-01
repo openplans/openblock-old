@@ -102,7 +102,8 @@ class LocalNewsScraper(object):
                 point = entry.get('georss_point') or entry.get('point')
                 x, y = None, None
                 if point:
-                    x, y = point.split(' ')
+                    # GeoRSS puts latitude (Y) first.
+                    y, x = point.split(' ')
                 else:
                     if item.location_name:
                         text = item.location_name
@@ -117,6 +118,9 @@ class LocalNewsScraper(object):
                             point = result['point']
                             logger.debug("internally geocoded %r" % addr)
                             x, y = point.x, point.y
+                            if not item.location_name:
+                                item.location_name = result['address']
+                            item.block = result['block']
                             break
                         except GeocodingException:
                             logger.debug("Geocoding exception on %r:" % text)
