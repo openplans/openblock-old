@@ -86,8 +86,9 @@
         if (minute < 10) printMinute = '0' + minute;
 
         if (options.isoTime) {
-            var printHour = hour
-            if (printHour < 10) printHour = '0' + hour;
+            var printHour = hour;
+            if (printHour < 10) 
+                printHour = '0' + hour;
             return printHour + ':' + printMinute;
         } else {
             var printHour = hour % 12;
@@ -108,7 +109,7 @@
         var match = match = /(\d+)\s*[:\-\.,]\s*(\d+)\s*(am|pm)?/i.exec(text);
         if (match && match.length >= 3) {
             var hour = Number(match[1]);
-            var minute = Number(match[2])
+            var minute = Number(match[2]);
             if (hour == 12 && match[3]) hour -= 12;
             if (match[3] && match[3].toLowerCase() == 'pm') hour += 12;
             return {
