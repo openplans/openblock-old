@@ -7,6 +7,14 @@ OpenBlock consists of a number of packages, summarized below:
 Main Code Packages
 ====================
 
+.. toctree::
+   :maxdepth: 1
+
+   obdemo
+   ebpub
+   ebdata
+   obadmin
+
 obdemo
 ------
 
@@ -32,8 +40,8 @@ ebdata
 
 Code to help write scripts that crawl/parse/import data into ebpub.
 
-You *will* need to write such scripts to get OpenBlock to do anything
-useful; that is how you feed local news into the system.
+You will probably  need to write such scripts to get OpenBlock to do anything
+useful; that is the main way you feed local news into the system.
 
 For more information, see :doc:`ebdata`.
 
@@ -52,14 +60,3 @@ EveryBlock.com team in 2009, but not actively used or maintained by
 the OpenBlock core developers.
 They have been moved out of OpenBlock itself and into
 https://github.com/openplans/openblock-extras
-
-Contents
-========
-
-.. toctree::
-   :maxdepth: 1
-
-   obdemo
-   ebpub
-   ebdata
-   obadmin

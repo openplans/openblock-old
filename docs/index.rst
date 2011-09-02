@@ -110,17 +110,7 @@ the data storage aspect of :doc:`packages/ebpub`, watch the video "Behind the
 scenes of EveryBlock.com" here: http://blip.tv/file/1957362
 
 
-Contents
-========
-
-.. toctree::
-   :maxdepth: 1
-
-   install/index
-   main/index
-   packages/index
-   release_notes
-   history
+.. include:: contents.rst
 
 Indices and tables
 ==================

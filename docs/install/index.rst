@@ -2,10 +2,6 @@
 Installation and Setup
 =================================
 
-
-Contents
-========
-
 .. toctree::
    :maxdepth: 2
 

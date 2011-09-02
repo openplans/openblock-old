@@ -1,5 +1,7 @@
-OpenBlock 1.0.1 (Unreleased)
+OpenBlock 1.0.1 Release Notes
 ====================================
+
+Released DATE HERE
 
 This is a minor bugfix release, and is mostly identical to 1.0.0.
 
@@ -15,7 +17,9 @@ Documentation
 
  * Added docs for cloning an EC2 instance from our Amazon AMI.
 
+ * Changed docs theme for easier navigation.
+
 Older Changes
-==============
+-------------
 
 See :doc:`history`.

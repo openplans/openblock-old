@@ -2,13 +2,14 @@
 Installing OpenBlock on Amazon AWS
 =========================================
 
-*Warning, this is still somewhat experimental.*
-
 This is the fastest way to try out OpenBlock.
 You can launch an instance cloned from our AMI and start
 feeding in data in minutes.
 
-*Warning, this is still somewhat experimental.*
+.. admonition:: Warning, experimental!
+
+  Our AMI is still new and hasn't been widely tested. Please report
+  any issue to the `mailing list <http://groups.google.com/group/ebcode/>`_.
 
 Get an Account
 ==============
@@ -24,8 +25,15 @@ In the `AWS EC2 management console <https://console.aws.amazon.com/ec2/>`_,
 click "Launch Instance". Click "Community AMIs", and in the search box, type in
 "ami-e59b588c".  Select the OpenBlock AMI that comes up, then continue
 through the wizard until your instance is launched. You can leave all
-options at their default values unless you know what you're doing.
+options at their default values (except the security group)
+unless you know what you're doing.
 
+.. admonition:: Security groups
+
+  Note that the default security group has *all* ports closed.  You
+  can modify your default security group, or create a new one; either
+  way you *must* add the SSH and HTTP rules to open ports 22 and 80.
+  Otherwise you won't be able to connect to your new instance at all.
 
 As part of the setup, you'll be prompted to create a key pair.  It's
 very important that you save the PEM file that it prompts you to
