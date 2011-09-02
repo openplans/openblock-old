@@ -59,9 +59,12 @@ will be a domain name such as
 "ec2-50-17-54-xyz.compute-1.amazonaws.com".  Paste or type that into
 your browser, and you should see the OpenBlock front page.
 
-(Until you finish configuration and data loading, it'll have some
+If the connection times out, make sure your security group allows
+connecting to port 80.
+
+Until you finish configuration and data loading, your site will have some
 boring defaults, such as the title "OpenBlock: Your City", and there
-will be no locations and no news.)
+will be no locations and no news.
 
 
 What You Have
