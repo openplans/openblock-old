@@ -11,6 +11,8 @@ You can do this any way you like; `cron
 But there is a daemon that comes with OpenBlock which is tailor-made
 for this purpose.
 
+.. _updaterdaemon:
+
 Updaterdaemon Configuration
 ===========================
 

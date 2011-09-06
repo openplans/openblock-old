@@ -170,7 +170,7 @@ window.onload = function() {
 	{% ifnotequal place.slug "unknown" %}
 		<h2>Sign up for:</h2>
 		<ul>
-			<li><a class="email" href="{{ place.alert_url }}">E-mail alerts</a></li>
+			{% if alerts_installed %}<li><a class="email" href="{{ place.alert_url }}">E-mail alerts</a></li>{% endif %}
 			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
 		</ul>
 	{% endifnotequal %}

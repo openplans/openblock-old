@@ -286,3 +286,28 @@ the dictionaries.
 Most people will probably not be doing that. This feature serves the
 needs of `everyblock.com <http://everyblock.com>`_, which runs
 separate sites for many cities across the USA.
+
+.. _email-config:
+
+Email
+======
+
+OpenBlock uses email for two things: account confirmation, and
+:doc:`alerts <../main/alerts>` to which users can subscribe in order
+to get notified when news happens in their neighborhood or other area
+of interest.
+
+OpenBlock is configured like ``any other Django application``.
+In your ``settings.py``, you'll want to set these::
+
+  EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+  EMAIL_HOST='localhost'
+  EMAIL_PORT='25'
+  # If your email host needs authentication, set these.
+  #EMAIL_HOST_USER=''
+  #EMAIL_HOST_PASSWORD=''
+  #EMAIL_USE_TLS=False  # For secure SMTP connections.
+
+(If you don't have a suitable SMTP server, you may be able to use an
+appropriate account on Gmail or another public mail service.
+See for example `this blog post <http://www.mangoorange.com/2008/09/15/sending-email-via-gmail-in-django/>`_).
