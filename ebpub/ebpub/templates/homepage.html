@@ -33,7 +33,7 @@
 
 		<div id="intro-explore">
 			<h2>Locations</h2>
-			<ul>
+			<ul class="location-type-list">
 				{% for location_type in location_type_list %}
 					<li><a href="{{ location_type.url }}"><strong class="number">{{ location_type.count|intcomma }}</strong> {{ location_type.plural_name|capfirst }}</a></li>
 				{% endfor %}

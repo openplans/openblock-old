@@ -120,6 +120,42 @@
   {
     "fields": {
       "is_lookup": false, 
+      "pretty_name_plural": "Image URLs", 
+      "is_charted": false, 
+      "name": "image_url", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "text01", 
+      "pretty_name": "Image URL", 
+      "is_filter": false, 
+      "display": false, 
+      "schema": [
+        "neighbor-events"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
+      "pretty_name_plural": "Image URLs", 
+      "is_charted": false, 
+      "name": "image_url", 
+      "display_order": 10, 
+      "is_searchable": false, 
+      "real_name": "text01", 
+      "pretty_name": "Image URL", 
+      "is_filter": false, 
+      "display": false, 
+      "schema": [
+        "neighbor-messages"
+      ]
+    }, 
+    "model": "db.schemafield"
+  }, 
+  {
+    "fields": {
+      "is_lookup": false, 
       "pretty_name_plural": "Start Times", 
       "is_charted": false, 
       "name": "start_time", 

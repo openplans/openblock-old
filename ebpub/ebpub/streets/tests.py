@@ -50,7 +50,7 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,,House of D, D House")
         csv_file.name = 'test.csv'
         response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
@@ -86,7 +86,7 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,,House of D, D House")
         csv_file.name = 'test.csv'
         response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
@@ -115,7 +115,7 @@ class TestPlaces(TestCase):
         assert 'HOUSE OF D' in synonyms
 
         # now change one synonym of each
-        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Ole Doughy, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,Dunky H, D House")
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,,Ole Doughy, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,,Dunky H, D House")
         csv_file.name = 'test.csv'
         response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
@@ -269,7 +269,8 @@ class TestPlaces(TestCase):
                       address='100 Bubble Street', location=geos.Point(1.0, 2.0))
         place.save()
         place = Place(pretty_name='Donut Sanctuary', place_type=place_type,
-                      address='101 Bubble Street', location=geos.Point(3.0, 4.0))
+                      address='101 Bubble Street', location=geos.Point(3.0, 4.0),
+                      url='http://www.example.org/bs')
         place.save()
 
         
@@ -280,15 +281,17 @@ class TestPlaces(TestCase):
         
         count = 0
         for row in rows:
-            assert len(row) == 4
+            assert len(row) == 5
             if row[0] == 'Donut Palace':
                 assert row[1] == '100 Bubble Street'
                 assert row[2] == '2.0'
-                assert row[3] == '1.0'       
+                assert row[3] == '1.0'
+                assert row[4] == ''       
             elif row[0] == 'Donut Sanctuary':
                 assert row[1] == '101 Bubble Street'
                 assert row[2] == '4.0'
                 assert row[3] == '3.0'
+                assert row[4] == 'http://www.example.org/bs'
             else: 
                 assert 0, 'Unexpected Place!'       
             count += 1
@@ -313,7 +316,8 @@ class TestPlaces(TestCase):
         
     
         place = Place(pretty_name='Donut Sanctuary', place_type=place_type,
-                      address='101 Bubble Street', location=geos.Point(3.0, 4.0))
+                      address='101 Bubble Street', location=geos.Point(3.0, 4.0),
+                      url='http://www.example.org/bs')
         place.save()
         ps = PlaceSynonym(pretty_name='Sancy D', place=place)
         ps.save()
@@ -327,18 +331,20 @@ class TestPlaces(TestCase):
         
         count = 0
         for row in rows:
-            assert len(row) == 6
-            synonyms = set(row[4:])
+            assert len(row) == 7
+            synonyms = set(row[5:])
             if row[0] == 'Donut Palace':
                 assert row[1] == '100 Bubble Street'
                 assert row[2] == '2.0'
                 assert row[3] == '1.0'
+                assert row[4] == ''
                 assert 'Donut Hole' in synonyms
                 assert 'Donut Pally' in synonyms
             elif row[0] == 'Donut Sanctuary':
                 assert row[1] == '101 Bubble Street'
                 assert row[2] == '4.0'
                 assert row[3] == '3.0'
+                assert row[4] == 'http://www.example.org/bs'
                 assert 'Sancy D' in synonyms
                 assert 'D Sanc' in synonyms
             else: 
@@ -355,7 +361,7 @@ class TestPlaces(TestCase):
         assert Place.objects.all().count() == 0
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
-        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nFlapper Jacks,,,,\nDonut House,124 Fakey St.,1.001,2.001\nSoup Sacks,,,")
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0\nFlapper Jacks,,,,\nDonut House,124 Fakey St.,1.001,2.001,http://www.example.org/bs\nSoup Sacks,,,")
         csv_file.name = 'test.csv'
         response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
@@ -371,6 +377,7 @@ class TestPlaces(TestCase):
         assert place.address == '124 Fakey St.'
         assert place.location.x == 2.001
         assert place.location.y == 1.001
+        assert place.url == 'http://www.example.org/bs'
 
         response = self.client.post(self.export_url, {'place_type': place.place_type.id})
         assert response.status_code == 200
@@ -394,6 +401,7 @@ class TestPlaces(TestCase):
         assert place.address == '124 Fakey St.'
         assert place.location.x == 2.001
         assert place.location.y == 1.001
+        assert place.url == 'http://www.example.org/bs'
         
         
 
@@ -407,7 +415,7 @@ class TestPlaces(TestCase):
         assert test_client_login(self.client, username='admin@example.org', password='123') == True
 
 
-        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,House of D, D House")
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,http://www.example.org/bs,House of D, D House")
         csv_file.name = 'test.csv'
         response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
         assert response.status_code == 200
@@ -469,7 +477,153 @@ class TestPlaces(TestCase):
         assert len(synonyms) == 2
         assert 'D HOUSE' in synonyms
         assert 'HOUSE OF D' in synonyms
+
+
+    def test_import_same_name(self):
+        """
+        tests that the importer can handle places with the same name.
+        """
+
+        assert Place.objects.all().count() == 0
+        assert test_client_login(self.client, username='admin@example.org', password='123') == True
+
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,http://www.example.org/bs/0\nDonut Mountain,99 Fakley St.,99.0,22.0,http://www.example.org/bs/1")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
+        assert response.status_code == 200
+
+        assert Place.objects.all().count() == 2
+
+        locs = []
+        for place in Place.objects.filter(normalized_name='DONUT MOUNTAIN').all():
+            locs.append((place.address, place.location.x, place.location.y, place.url))
+
+        assert ('123 Fakey St.', 2.0, 1.0, 'http://www.example.org/bs/0') in locs
+        assert ('99 Fakley St.', 22.0, 99.0, 'http://www.example.org/bs/1') in locs
         
+        
+
+    def test_import_same_name_synonym(self):
+        """
+        tests that the importer can handle places with the same name.
+        and maintain separate synonym lists.
+        """
+
+        assert Place.objects.all().count() == 0
+        assert test_client_login(self.client, username='admin@example.org', password='123') == True
+
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,http://www.example.org/bs/0,123 D House, Mount D\nDonut Mountain,99 Fakley St.,99.0,22.0,http://www.example.org/bs/1,99 D House, Mount D")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
+        assert response.status_code == 200
+
+        assert Place.objects.all().count() == 2
+
+        locs = []
+        for place in Place.objects.filter(normalized_name='DONUT MOUNTAIN').all():
+            synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+            ll = [place.address, place.location.x, place.location.y, place.url]
+            ll.extend(sorted(synonyms))
+            locs.append(tuple(ll))
+
+        assert ('123 Fakey St.', 2.0, 1.0, 'http://www.example.org/bs/0', '123 D HOUSE', 'MOUNT D') in locs
+        assert ('99 Fakley St.', 22.0, 99.0, 'http://www.example.org/bs/1', '99 D HOUSE', 'MOUNT D') in locs
+
+
+
+    def test_import_update_synonyms(self):
+        """
+        tests that the results of an export can be re-imported'
+        to modify things, and no duplicates are formed.
+        """
+
+        assert Place.objects.all().count() == 0
+        assert test_client_login(self.client, username='admin@example.org', password='123') == True
+
+        csv_file = StringIO("Donut Mountain,123 Fakey St.,1.0,2.0,,Big Dough, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,http://www.example.org/bs,House of D, D House")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
+        assert response.status_code == 200
+
+        assert Place.objects.all().count() == 2
+
+        place = Place.objects.get(normalized_name='DONUT MOUNTAIN')
+        assert place.address == '123 Fakey St.'
+        assert place.location.x == 2.0
+        assert place.location.y == 1.0
+
+        synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+        assert len(synonyms) == 2
+        assert 'BIG DOUGH' in synonyms
+        assert 'DOUGH MO' in synonyms
+
+
+        place = Place.objects.get(normalized_name='DONUT HOUSE')
+        assert place.address == '124 Fakey St.'
+        assert place.location.x == 2.001
+        assert place.location.y == 1.001
+
+        synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+        assert len(synonyms) == 2
+        assert 'D HOUSE' in synonyms
+        assert 'HOUSE OF D' in synonyms
+
+        # re-import
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
+        assert response.status_code == 200
+
+        assert Place.objects.all().count() == 2
+
+        place = Place.objects.get(normalized_name='DONUT MOUNTAIN')
+        assert place.address == '123 Fakey St.'
+        assert place.location.x == 2.0
+        assert place.location.y == 1.0
+
+        synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+        assert len(synonyms) == 2
+        assert 'BIG DOUGH' in synonyms
+        assert 'DOUGH MO' in synonyms
+
+
+        place = Place.objects.get(normalized_name='DONUT HOUSE')
+        assert place.address == '124 Fakey St.'
+        assert place.location.x == 2.001
+        assert place.location.y == 1.001
+
+        synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+        assert len(synonyms) == 2
+        assert 'D HOUSE' in synonyms
+        assert 'HOUSE OF D' in synonyms
+
+        # re-import change an address slightly, change synonyms
+        csv_file = StringIO("Donut Mountain,121 Fakey St.,1.0,2.0,,Big Doughy, Dough Mo\nDonut House,124 Fakey St.,1.001,2.001,http://www.example.org/bs, D House,Meye Donuts")
+        csv_file.name = 'test.csv'
+        response = self.client.post(self.import_url, {'place_type': '1', 'csv_file': csv_file})
+        assert response.status_code == 200
+
+        assert Place.objects.all().count() == 2
+
+        place = Place.objects.get(normalized_name='DONUT MOUNTAIN')
+        assert place.address == '121 Fakey St.'
+        assert place.location.x == 2.0
+        assert place.location.y == 1.0
+
+        synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+        assert len(synonyms) == 2
+        assert 'BIG DOUGHY' in synonyms
+        assert 'DOUGH MO' in synonyms
+
+
+        place = Place.objects.get(normalized_name='DONUT HOUSE')
+        assert place.address == '124 Fakey St.'
+        assert place.location.x == 2.001
+        assert place.location.y == 1.001
+
+        synonyms = set([x.normalized_name for x in PlaceSynonym.objects.filter(place=place).all()])
+        assert len(synonyms) == 2
+        assert 'D HOUSE' in synonyms
+        assert 'HOUSE OF D' not in synonyms
+        assert 'MEYE DONUTS' in synonyms
         
 
 

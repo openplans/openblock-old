@@ -21,6 +21,7 @@ from django.conf.urls.defaults import patterns, url
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.gis import geos
+from django.contrib.gis.measure import D
 from django.core.exceptions import PermissionDenied
 from django import forms, template
 from django.http import HttpResponse
@@ -138,12 +139,12 @@ class PlaceAdmin(OSMModelAdmin):
             return self._show_export_csv_form(request, export_form)
             
         # ... do export csv
-        # fields: pretty_name, address, lat, lon, <synonym>, <synonym>, ...
+        # fields: pretty_name, address, lat, lon, url, <synonym>, <synonym>, ...
         place_type = export_form.cleaned_data['place_type']
         data = StringIO()
         serializer = csv.writer(data)
         for place in Place.objects.filter(place_type=place_type).all():
-            row = [place.pretty_name, place.address or '', place.location.y, place.location.x]
+            row = [place.pretty_name, place.address or '', place.location.y, place.location.x, place.url or '']
             for synonym in PlaceSynonym.objects.filter(place=place).all():
                 row.append(synonym.pretty_name)
             serializer.writerow(row)
@@ -167,7 +168,7 @@ class PlaceAdmin(OSMModelAdmin):
             return self._show_import_csv_form(request, import_form)
 
         # csv fields: 
-        # pretty_name, address, lat, lon, <synonym>, <synonym>, ...
+        # pretty_name, address, lat, lon, url, <synonym>, <synonym>, ...
 
         context = dict(
             errors = [],
@@ -194,6 +195,7 @@ class PlaceAdmin(OSMModelAdmin):
                 
                 synonyms = []
                 point = None
+                place_url = ''
 
                 pretty_name, address = [x.strip() for x in row[0:2]]
                 if pretty_name ==  '': 
@@ -208,13 +210,15 @@ class PlaceAdmin(OSMModelAdmin):
                             lat = float(lat.strip())
                             lon = float(lon.strip())
                             point = geos.Point(lon, lat)
-                            synonyms = [x.strip() for x in row[4:]]
+                            if len(row) > 4:
+                                place_url = row[4]
+                                synonyms = [x.strip() for x in row[5:]]
                     except ValueError: 
                         message = 'Line %d "%s": Invalid lat, lon' % (rows.line_num, pretty_name)
                         context['errors'].append(message)
                         continue
 
-
+                
                 if point is None:
                     if address == '':
                         message = 'Line %d "%s": Address and lat,lon are both empty.' % (rows.line_num, pretty_name)
@@ -236,7 +240,7 @@ class PlaceAdmin(OSMModelAdmin):
                         continue
                 
                 # phew!
-                validated_rows.append([pretty_name, address, point, synonyms])
+                validated_rows.append([pretty_name, address, point, place_url, synonyms])
 
         except csv.Error, e:
             message = "Stopped on line %d: %s" % (rows.line_num, e)
@@ -249,11 +253,12 @@ class PlaceAdmin(OSMModelAdmin):
         
         
         # wonderful, now do something...
-        for pretty_name, address, point, synonyms in validated_rows: 
+        for pretty_name, address, point, place_url, synonyms in validated_rows: 
             normalized_name = normalize(pretty_name)
             
             try: 
-                place = Place.objects.get(normalized_name=normalized_name)
+                place = Place.objects.get(normalized_name=normalized_name,
+                                          location__distance_lte=(point, D(m=1)))
                 created = False
             except Place.DoesNotExist:
                 place = Place(normalized_name=normalized_name)
@@ -263,6 +268,7 @@ class PlaceAdmin(OSMModelAdmin):
                 place.pretty_name = pretty_name
                 place.address = address
                 place.location = point
+                place.url = place_url
                 place.place_type = place_type
                 place.save()
 
