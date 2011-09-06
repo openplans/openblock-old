@@ -50,8 +50,8 @@
             <h3>{{ _('On This Page') }}</h3>
             {{ toc }}
             <br/>
-            <h3>Chapters</h3>
-            {{ toctree() }}
+            <h3>Contents</h3>
+            {{ toctree(maxdepth=2) }}
             <br/>
             <h4><a href="{{ pathto('contents') }}">Full Table of Contents</a></h4>
           {%- endblock %}
