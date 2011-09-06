@@ -45,5 +45,5 @@ def map_context(request):
             'MAP_MEDIA_HTML': _get_map_media,
             'MAP_CUSTOM_BASE_LAYERS': _get_extra_layers,
             'MAP_BASELAYER_TYPE': settings.MAP_BASELAYER_TYPE,
-            'alerts_installed': 'ebpub.alerts' not in settings.INSTALLED_APPS,
+            'alerts_installed': 'ebpub.alerts' in settings.INSTALLED_APPS,
             }
