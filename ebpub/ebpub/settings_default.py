@@ -192,6 +192,14 @@ EB_TODAY_OVERRIDE = None
 # This is used as a "From:" in e-mails sent to users.
 required_settings.append('GENERIC_EMAIL_SENDER')
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST='localhost'
+EMAIL_PORT='25'
+# Need authentication to send mail? Set these.
+#EMAIL_HOST_USER=''
+#EMAIL_HOST_PASSWORD=''
+#EMAIL_USE_TLS=False  # For secure SMTP connections.
+
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
 

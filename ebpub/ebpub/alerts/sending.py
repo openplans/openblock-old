@@ -17,7 +17,7 @@
 #
 
 from django.conf import settings
-from django.core.mail import SMTPConnection, EmailMultiAlternatives
+from django.core.mail import get_connection, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import NewsItem
@@ -83,11 +83,15 @@ def email_for_subscription(alert, start_date, frequency):
     text, html = email_text_for_place(alert, place, place_name, place_url, ni_list, start_date, frequency)
     return place_name, text, html
 
-def send_all(frequency):
+def send_all(frequency, verbose=False):
     """
-    Sends an e-mail to all subscribers in the system with data with the given frequency.
+    Sends an e-mail to all alert subscribers in the system with data
+    with the given frequency (in days).
+
+    Note that it does not keep track of already-sent messages, so take
+    care not to call send_all(frequency) more often than ``frequency`` days.
     """
-    conn = SMTPConnection() # Use default settings.
+    conn = get_connection() # Use default settings.
     count = 0
     start_date = datetime.date.today() - datetime.timedelta(days=frequency)
     for alert in EmailAlert.active_objects.filter(frequency=frequency):
@@ -100,4 +104,35 @@ def send_all(frequency):
             [alert.user.email], connection=conn)
         message.attach_alternative(html_content, 'text/html')
         message.send()
+        if verbose:
+            print "Sent to %s" % alert.user.email
         count += 1
+    return count
+
+def main(argv=None):
+    if argv is None:
+        import sys
+        argv = sys.argv[1:]
+    from optparse import OptionParser, OptionValueError
+    freq_choices = {'daily': 1, 'weekly': 7}
+    usage = """usage: %prog [options]\nSends OpenBlock email alerts.
+
+Warning, the system does not keep track of which alerts you've already sent.
+Eg. you should run this script with --frequency='daily' exactly once per day,
+NOT more, or you will send duplicate email.
+"""
+    optparser = OptionParser(usage=usage)
+    optparser.add_option('-f', '--frequency', type="choice",
+                         choices=freq_choices.keys(),
+                         help='Which email alerts to send (choices: %s)' % ', '.join(freq_choices.keys()))
+    optparser.add_option('-v', '--verbose', action='store_true')
+    opts, args = optparser.parse_args(argv)
+    try:
+        frequency = freq_choices[opts.frequency]
+    except KeyError:
+        sys.stderr.write("Error: You must choose a valid frequency.\n\n")
+        optparser.print_help()
+        return 1
+    count = send_all(frequency, opts.verbose)
+    print "Sent %d messages for %s subscriptions" % (count, opts.frequency)
+

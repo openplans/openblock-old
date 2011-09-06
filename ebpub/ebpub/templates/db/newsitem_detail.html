@@ -86,18 +86,8 @@
   {% block extracontent %}
   {% endblock %}
 
-	
-	<p>Published on <strong>{{ newsitem.pub_date|date:"F j, Y" }}</strong>.</p>
-	
-	{% if not newsitem.schema.is_special_report %}
-		<ul class="inlinelist">
-		    <li><a href="{{ newsitem.schema.url }}about/">What this information means and where it comes from</a></li>
-		    <li><a href="{{ newsitem.schema.url }}">More {{ newsitem.schema.plural_name }} in {% METRO_NAME %}</a></li>
-		</ul>
-	{% endif %}
+	<p>Retrieved on <strong>{{ newsitem.pub_date|date:"F j, Y" }}</strong>.</p>
 
-	
-	
 	{% block item_comments %}
 	  {% if newsitem.schema.allow_comments %}
 	  {% get_comment_count for newsitem as comment_count %} 
@@ -145,6 +135,7 @@
 	  {% endif %}
 	{% endblock %}
 
+
 	{% block similaritems %}
 		{% if not newsitem.schema.is_special_report %}
 			{% if locations_within %}
@@ -159,6 +150,24 @@
 		{% endif %}
 	{% endblock %}
 
+
+	<h2>About {{ schema.plural_name }}...</h2>
+	<ul class="inlinelist">
+	  {% if newsitem.schema.summary.strip %}
+	  <li>Summary: {{ newsitem.schema.summary|safe|linebreaks }}</li>
+	  {% endif %}
+	  {% if newsitem.schema.source.strip %}
+	  {% with newsitem.schema.source.splitlines as sources %}
+		<li>Source{{sources|pluralize}}:
+		{% for source in sources %}
+		   {% if source.strip %}
+		   <a href="{{ source.strip|safe }}">{{source}}
+		   </a>
+		   {% endif %}
+		{% endfor %}
+	  {% endwith %}
+	{% endif %}
+	</ul>
 
 </div><!--/ #content-->
 {% endblock %}

@@ -32,7 +32,10 @@ Required variables: nearby_locations, place, is_block
 	<!-- block subscribe_links -->
     {% block subscribe_links %}
 	<div class="subscribe-links">
-		<p>Stay up to date: <a href="{{ place.url }}feeds/">Custom RSS feeds</a> <a href="{{ place.alert_url }}">E-mail alerts</a></p>
+		<p>Stay up to date:
+		  <a href="{{ place.url }}feeds/">Custom RSS feeds</a>
+		  {% if alerts_installed %}<a href="{{ place.alert_url }}">E-mail alerts</a>{% endif %}
+		</p>
 	</div>
     {% endblock %}
 	<!-- end block subscribe_links -->

@@ -79,6 +79,7 @@ setup(
     include_package_data=True,
     entry_points={
         'console_scripts': [
+            'send_alerts = ebpub.alerts.sending:main',
             'activate_schema = ebpub.db.bin.activate_schema:main',
             'add_location = ebpub.db.bin.add_location:main',
             'alphabetize_locations = ebpub.db.bin.alphabetize_locations:main',

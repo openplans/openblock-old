@@ -149,6 +149,18 @@ before you can see your changes take effect on your site:
 
 (TODO, check if I enabled the "touch wsgi file" hack)
 
+.. admonition:: Warning about email!
+
+  OpenBlock uses outgoing email for two features: account
+  registration, and :doc:`email alert subscriptions <../main/alerts>`.
+  **You can't really send email from an EC2 host.**
+  Due to spam concerns, Amazon strictly limits the amount of email you
+  can send, and many ISPs block email from EC2 anyway.
+  The solution is to use another email server to send your outgoing
+  email. If you don't have an SMTP server available, you may be able to use
+  a gmail account or similar; for example, see `this blog post <http://www.mangoorange.com/2008/09/15/sending-email-via-gmail-in-django/>`_.
+
+
 Make an Admin User
 --------------------
 

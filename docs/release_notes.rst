@@ -7,6 +7,12 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+* Email alerts can now be sent via a command-line script. (related to
+  ticket #65). Includes docs for how to set it up with cron.
+
+* Email alert signup can be disabled by removing 'ebpub.alerts' from
+  settings.INSTALLED_APPS. (refs ticket #65).
+
 * Flickr scraper (ticket #26).
   It's at ebdata/scrapers/general/flickr/flickr_retrieval.py
   and the associated schema can be loaded like so:

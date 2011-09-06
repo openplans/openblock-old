@@ -14,6 +14,7 @@ Contents
    schemas
    scraper_tutorial
    running_scrapers
+   alerts
    api
    widgets
    deployment
