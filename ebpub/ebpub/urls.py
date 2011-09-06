@@ -127,7 +127,6 @@ else:
 urlpatterns += patterns(
     '',
     url(r'^([-\w]{4,32})/$', views.schema_detail, name='ebpub-schema-detail'),
-    url(r'^([-\w]{4,32})/about/$', views.schema_about, name='ebpub-schema-about'),
     (r'^([-\w]{4,32})/search/$', views.search),
     (r'^([-\w]{4,32})/petition/$', petition_views.form_view, {'is_schema': True}),
     (r'^([-\w]{4,32})/petition/thanks/$', petition_views.form_thanks, {'is_schema': True}),

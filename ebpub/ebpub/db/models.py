@@ -168,10 +168,10 @@ class Schema(models.Model):
     short_description = models.TextField(blank=True, default='')
     summary = models.TextField(blank=True, default='')
     source = models.TextField(blank=True, default='',
-                              help_text='Where this information came from, eg. a URL.')
+                              help_text='Where this information came from, as one or more URLs, one per line.')
     grab_bag_headline = models.CharField(max_length=128, blank=True, default='')
     grab_bag = models.TextField(blank=True, default='')  # TODO: what does this field mean?
-    short_source = models.CharField(max_length=128, blank=True, default='')
+    short_source = models.CharField(max_length=128, blank=True, default='One-line description of where this information came from.')
     update_frequency = models.CharField(max_length=64, blank=True, default='',
                                         choices=FREQUENCY_CHOICES)
     intro = models.TextField(blank=True, default='')

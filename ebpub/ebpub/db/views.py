@@ -605,12 +605,6 @@ def schema_detail_special_report(request, schema):
         'bodyid': schema.slug,
     })
 
-def schema_about(request, slug):
-    s = get_object_or_404(get_schema_manager(request), slug=slug)
-    context = {'schema': s, 'bodyid': slug, 'bodyclass': 'schema-about',}
-    context['breadcrumbs'] = breadcrumbs.schema_about(context)
-    return eb_render(request, 'db/schema_about.html', context)
-
 
 def schema_filter(request, slug, args_from_url):
     """
