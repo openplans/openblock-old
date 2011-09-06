@@ -1,7 +1,15 @@
-{% extends "!layout.html" %}
-{% set rellinks = rellinks + [('contents', 'Contents', 'C', 'Contents')] %}
+{#
+    agogo/layout.html forked for openblock
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-<!-- overriding the whole header because agogo doesn't make it quite granular enough for me. -->
+    Sphinx layout template for the agogo theme, originally written
+    by Andi Albrecht.
+
+    :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+#}
+{% extends "basic/layout.html" %}
+{% set rellinks = rellinks + [('contents', 'Full Table of Contents', 'C', 'Contents')] %}
 
 {% block header %}
     <div class="header-wrapper">
@@ -17,23 +25,77 @@
         <div class="rel">
           {%- for rellink in rellinks|reverse %}
           <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+             style="text-transform: capitalize; letter-spacing: 0; font-size: 0.9em"
              {{ accesskey(rellink[2]) }}>
-	       {% if rellink[3] in ('next', 'previous') %}{{rellink[3]}} : {{rellink[1]|striptags|truncate(length=24)|e }}</a>
-               {% else %}{{ rellink[3] }}</a>
-	       {% endif %}
-          {%- if not loop.last %}{{ reldelim2 }}{% endif %}
+              {% if rellink[3] in ('next', 'previous') %}{{rellink[3]}} : {{rellink[1]|striptags|truncate(length=30)|e }}</a>
+              {% else %}{{ rellink[3] }}</a>
+              {% endif %}
+              {%- if not loop.last %}{{ reldelim2 }}{% endif %}
           {%- endfor %}
         </div>
        </div>
     </div>
 {% endblock %}
 
-{% block sidebartoc %}
-  <h3>{{ _('This Page') }}</h3>
-  {{ toc }}
-  <br />
-  <h3>{{ _('Chapters') }}</h3>
-  {{ toctree(collapse=false, maxdepth=1) }}
-  <br />
-  <h4><a href="{{ pathto('contents') }}">Full Table of Contents</a></h4>
+{% block content %}
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+          {%- block document %}
+            {{ super() }}
+          {%- endblock %}
+        </div>
+        <div class="sidebar">
+          {%- block sidebartoc %}
+            <h3>{{ _('On This Page') }}</h3>
+            {{ toc }}
+            <br/>
+            <h3>Chapters</h3>
+            {{ toctree() }}
+            <br/>
+            <h4><a href="{{ pathto('contents') }}">Full Table of Contents</a></h4>
+          {%- endblock %}
+          {%- block sidebarsearch %}
+          <h3 style="margin-top: 1.5em;">{{ _('Search') }}</h3>
+          <form class="search" action="{{ pathto('search') }}" method="get">
+            <input type="text" name="q" size="18" />
+            <input type="submit" value="{{ _('Go') }}" />
+            <input type="hidden" name="check_keywords" value="yes" />
+            <input type="hidden" name="area" value="default" />
+          </form>
+          <p class="searchtip" style="font-size: 90%">
+            {{ _('Enter search terms or a module, class or function name.') }}
+          </p>
+          {%- endblock %}
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
 {% endblock %}
+
+{% block footer %}
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          {%- for rellink in rellinks|reverse %}
+          <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+             {{ accesskey(rellink[2]) }}>{{ rellink[3] }}</a>
+          {%- if not loop.last %}{{ reldelim2 }}{% endif %}
+          {%- endfor %}
+          {%- if show_source and has_source and sourcename %}
+            <br/>
+            <a href="{{ pathto('_sources/' + sourcename, true)|e }}"
+               rel="nofollow">{{ _('Show Source') }}</a>
+          {%- endif %}
+        </div>
+
+        <div class="right">
+          {{ super() }}
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+{% endblock %}
+
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
