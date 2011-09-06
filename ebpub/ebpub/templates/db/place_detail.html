@@ -168,11 +168,13 @@ window.onload = function() {
 	{% endif %}
 
 	{% ifnotequal place.slug "unknown" %}
+	<div id="alerts-signup">	
 		<h2>Sign up for:</h2>
 		<ul>
 			<li><a class="email" href="{{ place.alert_url }}">E-mail alerts</a></li>
 			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
 		</ul>
+	</div>
 	{% endifnotequal %}
   </div><!--/ #place-detail-content -->
 

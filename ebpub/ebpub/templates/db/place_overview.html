@@ -136,10 +136,12 @@ $j(document).ready(function() {
 			</div><!-- end #module-{{ schema.schema.id }} -->
 			{% endif %}
 		{% endfor %}
-		<h2>Sign up for:</h2>
-		<ul>
-			<li><a class="email" href="{{ place.alert_url }}">E-mail alerts</a></li>
-			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
-		</ul>
+		<div id="alerts-signup">
+  		<h2>Sign up for:</h2>
+  		<ul>
+  			<li><a class="email" href="{{ place.alert_url }}">E-mail alerts</a></li>
+  			<li><a class="feed" href="{{ place.url }}feeds/">Custom RSS feeds</a></li>
+  		</ul>
+    </div>
 	</div><!--/ #content -->
 {% endblock place_content %}
