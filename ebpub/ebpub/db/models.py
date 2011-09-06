@@ -131,6 +131,11 @@ class Schema(models.Model):
         default=False,
         help_text="Whether to show a detail page for NewsItems of this schema, or redirect to the NewsItem's source URL instead.")
 
+    allow_comments = models.BooleanField(
+        default=False,
+        help_text="Whether to allow users to add comments to NewsItems of the schema. Only applies to items with detail page."
+    )
+
     allow_charting = models.BooleanField(
         default=False,
         help_text="Whether aggregate charts are displayed on the home page of this Schema")

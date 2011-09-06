@@ -16,11 +16,12 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from django.contrib.auth.models import User
 import constants # relative import
 
 UNDEFINED = 123
 
-class LazyUser(object):
+class LazyUser(User):
     # This class is a transparent wrapper around User that hits the database
     # only after an attribute is accessed.
     def __init__(self, user_id):

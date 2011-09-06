@@ -1,0 +1,87 @@
+{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+{% load eb %}{% load django_static %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+<head>
+<title>{% block fulltitle %}{% block title %}{% endblock %} | {% block city_title %}OpenBlock{% endblock %}{% endblock fulltitle %}</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="robots" content="noarchive">
+<link rel="home" title="Home" href="/">
+
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
+<link rel="stylesheet" type="text/css" href="/styles/openblock.css" />
+{% endslimall %}
+
+<script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
+
+<script type="text/javascript">
+{% comment %}
+// Not using jquery.noConflict() because ironically it causes a conflict
+// with OpenLayers and we end up with the $ function from OpenLayers. 
+// But a lot of existing everyblock code expects $j instead of $
+{% endcomment %}
+var $j = $;
+</script>
+
+<!-- begin block extrahead -->
+{% block extrahead %}{% endblock %}
+<!-- end block extrahead -->
+</head>
+<body {% if bodyid %}id="{{bodyid}}"{% endif %} {% if bodyclass %}class="{{bodyclass}}"{% endif %}>
+  <div id="container">
+	<div id="header">
+		<h1><a href="/">OpenBlock: {% METRO_NAME %}</a></h1>
+		<div id="globalnav">
+		    <!--
+			<ul>
+				<li><a href="/news/">News</a></li>
+				<li><a href="/locations/">Locations</a></li>
+			</ul>
+			-->
+			{% block userlinks %}
+			<div id="userlinks">
+			  {% if USER_EMAIL %}
+			  <form action="/accounts/logout/" method="post">
+				<p>Logged in as <a href="/accounts/dashboard/">{{ USER_EMAIL }}</a>. <button type="submit">Log out</button></p>
+			  </form>
+			  {% else %}
+			  <p><a href="/accounts/login/" rel="nofollow">Sign in</a> or <a href="/accounts/register/" rel="nofollow">register</a> for extra features</p>
+			  {% endif %}
+			</div><!--/ #userlinks -->
+			{% endblock userlinks %}
+			{% with "Search for address, zip or neighborhood" as placeholder %}
+			<form action="/search/" id="globalsearch" onsubmit="if ($j('#searchinput').val() == '{{ placeholder }}') return false; return true;">
+				<p>
+					<label for="searchinput">{{ placeholder}}</label>
+					<input type="text" id="searchinput" name="q" value="{{ placeholder }}" onfocus="if (this.value == '{{ placeholder }}') { this.value = ''; }" onblur="if (this.value == '') { this.value = '{{ placeholder }}'; }">
+					<button type="submit">Go</button>
+				</p>
+			</form>
+			{% endwith %}
+		</div><!--/ #globalnav -->
+		<!-- begin block breadcrumbs -->
+		{% block breadcrumbs %}
+		{% include "db/snippets/breadcrumbs.html" %}
+		{% endblock breadcrumbs %}
+		<!-- end block breadcrumbs -->
+	</div><!-- / #header -->
+	<div id="main">
+	  <!-- begin block messages -->
+		{% block messages %}
+	    {% if messages %}
+	    <ul class="messages">
+		  {% for message in messages %}
+		  <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+		  {% endfor %}
+		</ul>
+		{% endif %}
+		{% endblock messages %}
+        <!-- end block messages -->
+		<!-- begin block content -->
+		{% block content %}{% endblock content %}
+		<!-- end block content -->
+	</div><!-- / #main -->
+  </div><!-- / #container -->
+</body>
+</html>

@@ -31,6 +31,7 @@ from django.utils import simplejson
 from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_page
+from django.views.decorators.csrf import csrf_protect
 from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
@@ -395,6 +396,7 @@ def search(request, schema_slug=''):
     lt_list = LocationType.objects.filter(is_significant=True).order_by('name')
     return eb_render(request, 'db/search_error.html', {'query': q, 'locationtype_list': lt_list})
 
+@csrf_protect
 def newsitem_detail(request, schema_slug, newsitem_id):
     ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id,
                            schema__slug=schema_slug)

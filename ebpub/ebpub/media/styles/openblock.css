@@ -1101,3 +1101,14 @@ ul.errorlist {
     list-style-type: none;
 }
 
+
+/* ##################### Comments ########################### */
+
+.comment-author, .comment-date {
+    font-size: 80%;
+    font-color: #cfcfcf;
+}
+
+.comment {
+    margin-bottom: 1em;
+}

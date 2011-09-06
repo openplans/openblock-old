@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load eb humanize mapping eb_filter %}
+{% load eb humanize mapping eb_filter comments %}
 
 {% block title %}{{ newsitem.title }} | {{ newsitem.schema.plural_name|capfirst }}{% endblock %}
 
@@ -97,6 +97,54 @@
 	{% endif %}
 
 	
+	
+	{% block item_comments %}
+	  {% if newsitem.schema.allow_comments %}
+	  {% get_comment_count for newsitem as comment_count %} 
+	  <h2>{{comment_count}} Comments</h2>
+	  
+	  <div class="comment-list">
+    {% get_comment_list for newsitem as comment_list %}
+    {% for comment in comment_list %}
+        <div id="c{{comment.id}}" class="comment">
+          <div class="comment-text">{{ comment.comment }}</div>
+          <span class="comment-author">by {{ comment.name }}</span>
+          <span class="comment-date">{{comment.submit_date}}</span>
+          {% comment %}<a class="comment-flag-link" href="{% url comments-flag comment.id %}">flag this comment</a>{%endcomment%}
+        </div>
+    {% endfor %}
+    </div>
+
+
+    {% if request.user.is_authenticated %}
+	  <h2> Add a Comment </h2>
+	  {% get_comment_form for newsitem as form %}
+
+      <form id="comment-form" action="{% comment_form_target %}" method="post">
+        {% csrf_token %}
+        {{form.content_type}}
+        {{form.object_pk}}
+        {{form.timestamp}}
+        {{form.security_hash}}
+
+        <label for="id_comment">{{form.comment.label_tag}}</label>
+        <div>
+          {{form.comment}}</td>
+        </div>
+
+        <div class="hidden">
+          If this field is filled in, the comment will be rejected as spam.</td>
+          {{form.honeypot}}
+        </div>
+        
+        <div>
+              <input type="submit" name="submit" value="Post">
+        </div>
+    </form>
+    {% endif %}
+	  {% endif %}
+	{% endblock %}
+
 	{% block similaritems %}
 		{% if not newsitem.schema.is_special_report %}
 			{% if locations_within %}
@@ -110,5 +158,7 @@
 			{% endif %}
 		{% endif %}
 	{% endblock %}
+
+
 </div><!--/ #content-->
 {% endblock %}
