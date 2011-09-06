@@ -3,6 +3,7 @@ from django.conf import settings
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.views.decorators.csrf import csrf_protect
 from ebpub.accounts.models import User
 from ebpub.accounts.utils import login_required
 from ebpub.db.models import Schema, NewsItem, SchemaField, Lookup
@@ -14,6 +15,7 @@ import re
 
 @if_disabled404(NEIGHBOR_MESSAGE_SLUG)
 @login_required
+@csrf_protect
 def new_message(request):
     schema = Schema.objects.get(slug=NEIGHBOR_MESSAGE_SLUG)
     FormType = NeighborMessageForm
@@ -21,6 +23,7 @@ def new_message(request):
     
 @if_disabled404(NEIGHBOR_EVENT_SLUG)
 @login_required
+@csrf_protect
 def new_event(request):
     schema = Schema.objects.get(slug=NEIGHBOR_EVENT_SLUG)
     FormType = NeighborEventForm

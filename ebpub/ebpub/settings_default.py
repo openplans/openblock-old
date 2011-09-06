@@ -58,6 +58,7 @@ TEMPLATE_LOADERS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
     'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.csrf',
     'django.contrib.messages.context_processors.messages',
     'ebpub.db.context_processors.map_context',
     'django.core.context_processors.request',
@@ -72,10 +73,12 @@ INSTALLED_APPS = (
     'background_task',
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.comments',
     'django.contrib.contenttypes',
     'django.contrib.gis',
     'django.contrib.humanize',
     'django.contrib.sessions',
+    'django.contrib.sites',
     'django_static',
     'ebdata.blobs',
     'ebdata.geotagger',
@@ -149,6 +152,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.http.ConditionalGetMiddleware',
 )
+
+SITE_ID = 1
 
 ##################################
 # CUSTOM EBPUB & OBDEMO SETTINGS #

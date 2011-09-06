@@ -73,6 +73,7 @@ urlpatterns += patterns('',
     (r'^widgets/', include('ebpub.widgets.urls')),
     (r'^maps/', include('ebpub.richmaps.urls')),
     (r'^neighbornews/', include('ebpub.neighbornews.urls')),
+    (r'^comments/', include('django.contrib.comments.urls')),
 )
 
 if get_metro()['multiple_cities']:
