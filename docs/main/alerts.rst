@@ -11,12 +11,15 @@ called regularly. You can do this any way you like; `cron
 So would :ref:`updaterdaemon <updaterdaemon>`.
 
 Here's an example crontab file that sends the daily alerts once a day,
-and the weekly alerts once a week::
+and the weekly alerts once a week. Adjust the environment variables as
+needed::
 
-  @daily /path/to/virtualenv/bin/send_alerts  --frequency daily
-  @weekly /path/to/virtualenv/bin/send_alerts --frequency weekly
+  DJANGO_SETTINGS_MODULE=obdemo.settings
+  VIRTUAL_ENV=/path/to/my/environment
+  @daily $VIRTUAL_ENV/bin/send_alerts  --frequency daily
+  @weekly $VIRTUAL_ENV/bin/send_alerts --frequency weekly
 
-Note that the script does not remember which alerts have already been
+Note that OpenBlock does not remember which alerts have already been
 sent, so you *should not* send eg. daily alerts more than once a day,
 or your users will get duplicate alert messages.
 
