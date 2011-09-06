@@ -13,7 +13,7 @@
 
 {% block header %}
     <div class="header-wrapper">
-      <div class="header">
+      <div class="header" style="width: 100%;">
         {%- if logo %}
           <p class="logo"><a href="{{ pathto(master_doc) }}">
             <img class="logo" src="{{ pathto('_static/' + logo, 1) }}" alt="Logo"/>
@@ -38,15 +38,16 @@
 {% endblock %}
 
 {% block content %}
-    <div class="content-wrapper">
-     {%- block sidebar1 %}
-        <div class="sidebar" style="float: left; margin-left: 5px; margin-right: 10px; background: #F9F9F9">
+    <div class="content-wrapper" style="width: 100%;">
+      <div class="content" style="width: 100%">
+      {%- block sidebar1 %}
+        <div class="sidebar" style="float: left; margin: 5px; background: #F9F9F9">
           {%- block sidebartoc %}
             <h3>{{ _('On This Page') }}</h3>
             {{ toc }}
             <br/>
-            <h3><h3><a href="{{ pathto('contents') }}">Contents</a></h3>
-            {{ toctree(maxdepth=2) }}
+            <h3><h3><a href="{{ pathto('contents') }}">Chapters</a></h3>
+            {{ toctree(maxdepth=1) }}
           {%- endblock %}
           {%- block sidebarsearch %}
           <h3 style="margin-top: 1.5em;">{{ _('Search') }}</h3>
@@ -61,15 +62,15 @@
           </p>
           {%- endblock %}
         </div>
-     {% endblock %}<!-- end sidebar1 -->
-      <div class="content">
-        <div class="document">
+       {% endblock %}<!-- end sidebar1 -->
+
+       <div class="document">
           {%- block document %}
             {{ super() }}
           {%- endblock %}
         </div>
-      </div>
       <div class="clearer"></div>
+      </div>
     </div>
 {% endblock %}
 

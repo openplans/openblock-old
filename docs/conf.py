@@ -132,6 +132,9 @@ html_theme = 'agogo'
 # documentation.
 html_theme_options = {
     'textalign': 'left',
+    'documentwidth': '600px',
+    'sidebarwidth': '190px',
+    'pagewidth': '800px',
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
