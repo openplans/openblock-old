@@ -51,7 +51,6 @@ class LocalNewsScraper(object):
         self.http = Http(http_cache)
 
     def update(self):
-
         logger.info("Starting LocalNewsScraper update %s" % self.url)
 
         try:
@@ -96,17 +95,22 @@ class LocalNewsScraper(object):
                 item.location_name = entry.get('x-calconnect-street') or entry.get('georss_featurename')
                 item.item_date = datetime.datetime(*entry.updated_parsed[:6])
                 item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
+                _short_title = item.title[:30] + '...'
 
                 # feedparser bug: depending on which parser it magically uses,
                 # we either get the xml namespace in the key name, or we don't.
                 point = entry.get('georss_point') or entry.get('point')
                 x, y = None, None
                 if point:
-                    x, y = point.split(' ')
-                _short_title = item.title[:30] + '...'
-                if True:
-                    # Fall back on geocoding.
-                    text = item.title + ' ' + item.description
+                    # GeoRSS puts latitude (Y) first.
+                    y, x = point.split(' ')
+                else:
+                    if item.location_name:
+                        text = item.location_name
+                    else:
+                        # Geocode whatever we can find.
+                        text = item.title + ' ' + item.description
+                    logger.debug("...Falling back on geocoding from %r..." % text[:50])
                     addrs = parse_addresses(text)
                     for addr, unused in addrs:
                         try:
@@ -114,6 +118,9 @@ class LocalNewsScraper(object):
                             point = result['point']
                             logger.debug("internally geocoded %r" % addr)
                             x, y = point.x, point.y
+                            if not item.location_name:
+                                item.location_name = result['address']
+                            item.block = result['block']
                             break
                         except GeocodingException:
                             logger.debug("Geocoding exception on %r:" % text)
@@ -123,7 +130,7 @@ class LocalNewsScraper(object):
                             logger.error('uncaught geocoder exception on %r\n' % addr)
                             log_exception()
                     if None in (x, y):
-                        logger.debug("couldn't geocode any addresses in item '%s...'"
+                        logger.debug("Skip, couldn't geocode any addresses in item '%s...'"
                                      % _short_title)
                         continue
                 item.location = Point((float(x), float(y)))

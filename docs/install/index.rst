@@ -9,6 +9,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   aws
    setup
    base_install
    common_install_problems

@@ -7,6 +7,8 @@ If you want to do something much different than
 custom Django app. We provide a script that will get you started with
 a skeleton app you can edit.
 
+(You can skip this if you are :doc:`cloning an OpenBlock AMI <aws>`.)
+
 Setting up the app
 ==================
 
@@ -42,6 +44,8 @@ your environment::
     $ python setup.py develop
     ...
 
+
+.. _custom_settings:
 
 Adjust Django Settings
 ----------------------

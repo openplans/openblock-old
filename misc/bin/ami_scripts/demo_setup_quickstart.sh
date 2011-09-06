@@ -29,6 +29,11 @@ mkdir -p openblock/src || exit 1
 cd openblock || exit 1
 git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 
+# TEMPORARY: BRANCH TEST
+cd src/openblock
+git checkout openblock-1.0-branch
+cd -
+
 echo
 echo Bootstrapping...
 
