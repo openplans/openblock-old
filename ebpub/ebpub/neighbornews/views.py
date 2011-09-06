@@ -99,6 +99,13 @@ def _create_item(request, schema, form):
             lookups.add(lu.id)
         item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
     
+    # image link
+    if form.cleaned_data['image_url']: 
+        item.attributes['image_url'] = form.cleaned_data['image_url']
+    
+
+    item.save()
+
     # add a NewsItemCreator association
     # un-lazy the User.
     user = User.objects.get(id=request.user.id)
