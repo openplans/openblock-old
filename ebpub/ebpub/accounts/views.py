@@ -139,11 +139,7 @@ class BadHash(Exception):
         self.response = response
 
 def send_confirmation_and_redirect(request, email, task):
-    if settings.DEBUG:
-        url = utils.verification_url(email, task)
-        return http.HttpResponse('<a href="%s">Click here to simulate the e-mail confirmation</a>.' % url)
-    else:
-        utils.send_verification_email(email, task)
+    utils.send_verification_email(email, task)
     return http.HttpResponseRedirect('/accounts/email-sent/')
 
 def confirm_request_hash(request, task):

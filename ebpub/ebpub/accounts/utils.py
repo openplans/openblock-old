@@ -64,16 +64,12 @@ def send_verification_email(email, task):
     text_content = render_to_string('accounts/%s_email.txt' % template_name, {'url': url, 'email': email})
     html_content = render_to_string('accounts/%s_email.html' % template_name, {'url': url, 'email': email})
 
-    if settings.DEBUG:
-        print text_content
-        print html_content
-    else:
-        subject = {CREATE_TASK: 'Please confirm account', RESET_TASK: 'Password reset request'}[task]
-        conn = get_connection() # Use default settings.
-        message = EmailMultiAlternatives(subject, text_content, settings.GENERIC_EMAIL_SENDER,
-            [email], connection=conn)
-        message.attach_alternative(html_content, 'text/html')
-        message.send()
+    subject = {CREATE_TASK: 'Please confirm account', RESET_TASK: 'Password reset request'}[task]
+    conn = get_connection() # Use default settings.
+    message = EmailMultiAlternatives(subject, text_content, settings.GENERIC_EMAIL_SENDER,
+        [email], connection=conn)
+    message.attach_alternative(html_content, 'text/html')
+    message.send()
 
 
 ##############

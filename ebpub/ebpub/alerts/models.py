@@ -28,17 +28,20 @@ class EmailAlert(models.Model):
     user_id = models.IntegerField()
     block = models.ForeignKey(Block, blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
-    frequency = models.PositiveIntegerField() # 1=daily, 7=weekly
+    frequency = models.PositiveIntegerField(help_text="How often to send.",
+                                            choices=((1, 'Daily'),
+                                                     (7, 'Weekly')))
     radius = models.PositiveIntegerField(blank=True, null=True)
 
-    # If True, schemas should be treated as an exclusion list instead of an
-    # inclusion list. This allows people to exclude existing schemas, but
-    # but still receive updates for new schemas when we add them later.
-    include_new_schemas = models.BooleanField()
+    include_new_schemas = models.BooleanField(
+        help_text="If True, schemas should be treated as an exclusion list instead of "
+        "an inclusion list. This allows people to exclude existing schemas, but "
+        "still receive updates for new schemas when we add them later.")
 
-    # A comma-separated list of schema IDs. Semantics depend on the value of
-    # include_new_schemas (see above comment).
-    schemas = models.TextField()
+
+    schemas = models.TextField(
+        help_text="A comma-separated list of schema IDs. Semantics depend on the value "
+        "of include_new_schemas (see above).")
 
     signup_date = models.DateTimeField()
     cancel_date = models.DateTimeField(blank=True, null=True)
