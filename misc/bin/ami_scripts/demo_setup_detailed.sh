@@ -49,9 +49,10 @@ cd -
 echo OK
 echo
 
-sudo -u postgres createdb -U openblock --template template_postgis openblock || exit 1
-
 echo Setting up DBs
+
+sudo -u postgres dropdb openblock 2> /dev/null
+sudo -u postgres createdb -U openblock --template template_postgis openblock || exit 1
 
 echo Syncing DB...
 

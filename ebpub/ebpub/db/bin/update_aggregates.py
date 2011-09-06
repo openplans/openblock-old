@@ -117,7 +117,9 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
     except TypeError: # if cursor.fetchone() is None, there are no records.
         pass
     else:
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+        # Note that BETWEEN is inclusive on both ends, so to get
+        # AggregateLocationDays for eg. 30 days, we'd need a timedelta of 29
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS -1)
         cursor.execute("""
             SELECT location_id, location_type_id, SUM(total)
             FROM %s
@@ -133,7 +135,8 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
             end_date = NewsItem.objects.filter(schema__id=schema_id, item_date__lte=today()).values_list('item_date', flat=True).order_by('-item_date')[0]
         except IndexError:
             continue # There have been no NewsItems in the given date range.
-        start_date = end_date - datetime.timedelta(days=constants.NUM_DAYS_AGGREGATE)
+        # Note BETWEEN is inclusive on both ends.
+        start_date = end_date - datetime.timedelta(days=constants.NUM_DAYS_AGGREGATE -1)
 
         if sf.is_many_to_many_lookup():
             # AggregateFieldLookup

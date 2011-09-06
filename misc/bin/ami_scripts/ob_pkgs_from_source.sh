@@ -33,6 +33,10 @@ cd $VIRTUAL_ENV || exit 1
 $SUDO mkdir -p src || exit 1
 $SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 
+# TEMPORARY: branch
+cd src/openblock
+git checkout openblock-1.0-branch
+
 echo
 export SRC=$VIRTUAL_ENV/src/openblock
 cd $SRC || exit 1

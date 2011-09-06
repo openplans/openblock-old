@@ -1,4 +1,3 @@
-====================================
 OpenBlock 1.1.0 (TODO date here)
 ====================================
 
@@ -13,7 +12,7 @@ New Features in 1.1
   and the associated schema can be loaded like so:
   ``django-admin.py loaddata ebdata/scrapers/general/flickr/photos_schema.json``
 
-* Import locations from shapefiles in the admin UI (ticket #59)
+* Import locations from shapefiles in the admin UI (ticket #59).
 
 * Import blocks from shapefiles in the admin UI.
   Also populates streets, blockintersections, and intersections.
@@ -26,9 +25,14 @@ Bug fixes
   newsitem.schema.has_newsitem_detail is False but newsitem.url is
   empty. Closes #110
 
+ * The georss scraper now gets coordinates in the right order on the
+   first try, and populates location_name if it falls back to
+   geocoding.
+
 Documentation
 -------------
 
+ * Added docs for cloning an EC2 instance from our Amazon AMI.
 
 
 Other

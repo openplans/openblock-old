@@ -50,7 +50,10 @@ until there are background jobs to process for installing the ZIP codes.
 TODO: move that to its own section somewhere in the install &
 deployment pages
 
-Surf to http://127.0.0.1:8000/admin/db/location/ and click the link "Import
+NB. If you are :doc:`installed on EC2 <aws>`, then process_tasks is already running as a daemon.
+
+
+Now you can surf to ``http://<your domain>/admin/db/location/`` and click the link "Import
 ZIP Shapefiles".  You can pick your state, paste your list of ZIPs, and wait
 for the import to finish.  When this is done, type `control-c` to stop
 process_tasks, then skip down to the "Verifying ZIP Codes" section below.

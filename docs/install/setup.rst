@@ -5,6 +5,8 @@ Preparing Your System
 These instructions cover manual installation of the prerequisites for
 OpenBlock and installation of the base Openblock software.
 
+(You can skip this if you are :doc:`cloning our AMI image <aws>`.)
+
 .. _support:
 
 If you have problems...
