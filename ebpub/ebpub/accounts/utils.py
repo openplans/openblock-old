@@ -21,7 +21,7 @@
 from django import http
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.core.mail import SMTPConnection, EmailMultiAlternatives
+from django.core.mail import get_connection, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.importlib import import_module
 from ebpub.metros.allmetros import get_metro
@@ -69,7 +69,7 @@ def send_verification_email(email, task):
         print html_content
     else:
         subject = {CREATE_TASK: 'Please confirm account', RESET_TASK: 'Password reset request'}[task]
-        conn = SMTPConnection() # Use default settings.
+        conn = get_connection() # Use default settings.
         message = EmailMultiAlternatives(subject, text_content, settings.GENERIC_EMAIL_SENDER,
             [email], connection=conn)
         message.attach_alternative(html_content, 'text/html')

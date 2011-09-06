@@ -17,7 +17,7 @@
 #
 
 from django.conf import settings
-from django.core.mail import SMTPConnection, EmailMultiAlternatives
+from django.core.mail import get_connection, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import NewsItem
@@ -87,7 +87,7 @@ def send_all(frequency):
     """
     Sends an e-mail to all subscribers in the system with data with the given frequency.
     """
-    conn = SMTPConnection() # Use default settings.
+    conn = get_connection() # Use default settings.
     count = 0
     start_date = datetime.date.today() - datetime.timedelta(days=frequency)
     for alert in EmailAlert.active_objects.filter(frequency=frequency):

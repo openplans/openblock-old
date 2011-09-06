@@ -35,9 +35,12 @@ import datetime
 ###########################
 
 def login(request, custom_message=None, force_form=False, initial_email=None):
-    # custom_message is a string to display at the top of the login form.
-    # force_form is used when you want to force display of the original
-    # form (regardless of whether it's a POST request).
+    """
+    View for logging in.
+    custom_message is a string to display at the top of the login form.
+    force_form is used when you want to force display of the original
+    form (regardless of whether it's a POST request).
+    """
 
     # If the user is already logged in, redirect to the dashboard.
     if not request.user.is_anonymous():
