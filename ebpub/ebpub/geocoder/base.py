@@ -309,6 +309,7 @@ class IntersectionGeocoder(Geocoder):
             raise AmbiguousResult(list(all_results), "Intersections DB returned %s results" % len(all_results))
 
     def _db_lookup(self, street_a, street_b):
+        # Avoid circular import.
         from ebpub.streets.models import Intersection
         try:
             intersections = Intersection.objects.search(

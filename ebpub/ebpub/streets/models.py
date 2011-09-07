@@ -567,7 +567,6 @@ class PlaceSynonymManager(models.Manager):
         If the given place name is already correctly spelled, then it's returned as-is.
         """        
         try:
-            from ebpub.geocoder.parser.parsing import normalize
             normalized_name = normalize(name)
             return self.get(normalized_name=normalized_name).place.normalized_name
         except self.model.DoesNotExist:
