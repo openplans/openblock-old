@@ -7,17 +7,26 @@ HERE=`(cd "${0%/*}" 2>/dev/null; echo "$PWD"/)`
 SOURCE_ROOT=`cd $HERE/../.. && pwd`
 
 export VERSION=$1
-
 if [ -z "$VERSION" ]; then
     echo Need to specify the new version.
     exit 1
 fi
+shift
+echo Preparing to release version $VERSION
 
 cd $SOURCE_ROOT
-PKGS="ebpub ebdata obadmin obdemo"
+export PKGS="$@"
+if [ -z "$PKGS" ]; then
+    export PKGS="ebpub ebdata obadmin obdemo"
+    echo "Versioning by default: $PKGS"
+else
+    echo "Versioning these packages: $PKGS"
+fi
+
 for PKGDIR in $PKGS; do
     cd $SOURCE_ROOT/$PKGDIR
-    if [ ! grep -q "no autoversion" setup.py ]; then
+    grep -q "no auto-version" setup.py > /dev/null
+    if [ $? -ne 0 ]; then
         sed -i -e "s/VERSION=.*\$/VERSION=\"${VERSION}\"/" setup.py
     fi
     python setup.py sdist > /dev/null || exit 1
@@ -61,6 +70,6 @@ echo Output is at $REQFILE
 echo
 echo "Don't forget to update your changelogs!"
 echo ========================================
-echo "Be sure that recent changes are in docs/release_notes.rst"
-echo "and older changes have been moved from docs/release_notes.txt to the top of"
-echo "docs/history.rst."
+echo "Be sure that recent changes are in docs/changes/release_notes.rst"
+echo "and older changes have been moved from docs/changes/release_notes.txt to the top of"
+echo "docs/changes/history.rst."

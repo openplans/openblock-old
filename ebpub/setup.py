@@ -38,7 +38,7 @@ with open(os.path.join(here, 'README.txt')) as file:
         with open(openblock_readme) as openblock_readme:
             long_description += '\n\n'
             long_description += openblock_readme.read()
-    release_notes = os.path.join(here, '..', 'docs', 'release_notes.rst')
+    release_notes = os.path.join(here, '..', 'docs', 'changes', 'release_notes.rst')
     if os.path.exists(release_notes):
         with open(release_notes) as release_notes:
             long_description += '\n\n'
@@ -46,6 +46,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     # Remove stuff that breaks vanilla rst (no sphinx)
     # and doesn't belong on a pypi page anyway.
     long_description = long_description.split('Older Changes')[0]
+
 
 VERSION="1.1.0-dev"
 

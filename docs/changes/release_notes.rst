@@ -43,7 +43,7 @@ Nothing since 1.0.1.
 
 
 
-OpenBlock 1.0.1 (TODO date here)
+OpenBlock 1.0.1 (Sept 7 2011)
 ================================
 
 This was a minor bugfix (and docs) release, and was mostly identical to 1.0.0.
@@ -66,8 +66,10 @@ Documentation
 
  * Remove nonexistent ``--city`` option from geodata docs.
 
+ * Changed docs theme for easier navigation.
+
 
 Older Changes
-==============
+-------------
 
 See :doc:`history`.
