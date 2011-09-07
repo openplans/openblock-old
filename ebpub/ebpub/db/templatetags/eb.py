@@ -35,21 +35,11 @@ register.filter('bunchlong', bunchlong)
 register.filter('stride', stride)
 
 def METRO_NAME():
-    return get_metro()['metro_name']
+    name = get_metro()['metro_name']
+    if name[0] != name[0].upper:
+        name = name.title()
+    return name
 register.simple_tag(METRO_NAME)
-
-def SHORT_NAME():
-    return settings.SHORT_NAME
-register.simple_tag(SHORT_NAME)
-
-def STATE_ABBREV():
-    return get_metro()['state']
-register.simple_tag(STATE_ABBREV)
-
-def EB_SUBDOMAIN():
-    # misnamed, it's actually the full domain.
-    return settings.EB_DOMAIN
-register.simple_tag(EB_SUBDOMAIN)
 
 def isdigit(value):
     return value.isdigit()
