@@ -27,7 +27,8 @@ New Features in 1.1
 Bug fixes
 ---------
 
-Nothing since 1.0.1.
+* Locations weren't capitalized on some pages. (ticket #202)
+
 
 
 Documentation
@@ -38,8 +39,7 @@ Documentation
 Other
 -----
 
-Nothing since 1.0.1.
-
+* Removed some unused template tags (SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN).
 
 
 
