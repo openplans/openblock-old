@@ -76,7 +76,7 @@ What You Have
 * A "custom" app named "myblock" as per the :doc:`docs <custom>`,
   installed at `/home/openblock/openblock/src/myblock/myblock`
 
-* Ubuntu 11.04 ("Natty"), Python 2.7, PostGIS, Apache2, mod_wsgi.
+* Ubuntu 11.04 ("Natty"), Python 2.7, Postgresql 8.4 and PostGIS 1.5, Apache2, mod_wsgi.
 
 The code and its database are set up as if you had already followed
 the :doc:`setup`, :doc:`base_install`, and :doc:`custom` instructions.
