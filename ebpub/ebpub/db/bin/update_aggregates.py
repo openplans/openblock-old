@@ -27,7 +27,8 @@ import logging
 
 logger = logging.getLogger('ebpub.db.bin.update_aggregates')
 
-def smart_update(cursor, new_values, table_name, field_names, comparable_fields, where, pk_name='id', dry_run=False):
+def smart_update(cursor, new_values, table_name, field_names, comparable_fields,
+                 where, pk_name='id', dry_run=False, verbose=False):
     # new_values is a list of dictionaries, each with a value for each field in field_names.
 
     # Run a query to determine the current values in the DB.
@@ -43,7 +44,8 @@ def smart_update(cursor, new_values, table_name, field_names, comparable_fields,
         try:
             old_value = old_values.pop(key)
         except KeyError:
-            print "INSERT INTO %s (%s) VALUES (%s)" % (table_name, ', '.join(field_names + tuple([i[0] for i in where])), ', '.join([str(new_value[i]) for i in field_names] + [str(i[1]) for i in where]))
+            if verbose:
+                print "INSERT INTO %s (%s) VALUES (%s)" % (table_name, ', '.join(field_names + tuple([i[0] for i in where])), ', '.join([str(new_value[i]) for i in field_names] + [str(i[1]) for i in where]))
             if not dry_run:
                 cursor.execute("INSERT INTO %s (%s) VALUES (%s)" % \
                     (table_name, ', '.join(field_names + tuple([i[0] for i in where])), ','.join(['%s' for _ in tuple(field_names) + tuple(where)])),
@@ -51,7 +53,8 @@ def smart_update(cursor, new_values, table_name, field_names, comparable_fields,
         else:
             for k, v in new_value.items():
                 if old_value[k] != v:
-                    print "UPDATE %s SET %s WHERE %s=%s" % (table_name, ', '.join(['%s=%s' % (k, v) for k, v in new_value.items()]), pk_name, old_value[pk_name])
+                    if verbose:
+                        print "UPDATE %s SET %s WHERE %s=%s" % (table_name, ', '.join(['%s=%s' % (k, v) for k, v in new_value.items()]), pk_name, old_value[pk_name])
                     if not dry_run:
                         new_value_tuple = new_value.items()
                         cursor.execute("UPDATE %s SET %s WHERE %s=%%s" % \
@@ -59,28 +62,42 @@ def smart_update(cursor, new_values, table_name, field_names, comparable_fields,
                             tuple([v for k, v in new_value_tuple] + [old_value[pk_name]]))
                     break
     for old_value in old_values.values():
-        print "DELETE FROM %s WHERE %s = %s" % (table_name, pk_name, old_value[pk_name])
+        if verbose:
+            print "DELETE FROM %s WHERE %s = %s" % (table_name, pk_name, old_value[pk_name])
         if not dry_run:
             cursor.execute("DELETE FROM %s WHERE %s = %%s" % (table_name, pk_name), (old_value[pk_name],))
 
-def update_aggregates(schema_id_or_slug, dry_run=False):
+def update_aggregates(schema_id_or_slug, dry_run=False, verbose=False, reset=False):
     """
     Updates all Aggregate* tables for the given schema_id/slug,
     deleting/updating the existing records if necessary.
 
     If dry_run is True, then the records won't be updated -- only the SQL
     will be output.
+
+    If reset is True, then all aggregates for this schema will be deleted before
+    updating.
     """
+    if verbose:
+        print '... %s' % schema_id_or_slug
     if not str(schema_id_or_slug).isdigit():
         schema_id = Schema.objects.get(slug=schema_id_or_slug).id
     else:
         schema_id = schema_id_or_slug
     cursor = connection.cursor()
 
+    if reset and not dry_run:
+        for aggmodel in (AggregateAll, AggregateDay, AggregateLocation,
+                         AggregateLocationDay, AggregateFieldLookup):
+            if verbose:
+                print '... deleting all %s for schema %s' % (aggmodel.__name__, schema_id_or_slug)
+            aggmodel.objects.filter(schema__id=schema_id).delete()
+
     # AggregateAll
     cursor.execute("SELECT COUNT(*) FROM db_newsitem WHERE schema_id = %s", (schema_id,))
     new_values = [{'total': row[0]} for row in cursor.fetchall()]
-    smart_update(cursor, new_values, AggregateAll._meta.db_table, ('total',), (), {'schema_id': schema_id}, dry_run=dry_run)
+    smart_update(cursor, new_values, AggregateAll._meta.db_table, ('total',),
+                 (), {'schema_id': schema_id}, dry_run=dry_run, verbose=verbose)
 
     # AggregateDay
     cursor.execute("""
@@ -89,7 +106,9 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
         WHERE schema_id = %s
         GROUP BY 1""", (schema_id,))
     new_values = [{'date_part': row[0], 'total': row[1]} for row in cursor.fetchall()]
-    smart_update(cursor, new_values, AggregateDay._meta.db_table, ('date_part', 'total'), ('date_part',), {'schema_id': schema_id}, dry_run=dry_run)
+    smart_update(cursor, new_values, AggregateDay._meta.db_table, ('date_part', 'total'),
+                 ('date_part',), {'schema_id': schema_id}, dry_run=dry_run,
+                 verbose=verbose)
 
     # AggregateLocationDay
     cursor.execute("""
@@ -100,7 +119,10 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
             AND nl.location_id = loc.id
         GROUP BY 1, 2, 3""", (schema_id,))
     new_values = [{'location_id': row[0], 'date_part': row[1], 'location_type_id': row[2], 'total': row[3]} for row in cursor.fetchall()]
-    smart_update(cursor, new_values, AggregateLocationDay._meta.db_table, ('location_id', 'date_part', 'location_type_id', 'total'), ('location_id', 'date_part', 'location_type_id'), {'schema_id': schema_id}, dry_run=dry_run)
+    smart_update(cursor, new_values, AggregateLocationDay._meta.db_table, ('location_id', 'date_part', 'location_type_id', 'total'),
+                 ('location_id', 'date_part', 'location_type_id'),
+                 {'schema_id': schema_id}, dry_run=dry_run,
+                 verbose=verbose)
 
     # AggregateLocation
     # This query is a bit clever -- we just sum up the totals created in a
@@ -119,7 +141,7 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
     else:
         # Note that BETWEEN is inclusive on both ends, so to get
         # AggregateLocationDays for eg. 30 days, we'd need a timedelta of 29
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS -1)
+        start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
         cursor.execute("""
             SELECT location_id, location_type_id, SUM(total)
             FROM %s
@@ -128,7 +150,10 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
             GROUP BY 1, 2""" % AggregateLocationDay._meta.db_table,
                 (schema_id, start_date, end_date))
         new_values = [{'location_id': row[0], 'location_type_id': row[1], 'total': row[2]} for row in cursor.fetchall()]
-        smart_update(cursor, new_values, AggregateLocation._meta.db_table, ('location_id', 'location_type_id', 'total'), ('location_id', 'location_type_id'), {'schema_id': schema_id}, dry_run=dry_run)
+        smart_update(cursor, new_values, AggregateLocation._meta.db_table,
+                     ('location_id', 'location_type_id', 'total'),
+                     ('location_id', 'location_type_id'), {'schema_id': schema_id},
+                     dry_run=dry_run, verbose=verbose)
 
     for sf in SchemaField.objects.filter(schema__id=schema_id, is_filter=True, is_lookup=True):
         try:
@@ -136,7 +161,7 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
         except IndexError:
             continue # There have been no NewsItems in the given date range.
         # Note BETWEEN is inclusive on both ends.
-        start_date = end_date - datetime.timedelta(days=constants.NUM_DAYS_AGGREGATE -1)
+        start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
 
         if sf.is_many_to_many_lookup():
             # AggregateFieldLookup
@@ -152,7 +177,10 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
                 FROM db_lookup
                 WHERE schema_field_id = %%s""" % sf.real_name, (schema_id, schema_id, start_date, end_date, sf.id))
             new_values = [{'lookup_id': row[0], 'total': row[1]} for row in cursor.fetchall()]
-            smart_update(cursor, new_values, AggregateFieldLookup._meta.db_table, ('lookup_id', 'total'), ('lookup_id',), {'schema_id': schema_id, 'schema_field_id': sf.id}, dry_run=dry_run)
+            smart_update(cursor, new_values, AggregateFieldLookup._meta.db_table,
+                         ('lookup_id', 'total'), ('lookup_id',),
+                         {'schema_id': schema_id, 'schema_field_id': sf.id},
+                         dry_run=dry_run, verbose=verbose)
         else:
             # AggregateFieldLookup
             cursor.execute("""
@@ -165,25 +193,45 @@ def update_aggregates(schema_id_or_slug, dry_run=False):
                     AND ni.item_date BETWEEN %%s AND %%s
                 GROUP BY 1""" % (sf.real_name, sf.real_name), (schema_id, schema_id, start_date, end_date))
             new_values = [{'lookup_id': row[0], 'total': row[1]} for row in cursor.fetchall()]
-            smart_update(cursor, new_values, AggregateFieldLookup._meta.db_table, ('lookup_id', 'total'), ('lookup_id',), {'schema_id': schema_id, 'schema_field_id': sf.id}, dry_run=dry_run)
+            smart_update(cursor, new_values, AggregateFieldLookup._meta.db_table,
+                         ('lookup_id', 'total'), ('lookup_id',),
+                         {'schema_id': schema_id, 'schema_field_id': sf.id},
+                         dry_run=dry_run, verbose=verbose)
 
     transaction.commit_unless_managed()
 
-def update_all_aggregates(verbose=False):
+def update_all_aggregates(verbose=False, dry_run=False, reset=False):
     for schema in Schema.objects.all():
-        if verbose:
-            print '... %s' % schema.plural_name
-        logger.info('Updating %s aggregates' % schema.plural_name)
-        update_aggregates(schema.id)
+        if dry_run:
+            logger.info('Dry run: Updating %s aggregates' % schema.plural_name)
+        elif reset:
+            logger.info('Resetting all %s aggregates' % schema.plural_name)
+        else:
+            logger.info('Updating %s aggregates' % schema.plural_name)
+        update_aggregates(schema.id, dry_run=dry_run, verbose=verbose, reset=reset)
 
 def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv[1:]
-    if argv:
-        update_aggregates(argv[0])
+    from optparse import OptionParser
+    optparser = OptionParser(usage='''usage: %prog [options] [schema]
+
+Updates aggregate statistics for the given schema (default: all schemas).
+''')
+    optparser.add_option('-r', '--reset', action='store_true',
+                         help='Delete all aggregates before updating.')
+    optparser.add_option('-v', '--verbose', action='store_true', help='Verbose output.')
+    optparser.add_option('-d', '--dry-run', action='store_true',
+                         help='Dry run, change nothing.')
+
+    opts, args = optparser.parse_args(argv)
+    if args:
+        return update_aggregates(*args, verbose=opts.verbose, reset=opts.reset,
+                                 dry_run=opts.dry_run)
     else:
-        update_all_aggregates(verbose=True)
+        return update_all_aggregates(verbose=opts.verbose, reset=opts.reset,
+                                     dry_run=opts.dry_run)
 
 
 if __name__ == "__main__":

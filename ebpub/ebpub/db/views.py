@@ -72,6 +72,8 @@ logger = logging.getLogger('ebpub.db.views')
 
 
 def get_date_chart_agg_model(schemas, start_date, end_date, agg_model, kwargs=None):
+    """start_date and end_date are *inclusive*.
+    """
     kwargs = kwargs or {}
     counts = {}
     for agg in agg_model.objects.filter(schema__id__in=[s.id for s in schemas], date_part__range=(start_date, end_date), **kwargs):
@@ -82,7 +84,8 @@ def get_date_chart(schemas, start_date, end_date, counts):
     """
     Returns a list that's used to display a date chart for the given
     schemas. Note that start_date and end_date should be datetime.date objects,
-    NOT datetime.datetime objects.
+    NOT datetime.datetime objects, and they are *inclusive*,
+    i.e. the resulting chart will include both start_date and end_date.
 
     counts should be a nested dictionary: {schema_id: {date: count}}
 
@@ -188,7 +191,7 @@ def ajax_place_date_chart(request):
     qs = filters.apply()
     # TODO: Ignore future dates
     end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
-    start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+    start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
     filters.add('date', start_date, end_date)
     counts = filters.apply().date_counts()
     date_chart = get_date_chart([schema], start_date, end_date, {schema.id: counts})[0]
@@ -507,7 +510,7 @@ def schema_detail(request, slug):
             date_chart = {}
             start_date = end_date = None
         else:
-            start_date = end_date - datetime.timedelta(days=constants.NUM_DAYS_AGGREGATE)
+            start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
             date_chart = get_date_chart_agg_model([s], start_date, end_date, AggregateDay)[0]
             latest_dates = [date['date'] for date in date_chart['dates'] if date['count']]
 

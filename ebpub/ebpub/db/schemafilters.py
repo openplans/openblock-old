@@ -458,6 +458,7 @@ class BlockFilter(NewsitemFilter):
 class DateFilter(NewsitemFilter):
 
     """Filters on NewsItem.item_date.
+    The start_date and end_date args are *inclusive*.
     """
 
     slug = 'date'

@@ -7,6 +7,13 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+
+* Add a --reset option to ``update_aggregates`` script, deletes all
+  aggregates and starts over. (ticket #221)
+
+* Also add --verbose, --dry-run, and --help command-line options to
+  ``update_aggregates``.
+
 * Email alerts can now be sent via a command-line script. (related to
   ticket #65). Includes docs for how to set it up with cron.
 
@@ -27,9 +34,10 @@ New Features in 1.1
 Bug fixes
 ---------
 
+* Fixed bug that caused many "Unknown" locations in location charts.
+  (ticket #192)
+
 * Locations weren't capitalized on some pages. (ticket #202)
-
-
 
 Documentation
 -------------
