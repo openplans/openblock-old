@@ -38,7 +38,8 @@ Nothing since 1.0.1.
 Documentation
 -------------
 
-Nothing since 1.0.1.
+* Document email configuration.
+
 
 
 OpenBlock 1.0.1 (TODO date here)
