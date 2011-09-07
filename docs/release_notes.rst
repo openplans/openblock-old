@@ -10,12 +10,20 @@ Bug fixes
    first try, and populates location_name if it falls back to
    geocoding.
 
+ * Fix date formatting on newsitem-detail page. (ticket #201)
+
+ * The ``import_blocks_tiger`` and ``import_blocks_esri`` scripts had
+   a circular import.
+
+ * Fix a broken doctest in bootsrap.py.
+
 Documentation
 -------------
 
  * Added docs for cloning an EC2 instance from our Amazon AMI.
 
  * Remove nonexistent ``--city`` option from geodata docs.
+
 
 Older Changes
 ==============
