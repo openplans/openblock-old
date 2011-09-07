@@ -1,7 +1,7 @@
 OpenBlock 1.0.1 (Unreleased)
 ====================================
 
-This is a minor bugfix release, and is mostly identical to 1.0.0.
+This is a minor bugfix (and docs) release, and is mostly identical to 1.0.0.
 
 Bug fixes
 ---------
