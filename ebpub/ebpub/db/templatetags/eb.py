@@ -25,6 +25,7 @@ from django.conf import settings
 from django.template.defaultfilters import stringfilter
 from django.template.loader import select_template
 from django.conf import settings
+from ebpub.db.utils import today
 import datetime
 
 register = template.Library()
@@ -91,18 +92,43 @@ safe_id_sort_reversed.is_safe = False
 register.filter('safe_id_sort_reversed', safe_id_sort_reversed)
 
 def friendlydate(value):
+    """
+    A date string that includes 'Today' or 'Yesterday' if relevant,
+    or the day of the week if it's within the past week,
+    otherwise just the date.
+
+    Examples:
+
+    >>> import mock, datetime
+    >>> with mock.patch('ebpub.db.templatetags.eb.today', lambda: datetime.date(2011, 8, 15)):
+    ...     print friendlydate(datetime.date(2011, 8, 15))
+    ...     print friendlydate(datetime.date(2011, 8, 14))
+    ...     print friendlydate(datetime.date(2011, 8, 13))
+    ...     print friendlydate(datetime.date(2011, 8, 9))
+    ...     print friendlydate(datetime.date(2011, 8, 8))
+    ...
+    Today August 15, 2011
+    Yesterday August 14, 2011
+    Saturday August 13, 2011
+    Tuesday August 9, 2011
+    August 8, 2011
+    """
     try: # Convert to a datetime.date, if it's a datetime.datetime.
         value = value.date()
     except AttributeError:
         pass
-    today = datetime.date.today()
-    if value == today:
-        return 'today'
-    elif value == today - datetime.timedelta(1):
-        return 'yesterday'
-    elif today - value <= datetime.timedelta(6):
-        return value.strftime('%A')
-    return '%s %s' % (value.strftime('%B'), value.day)
+    # Using value.day because strftine('%d') is zero-padded and we don't want that.
+    # TODO: parameterize format to allow i18n?
+    formatted_date = value.strftime('%B ') + unicode(value.day) + value.strftime(', %Y')
+    _today = today()
+    if value == _today:
+        return 'Today %s' % formatted_date
+    elif value == _today - datetime.timedelta(1):
+        return 'Yesterday %s' % formatted_date
+    elif _today - value <= datetime.timedelta(6):
+        return '%s %s' % (value.strftime('%A'), formatted_date)
+    return formatted_date
+
 register.filter('friendlydate', friendlydate)
 
 class GetMetroListNode(template.Node):
