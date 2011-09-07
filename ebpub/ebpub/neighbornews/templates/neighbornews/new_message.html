@@ -31,8 +31,8 @@
 		}
 		  
     function _setupMessagePage(obmap) {
-      $j('#id_item_date').calendricalDate();
-      $j('#id_start_time, #id_end_time').calendricalTimeRange();
+      $j('#id_item_date').calendricalDate({usa: true});
+      $j('#id_start_time, #id_end_time').calendricalTimeRange({usa: true});
       var map = obmap.map;
       var default_map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
       default_map_center.transform(map.displayProjection, map.projection);

@@ -1,19 +1,14 @@
 {% extends "base.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
-{% load eb humanize mapping %}
+{% load django_static eb humanize mapping %}
 
 {% block fulltitle %}OpenBlock{% endblock %}
 
 {% block extrahead %}
-<style>
-      
-  
-  #detailmap {
-    width: 100%;
-    height: 500px;
-  }
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
+<script src="/scripts/jquery.calendrical.js"></script>
+{% endslimall %}
 
-
-</style>
 {% endblock %}
 
 {% block content %}
@@ -26,11 +21,24 @@
 
           var map = new OBMap(config);
           map.map.addControl(new OpenLayers.Control.LayerSwitcher());
-          map.map.addControl(new OpenblockPermalink(map));
+          
+          var permalink = new OpenblockPermalink(map);
+          map.map.addControl(permalink);
+
+          var dateControl = new OBMapDateRange(map, permalink, '#map_date_range_form');
           return map;
       }
       {% endautoescape %}
 		  </script>
 		{% include "richmaps/richmap.html" %}
 		</div><!-- end mapwrapper -->
+    <div id="map_date_range">
+        <form action="#" id="map_date_range_form">
+        		<label for="map_begin_date">Start Date</label>
+        		<input type="text" class="begin-date" id="map_begin_date" />
+        		<label for="map_end_date">End Date</label>
+    		    <input type="text" class="end-date" id="map_end_date" />
+    		    <input type="submit" value="change" />
+  		  </form>
+    </div>
 {% endblock %}

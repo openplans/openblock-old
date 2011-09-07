@@ -11,6 +11,21 @@ function _report_error(error) {
     /* FIXME */
 }
 
+var OBMapDateRange = function(map, permalink, form) {
+    var begin = $(form).find('.begin-date');
+    var end = $(form).find('.end-date');
+    begin.val(map.options.permalink_params.s);
+    end.val(map.options.permalink_params.e);
+    $([begin, end]).calendricalDateRange({usa: true});
+    $(form).submit(function(evt) {
+        evt.preventDefault();
+        map.options.permalink_params.s = begin.val(); 
+        map.options.permalink_params.e = end.val();
+        permalink.updateLink();
+        window.location.href = permalink.element.href;
+    });
+};
+
 var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
     /* inherits fro the OpenLayers.Strategy.Cluster class and
      * adds a pre-reclustering notification and splitting of clusters

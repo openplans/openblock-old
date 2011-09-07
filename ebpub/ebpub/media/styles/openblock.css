@@ -413,6 +413,16 @@ height: 255px
 }
 
 
+
+.fullpage #detailmap {
+    width: 100%;
+    height: 480px;
+}
+
+#map_date_range {
+    margin-bottom: 20em;
+}
+
 #mapwrapper {
 margin-bottom : .5em;
 border : 1px solid #cac8c6;

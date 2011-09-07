@@ -107,14 +107,14 @@ def _decode_map_permalink(request):
     startdate = params.get('s')
     if startdate is not None:
         try:
-            startdate = datetime.datetime.date.strptime(startdate, '%m/%d/%Y').date()
+            startdate = datetime.datetime.strptime(startdate, '%m/%d/%Y').date()
         except:
             startdate = None
 
     enddate = params.get('e')
     if enddate is not None: 
         try:
-            enddate = datetime.datetime.date.strptime(enddate, '%m/%d/%Y').date()
+            enddate = datetime.datetime.strptime(enddate, '%m/%d/%Y').date()
         except:
             enddate = None
     
