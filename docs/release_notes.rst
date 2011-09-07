@@ -42,6 +42,9 @@ Documentation
 
  * Added docs for email configuration. (ticket #205)
 
+ * Remove nonexistent ``--city`` option from geodata docs.
+
+
 Other
 -----
 
