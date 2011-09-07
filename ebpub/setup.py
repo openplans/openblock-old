@@ -47,7 +47,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     # and doesn't belong on a pypi page anyway.
     long_description = long_description.split('Older Changes')[0]
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 
 setup(
     name='ebpub',
