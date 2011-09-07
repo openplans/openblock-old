@@ -40,6 +40,7 @@ Documentation
 
  * Added docs for cloning an EC2 instance from our Amazon AMI.
 
+ * Added docs for email configuration. (ticket #205)
 
 Other
 -----
