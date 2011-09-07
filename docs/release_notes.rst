@@ -1,4 +1,4 @@
-OpenBlock 1.0.1 (Unreleased)
+OpenBlock 1.0.1 (Sept 7, 2011)
 ====================================
 
 This is a minor bugfix (and docs) release, and is mostly identical to 1.0.0.
