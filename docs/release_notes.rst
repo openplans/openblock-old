@@ -27,13 +27,35 @@ New Features in 1.1
 Bug fixes
 ---------
 
-* Return 404 instead of infinite loop if
-  newsitem.schema.has_newsitem_detail is False but newsitem.url is
-  empty. Closes #110
+Nothing since 1.0.1.
+
+Other
+-----
+
+Nothing since 1.0.1.
+
+
+Documentation
+-------------
+
+Nothing since 1.0.1.
+
+
+OpenBlock 1.0.1 (TODO date here)
+================================
+
+This was a minor bugfix (and docs) release, and was mostly identical to 1.0.0.
 
  * The georss scraper now gets coordinates in the right order on the
    first try, and populates location_name if it falls back to
    geocoding.
+
+ * Fix date formatting on newsitem-detail page. (ticket #201)
+
+ * The ``import_blocks_tiger`` and ``import_blocks_esri`` scripts had
+   a circular import.
+
+ * Fix a broken doctest in bootsrap.py.
 
 Documentation
 -------------
@@ -44,11 +66,6 @@ Documentation
 
  * Remove nonexistent ``--city`` option from geodata docs.
 
-
-Other
------
-
-* Removing lots of clustering code that's totally unused. (ticket #156)
 
 Older Changes
 ==============
