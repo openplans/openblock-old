@@ -24,8 +24,10 @@ Documentation
 
  * Remove nonexistent ``--city`` option from geodata docs.
 
+ * Changed docs theme for easier navigation.
+
 
 Older Changes
-==============
+-------------
 
 See :doc:`history`.

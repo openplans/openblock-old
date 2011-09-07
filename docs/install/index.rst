@@ -2,10 +2,6 @@
 Installation and Setup
 =================================
 
-
-Contents
-========
-
 .. toctree::
    :maxdepth: 2
 
@@ -24,6 +20,6 @@ Indices and tables
 
 
 * :ref:`search`
-* :ref:`genindex`
 
+.. * :ref:`genindex`
 .. * :ref:`modindex`
