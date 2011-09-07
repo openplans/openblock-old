@@ -15,6 +15,8 @@ Documentation
 
  * Added docs for cloning an EC2 instance from our Amazon AMI.
 
+ * Remove nonexistent ``--city`` option from geodata docs.
+
 Older Changes
 ==============
 
