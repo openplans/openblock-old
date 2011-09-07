@@ -29,16 +29,17 @@ Bug fixes
 
 Nothing since 1.0.1.
 
-Other
------
-
-Nothing since 1.0.1.
-
 
 Documentation
 -------------
 
 * Document email configuration.
+
+Other
+-----
+
+Nothing since 1.0.1.
+
 
 
 
@@ -62,8 +63,6 @@ Documentation
 -------------
 
  * Added docs for cloning an EC2 instance from our Amazon AMI.
-
- * Added docs for email configuration. (ticket #205)
 
  * Remove nonexistent ``--city`` option from geodata docs.
 
