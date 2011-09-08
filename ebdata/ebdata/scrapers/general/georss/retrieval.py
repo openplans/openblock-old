@@ -153,8 +153,8 @@ class LocalNewsScraper(object):
                         item.location_name = block.pretty_name
                         item.block = block
                     except reverse.ReverseGeocodeError:
-                        logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, _short_title))
-                        item.location_name = u''
+                        logger.info(" Skip, failed to reverse geocode %s for %r" % (item.location.wkt, _short_title))
+                        continue
                 item.save()
                 if status == 'added':
                     addcount += 1

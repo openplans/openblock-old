@@ -33,7 +33,7 @@ with open(os.path.join(here, 'README.txt')) as file:
         with open(openblock_readme) as openblock_readme:
             long_description += '\n\n'
             long_description += openblock_readme.read()
-    release_notes = os.path.join(here, '..', 'docs', 'release_notes.rst')
+    release_notes = os.path.join(here, '..', 'docs', 'changes', 'release_notes.rst')
     if os.path.exists(release_notes):
         with open(release_notes) as release_notes:
             long_description += '\n\n'

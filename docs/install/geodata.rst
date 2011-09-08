@@ -105,10 +105,6 @@ configured your :ref:`metro extent <metro_extent>`.
 The ``-b`` option tells it to filter out zip codes outside your
 metro extent, and ``-v`` tells it to give verbose output.
 
-If you need more filtering, you can also provide the "--city" option
-to give a city name to filter against. Zip codes for other cities
-would be skipped.
-
 It will tell you which ZIP codes were skipped, and at the end, print a
 count of how many were created.
 

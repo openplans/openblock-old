@@ -21,6 +21,13 @@
 # how many NewsItems were added per page.
 NUM_DAYS_AGGREGATE = 30
 
+# A timedelta that can be added to an end date to get a start date
+# that gives NUM_DAYS_AGGREGATE days total, *inclusive*.
+# This was hardcoded in a few places, leading to several mismatches
+# between expected date ranges.
+import datetime
+DAYS_AGGREGATE_TIMEDELTA = datetime.timedelta(days=NUM_DAYS_AGGREGATE - 1)
+
 # Number of results per page in the schema_filter view.
 FILTER_PER_PAGE = 30
 

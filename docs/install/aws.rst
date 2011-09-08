@@ -23,7 +23,9 @@ Launch an Instance ...
 
 In the `AWS EC2 management console <https://console.aws.amazon.com/ec2/>`_,
 click "Launch Instance". Click "Community AMIs", and in the search box, type in
-"ami-e59b588c".  Select the OpenBlock AMI that comes up, then continue
+"ami-9b08cbf2".  (You can also try searching for "openblock".)
+
+Select the OpenBlock AMI, then continue
 through the wizard until your instance is launched. You can leave all
 options at their default values (except the security group)
 unless you know what you're doing.
@@ -76,7 +78,7 @@ What You Have
 * A "custom" app named "myblock" as per the :doc:`docs <custom>`,
   installed at `/home/openblock/openblock/src/myblock/myblock`
 
-* Ubuntu 11.04 ("Natty"), Python 2.7, PostGIS, Apache2, mod_wsgi.
+* Ubuntu 11.04 ("Natty"), Python 2.7, Postgresql 8.4 and PostGIS 1.5, Apache2, mod_wsgi.
 
 The code and its database are set up as if you had already followed
 the :doc:`setup`, :doc:`base_install`, and :doc:`custom` instructions.

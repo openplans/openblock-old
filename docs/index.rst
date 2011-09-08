@@ -67,7 +67,7 @@ History
 OpenBlock began life as the open-source code released by
 `Everyblock.com
 <http://everyblock.com>`_ in June 2009.  Originally created by Adrian Holovaty
-and the Everyblock team, it has been rebranded OpenBlock to avoid
+and the Everyblock team in 2007, it has been rebranded OpenBlock to avoid
 trademark infringement, and is now developed as an open-source (GPL)
 project at http://openblockproject.org.
 
@@ -110,23 +110,13 @@ the data storage aspect of :doc:`packages/ebpub`, watch the video "Behind the
 scenes of EveryBlock.com" here: http://blip.tv/file/1957362
 
 
-Contents
-========
-
-.. toctree::
-   :maxdepth: 1
-
-   install/index
-   main/index
-   packages/index
-   release_notes
-   history
+.. include:: contents.rst
 
 Indices and tables
 ==================
 
 
 * :ref:`search`
-* :ref:`genindex`
 
+.. * :ref:`genindex`
 .. * :ref:`modindex`

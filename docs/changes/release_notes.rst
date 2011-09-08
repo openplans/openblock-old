@@ -7,6 +7,13 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+
+* Add a --reset option to ``update_aggregates`` script, deletes all
+  aggregates and starts over. (ticket #221)
+
+* Also add --verbose, --dry-run, and --help command-line options to
+  ``update_aggregates``.
+
 * Email alerts can now be sent via a command-line script. (related to
   ticket #65). Includes docs for how to set it up with cron.
 
@@ -27,26 +34,50 @@ New Features in 1.1
 Bug fixes
 ---------
 
-* Return 404 instead of infinite loop if
-  newsitem.schema.has_newsitem_detail is False but newsitem.url is
-  empty. Closes #110
+* Fixed bug that caused many "Unknown" locations in location charts.
+  (ticket #192)
+
+* Locations weren't capitalized on some pages. (ticket #202)
+
+Documentation
+-------------
+
+* Document email configuration.
+
+Other
+-----
+
+* Removed some unused template tags (SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN).
+
+
+
+OpenBlock 1.0.1 (Sept 7 2011)
+================================
+
+This was a minor bugfix (and docs) release, and was mostly identical to 1.0.0.
 
  * The georss scraper now gets coordinates in the right order on the
    first try, and populates location_name if it falls back to
    geocoding.
+
+ * Fix date formatting on newsitem-detail page. (ticket #201)
+
+ * The ``import_blocks_tiger`` and ``import_blocks_esri`` scripts had
+   a circular import.
+
+ * Fix a broken doctest in bootsrap.py.
 
 Documentation
 -------------
 
  * Added docs for cloning an EC2 instance from our Amazon AMI.
 
+ * Remove nonexistent ``--city`` option from geodata docs.
 
-Other
------
+ * Changed docs theme for easier navigation.
 
-* Removing lots of clustering code that's totally unused. (ticket #156)
 
 Older Changes
-==============
+-------------
 
 See :doc:`history`.
