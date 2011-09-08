@@ -58,9 +58,9 @@ window.onload = function() {
 		}
 		if (action == 'hide') {
 			url = '/accounts/hidden-schemas/add/';
-			link.text('Hiding...');
+			link.html('Hiding...');
 			on_success = function(data, textStatus) {
-				link.text('Show');
+				link.html('Show');
 				$j('h4.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 			};
@@ -69,9 +69,9 @@ window.onload = function() {
 			};
 		} else {
 			url = '/accounts/hidden-schemas/delete/';
-			link.text('Showing...')
+			link.html('Showing...')
 			on_success = function(data, textStatus) {
-				link.text('Hide')
+				link.html('Hide')
 				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 			};
@@ -145,13 +145,13 @@ window.onload = function() {
 			{% for schemagroup in newsitem_list_byschema %}
 				{% with schemagroup.list|length as num_newsitems %}
 					{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
-				<h4 class="{% if is_hidden %}hidden{% else %}visible{% endif %}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
+				<h4 class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
 					{% map_icon_img schemagroup.grouper %}
 
 					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
 					{% if USER %}<a class="toggle show" href="#">Hide</a>{% endif %}
 				</h4>
-				<div class="{% if is_hidden %}hidden{% else %}visible{% endif %}">
+				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
 					{% newsitem_list_by_schema schemagroup.list %}
 					</ul>
 				</div>
