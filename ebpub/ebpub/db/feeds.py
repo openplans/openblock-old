@@ -86,6 +86,8 @@ class AbstractLocationFeed(EbpubFeed):
         # Note: The item_date__lt=end_date+(1 day) ensures that we don't miss
         # stuff that has a item_date of the afternoon of end_date. A straight
         # item_date__range would miss those items.
+        # ... Or anyway, that applied when we were using a datetime instead of
+        # a date; doesn't matter now, but doesn't hurt either.
         qs = NewsItem.objects.select_related().filter(schema__is_public=True, item_date__gte=start_date, item_date__lt=end_date+datetime.timedelta(days=1)).extra(select={'item_date_date': 'date(db_newsitem.item_date)'}).order_by('-item_date_date', 'schema__id', 'id')
 
         # Filter out ignored schemas -- those whose slugs are specified in
@@ -123,7 +125,7 @@ class AbstractLocationFeed(EbpubFeed):
         if item[0] == 'newsitem':
             # Returning pub_date here because we need a datetime, not a date.
             # XXX That's potentially confusing since we use item_date elsewhere.
-            # Ticket #77.
+            # See ticket #77.
             if item[2].can_collapse:
                 return item[3][0].pub_date
             return item[3].pub_date
