@@ -181,16 +181,19 @@ def _decode_map_permalink(request):
     
     return config
 
-def item_headlines(request):
+def headlines(request):
     html = ''
     items = request.POST.getlist('item_id')
+    items = [x.split(':') for x in items]
     if len(items) == 0:
         cur_template = get_template('richmaps/no_headlines.html')
         html = cur_template.render(template.Context({}))
-
     else: 
-        for item_id in items: 
-            html += _item_headline(request, item_id)
+        for (obtype, item_id) in items:
+            if obtype == 'newsitem':
+                html += _item_headline(request, item_id)
+            else: 
+                html += _place_headline(request, item_id)
 
     response = HttpResponse(html)
     patch_response_headers(response, cache_timeout=3600)
@@ -213,6 +216,25 @@ def _item_headline(request, item_id):
                      ]
     current_template = select_template(template_list)
     return current_template.render(template.Context({'newsitem': ni, 'schema': schema, }))
+
+
+def _place_headline(request, item_id):
+    """
+    returns the headline list html for a single place.
+    """
+    try:
+        item_id = int(item_id)
+        place = Place.objects.get(id=item_id)
+        place_type = place.place_type
+    except:
+        return ''
+
+
+    template_list = ['richmaps/place_headline_%s.html' % place_type.slug,
+                     'richmaps/place_headline.html',
+                     ]
+    current_template = select_template(template_list)
+    return current_template.render(template.Context({'place': place, 'place_type': place_type, }))
 
 
 def item_popup(request, item_id):
@@ -269,6 +291,7 @@ def map_items_json(request):
                  'openblock_type': 'newsitem',
                  'icon': item.schema.map_icon_url,
                  'color': item.schema.map_color,
+                 'sort': item.item_date.strftime('%Y-%m-%d')
                 }
         result['properties'] = props
         return result
