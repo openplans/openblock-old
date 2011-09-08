@@ -36,10 +36,19 @@ New Features in 1.1
 Bug fixes
 ---------
 
+* Fix ticket #77: Now filtering news by item_date instead of pub_date
+  since that's the date that's shown and used for aggregates.
+
+* Fix "show/hide" buttons on place detail page and account
+  page. (tickets #204, #115)
+
 * Fixed bug that caused many "Unknown" locations in location charts.
   (ticket #192)
 
 * Locations weren't capitalized on some pages. (ticket #202)
+
+* GeoReport scraper: scrape a reasonable amount of days, not 60 every
+  darn time
 
 Documentation
 -------------
