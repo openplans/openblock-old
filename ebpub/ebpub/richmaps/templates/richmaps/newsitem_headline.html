@@ -1,6 +1,6 @@
 <li class="item-headline" id="item_headline_{{newsitem.id}}">
   {% if schema.map_icon_url %}
-  <img src="schema.map_icon_url" />
+  <img src="{{schema.map_icon_url}}" />
   {% endif %}
   <div class="title">
     {% if newsitem.item_url %}<a href="{{newsitem.item_url}}">{{newsitem.title|truncatewords_html:15}}</a>
