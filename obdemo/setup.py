@@ -59,6 +59,7 @@ setup(
         "ebpub>=%s" % VERSION,
         "ebdata>=%s" % VERSION,
         "obadmin>=%s" % VERSION,
+        "flickrapi>=1.4.2",
     ],
     dependency_links=[
     ],
