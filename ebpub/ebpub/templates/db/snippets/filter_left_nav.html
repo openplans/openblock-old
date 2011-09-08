@@ -6,6 +6,15 @@ start_date, end_date, lookup_list, search_list, search_url
 
 {% load eb_filter %}
 
+<script type="text/javascript">
+{% autoescape off %}
+$j(document).ready(function() {
+    $j('#start_date, #end_date').calendricalDateRange({usa: true});
+}
+)
+{% endautoescape %}
+</script>
+
 <div id="schemanav">
 	<h2>{% if filters %}Refine your search{% else %}Filter this section{% endif %}</h2>
 	{% if filters %}
@@ -52,9 +61,9 @@ start_date, end_date, lookup_list, search_list, search_url
 		<h3>{{ schema.date_name|capfirst }}</h3>
 		<form action="{% filter_url filters %}" method="get">
 			<p>
-				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"Y/m/d" }}">
+				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"m/d/Y" }}">
 					 - 
-					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"Y/m/d" }}">
+					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"m/d/Y" }}">
 				<button type="submit">Search</button>
 			</p>
 		</form>

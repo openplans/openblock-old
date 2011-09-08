@@ -706,10 +706,17 @@ class FilterChain(SortedDict):
         end_date = pop_key('end_date')
         if start_date and end_date:
             try:
-                start_date = parse_date(start_date, '%Y/%m/%d')
-                end_date = parse_date(end_date, '%Y/%m/%d')
+                start_date = parse_date(start_date, '%m/%d/%Y')
+                end_date = parse_date(end_date, '%m/%d/%Y')
             except ValueError, e:
-                raise BadDateException(str(e))
+                old_e = str(e)
+                del(e)
+                try:
+                    # Ugh, papering over wild proliferation of date formats.
+                    start_date = parse_date(start_date, '%Y/%m/%d')
+                    end_date = parse_date(end_date, '%Y/%m/%d')
+                except ValueError, e:
+                    raise BadDateException("%s; %s" % (str(e), old_e))
             if start_date.year < 1900 or end_date.year < 1900:
                 # This prevents strftime from throwing a ValueError.
                 raise BadDateException('Dates before 1900 are not supported.')
