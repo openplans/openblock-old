@@ -67,7 +67,7 @@ History
 OpenBlock began life as the open-source code released by
 `Everyblock.com
 <http://everyblock.com>`_ in June 2009.  Originally created by Adrian Holovaty
-and the Everyblock team, it has been rebranded OpenBlock to avoid
+and the Everyblock team in 2007, it has been rebranded OpenBlock to avoid
 trademark infringement, and is now developed as an open-source (GPL)
 project at http://openblockproject.org.
 
