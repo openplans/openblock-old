@@ -58,20 +58,20 @@ window.onload = function() {
 		}
 		if (action == 'hide') {
 			url = '/accounts/hidden-schemas/add/';
-			$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Hiding...');
+			link.text('Hiding...');
 			on_success = function(data, textStatus) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Hide');
+				link.text('Show');
 				$j('h4.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 			};
 			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Hide');
+				link.html('Hide');
 			};
 		} else {
 			url = '/accounts/hidden-schemas/delete/';
-			$j('h4.schema_' + schema_slug + ' .extra .toggle.show').html('Showing...');
+			link.text('Showing...')
 			on_success = function(data, textStatus) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.show').html('Show');
+				link.text('Hide')
 				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 			};
@@ -149,7 +149,7 @@ window.onload = function() {
 					{% map_icon_img schemagroup.grouper %}
 
 					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
-					{% if USER %}<a class="toggle show" href="#">Show</a>{% endif %}
+					{% if USER %}<a class="toggle show" href="#">Hide</a>{% endif %}
 				</h4>
 				<div class="{% if is_hidden %}hidden{% else %}visible{% endif %}">
 					{% newsitem_list_by_schema schemagroup.list %}
