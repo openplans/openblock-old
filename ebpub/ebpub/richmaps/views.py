@@ -287,11 +287,17 @@ def map_items_json(request):
             'type': 'Feature',
             'geometry': geom,
             }
+    
+        sort_key = '%d-%d-%d-%s-%d' % (9999 - item.item_date.year,
+                                    13 - item.item_date.month,
+                                    32 - item.item_date.day,
+                                    item.title,
+                                    item.id)
         props = {'id': item.id,
                  'openblock_type': 'newsitem',
                  'icon': item.schema.map_icon_url,
                  'color': item.schema.map_color,
-                 'sort': item.item_date.strftime('%Y-%m-%d')
+                 'sort': sort_key
                 }
         result['properties'] = props
         return result
