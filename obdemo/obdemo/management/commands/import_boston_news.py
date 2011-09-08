@@ -57,6 +57,9 @@ class Command(BaseCommand):
         #echo Adding press releases...
         #python everyblock/everyblock/cities/boston/city_press_releases/retrieval.py || die
 
+        print "Adding flickr photos..."
+        from ebdata.scrapers.general.flickr import flickr_retrieval
+        flickr_retrieval.main()
 
         print "Updating aggregates, see ebpub/README.txt..."
         from ebpub.db.bin.update_aggregates import update_all_aggregates
