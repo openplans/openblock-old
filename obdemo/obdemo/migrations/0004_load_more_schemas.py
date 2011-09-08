@@ -11,6 +11,11 @@ class Migration(DataMigration):
         ("db", "0015_auto__add_field_schema_map_icon_url__add_field_schema_map_color"),
 
     )
+    
+    needed_by = (
+        ("db", "0016_use_slug_fields_for_slugs"),
+    )
+    
 
     def forwards(self, orm):
         def _create_or_update(model_id, key, attributes):
