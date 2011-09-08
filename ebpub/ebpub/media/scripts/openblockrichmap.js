@@ -142,15 +142,9 @@ OBMapItemList.prototype._findVisibleItems = function() {
             ak = at;
             bk = bt;
         }
-        else if (at == 'newsitem') {
-            /* reverse sort on the sort field */
-            ak = b.attributes.sort;
-            bk = a.attributes.sort; 
-        }
         else {
-            /* sort on name */
-            ak = a.attributes.name;
-            bk = b.attributes.name;
+            ak = a.attributes.sort || a.attributes.name || a.attributes.title;
+            bk = b.attributes.sort || a.attributes.name || a.attributes.title;
         }
         
         return ((ak < bk) ? -1 : ((bk < ak) ? 1 : 0));
