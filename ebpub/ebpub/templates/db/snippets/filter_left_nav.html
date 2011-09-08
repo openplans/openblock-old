@@ -9,7 +9,8 @@ start_date, end_date, lookup_list, search_list, search_url
 <script type="text/javascript">
 {% autoescape off %}
 $j(document).ready(function() {
-    $j('#start_date, #end_date').calendricalDateRange({usa: true});
+    $j('#start_date').calendricalDate({usa: true});
+    $j('#end_date').calendricalDate({usa: true});
 }
 )
 {% endautoescape %}
