@@ -24,6 +24,8 @@ New Features in 1.1
   It's at ebdata/scrapers/general/flickr/flickr_retrieval.py
   and the associated schema can be loaded like so:
   ``django-admin.py loaddata ebdata/scrapers/general/flickr/photos_schema.json``
+  You'll need to set ``FLICKR_API_KEY`` and ``FLICKR_API_SECRET`` in
+  settings.py.
 
 * Import locations from shapefiles in the admin UI (ticket #59).
 

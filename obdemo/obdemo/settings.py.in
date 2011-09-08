@@ -150,6 +150,17 @@ CACHES = {
      },
 }
 
+######################################################
+# API keys for scrapers
+FLICKR_API_KEY = 'fix me'
+FLICKR_API_SECRET = 'fix me'
+
+#######################################################
+# For debugging.
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST='localhost'
+
+
 if DEBUG:
     for _name in required_settings:
         if not _name in globals():
