@@ -43,17 +43,15 @@ location_re = re.compile(r'^([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})$')
 def bunch_by_date_and_schema(newsitem_list, date_cutoff):
     current_schema_date, current_list = None, []
     for ni in newsitem_list:
-        ni_item_date = ni.item_date.date()
-
         # Remove collapsable newsitems that shouldn't be published in the
         # feed yet. See the lengthy comment in AbstractLocationFeed.items().
-        if ni.schema.can_collapse and ni_item_date >= date_cutoff:
+        if ni.schema.can_collapse and ni.item_date >= date_cutoff:
             continue
 
-        if current_schema_date != (ni.schema, ni_item_date):
+        if current_schema_date != (ni.schema, ni.item_date):
             if current_list:
                 yield current_list
-            current_schema_date = (ni.schema, ni_item_date)
+            current_schema_date = (ni.schema, ni.item_date)
             current_list = [ni]
         else:
             current_list.append(ni)
@@ -123,9 +121,12 @@ class AbstractLocationFeed(EbpubFeed):
 
     def item_pubdate(self, item):
         if item[0] == 'newsitem':
+            # Returning pub_date here because we need a datetime, not a date.
+            # XXX That's potentially confusing since we use item_date elsewhere.
+            # Ticket #77.
             if item[2].can_collapse:
-                return item[3][0].item_date
-            return item[3].item_date
+                return item[3][0].pub_date
+            return item[3].pub_date
         else:
             raise NotImplementedError()
 
