@@ -190,7 +190,12 @@ def ajax_place_date_chart(request):
     filters.add_by_place_id(request.GET.get('pid', ''))
     qs = filters.apply()
     # TODO: Ignore future dates
-    end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
+    try:
+        last_item = qs.order_by('-item_date').values('item_date')[0]
+        end_date = last_item['item_date']
+    except IndexError:  # No matching items.
+        end_date = today()
+
     start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
     filters.add('date', start_date, end_date)
     counts = filters.apply().date_counts()
@@ -1010,7 +1015,10 @@ def place_detail_overview(request, *args, **kwargs):
     # many more NewsItems than schemas.
     s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
     needed = set(s_list.keys())
-    newsitem_qs = NewsItem.objects.all()
+
+    filterchain = FilterChain(request=request, context=context)
+    filterchain.add('location', context['place'])
+    newsitem_qs = filterchain.apply()
     for ni in newsitem_qs.order_by('-item_date', '-id')[:300]:
         # Ordering by ID ensures consistency across page views.
         s_id = ni.schema_id

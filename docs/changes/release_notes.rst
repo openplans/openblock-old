@@ -36,6 +36,10 @@ New Features in 1.1
 Bug fixes
 ---------
 
+* place_detail_overview wasn't actually filtering by place.
+
+* ajax date charts would blow up if no results found.
+
 * Fix ticket #77: Now filtering news by item_date instead of pub_date
   since that's the date that's shown and used for aggregates.
 
