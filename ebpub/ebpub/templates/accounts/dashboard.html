@@ -48,10 +48,8 @@ $j(function() {
 			success: function(data, textStatus) {
 				if (action == 'hide') {
 					button.html('Show').removeAttr('disabled');
-					button.parent().addClass('hidden');
 				} else {
 					button.html('Hide').removeAttr('disabled');
-					button.parent().removeClass('hidden');
 				}
 			}
 		});
@@ -79,7 +77,7 @@ $j(function() {
 		<p>Choose categories of news for the timeline.</p>
 		<ul>
 		{% for schema in schema_list %}
-			<li{% if schema.is_hidden %}class="hidden"{% endif %}><button class="display-toggle" id="toggle-{{ schema.schema.slug }}">{% if schema.is_hidden %}Show{% else %}Hide{% endif %}</button> <a href="{{ schema.schema.url }}">{{ schema.schema.plural_name|capfirst }}</a></li>
+			<li><button class="display-toggle" id="toggle-{{ schema.schema.slug }}">{% if schema.is_hidden %}Show{% else %}Hide{% endif %}</button> <a href="{{ schema.schema.url }}">{{ schema.schema.plural_name|capfirst }}</a></li>
 		{% endfor %}
 		</ul>
 	</div><!--/ #display-preferences -->

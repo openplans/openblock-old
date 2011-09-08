@@ -120,8 +120,10 @@ class Schema(models.Model):
         help_text='Bigger number is more important; used for sorting in some places.')
     is_public = models.BooleanField(
         db_index=True, default=False,
-        help_text="Set False if you want only people with the staff cookie to be able to see it.")
-    is_special_report = models.BooleanField(default=False)
+        help_text="Set False if you want only people with the staff cookie to be able to see it.") 
+    is_special_report = models.BooleanField(
+        default=False,
+        help_text="Whether to use the schema_detail_special_report view for these items, eg. for displaying items that have a known general Location but not a specific point.")
 
     can_collapse = models.BooleanField(
         default=False,
@@ -751,7 +753,7 @@ class NewsItem(models.Model):
     location_name = models.CharField(max_length=255,
                                      help_text="Human-readable address or name of place where this news item occurred.")
     location_object = models.ForeignKey(Location, blank=True, null=True,
-                                        help_text="Optional reference to a Location where this item occurred")
+                                        help_text="Optional reference to a Location where this item occurred, for use when we know the general area but not specific coordinates.")
     block = models.ForeignKey(Block, blank=True, null=True,
                               help_text="Optional reference to a Block. Not really used")
 

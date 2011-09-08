@@ -1,0 +1,12 @@
+<li class="item-headline" id="item_headline_{{newsitem.id}}">
+  {% if schema.map_icon_url %}
+  <img src="{{schema.map_icon_url}}" />
+  {% endif %}
+  <div class="title">
+    {% if newsitem.item_url %}<a href="{{newsitem.item_url}}">{{newsitem.title|truncatewords_html:15}}</a>
+    {% else %}{{ newsitem.title }}{% endif %}
+  </div>
+  <div class="location">{{ newsitem.location_name.title }}</div>
+  <div class="date">{{ newsitem.item_date|date:"M j" }}</div>
+  <div class="category">{{schema.name}}</div>
+</li>

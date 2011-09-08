@@ -589,6 +589,9 @@ def schema_detail(request, slug):
     return eb_render(request, templates_to_try, context)
 
 def schema_detail_special_report(request, schema):
+    """
+    For display of schemas where is_special_report=True.
+    """
     ni_list = NewsItem.objects.filter(schema__id=schema.id)
     populate_schema(ni_list, schema)
     populate_attributes_if_needed(ni_list, [schema])
