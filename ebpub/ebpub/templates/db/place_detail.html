@@ -52,6 +52,7 @@ window.onload = function() {
 		var container = $j(this).parents('h4');
 		var link = container.find('.toggle');
 		var schema_slug = /(.*?)-\d+/.exec(container.attr('id'))[1];
+		var all_links = $j('.schema_' + schema_slug + ' .toggle');
 		if ($j('div.schema_' + schema_slug).hasClass('hidden')) {
 			action = 'show';
 		} else {
@@ -59,24 +60,24 @@ window.onload = function() {
 		}
 		if (action == 'hide') {
 			url = '/accounts/hidden-schemas/add/';
-			$j('a.toggle').html('Hiding...');
+			all_links.html('Hiding...');
 			on_success = function(data, textStatus) {
-                $j('a.toggle').html('Show');
+                all_links.html('Show');
 				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 			};
 			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
-                $j('a.toggle').html('Hide');
+                all_links.html('Hide');
 			};
 		} else {
 			url = '/accounts/hidden-schemas/delete/';
-			$j('a.toggle').html('Showing...')
+			all_links.html('Showing...')
 			on_success = function(data, textStatus) {
-				$j('a.toggle').html('Hide')
+				all_links.html('Hide')
 				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 			};
 			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Show');
+				all_links.html('Show');
 			};
 		}
 		$j.ajax({
