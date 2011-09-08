@@ -26,6 +26,165 @@ var OBMapDateRange = function(map, permalink, form) {
     });
 };
 
+var OBMapItemList = function(map, options) {
+    this.options = options || {};
+    this.map = map;
+    this.el = $(this.options.element || '#map_headlines');
+    this.items = [];
+    this.clustersById = {};
+    this.listLength = this.options.listLength || 5;
+    this.page = 0; 
+    this.pages = 0;
+    this.sequence = 0;
+
+    this.el.html('<ul class="map-item-list"></ul><div class="spacer">&nbsp</div><div class="map-item-list-pager"></div>');
+
+    var _handleNewLayer = function(evt) {
+        var layer = evt.layer;
+        this._setupNewLayer(layer);
+        this.update();
+    };
+
+    this.map.map.events.on({'addlayer': _handleNewLayer,
+                            'changelayer': this.update,
+                            'removelayer': this.update,
+                            'moveend': this.update,
+                            'scope': this});
+                            
+    for (var i = 0; i < this.map.map.layers.length; i++) {
+        var layer = this.map.map.layers[i];
+        this._setupNewLayer(layer);
+    }
+
+    this.update();
+};
+
+OBMapItemList.prototype._setupNewLayer = function(layer) {
+    layer.events.on({
+        'loadend': this.update,
+        'scope': this
+    });
+}
+
+OBMapItemList.prototype.update = function() {
+    this._findVisibleItems();
+    this._resetPager();
+    this._refreshPage();
+};
+
+OBMapItemList.prototype._resetPager = function() {
+    this.page = 0;
+    this.pages = Math.ceil(this.items.length / this.listLength);
+    if (this.pages > 0) {
+        var pagerHTML = '<a class="nav-prev" href="#">&larr;prev</a>&nbsp;';
+        pagerHTML +=    '<span class="page-number">' + (this.page + 1) + '</span>&nbsp;of&nbsp;';
+        pagerHTML += this.pages + '&nbsp;<a class="nav-next" href="#">next&rarr;</a></div>';
+
+        this.el.find('.map-item-list-pager').html(pagerHTML);
+        var prev = this.el.find("a.nav-prev");
+        var next = this.el.find("a.nav-next");
+        
+        // Clicking next or previous replaces the nav links html.
+        var thisList = this;
+        prev.click(function(e) {
+            e.preventDefault();
+            thisList.prevPage();
+        });
+        next.click(function(e) {
+            e.preventDefault();
+            thisList.nextPage();
+        });
+    }
+    else {
+        this.el.find('.map-item-list-pager').html("");
+    }
+};
+
+OBMapItemList.prototype.nextPage = function() {
+    this.page = (this.page + 1) % this.pages;
+    this.el.find('.page-number').html(this.page + 1); 
+    this._refreshPage();
+};
+
+OBMapItemList.prototype.prevPage = function() {
+    this.page = (this.page - 1 + this.pages) % this.pages; 
+    this.el.find('.page-number').html(this.page + 1);
+    this._refreshPage();
+};
+
+OBMapItemList.prototype._findVisibleItems = function() {
+    /* gathers a list of all features that are currently 
+     * visible on the map.
+     */
+    this.items = [];
+    this.clustersById = {};
+    
+    for (var i = 0; i < this.map.map.layers.length; i++) {
+        var layer = this.map.map.layers[i];
+        if (layer.visibility == false || layer.isBaseLayer)
+            continue;
+        for (var j = 0; j < layer.features.length; j++) {
+            var feature = layer.features[j];
+            if (feature.onScreen) {
+                for (var k = 0; k < feature.cluster.length; k++) {
+                    this.items.push(feature.cluster[k]);
+                    this.clustersById[feature.cluster[k].attributes.id] = feature;
+                }
+            }
+        }
+    }
+};
+
+OBMapItemList.prototype._refreshPage = function() {
+    /* gather items on page */
+    var items = [];
+    var start = this.page*this.listLength
+    for (var i = 0; i < this.listLength; i++) {
+        var cur = start + i; 
+        if (cur < this.items.length) {
+            items.push(this.items[cur].attributes.id);
+        }
+    }
+
+    this.sequence += 1;
+    var seq = this.sequence; 
+    var _setContent = function(html) {
+        if (seq == this.sequence) {
+            this.el.find('.map-item-list').html(html);
+        }
+        var thisItemList = this;
+        this.el.find('.item-headline').click(function(evt) {
+            var headline = $(evt.target).closest('.item-headline')[0];
+            var itemId = headline.id.substr(14);
+            thisItemList._itemSelected(itemId);
+        });
+    };
+    jQuery.ajax({
+       url: '/maps/headlines',
+       type: 'POST',
+       data: {'item_id': items},
+       traditional: true,
+       dataType: 'html',
+       success: _setContent,
+       context: this
+    });
+};
+
+OBMapItemList.prototype._itemSelected = function(itemId) {
+    
+    var feature = this.clustersById[itemId];
+    /* locate the index of the specific feature in the cluster */
+    for (var k = 0; k < feature.cluster.length; k++) {
+        if (feature.cluster[k].attributes.id == itemId) {
+            this.map.selectFeature(feature, k);
+            return; 
+        }
+    }
+};
+
+
+
+
 var OpenblockCluster = OpenLayers.Class(OpenLayers.Strategy.Cluster, {
     /* inherits fro the OpenLayers.Strategy.Cluster class and
      * adds a pre-reclustering notification and splitting of clusters
@@ -141,7 +300,8 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
 *
 ****************************************/
 var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
-    initialize: function(obmap, center, features) {
+    initialize: function(obmap, center, features, initialIndex) {
+        initialIndex = initialIndex || 0;
         this.featureInfo = features;
         if (center != null) {
             this.clusterCenter = center;
@@ -168,12 +328,12 @@ var OpenblockPopup = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
         );
 
         this.obmap = obmap;
-        this.featureIndex = 0;
+        this.featureIndex = initialIndex;
         this.maxSize = new OpenLayers.Size(320, 320);
         this.contentDiv.className = "openblockFramedCloudPopupContent";
         this.panMapIfOutOfView = true;
 
-        this.replaceHTML(0);
+        this.replaceHTML(initialIndex);
     }
 });
 
@@ -645,8 +805,15 @@ OBMap.prototype.loadAllPlaceLayers = function() {
     });
 };
 
+OBMap.prototype.selectFeature = function(feature, clusterIndex) {
+    /* public feature selection request */
+    
+    // just pass it along.
+    this._featureSelected(feature, clusterIndex);
+};
 
-OBMap.prototype._featureSelected = function(feature) {
+OBMap.prototype._featureSelected = function(feature, clusterIndex) {
+    clusterIndex = clusterIndex || 0;
     var clusterCenter = feature.geometry.getBounds().getCenterLonLat();
     var featureInfo = [];
     for (var i = 0; i < feature.cluster.length; i++) {
@@ -655,7 +822,7 @@ OBMap.prototype._featureSelected = function(feature) {
                           openblock_type: cur.attributes.openblock_type,
                           lonlat: cur.geometry.getBounds().getCenterLonLat()});
     }
-    var popup = new OpenblockPopup(this, clusterCenter, featureInfo);
+    var popup = new OpenblockPopup(this, clusterCenter, featureInfo, clusterIndex);
     this.setPopup(popup);
 };
 

@@ -413,7 +413,6 @@ height: 255px
 }
 
 
-
 .fullpage #detailmap {
     width: 100%;
     height: 480px;
@@ -421,12 +420,37 @@ height: 255px
 
 #map_date_range {
     margin-bottom: 20em;
+    float: right;
 }
 
 #mapwrapper {
 margin-bottom : .5em;
 border : 1px solid #cac8c6;
 }
+
+#mapwrapper.fullpage {
+    float: left;
+    width: 698px;
+}
+
+#map_headlines {
+    width: 200px;
+    float: left;
+}
+
+#map_headlines .map-item-list {
+    height: 500px;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#map_headlines .map-item-list li {
+    height: 90px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #a0a0a0;
+}
+
 
 #content {
 width : 480px;

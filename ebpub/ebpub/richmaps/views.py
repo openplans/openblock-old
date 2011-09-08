@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django import template
-from django.template.loader import select_template
+from django.template.loader import get_template, select_template
 from django.utils.cache import patch_response_headers
 from django.utils import simplejson
 from ebpub.utils.view_utils import eb_render
@@ -177,11 +177,43 @@ def _decode_map_permalink(request):
     
     return config
 
+def item_headlines(request):
+    html = ''
+    items = request.POST.getlist('item_id')
+    if len(items) == 0:
+        cur_template = get_template('richmaps/no_headlines.html')
+        html = cur_template.render(template.Context({}))
+
+    else: 
+        for item_id in items: 
+            html += _item_headline(request, item_id)
+
+    response = HttpResponse(html)
+    patch_response_headers(response, cache_timeout=3600)
+    return response
+
+
+def _item_headline(request, item_id):
+    """
+    returns the headline list html for a single item.
+    """
+    try:
+        item_id = int(item_id)
+        ni = NewsItem.objects.get(id=item_id)
+    except:
+        return ''
+
+    schema = ni.schema
+    template_list = ['richmaps/newsitem_headline_%s.html' % schema.slug,
+                     'richmaps/newsitem_headline.html',
+                     ]
+    current_template = select_template(template_list)
+    return current_template.render(template.Context({'newsitem': ni, 'schema': schema, }))
+
 
 def item_popup(request, item_id):
     """
-    Given a list of newsitems, return a list of lists
-    of the form [newsitem_id, popup_html, schema_name]
+    returns the popup html for a single item.
     """
     try:
         item_id = int(item_id)

@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block content %}
+    <div id="map_headlines" class="map-headlines"></div>
 		<div id="mapwrapper" class="fullpage">
 		  <script type="text/javascript">
 	    {% autoescape off %}
@@ -26,6 +27,8 @@
           map.map.addControl(permalink);
 
           var dateControl = new OBMapDateRange(map, permalink, '#map_date_range_form');
+
+          var headlines = new OBMapItemList(map, {'element': '#map_headlines'});
           return map;
       }
       {% endautoescape %}
@@ -41,4 +44,5 @@
     		    <input type="submit" value="change" />
   		  </form>
     </div>
+
 {% endblock %}
