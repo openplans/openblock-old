@@ -134,10 +134,26 @@ OBMapItemList.prototype._findVisibleItems = function() {
         }
     }
     this.items.sort(function(a,b) {
-        // reverse sort on the 'sort' field
-        var ac = a.attributes.sort;
-        var bc = b.attributes.sort;
-        return ((ac < bc) ? 0 : ((bc < ac) ? -1 : 0));
+        var at = a.attributes.openblock_type; 
+        var bt = b.attributes.openblock_type; 
+        
+        if (at != bt) {
+            /* if types do not match, order by type */
+            ak = at;
+            bk = bt;
+        }
+        else if (at == 'newsitem') {
+            /* reverse sort on the sort field */
+            ak = b.attributes.sort;
+            bk = a.attributes.sort; 
+        }
+        else {
+            /* sort on name */
+            ak = a.attributes.name;
+            bk = b.attributes.name;
+        }
+        
+        return ((ak < bk) ? -1 : ((bk < ak) ? 1 : 0));
     });
 };
 
@@ -148,7 +164,7 @@ OBMapItemList.prototype._refreshPage = function() {
     for (var i = 0; i < this.listLength; i++) {
         var cur = start + i; 
         if (cur < this.items.length) {
-            items.push(this.items[cur].attributes.id);
+            items.push(this.items[cur].attributes.openblock_type + ':' + this.items[cur].attributes.id);
         }
     }
 
