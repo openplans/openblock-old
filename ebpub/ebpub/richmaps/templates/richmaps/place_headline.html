@@ -1,0 +1,11 @@
+<li class="item-headline" id="item_headline_{{place.id}}">
+  {% if place_type.map_icon_url %}
+  <img src="{{place_type.map_icon_url}}" />
+  {% endif %}
+  <div class="title">
+    {% if place.url %}<a href="{{place.url}}">{{place.pretty_name|truncatewords_html:15}}</a>
+    {% else %}{{ place.pretty_name }}{% endif %}
+  </div>
+  <div class="location">{{place.address}}</div>
+  <div class="category">{{place_type.name}}</div>
+</li>
