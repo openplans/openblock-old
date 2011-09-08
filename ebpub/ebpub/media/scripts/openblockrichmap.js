@@ -125,7 +125,7 @@ OBMapItemList.prototype._findVisibleItems = function() {
             continue;
         for (var j = 0; j < layer.features.length; j++) {
             var feature = layer.features[j];
-            if (feature.onScreen) {
+            if (feature.onScreen() == true) {
                 for (var k = 0; k < feature.cluster.length; k++) {
                     this.items.push(feature.cluster[k]);
                     this.clustersById[feature.cluster[k].attributes.id] = feature;
@@ -133,6 +133,12 @@ OBMapItemList.prototype._findVisibleItems = function() {
             }
         }
     }
+    this.items.sort(function(a,b) {
+        // reverse sort on the 'sort' field
+        var ac = a.attributes.sort;
+        var bc = b.attributes.sort;
+        return ((ac < bc) ? 0 : ((bc < ac) ? -1 : 0));
+    });
 };
 
 OBMapItemList.prototype._refreshPage = function() {

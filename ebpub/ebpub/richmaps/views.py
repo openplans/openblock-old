@@ -269,6 +269,7 @@ def map_items_json(request):
                  'openblock_type': 'newsitem',
                  'icon': item.schema.map_icon_url,
                  'color': item.schema.map_color,
+                 'sort': item.item_date.strftime('%Y-%m-%d')
                 }
         result['properties'] = props
         return result
