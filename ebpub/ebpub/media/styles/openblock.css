@@ -449,7 +449,34 @@ border : 1px solid #cac8c6;
     height: 90px;
     padding-bottom: 10px;
     border-bottom: 1px solid #a0a0a0;
+    overflow: hidden;
 }
+
+#map_headlines .map-item-list li img {
+    width: 20px;
+    float: left;
+}
+
+#map_headlines .map-item-list li .title {
+    font-size: 95%;
+    padding-left: 5px;
+}  
+
+
+#map_headlines .map-item-list li .location,
+#map_headlines .map-item-list li .category, 
+#map_headlines .map-item-list li .date {
+
+    font-size: 80%;
+}
+
+#map_headlines .map-item-list li .location {
+    clear: both;
+}
+
+
+
+
 
 
 #content {
