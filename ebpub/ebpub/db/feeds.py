@@ -43,17 +43,17 @@ location_re = re.compile(r'^([-_a-z0-9]{1,32})/([-_a-z0-9]{1,32})$')
 def bunch_by_date_and_schema(newsitem_list, date_cutoff):
     current_schema_date, current_list = None, []
     for ni in newsitem_list:
-        ni_pub_date = ni.pub_date.date()
+        ni_item_date = ni.item_date.date()
 
         # Remove collapsable newsitems that shouldn't be published in the
         # feed yet. See the lengthy comment in AbstractLocationFeed.items().
-        if ni.schema.can_collapse and ni_pub_date >= date_cutoff:
+        if ni.schema.can_collapse and ni_item_date >= date_cutoff:
             continue
 
-        if current_schema_date != (ni.schema, ni_pub_date):
+        if current_schema_date != (ni.schema, ni_item_date):
             if current_list:
                 yield current_list
-            current_schema_date = (ni.schema, ni_pub_date)
+            current_schema_date = (ni.schema, ni_item_date)
             current_list = [ni]
         else:
             current_list.append(ni)
@@ -85,10 +85,10 @@ class AbstractLocationFeed(EbpubFeed):
         start_date = today_value - datetime.timedelta(days=4)
         end_date = today_value
 
-        # Note: The pub_date__lt=end_date+(1 day) ensures that we don't miss
-        # stuff that has a pub_date of the afternoon of end_date. A straight
-        # pub_date__range would miss those items.
-        qs = NewsItem.objects.select_related().filter(schema__is_public=True, pub_date__gte=start_date, pub_date__lt=end_date+datetime.timedelta(days=1)).extra(select={'pub_date_date': 'date(db_newsitem.pub_date)'}).order_by('-pub_date_date', 'schema__id', 'id')
+        # Note: The item_date__lt=end_date+(1 day) ensures that we don't miss
+        # stuff that has a item_date of the afternoon of end_date. A straight
+        # item_date__range would miss those items.
+        qs = NewsItem.objects.select_related().filter(schema__is_public=True, item_date__gte=start_date, item_date__lt=end_date+datetime.timedelta(days=1)).extra(select={'item_date_date': 'date(db_newsitem.item_date)'}).order_by('-item_date_date', 'schema__id', 'id')
 
         # Filter out ignored schemas -- those whose slugs are specified in
         # the "ignore" query-string parameter.
@@ -124,15 +124,15 @@ class AbstractLocationFeed(EbpubFeed):
     def item_pubdate(self, item):
         if item[0] == 'newsitem':
             if item[2].can_collapse:
-                return item[3][0].pub_date
-            return item[3].pub_date
+                return item[3][0].item_date
+            return item[3].item_date
         else:
             raise NotImplementedError()
 
     def item_link(self, item):
         if item[0] == 'newsitem':
             if item[2].can_collapse:
-                return item[1].url() + '#%s-%s' % (item[3][0].schema.slug, item[3][0].pub_date.strftime('%Y%m%d'))
+                return item[1].url() + '#%s-%s' % (item[3][0].schema.slug, item[3][0].item_date.strftime('%Y%m%d'))
             return item[3].item_url_with_domain()
         else:
             raise NotImplementedError()

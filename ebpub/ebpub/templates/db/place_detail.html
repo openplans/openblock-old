@@ -138,14 +138,14 @@ window.onload = function() {
 
   <div id="place-detail-content">
 	{% if newsitem_list %}
-		{% regroup newsitem_list by pub_date|friendlydate as newsitem_list_byday %}
+		{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
 		{% for daygroup in newsitem_list_byday %}
 			<h2>New {{ daygroup.grouper }}</h2>
 			{% regroup daygroup.list by schema as newsitem_list_byschema %}
 			{% for schemagroup in newsitem_list_byschema %}
 				{% with schemagroup.list|length as num_newsitems %}
 					{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
-				<h4 class="{% if is_hidden %}hidden{% else %}visible{% endif %}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.pub_date|date:"Ymd" }}">
+				<h4 class="{% if is_hidden %}hidden{% else %}visible{% endif %}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
 					{% map_icon_img schemagroup.grouper %}
 
 					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
