@@ -28,11 +28,16 @@ def do_seeclickfix(**kwargs):
     from ebdata.scrapers.general.seeclickfix.seeclickfix_retrieval import SeeClickFixNewsFeedScraper
     return SeeClickFixNewsFeedScraper().update()
 
+def do_flickr(**kwargs):
+    from ebdata.scrapers.general.flickr.flickr_retrieval import main
+    return main()
+
 def do_georeport(**kwargs):
     url = 'https://mayors24.cityofboston.gov:6443/api/open311/v2/'
     from ebdata.scrapers.general.open311.georeportv2 import GeoReportV2Scraper
     scraper = GeoReportV2Scraper(api_url=url,
                                  http_cache='/tmp/georeport_scraper_cache',
+                                 days_prior=1,
                                  )
     return scraper.update()
 
@@ -77,10 +82,11 @@ TASKS = (
     # Example:
     # (multiple_daily(12, 0), run_some_function, {'arg': 'foo'}, {'DJANGO_SETTINGS_MODULE': 'foo.settings'})
     (multiple_hourly(*range(0, 60, 20)), do_news, {}, env),
-    (multiple_hourly(*range(5, 60, 20)), do_seeclickfix, {}, env),
+#    (multiple_hourly(*range(5, 60, 20)), do_seeclickfix, {}, env),
     (multiple_hourly(*range(7, 60, 20)), do_georeport, {}, env),
     (multiple_hourly(*range(10, 60, 20)), do_events, {}, env),
     (multiple_hourly(*range(15, 60, 20)), do_police_reports, {}, env),
+    (multiple_hourly(*range(19, 60, 20)), do_flickr, {}, env),
 
     (multiple_daily(7, 3), do_restaurants, {}, env),
 
