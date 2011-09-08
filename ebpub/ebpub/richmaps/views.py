@@ -288,10 +288,11 @@ def map_items_json(request):
             'geometry': geom,
             }
     
-        sort_key = '%d-%d-%d-%s' % (9999 - item.item_date.year,
+        sort_key = '%d-%d-%d-%s-%d' % (9999 - item.item_date.year,
                                     13 - item.item_date.month,
                                     32 - item.item_date.day,
-                                    item.title)
+                                    item.title,
+                                    item.id)
         props = {'id': item.id,
                  'openblock_type': 'newsitem',
                  'icon': item.schema.map_icon_url,
