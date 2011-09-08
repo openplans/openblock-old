@@ -119,17 +119,21 @@ def _decode_map_permalink(request):
             enddate = None
     
     # fill in any missing or invalid dates
-    max_interval = datetime.timedelta(days=7)
+    max_interval = datetime.timedelta(days=30)
+    default_interval = datetime.timedelta(days=7)
     if startdate is None and enddate is None:
         enddate = datetime.date.today()
-        startdate = enddate - max_interval
-    elif startdate is None: 
-        startdate = enddate - max_interval
-    elif enddate is None: 
-        enddate = startdate + max_interval
+        startdate = enddate - default_interval
+    elif startdate is None:
+        startdate = enddate - default_interval
+    elif enddate is None:
+        enddate = startdate + default_interval
     
-    if enddate < startdate or enddate - startdate > max_interval:
-        enddate = startdate + datetime.timedelta(days=7)
+    if enddate < startdate:
+        enddate = startdate + default_interval
+        
+    if enddate - startdate > max_interval:
+        enddate = startdate + max_interval
 
     layers = []
     for place_type in PlaceType.objects.filter(is_mappable=True).all():
