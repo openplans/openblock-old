@@ -1,0 +1,103 @@
+[
+  {
+    "fields": {
+      "last_updated": "2011-09-09",
+      "intro": "",
+      "update_frequency": "",
+      "has_newsitem_detail": true,
+      "grab_bag_headline": "",
+      "short_source": "http://meetup.com",
+      "slug": "meetups",
+      "source": "http://meetup.com",
+      "date_name": "Date",
+      "short_description": "Meetups",
+      "grab_bag": "",
+      "is_special_report": false,
+      "importance": 0,
+      "min_date": "2011-01-01",
+      "allow_charting": true,
+      "indefinite_article": "a",
+      "is_public": true,
+      "number_in_overview": 5,
+      "date_name_plural": "Dates",
+      "plural_name": "Meetups",
+      "name": "Meetup",
+      "uses_attributes_in_list": true,
+      "summary": "Local Meetup meetings",
+      "can_collapse": false
+    },
+    "model": "db.schema"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": true,
+      "name": "group_name",
+      "display_order": 1,
+      "real_name": "varchar01",
+      "pretty_name": "Group Name",
+      "pretty_name_plural": "Group Names",
+      "display": true,
+      "schema": [
+        "meetups"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": true,
+      "name": "venue_name",
+      "display_order": 5,
+      "real_name": "varchar02",
+      "pretty_name": "Venue Name",
+      "pretty_name_plural": "Venue Names",
+      "display": true,
+      "schema": [
+        "meetups"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_charted": false,
+      "is_filter": false,
+      "is_searchable": false,
+      "name": "venue_phone",
+      "display_order": 10,
+      "real_name": "varchar03",
+      "pretty_name": "Venue Phone",
+      "pretty_name_plural": "Venue Phones",
+      "display": true,
+      "schema": [
+        "meetups"
+      ]
+    },
+    "model": "db.schemafield"
+  },
+  {
+    "fields": {
+      "is_lookup": false,
+      "is_filter": false,
+      "is_charted": false,
+      "is_searchable": false,
+      "pretty_name_plural": "Start Times",
+      "name": "start_time",
+      "display_order": 0,
+      "real_name": "time01",
+      "pretty_name": "Start Time",
+      "display": true,
+      "schema": [
+        "meetups"
+      ]
+    },
+    "model": "db.schemafield"
+  }
+]
