@@ -47,12 +47,6 @@ var $j = $;
           var permalink = new OpenblockPermalink(map);
           map.map.addControl(permalink);
         }
-        if (config.controls.date) {
-          var dateControl = new OBMapDateRange(map, permalink, '#map_date_range_form');
-        }
-        else {
-          $('#map_date_range').hide();
-        }
 
         if (config.controls.headline_list) {
           var headlines = new OBMapItemList(map, {'element': '#map_headlines'});
@@ -67,9 +61,7 @@ var $j = $;
         }
         if (config.height) {
           $('.map-widget').height(config.height);
-          var dr_h = $('#map_date_range').height();
-          var map_h = config.height - dr_h;
-          $('#detailmap').height(map_h);
+          $('#detailmap').height(config.height);
         }
         return map;
     }
@@ -78,15 +70,6 @@ var $j = $;
 	{% include "richmaps/richmap.html" %}
 	</div><!-- end mapwrapper -->
 	
-  <div id="map_date_range">
-      <form action="#" id="map_date_range_form">
-      		<label for="map_begin_date">Start Date</label>
-      		<input type="text" class="begin-date" id="map_begin_date" />
-      		<label for="map_end_date">End Date</label>
-  		    <input type="text" class="end-date" id="map_end_date" />
-  		    <input type="submit" value="change" />
-		  </form>
-  </div>
   </div>
 </body>
 </html>

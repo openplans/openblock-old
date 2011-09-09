@@ -172,14 +172,12 @@ def _decode_map_permalink(request):
         })
         
     controls = {}
-    control_list = params.get("d", 'lhmdp')
+    control_list = params.get("d", 'lhp')
     if control_list: 
         if 'l' in control_list: 
             controls['layers'] = True
         if 'h' in control_list: 
             controls['headline_list'] = True
-        if 'd' in control_list: 
-            controls['date'] = True
         if 'p' in control_list: 
             controls['permalink'] = True
 
