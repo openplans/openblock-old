@@ -27,6 +27,8 @@ from ebpub.settings_default import *
 # CORE DJANGO SETTINGS #
 ########################
 
+TIME_ZONE = 'US/Eastern'
+
 INSTALLED_APPS += (
     'obdemo',
     )
@@ -130,7 +132,7 @@ METRO_LIST = (
         'state_name': 'Massachusetts',
 
         # Time zone, as required by Django's TIME_ZONE setting.
-        'time_zone': 'America/New_York',
+        'time_zone': TIME_ZONE,
 
         # Slug of an ebpub.db.LocationType that represents cities.
         # Only needed if multiple_cities = True.
