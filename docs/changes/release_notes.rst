@@ -7,6 +7,9 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+* Added a scraper for Meetup.com, in ebdata/scrapers/general/meetups.
+  It's zero-configuration: it just loops over your zip codes and
+  finds all meetups for those.
 
 * Add a --reset option to ``update_aggregates`` script, deletes all
   aggregates and starts over. (ticket #221)

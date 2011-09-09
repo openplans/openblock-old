@@ -16,7 +16,7 @@ class MeetupScraper(NewsItemListDetailScraper):
 
     logname = 'meetup_retrieval'
     has_detail = False
-    max_records_per_scrape = 2000
+    max_records_per_scrape = 10000
 
     def __init__(self, options):
         self.api_key = settings.MEETUP_API_KEY
@@ -61,6 +61,7 @@ class MeetupScraper(NewsItemListDetailScraper):
 
         for result in results:
             if self.records_seen > self.max_records_per_scrape:
+                self.logger.info("stopping at %d records" % self.max_records_per_scrape)
                 raise StopScraping("We've reached %d records" % self.max_records_per_scrape)
             self.records_seen += 1
             yield result
