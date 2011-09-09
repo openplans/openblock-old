@@ -178,8 +178,6 @@ def _decode_map_permalink(request):
             controls['layers'] = True
         if 'h' in control_list: 
             controls['headline_list'] = True
-        if 'm' in control_list:
-            controls['move'] = True
         if 'd' in control_list: 
             controls['date'] = True
         if 'p' in control_list: 
@@ -216,19 +214,14 @@ def _decode_map_permalink(request):
       'permalink_params': {
         's': startdate.strftime('%m/%d/%Y'),
         'e': enddate.strftime('%m/%d/%Y'),
-        'd': control_list,
-        'x': is_widget
       }, 
     }
 
     if width is not None: 
         config['width'] = width
-        config['permalink_params']['w'] = width
     if height is not None: 
         config['height'] = height
-        config['permalink_params']['h'] = height
- 
-    if popup_info: 
+    if popup_info:
         config['popup'] = popup_info
     
     return config
