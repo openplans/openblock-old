@@ -174,6 +174,11 @@ OBMapItemList.prototype._refreshPage = function() {
             var itemId = headline.id.substr(14);
             thisItemList._itemSelected(itemId);
         });
+        
+        if (this.map.isWidget()) {
+            $(this.el).find('a').attr('target', '_parent');
+        }
+        
     };
     jQuery.ajax({
        url: '/maps/headlines',
@@ -415,6 +420,9 @@ OpenblockPopup.prototype.replaceHTML = function(i) {
             if (this.featureInfo.length > 1) {
                 $(this.contentDiv).find("#clusteridx").text(i+1);
             }
+            if (this.obmap.isWidget()) {
+                $(this.contentDiv).find('a').attr('target', '_parent');
+            }
             this.checkPosition();
             this.updateSize();
             this.obmap.events.triggerEvent("popupchanged", {});
@@ -479,6 +487,11 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
             params.p = this._encodeLonLat(popup.lonlat);
             params.f = this._encodeFeature(popup.getFocalFeature());
         }
+
+        if (this.obmap.isWidget()) {
+            $(this.element).attr('target', '_parent');
+        }
+        
         return params;
     },
 
@@ -605,6 +618,10 @@ OBMap.prototype._configureLayers = function() {
             this.loadFeatureLayer(this.options.layers[i]);
         }
     }
+};
+
+OBMap.prototype.isWidget = function() {
+    return this.options.is_widget == true;
 };
 
 OBMap.prototype.loadLocationBorder = function(layerConfig) {

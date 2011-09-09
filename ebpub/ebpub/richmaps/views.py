@@ -36,8 +36,10 @@ def _decode_map_permalink(request):
     f - popup feature
     s - start date (inclusive) %m/%d/%Y
     e - end date (inclusive) %m/%d/%Y
-    d - limits what map controls are displayed 
-    x - show as 'widget' (embedded)
+    d - duration in days (overridden by end date)
+
+    x - show as 'widget' 
+    v- limits what map controls are displayed (widget only)
     w - width of map (widget only)
     h - height of map (widget only)
     """
@@ -127,19 +129,36 @@ def _decode_map_permalink(request):
         except:
             enddate = None
     
-    # fill in any missing or invalid dates
+
     max_interval = datetime.timedelta(days=30)
+    min_interval = datetime.timedelta(days=1)
     default_interval = datetime.timedelta(days=7)
+    
+    duration = params.get('d')
+    if duration is not None:
+        try:
+            duration = datetime.timedelta(days=int(duration))
+            if duration > max_interval: 
+                duration = max_interval
+            elif duration < min_interval:
+                duration = min_interval 
+        except:
+            duration = default_interval
+    else: 
+        duration = default_interval
+    
+    # fill in any missing or invalid dates
+
     if startdate is None and enddate is None:
         enddate = datetime.date.today()
-        startdate = enddate - default_interval
+        startdate = enddate - duration
     elif startdate is None:
-        startdate = enddate - default_interval
+        startdate = enddate - duration
     elif enddate is None:
-        enddate = startdate + default_interval
+        enddate = startdate + duration
     
     if enddate < startdate:
-        enddate = startdate + default_interval
+        enddate = startdate + duration
         
     if enddate - startdate > max_interval:
         enddate = startdate + max_interval
@@ -172,7 +191,7 @@ def _decode_map_permalink(request):
         })
         
     controls = {}
-    control_list = params.get("d", 'lhp')
+    control_list = params.get("v", 'lhp')
     if control_list: 
         if 'l' in control_list: 
             controls['layers'] = True
