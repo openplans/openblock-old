@@ -47,7 +47,7 @@ Bug fixes
   page. (tickets #204, #115)
 
 * Fixed bug that caused many "Unknown" locations in location charts.
-  (ticket #192)
+  (ticket #192). And removed "unknowns" entirely from the chart.
 
 * Locations weren't capitalized on some pages. (ticket #202)
 
