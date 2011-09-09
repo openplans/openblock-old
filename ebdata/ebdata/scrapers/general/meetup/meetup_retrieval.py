@@ -17,6 +17,7 @@ class MeetupScraper(NewsItemListDetailScraper):
     logname = 'meetup_retrieval'
     has_detail = False
     max_records_per_scrape = 10000
+    max_pages_per_zipcode = 10
 
     def __init__(self, options):
         self.api_key = settings.MEETUP_API_KEY
@@ -36,8 +37,7 @@ class MeetupScraper(NewsItemListDetailScraper):
                           country='US')
             # Result of each iteration is a JSON string.
             pagenum = 0
-            pages = float('inf')
-            while pagenum < pages:
+            while pagenum < self.max_pages_per_zipcode:
                 self.logger.info("Page %s for zip code %s" % (pagenum, zipcode.slug))
                 params['offset'] = pagenum
                 url = 'https://api.meetup.com/2/open_events?key=%(key)s&state=%(state)s&city=%(city)s&country=%(country)s&zip=%(zip)s&page=200&offset=%(offset)s' % params
