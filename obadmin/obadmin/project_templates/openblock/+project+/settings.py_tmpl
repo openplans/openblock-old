@@ -10,7 +10,7 @@ from ebpub.settings_default import *
 ########################
 
 DEBUG = True
-
+TIME_ZONE = 'US/Eastern'
 
 PROJECT_DIR = os.path.normpath(os.path.dirname(__file__))
 INSTALLED_APPS = ('${project}', ) + INSTALLED_APPS 
@@ -115,7 +115,7 @@ METRO_LIST = (
         'state_name': 'Your State',
 
         # Time zone, as required by Django's TIME_ZONE setting.
-        'time_zone': 'America/New_York',
+        'time_zone': TIME_ZONE,
 
         # Slug of an ebpub.db.LocationType that represents cities.
         # Only needed if multiple_cities = True.

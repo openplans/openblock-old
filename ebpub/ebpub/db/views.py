@@ -190,7 +190,12 @@ def ajax_place_date_chart(request):
     filters.add_by_place_id(request.GET.get('pid', ''))
     qs = filters.apply()
     # TODO: Ignore future dates
-    end_date = qs.order_by('-item_date').values('item_date')[0]['item_date']
+    try:
+        last_item = qs.order_by('-item_date').values('item_date')[0]
+        end_date = last_item['item_date']
+    except IndexError:  # No matching items.
+        end_date = today()
+
     start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
     filters.add('date', start_date, end_date)
     counts = filters.apply().date_counts()
@@ -252,7 +257,7 @@ def newsitems_geojson(request):
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
-        newsitem_qs = newsitem_qs.select_related().order_by('-pub_date')
+        newsitem_qs = newsitem_qs.select_related().order_by('-item_date')
         newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # Done preparing the query; cache based on the raw SQL
@@ -934,8 +939,8 @@ def place_detail_timeline(request, *args, **kwargs):
     newsitem_qs = filterchain.apply().select_related()
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
-        select={'pub_date_date': 'date(db_newsitem.pub_date)'},
-        order_by=('-pub_date_date', '-schema__importance', 'schema')
+        select={'item_date_date': 'date(db_newsitem.item_date)'},
+        order_by=('-item_date_date', '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # We're done filtering, so go ahead and do the query, to
@@ -946,7 +951,7 @@ def place_detail_timeline(request, *args, **kwargs):
     s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
     if ni_list:
-        next_day = ni_list[-1].pub_date - datetime.timedelta(days=1)
+        next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
     else:
         next_day = None
 
@@ -1073,7 +1078,10 @@ def place_detail_overview(request, *args, **kwargs):
     # many more NewsItems than schemas.
     s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
     needed = set(s_list.keys())
-    newsitem_qs = NewsItem.objects.all()
+
+    filterchain = FilterChain(request=request, context=context)
+    filterchain.add('location', context['place'])
+    newsitem_qs = filterchain.apply()
     for ni in newsitem_qs.order_by('-item_date', '-id')[:300]:
         # Ordering by ID ensures consistency across page views.
         s_id = ni.schema_id

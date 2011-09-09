@@ -7,6 +7,9 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+* Added a scraper for Meetup.com, in ebdata/scrapers/general/meetups.
+  It's zero-configuration: it just loops over your zip codes and
+  finds all meetups for those.
 
 * Add a --reset option to ``update_aggregates`` script, deletes all
   aggregates and starts over. (ticket #221)
@@ -36,10 +39,23 @@ New Features in 1.1
 Bug fixes
 ---------
 
+* place_detail_overview wasn't actually filtering by place.
+
+* ajax date charts would blow up if no results found.
+
+* Fix ticket #77: Now filtering news by item_date instead of pub_date
+  since that's the date that's shown and used for aggregates.
+
+* Fix "show/hide" buttons on place detail page and account
+  page. (tickets #204, #115)
+
 * Fixed bug that caused many "Unknown" locations in location charts.
-  (ticket #192)
+  (ticket #192). And removed "unknowns" entirely from the chart.
 
 * Locations weren't capitalized on some pages. (ticket #202)
+
+* GeoReport scraper: scrape a reasonable amount of days, not 60 every
+  darn time
 
 Documentation
 -------------

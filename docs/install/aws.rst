@@ -85,11 +85,12 @@ the :doc:`setup`, :doc:`base_install`, and :doc:`custom` instructions.
 
 A few other nice details are taken care of for you:
 
-* `django-background-tasks` is automatically started at boot via
+* ``django-background-tasks`` is automatically started at boot via
   ``/etc/init.d/openblock-background-tasks``
 
-* `updaterdaemon` is automatically started at boot via
+* ``updaterdaemon`` is automatically started at boot via
   ``/etc/init.d/openblock-updaterdaemon``.
+  The (empty) configuration file is at ``/home/openblock/scraper_config.py``.
 
 * ``logrotate`` is already configured to rotate the apache,
   django-background-task, and updaterdaemon logs, so they won't fill
@@ -99,11 +100,11 @@ Get ssh access
 ===============
 
 Next you'll need to log in to your server to do some configuration.
-The username will be `openblock` and you'll need to use the PEM file
+The username will be ``ubuntu`` and you'll need to use the PEM file
 that you were prompted to save when you launched your instance,
 and your public DNS that you can find in the EC2 console.
 
-If you have a command-line `ssh` tool such as openssh, you can log in
+If you have a command-line ``ssh`` tool such as openssh, you can log in
 like so:
 
 .. code-block:: bash
@@ -117,8 +118,8 @@ for instructions on how to use it with AWS.
 Once you're in...
 =================
 
-You'll be logged in as the `ubuntu` user, but openblock is installed
-by the `openblock` user. So typically the first thing you will do is
+You'll be logged in as the ``ubuntu`` user, but openblock is installed
+by the ``openblock`` user. So typically the first thing you will do is
 run these commands:
 
 .. code-block:: bash
@@ -127,6 +128,14 @@ run these commands:
  $ cd /home/openblock/openblock
  $ source bin/activate
  $ export DJANGO_SETTINGS_MODULE=myblock.settings
+
+.. admonition:: Users and Permissions on Your EC2 Instance
+
+  Note that the ``openblock`` user can do most anything that needs doing
+  in its home directory, but has no password and has limited
+  privileges beyond that, eg. cannot use ``sudo``.  I often keep a second
+  terminal logged in as ``ubuntu`` for those times that I need to use
+  ``sudo``.
 
 
 Change Settings
@@ -142,14 +151,14 @@ install `emacs` or whatever else you like.)
 **Security warning**: it is especially important that you change the
 ``PASSWORD_CREATE_SALT`` and ``PASSWORD_RESET_SALT`` settings.
 
-Note that anytime you change settings, you'll want to run this command
+Note that anytime you change settings, or updater your openblock code,
+you'll want to run this command
 before you can see your changes take effect on your site:
 
 .. code-block:: bash
 
-  $ sudo /etc/init.d/apache2 reload
+  $  touch /home/openblock/openblock/wsgi/myblock.wsgi
 
-(TODO, check if I enabled the "touch wsgi file" hack)
 
 .. admonition:: Warning about email!
 

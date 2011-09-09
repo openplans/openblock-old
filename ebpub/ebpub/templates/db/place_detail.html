@@ -46,37 +46,38 @@ window.onload = function() {
 			}
 		});
 	});
+    // Show or hide news items by type.
 	$j('.toggle').click(function() {
 		var url, action, on_success, on_error;
 		var container = $j(this).parents('h4');
 		var link = container.find('.toggle');
 		var schema_slug = /(.*?)-\d+/.exec(container.attr('id'))[1];
-		if (container.hasClass('hidden')) {
+		var all_links = $j('.schema_' + schema_slug + ' .toggle');
+		if ($j('div.schema_' + schema_slug).hasClass('hidden')) {
 			action = 'show';
 		} else {
 			action = 'hide';
 		}
 		if (action == 'hide') {
 			url = '/accounts/hidden-schemas/add/';
-			$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Hiding...');
+			all_links.html('Hiding...');
 			on_success = function(data, textStatus) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Hide');
-				$j('h4.schema_' + schema_slug).addClass('hidden').removeClass('visible');
+                all_links.html('Show');
 				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 			};
 			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Hide');
+                all_links.html('Hide');
 			};
 		} else {
 			url = '/accounts/hidden-schemas/delete/';
-			$j('h4.schema_' + schema_slug + ' .extra .toggle.show').html('Showing...');
+			all_links.html('Showing...')
 			on_success = function(data, textStatus) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.show').html('Show');
+				all_links.html('Hide')
 				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 			};
 			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
-				$j('h4.schema_' + schema_slug + ' .extra .toggle.hide').html('Show');
+				all_links.html('Show');
 			};
 		}
 		$j.ajax({
@@ -138,20 +139,20 @@ window.onload = function() {
 
   <div id="place-detail-content">
 	{% if newsitem_list %}
-		{% regroup newsitem_list by pub_date|friendlydate as newsitem_list_byday %}
+		{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
 		{% for daygroup in newsitem_list_byday %}
 			<h2>New {{ daygroup.grouper }}</h2>
 			{% regroup daygroup.list by schema as newsitem_list_byschema %}
 			{% for schemagroup in newsitem_list_byschema %}
 				{% with schemagroup.list|length as num_newsitems %}
 					{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
-				<h4 class="{% if is_hidden %}hidden{% else %}visible{% endif %}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.pub_date|date:"Ymd" }}">
+				<h4 class="schema_{{ schemagroup.grouper.slug }}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
 					{% map_icon_img schemagroup.grouper %}
 
 					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
-					{% if USER %}<a class="toggle show" href="#">Show</a>{% endif %}
+					{% if USER %}<a class="toggle show" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
 				</h4>
-				<div class="{% if is_hidden %}hidden{% else %}visible{% endif %}">
+				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
 					{% newsitem_list_by_schema schemagroup.list %}
 					</ul>
 				</div>
