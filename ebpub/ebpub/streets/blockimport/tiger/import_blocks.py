@@ -102,7 +102,8 @@ class TigerImporter(BlockImporter):
     to use for filtering out features outside the geometry.
 
     `edges_shp` contains all the feature edges (i.e. street segment
-    geometries); `featnames_dbf` contains metadata
+    geometries); `featnames_dbf` contains metadata; `faces_dbf` and
+    `place_shp` contain information about cities and states.
 
     Note this importer requires a lot of memory, because it loads the
     necessary .DBF files into memory for various lookups.
