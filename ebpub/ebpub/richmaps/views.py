@@ -17,9 +17,14 @@ def bigmap(request):
     
     config = _decode_map_permalink(request)
 
-    return eb_render(request, 'richmaps/bigmap.html', {
-        'map_config': simplejson.dumps(config, indent=2)
-    })
+    if config['is_widget']: 
+        return eb_render(request, 'richmaps/embed_bigmap.html', {
+            'map_config': simplejson.dumps(config, indent=2)
+        })
+    else:         
+        return eb_render(request, 'richmaps/bigmap.html', {
+            'map_config': simplejson.dumps(config, indent=2)
+        })
 
 def _decode_map_permalink(request):
     """
@@ -31,6 +36,10 @@ def _decode_map_permalink(request):
     f - popup feature
     s - start date (inclusive) %m/%d/%Y
     e - end date (inclusive) %m/%d/%Y
+    d - limits what map controls are displayed 
+    x - show as 'widget' (embedded)
+    w - width of map (widget only)
+    h - height of map (widget only)
     """
     
     params = request.GET
@@ -161,21 +170,64 @@ def _decode_map_permalink(request):
             'bbox': False,
             'visible': no_layers_specified or schema.id in schemas # default on if no 't' param given
         })
+        
+    controls = {}
+    control_list = params.get("d", 'lhmdp')
+    if control_list: 
+        if 'l' in control_list: 
+            controls['layers'] = True
+        if 'h' in control_list: 
+            controls['headline_list'] = True
+        if 'm' in control_list:
+            controls['move'] = True
+        if 'd' in control_list: 
+            controls['date'] = True
+        if 'p' in control_list: 
+            controls['permalink'] = True
+
+    is_widget = params.get('x', None) is not None
+
+    width = params.get("w", None)
+    if width:
+        try:
+            width = int(width)
+        except: 
+            width = None
+
+    height = params.get("h", None)
+    if height:
+        try:
+            height = int(height)
+        except: 
+            height = None
 
     config = {
       'center': center or [settings.DEFAULT_MAP_CENTER_LON,
                            settings.DEFAULT_MAP_CENTER_LAT],
-                           
+
       'zoom': zoom or settings.DEFAULT_MAP_ZOOM,
       
       'layers': layers, 
       
+      'controls': controls,
+      
+      'is_widget': is_widget,
+      
       'permalink_params': {
         's': startdate.strftime('%m/%d/%Y'),
-        'e': enddate.strftime('%m/%d/%Y')
-      }
+        'e': enddate.strftime('%m/%d/%Y'),
+        'd': control_list,
+        'x': is_widget
+      }, 
     }
-    
+
+    if width is not None: 
+        config['width'] = width
+        config['permalink_params']['w'] = width
+    if height is not None: 
+        config['height'] = height
+        config['permalink_params']['h'] = height
+ 
     if popup_info: 
         config['popup'] = popup_info
     

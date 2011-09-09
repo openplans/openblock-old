@@ -1,0 +1,92 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+{% load django_static eb humanize mapping %}
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
+<link rel="stylesheet" type="text/css" href="/styles/openblock.css" />
+{% endslimall %}
+
+<script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
+
+<script type="text/javascript">
+{% comment %}
+// Not using jquery.noConflict() because ironically it causes a conflict
+// with OpenLayers and we end up with the $ function from OpenLayers. 
+// But a lot of existing everyblock code expects $j instead of $
+{% endcomment %}
+var $j = $;
+</script>
+
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
+<script src="/scripts/jquery.calendrical.js"></script>
+{% endslimall %}
+</head>
+<body>
+
+  <div class="map-widget">
+  <div id="map_headlines" class="map-headlines"></div>
+
+	<div id="mapwrapper" class="fullpage">
+	  <script type="text/javascript">
+    {% autoescape off %}
+    function loadMap() {
+        var config = {{map_config}};
+        config['baselayer_type']  = "{{ MAP_BASELAYER_TYPE }}";
+
+
+        var map = new OBMap(config);
+
+        if (config.controls.layers) {
+          map.map.addControl(new OpenLayers.Control.LayerSwitcher());
+        }
+        if (config.controls.permalink) {
+          var permalink = new OpenblockPermalink(map);
+          map.map.addControl(permalink);
+        }
+        if (config.controls.date) {
+          var dateControl = new OBMapDateRange(map, permalink, '#map_date_range_form');
+        }
+        else {
+          $('#map_date_range').hide();
+        }
+
+        if (config.controls.headline_list) {
+          var headlines = new OBMapItemList(map, {'element': '#map_headlines'});
+          $('#mapwrapper').css('margin-left', $('#map_headlines').width());
+        }
+        else {
+          $('#map_headlines').hide();
+        }
+        
+        if (config.width) {
+          $('.map-widget').width(config.width);
+        }
+        if (config.height) {
+          $('.map-widget').height(config.height);
+          var dr_h = $('#map_date_range').height();
+          var map_h = config.height - dr_h;
+          $('#detailmap').height(map_h);
+        }
+        return map;
+    }
+    {% endautoescape %}
+	  </script>
+	{% include "richmaps/richmap.html" %}
+	</div><!-- end mapwrapper -->
+	
+  <div id="map_date_range">
+      <form action="#" id="map_date_range_form">
+      		<label for="map_begin_date">Start Date</label>
+      		<input type="text" class="begin-date" id="map_begin_date" />
+      		<label for="map_end_date">End Date</label>
+  		    <input type="text" class="end-date" id="map_end_date" />
+  		    <input type="submit" value="change" />
+		  </form>
+  </div>
+  </div>
+</body>
+</html>

@@ -542,9 +542,22 @@ var OBMap = function(options) {
     this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
 
     this.options = options;
+    
+    /* if controls were specified, but not the 'move' control, 
+       do not include pan/zoom and navigation controls (on by default)
+     */
+    if (this.options.controls && !this.options.controls.move) {
+        this.map_options.controls = [
+            new OpenLayers.Control.ArgParser(),
+            new OpenLayers.Control.Attribution()
+        ];
+    }
+    
     this._initBasicMap();
     this._configurePopup();
     this._configureLayers();
+
+    
 };
 
 OBMap.prototype.events = null;

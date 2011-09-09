@@ -14,6 +14,10 @@
 .hidden {
     display: none;
 }
+body, html {
+    height: 100%;
+}
+
 body, input, textarea, button {
     color: #333333;
     font: 15px/22px Verdana,sans-serif;
@@ -423,19 +427,21 @@ height: 255px
     float: right;
 }
 
+
 #mapwrapper {
 margin-bottom : .5em;
 border : 1px solid #cac8c6;
 }
 
 #mapwrapper.fullpage {
-    float: left;
-    width: 698px;
 }
 
 #map_headlines {
     width: 200px;
     float: left;
+    margin: 0;
+    padding: 0;
+    
 }
 
 #map_headlines .map-item-list {
