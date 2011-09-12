@@ -14,13 +14,14 @@ function _report_error(error) {
 var OBMapDateRange = function(map, permalink, form) {
     var begin = $(form).find('.begin-date');
     var end = $(form).find('.end-date');
-    begin.val(map.options.permalink_params.s);
-    end.val(map.options.permalink_params.e);
-    $([begin, end]).calendricalDateRange({usa: true});
+    begin.val(map.options.permalink_params.start_date);
+    end.val(map.options.permalink_params.end_date);
+    $(begin).calendricalDate({usa: true});
+    $(end).calendricalDate({usa: true});
     $(form).submit(function(evt) {
         evt.preventDefault();
-        map.options.permalink_params.s = begin.val(); 
-        map.options.permalink_params.e = end.val();
+        map.options.permalink_params.start_date = begin.val(); 
+        map.options.permalink_params.end_date = end.val();
         permalink.updateLink();
         window.location.href = permalink.element.href;
     });
@@ -75,7 +76,7 @@ OBMapItemList.prototype.update = function() {
 OBMapItemList.prototype._resetPager = function() {
     this.page = 0;
     this.pages = Math.ceil(this.items.length / this.listLength);
-    if (this.pages > 0) {
+    if (this.pages > 1) {
         var pagerHTML = '<a class="nav-prev" href="#">&larr;prev</a>&nbsp;';
         pagerHTML +=    '<span class="page-number">' + (this.page + 1) + '</span>&nbsp;of&nbsp;';
         pagerHTML += this.pages + '&nbsp;<a class="nav-next" href="#">next&rarr;</a></div>';

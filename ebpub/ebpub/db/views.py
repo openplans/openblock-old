@@ -657,12 +657,25 @@ def schema_filter_geojson(request, slug, args_from_url):
         end_date = today()
         qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
 
+    page = request.GET.get('page', None)
+    if page is not None: 
+        try:
+            page = int(request.GET.get('page', '1'))
+            idx_start = (page - 1) * constants.FILTER_PER_PAGE
+            idx_end = page * constants.FILTER_PER_PAGE
+            # Get one extra, so we can tell whether there's a next page.
+            ni_list = list(qs[idx_start:idx_end+1])
+        except ValueError:
+            return HttpResponse('Invalid Page', status=400)
+    else:
+        ni_list = list(qs[0:1000])
+
     cache_seconds = 60 * 5
     cache_key = 'schema_filter_geojson:'
     cache_key += hashlib.md5(str(qs.query)).hexdigest()
     output = cache.get(cache_key, None)
     if output is None:
-        output = api_items_geojson(qs)
+        output = api_items_geojson(ni_list)
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
@@ -807,6 +820,16 @@ def schema_filter(request, slug, args_from_url):
                 'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
                 'default_zoom': settings.DEFAULT_MAP_ZOOM,
                 })
+
+    # try to provide a link to larger map, but don't worry about it 
+    # if there is no richmap app hooked in...
+    try: 
+        large_map_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
+        context.update({
+            'large_map_url': large_map_url
+        })
+    except: 
+        pass
 
     context.update({
         'newsitem_list': ni_list,
@@ -1016,9 +1039,12 @@ def _preconfigured_map(context):
     if filters is not None and filters.schema is not None:
         base_url = reverse('ebpub-schema-filter-geojson', args=(context['schema'].slug,))
         layer_url = filters.make_url(base_url=base_url)
+        layer_params = {}
+        if 'page_number' in context: 
+            layer_params['page'] = context['page_number']
         items_layer = {
             'url': layer_url,
-            'params': {},
+            'params': layer_params,
             'title': "Custom Filter" ,
             'visible': True
         }

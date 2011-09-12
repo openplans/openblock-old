@@ -445,35 +445,36 @@ border : 1px solid #cac8c6;
 }
 
 #map_headlines .map-item-list {
-    height: 500px;
+    height: 420px;
     list-style-type: none;
     margin: 0;
     padding: 0;
 }
 
 #map_headlines .map-item-list li {
-    height: 90px;
+    height: 70px;
     padding-bottom: 10px;
+    margin-bottom: 5px;
     border-bottom: 1px solid #a0a0a0;
     overflow: hidden;
 }
 
 #map_headlines .map-item-list li img {
     width: 20px;
+    padding-right: 5px;
     float: left;
 }
 
 #map_headlines .map-item-list li .title {
     font-size: 95%;
-    padding-left: 5px;
 }  
 
 
 #map_headlines .map-item-list li .location,
 #map_headlines .map-item-list li .category, 
 #map_headlines .map-item-list li .date {
-
     font-size: 80%;
+    line-height: 1.1em;
 }
 
 #map_headlines .map-item-list li .location {
@@ -796,6 +797,12 @@ float : left;
 
 .schema-filter #mapwrapper {
 float : right;
+}
+.schema-filter a.large-map-link {
+    float: right;
+    clear: right;
+    font-size: 80%;
+    text-decoration: none;
 }
 
 #schemanav {

@@ -1,20 +1,78 @@
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django import template
+from django.shortcuts import get_object_or_404
 from django.template.loader import get_template, select_template
 from django.utils.cache import patch_response_headers
+from django.utils.datastructures import SortedDict
 from django.utils import simplejson
 from ebpub.utils.view_utils import eb_render
-from ebpub.db.models import NewsItem, Schema
+from ebpub.db.models import NewsItem, Schema, SchemaField
 from ebpub.openblockapi.views import _copy_nomulti, JSON_CONTENT_TYPE
 from ebpub.openblockapi.itemquery import build_item_query
+from ebpub.db.schemafilters import FilterError
+from ebpub.db.schemafilters import FilterChain
+from ebpub.db.schemafilters import BadAddressException
+from ebpub.db.schemafilters import BadDateException
 from ebpub.streets.models import Place, PlaceType
+from ebpub.utils.view_utils import get_schema_manager
 import datetime
 import re
 
-def bigmap(request):
+
+
+
+def bigmap_filter(request, slug, args_from_url):
     
+    s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
+    if not s.allow_charting:
+        return HttpResponse(status=404)
+
+    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
+    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
+
+    # Use SortedDict to preserve the display_order.
+    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+
+    # Determine what filters to apply, based on path and/or query string.
+    filterchain = FilterChain(request=request, schema=s)
+    try:
+        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filters_need_more = filterchain.validate()
+    except:
+        return HttpResponse(status=404)
+        
+    new_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
+    if new_url != request.get_full_path():
+        return HttpResponseRedirect(new_url)    
+
+    config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
+    
+    # add in the filter layer
+    base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
+    layer_url = filterchain.make_url(base_url=base_url)
+    custom_layer = {
+        'url': layer_url,
+        'params': {},
+        'title': "Custom Filter",
+        'visible': True
+    }
+    config['layers'].append(custom_layer)
+
+
+
+    if config['is_widget']: 
+        return eb_render(request, 'richmaps/embed_bigmap.html', {
+            'map_config': simplejson.dumps(config, indent=2)
+        })
+    else:         
+        return eb_render(request, 'richmaps/bigmap.html', {
+            'map_config': simplejson.dumps(config, indent=2)
+        })
+
+
+def bigmap(request):
     config = _decode_map_permalink(request)
 
     if config['is_widget']: 
@@ -26,7 +84,7 @@ def bigmap(request):
             'map_config': simplejson.dumps(config, indent=2)
         })
 
-def _decode_map_permalink(request):
+def _decode_map_permalink(request, show_default_layers=True, filters=None):
     """
     request parameters: 
     c - map center 
@@ -34,8 +92,8 @@ def _decode_map_permalink(request):
     l - layer info
     p - popup center
     f - popup feature
-    s - start date (inclusive) %m/%d/%Y
-    e - end date (inclusive) %m/%d/%Y
+    start_date - start date (inclusive) %m/%d/%Y
+    end_date - end date (inclusive) %m/%d/%Y
     d - duration in days (overridden by end date)
 
     x - show as 'widget' 
@@ -115,39 +173,36 @@ def _decode_map_permalink(request):
     
 
     # start and end date range
-    startdate = params.get('s')
+    startdate = params.get('start_date')
     if startdate is not None:
         try:
             startdate = datetime.datetime.strptime(startdate, '%m/%d/%Y').date()
         except:
             startdate = None
 
-    enddate = params.get('e')
+    enddate = params.get('end_date')
     if enddate is not None: 
         try:
             enddate = datetime.datetime.strptime(enddate, '%m/%d/%Y').date()
         except:
             enddate = None
-    
 
-    max_interval = datetime.timedelta(days=30)
-    min_interval = datetime.timedelta(days=1)
+    if startdate is None and enddate is None and filters:
+        date_filter = filters.get('date') or filters.get('pubdate')
+        if date_filter:
+            startdate = date_filter.start_date
+            enddate = date_filter.end_date
+
+
     default_interval = datetime.timedelta(days=7)
-    
     duration = params.get('d')
     if duration is not None:
         try:
             duration = datetime.timedelta(days=int(duration))
-            if duration > max_interval: 
-                duration = max_interval
-            elif duration < min_interval:
-                duration = min_interval 
         except:
             duration = default_interval
     else: 
         duration = default_interval
-    
-    # fill in any missing or invalid dates
 
     if startdate is None and enddate is None:
         enddate = datetime.date.today()
@@ -156,12 +211,9 @@ def _decode_map_permalink(request):
         startdate = enddate - duration
     elif enddate is None:
         enddate = startdate + duration
-    
+
     if enddate < startdate:
         enddate = startdate + duration
-        
-    if enddate - startdate > max_interval:
-        enddate = startdate + max_interval
 
     layers = []
     for place_type in PlaceType.objects.filter(is_mappable=True).all():
@@ -187,7 +239,7 @@ def _decode_map_permalink(request):
                        'startdate': api_startdate,
                        'enddate': api_enddate},
             'bbox': False,
-            'visible': no_layers_specified or schema.id in schemas # default on if no 't' param given
+            'visible': (no_layers_specified and show_default_layers) or schema.id in schemas # default on if no 't' param given
         })
         
     controls = {}
@@ -229,8 +281,8 @@ def _decode_map_permalink(request):
       'is_widget': is_widget,
       
       'permalink_params': {
-        's': startdate.strftime('%m/%d/%Y'),
-        'e': enddate.strftime('%m/%d/%Y'),
+        'start_date': startdate.strftime('%m/%d/%Y'),
+        'end_date': enddate.strftime('%m/%d/%Y'),
       }, 
     }
 
