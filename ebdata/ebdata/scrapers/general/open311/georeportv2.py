@@ -86,23 +86,29 @@ class GeoReportV2Scraper(object):
             end_date = start_date + request_granularity
             log.info("Fetching from %s - %s" % (start_date, end_date))
             url = self.service_requests_url(start_date, end_date)
-            self._update(url)
+            # Pagination is not officially part of the v2 spec, but
+            # some endpoints support it, eg. seeclickfix has a non-compliant
+            # page size of 20.
+            page = 1
+            while True:
+                items_on_page = self._update(url + '&page=%d' % page)
+                page += 1
+                time.sleep(self.seconds_between_requests)
+                if not items_on_page:
+                    break
             start_date = end_date
-            time.sleep(self.seconds_between_requests)
     
     def _update(self, url):
-        
+        """Make an HTTP request to url, create newsitems,
+        return number of items found (not created)
+        """
         # make http request to api
         try: 
             log.debug("Requesting %s" % url)
             # User-Agent is a lame workaround for SeeClickFix blocking httplib2
             # (they had too many bots hitting them).
             response, content = self.http.request(url, headers={'User-Agent': 'openblock-georeport-scraper'})
-            if response.fromcache:
-                log.info("Requests from this time period are unchanged since last update (cached)")
-                return
-                
-            if response.status != 200: 
+            if response.status != 200:
                 log.error("Error retrieving %s: status was %d" % (url, response.status))
                 log.error(content)
                 return
@@ -121,9 +127,13 @@ class GeoReportV2Scraper(object):
         # iterate through the service requests in the response
         reqs = root.findall('.//request')
         if not reqs:
-            log.warn("No request elements found")
-        for req in reqs:
-            self._update_service_request(req)
+            log.info("No request elements found")
+        if response.fromcache:
+            log.info("Requests from this time period are unchanged since last update (cached)")
+        else:
+            for req in reqs:
+                self._update_service_request(req)
+        return len(list(reqs))
 
     def _update_service_request(self, sreq):
         service_request_id = self._get_request_field(sreq, 'service_request_id')
@@ -157,14 +167,16 @@ class GeoReportV2Scraper(object):
         ni.title = self._get_request_field(sreq, 'service_name')
         ni.description = self._get_request_field(sreq, 'description')
         ni.location = point
+        ni.location_name = self._get_request_field(sreq, 'address')
         # try to reverse geocde this point
-        try: 
+        try:
             block, distance = reverse_geocode(ni.location)
-            ni.location_name = block.pretty_name
+            if not ni.location_name:
+                ni.location_name = block.pretty_name
             ni.block = block
         except: 
             log.debug("Failed to reverse geocode item %s" % service_request_id)
-        
+
         # try to pull the requested_datetime into pubdate/itemdate
         # default to now.
         try: 

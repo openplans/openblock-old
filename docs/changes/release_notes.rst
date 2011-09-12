@@ -39,6 +39,13 @@ New Features in 1.1
 Bug fixes
 ---------
 
+* Georeport / open311 scraper: support unofficial 'page' parameter
+  (ticket #245); also, use the 'address' field for location_name if
+  provided.
+
+* Seeclickfix scraper: allow city & state params, don't hardcode to
+  boston; ticket #243.
+
 * place_detail_overview wasn't actually filtering by place.
 
 * ajax date charts would blow up if no results found.
@@ -59,6 +66,8 @@ Bug fixes
 
 Documentation
 -------------
+
+* Document the out-of-the-box scrapers provided by ebdata.
 
 * Document email configuration.
 

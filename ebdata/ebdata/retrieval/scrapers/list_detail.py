@@ -410,8 +410,11 @@ class RssListDetailScraper(ListDetailScraper):
         # whether you get a loose or strict parser, you might or might
         # not see the namespace prefix on the attribute name.
 
-        # TODO: support other geometry types as per
+        # TODO: support other georss geometry types as per
         # http://www.georss.org/simple ... so far only handles Point.
+
+        # TODO: support xCal geometries
+        # https://tools.ietf.org/html/rfc6321#section-3.4.1.2
 
         if 'gml_point' in record:
             # Looks like georss gml.

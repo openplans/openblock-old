@@ -27,7 +27,6 @@ import math
 #BASE_URL = 'https://seeclickfix.com/api/'
 # This one is load-balanced, as requested by the SeeClickFix guys.
 BASE_URL = 'http://seeclicktest.com/api/'
-FEED_URL = BASE_URL + 'issues.rss?at=Boston,+MA&sort=issues.created_at&direction=DESC'
 
 
 class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
@@ -40,11 +39,17 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
     has_detail = True
     sleep = 2
 
+    def __init__(self, *args, **kwargs):
+        self.city = kwargs.pop('city')
+        self.state = kwargs.pop('state')
+        super(SeeClickFixNewsFeedScraper, self).__init__(*args, **kwargs)
+
     def list_pages(self):
         # Fetch the feed, paginating if necessary.
         # See API docs at http://help.seeclickfix.com/faqs/api/listing-issues
         max_per_page = 500
         max_pages = 4
+        url = BASE_URL + 'issues.rss?at=%s,+%s&sort=issues.created_at&direction=DESC' % (self.city, self.state)
 
         # First, figure out how long it's been since the last scrape;
         # seeclickfix has a 'start' option in hours.  The idea is not
@@ -54,8 +59,9 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
         delta = datetime.datetime.now() - self.last_updated_time()
         hours_ago = math.ceil((delta.seconds / 3600.0) + (delta.days * 24))
         for page in range(1, max_pages + 1):
-            feed_url = FEED_URL + '&start=%d&page=%d&num_results=%d' % (
+            feed_url = url + '&start=%d&page=%d&num_results=%d' % (
                 hours_ago, page, max_per_page)
+            self.logger.info("Fetching %s" % feed_url)
             yield self.fetch_data(feed_url)
 
     def existing_record(self, cleaned_list_record):
@@ -118,13 +124,27 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
         self.create_or_update(old_record, attributes, **detail_record)
 
 
-def main():
+def main(argv=None):
+    import sys
+    if argv is None:
+        argv = sys.argv[1:]
+
+    from optparse import OptionParser
+    usage = "usage: %prog [options] city state"
+    parser = OptionParser(usage=usage)
+
+    options, args = parser.parse_args(argv)
+    if len(args) != 2:
+        parser.print_usage()
+        sys.exit(0)
+    city, state = args
+    scraper = SeeClickFixNewsFeedScraper(city=city.title(), state=state.upper())
     TESTING = False
     if TESTING:
         from ebdata.retrieval import log_debug
-        SeeClickFixNewsFeedScraper().display_data()
+        scraper.display_data()
     else:
-        SeeClickFixNewsFeedScraper().update()
+        scraper.update()
 
 if __name__ == "__main__":
     main()

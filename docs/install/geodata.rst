@@ -35,6 +35,8 @@ experimentation and asking questions on the mailing list; we know of
 several people currently trying it in other countries.
 
 
+.. _zipcodes:
+
 ZIP Codes
 =========
 
