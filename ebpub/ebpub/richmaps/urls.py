@@ -8,4 +8,5 @@ urlpatterns = patterns(
     url(r'^popup/newsitem/(?P<item_id>.*)/?', views.item_popup, name="item_popup"),
     url(r'^popup/place/(?P<place_id>.*)/?', views.place_popup, name="place_popup"),
     url(r'^items.json/?', views.map_items_json, name="map_items_json"),
+    url(r'^([-\w]{4,32})/filter/([^/].*)?/?$', views.bigmap_filter, name='bigmap_filter')
 )

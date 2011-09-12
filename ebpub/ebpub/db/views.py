@@ -206,6 +206,7 @@ def ajax_place_date_chart(request):
         'filters': filters,
     })
 
+
 def newsitems_geojson(request):
     """Get a list of newsitems, optionally filtered for one place ID
     and/or one schema slug.
@@ -619,6 +620,68 @@ def schema_detail_special_report(request, schema):
     })
 
 
+def schema_filter_geojson(request, slug, args_from_url):
+    s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
+    if not s.allow_charting:
+        return HttpResponse(status=404)
+
+    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
+    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
+
+    # Use SortedDict to preserve the display_order.
+    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+
+    # Determine what filters to apply, based on path and/or query string.
+    filterchain = FilterChain(request=request, schema=s)
+    try:
+        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filters_need_more = filterchain.validate()
+    except FilterError, e:
+        return HttpResponse(status=400)
+    except BadAddressException, e:
+        return HttpResponse(status=400)
+    except BadDateException, e:
+        return HttpResponse(status=400)
+
+    if filters_need_more:
+        return HttpResponse(status=400)
+
+    qs = filterchain.apply().order_by('-item_date')
+
+    date_filter = filterchain.get('date') or filterchain.get('pubdate')
+    if date_filter:
+        start_date = date_filter.start_date
+        end_date = date_filter.end_date
+    else:
+        start_date = s.min_date
+        end_date = today()
+        qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
+
+    page = request.GET.get('page', None)
+    if page is not None: 
+        try:
+            page = int(request.GET.get('page', '1'))
+            idx_start = (page - 1) * constants.FILTER_PER_PAGE
+            idx_end = page * constants.FILTER_PER_PAGE
+            # Get one extra, so we can tell whether there's a next page.
+            ni_list = list(qs[idx_start:idx_end+1])
+        except ValueError:
+            return HttpResponse('Invalid Page', status=400)
+    else:
+        ni_list = list(qs[0:1000])
+
+    cache_seconds = 60 * 5
+    cache_key = 'schema_filter_geojson:'
+    cache_key += hashlib.md5(str(qs.query)).hexdigest()
+    output = cache.get(cache_key, None)
+    if output is None:
+        output = api_items_geojson(ni_list)
+        cache.set(cache_key, output, cache_seconds)
+
+    response = HttpResponse(output, mimetype="application/javascript")
+    patch_response_headers(response, cache_timeout=60 * 5)
+    return response
+
 def schema_filter(request, slug, args_from_url):
     """
     List NewsItems for one schema, filtered by various criteria in the
@@ -757,6 +820,16 @@ def schema_filter(request, slug, args_from_url):
                 'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
                 'default_zoom': settings.DEFAULT_MAP_ZOOM,
                 })
+
+    # try to provide a link to larger map, but don't worry about it 
+    # if there is no richmap app hooked in...
+    try: 
+        large_map_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
+        context.update({
+            'large_map_url': large_map_url
+        })
+    except: 
+        pass
 
     context.update({
         'newsitem_list': ni_list,
@@ -962,35 +1035,51 @@ def _preconfigured_map(context):
     # TODO filtering? via api? see ticket #121
     ###########################
     
-    # single news item ? 
-    layer_params = {}
-    item = context.get('newsitem')
-    if item is not None: 
-        layer_params['newsitem'] = item.id
+    filters = context.get('filters', None)
+    if filters is not None and filters.schema is not None:
+        base_url = reverse('ebpub-schema-filter-geojson', args=(context['schema'].slug,))
+        layer_url = filters.make_url(base_url=base_url)
+        layer_params = {}
+        if 'page_number' in context: 
+            layer_params['page'] = context['page_number']
+        items_layer = {
+            'url': layer_url,
+            'params': layer_params,
+            'title': "Custom Filter" ,
+            'visible': True
+        }
+    else: 
+        # make up an api layer from the context 
+    
+        # single news item ? 
+        layer_params = {}
+        item = context.get('newsitem')
+        if item is not None: 
+            layer_params['newsitem'] = item.id
 
-    # restricted to place?
-    for key in ['pid']:
-        val = context.get(key)
-        if val is not None: 
-            layer_params[key] = val
+        # restricted to place?
+        for key in ['pid']:
+            val = context.get(key)
+            if val is not None: 
+                layer_params[key] = val
 
-    # restricted date range ?
-    for key in ['start_date', 'end_date']:
-        val = context.get(key)
-        if val is not None: 
-            layer_params[key] = val.strftime('%Y/%m/%d')
+        # restricted date range ?
+        for key in ['start_date', 'end_date']:
+            val = context.get(key)
+            if val is not None: 
+                layer_params[key] = val.strftime('%Y/%m/%d')
 
-    # restricted by schema ?
-    schema_slug = context.get('schema_slug')
-    if schema_slug is not None: 
-        layer_params['schema'] = schema_slug
+        # restricted by schema ?
+        schema_slug = context.get('schema_slug')
+        if schema_slug is not None: 
+            layer_params['schema'] = schema_slug
 
-    items_layer = {
-        'url': reverse('ajax-newsitems-geojson'),
-        'params': layer_params,
-        'title': "News" ,
-        'visible': True
-    }
+        items_layer = {
+            'url': reverse('ajax-newsitems-geojson'),
+            'params': layer_params,
+            'title': "News" ,
+            'visible': True
+        }
     config['layers'].append(items_layer)
     config['baselayer_type'] = settings.MAP_BASELAYER_TYPE
     return simplejson.dumps(config, indent=2)

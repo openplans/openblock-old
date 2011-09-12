@@ -29,6 +29,8 @@
           var dateControl = new OBMapDateRange(map, permalink, '#map_date_range_form');
 
           var headlines = new OBMapItemList(map, {'element': '#map_headlines'});
+          $('#mapwrapper').css('margin-left', $('#map_headlines').css('width'));
+          
           return map;
       }
       {% endautoescape %}

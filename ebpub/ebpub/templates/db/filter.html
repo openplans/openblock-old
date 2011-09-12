@@ -74,7 +74,12 @@
 		  {% endautoescape %}
 		  </script>
 		  {% include "richmaps/richmap.html" %}
+
 		</div><!--/ #mapwrapper -->
+		{% if large_map_url %}
+		<a class="large-map-link" href="{{ large_map_url }}">Explore these items on a larger map</a>
+		{% endif %}
+
 
 		<!--
 		<div class="subscribe-links"><p>what would subscription links on this page point to?</p>

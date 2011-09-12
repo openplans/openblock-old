@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+{% load django_static eb humanize mapping %}
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
+<link rel="stylesheet" type="text/css" href="/styles/openblock.css" />
+{% endslimall %}
+
+<script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
+
+<script type="text/javascript">
+{% comment %}
+// Not using jquery.noConflict() because ironically it causes a conflict
+// with OpenLayers and we end up with the $ function from OpenLayers. 
+// But a lot of existing everyblock code expects $j instead of $
+{% endcomment %}
+var $j = $;
+</script>
+
+{% slimall %}
+<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
+<script src="/scripts/jquery.calendrical.js"></script>
+{% endslimall %}
+</head>
+<body>
+	<script type="text/javascript">
+    {% autoescape off %}
+    function loadMap() {
+        var config = {{map_config}};
+        config['baselayer_type']  = "{{ MAP_BASELAYER_TYPE }}";
+
+
+        var map = new OBMap(config);
+
+        if (config.controls.layers) {
+          map.map.addControl(new OpenLayers.Control.LayerSwitcher());
+        }
+        if (config.controls.permalink) {
+          var permalink = new OpenblockPermalink(map);
+          map.map.addControl(permalink);
+        }
+
+        if (config.controls.headline_list) {
+          var headlines = new OBMapItemList(map, {'element': '#map_headlines'});
+          $('#mapwrapper').css('margin-left', $('#map_headlines').width());
+        }
+        else {
+          $('#map_headlines').hide();
+        }
+        
+        if (config.width) {
+          $('body').width(config.width);
+          $('body').css('min-width', config.width);
+          $('.map-widget').width(config.width);
+        }
+        if (config.height) {
+          $('body').height(config.height);
+          $('.map-widget').height(config.height);
+          $('#detailmap').height(config.height);
+        }
+
+        return map;
+    }
+    {% endautoescape %}
+	</script>
+	  
+  <div class="map-widget">
+  <div id="map_headlines" class="map-headlines"></div>
+	<div id="mapwrapper" class="fullpage">
+	{% include "richmaps/richmap.html" %}
+	</div><!-- end mapwrapper -->
+
+	
+  </div>
+</body>
+</html>

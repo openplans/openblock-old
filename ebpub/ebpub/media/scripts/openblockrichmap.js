@@ -14,13 +14,14 @@ function _report_error(error) {
 var OBMapDateRange = function(map, permalink, form) {
     var begin = $(form).find('.begin-date');
     var end = $(form).find('.end-date');
-    begin.val(map.options.permalink_params.s);
-    end.val(map.options.permalink_params.e);
-    $([begin, end]).calendricalDateRange({usa: true});
+    begin.val(map.options.permalink_params.start_date);
+    end.val(map.options.permalink_params.end_date);
+    $(begin).calendricalDate({usa: true});
+    $(end).calendricalDate({usa: true});
     $(form).submit(function(evt) {
         evt.preventDefault();
-        map.options.permalink_params.s = begin.val(); 
-        map.options.permalink_params.e = end.val();
+        map.options.permalink_params.start_date = begin.val(); 
+        map.options.permalink_params.end_date = end.val();
         permalink.updateLink();
         window.location.href = permalink.element.href;
     });
@@ -75,7 +76,7 @@ OBMapItemList.prototype.update = function() {
 OBMapItemList.prototype._resetPager = function() {
     this.page = 0;
     this.pages = Math.ceil(this.items.length / this.listLength);
-    if (this.pages > 0) {
+    if (this.pages > 1) {
         var pagerHTML = '<a class="nav-prev" href="#">&larr;prev</a>&nbsp;';
         pagerHTML +=    '<span class="page-number">' + (this.page + 1) + '</span>&nbsp;of&nbsp;';
         pagerHTML += this.pages + '&nbsp;<a class="nav-next" href="#">next&rarr;</a></div>';
@@ -174,6 +175,11 @@ OBMapItemList.prototype._refreshPage = function() {
             var itemId = headline.id.substr(14);
             thisItemList._itemSelected(itemId);
         });
+        
+        if (this.map.isWidget()) {
+            $(this.el).find('a').attr('target', '_parent');
+        }
+        
     };
     jQuery.ajax({
        url: '/maps/headlines',
@@ -415,6 +421,9 @@ OpenblockPopup.prototype.replaceHTML = function(i) {
             if (this.featureInfo.length > 1) {
                 $(this.contentDiv).find("#clusteridx").text(i+1);
             }
+            if (this.obmap.isWidget()) {
+                $(this.contentDiv).find('a').attr('target', '_parent');
+            }
             this.checkPosition();
             this.updateSize();
             this.obmap.events.triggerEvent("popupchanged", {});
@@ -479,6 +488,11 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
             params.p = this._encodeLonLat(popup.lonlat);
             params.f = this._encodeFeature(popup.getFocalFeature());
         }
+
+        if (this.obmap.isWidget()) {
+            $(this.element).attr('target', '_parent');
+        }
+        
         return params;
     },
 
@@ -542,9 +556,12 @@ var OBMap = function(options) {
     this.events = new OpenLayers.Events(this, null, this.EVENT_TYPES);
 
     this.options = options;
+    
     this._initBasicMap();
     this._configurePopup();
     this._configureLayers();
+
+    
 };
 
 OBMap.prototype.events = null;
@@ -602,6 +619,10 @@ OBMap.prototype._configureLayers = function() {
             this.loadFeatureLayer(this.options.layers[i]);
         }
     }
+};
+
+OBMap.prototype.isWidget = function() {
+    return this.options.is_widget == true;
 };
 
 OBMap.prototype.loadLocationBorder = function(layerConfig) {
