@@ -49,9 +49,9 @@ class Command(BaseCommand):
 
         print "Adding GeoReport issues..."
         from ebdata.scrapers.general.open311.georeportv2 import main as georeport_main
-        georeport_main(['--html-url-template=http://seeclickfix.com/open311/v2/requests/%s.html',
+        georeport_main(['--html-url-template=http://seeclickfix.com/isses/{id}',
                         '--days-prior=6',
-                        'http://seeclicktest.com/open311/v2'])
+                        'http://seeclicktest.com/boston/open311/v2'])
 
 
         # TODO: fix traceback:  ebdata.blobs.scrapers.NoSeedYet: You need to add a Seed with the URL 'http://www.cityofboston.gov/news/
