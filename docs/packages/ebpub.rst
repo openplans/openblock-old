@@ -174,11 +174,12 @@ fields:
       an optional URL to another Web site
 
     pub_date
-      the date this NewsItem was added to the site
+      the date and time this NewsItem was added to the OpenBlock site
 
     item_date
-      the date of the object (e.g. the date it was published on the
-      original source site, or the date the news occurred)
+      the date (without time) of the object (e.g. the date the news
+      occurred, or failing that, the date it was published on the
+      original source site)
 
     location
       the location of the object (a GeoDjango GeometryField, usually a
