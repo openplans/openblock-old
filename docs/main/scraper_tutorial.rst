@@ -5,23 +5,26 @@ Data Scraper Tutorial
 Currently, anybody using OpenBlock will have to write their own
 scraper scripts to import data.
 
-You have at least four options for how to write Python scraper scripts.
+You have several options for how to write scraper scripts.
 We'll look at each in turn:
 
-1. :ref:`Use the OpenBlock REST API <scraping_rest_api>` to push data
+1. :ref:`Use an Existing Scraper <ebdata-scrapers>` (separate page)
+   if there is one that meets your needs.
+
+2. :ref:`Use the OpenBlock REST API <scraping_rest_api>` to push data
    in from any script in any language that can make HTTP connections.
 
-2. :ref:`Expediently hack a Python script <scraping_hack>` that creates instances of
+3. :ref:`Expediently hack a Python script <scraping_hack>` that creates instances of
    ebpub.db.NewsItem, in any way you like.
 
-3. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
+4. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
    (eg. an RSS feed, or an HTML index page), with optional separate
    linked pages providing more detail about each record -- you can
    write a Python script that builds on the infrastructure in
    ``ebdata.retrieval.scrapers.newsitem_list_detail``.
 
 
-4. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
+5. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
    consumption, eg. big piles of HTML and/or binary files such as PDF
    or Excel - you can write a Python script that builds on ``ebdata.blobs``.
 

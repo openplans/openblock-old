@@ -88,6 +88,111 @@ facility for running scrapers. It comes with a unix-style init script, and its
 configuration and examples are in ``ebdata/retrieval/updaterdaemon/config.py``.
 More documentation at :doc:`../main/running_scrapers`.
 
+.. _ebdata-scrapers:
+
+ebdata.scrapers
+===============
+
+A collection of ready-to-run scraper scripts, with JSON fixture files
+for loading the schemas needed by each scraper.
+
+(If you want to write your own scrapers for other data sources, see
+:doc:`../main/scraper_tutorial`.)
+
+These generally leverage the tools in ebdata.retrieval.
+
+All of them can be run as command-line scripts. Use the ``-h`` option to
+see what options, if any, each script takes.
+
+Flickr: ebdata.scrapers.general.flickr
+---------------------------------------
+
+Loads Flickr photos that are geotagged at a location within your
+configured :ref:`metro extent <metro_extent>`.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/flickr/flickr_retrieval.py``
+and the schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/flickr/photos_schema.json``.
+
+
+GeoRSS: ebdata.scrapers.general.georss
+---------------------------------------
+
+Loads any RSS or Atom feed.  It tries to extract a point location and
+a location name from any feed according to the following strategy:
+
+* First look for a GeoRSS point.
+* If no point is found, look for a location name in
+  standard GeoRSS or xCal elements; if found, geocode that.
+* If no location name is found, try to find addresses
+  in the title and/or description, and geocode that.
+* If a point was found, but a location name was not,
+  try to reverse-geocode the point.
+* If all of the above fail, skip this item.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/georss/retrieval.py``
+and a generic "local news" schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/georss/local_news_schema.json``.
+
+Meetup: ebdata.scrapers.general.meetup
+---------------------------------------
+
+Retrieves upcoming Meetups from `meetup.com <http://meetup.com>`_.  USA-only.
+This assumes you have loaded some :ref:`zipcodes`,
+as it will attempt to load meetups for each zip code in turn.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/meetup/meetup_retrieval.py``
+and the schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/meetup/meetup_schema.json``.
+
+
+Open311 / GeoReport: ebdata.scrapers.general.open311
+------------------------------------------------------
+
+A scraper for the
+`Open311 / GeoReport API <http://wiki.open311.org/GeoReport_v2#GET_Service_Requests>`_
+that is being adopted by a
+`growing number of cities <http://wiki.open311.org/GeoReport_v2/Servers>`_
+including many served by `SeeClickFix <http://seeclickfix.com>`.
+
+It has many command-line options for passing API keys and so forth;
+run it with the ``--help`` option.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/open311/georeportv2.py``
+and a suitable schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/open311/open311_service_requests_schema.json``.
+
+
+SeeClickFix: ebdata.scrapers.general.seeclickfix
+-------------------------------------------------
+
+A scraper for issues reported to `SeeClickFix <http://seeclickfix.com>`_.
+Note you can also use the Open311 / GeoReport scraper described above,
+since SeeClickFix supports the GeoReport API as well; we have both
+scrapers because the SeeClickFix native API has been around longer.
+
+Pass the city and state as command-line arguments.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/seeclickfix/seeclickfix_retrieval.py``
+and a suitable schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/seeclickfix/seeclickfix_schema.json``.
+
+
+ebdata.scrapers.us
+------------------
+
+Scrapers for specific city data sources in the USA. Currently this
+includes only scrapers for Boston, MA:
+
+* ebdata/scrapers/us/ma/boston/building_permits/
+* ebdata/scrapers/us/ma/boston/businesses/
+* ebdata/scrapers/us/ma/boston/events/
+* ebdata/scrapers/us/ma/boston/police_reports/
+* ebdata/scrapers/us/ma/boston/restaurants/
+
+Many of these are used for http://demo.openblockproject.org.
+For more information, see the source of each script.
+
 ebdata.templatemaker
 ====================
 
