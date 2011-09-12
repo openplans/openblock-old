@@ -675,10 +675,10 @@ Restricts results to items within a time range
 ================== ==========================================================================
     Parameter                                Description
 ------------------ --------------------------------------------------------------------------
-     startdate     limits items to only those newer than the given date.
+     startdate     limits items to only those whose pub_date is newer than the given date.
                    date format is YYYY-MM-DD or rfc3339 for date/time
 ------------------ --------------------------------------------------------------------------
-     enddate       limits items to only those older than the given date.
+     enddate       limits items to only those whose pub_date is older than the given date.
                    date format is YYYY-MM-DD or rfc3339 for date/time
 ================== ==========================================================================
 
