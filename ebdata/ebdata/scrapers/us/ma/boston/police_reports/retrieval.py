@@ -18,10 +18,9 @@
 
 """
 
-Boston city press release scraper.
+Boston police reports scraper.
+http://www.bpdnews.com/
 
-http://www.cityofboston.gov/news/
-Example: http://www.cityofboston.gov/news/default.aspx?id=3910
 """
 
 from ebdata.nlp.addresses import parse_addresses
