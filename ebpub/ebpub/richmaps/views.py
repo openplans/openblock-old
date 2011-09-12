@@ -241,18 +241,18 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
             'bbox': False,
             'visible': (no_layers_specified and show_default_layers) or schema.id in schemas # default on if no 't' param given
         })
+
+    is_widget = params.get('x', None) is not None
         
     controls = {}
-    control_list = params.get("v", 'lhp')
-    if control_list: 
+    control_list = params.get("v", None)
+    if control_list is not None: 
         if 'l' in control_list: 
             controls['layers'] = True
         if 'h' in control_list: 
             controls['headline_list'] = True
         if 'p' in control_list: 
             controls['permalink'] = True
-
-    is_widget = params.get('x', None) is not None
 
     width = params.get("w", None)
     if width:
@@ -276,8 +276,6 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
       
       'layers': layers, 
       
-      'controls': controls,
-      
       'is_widget': is_widget,
       
       'permalink_params': {
@@ -286,12 +284,17 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
       }, 
     }
 
-    if width is not None: 
-        config['width'] = width
-    if height is not None: 
-        config['height'] = height
+
     if popup_info:
         config['popup'] = popup_info
+
+    
+    if is_widget: 
+        config['controls'] = controls
+        if width is not None: 
+            config['width'] = width
+        if height is not None: 
+            config['height'] = height
     
     return config
 
