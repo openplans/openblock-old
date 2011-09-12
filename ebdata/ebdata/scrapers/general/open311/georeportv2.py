@@ -167,14 +167,16 @@ class GeoReportV2Scraper(object):
         ni.title = self._get_request_field(sreq, 'service_name')
         ni.description = self._get_request_field(sreq, 'description')
         ni.location = point
+        ni.location_name = self._get_request_field(sreq, 'address')
         # try to reverse geocde this point
-        try: 
+        try:
             block, distance = reverse_geocode(ni.location)
-            ni.location_name = block.pretty_name
+            if not ni.location_name:
+                ni.location_name = block.pretty_name
             ni.block = block
         except: 
             log.debug("Failed to reverse geocode item %s" % service_request_id)
-        
+
         # try to pull the requested_datetime into pubdate/itemdate
         # default to now.
         try: 
