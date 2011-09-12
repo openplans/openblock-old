@@ -92,7 +92,9 @@ class LocalNewsScraper(object):
                 item.schema = schema
                 item.description = description
                 item.url = item_url
-                item.location_name = entry.get('x-calconnect-street') or entry.get('georss_featurename')
+                # Support both georss and xcal for getting the location name.
+                # TODO: should also support ev:location per http://web.resource.org/rss/1.0/modules/event/
+                item.location_name = entry.get('xCal_x-calconnect-street') or entry.get('x-calconnect-street') or entry.get('georss_featurename') or entry.get('featurename')
                 item.item_date = datetime.datetime(*entry.updated_parsed[:6])
                 item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
                 _short_title = item.title[:30] + '...'
