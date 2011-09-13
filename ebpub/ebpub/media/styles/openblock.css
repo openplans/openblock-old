@@ -437,7 +437,7 @@ border : 1px solid #cac8c6;
 }
 
 #map_headlines {
-    width: 200px;
+    width: 250px;
     float: left;
     margin: 0;
     padding: 0;
@@ -459,6 +459,15 @@ border : 1px solid #cac8c6;
     overflow: hidden;
 }
 
+#map_headlines .map-item-list li.no-headlines {
+    height: 400px;
+    padding-bottom: 10px;
+    margin-bottom: 5px;
+    border-bottom: none;
+    overflow: hidden;
+}
+
+
 #map_headlines .map-item-list li img {
     width: 20px;
     padding-right: 5px;
@@ -466,7 +475,9 @@ border : 1px solid #cac8c6;
 }
 
 #map_headlines .map-item-list li .title {
-    font-size: 95%;
+    font-size: 85%;
+    line-height: 1.1em;
+    margin-bottom: .2em;
 }  
 
 

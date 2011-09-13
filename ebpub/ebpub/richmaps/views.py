@@ -43,11 +43,12 @@ def bigmap_filter(request, slug, args_from_url):
     except:
         return HttpResponse(status=404)
         
+    config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
+
     new_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)    
 
-    config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
     
     # add in the filter layer
     base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
@@ -214,6 +215,10 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
 
     if enddate < startdate:
         enddate = startdate + duration
+
+    # inject date range into filters if none was specified:
+    if filters and filters.get('date') is None: 
+        filters.add('date', startdate, enddate)
 
     layers = []
     for place_type in PlaceType.objects.filter(is_mappable=True).all():
