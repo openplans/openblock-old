@@ -379,6 +379,38 @@ You'll want to do this on a regular basis, depending on how often you update
 your data. Some parts of the site (such as charts) will not be visible until
 you populate the aggregates.
 
+.. _future_events:
+
+Event-like News Types
+----------------------
+
+In order for OpenBlock to treat a news type as being about
+(potentially) future events, rather than news from the (recent) past,
+there is a simple convention that you should follow:
+
+1. Set the schema's ``is_event=True``.
+
+2. Add a SchemaField with ``name='start_time'``. It should be a Time
+field, i.e. ``real_name`` should be one of ``time01``, ``time02``,
+etc.  Leave ``is_filter``, ``is_lookoup``, ``is_searchable``, and
+``is_charted`` set to False.  The ``pretty_name`` can be whatever you
+like of course.
+
+3. Optionally add a SchemaField with ``name='end_time'``, if your data
+source will include this information.
+
+4. When adding NewsItems of this type, the NewsItem's ``item_date``
+field should be set to the date on which the event will (or already
+did) take place, and the ``start_time`` attribute should be set to the
+(local) time it will start, and the ``end_time`` attribute should be set to
+the (local) end time if known.
+
+All-day events can be represented by leaving ``start_time`` empty.
+
+There is no special support for repeating events or other advanced
+calendar features.
+
+
 .. _custom-look-feel:
 
 Site views/templates

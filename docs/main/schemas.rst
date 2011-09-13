@@ -102,6 +102,14 @@ news before "turning it on".  We'll just make it available immediately::
 
     >>> crime_report.is_public = True
 
+
+The `is_event` field controls whether or not NewsItems of this type
+are announcements of future events, rather than news that happened in
+the past.  For more details on how to do this, see :ref:`future_events`
+This doesn't apply to crime reports, so we'll leave it set to False:
+
+    >>> crime_report.is_event = False
+
 There are a few additional fields you can explore (see the code in ``ebpub.db.models.Schema``), but this will be good enough to 
 start with.  So let's save it and move on::
 
