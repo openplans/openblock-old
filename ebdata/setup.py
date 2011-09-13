@@ -67,6 +67,7 @@ setup(
         "django>=1.3",
         "ebpub>=%s" % VERSION,   # Assumes ebpub and ebdata are versioned together.
         "lxml",
+        "beautifulsoup",
         "chardet",
         "feedparser",
         "httplib2",
