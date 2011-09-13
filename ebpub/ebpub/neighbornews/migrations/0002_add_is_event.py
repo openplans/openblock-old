@@ -6,114 +6,67 @@ from django.db import models
 
 class Migration(DataMigration):
 
-    depends_on = (('db', '0019_auto__add_field_schema_allow_comments'),
-                  )
-
-    needed_by = (('db', '0020_auto__add_field_schema_is_event'),
-                 )
+    depends_on = (
+        ("db", "0020_auto__add_field_schema_is_event"),
+        )
 
     def forwards(self, orm):
-        "Write your forwards methods here."
-        def _create_or_update(model_id, key, attributes):
-            Model = orm[model_id]
-            params = {'defaults': attributes}
-            params.update(key)
-            ob, created = Model.objects.get_or_create(**params)
-            for k, v in attributes.items(): 
-                setattr(ob, k, v)
-            ob.save()
-
-
-        _create_or_update('db.schema', {'slug': 'photos'}, {
-              "last_updated": "2011-09-08",
-              "intro": "",
-              "update_frequency": "",
-              "has_newsitem_detail": False,
-              "grab_bag_headline": "",
-              "short_source": "http://flickr.com",
-              "slug": "photos",
-              "source": "http://flickr.com",
-              "date_name": "Date",
-              "short_description": "Photos from Flickr",
-              "grab_bag": "",
-              "is_special_report": False,
-              "importance": 0,
-              "min_date": "2011-01-01",
-              "allow_charting": True,
-              "indefinite_article": "a",
-              "is_public": True,
-              "number_in_overview": 5,
-              "date_name_plural": "Dates",
-              "plural_name": "Photos from Flickr",
-              "name": "Photo from Flickr",
-              "uses_attributes_in_list": True,
-              "summary": "Boston-area photos from Flickr..",
-              "can_collapse": False
-              })
-
-        schema = orm['db.schema'].objects.get(slug='photos')
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': 'varchar01'},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": True,
-                           "name": "username",
-                           "display_order": 1,
-                           "real_name": "varchar01",
-                           "pretty_name": "User Name",
-                           "pretty_name_plural": "User Names",
-                           "display": True,
-                           "schema": schema,
-                           })
-
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': "varchar02",},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": False,
-                           "name": "user_id",
-                           "display_order": 2,
-                           "real_name": "varchar02",
-                           "pretty_name": "User ID",
-                           "pretty_name_plural": "User IDs",
-                           "display": False,
-                           "schema": schema,
-                           })
-
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': "varchar03",},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": False,
-                           "name": "sourcename",
-                           "display_order": 3,
-                           "real_name": "varchar03",
-                           "pretty_name": "Source Site Name",
-                           "pretty_name_plural": "Source Site Names",
-                           "display": True,
-                           "schema": schema,
-                           })
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': "varchar04",},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": False,
-                           "name": "photo_href",
-                           "display_order": 4,
-                           "real_name": "varchar04",
-                           "pretty_name": "Thumbnail URL",
-                           "pretty_name_plural": "Thumbnail URLs",
-                           "display": False,
-                           "schema": schema,
-                           })
-
+        """
+        Just in case somebody loaded the neighbornews fixtures
+        before we added the Schema.is_event field.
+        """
+        schemas = orm['db.schema'].objects.filter(slug='neighbor-events')
+        if schemas.count():
+            schema = schemas[0]
+            schema.is_event = True
+            schema.save()
 
     def backwards(self, orm):
-        "Write your backwards methods here."
         pass
 
 
     models = {
+        'accounts.user': {
+            'Meta': {'object_name': 'User', '_ormbases': ['auth.User']},
+            'main_metro': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
+            'user_ptr': ('django.db.models.fields.related.OneToOneField', [], {'to': "orm['auth.User']", 'unique': 'True', 'primary_key': 'True'})
+        },
+        'auth.group': {
+            'Meta': {'object_name': 'Group'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '80'}),
+            'permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'})
+        },
+        'auth.permission': {
+            'Meta': {'ordering': "('content_type__app_label', 'content_type__model', 'codename')", 'unique_together': "(('content_type', 'codename'),)", 'object_name': 'Permission'},
+            'codename': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'content_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['contenttypes.ContentType']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '50'})
+        },
+        'auth.user': {
+            'Meta': {'object_name': 'User'},
+            'date_joined': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'email': ('django.db.models.fields.EmailField', [], {'max_length': '75', 'blank': 'True'}),
+            'first_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'groups': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Group']", 'symmetrical': 'False', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'is_staff': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'is_superuser': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'last_login': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now'}),
+            'last_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
+            'password': ('django.db.models.fields.CharField', [], {'max_length': '128'}),
+            'user_permissions': ('django.db.models.fields.related.ManyToManyField', [], {'to': "orm['auth.Permission']", 'symmetrical': 'False', 'blank': 'True'}),
+            'username': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '30'})
+        },
+        'contenttypes.contenttype': {
+            'Meta': {'ordering': "('name',)", 'unique_together': "(('app_label', 'model'),)", 'object_name': 'ContentType', 'db_table': "'django_content_type'"},
+            'app_label': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'model': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+        },
         'db.aggregateall': {
             'Meta': {'object_name': 'AggregateAll'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -279,6 +232,7 @@ class Migration(DataMigration):
             'importance': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'}),
             'indefinite_article': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
             'intro': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
+            'is_event': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             'is_special_report': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'last_updated': ('django.db.models.fields.DateField', [], {}),
@@ -319,6 +273,12 @@ class Migration(DataMigration):
             'redirect_to': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'True'})
         },
+        'neighbornews.newsitemcreator': {
+            'Meta': {'ordering': "('news_item',)", 'unique_together': "(('news_item', 'user'),)", 'object_name': 'NewsItemCreator'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'news_item': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.NewsItem']"}),
+            'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['accounts.User']"})
+        },
         'streets.block': {
             'Meta': {'ordering': "('pretty_name',)", 'object_name': 'Block', 'db_table': "'blocks'"},
             'from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
@@ -346,4 +306,4 @@ class Migration(DataMigration):
         }
     }
 
-    complete_apps = ['db', 'obdemo']
+    complete_apps = ['db', 'neighbornews']

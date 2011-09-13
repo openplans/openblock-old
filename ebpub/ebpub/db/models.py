@@ -125,6 +125,10 @@ class Schema(models.Model):
         default=False,
         help_text="Whether to use the schema_detail_special_report view for these items, eg. for displaying items that have a known general Location but not a specific point.")
 
+    is_event = models.BooleanField(
+        default=False,
+        help_text="Whether these items are (potentially) future events rather than news in the past.")
+
     can_collapse = models.BooleanField(
         default=False,
         help_text="Whether RSS feed should collapse many of these into one.")

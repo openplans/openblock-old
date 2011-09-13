@@ -13,6 +13,7 @@
       "short_description": "Meetups",
       "grab_bag": "",
       "is_special_report": false,
+      "is_event": true,
       "importance": 0,
       "min_date": "2011-01-01",
       "allow_charting": true,

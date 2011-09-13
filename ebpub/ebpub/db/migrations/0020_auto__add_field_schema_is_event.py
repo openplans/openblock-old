@@ -1,116 +1,21 @@
 # encoding: utf-8
 import datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
-class Migration(DataMigration):
-
-    depends_on = (('db', '0019_auto__add_field_schema_allow_comments'),
-                  )
-
-    needed_by = (('db', '0020_auto__add_field_schema_is_event'),
-                 )
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        "Write your forwards methods here."
-        def _create_or_update(model_id, key, attributes):
-            Model = orm[model_id]
-            params = {'defaults': attributes}
-            params.update(key)
-            ob, created = Model.objects.get_or_create(**params)
-            for k, v in attributes.items(): 
-                setattr(ob, k, v)
-            ob.save()
-
-
-        _create_or_update('db.schema', {'slug': 'photos'}, {
-              "last_updated": "2011-09-08",
-              "intro": "",
-              "update_frequency": "",
-              "has_newsitem_detail": False,
-              "grab_bag_headline": "",
-              "short_source": "http://flickr.com",
-              "slug": "photos",
-              "source": "http://flickr.com",
-              "date_name": "Date",
-              "short_description": "Photos from Flickr",
-              "grab_bag": "",
-              "is_special_report": False,
-              "importance": 0,
-              "min_date": "2011-01-01",
-              "allow_charting": True,
-              "indefinite_article": "a",
-              "is_public": True,
-              "number_in_overview": 5,
-              "date_name_plural": "Dates",
-              "plural_name": "Photos from Flickr",
-              "name": "Photo from Flickr",
-              "uses_attributes_in_list": True,
-              "summary": "Boston-area photos from Flickr..",
-              "can_collapse": False
-              })
-
-        schema = orm['db.schema'].objects.get(slug='photos')
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': 'varchar01'},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": True,
-                           "name": "username",
-                           "display_order": 1,
-                           "real_name": "varchar01",
-                           "pretty_name": "User Name",
-                           "pretty_name_plural": "User Names",
-                           "display": True,
-                           "schema": schema,
-                           })
-
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': "varchar02",},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": False,
-                           "name": "user_id",
-                           "display_order": 2,
-                           "real_name": "varchar02",
-                           "pretty_name": "User ID",
-                           "pretty_name_plural": "User IDs",
-                           "display": False,
-                           "schema": schema,
-                           })
-
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': "varchar03",},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": False,
-                           "name": "sourcename",
-                           "display_order": 3,
-                           "real_name": "varchar03",
-                           "pretty_name": "Source Site Name",
-                           "pretty_name_plural": "Source Site Names",
-                           "display": True,
-                           "schema": schema,
-                           })
-        _create_or_update('db.schemafield', {'schema': schema, 'real_name': "varchar04",},
-                          {"is_lookup": False,
-                           "is_charted": False,
-                           "is_filter": False,
-                           "is_searchable": False,
-                           "name": "photo_href",
-                           "display_order": 4,
-                           "real_name": "varchar04",
-                           "pretty_name": "Thumbnail URL",
-                           "pretty_name_plural": "Thumbnail URLs",
-                           "display": False,
-                           "schema": schema,
-                           })
+        
+        # Adding field 'Schema.is_event'
+        db.add_column('db_schema', 'is_event', self.gf('django.db.models.fields.BooleanField')(default=False), keep_default=False)
 
 
     def backwards(self, orm):
-        "Write your backwards methods here."
-        pass
+        
+        # Deleting field 'Schema.is_event'
+        db.delete_column('db_schema', 'is_event')
 
 
     models = {
@@ -279,6 +184,7 @@ class Migration(DataMigration):
             'importance': ('django.db.models.fields.SmallIntegerField', [], {'default': '0'}),
             'indefinite_article': ('django.db.models.fields.CharField', [], {'max_length': '2'}),
             'intro': ('django.db.models.fields.TextField', [], {'default': "''", 'blank': 'True'}),
+            'is_event': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
             'is_special_report': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'last_updated': ('django.db.models.fields.DateField', [], {}),
@@ -346,4 +252,4 @@ class Migration(DataMigration):
         }
     }
 
-    complete_apps = ['db', 'obdemo']
+    complete_apps = ['db']
