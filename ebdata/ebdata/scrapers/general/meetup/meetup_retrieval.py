@@ -75,7 +75,7 @@ class MeetupScraper(NewsItemListDetailScraper):
                         code = ''
                     if code == 'limit':
                         # This either raises an exception, or eventually returns new data.
-                        page, headers = self.handle_ratelimit_exceeded(url, ratelimit_reset)
+                        page, headers = self.handle_ratelimit_exceeded(url)
                         break
                     else:
                         msg = "Error %d. %s: %s" % (headers.get('status'), code, problem)
