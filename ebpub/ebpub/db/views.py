@@ -1097,31 +1097,40 @@ def place_detail_overview(request, *args, **kwargs):
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
 
-    # Here, the goal is to get the latest nearby NewsItems for each
-    # schema. A naive way to do this would be to run the query once for
-    # each schema, but we improve on that by grabbing the latest 300
-    # items of ANY schema and hoping that several of the schemas include
-    # all of their recent items in that list. Then, for any remaining
-    # schemas, we do individual queries as a last resort.
-    # Note that we iterate over the 300 NewsItems as the outer loop rather
-    # than iterating over the schemas as the outer loop, because there are
-    # many more NewsItems than schemas.
-    s_list = SortedDict([(s.id, [s, [], 0]) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
-    needed = set(s_list.keys())
+    schema_list = SortedDict([(s.id, s) for s in schema_manager.filter(is_special_report=False).order_by('plural_name')])
+    # needed = set(schema_list.keys())
+
+    # We actually want two lists of schemas, since we care whether
+    # they are news-like or future-event-like.
+    import copy
+    eventish_schema_list = copy.deepcopy(schema_list)
+    newsish_schema_list = copy.deepcopy(schema_list)
+    for s_id, schema in schema_list.items():
+        if schema.is_event:
+            del(newsish_schema_list[s_id])
+        else:
+            del(eventish_schema_list[s_id])
 
     filterchain = FilterChain(request=request, context=context)
     filterchain.add('location', context['place'])
-    newsitem_qs = filterchain.apply()
-    for ni in newsitem_qs.order_by('-item_date', '-id')[:300]:
-        # Ordering by ID ensures consistency across page views.
-        s_id = ni.schema_id
-        if s_id in needed:
-            s_list[s_id][1].append(ni)
-            s_list[s_id][2] += 1
-            if s_list[s_id][2] == s_list[s_id][0].number_in_overview:
-                needed.remove(s_id)
 
-    # Mapping of schema id -> [schemafields].
+    # Distinguish between past news and upcoming events.
+    # With some preliminary date limiting too.
+    filterchain_news = filterchain.copy()
+    filterchain_news.add('date',
+                         today() - datetime.timedelta(days=90),
+                         today())
+
+    filterchain_events = filterchain.copy()
+    filterchain_events.add('date',
+                           today(),
+                           today() + datetime.timedelta(days=60))
+
+    # Ordering by ID ensures consistency across page views.
+    newsitem_qs = filterchain_news.apply().order_by('-item_date', '-id')
+    events_qs = filterchain_events.apply().order_by('item_date', 'id')
+
+    # Mapping of schema id -> [schemafields], for building Lookup charts.
     sf_dict = {}
     charted_lookups = SchemaField.objects.filter(
         is_lookup=True, is_charted=True, schema__is_public=True,
@@ -1130,24 +1139,30 @@ def place_detail_overview(request, *args, **kwargs):
     for sf in charted_lookups.order_by('schema__id', 'display_order'):
         sf_dict.setdefault(sf['schema_id'], []).append(sf)
 
+    # Now retrieve newsitems per schema.
     schema_groups, all_newsitems = [], []
-    for s, newsitems, _ in s_list.values():
-        if s.id in needed:
-            newsitems = list(newsitem_qs.filter(schema__id=s.id).order_by('-item_date', '-id')[:s.number_in_overview])
-        populate_schema(newsitems, s)
+    for schema in schema_list.values():
+        if schema.id in newsish_schema_list:
+            newsitems = newsitem_qs.filter(schema__id=schema.id)
+        elif schema.id in eventish_schema_list:
+            newsitems = events_qs.filter(schema__id=schema.id)
+        else:
+            raise RuntimeError("should never get here")
+        newsitems = list(newsitems[:s.number_in_overview])
+        populate_schema(newsitems, schema)
         schema_groups.append({
-            'schema': s,
+            'schema': schema,
             'latest_newsitems': newsitems,
             'has_newsitems': bool(newsitems),
-            'lookup_charts': sf_dict.get(s.id),
+            'lookup_charts': sf_dict.get(schema.id),
         })
         all_newsitems.extend(newsitems)
-    s_list = [s[0] for s in s_list.values()]
-    populate_attributes_if_needed(all_newsitems, s_list)
-    s_list = [s for s in s_list if s.allow_charting]
+    schema_list = schema_list.values()
+    populate_attributes_if_needed(all_newsitems, schema_list)
+    schema_list = [s for s in schema_list if s.allow_charting]
 
     context['schema_groups'] = schema_groups
-    context['filtered_schema_list'] = s_list
+    context['filtered_schema_list'] = schema_list
     context['bodyclass'] = 'place-detail-overview'
     if context['is_block']:
         context['bodyid'] = '%s-%s-%s' % (context['place'].street_slug,
