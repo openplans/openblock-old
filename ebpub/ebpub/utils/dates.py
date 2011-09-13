@@ -31,6 +31,8 @@ def parse_date(value, format, return_datetime=False):
     Equivalent to time.strptime, but it returns a datetime.date or
     datetime.datetime object instead of a struct_time object.
 
+    If you pass a date or datetime instance, you get it back.
+
     Returns None if the value evaluates to False.
 
     >>> parse_date(None, '')
@@ -39,10 +41,15 @@ def parse_date(value, format, return_datetime=False):
     datetime.date(2000, 1, 1)
     >>> parse_date('2000', '%Y', True) # doctest: +ELLIPSIS
     datetime.datetime(2000, 1, 1, 0, 0, 0, ...)
+    >>> parse_date(datetime.date(2000, 1, 1), '%Y')
+    datetime.date(2000, 1, 1)
+
     """
     # See http://docs.python.org/lib/node85.html
     idx = return_datetime and 7 or 3
     func = return_datetime and datetime.datetime or datetime.date
+    if isinstance(value, func):
+        return value
     if value:
         return func(*time.strptime(value, format)[:idx])
     return None
