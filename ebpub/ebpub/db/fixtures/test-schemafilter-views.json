@@ -8,6 +8,7 @@
        "last_updated": "2006-11-08",
        "importance": 10,
        "is_public": true,
+       "is_event": false,
        "can_collapse": false,
        "has_newsitem_detail": true,
        "allow_charting": true,

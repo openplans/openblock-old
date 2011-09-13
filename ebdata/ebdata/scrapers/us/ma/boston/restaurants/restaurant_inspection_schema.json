@@ -14,6 +14,7 @@
       "date_name": "Date",
       "indefinite_article": "a",
       "is_public": true,
+      "is_event": false,
       "number_in_overview": 5,
       "slug": "restaurant-inspections",
       "date_name_plural": "Dates",

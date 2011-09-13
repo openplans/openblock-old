@@ -13,6 +13,7 @@
       "date_name": "publication date",
       "indefinite_article": "a",
       "is_public": true,
+      "is_event": false,
       "slug": "type1",
       "date_name_plural": "publication dates",
       "is_special_report": false
@@ -34,6 +35,7 @@
       "date_name": "publication date",
       "indefinite_article": "a",
       "is_public": true,
+      "is_event": false,
       "slug": "type2",
       "date_name_plural": "publication dates",
       "is_special_report": false

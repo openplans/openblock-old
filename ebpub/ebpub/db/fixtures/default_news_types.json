@@ -13,6 +13,7 @@
       "indefinite_article": "a",
       "intro": "",
       "is_public": true,
+      "is_event": false,
       "is_special_report": false,
       "last_updated": "2000-01-01",
       "min_date": "2000-01-01",
