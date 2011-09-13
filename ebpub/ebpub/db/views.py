@@ -827,7 +827,7 @@ def schema_filter(request, slug, args_from_url):
         large_map_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
         if filterchain.get('date') is None: 
             # force a date range
-            large_map_url += '?end_date=' + ni_list[0].pub_date.strftime("%Y-%m-%d") 
+            large_map_url += '?end_date=' + ni_list[0].pub_date.strftime("%m/%d/%Y") 
             
         context.update({
             'large_map_url': large_map_url
