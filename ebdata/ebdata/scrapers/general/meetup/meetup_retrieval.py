@@ -58,12 +58,15 @@ class MeetupScraper(NewsItemListDetailScraper):
                                                                       raise_on_error=False
 )
                 ratelimit_remaining = int(headers.get('x-ratelimit-remaining', '9999'))
-                if ratelimit_remaining <= 1:
+                while ratelimit_remaining <= 1:
                     # Apparently meetup says you have 1 hit remaining
                     # when they actually mean "this is the last one."
-                    ratelimit_reset = int(headers.get('x-ratelimit-reset'))
-                    self.handle_ratelimit_exceeded(ratelimit_reset)
-                elif int(headers.get('status')) >= 400:
+                    # This either raises an exception, or eventually returns new data.
+                    ratelimit_reset = int(headers.get('x-ratelimit-reset', 0))
+                    page, headers = self.handle_ratelimit_exceeded(url, ratelimit_reset)
+                    ratelimit_remaining = int(headers.get('x-ratelimit-remaining', 0))
+                    break
+                while int(headers.get('status')) >= 400:
                     try:
                         body = simplejson.loads(page)
                         problem, code = body.get('problem'), body.get('code')
@@ -71,7 +74,9 @@ class MeetupScraper(NewsItemListDetailScraper):
                         problem = page
                         code = ''
                     if code == 'limit':
-                        self.handle_ratelimit_exceeded()
+                        # This either raises an exception, or eventually returns new data.
+                        page, headers = self.handle_ratelimit_exceeded(url, ratelimit_reset)
+                        break
                     else:
                         msg = "Error %d. %s: %s" % (headers.get('status'), code, problem)
                         self.logger.error(msg)
@@ -95,10 +100,10 @@ class MeetupScraper(NewsItemListDetailScraper):
                 break
 
 
-    def handle_ratelimit_exceeded(self, reset_time=None):
+    def handle_ratelimit_exceeded(self, url, reset_time=None):
         """
-        Either sleep until rate limit expires, or exit,
-        depending on options.
+        Either sleep until rate limit expires, and retry the url;
+        or raise StopScraping, depending on options.
         """
         import time
         if reset_time is None:
@@ -113,6 +118,8 @@ class MeetupScraper(NewsItemListDetailScraper):
             self.logger.info("Wait limit should be expired, resuming")
         else:
             raise StopScraping(msg)
+        page, headers = self.retriever.fetch_data_and_headers(url, raise_on_error=False)
+        return page, headers
 
     def parse_list(self, page):
         # NOrmally we'd get a string here, but it's easier
