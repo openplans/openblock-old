@@ -110,7 +110,8 @@ $j(document).ready(function() {
 					<h2>{{ schema.schema.plural_name|capfirst }}</h2>
 					{% if schema.schema.allow_charting %}
 						<ul class="tabs">
-							<li class="current"><a href="#" class="linklist">Recent items</a></li>
+							<li class="current"><a href="#" class="linklist">
+								{% if schema.schema.is_event %}Upcoming{% else %}Recent items{% endif %}</a></li>
 							<li><a href="#" class="linkdatechart">By {{ schema.schema.date_name }}</a></li>
 							{% for lookup in schema.lookup_charts %}
 							<li><a href="#" class="linklookup{{ lookup.id }}">By {{ lookup.pretty_name }}</a></li>
