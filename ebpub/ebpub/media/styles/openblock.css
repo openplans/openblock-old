@@ -437,7 +437,7 @@ border : 1px solid #cac8c6;
 }
 
 #map_headlines {
-    width: 200px;
+    width: 250px;
     float: left;
     margin: 0;
     padding: 0;
@@ -475,7 +475,9 @@ border : 1px solid #cac8c6;
 }
 
 #map_headlines .map-item-list li .title {
-    font-size: 95%;
+    font-size: 85%;
+    line-height: 1.1em;
+    margin-bottom: .2em;
 }  
 
 
