@@ -26,6 +26,9 @@ import unittest
 
 class MakeTreeTestCase(unittest.TestCase):
     def assertMakeTree(self, html, expected):
+        import warnings
+        # Note, warnings.catch_warnings() should work but has no effect here?
+        warnings.simplefilter('ignore', UnicodeWarning)
         got = etree.tostring(make_tree(html), method='html')
         self.assertEqual(got, expected)
 
@@ -52,9 +55,11 @@ class MakeTreeTestCase(unittest.TestCase):
 
 class PreprocessTestCase(unittest.TestCase):
     def assertPreprocesses(self, html, expected, **kwargs):
-        tree = make_tree(html)
-        got = etree.tostring(preprocess(tree, **kwargs), method='html')
-        self.assertEqual(got, expected)
+        import warnings
+        with warnings.catch_warnings():
+            tree = make_tree(html)
+            got = etree.tostring(preprocess(tree, **kwargs), method='html')
+            self.assertEqual(got, expected)
 
     def test_comment1(self):
         self.assertPreprocesses('<html><body><!-- comment --></body></html>', '<html><body></body></html>')

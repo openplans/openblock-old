@@ -20,9 +20,12 @@
 Common utilities for creating and cleaning lxml HTML trees.
 """
 
+from lxml.etree import ElementTree, Element
 from lxml.html import document_fromstring
+import lxml.html.soupparser
 import re
 from ebdata.retrieval.utils import convert_entities
+from BeautifulSoup import UnicodeDammit
 
 def make_tree(html):
     """
@@ -43,8 +46,20 @@ def make_tree(html):
     # removing it.
     if isinstance(html, unicode):
         html = re.sub(r'^\s*<\?xml\s+.*?\?>', '', html)
+    else:
+        html = UnicodeDammit(html, isHTML=True).unicode
+    html = html.strip()
+    if html:
+        try:
+            return document_fromstring(html)
+        except:
+            # Fall back to using the (slow) BeautifulSoup parser.
+            return lxml.html.soupparser.fromstring(html)
+    else:
+        root = Element('body')
+        root.text = u''
+        return ElementTree(root)
 
-    return document_fromstring(html)
 
 def make_tree_and_preprocess(html, *args, **kw):
     """
@@ -55,17 +70,16 @@ def make_tree_and_preprocess(html, *args, **kw):
     Extra args are passed to preprocess().
     """
     tree = make_tree(html)
-    return preprocess(tree, *args, **kw)
+    result = preprocess(tree, *args, **kw)
+    return result
 
 def preprocess_to_string(*args, **kw):
     """
     like make_tree_and_preprocess() but returns a string.
     """
     tree = make_tree_and_preprocess(*args, **kw)
-    if tree.body.text:
-        return tree.body.text.strip()
-    else:
-        return u''
+    text = tree.findtext('body') or u''
+    return text.strip()
 
 def preprocess(tree, drop_tags=(), drop_trees=(), drop_attrs=()):
     """
@@ -104,6 +118,12 @@ def text_from_html(html):
     """
     text = preprocess_to_string(html, drop_tags=_html_droptags,
                                 drop_trees=_html_droptrees)
+    if not text:
+        # Maybe there was something there but not really HTML.
+        if text and not isinstance(text, unicode):
+            text = UnicodeDammit(html, isHTML=False).unicode.strip()
+        else:
+            text = u''
     text = convert_entities(text)
     return text
 
