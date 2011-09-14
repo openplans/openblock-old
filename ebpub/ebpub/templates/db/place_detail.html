@@ -111,8 +111,15 @@ window.onload = function() {
 	  <h1>{{ place.pretty_name }}</h1>
 
 	  <ul class="nav-view">
-		<li class="selected">Timeline</li>
-		<li><a href="overview/" rel="nofollow">Overview</a></li>
+		{% if show_upcoming %}
+		  <li><a href="../" rel="nofollow">Recent News</a></li>
+		  <li class="selected">Upcoming Events</li>
+		  <li><a href="../overview/" rel="nofollow">Overview</a></li>
+		{% else %}
+		  <li class="selected">Recent News</li>
+		  <li><a href="upcoming/" rel="nofollow">Upcoming Events</a></li>
+		  <li><a href="overview/" rel="nofollow">Overview</a></li>
+		{% endif %}
 	  </ul>
 	  {% if is_block %}
 	  <p>Show news within:</p>
@@ -141,7 +148,7 @@ window.onload = function() {
 	{% if newsitem_list %}
 		{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
 		{% for daygroup in newsitem_list_byday %}
-			<h2>New {{ daygroup.grouper }}</h2>
+			<h2>{% if not show_upcoming %}New{% endif %} {{ daygroup.grouper }}</h2>
 			{% regroup daygroup.list by schema as newsitem_list_byschema %}
 			{% for schemagroup in newsitem_list_byschema %}
 				{% with schemagroup.list|length as num_newsitems %}
@@ -161,8 +168,13 @@ window.onload = function() {
 			{% endfor %}
 		{% endfor %}
 	  <p>
+		{% if show_upcoming %}
+			{% if not is_latest_page %}<a href="./">&larr; Earlier upcoming events for {{ place.pretty_name }}</a>{% endif %}
+			{% if next_day %}<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow">More upcoming &rarr;</a>{% endif %}
+		{% else %}
 			{% if not is_latest_page %}<a href="./">&larr; Most recent news for {{ place.pretty_name }}</a>{% endif %}
 			{% if next_day %}<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow">Older news &rarr;</a>{% endif %}
+		{% endif %}
     </p>
 	{% else %}
 		<p>We haven't found any news available for this area recently.</p>

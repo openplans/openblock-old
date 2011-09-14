@@ -51,7 +51,12 @@ def place_base(context):
 
 def place_detail_timeline(context):
     crumbs =  place_base(context)
-    crumbs.append(('Timeline: Everything', ''))
+    crumbs.append(('Recent: Everything', ''))
+    return crumbs
+
+def place_detail_upcoming(context):
+    crumbs =  place_base(context)
+    crumbs.append(('Upcoming: Everything', ''))
     return crumbs
 
 def place_detail_overview(context):

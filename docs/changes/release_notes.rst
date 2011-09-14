@@ -7,6 +7,12 @@ Upgrade Notes
 New Features in 1.1
 -------------------
 
+* Support for future events, not just recent news.
+  Several scrapers support this: the ma/boston/events scraper,
+  and the general/meetups/ scraper.
+  See docs in docs/packages/ebdata.rst.
+  Ticket #246.
+
 * Added a scraper for Meetup.com, in ebdata/scrapers/general/meetups.
   It's zero-configuration: it just loops over your zip codes and
   finds all meetups for those.

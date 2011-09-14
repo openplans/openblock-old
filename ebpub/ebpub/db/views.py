@@ -960,8 +960,15 @@ def place_detail_timeline(request, *args, **kwargs):
     context, response = _place_detail_normalize_url(request, *args, **kwargs)
     if response is not None:
         return response
+
+    show_upcoming = kwargs.get('show_upcoming')
     schema_manager = get_schema_manager(request)
-    context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
+
+    if show_upcoming:
+        context['breadcrumbs'] = breadcrumbs.place_detail_upcoming(context)
+    else:
+        context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
+
     is_latest_page = True
     # Check the query string for the max date to use. Otherwise, fall
     # back to today.
@@ -975,15 +982,26 @@ def place_detail_timeline(request, *args, **kwargs):
 
     filterchain = FilterChain(request=request, context=context)
     filterchain.add('location', context['place'])
-    # As an optimization, limit the NewsItems to those published in the
-    # last few days.
-    start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-    filterchain.add('pubdate', start_date, end_date)
+    # As an optimization, limit the NewsItems to those on the
+    # last (or next) few days.
+    # And only fetch for relevant schemas - either event-ish or not.
+    if show_upcoming:
+        s_list = schema_manager.filter(is_event=True)
+        start_date = end_date
+        end_date = start_date + datetime.timedelta(days=settings.DEFAULT_DAYS)
+        order_by = 'item_date_date'
+    else:
+        s_list = schema_manager.filter(is_event=False)
+        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
+        order_by = '-item_date_date'
+
+    filterchain.add('schema', list(s_list))
+    filterchain.add('date', start_date, end_date)
     newsitem_qs = filterchain.apply().select_related()
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
         select={'item_date_date': 'date(db_newsitem.item_date)'},
-        order_by=('-item_date_date', '-schema__importance', 'schema')
+        order_by=(order_by, '-schema__importance', 'schema')
     )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # We're done filtering, so go ahead and do the query, to
@@ -991,7 +1009,7 @@ def place_detail_timeline(request, *args, **kwargs):
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
     ni_list = list(newsitem_qs)
     schemas_used = list(set([ni.schema for ni in ni_list]))
-    s_list = schema_manager.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
+    s_list = s_list.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
     if ni_list:
         next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
@@ -1010,6 +1028,7 @@ def place_detail_timeline(request, *args, **kwargs):
         'bodyclass': 'place-detail-timeline',
         'bodyid': context.get('place_type') or '',
         'filters': filterchain,
+        'show_upcoming': show_upcoming,
     })
 
 
@@ -1056,7 +1075,7 @@ def _preconfigured_map(context):
     ###########################
     
     filters = context.get('filters', None)
-    if filters is not None and filters.schema is not None:
+    if filters is not None and (filters.schema is not None and not isinstance(filters.schema, list)):
         base_url = reverse('ebpub-schema-filter-geojson', args=(context['schema'].slug,))
         layer_url = filters.make_url(base_url=base_url)
         layer_params = {}
@@ -1068,7 +1087,7 @@ def _preconfigured_map(context):
             'title': "Custom Filter" ,
             'visible': True
         }
-    else: 
+    else:
         # make up an api layer from the context 
     
         # single news item ? 

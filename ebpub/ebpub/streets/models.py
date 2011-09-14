@@ -261,7 +261,7 @@ class Block(models.Model):
         return ''.join(url)
 
     def url(self):
-        return urlresolvers.reverse('ebpub-block-timeline',
+        return urlresolvers.reverse('ebpub-block-recent',
                                     args=self._get_full_url_args())
 
     def _get_full_url_args(self):

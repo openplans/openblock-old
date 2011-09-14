@@ -144,7 +144,10 @@ class SchemaFilter(NewsitemFilter):
         return {}
 
     def apply(self):
-        self.qs = self.qs.filter(schema=self.schema)
+        if isinstance(self.schema, list):
+            self.qs = self.qs.filter(schema__in=self.schema)
+        else:
+            self.qs = self.qs.filter(schema=self.schema)
 
 
 class AttributeFilter(NewsitemFilter):
@@ -472,6 +475,9 @@ class DateFilter(NewsitemFilter):
         args = list(args)
         schema = kwargs.get('schema') or context.get('schema')
         if schema is not None:
+            if isinstance(schema, list):
+                # Um. Use the first schema? This is rather arbitrary.
+                schema = schema[0]
             self.label = schema.date_name
         else:
             self.label = self.slug
@@ -850,7 +856,7 @@ class FilterChain(SortedDict):
                 val = PubDateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
             else:
                 val = DateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
-        elif isinstance(values[0], models.Schema):
+        elif isinstance(values[0], models.Schema) or (isinstance(values[0], list) and values[0] and isinstance(values[0][0], models.Schema)):
             key = 'schema'
             schema = values[0]
             val = SchemaFilter(self.request, self.context, self.qs, *values, schema=schema)

@@ -111,7 +111,7 @@ class LocationDetailTestCase(BaseTestCase):
     @mock.patch('ebpub.db.views.today')
     def test_location_timeline(self, mock_today):
         mock_today.return_value = datetime.date(2006, 9, 26)
-        url = urlresolvers.reverse('ebpub-location-timeline',
+        url = urlresolvers.reverse('ebpub-location-recent',
                                    args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
