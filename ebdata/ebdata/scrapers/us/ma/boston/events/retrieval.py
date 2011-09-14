@@ -33,7 +33,9 @@ and updates the database
 
 import sys, feedparser, datetime
 import logging
+import pytz
 
+from django.conf import settings
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
 from ebpub.utils.logutils import log_exception
@@ -45,6 +47,8 @@ from ebdata.retrieval.utils import convert_entities
 
 logger = logging.getLogger()
 
+local_tz = pytz.timezone(settings.TIME_ZONE)
+
 class EventsCalendarScraper(object):
 
     url = "http://calendar.boston.com/search?commit=Search&new=n&rss=1&search=true&srad=50&srss=&st=event&st_select=event&svt=text&swhat=&swhen=&swhere="
@@ -53,7 +57,7 @@ class EventsCalendarScraper(object):
         try:
             self.schema = Schema.objects.get(slug=schema_slug)
         except Schema.DoesNotExist:
-            logger.error("Schema (%s): DoesNotExist" % schema)
+            logger.error("Schema (%s): DoesNotExist" % schema_slug)
             sys.exit(1)
         
     def update(self):
@@ -63,6 +67,15 @@ class EventsCalendarScraper(object):
         feed = feedparser.parse(self.url)
         seencount = addcount = updatecount = 0
         for entry in feed.entries:
+
+            def ns_get(element):
+                # work around feedparser unpredictability.
+                namespace, element = element.split(':')
+                result = entry.get('%s_%s' % (namespace, element))
+                if result is None:
+                    result = entry.get(element)
+                return result
+
             seencount += 1
             title = convert_entities(entry.title)
             try:
@@ -76,15 +89,21 @@ class EventsCalendarScraper(object):
                 logger.warn("Multiple entries matched title %r, event titles are not unique?" % title)
                 continue
             try:
-                item.location_name = entry.get('xcal_x-calconnect-street') or entry.get('x-calconnect-street') or u''
+                item.location_name = '%s %s' % (ns_get('xcal:x-calconnect-venue-name'),
+                                                ns_get('xcal:x-calconnect-street'))
+                item.location_name = item.location_name.strip()
                 item.schema = self.schema
                 item.title = title
                 item.description = convert_entities(entry.description)
                 item.url = entry.link
-                item.item_date = datetime.datetime(*entry.updated_parsed[:6])
+                start_dt = ns_get('xcal:dtstart')
+                import dateutil.parser
+                start_dt = dateutil.parser.parse(start_dt)
+                start_dt = start_dt.astimezone(local_tz)
+                item.item_date = start_dt.date()
                 item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
-                item.location = Point((float(entry['geo_long']),
-                                       float(entry['geo_lat'])))
+                item.location = Point((float(ns_get('geo:long')),
+                                       float(ns_get('geo:lat'))))
                 if (item.location.x, item.location.y) == (0.0, 0.0):
                     logger.warn("Skipping %r, bad location 0,0" % item.title)
                     continue
@@ -102,6 +121,12 @@ class EventsCalendarScraper(object):
                         item.location_name = u''
 
                 item.save()
+                item.attributes['start_time'] = start_dt.time()
+                end_dt = ns_get('xcal:dtend') or u''
+                if end_dt.strip():
+                    end_dt = dateutil.parser.parse(end_dt.strip())
+                    end_dt = end_dt.astimezone(local_tz)
+                    item.attributes['end_time'] = end_dt.time()
                 if status == 'added':
                     addcount += 1
                 else:

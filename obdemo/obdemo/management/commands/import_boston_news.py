@@ -28,15 +28,16 @@ class Command(BaseCommand):
         HERE = os.getcwd()
         print "Working directory is", HERE
 
+        print "Adding latest events..."
+        from ebdata.scrapers.us.ma.boston.events.retrieval import main as events_main
+        events_main()
+
         print "Adding latest news..."
         from ebdata.scrapers.general.georss.retrieval import main as news_main
         news_main(["http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=massachusetts&scope=bonzai"])
         # more feeds from Joel. Local blog news:
         news_main(["http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"])
 
-        print "Adding latest events..."
-        from ebdata.scrapers.us.ma.boston.events.retrieval import main as events_main
-        events_main()
 
         print "Adding police reports..."
         from ebdata.scrapers.us.ma.boston.police_reports.retrieval import main as pr_main
