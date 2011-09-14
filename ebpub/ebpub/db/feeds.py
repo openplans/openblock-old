@@ -79,7 +79,6 @@ class AbstractLocationFeed(EbpubFeed):
         # is annoying.
 
         # TODO: re-use ebpub.db.schemafilters for filtering here.
-        import pdb; pdb.set_trace()
 
         # TODO: allow user control over date range
         today_value = today()
