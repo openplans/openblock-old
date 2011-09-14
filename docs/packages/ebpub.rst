@@ -446,10 +446,10 @@ We've included two sample schema-specific newsitem_list templates,
 news-articles.html and photos.html.
 
 It is also possible to customize the html used in map popups for each
-schema, by creating a snippet named [schema_slug].html in a
-subdirectory db/snippets/newsitem_popup_list/ on your template path.
+schema, by creating a snippet named newsitem_popup_[schema_slug].html in a
+subdirectory richmaps/ on your template path.
 If no such template exists, the default is
-ebpub/templates/db/snippets/newsitem_popup_list.html.
+``ebpub/richmaps/templates/richmaps/newsitem_popup.html``.
 
 Custom NewsItem detail pages
 ----------------------------

@@ -82,7 +82,7 @@ Other
 
 * Removed some unused template tags (SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN).
 
-
+* Removed old version of map popups code.
 
 OpenBlock 1.0.1 (Sept 7 2011)
 ================================

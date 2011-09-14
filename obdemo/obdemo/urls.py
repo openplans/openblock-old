@@ -19,11 +19,21 @@
 from django.conf import settings
 from django.conf.urls.defaults import *
 from obadmin import admin
-
+import os
 admin.autodiscover()
 
-urlpatterns = patterns(
+if settings.DEBUG:
+    # This stuff can probably go away if/when we switch to Django 1.3,
+    # not sure yet how that interacts with django-static.
+    urlpatterns = patterns('',
+        (r'^(?P<path>(map_icons).*)$',
+         'django.views.static.serve', {'document_root': os.path.join(settings.OBDEMO_DIR, 'media')}),
+    )
+else:
+    urlpatterns = patterns('')
 
+
+urlpatterns += patterns(
     '',
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 

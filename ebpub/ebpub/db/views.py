@@ -129,27 +129,6 @@ def block_bbox(block, radius):
     return (env[0], env[2], env[1], env[3])
 
 
-def _map_popups(ni_list):
-    """
-    Given a list of newsitems, return a list of lists
-    of the form [newsitem_id, popup_html, schema_name]
-    """
-    schemas = list(set([ni.schema for ni in ni_list]))
-    populate_attributes_if_needed(ni_list, schemas)
-    result = []
-    current_schema = current_template = None
-    for ni in ni_list:
-        schema = ni.schema
-        if current_schema != schema:
-            # This goes faster if ni_list is sorted by schema.
-            template_list = ['db/snippets/newsitem_popup_list/%s.html' % schema.slug,
-                             'db/snippets/newsitem_popup_list.html',
-                             ]
-            current_template = select_template(template_list)
-            current_schema = schema
-        html = current_template.render(template.Context({'newsitem': ni, 'schema': schema, }))
-        result.append([ni.id, html, schema.name.title()])
-    return result
 
 
 ##############
@@ -282,11 +261,7 @@ def newsitems_geojson(request):
     cache_key = 'newsitem_geojson:' + _make_cache_key_from_queryset(newsitem_qs)
     output = cache.get(cache_key, None)
     if output is None:
-        # Re-sort by schema type.
-        # This is an optimization for map_popups().
-        # We can't do it in the qs because we want to first slice the qs
-        # by date, and we can't call order_by() after a slice.
-        newsitem_list = sorted(newsitem_qs, key=lambda ni: ni.schema.id)
+        newsitem_list = list(newsitem_qs)
         output = api_items_geojson(newsitem_list)
         cache.set(cache_key, output, cache_seconds)
 
