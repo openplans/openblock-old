@@ -79,16 +79,18 @@ class AbstractLocationFeed(EbpubFeed):
         # is annoying.
 
         # TODO: re-use ebpub.db.schemafilters for filtering here.
-        today_value = today()
-        start_date = today_value - datetime.timedelta(days=4)
-        end_date = today_value
+        import pdb; pdb.set_trace()
 
-        # Note: The item_date__lt=end_date+(1 day) ensures that we don't miss
-        # stuff that has a item_date of the afternoon of end_date. A straight
-        # item_date__range would miss those items.
-        # ... Or anyway, that applied when we were using a datetime instead of
-        # a date; doesn't matter now, but doesn't hurt either.
-        qs = NewsItem.objects.select_related().filter(schema__is_public=True, item_date__gte=start_date, item_date__lt=end_date+datetime.timedelta(days=1)).extra(select={'item_date_date': 'date(db_newsitem.item_date)'}).order_by('-item_date_date', 'schema__id', 'id')
+        # TODO: allow user control over date range
+        today_value = today()
+        start_date = today_value - datetime.timedelta(days=5)
+        # Include future stuff, useful for events
+        end_date = today_value + datetime.timedelta(days=5)
+
+        qs = NewsItem.objects.select_related().filter(
+            schema__is_public=True,
+            item_date__gte=start_date,
+            item_date__lte=end_date).order_by('-item_date', 'schema__id', 'id')
 
         # Filter out ignored schemas -- those whose slugs are specified in
         # the "ignore" query-string parameter.
@@ -152,13 +154,13 @@ class BlockFeed(AbstractLocationFeed):
         return url_to_block(city_slug, street_slug, from_num, to_num, predir, postdir)
 
     def title(self, obj):
-        return u"EBPUB: %s" % obj.pretty_name
+        return u"OpenBlock: %s" % obj.pretty_name
 
     def link(self, obj):
         return obj.url()
 
     def description(self, obj):
-        return u"EBPUB %s" % obj.pretty_name
+        return u"OpenBlock: %s" % obj.pretty_name
 
     def newsitems_for_obj(self, obj, qs, block_radius):
         search_buffer = make_search_buffer(obj.location.centroid, block_radius)
@@ -173,13 +175,13 @@ class LocationFeed(AbstractLocationFeed):
                                                      slug=slug)
 
     def title(self, obj):
-        return u"EBPUB: %s" % obj.name
+        return u"OpenBlock: %s" % obj.name
 
     def link(self, obj):
         return obj.url()
 
     def description(self, obj):
-        return u"EBPUB %s" % obj.name
+        return u"OpenBlock %s" % obj.name
 
     def newsitems_for_obj(self, obj, qs, block_radius):
         return qs.filter(newsitemlocation__location__id=obj.id)
