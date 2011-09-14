@@ -960,6 +960,7 @@ overflow: hidden;
 
 .datechart .day { 
 width : 20px;
+vertical-align: top;
 }
 
 #location-neighborhoods table, 
