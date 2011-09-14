@@ -34,7 +34,7 @@
 
 		{% if newsitem_list %}
 
-			<p><strong>{{ schema.plural_name|capfirst }} {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
+			<p>{% map_icon_img schema %} <strong>{{ schema.plural_name|capfirst }} {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
 			<ul>
 				{% newsitem_list_by_schema newsitem_list ungrouped %}
 			</ul>

@@ -1,6 +1,6 @@
 {% extends "base_place.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
-{% load eb eb_filter %}
+{% load eb eb_filter mapping %}
 
 {% block title %}News {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% endblock title %}
 
@@ -93,22 +93,12 @@ $j(document).ready(function() {
 	</ul>
 	{% endif %}
 
-	<form class="select-filter">
-	<select id="sectionfilter">
-		<option value="">Choose a type of information&hellip;</option>
-		{% for schema in filtered_schema_list %}
-			<option value="{{ schema.url }}{{ place.url|slice:"1:" }}">{{ schema.plural_name|capfirst }}</option>
-		{% endfor %}
-	</select>
-	<button id="sectionfilterbutton">Go</button>
-	</form>
-
 	</div><!-- end #contentheader -->
 		{% for schema in schema_groups %}
 			{% if schema.latest_newsitems %}
 				<div class="module {% if forloop.counter0|divisibleby:"2" %}odd{% endif %}"
 					 id="module-{{ schema.schema.id }}">
-					<h2>{{ schema.schema.plural_name|capfirst }}</h2>
+					<h2>{% map_icon_img schema.schema %} {{ schema.schema.plural_name|capfirst }}</h2>
 					{% if schema.schema.allow_charting %}
 						<ul class="tabs">
 							<li class="current"><a href="#" class="linklist">

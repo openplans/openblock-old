@@ -1112,7 +1112,7 @@ img.schema-icon {
 div.schema-colorsample {
   display: inline-block;
   height: 20px; width: 20px;
-  padding: 0px; margin: 0px;
+  padding: 0px; margin: 3px;
   border: 1px solid #CCCCCC;
 }
 
