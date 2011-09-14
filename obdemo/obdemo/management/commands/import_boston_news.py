@@ -70,9 +70,12 @@ class Command(BaseCommand):
         print """
 ___________________________________________________________________
 
- *** NOT adding restaurant inspections, it may take hours. ***
+ *** NOT adding restaurant inspections or meetups, they can take hours. ***
 
-  If you want to load them, do:
-  django-admin.py import_boston_restaurants
+  If you want to load them, run these commands:
+   django-admin.py import_boston_restaurants
+   django-admin.py import_boston_meetups
+   update_aggregates
+
 ___________________________________________________________________
 """

@@ -26,7 +26,12 @@ class MeetupScraper(NewsItemListDetailScraper):
         super(MeetupScraper, self).__init__()
 
     def list_pages(self):
-        """generate page strings."""
+        """generate page ... well, not strings, but decoded JSON structures."""
+        # TODO: This fetches a ton of data, which is maybe useful for
+        # bootstrapping but very inefficient for getting updates.
+        # For that we should support meetup's streaming API,
+        # which allows passing a start time.
+
         # Result of each iteration is a JSON structure.
         # Normally in list_detail scrapers we return a string,
         # and leave parsing to parse_list(); but here we need to
@@ -168,28 +173,28 @@ class MeetupScraper(NewsItemListDetailScraper):
         attributes = list_record.pop('_attributes')
         self.create_or_update(old_record, attributes, **list_record)
 
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option(
+    "--schema", help="Slug of schema to use. Default is 'meetups'.",
+    action='store', default='meetups',
+    )
+
+parser.add_option(
+    '-p', '--start-page',
+    help="Page of results to start from. Default is zero.",
+    default=0
+    )
+parser.add_option(
+    "-n", "--no-wait-for-rate-limit",
+    help="If we hit rate limit, exit instead of waiting until it resets (typically 1 hour). Default is to wait.",
+    dest="wait_for_rate_limit", action='store_false', default=True,
+    )
 
 def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv[1:]
-    from optparse import OptionParser
-    parser = OptionParser()
-    parser.add_option(
-        "--schema", help="Slug of schema to use. Default is 'meetups'.",
-        action='store', default='meetups',
-        )
-
-    parser.add_option(
-        '-p', '--start-page',
-        help="Page of results to start from. Default is zero.",
-        default=0
-        )
-    parser.add_option(
-        "-n", "--no-wait-for-rate-limit",
-        help="If we hit rate limit, exit instead of waiting until it resets (typically 1 hour). Default is to wait.",
-        dest="wait_for_rate_limit", action='store_false', default=True,
-        )
     options, args = parser.parse_args(argv)
     scraper = MeetupScraper(options)
     scraper.update()

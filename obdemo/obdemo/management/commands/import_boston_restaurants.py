@@ -18,11 +18,9 @@
 
 
 from django.core.management.base import BaseCommand
-from ebpub.utils.script_utils import die, makedirs, wget, unzip
-import os
 
 class Command(BaseCommand):
-    help = 'Import Boston neighborhoods as ebpub.db.Locations.'
+    help = 'Import Boston restaurant inspections.'
 
     def handle(self, *args, **options):
         from ebdata.scrapers.us.ma.boston.restaurants.retrieval import main
