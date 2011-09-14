@@ -83,7 +83,7 @@ class MeetupScraper(NewsItemListDetailScraper):
                         page, headers = self.handle_ratelimit_exceeded(url)
                         break
                     else:
-                        msg = "Error %d. %s: %s" % (headers.get('status'), code, problem)
+                        msg = "Error %s. %s: %s" % (headers.get('status'), code, problem)
                         self.logger.error(msg)
                         raise StopScraping(msg)
                 zipcode_state[zipcode]['page'] += 1
