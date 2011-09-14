@@ -191,12 +191,15 @@ def ajax_place_date_chart(request):
     qs = filters.apply()
     # TODO: Ignore future dates
     try:
-        last_item = qs.order_by('-item_date').values('item_date')[0]
+        last_item = qs.order_by('-item_date', '-id').values('item_date')[0]
         end_date = last_item['item_date']
     except IndexError:  # No matching items.
         end_date = today()
 
-    start_date = end_date - constants.DAYS_AGGREGATE_TIMEDELTA
+    # These charts are used on eg. the place overview page; there,
+    # they should be smaller than the ones on the schema_detail view;
+    # we don't have room for 30 days.
+    start_date = end_date - datetime.timedelta(days=7)
     filters.add('date', start_date, end_date)
     counts = filters.apply().date_counts()
     date_chart = get_date_chart([schema], start_date, end_date, {schema.id: counts})[0]
@@ -254,7 +257,7 @@ def newsitems_geojson(request):
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
-        newsitem_qs = newsitem_qs.select_related().order_by('-item_date')
+        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-id')
         newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # Done preparing the query; cache based on the raw SQL
@@ -562,7 +565,7 @@ def schema_detail(request, slug):
     else:
         date_chart = {}
         latest_dates = schemafield_list = lookup_list = location_chartfield_list = ()
-        ni_list = list(NewsItem.objects.filter(schema__id=s.id).order_by('-item_date')[:30])
+        ni_list = list(NewsItem.objects.filter(schema__id=s.id).order_by('-item_date', '-id')[:30])
         populate_schema(ni_list, s)
         populate_attributes_if_needed(ni_list, [s])
 
@@ -656,9 +659,9 @@ def schema_filter_geojson(request, slug, args_from_url):
     qs, start_date, end_date = _default_date_filtering(filterchain)
 
     if s.is_event:
-        qs = qs.order_by('item_date')
+        qs = qs.order_by('item_date', 'id')
     else:
-        qs = qs.order_by('-item_date')
+        qs = qs.order_by('-item_date', '-id')
 
     page = request.GET.get('page', None)
     if page is not None:
@@ -744,9 +747,9 @@ def schema_filter(request, slug, args_from_url):
     qs, start_date, end_date = _default_date_filtering(filterchain)
 
     if s.is_event:
-        qs = qs.order_by('item_date')
+        qs = qs.order_by('item_date', 'id')
     else:
-        qs = qs.order_by('-item_date')
+        qs = qs.order_by('-item_date', '-id')
 
     context['newsitem_qs'] = qs
 
