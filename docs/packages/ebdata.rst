@@ -165,6 +165,10 @@ A scraper for the
 that is being adopted by a
 `growing number of cities <http://wiki.open311.org/GeoReport_v2/Servers>`_
 including many served by `SeeClickFix <http://seeclickfix.com>`.
+(Tip: You can get an open311 endpoint for *any* location served by
+seeclickfix, not just those listed on that page, by passing
+``http://seeclickfix.com/<location-name>/open311/v2/``
+as the API URL.)
 
 It has many command-line options for passing API keys and so forth;
 run it with the ``--help`` option.
