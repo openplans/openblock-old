@@ -228,9 +228,6 @@ def newsitems_geojson(request):
 
     nid = request.GET.get('newsitem', '')
 
-    cache_seconds = 60 * 5
-    cache_key = 'newsitem_geojson_%s_%s_%s' % (pid, nid, schema)
-
     newsitem_qs = NewsItem.objects.all()
     if nid:
         newsitem_qs = newsitem_qs.filter(id=nid)
@@ -262,7 +259,8 @@ def newsitems_geojson(request):
 
     # Done preparing the query; cache based on the raw SQL
     # to be sure we capture everything that matters.
-    cache_key += hashlib.md5(str(newsitem_qs.query)).hexdigest()
+    cache_seconds = 60 * 5
+    cache_key = 'newsitem_geojson:' + _make_cache_key_from_queryset(newsitem_qs)
     output = cache.get(cache_key, None)
     if output is None:
         # Re-sort by schema type.
@@ -276,6 +274,11 @@ def newsitems_geojson(request):
     response = HttpResponse(output, mimetype="application/javascript")
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
+
+def _make_cache_key_from_queryset(qs):
+    cache_key = 'query:'
+    cache_key += hashlib.md5(str(qs.query)).hexdigest()
+    return cache_key
 
 @cache_page(60 * 60)
 def place_kml(request, *args, **kwargs):
@@ -636,46 +639,44 @@ def schema_filter_geojson(request, slug, args_from_url):
     try:
         filterchain.update_from_request(args_from_url, filter_sf_dict)
         filters_need_more = filterchain.validate()
-    except FilterError, e:
+    except FilterError:
         return HttpResponse(status=400)
-    except BadAddressException, e:
+    except BadAddressException:
         return HttpResponse(status=400)
-    except BadDateException, e:
+    except BadDateException:
         return HttpResponse(status=400)
 
     if filters_need_more:
         return HttpResponse(status=400)
 
-    qs = filterchain.apply().order_by('-item_date')
+    # If there isn't a date filter, add a default one.
+    start_date, end_date = _ensure_has_date_filter(filterchain)
 
-    date_filter = filterchain.get('date') or filterchain.get('pubdate')
-    if date_filter:
-        start_date = date_filter.start_date
-        end_date = date_filter.end_date
+    qs = filterchain.apply()
+    if s.is_event:
+        qs = qs.order_by('item_date')
     else:
-        start_date = s.min_date
-        end_date = today()
-        qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
+        qs = qs.order_by('-item_date')
 
     page = request.GET.get('page', None)
-    if page is not None: 
+    if page is not None:
         try:
-            page = int(request.GET.get('page', '1'))
+            page = int(page)
             idx_start = (page - 1) * constants.FILTER_PER_PAGE
             idx_end = page * constants.FILTER_PER_PAGE
             # Get one extra, so we can tell whether there's a next page.
-            ni_list = list(qs[idx_start:idx_end+1])
+            idx_end += 1
         except ValueError:
             return HttpResponse('Invalid Page', status=400)
     else:
-        ni_list = list(qs[0:1000])
+        idx_start, idx_end = 0, 1000
+    qs = qs[idx_start:idx_end]
 
+    cache_key = 'schema_filter_geojson:' + _make_cache_key_from_queryset(qs)
     cache_seconds = 60 * 5
-    cache_key = 'schema_filter_geojson:'
-    cache_key += hashlib.md5(str(qs.query)).hexdigest()
     output = cache.get(cache_key, None)
     if output is None:
-        output = api_items_geojson(ni_list)
+        output = api_items_geojson(list(qs))
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
@@ -737,17 +738,16 @@ def schema_filter(request, slug, args_from_url):
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)
 
-    # Finally, filter the newsitems.
-    qs = filterchain.apply().order_by('-item_date')
+    # If there isn't a date filter, add a default one.
+    start_date, end_date = _ensure_has_date_filter(filterchain)
 
-    date_filter = filterchain.get('date') or filterchain.get('pubdate')
-    if date_filter:
-        start_date = date_filter.start_date
-        end_date = date_filter.end_date
+    # Finally, filter the newsitems.
+    qs = filterchain.apply()
+
+    if s.is_event:
+        qs = qs.order_by('item_date')
     else:
-        start_date = s.min_date
-        end_date = today()
-        qs = qs.filter(item_date__gte=start_date, item_date__lte=end_date)
+        qs = qs.order_by('-item_date')
 
     context['newsitem_qs'] = qs
 
@@ -821,18 +821,18 @@ def schema_filter(request, slug, args_from_url):
                 'default_zoom': settings.DEFAULT_MAP_ZOOM,
                 })
 
-    # try to provide a link to larger map, but don't worry about it 
+    # Try to provide a link to larger map, but don't worry about it
     # if there is no richmap app hooked in...
-    try: 
+    try:
         large_map_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
-        if filterchain.get('date') is None: 
+        if filterchain.get('date') is None:
             # force a date range
             large_map_url += '?end_date=' + ni_list[0].pub_date.strftime("%m/%d/%Y") 
-            
+
         context.update({
             'large_map_url': large_map_url
         })
-    except: 
+    except:
         pass
 
     context.update({
@@ -860,6 +860,22 @@ def schema_filter(request, slug, args_from_url):
 
     return eb_render(request, 'db/filter.html', context)
 
+
+def _ensure_has_date_filter(filterchain):
+    schema = filterchain['schema'].schema
+    date_filter = filterchain.get('date') or filterchain.get('pubdate')
+    if date_filter:
+        start_date = date_filter.start_date
+        end_date = date_filter.end_date
+    else:
+        if schema.is_event:
+            start_date = today()
+            end_date = start_date + datetime.timedelta(days=30)
+        else:
+            start_date = schema.min_date
+            end_date = today()
+        filterchain.add('date', start_date, end_date)
+    return start_date, end_date
 
 def location_type_detail(request, slug):
     lt = get_object_or_404(LocationType, slug=slug)
