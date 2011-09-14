@@ -4,9 +4,11 @@ OpenBlock 1.1.0 (TODO date here)
 Upgrade Notes
 -------------
 
-As with any upgrade, you will need to do two things:
+* Due to an oversight, both obdemo and the generated custom
+  applications prior to this release didn't include the TIME_ZONE setting.
+  Please set settings.TIME_ZONE to an appropriate value.
 
-* Install all dependencies, eg if you are upgrading a source checkout::
+* As usual, install all dependencies, eg if you are upgrading a source checkout::
 
    pip install -r ebpub/requirements.txt
    pip install -r ebdata/requirements.txt
@@ -17,7 +19,7 @@ As with any upgrade, you will need to do two things:
    pip install -e obadmin
    pip install -e obdemo
 
-* Sync the database::
+* As usual, sync and migrate the database::
 
   django-admin.py syncdb
   django-admin.py migrate
