@@ -53,7 +53,7 @@ class MeetupScraper(NewsItemListDetailScraper):
                     continue
                 try:
                     int(zipcode)
-                except TypeError:
+                except ValueError:
                     # meetup will barf on these.
                     self.logger.info("Skipping %s, doesn't look like a valid US zip code" % zipcode)
                     continue
