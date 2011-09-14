@@ -448,7 +448,7 @@ class TestUrlNormalization(TestCase):
         self.proper_city = self._patcher1.start()
         self.proper_city.return_value = 'chicago'
 
-        self._patcher2 = mock.patch('ebpub.db.views.SmartGeocoder.geocode')
+        self._patcher2 = mock.patch('ebpub.db.schemafilters.SmartGeocoder.geocode')
         self.mock_geocode = self._patcher2.start()
 
     def tearDown(self):
