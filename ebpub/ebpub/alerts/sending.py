@@ -29,7 +29,8 @@ import datetime
 class NoNews(Exception):
     pass
 
-def email_text_for_place(alert, place, place_name, place_url, newsitem_list, date, frequency):
+def email_text_for_place(alert, place, place_name, place_url,
+                         news_groups, date, frequency):
     """
     Returns a tuple of (text, html) for the given args. `text` is the text-only
     e-mail, and `html` is the HTML version.
@@ -43,7 +44,7 @@ def email_text_for_place(alert, place, place_name, place_url, newsitem_list, dat
         'email_address': alert.user.email,
         'place_name': place_name,
         'place_url': place_url,
-        'newsitem_list': newsitem_list,
+        'news_groups': news_groups,
         'date': date,
         'frequency': frequency,
         'unsubscribe_url': alert.unsubscribe_url(),
@@ -59,13 +60,14 @@ def email_for_subscription(alert, start_date, frequency):
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     end_datetime = datetime.datetime.combine(yesterday, datetime.time(23, 59, 59, 9999)) # the end of yesterday
     # Order by schema__id to group schemas together.
-    qs = NewsItem.objects.select_related().filter(schema__is_public=True, pub_date__range=(start_datetime, end_datetime)).order_by('-schema__importance', 'schema__id')
+    qs = NewsItem.objects.select_related().filter(schema__is_public=True)
     if alert.include_new_schemas:
         if alert.schemas:
             qs = qs.exclude(schema__id__in=alert.schemas.split(','))
     else:
         if alert.schemas:
             qs = qs.filter(schema__id__in=alert.schemas.split(','))
+
     if alert.block:
         place_name, place_url = alert.block.pretty_name, alert.block.url()
         place = alert.block
@@ -75,12 +77,24 @@ def email_for_subscription(alert, start_date, frequency):
         place_name, place_url = alert.location.name, alert.location.url()
         place = alert.location
         qs = qs.filter(newsitemlocation__location__id=alert.location.id)
-    ni_list = list(qs)
-    if not ni_list:
+
+    news_qs = qs.filter(schema__is_event=False,
+                        pub_date__range=(start_datetime, end_datetime),
+                        ).order_by('-schema__importance', 'schema__id', '-item_date', '-id')
+    events_qs = qs.filter(schema__is_event=True,
+                         pub_date__range=(start_datetime, end_datetime),
+                         ).order_by('-schema__importance', 'schema__id', 'item_date', 'id')
+
+    news_list = list(news_qs)
+    events_list = list(events_qs)
+    if not (news_list or events_list):
         raise NoNews
-    schemas_used = set([ni.schema for ni in ni_list])
-    populate_attributes_if_needed(ni_list, list(schemas_used))
-    text, html = email_text_for_place(alert, place, place_name, place_url, ni_list, start_date, frequency)
+    schemas_used = set([ni.schema for ni in news_list + events_list])
+    populate_attributes_if_needed(news_list, list(schemas_used))
+    populate_attributes_if_needed(events_list, list(schemas_used))
+    newsitem_groups = ({'title': 'Recent', 'newsitems': news_list},
+                       {'title': 'Upcoming', 'newsitems': events_list})
+    text, html = email_text_for_place(alert, place, place_name, place_url, newsitem_groups, start_date, frequency)
     return place_name, text, html
 
 def send_all(frequency, verbose=False):
@@ -113,7 +127,7 @@ def main(argv=None):
     if argv is None:
         import sys
         argv = sys.argv[1:]
-    from optparse import OptionParser, OptionValueError
+    from optparse import OptionParser
     freq_choices = {'daily': 1, 'weekly': 7}
     usage = """usage: %prog [options]\nSends OpenBlock email alerts.
 
