@@ -31,14 +31,14 @@ Downloads calendar entries from RSS feed at boston.com
 and updates the database
 """
 
-import sys, feedparser, datetime
-import logging
-import pytz
-
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
 from ebpub.utils.logutils import log_exception
+import dateutil.parser
+import logging
+import pytz
+import sys, feedparser, datetime
 
 # Note there's an undocumented assumption in ebdata that we want to
 # put unescape html before putting it in the db.  Maybe wouldn't have
@@ -97,9 +97,11 @@ class EventsCalendarScraper(object):
                 item.description = convert_entities(entry.description)
                 item.url = entry.link
                 start_dt = ns_get('xcal:dtstart')
-                import dateutil.parser
                 start_dt = dateutil.parser.parse(start_dt)
-                start_dt = start_dt.astimezone(local_tz)
+                # Upstream bug: They provide a UTC offset of +0000 which
+                # means times in UTC, but they're actually times in
+                # US/Eastern, so do *not* fix the zone.
+                #start_dt = start_dt.astimezone(local_tz)
                 item.item_date = start_dt.date()
                 item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
                 item.location = Point((float(ns_get('geo:long')),
@@ -125,7 +127,7 @@ class EventsCalendarScraper(object):
                 end_dt = ns_get('xcal:dtend') or u''
                 if end_dt.strip():
                     end_dt = dateutil.parser.parse(end_dt.strip())
-                    end_dt = end_dt.astimezone(local_tz)
+                    #end_dt = end_dt.astimezone(local_tz)
                     item.attributes['end_time'] = end_dt.time()
                 if status == 'added':
                     addcount += 1
