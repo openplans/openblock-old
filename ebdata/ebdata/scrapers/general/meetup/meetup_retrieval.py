@@ -46,17 +46,24 @@ class MeetupScraper(NewsItemListDetailScraper):
         ratelimit_remaining = 99999
         while True:
             for zipcode in Location.objects.filter(location_type__slug='zipcodes'):
+                zipcode = zipcode.slug
                 zipcode_state.setdefault(zipcode, {'page': int(self.options.start_page),
                                                    'done': False})
                 if zipcode_state[zipcode]['done']:
                     continue
+                try:
+                    int(zipcode)
+                except TypeError:
+                    # meetup will barf on these.
+                    self.logger.info("Skipping %s, doesn't look like a valid US zip code" % zipcode)
+                    continue
 
-                params = dict(zip=zipcode.slug, key=api_key, city=city, state=state,
+                params = dict(zip=zipcode, key=api_key, city=city, state=state,
                               country='US',
                               time='-1m,2m',
                               )
                 pagenum = zipcode_state[zipcode]['page']
-                self.logger.info("Page %s for zip code %s" % (pagenum, zipcode.slug))
+                self.logger.info("Page %s for zip code %s" % (pagenum, zipcode))
                 params['offset'] = pagenum
                 url = 'https://api.meetup.com/2/open_events?key=%(key)s&state=%(state)s&city=%(city)s&country=%(country)s&zip=%(zip)s&page=200&offset=%(offset)s' % params
                 page, headers = self.retriever.fetch_data_and_headers(url,
