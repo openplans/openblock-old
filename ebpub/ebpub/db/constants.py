@@ -28,6 +28,11 @@ NUM_DAYS_AGGREGATE = 30
 import datetime
 DAYS_AGGREGATE_TIMEDELTA = datetime.timedelta(days=NUM_DAYS_AGGREGATE - 1)
 
+# A shorter span for use where there's not so much room,
+# eg. in the ajax views used by place_detail_overview.
+NUM_DAYS_SHORT_AGGREGATE = 10
+DAYS_SHORT_AGGREGATE_TIMEDELTA = datetime.timedelta(days=NUM_DAYS_SHORT_AGGREGATE-1)
+
 # Number of results per page in the schema_filter view.
 FILTER_PER_PAGE = 30
 

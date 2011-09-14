@@ -44,10 +44,9 @@ from ebpub.db.schemafilters import BadDateException
 
 from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.db.utils import url_to_place
-from ebpub.geocoder import SmartGeocoder, AmbiguousResult, DoesNotExist, InvalidBlockButValidStreet
 from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
-from ebpub.geocoder.parser.parsing import normalize, ParsingError
+from ebpub.geocoder.parser.parsing import normalize
 from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
@@ -180,7 +179,11 @@ def ajax_place_lookup_chart(request):
 
 def ajax_place_date_chart(request):
     """
-    Returns HTML fragment -- expects request.GET['pid'] and request.GET['s'] (a Schema ID).
+    Returns HTML fragment containing a chart of how many news items
+    were added for each day over a short period (length defined by
+    constants.DAYS_SHORT_AGGREGATE_TIMEDELTA).
+
+    Expects request.GET['pid'] and request.GET['s'] (a Schema ID).
     """
     try:
         schema = Schema.public_objects.get(id=int(request.GET['s']))
@@ -189,17 +192,30 @@ def ajax_place_date_chart(request):
     filters = FilterChain(request=request, schema=schema)
     filters.add_by_place_id(request.GET.get('pid', ''))
     qs = filters.apply()
-    # TODO: Ignore future dates
-    try:
-        last_item = qs.order_by('-item_date', '-id').values('item_date')[0]
-        end_date = last_item['item_date']
-    except IndexError:  # No matching items.
-        end_date = today()
 
     # These charts are used on eg. the place overview page; there,
     # they should be smaller than the ones on the schema_detail view;
-    # we don't have room for 30 days.
-    start_date = end_date - datetime.timedelta(days=7)
+    # we don't have room for a full 30 days.
+    date_span = constants.DAYS_SHORT_AGGREGATE_TIMEDELTA
+    if schema.is_event:
+        # Soonest span that includes some.
+        try:
+            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'id')
+            first_item = qs.values('item_date')[0]
+            start_date = first_item['item_date']
+        except IndexError:  # No matching items.
+            start_date = today()
+        end_date = today() + date_span
+    else:
+        # Most recent span that includes some.
+        try:
+            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-id')
+            last_item = qs.values('item_date')[0]
+            end_date = last_item['item_date']
+        except IndexError:  # No matching items.
+            end_date = today()
+        start_date = end_date - date_span
+
     filters.add('date', start_date, end_date)
     counts = filters.apply().date_counts()
     date_chart = get_date_chart([schema], start_date, end_date, {schema.id: counts})[0]

@@ -160,8 +160,10 @@ class TestAjaxViews(BaseTestCase):
         self.assertEqual(response.status_code, 404)
 
 
+    @mock.patch('ebpub.db.views.today')
     @mock.patch('ebpub.db.views.FilterChain')
-    def test_ajax_place_date_chart__location(self, mock_chain):
+    def test_ajax_place_date_chart__location(self, mock_chain, mock_today):
+        mock_today.return_value = datetime.date(2006, 11, 10)
         # Hack so isinstance(mock_chain(), FilterChain) works
         from ebpub.db import schemafilters
         mock_chain.return_value = mock.Mock(spec=schemafilters.FilterChain)
@@ -172,11 +174,10 @@ class TestAjaxViews(BaseTestCase):
         url = urlresolvers.reverse('ajax-place-date-chart') + '?s=1&pid=b:1000.8'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['date_chart']['total_count'], 1)
-        self.assertEqual(len(response.context['date_chart']['dates']), 8)
-        import datetime
+        self.assertEqual(response.context['date_chart']['total_count'], 2)
+        self.assertEqual(len(response.context['date_chart']['dates']), 10)
         self.assertEqual(response.context['date_chart']['dates'][-1],
-                         {'date': datetime.date(2006, 11, 8), 'count': 1})
+                         {'date': datetime.date(2006, 11, 8), 'count': 2})
 
 
     @mock.patch('ebpub.db.views.FilterChain')

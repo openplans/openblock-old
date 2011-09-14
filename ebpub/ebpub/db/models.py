@@ -606,11 +606,10 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         """
         Returns a dictionary mapping {item_date: count}.
         """
-        # TODO: values + annotate doesn't seem to play nice with GeoQuerySet
-        # at the moment. This is the changeset where it broke:
-        # http://code.djangoproject.com/changeset/10326
         from django.db.models.query import QuerySet
         qs = QuerySet.values(self, 'item_date').annotate(count=models.Count('id'))
+        # Turn off ordering, as that breaks Count; see https://docs.djangoproject.com/en/dev/topics/db/aggregation/#interaction-with-default-ordering-or-order-by
+        qs = qs.order_by()
         return dict([(v['item_date'], v['count']) for v in qs])
 
     def top_lookups(self, schema_field, count):
