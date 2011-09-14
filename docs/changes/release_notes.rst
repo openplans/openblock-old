@@ -4,6 +4,25 @@ OpenBlock 1.1.0 (TODO date here)
 Upgrade Notes
 -------------
 
+As with any upgrade, you will need to do two things:
+
+* Install all dependencies, eg if you are upgrading a source checkout::
+
+   pip install -r ebpub/requirements.txt
+   pip install -r ebdata/requirements.txt
+   pip install -r obadmin/requirements.txt
+   pip install -r obdemo/requirements.txt
+   pip install -e ebpub
+   pip install -e ebdata
+   pip install -e obadmin
+   pip install -e obdemo
+
+* Sync the database::
+
+  django-admin.py syncdb
+  django-admin.py migrate
+
+
 New Features in 1.1
 -------------------
 
