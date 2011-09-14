@@ -649,10 +649,12 @@ def schema_filter_geojson(request, slug, args_from_url):
     if filters_need_more:
         return HttpResponse(status=400)
 
-    # If there isn't a date filter, add a default one.
-    start_date, end_date = _ensure_has_date_filter(filterchain)
 
-    qs = filterchain.apply()
+    # If there isn't a date filter, add some dates to the queryset,
+    # but NOT to the filterchain, because need to give the user the
+    # option of choosing dates.
+    qs, start_date, end_date = _default_date_filtering(filterchain)
+
     if s.is_event:
         qs = qs.order_by('item_date')
     else:
@@ -738,11 +740,8 @@ def schema_filter(request, slug, args_from_url):
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)
 
-    # If there isn't a date filter, add a default one.
-    start_date, end_date = _ensure_has_date_filter(filterchain)
-
-    # Finally, filter the newsitems.
-    qs = filterchain.apply()
+    # Make the queryset, with default date filtering if needed.
+    qs, start_date, end_date = _default_date_filtering(filterchain)
 
     if s.is_event:
         qs = qs.order_by('item_date')
@@ -861,9 +860,15 @@ def schema_filter(request, slug, args_from_url):
     return eb_render(request, 'db/filter.html', context)
 
 
-def _ensure_has_date_filter(filterchain):
+def _default_date_filtering(filterchain):
+    """
+    Make sure we do some date limiting, but don't force a
+    DateFilter into the filterchain, because that would prevent
+    users from choosing dates.
+    """
     schema = filterchain['schema'].schema
     date_filter = filterchain.get('date') or filterchain.get('pubdate')
+    qs = filterchain.apply()
     if date_filter:
         start_date = date_filter.start_date
         end_date = date_filter.end_date
@@ -874,8 +879,9 @@ def _ensure_has_date_filter(filterchain):
         else:
             start_date = schema.min_date
             end_date = today()
-        filterchain.add('date', start_date, end_date)
-    return start_date, end_date
+        qs = qs.filter(item_date__gte=start_date,
+                       item_date__lte=end_date)
+    return qs, start_date, end_date
 
 def location_type_detail(request, slug):
     lt = get_object_or_404(LocationType, slug=slug)

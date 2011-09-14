@@ -509,9 +509,9 @@ class TestSchemaFilterView(BaseTestCase):
         # filtering after that.)
         # TODO: this is pretty brittle. Worth it?
         mock_qs = mock.Mock()
-        mock_qs.order_by.return_value = mock_qs
+        mock_qs.filter.return_value = mock_qs
         newsitem = models.NewsItem.objects.all()[0]
-        mock_qs.filter.return_value = [newsitem] * 100
+        mock_qs.order_by.return_value = [newsitem] * 100
 
         mock_chain.return_value = mock_chain
         mock_chain.apply.return_value = mock_qs
