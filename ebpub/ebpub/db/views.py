@@ -966,6 +966,9 @@ def _place_detail_normalize_url(request, *args, **kwargs):
 
 
 def place_detail_timeline(request, *args, **kwargs):
+    """
+    Recent news OR upcoming events for the given Location or Block.
+    """
     context, response = _place_detail_normalize_url(request, *args, **kwargs)
     if response is not None:
         return response

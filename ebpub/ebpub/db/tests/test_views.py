@@ -115,7 +115,8 @@ class LocationDetailTestCase(BaseTestCase):
                                    args=['neighborhoods', 'hood-1'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context['newsitem_list']), 2)
+        self.assertEqual(len(response.context['newsitem_list']), 1)
+        self.assertEqual(response.context['newsitem_list'][0].title, 'crime title 1')
 
     def test_location_overview(self):
         url = urlresolvers.reverse('ebpub-location-overview',
