@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
         print "Adding GeoReport issues..."
         from ebdata.scrapers.general.open311.georeportv2 import main as georeport_main
-        georeport_main(['--html-url-template=http://seeclickfix.com/isses/{id}',
+        georeport_main(['--html-url-template=http://seeclickfix.com/issues/{id}',
                         '--days-prior=6',
                         'http://seeclicktest.com/boston/open311/v2'])
 
