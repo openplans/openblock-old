@@ -54,6 +54,7 @@ the bootstrap script, it should just work.
 For more information on configuring Apache and running Django apps
 under mod_wsgi, see
 http://docs.djangoproject.com/en/1.1/howto/deployment/modwsgi/
+and see :ref:`example_apache_config`.
 
 .. _ebgeo: https://github.com/openplans/openblock-extras/blob/master/docs/ebgeo.rst
 
