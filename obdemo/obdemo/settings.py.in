@@ -156,6 +156,7 @@ CACHES = {
 # API keys for scrapers
 FLICKR_API_KEY = 'fix me'
 FLICKR_API_SECRET = 'fix me'
+MEETUP_API_KEY = 'fix me'
 
 #######################################################
 # For debugging.

@@ -39,7 +39,7 @@ class Migration(DataMigration):
 
         _create_or_update('db.schema', {'slug': 'local-news'},
                           {'map_icon_url': '',
-                           'map_color': ''})
+                           'map_color': '#FFAC54'})
 
 
     def backwards(self, orm):

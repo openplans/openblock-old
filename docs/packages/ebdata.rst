@@ -110,6 +110,8 @@ Flickr: ebdata.scrapers.general.flickr
 Loads Flickr photos that are geotagged at a location within your
 configured :ref:`metro extent <metro_extent>`.
 
+You must set both ``settings.FLICKR_API_KEY`` and ``settings.FLICKR_API_SECRET``.
+
 The scraper script is ``PATH/TO/ebdata/scrapers/general/flickr/flickr_retrieval.py``
 and the schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/flickr/photos_schema.json``.
