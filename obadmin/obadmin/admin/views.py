@@ -31,7 +31,6 @@ from ebdata.blobs.models import Seed
 from ebpub.db.bin import import_locations
 from ebpub.db.models import LocationType
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
-from ebpub.metros.allmetros import get_metro
 from re import findall
 from tasks import CENSUS_STATES, download_state_shapefile, import_blocks_from_shapefiles
 from tempfile import mkstemp, mkdtemp
@@ -105,12 +104,6 @@ class UploadShapefileForm(forms.Form):
         # TODO: Some zipped shapefiles contain multiple .shp files!
         # We'll just assume you want the first one.
         shapefiles = glob.glob(os.path.join(outdir, '*shp'))
-        if not shapefiles:
-            for name in os.listdir(outdir):
-                # Maybe there's a subdirectory?
-                shapefiles = glob.glob(os.path.join(outdir, name, '*shp'))
-                if shapefiles:
-                    break
         assert shapefiles
         shapefile = shapefiles[0]
         return os.path.abspath(shapefile)
@@ -138,8 +131,7 @@ class PickShapefileLayerForm(forms.Form):
         name_field = self.cleaned_data['name_field']
 
         # TODO: Run this as a background task
-        importer = import_locations.LocationImporter(layer, location_type,
-                                                     filter_bounds=True)
+        importer = import_locations.LocationImporter(layer, location_type)
         if importer.save(name_field) > 0:
             # TODO: validate this directory!
             import shutil
@@ -160,14 +152,6 @@ class ImportBlocksForm(forms.Form):
 
     city = forms.CharField(max_length=30, help_text="Optional: skip features that don't include this city name", required=False)
 
-    fix_cities = forms.BooleanField(
-        help_text="Optional: try to override each block's city by finding an overlapping Location that represents a city. Only useful if you've set up multiple_cities=True and set city_location_type in your settings.METRO_LIST *and* have some appropriate Locations of that type already created.",
-        required=False, initial=bool(get_metro().get('multiple_cities', False)))
-
-    regenerate_intersections = forms.BooleanField(
-        help_text="Regenerate all Intersections and BlockIntersections after loading Blocks.  Say No only if you are sure you have more blocks to load from another set of shapefiles; it will run a lot faster. It's always safe to say Yes.",
-        required=False, initial=True)
-
     def save(self):
         if not self.is_valid():
             return False
@@ -177,9 +161,7 @@ class ImportBlocksForm(forms.Form):
             save_file(self.cleaned_data['featnames'], suffix='.zip'),
             save_file(self.cleaned_data['faces'], suffix='.zip'),
             save_file(self.cleaned_data['place'], suffix='.zip'),
-            city=self.cleaned_data['city'],
-            fix_cities=self.cleaned_data['fix_cities'],
-            regenerate_intersections=self.cleaned_data['regenerate_intersections'],
+            self.cleaned_data['city']
         )
 
         return True
@@ -316,7 +298,7 @@ def jobs_status(request, appname, modelname):
     use via AJAX.
     """
     pending = Task.objects.find_available()
-    running = Task.objects.filter(locked_by__isnull=False)
+
     # if there are old jobs and nothing's running, tell user to run tasks
     old_time = datetime.now() - timedelta(seconds=(60 * 15))
     stalled_count = pending.filter(run_at__lt=old_time).count()
@@ -326,33 +308,26 @@ def jobs_status(request, appname, modelname):
     # list instead of dict because tasks run in sequence, confusing otherwise
     if appname == 'db':
         counts = [
-            {'label': u'Download state shapefile',
-             'task': u'obadmin.admin.tasks.download_state_shapefile' },
-            {'label': u'Import ZIP codes',
-             'task': u'obadmin.admin.tasks.import_zip_from_shapefile'},
+            [ 'Download state shapefile', u'obadmin.admin.tasks.download_state_shapefile' ],
+            [ 'Import ZIP codes',         u'obadmin.admin.tasks.import_zip_from_shapefile' ],
             ]
     elif appname == 'streets':
         # Don't bother discriminating further based on modelname;
         # the models here are closely related anyway.
         counts = [
-            {'label': u'Import blocks from shapefile',
-             'task': u'obadmin.admin.tasks.import_blocks_from_shapefiles'},
-            {'label': 'Populate streets',
-             'task': u'obadmin.admin.tasks.populate_streets_task'},
-            {'label': 'Populate block intersections',
-             'task': u'obadmin.admin.tasks.populate_block_intersections'},
-            {'label': 'Populate intersections',
-             'task': u'obadmin.admin.tasks.populate_intersections'},
+            [ 'Import blocks from shapefile', u'obadmin.admin.tasks.import_blocks' ],
+            [ 'Populate streets',             u'obadmin.admin.tasks.populate_streets_task' ],
+            [ 'Populate block intersections', u'obadmin.admin.tasks.populate_block_intersections' ],
+            [ 'Populate intersections',       u'obadmin.admin.tasks.populate_intersections' ],
             ]
     else:
         raise ValueError("No known tasks for %s/%s" % (appname, modelname))
 
     display_counts = False
     for task in counts:
-        task['pending_count'] = pending.filter(task_name=task['task']).count()
-        task['running_count'] = running.filter(task_name=task['task']).count()
-
-        if task['pending_count'] or task['running_count']:
+        count = pending.filter(task_name=task[1]).count()
+        task.append(count)
+        if count > 0:
             display_counts = True
 
     if display_counts:
@@ -415,12 +390,8 @@ def import_blocks(request):
     if form.save():
         return HttpResponseRedirect('../')
 
-    fieldsets = (
-        Fieldset(form, fields=('edges', 'featnames', 'faces', 'place')),
-        Fieldset(form, fields=('city', 'fix_cities', 'regenerate_intersections')),
-        )
-
+    fieldset = Fieldset(form, fields=('city', 'edges', 'featnames', 'faces', 'place',))
     return render(request, 'obadmin/block/import_blocks.html', {
-        'fieldsets': fieldsets,
+        'fieldset': fieldset,
         'form': form,
     })

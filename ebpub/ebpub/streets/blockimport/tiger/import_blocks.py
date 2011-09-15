@@ -116,10 +116,9 @@ class TigerImporter(BlockImporter):
     """
     def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp,
                  filter_city=None, filter_bounds=None,
-                 verbose=False, encoding='utf8', fix_cities=False):
+                 verbose=False, encoding='utf8'):
         BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
                                verbose=verbose, encoding=encoding)
-        self.fix_cities = fix_cities
         self.featnames_db = featnames_db = {}
         for tlid, row in self._load_rel_db(featnames_dbf, 'TLID').iteritems():
             # TLID is Tiger/Line ID, unique per edge.
@@ -175,22 +174,14 @@ class TigerImporter(BlockImporter):
         return db
 
     def _get_city(self, feature, side):
+        fid = feature.get('TFID' + side)
         city = ''
-        if self.fix_cities:
-            from ebpub.db.models import get_city_locations
-            overlapping_cities = list(get_city_locations().filter(location__intersects=feature.geom.geos))
-            if overlapping_cities:
-                city = overlapping_cities[0].name
-                if self.verbose:
-                    print >> sys.stderr, "overriding city to %s" % city
-        else:
-            fid = feature.get('TFID' + side)
-            if fid in self.faces_db:
-                face = self.faces_db[fid]
-                pid = face['PLACEFP']
-                if pid in self.places:
-                    place = self.places[pid]
-                    city = place['NAME']
+        if fid in self.faces_db:
+            face = self.faces_db[fid]
+            pid = face['PLACEFP']
+            if pid in self.places:
+                place = self.places[pid]
+                city = place['NAME']
         return city
 
     def _get_state(self, feature, side):
@@ -208,11 +199,6 @@ class TigerImporter(BlockImporter):
                     print >> sys.stderr, "Skipping %s, out of bounds" % feature
                 return True
 
-        if not feature.get('MTFCC') in VALID_MTFCC:
-            if self.verbose:
-                print >> sys.stderr, "Skipping %s, not a valid feature type" % feature.get('MTFCC')
-            return True
-
         if self.filter_city:
             in_city = False
             for side in ('R', 'L'):
@@ -223,13 +209,16 @@ class TigerImporter(BlockImporter):
                     print >> sys.stderr, "Skipping %s, out of city" % feature
                 return True
 
-        if not (
-            ((feature.get('RFROMADD') and feature.get('RTOADD')) or
-            (feature.get('LFROMADD') and feature.get('LTOADD')))):
-            if self.verbose:
-                print >> sys.stderr, "Skipping %s, not enough address info" % feature
-            return True
-
+            if not feature.get('MTFCC') in VALID_MTFCC:
+                if self.verbose:
+                    print >> sys.stderr, "Skipping %s, not a valid feature type"
+                return True
+            if not (
+                ((feature.get('RFROMADD') and feature.get('RTOADD')) or
+                (feature.get('LFROMADD') and feature.get('LTOADD')))):
+                if self.verbose:
+                    print >> sys.stderr, "Skipping %s, not enough address info" % feature
+                return True
         return False
 
     def gen_blocks(self, feature):
@@ -264,13 +253,6 @@ def main(argv=None):
     parser = optparse.OptionParser(usage='%prog edges.shp featnames.dbf faces.dbf place.shp')
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', default=False)
     parser.add_option('-c', '--city', dest='city', help='A city name to filter against')
-    parser.add_option('-f', '--fix-cities', action="store_true", default=False,
-                      help='Whether to override "city" attribute of blocks and '
-                      'streets by finding an intersecting Location of a city-ish '
-                      'type. Only makes sense if you have configured '
-                      'multiple_cities=True in the METRO_LIST of your settings.py, '
-                      'and after you have created some appropriate Locations.')
-
     parser.add_option('-b', '--filter-bounds', action="store_true", default=True,
                       help='Whether to skip blocks outside the metro extent from your '
                       'settings.py. Default True.')
@@ -289,8 +271,7 @@ def main(argv=None):
     tiger = TigerImporter(*args, verbose=options.verbose,
                            filter_city=options.city, 
                            filter_bounds=filter_bounds,
-                           encoding=options.encoding,
-                           fix_cities=options.fix_cities)
+                           encoding=options.encoding)
     num_created = tiger.save()
     print "Created %d blocks" % num_created
     if options.verbose:
