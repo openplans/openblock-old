@@ -97,7 +97,8 @@ CENSUS_STATES = (
 
 @background
 def download_state_shapefile(state, zipcodes):
-    n = dict(CENSUS_STATES)[state].upper().translate(maketrans(' ', '_'))
+    print "Starting download"
+    n = dict(CENSUS_STATES)[state].upper().replace(' ', '_')
     name         = "tl_2009_%s_zcta5" % state
     zip_filename = "%s.zip" % name
     cache_dir    = getattr(settings, 'HTTP_CACHE', tempfile.gettempdir())
@@ -105,18 +106,22 @@ def download_state_shapefile(state, zipcodes):
     url = "http://tigerline.census.gov/geo/tiger/TIGER2009/%(id)s_%(name)s/%(zip_filename)s" % { 'id': state, 'name': n, 'zip_filename': zip_filename }
 
     Retriever().cached_get_to_file(url, path)
-
+    print "fetched %s" % url
     files = [name + ext for ext in ('.shp', '.dbf', '.prj', '.shp.xml', '.shx')]
     shapefile = os.path.join(cache_dir, '%s.shp' % name)
     # TODO: handle corrupt/incomplete/missing files zipfile
     # expected files aren't in the archive ...)
     try:
         ZipFile(path, 'r').extractall(cache_dir, files)
+        print "extracted"
     except:
         log_exception()
         return
     for zipcode in zipcodes:
+        print "importing %s" % zipcode
         import_zip_from_shapefile(shapefile, zipcode)
+        print "... ok"
+    print "All zip codes done"
 
 @background
 def import_zip_from_shapefile(filename, zipcode):
@@ -129,9 +134,10 @@ def import_zip_from_shapefile(filename, zipcode):
         return
 
 @background
-def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None):
+def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
+                                  fix_cities=False, regenerate_intersections=True):
     # File args are paths to zip files.
-    
+
     outdir = mkdtemp(suffix='-block-shapefiles')
     try:
         for path in (edges, featnames, faces, place):
@@ -156,12 +162,14 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None):
             featnames,
             faces,
             place,
-            filter_city=city
+            filter_city=city,
+            fix_cities=fix_cities,
             )
         num_created = tiger.save()
     finally:
         shutil.rmtree(outdir)
-    populate_streets_task()
+    if regenerate_intersections:
+        populate_streets_task()
     return num_created
 
 @background

@@ -1,6 +1,6 @@
-Pending jobs:
+Current background jobs:
 <ol style="list-style-type: none">
-  {% for title, task_name, count in counts %}
-      <li><b>{{ count }}</b> {{ title }}</li>
+  {% for job_info in counts %}
+      <li><b>{{ job_info.running_count }} running, {{ job_info.pending_count }} queued</b> {{ job_info.label }}</li>
   {% endfor %}
 </ol>
