@@ -1101,3 +1101,17 @@ class DataUpdate(models.Model):
     def total_time(self):
         return self.update_finish - self.update_start
 
+def get_city_locations():
+    """
+    If we have configured multiple_cities, find all Locations
+    of the city_location_type.
+    Otherwise, empty query set.
+    """
+    from ebpub.metros.allmetros import get_metro
+    metro = get_metro()
+    if metro['multiple_cities']:
+        cities = Location.objects.filter(location_type__slug=metro['city_location_type'])
+        cities = cities.exclude(location_type__name__startswith='Unknown')
+        return cities
+    else:
+        return Location.objects.filter(id=None)
