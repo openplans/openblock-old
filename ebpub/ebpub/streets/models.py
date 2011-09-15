@@ -57,10 +57,10 @@ def proper_city(block):
     should be in there. i.e., neither the left nor right side city is
     one of our metros or city within a multiple-city metro.
     """
-    from ebpub.db.models import Location
+    from ebpub.db.models import get_city_locations
     metro = get_metro()
     if metro['multiple_cities']:
-        cities = set([l.name.upper() for l in Location.objects.filter(location_type__slug=metro['city_location_type']).exclude(location_type__name__startswith='Unknown')])
+        cities = set([l.name.upper() for l in get_city_locations()])
     else:
         cities = set([metro['city_name'].upper()])
     # Determine the block's city, which because of blocks that
@@ -426,12 +426,15 @@ class Block(models.Model):
 
 
 class Street(models.Model):
-    street = models.CharField(max_length=255, db_index=True) # Always uppercase
+    street = models.CharField(max_length=255, db_index=True,
+                              help_text='Always uppercase.')
     pretty_name = models.CharField(max_length=255)
     street_slug = models.SlugField()
-    suffix = models.CharField(max_length=32, blank=True, db_index=True) # Always uppercase
-    city = models.CharField(max_length=255, db_index=True) # Always uppercase
-    state = USStateField(db_index=True) # Always uppercase
+    suffix = models.CharField(max_length=32, blank=True, db_index=True,
+                              help_text='Always uppercase.')
+    city = models.CharField(max_length=255, db_index=True,
+                            help_text='Always uppercase. City name, not slug.')
+    state = USStateField(db_index=True, help_text='Always uppercase.')
 
     class Meta:
         db_table = 'streets'
