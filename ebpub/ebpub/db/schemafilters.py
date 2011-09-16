@@ -385,9 +385,12 @@ class BlockFilter(NewsitemFilter):
         value = '%s block%s around %s' % (self.block_radius, (self.block_radius != '1' and 's' or ''), block.pretty_name)
         self.short_value = value
         self.value = value
-        self.url = 'streets=%s,%s%s,%s' % (block.street_slug,
-                                         block.number(), block.dir_url_bit(),
-                                         radius_slug(self.block_radius))
+        self.url = 'streets='
+        if get_metro()['multiple_cities']:
+            self.url += self.city_slug + ','
+        self.url += '%s,%s%s,%s' % (block.street_slug,
+                                    block.number(), block.dir_url_bit(),
+                                    radius_slug(self.block_radius))
         self.location_name = block.pretty_name
 
 
