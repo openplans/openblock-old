@@ -20,7 +20,6 @@
 from background_task import background
 from django.conf import settings
 from ebdata.retrieval.retrievers import Retriever
-from string import maketrans
 from tempfile import mkdtemp
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile

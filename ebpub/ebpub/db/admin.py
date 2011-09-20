@@ -27,7 +27,6 @@ from ebpub.db.models import NewsItem
 from ebpub.db.models import Schema
 from ebpub.db.models import SchemaField
 from ebpub.geoadmin import OSMModelAdmin
-import copy
 
 class AttributeInline(admin.StackedInline):
     # TODO: this badly needs a custom Form that takes into account the
@@ -68,7 +67,6 @@ class LocationAdmin(OSMModelAdmin):
 
     # Display a map of items on the change list page. (olwidget)
     list_map = ['location']
-
 
 class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',

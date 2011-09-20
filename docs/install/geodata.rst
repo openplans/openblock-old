@@ -154,16 +154,18 @@ Unzip all these files.
 Loading Blocks from US Census TIGER shapefiles
 -----------------------------------------------
 
-The block importer, like the zip importer, can filter out blocks
-outside your named city. (It cannot yet filter based on metro extent.)
+The block importer can filter out blocks outside the city named by the
+``--city`` option. It can also filter out blocks outside your
+:ref:`metro extent <metro_extent>` by passing the ``--filter-bounds`` option.
 
 You can run it like this (assuming all the unzipped shapefiles are in
 the current directory):
 
 .. code-block:: bash
 
-  $ import_blocks_tiger \
-    --city=BOSTON tl_2009_25025_edges.shp tl_2009_25025_featnames.dbf tl_2009_25025_faces.dbf tl_2009_25_place.shp
+  $ import_blocks_tiger --city=BOSTON --filter-bounds \
+    tl_2009_25025_edges.shp tl_2009_25025_featnames.dbf \
+    tl_2009_25025_faces.dbf tl_2009_25_place.shp
 
 The order of file arguments is important. First give the
 edges.shp filename, then the featnames.dbf file, then the faces.dbf
@@ -172,7 +174,7 @@ file, then the place.shp file.
 The filenames would be different from the example shown for a
 different city/county, of course.
 
-Be patient; it typically takes several minutes to run.
+Be patient; it typically takes at least several minutes to run.
 
 
 Loading Blocks from ESRI files
