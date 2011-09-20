@@ -44,7 +44,7 @@ def _first_not_false(*args):
 
 def proper_city(block):
     """
-    Returns the "proper" city for block.
+    Returns the "proper" city for block, as a string.
 
     This function is necessary because in the Block model there are
     two sides of the street, and the city on the left side could
@@ -332,26 +332,26 @@ class Block(models.Model):
 
         return (from_num <= number <= to_num), from_num, to_num
 
-    def _get_location(self):
+    @property
+    def location(self):
         return self.geom
-    location = property(_get_location)
 
-    def _get_city(self):
+    @property
+    def city(self):
         if not hasattr(self, '_city_cache'):
             self._city_cache = proper_city(self)
         return self._city_cache
-    city = property(_get_city)
 
-    def _get_state(self):
+    @property
+    def state(self):
         if self.left_state == self.right_state:
             return self.left_state
         else:
             return get_metro()['state']
-    state = property(_get_state)
 
-    def _get_zip(self):
+    @property
+    def zip(self):
         return self.left_zip
-    zip = property(_get_zip)
 
     def clean(self):
         """Enforce some constraints that depend on multiple fields.

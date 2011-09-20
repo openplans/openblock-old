@@ -33,11 +33,12 @@ class SavedPlace(models.Model):
     def __unicode__(self):
         return u'User %s: %u' % (self.user_id, self.place.pretty_name)
 
-    def _get_place(self):
+    @property
+    def place(self):
         return self.block_id and self.block or self.location
-    place = property(_get_place)
 
-    def _get_user(self):
+    @property
+    def user(self):
         if not hasattr(self, '_user_cache'):
             from ebpub.accounts.models import User
             try:
@@ -45,7 +46,6 @@ class SavedPlace(models.Model):
             except User.DoesNotExist:
                 self._user_cache = None
         return self._user_cache
-    user = property(_get_user)
 
     def pid(self):
         """Place ID as used by ebpub.db.views
