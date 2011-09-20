@@ -139,10 +139,12 @@ class TestBlockFilter(TestCase):
     def test_filter__ok(self, mock_url_to_block, mock_get_metro):
         def _mock_url_to_block(request, *args, **kwargs):
             from django.contrib.gis.geos import Point
-            block = mock.Mock(**dict(
-                    from_num=99, to_num=100, street_slug='something',
-                    pretty_name='99-100 something st',
-                    location=Point(60.0, 60.0)))
+            block = mock.Mock(
+                from_num=99, to_num=100, street_slug='something',
+                pretty_name='99-100 something st',
+                location=Point(60.0, 60.0),
+                city='boston', left_city='boston',
+                )
             block.number.return_value = '99-100'
             block.dir_url_bit.return_value = ''
             return block
