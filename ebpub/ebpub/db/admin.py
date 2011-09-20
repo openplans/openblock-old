@@ -17,7 +17,7 @@
 #
 
 from django.contrib.gis import admin
-from ebpub.db.forms import NewsItemForm, SchemaFieldInlineOnSchemaForm
+from ebpub.db.forms import NewsItemForm
 from ebpub.db.models import Attribute
 from ebpub.db.models import Location
 from ebpub.db.models import LocationSynonym
@@ -68,22 +68,10 @@ class LocationAdmin(OSMModelAdmin):
     # Display a map of items on the change list page. (olwidget)
     list_map = ['location']
 
-class SchemaFieldInlineOnSchema(admin.TabularInline):
-    model = SchemaField
-    form = SchemaFieldInlineOnSchemaForm
-    prepopulated_fields = {'name': ('pretty_name',)}
-    fields = ('pretty_name', 'pretty_name_plural', 'name', 'field_type', 'real_name')
-    extra = 0
-    # probably will end up needing a custom template to add JS to enforce
-    # relationships between the booleans
-    # django/contrib/admin/templates/admin/edit_inline/tabular.html (or stacked.html)
-    #template = 'admin/db/schema/schemafieldonschema_tabular.html'
-
 class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',
                     'has_newsitem_detail',)
     prepopulated_fields = {'slug': ('plural_name',)}
-    inlines = [ SchemaFieldInlineOnSchema ]
 
 class SchemaFieldAdmin(admin.ModelAdmin):
 
