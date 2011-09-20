@@ -87,7 +87,7 @@ def _template_ctx(newsitem, widget):
     # now to extra widgety-stuff
     if widget.item_link_template and widget.item_link_template.strip():
         try:
-            ctx['internal_url'] = _eval_item_link_template(widget.item_link_template, ctx)
+            ctx['internal_url'] = _eval_item_link_template(widget.item_link_template, {'item': ctx, 'widget': widget})
         except: 
             return '#error'
     

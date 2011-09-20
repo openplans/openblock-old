@@ -200,7 +200,7 @@ value available to the widget template.
 
 For example, if your site has a different public url or url scheme than openblock uses internally, you can use this value to rewrite item links accordingly.
 
-You may reference any of the fields of an item as shown above in your url template. 
+You may reference any of the fields shown above in your url template, but there is only one item, referenced as `item`.
 URL templates follow the same django template syntax above, but should evaluate to 
 a single url.  
 
@@ -208,7 +208,7 @@ a single url.
 
 Example::
 
-    http://mypublicsite.com/xzy/openblock/items/{{id}}/
+    http://mypublicsite.com/xzy/openblock/items/{{item.id}}/
     
 This will link items to mypublicsite and fill in the identifier for the item being 
 linked to depending on the item.
@@ -218,14 +218,14 @@ linked to depending on the item.
 
 Example:: 
 
-    http://mypublicsite.com/track_click_and_redirect?realurl={{external_url|urlencode}}
+    http://mypublicsite.com/track_click_and_redirect?realurl={{item.external_url|urlencode}}
     
 Here, we link to a theoretical redirector on mypublicsite to capture a click through to an externally hosted (3rd party) detail page.
 
 You are free to use django's full template syntax as long as the result contains a single url.  Here for example, we perform some logic to determine whether to link internally, or use the redirector based on the item's schema::
 
-    {% if schema.slug == "restaurant-inspections" %}
-        http://mypublicsite.com/xzy/openblock/inspections/{{id}}/
+    {% if item.schema.slug == "restaurant-inspections" %}
+        http://mypublicsite.com/xzy/openblock/inspections/{{item.id}}/
     {% else %}
-        http://mypublicsite.com/track_click_and_redirect?realurl={{external_url|urlencode}}
+        http://mypublicsite.com/track_click_and_redirect?realurl={{item.external_url|urlencode}}
     {% endif %}

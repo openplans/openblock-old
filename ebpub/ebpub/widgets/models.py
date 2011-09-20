@@ -30,7 +30,7 @@ class Widget(models.Model):
     max_items = models.IntegerField(default=10)
     types = models.ManyToManyField(Schema, blank=True, null=True)
     location = models.ForeignKey(Location, blank=True, null=True)
-    item_link_template = models.TextField(blank=True, null=True, help_text="If specified, this simple URL template is used to determine the url for items with openblock 'detail' pages, eg: 'http://mypublicsite.com/openblock/{{schema.name}}/{{id}}/'. For detailed information, see documentation.")
+    item_link_template = models.TextField(blank=True, null=True, help_text="If specified, this simple URL template is used to determine the url for items with openblock 'detail' pages, eg: 'http://mypublicsite.com/openblock/{{item.schema.name}}/{{item.id}}/'. For detailed information, see documentation.")
 
     #...
     
