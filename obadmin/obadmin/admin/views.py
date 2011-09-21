@@ -124,7 +124,14 @@ class UploadShapefileForm(forms.Form):
 
 class PickShapefileLayerForm(forms.Form):
     shapefile = forms.CharField(required=True)
-    location_type = forms.ModelChoiceField(queryset=LocationType.objects.all(), required=True, empty_label=None)
+
+    # Would be nice to use a RelatedFieldWidgetWrapper here so we get
+    # the "+" button to add new LocationTypes, but I haven't dug deep
+    # enough to see how to rig that in to this context... AFAICT it
+    # needs to wrap the widget instance, not just the widget class.
+    location_type = forms.ModelChoiceField(queryset=LocationType.objects.all(),
+                                           required=True,
+                                           )
     layer = forms.IntegerField(required=True)
     name_field = forms.CharField(required=True)
 
@@ -394,12 +401,10 @@ def pick_shapefile_layer(request):
         shapefile = request.POST.get('shapefile', False)
     if not shapefile:
         return HttpResponseRedirect('../upload-shapefile/')
-
     if form.save():
         return HttpResponseRedirect('../')
 
     ds = DataSource(shapefile)
-
     fieldset = Fieldset(form, fields=('location_type',))
     return render(request, 'obadmin/location/pick_shapefile_layer.html', {
         'shapefile': shapefile,
