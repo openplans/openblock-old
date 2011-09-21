@@ -25,8 +25,7 @@ You will need the following:
 
 
 
-.. admonition: USA Only?
--------------------------
+.. admonition:: USA Only?
 
   OpenBlock was originally written with the assumption that it will be
   installed in the USA, for a major metropolitan area.  It may be
@@ -66,29 +65,40 @@ NB. If you are :doc:`installed on EC2 <aws>`, then ``django-admin.py
 process_tasks`` is already running as a daemon.
 
 
+.. admonition:: Why not Celery?
+
+  `Celery <http://celeryproject.org/>`_ is common in the Django world
+  for handling asynchronous tasks. However, our mandate was to make
+  OpenBlock as easy as possible to install, and we really did not want
+  to burden our users with yet another service to install, configure,
+  and maintain.
 
 .. _zipcodes:
 
 US ZIP Codes
 =============
 
-If you have a list of the ZIP codes you'd like to install, be sure the
+Load ZIP Codes via Admin UI
+----------------------------
+
+If you have a list of the ZIP codes you'd like to install, just be sure the
 :ref:`background task daemon <background_tasks>` is running. Then
 you can surf to ``http://<your domain>/admin/db/location/`` and click the link "Import
 ZIP Shapefiles".  You can pick your state, paste your list of ZIPs, and wait
-for the import to finish.  You can do this several times if your area
-crosses state lines. When this is done,
+for the import to finish.
+
+You can do this several times if your area
+crosses state lines.
+
+When this is done,
 skip down to the "Verifying ZIP Codes" section below.
 
-TODO: screen shot?
+(TODO: screen shot?)
 
 Finding ZIP Codes To Install By Hand
 ------------------------------------
 
-Alternately, you can use command-line scripts to install ZIP codes. This
-may be more convenient if you have configured your
-:ref:`metro extent <metro_extent>` and your list of ZIP codes crosses
-state boundaries.
+Alternately, you can use command-line scripts to install ZIP codes.
 
 The US Census Bureau has shapefiles for all USA zip codes.  Go to
 http://www2.census.gov/cgi-bin/shapefiles2009/national-files, select
@@ -153,6 +163,8 @@ ZIP code.
 Streets / Blocks
 ================
 
+.. _finding_blocks_data:
+
 Finding Blocks Data
 -------------------
 
@@ -165,10 +177,6 @@ in.  Download the file labeled "Place (Current)".
 Next, select the County you're interested in. From the county's page,
 download the files labeled "All Lines", "Topological Faces (Polygons
 With All Geocodes)", and "Feature Names Relationship File".
-
-Unzip all four zip files.
-
-
 
 Loading Blocks from US Census: Admin UI
 ----------------------------------------
@@ -206,6 +214,8 @@ line. It takes several steps.
 
 Loading Blocks from Census TIGER files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, unzip all four files you downloaded in :ref:`<finding_blocks_data>`.
 
 The block importer can filter out blocks outside the city named by the
 ``--city`` option. It can also filter out blocks outside your
@@ -270,7 +280,9 @@ should link to a detail page that includes a map of a several-block
 radius.
 
 You should also be able to search. In the search bar at top right,
-type in some addresses or intersections that you know should exist
+type in some addresses or intersections that you know should exist,
+and verify that they're found.
+
 
 Other Locations: Neighborhoods, Etc.
 ====================================

@@ -21,8 +21,8 @@ Upgrade Notes
 
 * As usual, sync and migrate the database::
 
-  django-admin.py syncdb
-  django-admin.py migrate
+   django-admin.py syncdb
+   django-admin.py migrate
 
 
 New Features in 1.1
