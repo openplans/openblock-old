@@ -24,42 +24,63 @@ You will need the following:
    for more on setting up your map base layer.
 
 
-Caveat: USA Only?
+
+.. admonition: USA Only?
+-------------------------
+
+  OpenBlock was originally written with the assumption that it will be
+  installed in the USA, for a major metropolitan area.  It may be
+  possible to work around those assumptions, but using OpenBlock
+  outside the USA is not officially supported at this time.  We
+  encourage experimentation and asking questions on the mailing list;
+  we know of several people currently trying it in other countries.
+
+
+.. admonition::  Background Jobs
+
+  Several of these tasks can be performed easily via the admin UI, but
+  can potentially take a long time, so they are launched as background
+  tasks. If you want to use these admin UI features, your server
+  should be running ``django-admin.py process_tasks`` as per the
+  :ref:`background_tasks` section.
+
+
+.. _background_tasks:
+
+Background Tasks
 -----------------
 
-OpenBlock was originally written with the assumption that it will be
-installed in the USA, for a major metropolitan area.  It may be
-possible to work around those assumptions, but using OpenBlock outside
-the USA is not officially supported at this time.  We encourage
-experimentation and asking questions on the mailing list; we know of
-several people currently trying it in other countries.
+For long-running tasks, we use `django-background-task
+<http://pypi.python.org/pypi/django-background-task>`_.
+You'll need to do this once at server start time:
 
-
-.. _zipcodes:
-
-ZIP Codes
-=========
-
-If you have a list of the ZIP codes you'd like to install, you can run your
-server and in another terminal run::
+.. code-block:: bash
 
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py process_tasks
 
 Like the `runserver` command, this won't immediately exit. It will sit quietly
-until there are background jobs to process for installing the ZIP codes.
+until there are background jobs to process for installing geographic data.
 
-TODO: move that to its own section somewhere in the install &
-deployment pages
-
-NB. If you are :doc:`installed on EC2 <aws>`, then process_tasks is already running as a daemon.
+NB. If you are :doc:`installed on EC2 <aws>`, then ``django-admin.py
+process_tasks`` is already running as a daemon.
 
 
-Now you can surf to ``http://<your domain>/admin/db/location/`` and click the link "Import
+
+.. _zipcodes:
+
+US ZIP Codes
+=============
+
+If you have a list of the ZIP codes you'd like to install, be sure the
+:ref:`background task daemon <background_tasks>` is running. Then
+you can surf to ``http://<your domain>/admin/db/location/`` and click the link "Import
 ZIP Shapefiles".  You can pick your state, paste your list of ZIPs, and wait
-for the import to finish.  When this is done, type `control-c` to stop
-process_tasks, then skip down to the "Verifying ZIP Codes" section below.
+for the import to finish.  You can do this several times if your area
+crosses state lines. When this is done,
+skip down to the "Verifying ZIP Codes" section below.
 
+TODO: screen shot?
 
 Finding ZIP Codes To Install By Hand
 ------------------------------------
@@ -90,9 +111,6 @@ Unzip the file. It should contain a number of files like this:
   inflating: tl_2009_36_zcta5.shp.xml  
   inflating: tl_2009_36_zcta5.shx
 
-
-Loading ZIP Codes
-------------------
 
 The ZIP code file you downloaded is for an entire state. You're
 probably not setting up OpenBlock for an entire state, so you'll need
@@ -148,11 +166,46 @@ Next, select the County you're interested in. From the county's page,
 download the files labeled "All Lines", "Topological Faces (Polygons
 With All Geocodes)", and "Feature Names Relationship File".
 
-Unzip all these files.
+Unzip all four zip files.
 
 
-Loading Blocks from US Census TIGER shapefiles
------------------------------------------------
+
+Loading Blocks from US Census: Admin UI
+----------------------------------------
+
+It's easy to use the admin UI to load these shapefiles.
+First, be sure the :ref:`background task daemon <background_tasks>` is
+running.
+
+Then you can surf to ``http://<your domain>/admin/streets/blocks/``
+and click the link "Import Block Shapefiles".  Type in the city name
+that these blocks are in, upload the four zip files you downloaded
+above, click "Import" and wait for it to finish.
+
+(It is likely to take several minutes - more or less, depending on
+your hardware; this is the most computationally intensive thing that
+OpenBlock ever does.)
+
+Streets, Intersections, and BlockIntersections will be done
+automatically.
+
+You can repeat this process if your area spans multiple shapefiles.
+(It tends to get slower as the number of intersections grows.)
+
+When done, skip down to :ref:`verifying_blocks`.
+
+(TODO: screen shot?)
+
+
+Loading Blocks from the Command Line
+--------------------------------------------
+
+You don't have to use the admin UI if you're happy at the command
+line. It takes several steps.
+
+
+Loading Blocks from Census TIGER files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The block importer can filter out blocks outside the city named by the
 ``--city`` option. It can also filter out blocks outside your
@@ -178,14 +231,14 @@ Be patient; it typically takes at least several minutes to run.
 
 
 Loading Blocks from ESRI files
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you have access to proprietary ESRI blocks data, you can instead
 use the script ``ebpub/streets/blockimport/esri/importers/blocks.py.``
 
 
 Populating Streets and Intersections
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 After all your blocks have loaded, you *must* run another script to
 derive streets and intersections from the blocks data.
@@ -201,6 +254,8 @@ The following commands must be run *once*, in exactly this order:
 
 The ``-v`` argument controls verbosity; give it fewer times for less output.
 
+.. _verifying_blocks:
+
 Verifying Blocks
 ----------------
 
@@ -213,6 +268,9 @@ should see a comprehensive list of streets on that page, and each
 should link to a list of blocks.  On the list of blocks, each block
 should link to a detail page that includes a map of a several-block
 radius.
+
+You should also be able to search. In the search bar at top right,
+type in some addresses or intersections that you know should exist
 
 Other Locations: Neighborhoods, Etc.
 ====================================
@@ -231,13 +289,41 @@ http://localhost:8000/admin/db/locationtype/ and click "Add".  Fill
 out the fields as desired.  You'll want to enable both 'is_browsable'
 and 'is_significant'.
 
-Note also that the shapefile import scripts described below can create
+(Note also that the shapefile import scripts described below can create
 LocationTypes for you automatically, so you may not need to do
-anything in the admin UI.
+anything in the admin UI.)
 
 You're limited only by the data you have available. Some suggestions:
 try looking for neighborhoods/districts/wards, police precincts,
 school districts, political districts...
+
+Drawing Locations by Hand
+---------------------------
+
+If you don't have shapefiles available, it's always possible to
+hand-draw locations in the admin UI. This is a great option for
+relatively simple shapes where you don't need to be very
+precise with the edges.
+This might also be appropriate for areas whose boundaries are informal.
+For example, often local residents will have a general sense of where
+neighborhoods begin and end, but there may not be "official"
+boundaries published anywhere.
+
+Just browse to `/admin/db/locations`, click "Add location", 
+drag and zoom the map as desired, select a location
+type, and start clicking away on the map.  When happy with your
+polygon, double-click on the last point to stop drawing.  To modify
+it, click the "Modify features" icon in the map toolbar and then you
+can click and drag individual points, or click a point and hit the
+Delete key to remove a point.  There are Undo and Redo buttons,
+although the history will be forgotten once you click the Save button
+on the form.
+
+(TODO: screen shots?)
+
+For precise complex shapes, it's just not practical to draw a
+500-point polygon in our admin UI.
+
 
 Finding Location Data
 ---------------------
@@ -257,10 +343,29 @@ Loading Location Data
 ----------------------
 
 Once you have one or more Location Types defined, you can start
-populating them.
+populating them, either via the command line or the admin UI.
 
-Importing Locations From Shapefiles
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Admin UI: Importing Locations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Browse  to /admin/db/locations, click "Upload Shapefile",
+and upload the zipped file you downloaded. Submit the form.
+
+On the next screen, you can choose a Location Type,
+then choose from the "layers" available in this shapefile (often there
+is only one).
+
+Then you get to choose which field contains the name of each location.
+The form will show you an example value from each field, so it's
+usually pretty obvious which field is the one to choose.
+(If none of them make any sense, it's possible that this shapefile
+isn't usable by OpenBlock.)
+
+Submit the form and you're done.
+
+
+Command Line: Importing Locations From Shapefiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There is a script ``import_locations`` that can import any kind of location from a
 shapefile.  If a LocationType with the given slug doesn't exist, it will be
@@ -294,8 +399,8 @@ All of these are optional. The defaults often work fine, although
 don't overlap with your metro extent.
 
 
-Neighborhoods From Shapefiles
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Command Line: Neighborhoods From Shapefiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 There is also a variant of the location importer just for
 neighborhoods.  Historically, "neighborhoods" have been a bit special
@@ -327,27 +432,6 @@ Again, all of the options are really optional. The defaults often work
 fine, although ``--filter-bounds`` is usually a good idea, to exclude
 areas that don't overlap with your metro extent.
 
-
-Creating Locations By Hand
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Hand-drawing locations in the admin UI is possible too, but is only
-recommended for areas that don't have to be very precise - it would be
-too time-consuming, and there's no "undo" currently.
-
-This might be appropriate for areas whose boundaries are informal.
-For example, often local people will have a general sense of where
-neighborhoods begin and end, but there may not be "official"
-boundaries published anywhere.
-
-To take this approach, just go in the admin UI to http://localhost:8000/admin/db/location/
-and click "Add location".  Fill out the fields as desired. Then in the
-map labeled "location", drag and zoom as desired, then click the "Draw
-Polygons" control at upper right, and start adding points by
-clicking.  Finish by double-clicking.   Afterward you can modify
-points by clicking the "Modify" control, then dragging points as needed.
-
-(TODO: screenshots?)
 
 Can I load KML, GeoJSON, OpenStreetMap XML, or other kinds of files?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

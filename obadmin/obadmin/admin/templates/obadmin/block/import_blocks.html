@@ -36,7 +36,9 @@ Import Blocks From Shapefiles
         </p>
 
         <form action="" enctype="multipart/form-data" method="post">{% csrf_token %}
-            {% include "admin/includes/fieldset.html" %}
+            {% for fieldset in fieldsets %}
+              {% include "admin/includes/fieldset.html" %}
+            {% endfor %}
             <div class="submit-row"><input class="button default" type="submit" value="Import" /></div>
         </form>
     </div>

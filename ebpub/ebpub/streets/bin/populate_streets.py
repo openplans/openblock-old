@@ -30,7 +30,7 @@ Ensure the ZIP Codes are populated in the db_location table: they
 are needed for resolving 'disputes' when the two intersecting
 blocks of an intersection have different ZIP Codes. This is
 not described here: there should be a ZIP Code importer script
-available for each city.
+suitable for your city.
 
 Next, populate the streets from the blocks table, by calling populate_streets().
 
@@ -64,6 +64,16 @@ from ebpub.streets.models import Block, BlockIntersection, Intersection, Street
 from ebpub.streets.name_utils import make_dir_street_name, pretty_name_from_blocks, slug_from_blocks
 
 logger = logging.getLogger()
+
+def timer(func):
+    # a decorator that logs how long func took to run
+    def wrapper(*args, **kwargs):
+        import time
+        start = time.time()
+        result = func(*args, **kwargs)
+        logger.info("Ran %s in %s seconds" % (func.__name__, time.time() - start))
+        return result
+    return wrapper
 
 def intersecting_blocks(block):
     """
@@ -115,14 +125,15 @@ def intersection_from_blocks(block_a, block_b, intersection_pt, city, state, zip
     )
     return obj
 
+@timer
 @transaction.commit_on_success
 def populate_streets(*args, **kwargs):
     """
     Populates the streets table from the blocks table
     """
     print 'Populating the streets table'
+    Street.objects.all().delete()
     cursor = connection.cursor()
-    cursor.execute("TRUNCATE streets")
     cursor.execute("""
         INSERT INTO streets (street, pretty_name, street_slug, suffix, city, state)
         SELECT DISTINCT street, street_pretty_name, street_slug, suffix, left_city, left_state
@@ -137,8 +148,11 @@ def populate_streets(*args, **kwargs):
     #Street.objects.exclude(city__in=cities).delete()
     return Street.objects.all().count()
 
+@timer
 @transaction.commit_on_success
 def populate_block_intersections(*args, **kwargs):
+    logger.info("Starting to populate block_intersections")
+    BlockIntersection.objects.all().delete()
     for block in Block.objects.all():
         logger.debug('Calculating the blocks that intersect %s' % block)
         for iblock, intersection_pt in intersecting_blocks(block):
@@ -149,11 +163,13 @@ def populate_block_intersections(*args, **kwargs):
             )
     return BlockIntersection.objects.all().count()
 
+@timer
 @transaction.commit_on_success
 def populate_intersections(*args, **kwargs):
     # On average, there are 2.3 blocks per intersection. So for
     # example in the case of Chicago, where there are 788,496 blocks,
     # we'd expect to see approximately 340,000 intersections
+    Intersection.objects.all().delete()
     logger.info("Starting to populate intersections")
     metro = get_metro()
     zipcodes = Location.objects.filter(location_type__name__istartswith="zip").exclude(name__startswith='Unknown')
@@ -178,7 +194,14 @@ def populate_intersections(*args, **kwargs):
         if seen_intersection[0] not in intersections_seen and \
            seen_intersection[1] not in intersections_seen:
             if bi.block.left_city != bi.block.right_city:
-                city = metro['city_name'].upper()
+                # If we have Locations representing cities,
+                # find one that contains this bi's center.
+                from ebpub.db.models import get_city_locations
+                overlapping_cities = get_city_locations().filter(location__contains=bi.location)
+                if overlapping_cities:
+                    city = overlapping_cities[0].name.upper()
+                else:
+                    city = metro['city_name'].upper()
             else:
                 city = bi.block.left_city
             if bi.block.left_state != bi.block.right_state:
@@ -208,7 +231,9 @@ def populate_intersections(*args, **kwargs):
                 bi.save()
             logger.debug("Already seen intersection %s" % " / ".join(seen_intersection))
     logger.info("Finished populating intersections")
-    return Intersection.objects.all().count()
+    total = Intersection.objects.all().count()
+    if not total:
+        logger.warn("No intersections created, maybe you forgot to do populate_block_intersections first?")
 
 LOG_VERBOSITY = (logging.CRITICAL,
                  logging.ERROR,
@@ -229,6 +254,7 @@ def main(argv=None):
                                    description=__doc__)
     parser.add_option('-v', '--verbose', action='count', dest='verbosity',
                       default=0, help='verbosity, add more -v to be more verbose')
+
     opts, args = parser.parse_args(argv)
     if len(args) != 1 or args[0] not in valid_actions:
         parser.error('must supply an valid action, one of: %r' % \
