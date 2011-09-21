@@ -35,27 +35,20 @@ You will need the following:
   we know of several people currently trying it in other countries.
 
 
-.. admonition::  Background Jobs
-
-  Several of these tasks can be performed easily via the admin UI, but
-  can potentially take a long time, so they are launched as background
-  tasks. If you want to use these admin UI features, your server
-  should be running ``django-admin.py process_tasks`` as per the
-  :ref:`background_tasks` section.
-
-
 .. _background_tasks:
 
 Background Tasks
 -----------------
 
-For long-running tasks, we use `django-background-task
-<http://pypi.python.org/pypi/django-background-task>`_.
+Several of the things you can do in the admin UI can potentially take
+a long time, so they are launched as background tasks. If you want to
+use these admin UI features, be sure to read this section.
+
 You'll need to do this once at server start time:
 
 .. code-block:: bash
 
-    $ export DJANGO_SETTINGS_MODULE=myblock.settings
+    $ export DJANGO_SETTINGS_MODULE=myblock.settings  # change as needed
     $ django-admin.py process_tasks
 
 Like the `runserver` command, this won't immediately exit. It will sit quietly
@@ -67,10 +60,14 @@ process_tasks`` is already running as a daemon.
 
 .. admonition:: Why not Celery?
 
+  We use `django-background-task
+  <http://pypi.python.org/pypi/django-background-task>`_ for our
+  background jobs.
   `Celery <http://celeryproject.org/>`_ is common in the Django world
-  for handling asynchronous tasks. However, our mandate was to make
-  OpenBlock as easy as possible to install, and we really did not want
-  to burden our users with yet another service to install, configure,
+  for handling asynchronous tasks, and is a more mature, robust, and featureful
+  solution. However, our mandate was to make
+  OpenBlock as easy as possible to install, and we could not justify
+  burdening our users with yet another service to install, configure,
   and maintain.
 
 .. _zipcodes:
