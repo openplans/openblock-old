@@ -235,6 +235,8 @@ default bounding box when searching for relevant NewsItems.  It is
 also used by some data-loading scripts to filter out data that's not
 relevant to your area.
 
+.. _multi_city:
+
 multiple_cities
 ---------------
 

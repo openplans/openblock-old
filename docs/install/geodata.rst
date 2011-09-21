@@ -13,7 +13,9 @@ You will need the following:
  * Boundaries for local areas of interest to your users, such as
    neighborhoods, towns, ZIP codes, political districts, etc.
 
-   It is recommended to set up ZIP codes first.
+   It is recommended to set up ZIP codes first;
+   if you are using a :ref:`multi_city` configuration, you should also
+   load your city boundaries first.
 
  * A database of city streets and blocks. This is used for geocoding,
    for address searches, and for browsing news by block.
@@ -24,6 +26,18 @@ You will need the following:
    for more on setting up your map base layer.
 
 
+
+.. admonition:: Admin UI or command line?
+
+  It is now possible to do all your geographic data loading via
+  the OpenBlock's web admin UI at http://localhost:8000/admin,
+  or via command-line scripts. It is purely a matter of preference.
+
+.. admonition:: Multiple Cities?
+
+  If the area you're interested in isn't a single city,
+  be sure to read :ref:`metro_config`, especially the
+  :ref:`multi_city` section.
 
 .. admonition:: USA Only?
 
@@ -88,11 +102,11 @@ You can do this several times if your area
 crosses state lines.
 
 When this is done,
-skip down to the "Verifying ZIP Codes" section below.
+skip down to :ref:`verifying_zipcodes` below.
 
 (TODO: screen shot?)
 
-Finding ZIP Codes To Install By Hand
+Load ZIP Codes via Command Line
 ------------------------------------
 
 Alternately, you can use command-line scripts to install ZIP codes.
@@ -134,6 +148,8 @@ metro extent, and ``-v`` tells it to give verbose output.
 
 It will tell you which ZIP codes were skipped, and at the end, print a
 count of how many were created.
+
+.. _verifying_zipcodes:
 
 Verifying ZIP Codes
 -------------------
@@ -212,7 +228,7 @@ line. It takes several steps.
 Loading Blocks from Census TIGER files
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-First, unzip all four files you downloaded in :ref:`<finding_blocks_data>`.
+First, unzip all four files you downloaded in :ref:`finding_blocks_data`.
 
 The block importer can filter out blocks outside the city named by the
 ``--city`` option. It can also filter out blocks outside your
@@ -235,6 +251,30 @@ The filenames would be different from the example shown for a
 different city/county, of course.
 
 Be patient; it typically takes at least several minutes to run.
+
+If you run it with the ``--help`` option, it will tell you how about
+all options::
+
+ $ import_locations  --help
+ Usage: import_blocks_tiger edges.shp featnames.dbf faces.dbf place.shp
+ 
+ Options:
+  -h, --help            show this help message and exit
+  -v, --verbose
+  -c CITY, --city=CITY  A city name to filter against
+  -f, --fix-cities      Whether to override "city" attribute of blocks and
+                        streets by finding an intersecting Location of a city-
+                        ish type. Only makes sense if you have configured
+                        multiple_cities=True in the METRO_LIST of your
+                        settings.py, and after you have created some
+                        appropriate Locations.
+  -b, --filter-bounds   Whether to skip blocks outside the metro extent from
+                        your settings.py. Default True.
+  -e ENCODING, --encoding=ENCODING
+                        Encoding to use when reading the shapefile
+
+
+
 
 
 Loading Blocks from ESRI files
@@ -266,7 +306,9 @@ The ``-v`` argument controls verbosity; give it fewer times for less output.
 Verifying Blocks
 ----------------
 
-Try starting up django and browsing or searching some blocks::
+Try starting up django and browsing or searching some blocks:
+
+.. code-block:: bash
 
   $ django-admin.py runserver
 
@@ -320,13 +362,17 @@ boundaries published anywhere.
 
 Just browse to `/admin/db/locations`, click "Add location", 
 drag and zoom the map as desired, select a location
-type, and start clicking away on the map.  When happy with your
-polygon, double-click on the last point to stop drawing.  To modify
-it, click the "Modify features" icon in the map toolbar and then you
+type, and start clicking away on the map.
+
+When happy with your
+polygon, double-click on the last point to stop drawing.
+
+To modify it, click the "Modify features" icon in the map toolbar and then you
 can click and drag individual points, or click a point and hit the
-Delete key to remove a point.  There are Undo and Redo buttons,
-although the history will be forgotten once you click the Save button
-on the form.
+Delete key to remove a point.
+
+There are Undo and Redo buttons, although the history will be
+forgotten once you click the Save button on the form.
 
 (TODO: screen shots?)
 
@@ -443,7 +489,7 @@ areas that don't overlap with your metro extent.
 
 
 Can I load KML, GeoJSON, OpenStreetMap XML, or other kinds of files?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------------------------------------------------
 
 No, at this time the only files we can directly import are shapefiles.
 Try using tools like `ogr2ogr <http://www.gdal.org/ogr2ogr.html>`_ to
