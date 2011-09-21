@@ -73,3 +73,30 @@ def unzip(filename, cwd=None):
         log_exception()
         return False
 
+
+def add_verbosity_options(parser):
+    """
+    Add --verbose and --quiet options to an optparser.
+    """
+    parser.add_option('-v', '--verbose', action='store_true', help='Verbose output.')
+    parser.add_option('-q', '--quiet', action='store_true', help='No output.')
+
+
+def setup_logging_from_opts(opts, logger=None):
+    """
+    If opts.verbose, set log level to DEBUG.
+    If opts.quiet, set log level to WARN.
+    Otherwise, set log level to INFO.
+
+    TODO: should only affect the stdout / stderr handlers, not files.
+    """
+    import logging
+    logger = logger or logging.getLogger()
+    loglevel = logging.INFO
+    if opts.verbose:
+        loglevel = logging.DEBUG
+    if opts.quiet:
+        loglevel = logging.WARN
+
+    logging.basicConfig(level=loglevel)
+    logger.setLevel(loglevel)

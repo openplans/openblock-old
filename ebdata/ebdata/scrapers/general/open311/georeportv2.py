@@ -92,7 +92,6 @@ class GeoReportV2Scraper(object):
             page = 1
             while True:
                 items_on_page = self._update(url + '&page=%d' % page)
-                page += 1
                 time.sleep(self.seconds_between_requests)
                 if not items_on_page:
                     break
@@ -111,10 +110,10 @@ class GeoReportV2Scraper(object):
             if response.status != 200:
                 log.error("Error retrieving %s: status was %d" % (url, response.status))
                 log.error(content)
-                return
+                return 0
         except:
             log.error("Error retrieving %s: %s" % (url, traceback.format_exc()))
-            return
+            return 0
         log.info("Got %s OK" % url)
 
         # parse the response
@@ -275,8 +274,13 @@ def main(argv=None):
         "--jurisdiction-id", help='jurisdiction identifier to provide to api',
         action='store'
         )
+
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    add_verbosity_options(parser)
+
     options, args = parser.parse_args(argv)
-    
+    setup_logging_from_opts(options, log)
+
     if len(args) < 1:
         parser.print_usage()
         return 1

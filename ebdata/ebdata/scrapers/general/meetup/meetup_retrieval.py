@@ -198,12 +198,17 @@ parser.add_option(
     dest="wait_for_rate_limit", action='store_false', default=True,
     )
 
+
+from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+add_verbosity_options(parser)
+
 def main(argv=None):
     import sys
     if argv is None:
         argv = sys.argv[1:]
     options, args = parser.parse_args(argv)
     scraper = MeetupScraper(options)
+    setup_logging_from_opts(options, scraper.logger)
     scraper.update()
 
 if __name__ == '__main__':

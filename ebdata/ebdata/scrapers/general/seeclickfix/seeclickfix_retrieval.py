@@ -125,6 +125,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
 
 def main(argv=None):
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
     import sys
     if argv is None:
         argv = sys.argv[1:]
@@ -132,6 +133,7 @@ def main(argv=None):
     from optparse import OptionParser
     usage = "usage: %prog [options] city state"
     parser = OptionParser(usage=usage)
+    add_verbosity_options(parser)
 
     options, args = parser.parse_args(argv)
     if len(args) != 2:
@@ -139,6 +141,8 @@ def main(argv=None):
         sys.exit(0)
     city, state = args
     scraper = SeeClickFixNewsFeedScraper(city=city.title(), state=state.upper())
+    setup_logging_from_opts(options, scraper.logger)
+
     TESTING = False
     if TESTING:
         from ebdata.retrieval import log_debug

@@ -41,6 +41,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
 
     schema_slugs = ('police-reports',)
     has_detail = False
+    logname = 'us.ma.boston.police_reports'
 
     # Can't find a way to specify number of items.
     url = 'http://www.bpdnews.com/feed/'
@@ -136,9 +137,18 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
         self.create_or_update(old_record, attributes, **kwargs)
 
 
-def main():
-    #from ebdata.retrieval import log_debug
-    BPDNewsFeedScraper().update()    
+def main(argv=None):
+    import sys
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    from optparse import OptionParser
+    if argv is None:
+        argv = sys.argv[1:]
+    optparser = OptionParser()
+    add_verbosity_options(optparser)
+    scraper = BPDNewsFeedScraper()
+    opts, args = optparser.parse_args(argv)
+    setup_logging_from_opts(opts, scraper.logger)
+    scraper.update()
 
 if __name__ == "__main__":
     main()

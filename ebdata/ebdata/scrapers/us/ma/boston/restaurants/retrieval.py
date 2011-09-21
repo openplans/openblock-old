@@ -38,6 +38,8 @@ strip_tags = lambda x: re.sub(r'(?s)</?[^>]*>', '', x).replace('&nbsp;', ' ').st
 
 class RestaurantScraper(NewsItemListDetailScraper):
 
+    logname = 'us.ma.boston.restaurants'
+
     # Sadly, there appears to be no way to query by date;
     # we have no choice but to crawl the entire site every time.
 
@@ -53,8 +55,19 @@ class RestaurantScraper(NewsItemListDetailScraper):
         # scraper and it's broken several hours into it -- you can pick up
         # around where it left off.
         NewsItemListDetailScraper.__init__(self)
+        self.logger.info("WARNING, this is a VERY slow scraper, it typically takes hours!")
         self.name_start = name_start.lower()
 
+
+    def update(self, *args, **kwargs):
+        import time
+        start = time.time()
+        super(RestaurantScraper, self).update(*args, **kwargs)
+        elapsed = time.time() - start
+        hours, elapsed = divmod(elapsed, 3600)
+        mins, secs = divmod(elapsed, 60)
+        self.logger.info("Done scraping restaurants in %02d:%02d:%02d" % (hours, mins, secs))
+        
     def list_pages(self):
         # Submit the search form with ' ' as the neighborhood to get *every*
         # restaurant in the city.
@@ -161,17 +174,23 @@ class RestaurantScraper(NewsItemListDetailScraper):
         except:
             import traceback;
             self.logger.error("Error storing inspection for %s: %s" % (list_record.get('restaurant_name', 'Unknown'), traceback.format_exc())) 
-            
-def main():
-    print "WARNING, this is a VERY slow scraper, it typically takes hours!"
-    import time
-    start = time.time()
-    from ebdata.retrieval import log_debug
-    RestaurantScraper().update()
-    elapsed = time.time() - start
-    hours, elapsed = divmod(elapsed, 3600)
-    mins, secs = divmod(elapsed, 60)
-    print "Done scraping restaurants in %02d:%02d:%02d" % (hours, mins, secs)
+
+
+def main(argv=None):
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    import sys
+    if argv is None:
+        argv = sys.argv[1:]
+    from optparse import OptionParser
+    parser = OptionParser()
+    add_verbosity_options(parser)
+    options, args = parser.parse_args(argv)
+
+    scraper = RestaurantScraper()
+    setup_logging_from_opts(options, scraper.logger)
+
+    scraper.update()
+
 
 if __name__ == "__main__":
     main()

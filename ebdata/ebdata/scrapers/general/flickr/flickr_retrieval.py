@@ -33,7 +33,8 @@ from ebdata.retrieval.utils import convert_entities
 
 local_tz = pytz.timezone(settings.TIME_ZONE)
 utc = pytz.timezone('utc')
-logger = logging.getLogger()
+
+logger = logging.getLogger('flickr_retrieval')
 
 class FlickrScraper(NewsItemListDetailScraper):
 
@@ -164,7 +165,11 @@ def main(argv=None):
         action='store', default='photos',
         )
 
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    add_verbosity_options(parser)
+
     options, args = parser.parse_args(argv)
+    setup_logging_from_opts(options, logger)
     scraper = FlickrScraper(options)
     scraper.update()
 

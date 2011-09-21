@@ -40,7 +40,7 @@ from ebpub.utils.geodjango import intersects_metro_bbox
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
 
-logger = logging.getLogger()
+logger = logging.getLogger('georss.retrieval')
 
 
 class LocalNewsScraper(object):
@@ -186,17 +186,19 @@ def main(argv=None):
         action='store'
         )
 
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    add_verbosity_options(parser)
+
     options, args = parser.parse_args(argv)
-    
+    setup_logging_from_opts(options, logger)
+
     if len(args) < 1:
         parser.print_usage()
         sys.exit(0)
-    
+
     scraper = LocalNewsScraper(url=args[0],  schema_slug=options.schema, http_cache=options.http_cache)
 
     scraper.update()
-
-    
 
 if __name__ == '__main__':
     main()
