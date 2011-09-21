@@ -56,7 +56,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
         # around where it left off.
         NewsItemListDetailScraper.__init__(self)
         self.logger.info("WARNING, this is a VERY slow scraper, it typically takes hours!")
-        self.name_start = name_start.lower()
+        self.name_start = (name_start or u'').lower().strip()
 
 
     def update(self, *args, **kwargs):
@@ -82,7 +82,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
         for record in parse_main_re.finditer(html):
             record = record.groupdict()
             if self.name_start and record['restaurant_name'].lower() < self.name_start:
-                self.logger.debug('Skipping %r due to name_start %r', record['restaurant_name'], self.name_start)
+                self.logger.info('Skipping %r due to name_start %r', record['restaurant_name'], self.name_start)
                 continue
             url = 'http://www.cityofboston.gov/isd/health/mfc/insphistory.asp?licno=%s' % record['restaurant_id']
             yield (record, self.get_html(url))
@@ -145,7 +145,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
         if len(violation_lookup_text) > 4096: 
             violation_lookup_text = violation_lookup_text[0:4096]
             violation_lookup_text = violation_lookup_text[0:violation_lookup_text.rindex(',')]
-            self.logger.error('Restaurant %r had too many violations to store, skipping some!', list_record['restaurant_name'])
+            self.logger.warning('Restaurant %r had too many violations to store, skipping some!', list_record['restaurant_name'])
 
         # There's a bunch of data about every particular violation, and we
         # store it as a JSON object. Here, we create the JSON object.
@@ -184,9 +184,13 @@ def main(argv=None):
     from optparse import OptionParser
     parser = OptionParser()
     add_verbosity_options(parser)
+    parser.add_option('-n', '--name-start', help='Name of first restaurant to start with.'
+                      ' This is useful if you\'ve run the scraper and it\'s broken '
+                      'several hours into it; you can pick up around where it left off.')
+
     options, args = parser.parse_args(argv)
 
-    scraper = RestaurantScraper()
+    scraper = RestaurantScraper(name_start=options.name_start)
     setup_logging_from_opts(options, scraper.logger)
 
     scraper.update()

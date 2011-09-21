@@ -38,14 +38,15 @@ from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
 from ebpub.utils.logutils import log_exception
 
+logger = logging.getLogger('add_events')
+
 # Note there's an undocumented assumption in ebdata that we want to
 # put unescape html before putting it in the db.  Maybe wouldn't have
 # to do this if we used the scraper framework in ebdata?
 from ebdata.retrieval.utils import convert_entities
 
-logger = logging.getLogger()
 
-def main():
+def update():
     """ Download Calendar RSS feed and update database """
     logger.info("Starting add_events")
     url = """http://calendar.boston.com/search?acat=&cat=&commit=Search\
@@ -110,6 +111,19 @@ def main():
             logger.error("unexpected error:", sys.exc_info()[1])
             log_exception()
     logger.info("add_events finished: %d added, %d updated" % (addcount, updatecount))
+
+
+
+def main(argv=None):
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    from optparse import OptionParser
+    if argv is None:
+        argv = sys.argv[1:]
+    optparser = OptionParser()
+    add_verbosity_options(optparser)
+    opts, args = optparser.parse_args(argv)
+    setup_logging_from_opts(opts, logger)
+    update()
 
 if __name__ == '__main__':
     sys.exit(main())

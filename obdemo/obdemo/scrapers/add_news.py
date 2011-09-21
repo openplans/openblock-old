@@ -39,9 +39,9 @@ from ebpub.utils.logutils import log_exception
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
 
-logger = logging.getLogger()
+logger = logging.getLogger('add_news')
 
-def main(argv=None):
+def update(argv=None):
     logger.info("Starting add_news")
     if argv:
         url = argv[0]
@@ -141,6 +141,18 @@ def main(argv=None):
             logger.error("Warning: couldn't save %r. Traceback:" % item.title)
             log_exception()
     logger.info("Finished add_news: %d added, %d updated" % (addcount, updatecount))
+
+def main(argv=None):
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    from optparse import OptionParser
+    if argv is None:
+        argv = sys.argv[1:]
+    optparser = OptionParser()
+    add_verbosity_options(optparser)
+    opts, args = optparser.parse_args(argv)
+    setup_logging_from_opts(opts, logger)
+    update(args)
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
