@@ -92,6 +92,8 @@ A few other nice details are taken care of for you:
   ``/etc/init.d/openblock-updaterdaemon``.
   The (empty) configuration file is at ``/home/openblock/scraper_config.py``.
 
+  TODO: deprecated, need to replace that with a crontab file.
+
 * ``logrotate`` is already configured to rotate the apache,
   django-background-task, and updaterdaemon logs, so they won't fill
   up your storage.

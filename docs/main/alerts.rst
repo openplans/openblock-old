@@ -7,8 +7,7 @@ they're interested in.
 
 In order to support this feature, there is a script that needs to be
 called regularly. You can do this any way you like; `cron
-<http://en.wikipedia.org/wiki/Cron>`_ would work fine.
-So would :ref:`updaterdaemon <updaterdaemon>`.
+<http://en.wikipedia.org/wiki/Cron>`__ would work fine.
 
 Here's an example crontab file that sends the daily alerts once a day,
 and the weekly alerts once a week. Adjust the environment variables as

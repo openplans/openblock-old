@@ -3,7 +3,7 @@ Data Scraper Tutorial
 =====================
 
 Currently, anybody using OpenBlock will have to write their own
-scraper scripts to import data.
+scraper scripts to import news data.
 
 You have several options for how to write scraper scripts.
 We'll look at each in turn:
@@ -56,7 +56,7 @@ That's just about any modern language.
 
 The general approach will be the same regardless of language:
 
-* Fetch data from the source you're interested in source
+* Fetch data from the source you're interested
 * Parse the data
 * For each news item you parsed:
 
@@ -144,6 +144,12 @@ from boston.com and creates a NewsItem for each entry:
         logger.info("Finished add_news")
 
     if __name__ == '__main__':
+        import sys
+        args = sys.argv
+        loglevel = logging.INFO
+        if '-q' in args:
+            loglevel = logging.WARN
+        logger.setLevel(loglevel)
         main()
 
 
@@ -162,6 +168,11 @@ So, what's left out? Among other things:
 
 * This schema doesn't require any custom attributes, so we don't show
   that. It's trivial though, just assign a dictionary to item.attributes.
+
+Also notice the ``-q`` or ``--quiet`` command-line option that silences all non-error
+output. This is an OpenBlock scraper convention intended to allow
+running scrapers under :ref:`cron` without sending yourself tons of useless
+email messages.
 
 .. _scraping_listdetail:
 
@@ -268,12 +279,23 @@ address extraction and ebpub's geocoder:
 
 
     if __name__ == "__main__":
-        #from ebdata.retrieval import log_debug
-        BPDNewsFeedScraper().update()
-	# During testing, do this instead:
-        # BPDNewsFeedScraper().display_data()
+    import sys
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    from optparse import OptionParser
+    if argv is None:
+        argv = sys.argv[1:]
+    optparser = OptionParser()
+    add_verbosity_options(optparser)
+    scraper = BPDNewsFeedScraper()
+    opts, args = optparser.parse_args(argv)
+    setup_logging_from_opts(opts, scraper.logger)
+    # During testing, do this instead:
+    # scraper.display_data()
+    scraper.update()
 
-That's not too complex; three methods and you're done. Most of the
+
+That's not too complex; three methods plus some command-line option
+handling and you're done. Most of the
 work was in save(), doing address parsing and geocoding. 
 
 But you do have to understand how (and when) to implement those three
@@ -326,7 +348,7 @@ Disadvantage:
   one or more of the base classes, and overriding various methods and
   attributes that get called by the base class as
   needed. Until you fully understand those base classes, this can be
-  quite confusing.
+  confusing.
 
 
 For a more complete example that uses detail pages and some of those other

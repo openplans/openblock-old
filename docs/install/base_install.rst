@@ -7,10 +7,12 @@ in the section :doc:`setup`.
 
 (You can skip this if you are :doc:`cloning an OpenBlock AMI <aws>`.)
 
+.. _virtualenv:
+
 Creating a virtualenv
 =====================
 
-Create a "`virtualenv <http://pypi.python.org/pypi/virtualenv>`_" that will contain 
+Create a "`virtualenv <http://pypi.python.org/pypi/virtualenv>`__" that will contain 
 the OpenBlock software and its python dependencies.  (You probably do *not* want to 
 do this as root or with sudo):
 
