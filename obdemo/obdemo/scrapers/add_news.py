@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# encoding: utf-8
-
 #   Copyright 2011 OpenPlans and contributors
 #
 #   This file is part of OpenBlock

@@ -22,8 +22,10 @@ Utils for command-line scripts.
 
 from django.core.management.base import CommandError
 from ebpub.utils.logutils import log_exception
+import logging
 import os
 import subprocess
+import sys
 import zipfile
 
 def die(msg):
@@ -84,19 +86,31 @@ def add_verbosity_options(parser):
 
 def setup_logging_from_opts(opts, logger=None):
     """
-    If opts.verbose, set log level to DEBUG.
-    If opts.quiet, set log level to WARN.
-    Otherwise, set log level to INFO.
+    Useful with scripts that have used add_verbosity_options(optparser).
 
-    TODO: should only affect the stdout / stderr handlers, not files.
+    If ``opts.verbose``, set log level *everywhere* to (at least) DEBUG.
+    If ``opts.quiet``, reduce stdout/stderr log level to WARN.
+    Otherwise, set stdout/stderr log level to INFO.
+
+    Note the asymmetry there: ``verbose`` affects all log handlers,
+    but ``quiet`` only affects console output.
     """
-    import logging
-    logger = logger or logging.getLogger()
+    logging.basicConfig()
     loglevel = logging.INFO
     if opts.verbose:
         loglevel = logging.DEBUG
     if opts.quiet:
         loglevel = logging.WARN
-
-    logging.basicConfig(level=loglevel)
-    logger.setLevel(loglevel)
+    current_logger = logger or logging.getLogger()
+    while current_logger:
+        if opts.verbose:
+            # For more verbosity, we have to open up verbosity at
+            # every step of the chain. I think.
+            if current_logger.getEffectiveLevel() > loglevel:
+                current_logger.setLevel(loglevel)
+        for handler in current_logger.handlers:
+            # Hopefully this will get all the console handlers...
+            if isinstance(handler, logging.StreamHandler):
+                if handler.stream in (sys.stdout, sys.stderr):
+                    handler.setLevel(loglevel)
+        current_logger = current_logger.parent
