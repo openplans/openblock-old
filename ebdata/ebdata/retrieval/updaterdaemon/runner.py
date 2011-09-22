@@ -64,6 +64,10 @@ class EveryTwoSecondsDaemon(Daemon):
 class UpdaterDaemon(EveryMinuteDaemon):
 
     def __init__(self, *args, **kwargs):
+        import warnings
+        warnings.warn("UpdaterDaemon is deprecated, see http://openblockproject.org/docs/main/running_scrapers.html",
+                      DeprecationWarning)
+
         super(UpdaterDaemon, self).__init__(*args, **kwargs)
         self.parser.add_option("-c", "--config",
                                help="path to configuration file (python).",
