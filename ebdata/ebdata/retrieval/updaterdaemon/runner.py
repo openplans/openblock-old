@@ -62,6 +62,11 @@ class EveryTwoSecondsDaemon(Daemon):
         pass
 
 class UpdaterDaemon(EveryMinuteDaemon):
+    """
+    A (deprecated) daemon for running OpenBlock scrapers based on a config file.
+
+    We now recommend just using cron or your preferred scheduling tool instead.
+    """
 
     def __init__(self, *args, **kwargs):
         import warnings

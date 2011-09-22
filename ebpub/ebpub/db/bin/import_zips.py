@@ -74,7 +74,6 @@ class ZipImporter(import_locations.LocationImporter):
     def create_location(self, zipcode, geom, display_order=0):
         verbose = self.verbose
         source = self.source
-        now = datetime.datetime.now()
         geom = ensure_valid(geom, self.location_type.slug)
         geom = flatten_geomcollection(geom)
         geom.srid = 4326
@@ -91,7 +90,8 @@ class ZipImporter(import_locations.LocationImporter):
         if not self.should_create_location(kwargs):
             return
         kwargs['defaults'] = {'display_order': display_order,
-                              'last_mod_date': now,
+                              'last_mod_date': self.now,
+                              'creation_date': self.now,
                               'area': kwargs['location'].transform(3395, True).area,
                               }
         zipcode_obj, created = Location.objects.get_or_create(**kwargs)
