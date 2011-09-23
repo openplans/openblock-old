@@ -19,6 +19,7 @@ class GeoReportV2Scraper(object):
     def __init__(self, api_url, api_key=None, jurisdiction_id=None, 
                  schema_slug='open311-service-requests', http_cache=None,
                  seconds_between_requests=2.0, days_prior=90,
+                 timeout=60,
                  bounds=None,
                  html_url_template=None):
         """
@@ -48,7 +49,7 @@ class GeoReportV2Scraper(object):
         if jurisdiction_id is not None: 
             self.standard_parms['jurisdiction_id'] = jurisdiction_id
         
-        self.http = Http(http_cache)
+        self.http = Http(http_cache, timeout=timeout)
         self.bounds = bounds
         if bounds is None:
             log.info("Calculating geographic boundaries from the extent in settings.METRO_LIST")
@@ -79,9 +80,9 @@ class GeoReportV2Scraper(object):
                                            start_date.month,
                                            start_date.day,
                                            0,0,0)
-        else: 
+        else:
             start_date = min_date
-            
+
         while (start_date < now):
             end_date = start_date + request_granularity
             log.info("Fetching from %s - %s" % (start_date, end_date))
@@ -95,8 +96,9 @@ class GeoReportV2Scraper(object):
                 time.sleep(self.seconds_between_requests)
                 if not items_on_page:
                     break
+                page += 1
             start_date = end_date
-    
+
     def _update(self, url):
         """Make an HTTP request to url, create newsitems,
         return number of items found (not created)
