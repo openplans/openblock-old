@@ -232,7 +232,8 @@ First, unzip all four files you downloaded in :ref:`finding_blocks_data`.
 
 The block importer can filter out blocks outside the city named by the
 ``--city`` option. It can also filter out blocks outside your
-:ref:`metro extent <metro_extent>` by passing the ``--filter-bounds`` option.
+:ref:`metro extent <metro_extent>` by passing the ``--filter-bounds``
+option.
 
 You can run it like this (assuming all the unzipped shapefiles are in
 the current directory):
@@ -252,10 +253,18 @@ different city/county, of course.
 
 Be patient; it typically takes at least several minutes to run.
 
+It can also filter out blocks outside of one or more locations by
+passing the ``--filter-location`` option with a LocationType slug and
+Location slug; for example::
+
+  $ import_blocks_tiger --filter-location="cities:cambridge" \
+    --filter-location="cities:newton" ...
+
+
 If you run it with the ``--help`` option, it will tell you how about
 all options::
 
- $ import_locations  --help
+ $ import_blocks_tiger  --help
  Usage: import_blocks_tiger edges.shp featnames.dbf faces.dbf place.shp
  
  Options:

@@ -21,7 +21,6 @@ import sys
 import optparse
 from django.contrib.gis.gdal import DataSource
 from ebdata.parsing import dbf
-from ebpub.metros.allmetros import get_metro
 from ebpub.streets.blockimport.base import BlockImporter
 
 STATE_FIPS = {
@@ -115,7 +114,7 @@ class TigerImporter(BlockImporter):
     http://www.census.gov/geo/www/tiger/tgrshp2008/rel_file_desc_2008.txt
     """
     def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp,
-                 filter_city=None, filter_bounds=None,
+                 filter_city=None, filter_bounds=None, filter_locations=(),
                  verbose=False, encoding='utf8', fix_cities=False):
         BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
                                verbose=verbose, encoding=encoding)
@@ -271,9 +270,16 @@ def main(argv=None):
                       'multiple_cities=True in the METRO_LIST of your settings.py, '
                       'and after you have created some appropriate Locations.')
 
-    parser.add_option('-b', '--filter-bounds', action="store_true", default=True,
+    parser.add_option('-b', '--filter-bounds', action="store", default=1,
+                      type='int',
                       help='Whether to skip blocks outside the metro extent from your '
-                      'settings.py. Default True.')
+                      'settings.py. Default 1 (true); use 0 to disable.')
+    parser.add_option('-l', '--filter-location', action="append",
+                      help='A location (spelled as location-type-slug:location-slug) '
+                      'that will be used to filter out blocks outside its boundaries. '
+                      'May be passed more than once.'
+                      )
+
     parser.add_option('-e', '--encoding', dest='encoding',
                       help='Encoding to use when reading the shapefile',
                       default='utf8')
@@ -286,6 +292,25 @@ def main(argv=None):
         filter_bounds = get_default_bounds()
     else:
         filter_bounds = None
+
+    # Optionally filter on bounds of some Locations too.
+    loc_bounds = None
+    for locslug in options.filter_location or []:
+        typeslug, locslug = locslug.split(':', 1)
+        from ebpub.db.models import Location
+        location = Location.objects.get(location_type__slug=typeslug, slug=locslug)
+        if loc_bounds is None:
+            loc_bounds = location.location
+        else:
+            loc_bounds = loc_bounds.union(location.location)
+
+    if None not in (filter_bounds, loc_bounds):
+        filter_bounds = filter_bounds.intersection(loc_bounds)
+    elif loc_bounds is not None:
+        filter_bounds = loc_bounds
+    else:
+        filter_bounds = filter_bounds
+
     tiger = TigerImporter(*args, verbose=options.verbose,
                            filter_city=options.city, 
                            filter_bounds=filter_bounds,
