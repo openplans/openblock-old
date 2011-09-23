@@ -203,10 +203,10 @@ class Block(models.Model):
         max_length=255, db_index=True, blank=True,
         help_text='Name of city, UPPERCASE, on right side of street.')
 
-    left_state = USStateField(
+    left_state = USStateField(  # bad for i18n!
         db_index=True,
         help_text='US State abbreviation, UPPERCASE, on left side of street.')
-    right_state = USStateField(
+    right_state = USStateField(  # bad for i18n!
         db_index=True,
         help_text='US State abbreviation, UPPERCASE, on right side of street.')
 
@@ -434,7 +434,7 @@ class Street(models.Model):
                               help_text='Always uppercase.')
     city = models.CharField(max_length=255, db_index=True,
                             help_text='Always uppercase. City name, not slug.')
-    state = USStateField(db_index=True, help_text='Always uppercase.')
+    state = USStateField(db_index=True, help_text='Always uppercase.')  # bad for i18n!
 
     class Meta:
         db_table = 'streets'
@@ -685,7 +685,7 @@ class Intersection(models.Model):
     postdir_b = models.CharField(max_length=2, blank=True, db_index=True) # eg., "SE"
     zip = models.CharField(max_length=10, db_index=True) # Possible Plus-4
     city = models.CharField(max_length=255, db_index=True) # Always uppercase
-    state = USStateField(db_index=True) # Always uppercase
+    state = USStateField(db_index=True) # Always uppercase. TODO: bad for i18n!
     location = models.PointField()
     objects = IntersectionManager()
 
