@@ -19,6 +19,9 @@
 
 from ebdata.nlp.addresses import parse_addresses
 from ebdata.nlp.places import phrase_tagger
+from ebdata.nlp.places import loose_phrase_grabber
+from ebdata.nlp.places import paranoid_phrase_grabber
+
 import unittest
 
 class AddressParsing(unittest.TestCase):
@@ -760,7 +763,26 @@ class CityAddressParsing(AddressParsing):
         # test_one_letter_sanity_check()
         self.assertParses('2826 S. WENTWORTH', [('2826 S. WENTWORTH', '')])
 
-class PhraseTagger(unittest.TestCase):
+
+class TestPhraseGrabber(unittest.TestCase):
+
+    def test_loose_phrase_grabber(self):
+        text = 'on the South Chicago Ave on the 7400 block in Chicago, IL'
+        phrases = ['Chicago', 'South Chicago']
+        grabber = loose_phrase_grabber(phrases)
+        self.assertEqual(grabber(text),
+                         [(7, 20, 'South Chicago'), (46, 53, 'Chicago')])
+
+    def test_paranoid_phrase_grabber(self):
+        text = 'on the <x>South Chicago Ave</x> on the 7400 block in <x>Chicago, IL</x> ... but <a>Chicago is OK</a>'
+        phrases = ['Chicago', 'South Chicago']
+        grabber = paranoid_phrase_grabber(phrases, '<x>', '</x>')
+        self.assertEqual(grabber(text),
+                         [(83, 90, 'Chicago')])
+
+
+
+class TestPhraseTagger(unittest.TestCase):
     def test_double_matching(self):
         # Make sure matching behaves as greedily as possible
         places = ['Lake View', 'Lake View East']
@@ -773,7 +795,7 @@ class PhraseTagger(unittest.TestCase):
         phrases = []
         text = 'In Lake View East today, a Lake View man...'
         tag = phrase_tagger(phrases)
-        self.assertEqual(tag(text), 'In Lake View East today, a Lake View man...')
+        self.assertEqual(tag(text), text)
 
     def test_matched_phrases_begin(self):
         # Don't try to re-highlight things that have already been highlighted
@@ -795,6 +817,17 @@ class PhraseTagger(unittest.TestCase):
         text = 'on the <addr>7400 block of South Chicago Ave</addr>...'
         tag = phrase_tagger(phrases, pre='<addr>', post='</addr>')
         self.assertEqual(tag(text), text)
+
+    def test_matched_phrases_middle__loose(self):
+        # DO tag things already tagged if paranoid=False.
+        phrases = ['South Chicago']
+        text = 'on the <addr>7400 block of South Chicago Ave</addr>...'
+        tag = phrase_tagger(phrases, pre='<addr>', post='</addr>', paranoid=False)
+        self.assertEqual(
+            tag(text),
+            'on the <addr>7400 block of <addr>South Chicago</addr> Ave</addr>...'
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
