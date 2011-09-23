@@ -2,7 +2,11 @@ from django.conf import settings
 from django.contrib.gis.db import models
 from ebpub.db.models import NewsItem, Location, Schema
 
-# Create your models here.
+
+class TemplateManager(models.GeoManager):
+
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
 
 class Template(models.Model):
     """
@@ -15,9 +19,19 @@ class Template(models.Model):
     code = models.TextField(blank=True)
     content_type = models.CharField(max_length=128, default='text/html')
 
+    def natural_key(self):
+        return (self.slug, )
+
+    objects = TemplateManager()
+
     def __unicode__(self):
         return self.name
 
+
+class WidgetManager(models.GeoManager):
+
+    def get_by_natural_key(self, slug):
+        return self.get(slug=slug)
 
 class Widget(models.Model):
     """
@@ -33,6 +47,11 @@ class Widget(models.Model):
     item_link_template = models.TextField(blank=True, null=True, help_text="If specified, this simple URL template is used to determine the url for items with openblock 'detail' pages, eg: 'http://mypublicsite.com/openblock/{{item.schema.name}}/{{item.id}}/'. For detailed information, see documentation.")
 
     #...
+    
+    def natural_key(self):
+        return (self.slug, )
+
+    objects = WidgetManager()
     
     def __unicode__(self):
         return '%s (%s)' % (self.name, self.slug)
