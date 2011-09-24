@@ -31,7 +31,7 @@ from ebpub.utils.text import smart_title
 import re
 
 parse_main_re = re.compile(r"<tr[^>]*><td[^>]*><a href='insphistory\.asp\?licno=(?P<restaurant_id>\d+)'>(?P<restaurant_name>[^<]*)</a></td><td[^>]*>(?P<address>[^<]*)</td><td[^>]*>(?P<neighborhood>[^<]*)</td></tr>")
-detail_violations_re = re.compile(r"<tr[^>]*><td[^>]*><span[^>]*>(?P<stars>\*+)</span></td><td[^>]*><span[^>]*>(?P<status>[^<]*)</span></td><td[^>]*><span[^>]*>(?P<code>[^<]*)</span></td><td[^>]*><span[^>]*>(?P<description>[^<]*)</span></td><td[^>]*>(?P<location>.*?)</td><td[^>]*>(?P<comment>.*?)</td></tr>", re.DOTALL)
+detail_violations_re = re.compile(r"<tr[^>]*><td[^>]*><span[^>]*>(?P<stars>\*+)</span></td><td[^>]*><span[^>]*>(?P<status>[^<]*)</span></td><td[^>]*><span[^>]*>(?P<code>[^<]*)</span></td><td[^>]*><span[^>]*>(?P<description>[^<]*)<p><i>Comments:<br></i>(?P<comment>[^<]*)</p></span></td><td[^>]*><span[^>]*>(?P<location>.*?)</span></td></tr>", re.DOTALL)
 detail_url = lambda inspection_id: 'http://www.cityofboston.gov/isd/health/mfc/viewinsp.asp?inspno=%s' % inspection_id
 
 strip_tags = lambda x: re.sub(r'(?s)</?[^>]*>', '', x).replace('&nbsp;', ' ').strip()
@@ -44,10 +44,10 @@ class RestaurantScraper(NewsItemListDetailScraper):
     # we have no choice but to crawl the entire site every time.
 
     schema_slugs = ('restaurant-inspections',)
-    detail_address_re = re.compile(r"View Inspections[^<]*</div>[^<]*<b>(?P<restaurant_name>[^<]*)</b>[^<]*<br/>(?P<address_1>[^<]*)<br/>(?P<address_2>[^<]*)(?P<zipcode>\d\d\d\d\d)[^<]*<br/>")
-    parse_list_re = re.compile(r"<a href='viewinsp\.asp\?inspno=(?P<inspection_id>\d+)'>(?P<inspection_date>[^<]*)</a></span> - <span[^>]*>(?P<result>[^<]*)</span>")
-    parse_detail_re = re.compile(r"<tr><th[^>]*>[^<]*</th><th[^>]*>Status</th><th[^>]*>Code Violation</th><th[^>]*>Description</th><th[^>]*>Location</th><th[^>]*>Comment</th></tr>(?P<body>.*?)</table>", re.DOTALL)
-    sleep = 5
+    detail_address_re = re.compile(r"View Inspections[^<]*</div>[^<]*<br/?>?<b>(?P<restaurant_name>[^<]*)</b>[^<]*<br/>(?P<address_1>[^<]*)<br/>(?P<address_2>[^<]*)(?P<zipcode>\d\d\d\d\d)[^<]*<br/>")
+    parse_list_re = re.compile(r" href='viewinsp\.asp\?inspno=(?P<inspection_id>\d+)'>(?P<inspection_date>[^<]*)</a></span></td><td[^>]*><span[^>]*>(?P<result>[^<]*)</span>")
+    parse_detail_re = re.compile(r"<th[^>]*>Status</th><th[^>]*>Code Violation</th><th[^>]*>Description</th><th[^>]*>Location</th></tr>(?P<body>.*?)</table>", re.DOTALL)
+    sleep = 4
 
     def __init__(self, name_start=''):
         # name_start, if given, should be a string of the first restaurant name
@@ -89,8 +89,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
 
     def parse_list(self, record_html):
         list_record, html = record_html
-        
-        # a better version of the restaurant address is available on this page, 
+        # a better version of the restaurant address is available on this page,
         # attempt to extract additional location details to resolve ambiguities.
         try:
             info = self.detail_address_re.search(html).groupdict()
@@ -102,7 +101,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
             yield dict(list_record, **record)
 
     def clean_list_record(self, record):
-        record['inspection_date'] = parse_date(record['inspection_date'], '%A, %B %d, %Y')
+        record['inspection_date'] = parse_date(record['inspection_date'], '%m/%d/%Y')
         record['address'] = smart_title(record['address'])
         record['restaurant_name'] = smart_title(record['restaurant_name'])
         record['result'] = smart_title(record['result'])
@@ -131,6 +130,8 @@ class RestaurantScraper(NewsItemListDetailScraper):
             vio['severity'] = {1: 'Non critical', 2: 'Critical', 3: 'Critical foodborne illness'}[vio.pop('stars').count('*')]
             vio['comment'] = strip_tags(vio['comment']).strip()
             vio['location'] = strip_tags(vio['location']).strip()
+            vio['description'] = strip_tags(vio['description']).strip()
+            vio['status'] = strip_tags(vio['status']).strip()
         record['violation_list'] = violations
         return record
 
@@ -142,7 +143,10 @@ class RestaurantScraper(NewsItemListDetailScraper):
         violation_lookups = [self.get_or_create_lookup('violation', v['description'], v['code'], make_text_slug=False) for v in detail_record['violation_list']]
 
         violation_lookup_text = ','.join([str(v.id) for v in violation_lookups])
-        if len(violation_lookup_text) > 4096: 
+        if len(violation_lookup_text) > 4096:
+            # This is an ugly hack to work around the fact that
+            # many-to-many Lookups are themselves an ugly hack.
+            # See http://developer.openblockproject.org/ticket/143
             violation_lookup_text = violation_lookup_text[0:4096]
             violation_lookup_text = violation_lookup_text[0:violation_lookup_text.rindex(',')]
             self.logger.warning('Restaurant %r had too many violations to store, skipping some!', list_record['restaurant_name'])
