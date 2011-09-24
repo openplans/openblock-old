@@ -203,6 +203,11 @@ EMAIL_PORT='25'
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
 
+# Do you want scrapers to email you errors?
+# (Used by the framework in ebdata/ebdata/retrieval/scrapers/)
+required_settings.append('SCRAPER_LOG_DO_EMAIL_ERRORS')
+SCRAPER_LOG_DO_EMAIL_ERRORS = False
+
 # Edit this if you want to control where
 # scraper scripts will put their HTTP cache.
 # (Warning, don't put it in a directory encrypted with ecryptfs

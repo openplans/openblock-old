@@ -48,9 +48,12 @@ emailer.setLevel(logging.WARNING)
 
 # Add the handler to the 'eb.retrieval' logger. This means that only loggers
 # whose names begin with 'eb.retrieval.' will get this functionality.
+
 eb_root_logger = logging.getLogger('eb.retrieval')
-eb_root_logger.addHandler(logfile)
-eb_root_logger.addHandler(emailer)
+if logfile not in eb_root_logger.handlers:
+    eb_root_logger.addHandler(logfile)
+if settings.SCRAPER_LOG_DO_EMAIL_ERRORS and emailer not in eb_root_logger.handlers:
+    eb_root_logger.addHandler(emailer)
 
 # Set the logger's threshold. By default, it seems to ignore everything
 # under the level WARNING.
