@@ -45,7 +45,7 @@ def parse_date(value, format, return_datetime=False):
     datetime.date(2000, 1, 1)
 
     """
-    # See http://docs.python.org/lib/node85.html
+    # See http://docs.python.org/library/time.html#time.strftime
     idx = return_datetime and 7 or 3
     func = return_datetime and datetime.datetime or datetime.date
     if isinstance(value, func):
