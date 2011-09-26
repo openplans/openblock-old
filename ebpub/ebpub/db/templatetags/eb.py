@@ -247,6 +247,7 @@ class NewsItemListBySchemaNode(template.Node):
             'place': context.get('place'),
             'is_block': context.get('is_block'),
             'block_radius': context.get('block_radius'),
+            'today': today,
         }))
 
 def do_newsitem_list_by_schema(parser, token):
