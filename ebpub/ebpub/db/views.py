@@ -875,6 +875,13 @@ def _default_date_filtering(filterchain):
                        item_date__lte=end_date)
     return qs, start_date, end_date
 
+def location_type_list(request):
+    """
+    Default view of /locations; just redirect to the default loc type.
+    """
+    url = reverse('ebpub-loc-type-detail', args=(settings.DEFAULT_LOCTYPE_SLUG,))
+    return HttpResponsePermanentRedirect(url)
+
 def location_type_detail(request, slug):
     lt = get_object_or_404(LocationType, slug=slug)
     order_by = get_metro()['multiple_cities'] and ('city', 'display_order') or ('display_order',)
