@@ -45,7 +45,7 @@ def ajax_save_place(request):
     # Validate that the SavedPlace hasn't already been created for this user,
     # to avoid duplicates.
     try:
-        sp = SavedPlace.objects.get(**kwargs)
+        SavedPlace.objects.get(**kwargs)
     except SavedPlace.DoesNotExist:
         pass
     else:
