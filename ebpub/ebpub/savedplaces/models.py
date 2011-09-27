@@ -50,7 +50,16 @@ class SavedPlace(models.Model):
     def pid(self):
         """Place ID as used by ebpub.db.views
         """
+        from ebpub.utils.view_utils import make_pid
         if self.block_id:
-            return 'b:%s.8' % self.block_id
+            return make_pid(self.block, 8)
         else:
-            return 'l:%s' % self.location_id
+            return make_pid(self.location)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        error = ValidationError("SavedPlace must have either a Location or a Block, but not both")
+        if self.block_id and self.location_id:
+            raise error
+        if not (self.block_id or self.location_id):
+            raise error
