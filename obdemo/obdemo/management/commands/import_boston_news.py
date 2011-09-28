@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
         print "Updating aggregates, see ebpub/README.txt..."
         from ebpub.db.bin.update_aggregates import update_all_aggregates
-        update_all_aggregates(verbose=True)
+        update_all_aggregates()
 
         print """
 ___________________________________________________________________
