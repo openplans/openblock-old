@@ -92,13 +92,12 @@ $j(function() {
 			</ul>
 		{% else %}
 			<h3>You haven't subscribed to any e-mail alerts yet.</h3>
-			<p>Search for an address, neighborhood or ZIP in {% METRO_NAME %} to subscribe to alerts for news nearby.</p>
-			{% with "Address, ZIP or neighborhood" as placeholder %}
+			{% set_search_placeholder "Search for an" as placeholder %}
+			<p>{{ placeholder }} in {% METRO_NAME %} to subscribe to alerts for news nearby.</p>
 			<form action="/search/" method="get" onsubmit="if ($j('#alerts-searchinput').val() == '{{ placeholder }}') return false; return true;">
 				<input type="hidden" name="type" value="alert">
 				<p><input type="text" id="alerts-searchinput" name="q" value="{{ placeholder }}" onfocus="if (this.value == '{{ placeholder }}') { this.value = ''; }" onblur="if (this.value == '') { this.value = '{{ placeholder }}'; }"> <input type="submit" value="Search"></p>
 			</form>
-			{% endwith %}
 		{% endif %}
 	</div><!--/ #email-alerts -->
 		
@@ -114,15 +113,16 @@ $j(function() {
 					</li>
 				{% endfor %}
 			</ul>
-			<p>Tip: To save more places, search for an address, neighborhood or ZIP code and click "Save this place" on the resulting page.</p>
+			{% set_search_placeholder "search for an" as placeholder %}
+			<p>Tip: To save more places, {{ placeholder }} and click "Save this place" on the resulting page.</p>
 		{% else %}
 			<h3>You haven't saved any places yet.</h3>
-			<p>Search for an address, neighborhood or ZIP in {% METRO_NAME %} and click "Save this place" on the resulting page.</p>
-			{% with "Address, ZIP or neighborhood" as placeholder %}
+			{% set_search_placeholder "Search for an" as placeholder %}
+			<p>{{ placeholder }} in {% METRO_NAME %} and click "Save this place" on the resulting page.</p>
+			{% set_search_placeholder "" as placeholder %}
 			<form action="/search/" method="get" onsubmit="if ($j('#locations-searchinput').val() == '{{ placeholder }}') return false; return true;">
 				<p><input id="locations-searchinput" type="text" name="q" value="{{ placeholder }}" onfocus="if (this.value == '{{ placeholder }}') { this.value = ''; }" onblur="if (this.value == '') { this.value = '{{ placeholder }}'; }"> <input type="submit" value="Search"></p>
 			</form>
-			{% endwith %}
 		{% endif %}
 	</div><!--/ #saved-places -->
 

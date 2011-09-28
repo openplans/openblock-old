@@ -21,12 +21,11 @@ from ebpub.db.utils import populate_attributes_if_needed
 from ebpub.utils.bunch import bunch, bunchlong, stride
 from ebpub.metros.allmetros import METRO_LIST, get_metro
 from django import template
-from django.conf import settings
 from django.template.defaultfilters import stringfilter
 from django.template.loader import select_template
-from django.conf import settings
 from ebpub.db.utils import today
 import datetime
+import re
 
 register = template.Library()
 
@@ -267,3 +266,58 @@ register.tag('newsitem_list_by_schema', do_newsitem_list_by_schema)
 def contains(value, arg):
     return arg in value
 register.filter('contains', contains)
+
+
+class SearchPlaceholderNode(template.Node):
+    def __init__(self, prefix, var_name):
+        self.prefix = prefix.strip()
+        self.var_name = var_name.strip()
+
+    def render(self, context):
+        # TODO: get these from database, heavily cached.
+        result = u'address, ZIP, or neighborhood'
+        if self.prefix:
+            result = u'%s %s' % (self.prefix, result)
+        else:
+            # By default we want just the 1st letter forced caps,
+            # and only when there's no prefix.
+            result = result[0].upper() + result[1:]
+        context[self.var_name] = result
+        return ''
+
+def do_search_placeholder(parser, token):
+    """
+    Stores in the context a list of LocationTypes,
+    plus 'address', with an optional prefix.
+
+    Useful for search form widgets where we want to use this as
+    placeholder text on the input, and need to write the same string
+    over and over because javascript will be checking for the
+    placeholder text, restoring it, etc.
+
+    Example::
+
+      {% set_search_placeholder "Some prefix" as some_var %}
+      <p>{{ some_var }}</p>
+
+    This will output in the template::
+
+      <p>Some prefix address, ZIP, or neighborhood</p>
+    """
+    # In Django 1.4, this could become an assignment_tag as per
+    # https://docs.djangoproject.com/en/dev/howto/custom-template-tags/#howto-custom-template-tags-assignment-tags
+    # This version uses a regular expression to parse tag contents.
+    try:
+        # Splitting by None == splitting by spaces.
+        tag_name, arg = token.contents.split(None, 1)
+    except ValueError:
+        raise template.TemplateSyntaxError("%r tag requires arguments" % token.contents.split()[0])
+    m = re.search(r'(.*?) as (\w+)', arg)
+    if not m:
+        raise template.TemplateSyntaxError("%r tag had invalid arguments" % tag_name)
+    prefix, var_name = m.groups()
+    if not (prefix[0] == prefix[-1] and prefix[0] in ('"', "'")):
+        raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
+    return SearchPlaceholderNode(prefix[1:-1], var_name)
+
+register.tag('set_search_placeholder', do_search_placeholder)

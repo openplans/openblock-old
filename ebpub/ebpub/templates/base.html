@@ -50,7 +50,7 @@ var $j = $;
 			  {% endif %}
 			</div><!--/ #userlinks -->
 			{% endblock userlinks %}
-			{% with "Search for address, zip or neighborhood" as placeholder %}
+			{% set_search_placeholder "Search for" as placeholder %}
 			<form action="/search/" id="globalsearch" onsubmit="if ($j('#searchinput').val() == '{{ placeholder }}') return false; return true;">
 				<p>
 					<label for="searchinput">{{ placeholder}}</label>
@@ -58,7 +58,6 @@ var $j = $;
 					<button type="submit">Go</button>
 				</p>
 			</form>
-			{% endwith %}
 		</div><!--/ #globalnav -->
 		<!-- begin block breadcrumbs -->
 		{% block breadcrumbs %}
