@@ -312,9 +312,9 @@ class NewsItemListDetailScraper(ListDetailScraper):
         or None.
         """
 
-        # try to lookup the adress, if it is ambiguous, attempt to use 
+        # Try to lookup the adress, if it is ambiguous, attempt to use 
         # any provided zipcode information to resolve the ambiguity. 
-        # the zipcode is not included in the initial pass because it 
+        # The zipcode is not included in the initial pass because it 
         # is often too picky yeilding no results when there is a 
         # legitimate nearby zipcode identified in either the address
         # or street number data.
