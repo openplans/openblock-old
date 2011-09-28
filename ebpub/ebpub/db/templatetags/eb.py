@@ -21,6 +21,7 @@ from ebpub.db.utils import populate_attributes_if_needed
 from ebpub.utils.bunch import bunch, bunchlong, stride
 from ebpub.metros.allmetros import METRO_LIST, get_metro
 from django import template
+from django.core.cache import cache
 from django.template.defaultfilters import stringfilter
 from django.template.loader import select_template
 from ebpub.db.utils import today
@@ -269,13 +270,33 @@ register.filter('contains', contains)
 
 
 class SearchPlaceholderNode(template.Node):
+    """
+    See do_search_placeholder()
+    """
     def __init__(self, prefix, var_name):
         self.prefix = prefix.strip()
         self.var_name = var_name.strip()
 
     def render(self, context):
-        # TODO: get these from database, heavily cached.
-        result = u'address, ZIP, or neighborhood'
+        cachekey = 'SearchPlaceholderNode'
+        result = cache.get(cachekey)
+        if result is None:
+            from ebpub.db.models import LocationType
+            types = LocationType.objects.filter(is_significant=True)
+            types = list(types.order_by('name').values('name'))
+            names = ['address'] + [loctype['name'].lower() for loctype in types]
+            if len(names) > 3:
+                # like "foo, bar, baz, ..."
+                result = u'%s, ...' % (u', '.join(names[:3]))
+            elif len(names) > 2:
+                # like "foo, bar, or baz"
+                result = u'%s, or %s' % (u', '.join(names[:-1]), names[-1])
+            elif len(names) == 2:
+                # like "foo or bar"
+                result = u'%s or %s' % names
+            else:
+                result = names[0]
+            cache.set(cachekey, result, 60 * 60)
         if self.prefix:
             result = u'%s %s' % (self.prefix, result)
         else:
