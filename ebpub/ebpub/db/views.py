@@ -922,6 +922,7 @@ def street_list(request, city_slug):
         'street_list': streets,
         'city': city,
         'bodyclass': 'street-list',
+        'example_loctype': LocationType.objects.get(slug=settings.DEFAULT_LOCTYPE_SLUG).plural_name,
     }
     context['breadcrumbs'] = breadcrumbs.street_list(context)
     return eb_render(request, 'db/street_list.html', context)
