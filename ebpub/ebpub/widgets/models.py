@@ -61,7 +61,7 @@ class Widget(models.Model):
     def target_id(self):
         return "obw:%s" % self.slug
 
-    def fetch_items(self, count=None):
+    def fetch_items(self, count=None, expire=True):
         """
         fetches items that should be displayed by 
         the widget.  This encorporates 'pinned' items
@@ -84,8 +84,10 @@ class Widget(models.Model):
                 expired_pinned.append(pi)
             else: 
                 pinned_items.append(pi)
-        for pi in expired_pinned: 
-            pi.delete()
+
+        if expire:
+            for pi in expired_pinned: 
+                pi.delete()
         
         # If any of the pinned items are already in the list 
         # of items, remove them so that they will not appear 
