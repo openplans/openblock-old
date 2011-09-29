@@ -77,7 +77,7 @@ class Widget(models.Model):
         # widget.  Delete any that have expired.
         expired_pinned = []
         pinned_items = []
-        for pi in PinnedItem.objects.get(widget=self).all(): 
+        for pi in PinnedItem.objects.filter(widget=self).all(): 
             # did it expire? 
             if pi.expiration_date is not None and pi.expiration_date < now:
                 # get rid of it if so
