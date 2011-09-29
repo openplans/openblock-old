@@ -30,6 +30,35 @@ def make_street_pretty_name(street, suffix):
     return street_name
 
 def make_block_number(left_from_num, left_to_num, right_from_num, right_to_num):
+    """
+    Given 4 numbers (left low, left high, right low, right high),
+    returns a string indicating the range of lowest to highest.
+    "lowest" and "highest" are derived as per the make_block_numbers() function.
+
+    >>> make_block_number(1, 9, 2, 3)
+    u'1-9'
+    >>> make_block_number(1, 1, 1, 1)
+    u'1'
+    >>> make_block_number(9, 8, 7, 6)
+    u'6-9'
+
+    Zero is not considered part of a range:
+    >>> make_block_number(0, 1, 2, 3)
+    u'1-3'
+
+    None is ignored, but one non-zero number must be provided:
+    >>> make_block_number(None, None, 1, None)
+    u'1'
+    >>> make_block_number(None, None, None, None)
+    Traceback (most recent call last):
+    ...
+    ValueError: No non-None addresses provided
+    >>> make_block_number(0, 0, 0, 0)
+    Traceback (most recent call last):
+    ...
+    ValueError: No non-zero numeric addresses provided in [0, 0, 0, 0]
+
+    """
     lo_num, hi_num = make_block_numbers(left_from_num, left_to_num,
                                         right_from_num, right_to_num)
     if lo_num == hi_num:
@@ -43,15 +72,94 @@ def make_block_number(left_from_num, left_to_num, right_from_num, right_to_num):
     return number
 
 def make_block_numbers(left_from_num, left_to_num, right_from_num, right_to_num):
-    nums = [x for x in (left_from_num, left_to_num, right_from_num, right_to_num) if x is not None]
+    """
+    Given four numbers, or strings containing numbers, returns the min
+    and max as a pair.
+
+    Because the input is possibly messy and quirky, there are some
+    subtleties in what's considered the min and max, see below.  In
+    all cases, the motivation is to assume that the input is spelled
+    correctly for human reading, no matter how unlikely; but for
+    sorting we assume we want a single non-negative number.
+
+    >>> make_block_numbers(10,9,8,7)
+    (7, 10)
+
+    >>> make_block_numbers(1,1,1,1)
+    (1, 1)
+
+    The first quirk is that zero is ignored:
+    >>> make_block_numbers(0,1,2,3)
+    (1, 3)
+
+    Another quirk is that negative numbers are compared as if positive:
+    >>> make_block_numbers(1000, 0, -9999, 0)
+    (1000, -9999)
+
+    None is ignored, but at least one number must be provided:
+
+    >>> make_block_numbers(None, None, None, None)
+    Traceback (most recent call last):
+    ...
+    ValueError: No non-None addresses provided
+
+    >>> make_block_numbers(None, None, None, 1)
+    (1, 1)
+
+    Handles strings that look like integers too. Note that they
+    are returned unchanged:
+
+    >>> make_block_numbers('1000', '0', u'9999', u'')
+    ('1000', u'9999')
+
+    It also, *for sorting purposes*, tries to ignore any non-numeric
+    characters, and if one looks like an address range (like "10-20"),
+    it compares only the absolute value of the first numeric part -
+    but again, returns them unchanged.  For example, this sorts them
+    as if they were 99 and 33 respectively:
+
+    >>> make_block_numbers('blah 99 blah', '33-44-55', '', '')
+    ('33-44-55', 'blah 99 blah')
+
+    This also sorts them as if they were 33 and 99 (not -99):
+
+    >>> make_block_numbers('33-44-55', '-99-123', '', '')
+    ('33-44-55', '-99-123')
+
+    >>> make_block_numbers('a', 'b', 'c', 'd')
+    Traceback (most recent call last):
+    ...
+    ValueError: No non-zero numeric addresses provided in ['a', 'b', 'c', 'd']
+
+    >>> make_block_numbers('a', 'b', 'c', 'd9d')
+    ('d9d', 'd9d')
+    """
+    nums = [x for x in (left_from_num, left_to_num, right_from_num, right_to_num)
+            if x not in (None, '', u'')]
     if not nums:
         # This used to raise ValueError, maybe accidentally, because
         # min([]) does so. Preserving that for backward compatibility,
         # not sure if it matters.
         raise ValueError("No non-None addresses provided")
-    lo_num = min(nums)
-    hi_num = max(nums)
-    return (lo_num, hi_num)
+    # Note that we may get passed strings with non-numeric junk.
+    # In that case, try to grab out the numbers for sorting.
+    sortable = []
+    for x in nums:
+        if isinstance(x, basestring):
+            maybe = re.search('(\d+)', x)
+            if maybe:
+                sortkey = int(maybe.group(1))
+                if sortkey:
+                    sortable.append((sortkey, x))
+        else:
+            if x:
+                sortable.append((abs(x), x))
+    if sortable:
+        sortable.sort()
+        return (sortable[0][1], sortable[-1][1])
+    else:
+        raise ValueError("No non-zero numeric addresses provided in %s" % nums)
+
 
 def make_pretty_directional(directional):
     """
