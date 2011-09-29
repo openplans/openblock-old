@@ -20,6 +20,7 @@
 import sys
 import optparse
 from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.gdal.error import OGRIndexError
 from ebdata.parsing import dbf
 from ebpub.streets.blockimport.base import BlockImporter
 
@@ -143,7 +144,10 @@ class TigerImporter(BlockImporter):
         fields = places_layer.fields
         self.places = places = {}
         for feature in places_layer:
-            fips = feature.get('PLACEFP')
+            try:
+                fips = feature.get('PLACEFP10')  # 2010 Census files.
+            except OGRIndexError:
+                fips = feature.get('PLACEFP')  # Older Census files.
             values = dict(zip(fields, map(feature.get, fields)))
             places[fips] = values
         self.filter_city = filter_city and filter_city.upper() or None
@@ -186,17 +190,21 @@ class TigerImporter(BlockImporter):
             fid = feature.get('TFID' + side)
             if fid in self.faces_db:
                 face = self.faces_db[fid]
-                pid = face['PLACEFP']
+                # Handle both 2010 and older census files.
+                pid = face.get('PLACEFP10') or face['PLACEFP']
                 if pid in self.places:
                     place = self.places[pid]
-                    city = place['NAME']
+                    # Handle both 2010 and earlier Census files.
+                    city = place.get('NAME10') or place['NAME']
         return city
 
     def _get_state(self, feature, side):
         fid = feature.get('TFID' + side)
         if fid in self.faces_db:
             face = self.faces_db[fid]
-            return STATE_FIPS[face['STATEFP']][0]
+            # Handle both 2010 and older census files.
+            state_fip = STATE_FIPS[face.get('STATEFP10') or face['STATEFP']]
+            return state_fip[0]
         else:
             return ''
 
