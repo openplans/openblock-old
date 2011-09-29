@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.contrib.gis.db import models
 from ebpub.db.models import NewsItem, Location, Schema
-
+import datetime
+from operator import attrgetter
 
 class TemplateManager(models.GeoManager):
 
@@ -60,10 +61,53 @@ class Widget(models.Model):
     def target_id(self):
         return "obw:%s" % self.slug
 
-    def fetch_items(self):
-        return self._item_query()
+    def fetch_items(self, count=None, expire=True):
+        """
+        fetches items that should be displayed by 
+        the widget.  This encorporates 'pinned' items
+        and performs expiration on them.
+        """
+        if count is None:
+            count = self.max_items
+        
+        widget_items = list(self.raw_item_query(count=count))
+        now = datetime.datetime.now()
+        
+        # Iterate through any 'pinned' items for this 
+        # widget.  Delete any that have expired.
+        expired_pinned = []
+        pinned_items = []
+        for pi in PinnedItem.objects.filter(widget=self).all(): 
+            # did it expire? 
+            if pi.expiration_date is not None and pi.expiration_date < now:
+                # get rid of it if so
+                expired_pinned.append(pi)
+            else: 
+                pinned_items.append(pi)
 
-    def _item_query(self):
+        if expire:
+            for pi in expired_pinned: 
+                pi.delete()
+        
+        # If any of the pinned items are already in the list 
+        # of items, remove them so that they will not appear 
+        # twice.
+        pinned_ids = set([pi.news_item.id for pi in pinned_items])
+        widget_items = [x for x in widget_items if x.id not in pinned_ids]
+        
+        # Insert pinned items into the list of items
+        pinned_items.sort(key=attrgetter('item_number'))
+        for pi in pinned_items:
+            widget_items.insert(pi.item_number, pi.news_item)
+        
+        return widget_items[:count]
+
+    def raw_item_query(self, start=0, count=None):
+        """
+        gets items based on the filters set 
+        on the widget. This does not include
+        'pinned' items. 
+        """
         # TODO integrate with other ways to search for items ?
         query = NewsItem.objects.all()
         
@@ -73,7 +117,10 @@ class Widget(models.Model):
         if self.location:
             query = query.filter(newsitemlocation__location=self.location)
         query = query.order_by('-item_date')
-        query = query[:self.max_items]
+        
+        if count is None: 
+            count = self.max_items
+        query = query[start:count]
         return query
 
     def embed_code(self):
@@ -82,17 +129,14 @@ class Widget(models.Model):
     def transclude_url(self):
         return "http://%s/widgets/%s" % (settings.EB_DOMAIN, self.slug)
 
-# class PinnedItem(models.Model):
-#     """
-#     """
-#     item_number = models.IntegerField()
-#     news_item = models.ForeignKey(NewsItem)
-#     widget = models.ForeignKey(Widget)
-
-# class BannedItem(models.Model):
-#     """
-#     """
-#     item_number = models.IntegerField()
-#     news_item = models.ForeignKey(NewsItem)
-#     widget = models.ForeignKey(Widget)
+class PinnedItem(models.Model):
+    """
+    represents an item that will be "pinned" in 
+    a certain place in a widget (ie the 5th item
+    regardless of what the query produces)
+    """
+    widget = models.ForeignKey(Widget)
+    item_number = models.IntegerField()
+    news_item = models.ForeignKey(NewsItem)
+    expiration_date = models.DateTimeField(null=True)
 
