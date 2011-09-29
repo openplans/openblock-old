@@ -159,6 +159,9 @@ SITE_ID = 1
 # CUSTOM EBPUB & OBDEMO SETTINGS #
 ##################################
 
+# Which LocationType to show when you visit /locations
+DEFAULT_LOCTYPE_SLUG = 'neighborhoods'
+required_settings.append('DEFAULT_LOCTYPE_SLUG')
 
 POSTGIS_TEMPLATE = 'template_postgis'
 
@@ -369,24 +372,23 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
     'formatters': {
-        'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
-            },
         'simple': {
             'format': '%(levelname)s %(module)s: %(message)s'
             },
-        'debug': {'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s:%(pathname)s:%(lineno)d %(message)s'
-                  },
-        'verbose': {'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s: % %(message)s'
-                    },
+        'debug': {
+            'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s:%(pathname)s:%(lineno)d %(message)s'
+            },
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s P: (process)d T: %(thread)d in %(module)s: %(message)s'
+            },
     },
     'handlers': {
         'null': {
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'django.utils.log.NullHandler',
             },
         'console':{
-            'level':'DEBUG',
+            'level':'INFO',
             'class':'logging.StreamHandler',
             'formatter': 'simple'
             },

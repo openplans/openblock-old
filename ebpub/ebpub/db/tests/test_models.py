@@ -20,7 +20,7 @@
 Unit tests for db.models.
 """
 
-from django.test import TestCase
+from ebpub.utils.django_testcase_backports import TestCase
 from ebpub.db.models import NewsItem, Attribute
 import datetime
 
@@ -34,19 +34,15 @@ class DatabaseExtensionsTestCase(TestCase):
 
         # Turn DEBUG on and reset queries, so we can keep track of queries.
         # This is hackish.
-        from django.conf import settings
         from django.db import connection
         connection.queries = []
-        settings.DEBUG = True
-
-        ni = NewsItem.objects.get(id=1)
-        self.assertEquals(ni.attributes['case_number'], u'case number 1')
-        self.assertEquals(ni.attributes['crime_date'], datetime.date(2006, 9, 19))
-        self.assertEquals(ni.attributes['crime_time'], None)
-        self.assertEquals(len(connection.queries), 3)
-
-        connection.queries = []
-        settings.DEBUG = False
+        with self.settings(DEBUG=True):
+            ni = NewsItem.objects.get(id=1)
+            self.assertEquals(ni.attributes['case_number'], u'case number 1')
+            self.assertEquals(ni.attributes['crime_date'], datetime.date(2006, 9, 19))
+            self.assertEquals(ni.attributes['crime_time'], None)
+            self.assertEquals(len(connection.queries), 3)
+            connection.queries = []
 
     def testSetAllAttributesNonDict(self):
         # Setting `attributes` to something other than a dictionary will raise
@@ -139,18 +135,14 @@ class DatabaseExtensionsTestCase(TestCase):
         # code accessed the NewsItem.attributes attribute.
 
         # Turn DEBUG on and reset queries, so we can keep track of queries.
-        # This is hackish.
-        from django.conf import settings
         from django.db import connection
         connection.queries = []
-        settings.DEBUG = True
-
-        ni = NewsItem.objects.get(id=1)
-        ni.attributes['case_number'] = u'Hello'
-        self.assertEquals(len(connection.queries), 3)
+        with self.settings(DEBUG=True):
+            ni = NewsItem.objects.get(id=1)
+            ni.attributes['case_number'] = u'Hello'
+            self.assertEquals(len(connection.queries), 3)
 
         connection.queries = []
-        settings.DEBUG = False
 
     def testBlankAttributes(self):
         # If a NewsItem has no attributes set, accessing

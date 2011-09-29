@@ -22,6 +22,7 @@ obdemo-specific stuff we might need in templates.
 
 from django.conf import settings
 from django.utils import simplejson
+from ebpub.db.utils import today
 
 def _get_map_media():
     from olwidget.widgets import Map
@@ -46,4 +47,5 @@ def map_context(request):
             'MAP_CUSTOM_BASE_LAYERS': _get_extra_layers,
             'MAP_BASELAYER_TYPE': settings.MAP_BASELAYER_TYPE,
             'alerts_installed': 'ebpub.alerts' in settings.INSTALLED_APPS,
+            'today': today(),
             }

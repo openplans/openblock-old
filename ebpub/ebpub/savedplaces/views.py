@@ -32,7 +32,6 @@ def ajax_save_place(request):
         raise http.Http404('Missing pid')
     if request.user.is_anonymous():
         raise http.Http404('Not logged in')
-
     place, block_radius, xy_radius = parse_pid(request.POST['pid'])
     kwargs = {'user_id': request.user.id}
     if isinstance(place, Block):
@@ -45,18 +44,20 @@ def ajax_save_place(request):
     # Validate that the SavedPlace hasn't already been created for this user,
     # to avoid duplicates.
     try:
-        sp = SavedPlace.objects.get(**kwargs)
+        SavedPlace.objects.get(**kwargs)
     except SavedPlace.DoesNotExist:
         pass
     else:
         return http.HttpResponse('0') # Already exists.
 
-    SavedPlace.objects.create(
+    savedplace = SavedPlace(
         user_id=request.user.id,
         block=block,
         location=location,
         nickname=request.POST.get('nickname', '').strip(),
     )
+    savedplace.full_clean()
+    savedplace.save()
     return http.HttpResponse('1')
 
 def ajax_remove_place(request):

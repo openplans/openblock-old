@@ -41,7 +41,7 @@ class BaseTestCase(TestCase):
         logger = logging.getLogger('django.request')
         self._previous_level = logger.getEffectiveLevel()
         logger.setLevel(logging.ERROR)
-        
+
         from ebpub.metros.allmetros import get_metro
         metro = get_metro()        
         self.old_multiple = metro['multiple_cities']
@@ -299,19 +299,21 @@ class TestItemSearchAPI(BaseTestCase):
 
     def test_single_item_json(self):
         schema1 = Schema.objects.get(slug='type1')
-        item = _make_items(1, schema1)[0]
-        item.save()
-        id_ = item.id
-        response = self.client.get(reverse('single_item_json', kwargs={'id_': id_}))
-        self.assertEqual(response.status_code, 200)
-        out = simplejson.loads(response.content)
-        self.assertEqual(out['type'], 'Feature')
-        self.assert_('geometry' in out.keys())
-        self.assertEqual(out['geometry']['type'], 'Point')
-        self.assert_('properties' in out.keys())
-        self.assertEqual(out['properties']['title'], item.title)
-        self.assertEqual(out['properties']['description'], item.description)
-        self.assertEqual(out['properties']['type'], schema1.slug)
+        zone = 'US/Pacific'
+        with self.settings(TIME_ZONE=zone):
+            item = _make_items(1, schema1)[0]
+            item.save()
+            id_ = item.id
+            response = self.client.get(reverse('single_item_json', kwargs={'id_': id_}))
+            self.assertEqual(response.status_code, 200)
+            out = simplejson.loads(response.content)
+            self.assertEqual(out['type'], 'Feature')
+            self.assert_('geometry' in out.keys())
+            self.assertEqual(out['geometry']['type'], 'Point')
+            self.assert_('properties' in out.keys())
+            self.assertEqual(out['properties']['title'], item.title)
+            self.assertEqual(out['properties']['description'], item.description)
+            self.assertEqual(out['properties']['type'], schema1.slug)
 
 
     def test_items_nofilter(self):
@@ -319,310 +321,331 @@ class TestItemSearchAPI(BaseTestCase):
         schema1 = Schema.objects.get(slug='type1')
         schema2 = Schema.objects.get(slug='type2')
         items = []
-        items += _make_items(5, schema1)
-        items += _make_items(5, schema2)
-        for item in items:
-            item.save()
+        zone = 'US/Eastern'
+        with self.settings(TIME_ZONE=zone):
+            items += _make_items(5, schema1)
+            items += _make_items(5, schema2)
+            for item in items:
+                item.save()
 
-        response = self.client.get(reverse('items_json'))
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
+            response = self.client.get(reverse('items_json'))
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
 
-        assert len(ritems['features']) == len(items)
+            assert len(ritems['features']) == len(items)
 
     def test_items_atom_nofilter(self):
-        schema1 = Schema.objects.get(slug='type1')
-        schema2 = Schema.objects.get(slug='type2')
-        items = _make_items(5, schema1) + _make_items(5, schema2)
-        for item in items:
-            item.save()
-        response = self.client.get(reverse('items_atom'))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response['content-type'], 'application/atom+xml')
-        feed = feedparser.parse(response.content)
-        self.assertEqual(feed['feed']['title'], u'openblock news item atom feed')
-        self.assertEqual(len(feed['entries']), len(items))
-        assert self._items_exist_in_xml_result(items, response.content)
+        zone = 'America/Chicago'
+        with self.settings(TIME_ZONE=zone):
+            schema1 = Schema.objects.get(slug='type1')
+            schema2 = Schema.objects.get(slug='type2')
+            items = _make_items(5, schema1) + _make_items(5, schema2)
+            for item in items:
+                item.save()
+            response = self.client.get(reverse('items_atom'))
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response['content-type'], 'application/atom+xml')
+            feed = feedparser.parse(response.content)
+            self.assertEqual(feed['feed']['title'], u'openblock news item atom feed')
+            self.assertEqual(len(feed['entries']), len(items))
+            assert self._items_exist_in_xml_result(items, response.content)
 
     def test_items_filter_schema(self):
-        # create a few items of each of two schema types
-        schema1 = Schema.objects.get(slug='type1')
-        schema2 = Schema.objects.get(slug='type2')
-        items1 = _make_items(5, schema1)
-        items2 = _make_items(5, schema2)
-        for item in items1 + items2:
-            item.save()
+        zone = 'Asia/Dubai'
+        with self.settings(TIME_ZONE=zone):
+            # create a few items of each of two schema types
+            schema1 = Schema.objects.get(slug='type1')
+            schema2 = Schema.objects.get(slug='type2')
+            items1 = _make_items(5, schema1)
+            items2 = _make_items(5, schema2)
+            for item in items1 + items2:
+                item.save()
 
-        # query for only the second schema
-        response = self.client.get(reverse('items_json') + "?type=type2")
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
+            # query for only the second schema
+            response = self.client.get(reverse('items_json') + "?type=type2")
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
 
-        assert len(ritems['features']) == len(items2)
-        for item in ritems['features']:
-            assert item['properties']['type'] == 'type2'
-        assert self._items_exist_in_result(items2, ritems)
+            assert len(ritems['features']) == len(items2)
+            for item in ritems['features']:
+                assert item['properties']['type'] == 'type2'
+            assert self._items_exist_in_result(items2, ritems)
 
     def test_items_atom_filter_schema(self):
-        # create a few items of each of two schema types
-        schema1 = Schema.objects.get(slug='type1')
-        schema2 = Schema.objects.get(slug='type2')
-        items1 = _make_items(5, schema1)
-        items2 = _make_items(5, schema2)
-        for item in items1 + items2:
-            item.save()
+        zone = 'Australia/North'
+        with self.settings(TIME_ZONE=zone):
+            # create a few items of each of two schema types
+            schema1 = Schema.objects.get(slug='type1')
+            schema2 = Schema.objects.get(slug='type2')
+            items1 = _make_items(5, schema1)
+            items2 = _make_items(5, schema2)
+            for item in items1 + items2:
+                item.save()
 
-        # query for only the second schema
-        response = self.client.get(reverse('items_atom') + "?type=type2")
-        self.assertEqual(response.status_code, 200)
-        feed = feedparser.parse(response.content)
+            # query for only the second schema
+            response = self.client.get(reverse('items_atom') + "?type=type2")
+            self.assertEqual(response.status_code, 200)
+            feed = feedparser.parse(response.content)
 
-        assert len(feed['entries']) == len(items2)
-        for item in feed['entries']:
-            # Yay feedparser, we don't know how it will spell the
-            # openblock:type element, varies depending on... something.
-            assert item.get('openblock_type', item.get('type')) == u'type2'
+            assert len(feed['entries']) == len(items2)
+            for item in feed['entries']:
+                # Yay feedparser, we don't know how it will spell the
+                # openblock:type element, varies depending on... something.
+                assert item.get('openblock_type', item.get('type')) == u'type2'
 
 
     def test_extension_fields_json(self):
-        schema = Schema.objects.get(slug='test-schema')
+        zone = 'Europe/Malta'
+        with self.settings(TIME_ZONE=zone):
+            schema = Schema.objects.get(slug='test-schema')
 
-        ext_vals = {
-            'varchar': ('This is a varchar', 'This is a varchar'), 
-            'date': (datetime.date(2001, 01, 02), '2001-01-02'),
-            'time': (datetime.time(hour=10, minute=11, second=12), 
-                     '10:11:12-08:00'),
-            'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
-                         '2001-01-02T10:11:12-08:00'),
-            'bool': (True, True),
-            'int': (7, 7),
-            'lookup': ('7701,7700', ['Lookup 7701 Name', 'Lookup 7700 Name']),
-        }
+            ext_vals = {
+                'varchar': ('This is a varchar', 'This is a varchar'), 
+                'date': (datetime.date(2001, 01, 02), '2001-01-02'),
+                'time': (datetime.time(hour=10, minute=11, second=12), 
+                         '10:11:12-08:00'),
+                'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
+                             '2001-01-02T10:11:12-08:00'),
+                'bool': (True, True),
+                'int': (7, 7),
+                'lookup': ('7701,7700', ['Lookup 7701 Name', 'Lookup 7700 Name']),
+            }
 
-        items = _make_items(5, schema)
-        for item in items:
-            item.save()
-            for k,v in ext_vals.items():
-                item.attributes[k] = v[0]
+            items = _make_items(5, schema)
+            for item in items:
+                item.save()
+                for k,v in ext_vals.items():
+                    item.attributes[k] = v[0]
 
-        response = self.client.get(reverse('items_json'))
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
+            response = self.client.get(reverse('items_json'))
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
 
-        self.assertEqual(len(ritems['features']), len(items))
-        for item in ritems['features']:
-            for k, v in ext_vals.items():
-                self.assertEqual(item['properties'][k], v[1])
-        assert self._items_exist_in_result(items, ritems)
+            self.assertEqual(len(ritems['features']), len(items))
+            for item in ritems['features']:
+                for k, v in ext_vals.items():
+                    self.assertEqual(item['properties'][k], v[1])
+            assert self._items_exist_in_result(items, ritems)
 
 
     def test_extension_fields_atom(self):
-        schema = Schema.objects.get(slug='test-schema')
-        ext_vals = {
-            'varchar': ('This is a varchar', 'This is a varchar'), 
-            'date': (datetime.date(2001, 01, 02), '2001-01-02'),
-            'time': (datetime.time(hour=10, minute=11, second=12), 
-                     '10:11:12-08:00'),
-            'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
-                         '2001-01-02T10:11:12-08:00'),
-            'bool': (True, 'True'),
-            'int': (7, '7'),
-            'lookup': ('7700,7701', 'Lookup 7700 Name'),  # only check 1
-        }
+        zone = 'Pacific/Fiji'
+        with self.settings(TIME_ZONE=zone):
+            schema = Schema.objects.get(slug='test-schema')
+            ext_vals = {
+                'varchar': ('This is a varchar', 'This is a varchar'), 
+                'date': (datetime.date(2001, 01, 02), '2001-01-02'),
+                'time': (datetime.time(hour=10, minute=11, second=12), 
+                         '10:11:12-08:00'),
+                'datetime': (datetime.datetime(2001, 01, 02, hour=10, minute=11, second=12),
+                             '2001-01-02T10:11:12-08:00'),
+                'bool': (True, 'True'),
+                'int': (7, '7'),
+                'lookup': ('7700,7701', 'Lookup 7700 Name'),  # only check 1
+            }
 
-        items = _make_items(5, schema)
-        for item in items:
-            item.save()
-            for k,v in ext_vals.items():
-                item.attributes[k] = v[0]
+            items = _make_items(5, schema)
+            for item in items:
+                item.save()
+                for k,v in ext_vals.items():
+                    item.attributes[k] = v[0]
 
-        response = self.client.get(reverse('items_atom'))
-        self.assertEqual(response.status_code, 200)
+            response = self.client.get(reverse('items_atom'))
+            self.assertEqual(response.status_code, 200)
 
-        # Darn feedparser throws away nested extension elements. Gahhh.
-        # Okay, let's parse the old-fashioned way.
-        from lxml import etree
-        root = etree.fromstring(response.content)
-        ns = {'atom': 'http://www.w3.org/2005/Atom',
-              'openblock': 'http://openblock.org/ns/0'}
+            # Darn feedparser throws away nested extension elements. Gahhh.
+            # Okay, let's parse the old-fashioned way.
+            from lxml import etree
+            root = etree.fromstring(response.content)
+            ns = {'atom': 'http://www.w3.org/2005/Atom',
+                  'openblock': 'http://openblock.org/ns/0'}
 
-        entries = root.xpath('//atom:entry', namespaces=ns)
-        assert len(entries) == len(items)
-        for entry in entries:
-            for key, value in sorted(ext_vals.items()):
-                attrs = entry.xpath(
-                    'openblock:attributes/openblock:attribute[@name="%s"]' % key,
-                    namespaces=ns)
-                if key == 'lookup':
-                    self.assertEqual(len(attrs), 2)
-                else:
-                    self.assertEqual(len(attrs), 1)
-                self.assertEqual(attrs[0].text, value[1])
-        assert self._items_exist_in_xml_result(items, response.content)
+            entries = root.xpath('//atom:entry', namespaces=ns)
+            assert len(entries) == len(items)
+            for entry in entries:
+                for key, value in sorted(ext_vals.items()):
+                    attrs = entry.xpath(
+                        'openblock:attributes/openblock:attribute[@name="%s"]' % key,
+                        namespaces=ns)
+                    if key == 'lookup':
+                        self.assertEqual(len(attrs), 2)
+                    else:
+                        self.assertEqual(len(attrs), 1)
+                    self.assertEqual(attrs[0].text, value[1])
+            assert self._items_exist_in_xml_result(items, response.content)
 
 
     def test_items_filter_daterange_rfc3339(self):
         import pyrfc3339
         import pytz
-        from django.conf import settings
-        # create some items, they will have
-        # dates spaced apart by one day, newest first
-        schema1 = Schema.objects.get(slug='type1')
-        items = _make_items(4, schema1)
-        for item in items:
-            item.save()
+        zone='US/Pacific'
+        local_tz = pytz.timezone(zone)
+        with self.settings(TIME_ZONE=zone):
+            # create some items, they will have
+            # dates spaced apart by one day, newest first
+            schema1 = Schema.objects.get(slug='type1')
+            items = _make_items(4, schema1)
+            for item in items:
+                item.save()
 
-        # filter out the first and last item by constraining
-        # the date range to the inner two items.
-        # (Use local timezone for consistency with _make_items())
-        local_tz = pytz.timezone(settings.TIME_ZONE)
-        startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=local_tz))
-        enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz))
-        # filter both ends
-        qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        self.assertEqual(len(ritems['features']), 2)
-        assert self._items_exist_in_result(items[1:3], ritems)
+            # filter out the first and last item by constraining
+            # the date range to the inner two items.
+            # (Use local timezone for consistency with _make_items())
+            startdate = pyrfc3339.generate(items[2].pub_date.replace(tzinfo=local_tz))
+            enddate = pyrfc3339.generate(items[1].pub_date.replace(tzinfo=local_tz))
+            # filter both ends
+            qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            self.assertEqual(len(ritems['features']), 2)
+            assert self._items_exist_in_result(items[1:3], ritems)
 
-        # startdate only
-        qs = "?startdate=%s" % startdate
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 3
-        assert self._items_exist_in_result(items[:-1], ritems)
+            # startdate only
+            qs = "?startdate=%s" % startdate
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 3
+            assert self._items_exist_in_result(items[:-1], ritems)
 
-        # enddate only
-        qs = "?enddate=%s" % enddate
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 3
-        assert self._items_exist_in_result(items[1:], ritems)
+            # enddate only
+            qs = "?enddate=%s" % enddate
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 3
+            assert self._items_exist_in_result(items[1:], ritems)
 
     def test_items_filter_daterange(self):
-        # create some items, they will have
-        # dates spaced apart by one day, newest first
-        schema1 = Schema.objects.get(slug='type1')
-        items = _make_items(4, schema1)
-        for item in items:
-            cd = item.item_date
-            item.pub_date = datetime.datetime(year=cd.year, month=cd.month, day=cd.day)
-            item.save()
+        zone = 'UTC'
+        with self.settings(TIME_ZONE=zone):
+            # create some items, they will have
+            # dates spaced apart by one day, newest first
+            schema1 = Schema.objects.get(slug='type1')
+            items = _make_items(4, schema1)
+            for item in items:
+                cd = item.item_date
+                item.pub_date = datetime.datetime(year=cd.year, month=cd.month, day=cd.day)
+                item.save()
 
-        # filter out the first and last item by constraining
-        # the date range to the inner two items
-        startdate = items[2].pub_date.strftime('%Y-%m-%d')
-        enddate = items[1].pub_date.strftime('%Y-%m-%d')
+            # filter out the first and last item by constraining
+            # the date range to the inner two items
+            startdate = items[2].pub_date.strftime('%Y-%m-%d')
+            enddate = items[1].pub_date.strftime('%Y-%m-%d')
 
-        # filter both ends
-        qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 2
-        assert self._items_exist_in_result(items[1:3], ritems)
+            # filter both ends
+            qs = "?startdate=%s&enddate=%s" % (startdate, enddate)
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 2
+            assert self._items_exist_in_result(items[1:3], ritems)
 
-        # startdate only
-        qs = "?startdate=%s" % startdate
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 3
-        assert self._items_exist_in_result(items[:-1], ritems)
+            # startdate only
+            qs = "?startdate=%s" % startdate
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 3
+            assert self._items_exist_in_result(items[:-1], ritems)
 
-        # enddate only
-        qs = "?enddate=%s" % enddate
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 3
-        assert self._items_exist_in_result(items[1:], ritems)
+            # enddate only
+            qs = "?enddate=%s" % enddate
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 3
+            assert self._items_exist_in_result(items[1:], ritems)
 
     def test_items_limit_offset(self):
-        # create a bunch of items
-        schema1 = Schema.objects.get(slug='type1')
-        items = _make_items(10, schema1)
-        for item in items:
-            item.save()
+        zone = 'Europe/Vienna'
+        with self.settings(TIME_ZONE=zone):
+            # create a bunch of items
+            schema1 = Schema.objects.get(slug='type1')
+            items = _make_items(10, schema1)
+            for item in items:
+                item.save()
 
-        # with no query, we should get all the items
-        response = self.client.get(reverse('items_json'))
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == len(items)
-        assert self._items_exist_in_result(items, ritems)
+            # with no query, we should get all the items
+            response = self.client.get(reverse('items_json'))
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == len(items)
+            assert self._items_exist_in_result(items, ritems)
 
-        # limited to 5, we should get the first 5
-        qs = "?limit=5"
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 5
-        assert self._items_exist_in_result(items[:5], ritems)
+            # limited to 5, we should get the first 5
+            qs = "?limit=5"
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 5
+            assert self._items_exist_in_result(items[:5], ritems)
 
-        # offset by 2, we should get the last 8
-        qs = "?offset=2"
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 8
-        assert self._items_exist_in_result(items[2:], ritems)
+            # offset by 2, we should get the last 8
+            qs = "?offset=2"
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 8
+            assert self._items_exist_in_result(items[2:], ritems)
 
-        # offset by 2, limit to 5
-        qs = "?offset=2&limit=5"
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 5
-        assert self._items_exist_in_result(items[2:7], ritems)
+            # offset by 2, limit to 5
+            qs = "?offset=2&limit=5"
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 5
+            assert self._items_exist_in_result(items[2:7], ritems)
 
     def test_items_predefined_location(self):
-        # create a bunch of items
-        schema1 = Schema.objects.get(slug='type1')
-        items1 = _make_items(5, schema1)
-        for item in items1:
-            item.save()
+        zone = 'Europe/Zurich'
+        with self.settings(TIME_ZONE=zone):
+            # create a bunch of items
+            schema1 = Schema.objects.get(slug='type1')
+            items1 = _make_items(5, schema1)
+            for item in items1:
+                item.save()
 
-        # make some items that are centered on a location
-        loc = Location.objects.get(slug='hood-1')
-        pt = loc.location.centroid
-        items2 = _make_items(5, schema1)
-        for item in items1:
-            item.location = pt
-            item.save()
+            # make some items that are centered on a location
+            loc = Location.objects.get(slug='hood-1')
+            pt = loc.location.centroid
+            items2 = _make_items(5, schema1)
+            for item in items1:
+                item.location = pt
+                item.save()
 
-        qs = "?locationid=%s" % cgi.escape("neighborhoods/hood-1")
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 5
-        assert self._items_exist_in_result(items2, ritems)
+            qs = "?locationid=%s" % cgi.escape("neighborhoods/hood-1")
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 5
+            assert self._items_exist_in_result(items2, ritems)
 
 
     def test_items_radius(self):
-        # create a bunch of items
-        schema1 = Schema.objects.get(slug='type1')
-        items1 = _make_items(5, schema1)
-        for item in items1:
-            item.save()
+        zone = 'Asia/Saigon'
+        with self.settings(TIME_ZONE=zone):
+            # create a bunch of items
+            schema1 = Schema.objects.get(slug='type1')
+            items1 = _make_items(5, schema1)
+            for item in items1:
+                item.save()
 
-        # make some items that are centered on a location
-        loc = Location.objects.get(slug='hood-1')
-        pt = loc.location.centroid
-        items2 = _make_items(5, schema1)
-        for item in items1:
-            item.location = pt
-            item.save()
+            # make some items that are centered on a location
+            loc = Location.objects.get(slug='hood-1')
+            pt = loc.location.centroid
+            items2 = _make_items(5, schema1)
+            for item in items1:
+                item.location = pt
+                item.save()
 
-        qs = "?center=%f,%f&radius=10" % (pt.x, pt.y)
-        response = self.client.get(reverse('items_json') + qs)
-        self.assertEqual(response.status_code, 200)
-        ritems = simplejson.loads(response.content)
-        assert len(ritems['features']) == 5
-        assert self._items_exist_in_result(items2, ritems)
+            qs = "?center=%f,%f&radius=10" % (pt.x, pt.y)
+            response = self.client.get(reverse('items_json') + qs)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            assert len(ritems['features']) == 5
+            assert self._items_exist_in_result(items2, ritems)
 
 
     def _items_exist_in_result(self, items, ritems):

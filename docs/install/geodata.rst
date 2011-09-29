@@ -331,6 +331,12 @@ You should also be able to search. In the search bar at top right,
 type in some addresses or intersections that you know should exist,
 and verify that they're found.
 
+.. admonition:: No Blocks?
+
+  If you don't get any blocks, it's possible that the shapefiles you
+  downloaded don't correspond to the geographic area you configured in
+  settings.py.  Double-check that you downloaded the right file, and
+  that your :ref:`metro extent <metro_extent>` covers the same area.
 
 Other Locations: Neighborhoods, Etc.
 ====================================

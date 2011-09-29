@@ -21,11 +21,11 @@ Unit tests for db.views.
 """
 
 from django.core import urlresolvers
-from django.test import TestCase
 from django.utils import simplejson
 from ebpub.db import models
 from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.views import BadAddressException
+from ebpub.utils.django_testcase_backports import TestCase
 import datetime
 import logging
 import mock
@@ -34,18 +34,22 @@ import urllib
 
 class BaseTestCase(TestCase):
 
+    _logger_keys = ('django.request',)
+
     def setUp(self):
         # Don't log 404 warnings, we expect a lot of them during these
         # tests.
-        logger = logging.getLogger('django.request')
-        self._previous_level = logger.getEffectiveLevel()
-        logger.setLevel(logging.ERROR)
+        self._previous_levels = {}
+        for key in self._logger_keys:
+            logger = logging.getLogger(key)
+            self._previous_levels[key] = logger.getEffectiveLevel()
+            logger.setLevel(logging.ERROR)
 
     def tearDown(self):
         # Restore old log level.
-        logger = logging.getLogger('django.request')
-        logger.setLevel(self._previous_level)
-
+        for key in self._logger_keys:
+            logger = logging.getLogger(key)
+            logger.setLevel(self._previous_levels[key])
 
 class ViewTestCase(BaseTestCase):
     "Unit tests for views.py."
@@ -82,11 +86,11 @@ class ViewTestCase(BaseTestCase):
         self.assertContains(response, 'crime title 1')
         self.assertContains(response, 'http://X')
 
-    def test_location_redirect(self):
-        # redirect to neighborhoods by default
-        response = self.client.get('/locations/')
-        self.assertEqual(response.status_code, 301)
-        self.assertEqual(response['Location'], 'http://testserver/locations/neighborhoods/')
+    def test_locationtype_list_redirect(self):
+        with self.settings(DEFAULT_LOCTYPE_SLUG='thingies'):
+            response = self.client.get('/locations/')
+            self.assertEqual(response.status_code, 301)
+            self.assertEqual(response['Location'], 'http://testserver/locations/thingies/')
 
     def test_schema_detail(self):
         response = self.client.get('/crime/')

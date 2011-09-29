@@ -113,6 +113,13 @@ configured :ref:`metro extent <metro_extent>`.
 
 You must set both ``settings.FLICKR_API_KEY`` and ``settings.FLICKR_API_SECRET``.
 
+You must also install a library that it depends on::
+
+  $ $VIRTUAL_ENV/bin/pip install flickrapi
+
+(Note that if :doc:`obdemo` is installed, you should already have this
+library.)
+
 The scraper script is ``PATH/TO/ebdata/scrapers/general/flickr/flickr_retrieval.py``
 and the schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/flickr/photos_schema.json``.
@@ -146,6 +153,11 @@ as it will attempt to load meetups for each zip code in turn.
 
 You will need to get an API key, and set it as ``settings.MEETUP_API_KEY``.
 
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/meetup/meetup_retrieval.py``
+and the schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/meetup/meetup_schema.json``.
+
 This scraper may take hours to run, since Meetup's API has a rate
 limit of 200 requests per hour (returning up to 200 meetups each), and
 a large city may have thousands of meetups every day, and we're trying
@@ -154,11 +166,6 @@ behavior is to run until the API's rate limit is hit, then wait till
 the limit is lifted (typically 1 hour), and repeat until all pages for
 all zip codes have been loaded.  If you'd rather do smaller batches,
 try the ``--help`` option to see what options you have.
-
-The scraper script is ``PATH/TO/ebdata/scrapers/general/meetup/meetup_retrieval.py``
-and the schema can be loaded by doing
-``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/meetup/meetup_schema.json``.
-
 
 Open311 / GeoReport: ebdata.scrapers.general.open311
 ------------------------------------------------------
