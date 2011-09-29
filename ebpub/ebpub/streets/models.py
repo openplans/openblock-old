@@ -366,21 +366,6 @@ class Block(models.Model):
             raise ValidationError(
                 "At least one of left_from_num, left_to_num, right_from_num, and/or right_to_num must be set to a non-empty, non-zero value")
 
-        # Try to fill in any missing numbers from the ones we got.
-        # Maybe we shouldn't be clever here?
-        if l_from is None:
-            logger.debug('left_from_num missing, guessing from other provided numbers')
-            l_from = _first_not_false(r_from, l_to, r_to)
-        if l_to is None:
-            logger.debug('left_to_num missing, guessing from other provided numbers')
-            l_to = _first_not_false(r_to)
-        if r_from is None:
-            logger.debug('right_from_num missing, guessing from other provided numbers')
-            r_from = _first_not_false(l_from, r_to, l_to)
-        if r_to is None:
-            logger.debug('right_to_num missing, guessing from other provided numbers')
-            r_to = _first_not_false(l_to)
-
         # Ensure we don't get the order wrong. Fixes #164
         if l_from > l_to:
             logger.debug('left_from_num %s cannot be greater than left_to_num %s, '
