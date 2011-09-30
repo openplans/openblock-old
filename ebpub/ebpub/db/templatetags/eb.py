@@ -293,7 +293,7 @@ class SearchPlaceholderNode(template.Node):
                 result = u'%s, or %s' % (u', '.join(names[:-1]), names[-1])
             elif len(names) == 2:
                 # like "foo or bar"
-                result = u'%s or %s' % names
+                result = u'%s or %s' % tuple(names)
             else:
                 result = names[0]
             cache.set(cachekey, result, 60 * 60)
