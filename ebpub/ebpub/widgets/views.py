@@ -2,10 +2,12 @@ from django.conf import settings
 from django.http import HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import Context, Template
+from django.template.context import RequestContext
 from django.utils import simplejson as json
 from ebpub.accounts.utils import login_required
 from ebpub.db.models import NewsItem
 from ebpub.widgets.models import Widget, PinnedItem
+import datetime
 from operator import attrgetter
 import urlparse
 
@@ -107,6 +109,30 @@ def _eval_item_link_template(template, context):
 ###########################################
 
 @login_required
+def widget_admin_list(request):
+    
+    if not request.user.is_superuser == True:
+        return HttpResponse("You must be an adminsitrator to access this function.", status=401)
+    
+    ctx = RequestContext(request, {'widgets': Widget.objects.all()})
+    return render_to_response('widgets/stickylist.html', ctx)
+
+
+@login_required
+def widget_admin(request, slug):
+    """
+    """
+    if not request.user.is_superuser == True:
+        return HttpResponse("You must be an adminsitrator to access this function.", status=401)
+
+    widget = get_object_or_404(Widget.objects, slug=slug)
+    
+    ctx = RequestContext(request, {'widget': widget})
+    return render_to_response('widgets/sticky.html', ctx)
+
+
+
+@login_required
 def ajax_widget_raw_items(request, slug):
     """
     gets a list of 'raw' items in a widget (does not include
@@ -203,7 +229,7 @@ def _get_ajax_widget_pins(request, widget):
     """
     
     pins = list(PinnedItem.objects.filter(widget=widget).all())
-    pins.sort(attrgetter('item_number'))
+    pins.sort(key=attrgetter('item_number'))
     
     item_infos = []
     for pin in pins:
@@ -214,7 +240,7 @@ def _get_ajax_widget_pins(request, widget):
         }
         if pin.expiration_date is not None: 
             item_info['expiration_date'] = pin.expiration_date.date().strftime('%m/%d/%Y')
-            item_info['expiration_time'] = pin.expiration_date.time().strftime('%I:%M %p')
+            item_info['expiration_time'] = pin.expiration_date.time().strftime('%I:%M%p')
         
         item_infos.append(item_info)
 
@@ -244,15 +270,16 @@ def _set_ajax_widget_pins(request, widget):
             try:
                 expiration = datetime.datetime.strptime(pi['expiration_date'], '%m/%d/%Y')
             except:
-                return HttResponse("unable to parse expiration date %s" % pi['expiration_date'], status=400)
+                return HttpResponse("unable to parse expiration date %s" % pi['expiration_date'], status=400)
         if 'expiration_time' in pi: 
             if expiration is None: 
                 return HttpResponse("cannot specify expiration time without expiration date", status=400)
             try:
-                etime = datetime.datetime.strptime(pi['expiration_time'], '%I:%M %p')
+                etime = datetime.datetime.strptime(pi['expiration_time'], '%I:%M%p')
                 expiration = expiration.replace(hours=etime.hours, minutes=etime.minutes)
             except:
                 return HttResponse("unable to parse expiration time %s" % pi['expiration_time'], status=400)
+        if expiration is not None: 
             new_pin.expiration_date = expiration
         new_pins.append(new_pin)
 

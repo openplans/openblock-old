@@ -120,7 +120,7 @@ class Widget(models.Model):
         
         if count is None: 
             count = self.max_items
-        query = query[start:count]
+        query = query[start:start+count]
         return query
 
     def embed_code(self):
@@ -139,4 +139,5 @@ class PinnedItem(models.Model):
     item_number = models.IntegerField()
     news_item = models.ForeignKey(NewsItem)
     expiration_date = models.DateTimeField(null=True)
+    
 

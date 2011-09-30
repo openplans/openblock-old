@@ -1,0 +1,73 @@
+{% extends "base.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
+
+{% block extrahead %}
+
+<script type="text/javascript" src="/scripts/jquery-ui-1.8.16.custom.min.js" charset="utf-8"></script>
+<link rel="stylesheet" src="/styles/smoothness/jquery-ui-1.8.16.custom.css" />
+
+<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
+<script src="/scripts/jquery.calendrical.js"></script>
+<script src="/scripts/json2.js"></script>
+
+<script type="text/javascript" src="/scripts/widgeteditor.js" charset="utf-8"></script>
+<script type="text/javascript">
+	$(document).ready(function() {
+		var widgetSlug = "{{widget.slug}}";
+		var rootURL = "{% url widget_admin_root %}";
+		var we = new WidgetEditor('#widget_editor', widgetSlug, rootURL);
+	});
+</script>
+<style>
+li {
+	font-size: 12px;
+	line-height; 15px;
+}
+
+.available-container,
+.current-container {
+	width: 50%;
+	display: inline;
+	float: left;
+	margin: 0px;
+	padding: 0px;
+}
+.current-items, 
+.available-items {
+	padding: 0px;
+	margin: 10px;
+}
+
+.pinnable-newsitem .delete-button {
+	display: none;
+}
+
+.current-container .pinnable-newsitem .delete-button {
+	display: inline;
+}
+
+
+.pinnable-newsitem .item-id {
+	display: none;
+}
+
+.pinnable-newsitem .expiration {
+	display: none;
+}
+.current-container .pinnable-newsitem .expiration {
+	display: block;
+}
+.pinnable-newsitem .expiration h3 {
+	font-size: 12px;
+}
+
+
+
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Configure Items For {{widget.name}}</h1>
+
+<div id="widget_editor"></div>
+
+{% endblock %}
