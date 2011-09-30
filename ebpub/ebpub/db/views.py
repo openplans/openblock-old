@@ -764,6 +764,9 @@ def schema_filter(request, slug, args_from_url):
                 has_more = True
             else:
                 has_more = False
+            # Note we ordered by -total to get the top values, but since we don't
+            # display the count, that ordering is nonsensical to the user.
+            top_values = sorted(top_values, key = lambda x: x.lookup.name)
             lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
