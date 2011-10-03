@@ -20,7 +20,7 @@ class Migration(DataMigration):
             return ob
 
 
-        schema = _create_or_update('db.schema', {'slug': 'restuarant-inspections'})
+        schema = _create_or_update('db.schema', {'slug': 'restaurant-inspections'}, {})
 
         _create_or_update('db.schemafield', {'schema': schema, 'name': 'details'},
                           {'display': True})
