@@ -31,11 +31,12 @@ class Command(BaseCommand):
         HERE = os.getcwd()
         print "Working directory is", HERE
         OUTDIR = os.path.join(HERE, 'tiger_data')
-        BASEURL='http://www2.census.gov/geo/tiger/TIGER2009/25_MASSACHUSETTS'
-        ZIPS = ("tl_2009_25_place.zip",
-                "25025_Suffolk_County/tl_2009_25025_edges.zip",
-                "25025_Suffolk_County/tl_2009_25025_faces.zip",
-                "25025_Suffolk_County/tl_2009_25025_featnames.zip"
+        BASEURL='ftp://ftp2.census.gov/geo/tiger/TIGER2010'
+        # 25 = MA; 25025 = Suffolk County, MA.
+        ZIPS = ("PLACE/2010/tl_2010_25_place10.zip",
+                "EDGES/tl_2010_25025_edges.zip",
+                "FACES/tl_2010_25025_faces.zip",
+                "FEATNAMES/tl_2010_25025_featnames.zip"
                 )
         makedirs(OUTDIR) or die("couldn't create directory %s" % OUTDIR)
         for fname in ZIPS:
@@ -55,10 +56,10 @@ class Command(BaseCommand):
         # Passing --city means we skip features labeled for other cities.
 
         importer = import_blocks.TigerImporter(
-            '%s/tl_2009_25025_edges.shp' % OUTDIR,
-            '%s/tl_2009_25025_featnames.dbf' % OUTDIR,
-            '%s/tl_2009_25025_faces.dbf' % OUTDIR,
-            '%s/tl_2009_25_place.shp' % OUTDIR,
+            '%s/tl_2010_25025_edges.shp' % OUTDIR,
+            '%s/tl_2010_25025_featnames.dbf' % OUTDIR,
+            '%s/tl_2010_25025_faces.dbf' % OUTDIR,
+            '%s/tl_2010_25_place10.shp' % OUTDIR,
             encoding='utf8',
             filter_bounds=get_default_bounds(),
             filter_city='BOSTON')
