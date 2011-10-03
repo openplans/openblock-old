@@ -47,12 +47,11 @@ def template_context_for_item(newsitem):
         'attributes_by_name': {},
     }
     for att in newsitem.attributes_for_template():
-        if not att.sf.display:
-            continue
 
         attr = {
             'name': att.sf.name,
             'title': att.sf.smart_pretty_name(),
+            'display': att.sf.display
         }
         
         vals = [x['value'] for x in att.value_list()]
