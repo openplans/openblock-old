@@ -1,0 +1,44 @@
+{% extends "db/newsitem_detail.html" %}
+
+{% load eb humanize mapping eb_filter comments eb_json %}
+
+{% block newsitem_detail_attribute_list %}
+	{% for attribute in attribute_list %}
+		<tr>
+			<th>
+				{{ attribute.sf.smart_pretty_name|capfirst }}
+			</th>
+			<td>
+			  {% if attribute.sf.name == "details" %}
+			  {% with attribute.raw_value|json_value as details %}
+			  <ul>
+			  {% for detail in details %}
+			  <li>{{ detail.status }}:
+			      {% if detail.severity %}{{ detail.severity }}:{% endif %}
+				{% if detail.comment %}{{ detail.comment }}:{% endif %}
+				{% if detail.location %}{{ detail.location }}{% endif %}
+				<!-- there isn't any way to deal with Lookups here; it should happen in view code, and there's no type-specific hook for that -->
+			  </li>
+			  {% endfor %}
+			  </ul>
+
+			  {% endwith %}
+			  {% else %}
+				{% if attribute.value_list %}
+				{% for value in attribute.value_list %}
+					{% if value.url %}
+						<a href="{{ value.url }}">{{ value.value }}</a>
+					{% else %}
+						{{ value.value }}
+					{% endif %}
+					{% if value.description %}<p>{{ value.description|safe }}</p>{% endif %}
+					{% if not forloop.last %}{% if not value.description %}<br>{% endif %}{% endif %}
+				{% endfor %}
+				{% else %}
+				None
+				{% endif %}
+			  {% endif %}
+			</td>
+		</tr>
+	{% endfor %}
+{% endblock %}

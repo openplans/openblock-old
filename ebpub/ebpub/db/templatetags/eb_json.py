@@ -27,13 +27,15 @@ from django.utils import simplejson
 register = template.Library()
 
 
-def json_value(value, arg):
+def json_value(value, arg=None):
     data = simplejson.loads(value)
-    try:
-        return data[arg]
-    except KeyError:
-        if settings.DEBUG:
-            raise
-        return None
+    if arg is not None:
+        try:
+            return data[arg]
+        except (KeyError, IndexError):
+            if settings.DEBUG:
+                raise
+            return None
+    return data
 
 register.filter('json_value', json_value)
