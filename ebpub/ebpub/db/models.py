@@ -979,12 +979,14 @@ class LookupManager(models.Manager):
 class Lookup(models.Model):
     schema_field = models.ForeignKey(SchemaField)
     name = models.CharField(max_length=255)
-    # `code` is the optional internal code to use during retrieval.
-    # For example, in scraping Chicago crimes, we use the crime type code
+    code = models.CharField(
+        max_length=255, blank=True,
+        help_text='Optional internal code to use for retrieval if `name` is modified from the original data source, eg. to make `name` prettier.')
+    # ... For example, in scraping Chicago crimes, we use the crime type code
     # to find the appropriate crime type in this table. We can't use `name`
     # in that case, because we've massaged `name` to use a "prettier"
     # formatting than exists in the data source.
-    code = models.CharField(max_length=255, blank=True)
+
     slug = models.SlugField(max_length=32, db_index=True)
     description = models.TextField(blank=True)
 
