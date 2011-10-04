@@ -991,7 +991,9 @@ class Lookup(models.Model):
     objects = LookupManager()
 
     class Meta:
-        unique_together = (('slug', 'schema_field'),)
+        unique_together = (('slug', 'schema_field'),
+                           ('code', 'schema_field'),
+                          )
         ordering = ('slug',)
 
     def natural_key(self):
