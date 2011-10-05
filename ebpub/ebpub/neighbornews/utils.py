@@ -5,9 +5,13 @@ NEIGHBOR_MESSAGE_SLUG = 'neighbor-messages'
 NEIGHBOR_EVENT_SLUG = 'neighbor-events'
 
 
+def app_enabled():
+    from django.conf import settings
+    return 'ebpub.neighbornews' in settings.INSTALLED_APPS
+
 def is_schema_enabled(slug):
     try: 
-        return Schema.objects.filter(slug=slug).values_list('is_public')[0][0]
+        return app_enabled() and Schema.objects.filter(slug=slug).values_list('is_public')[0][0]
     except IndexError:
         return False
 
@@ -23,7 +27,7 @@ def is_neighbornews_enabled():
     enabled.
     """
     return is_neighbor_message_enabled() or is_neighbor_event_enabled()
-    
+
 def if_disabled404(slug):
     def decorator(func):
         def inner(*args, **kw):

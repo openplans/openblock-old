@@ -129,5 +129,12 @@ $j(function() {
 	<div id="apikeys">
 		<h2><a href="{% url api_list_keys %}">Your API Keys</a></h2>
 	</div><!--/ #apikeys -->
+
+	{% if is_neighbornews_enabled %}
+	<div id="neighbornews">
+		<h2><a href="{% url neighbornews_by_user user.id %}">Items You Posted</a></h2>
+	</div><!--/ #apikeys -->
+	{% endif %}
+
 </div>
 {% endblock %}

@@ -81,7 +81,12 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
     if request.GET.get('next'):
         request.session['next_url'] = request.GET['next']
     custom_message = request.session.pop('login_message', custom_message)
-    return eb_render(request, 'accounts/login_form.html', {'form': form, 'custom_message': custom_message})
+    context = {
+        'form': form,
+        'custom_message': custom_message,
+        }
+
+    return eb_render(request, 'accounts/login_form.html', context)
 
 def logout(request):
     if request.method == 'POST':
@@ -118,13 +123,15 @@ def dashboard(request):
     schema_list = []
     for schema in Schema.public_objects.filter(is_special_report=False).order_by('plural_name'):
         schema_list.append({'schema': schema, 'is_hidden': schema.id in hidden_schema_ids})
-
+    from ebpub.neighbornews.utils import is_neighbornews_enabled
     return eb_render(request, 'accounts/dashboard.html', {
         'custom_message': custom_message,
         'user': request.user,
         'alert_list': alert_list,
         'saved_place_list': saved_place_list,
         'schema_list': schema_list,
+        'is_neighbornews_enabled': is_neighbornews_enabled,
+
     })
 
 ####################################

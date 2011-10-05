@@ -6,8 +6,11 @@
 <img class="item-image" src="{{newsitem.attributes.image_url}}" />
 {% endif %}
 
-
 {% if newsitem.newsitemcreator_set.all %}
-Created by {{ newsitem.newsitemcreator_set.all.0.user.first_name }}
+  {% with creator=newsitem.newsitemcreator_set.all.0.user %}
+    Created by
+    <a href="{% url neighbornews_by_user userid=creator.id %}">{{ creator.first_name }}</a>
+  {% endwith %}
 {% endif %}
+
 {%endblock%}

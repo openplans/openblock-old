@@ -128,4 +128,27 @@ def _category_nice_name(cat):
     nice = re.sub('\s+', ' ', nice)
     nice = nice.lower()
     return nice
-    
+
+
+def news_by_user(request, userid):
+    user = User.objects.get(id=userid)
+    is_viewing_self = False
+    if not request.user.is_anonymous():
+        if user.id == request.user.id:
+            is_viewing_self = True
+    items_by_schema = []
+    for slug in ('neighbor-messages', 'neighbor-events'):
+        try:
+            schema = Schema.objects.get(slug=slug)
+        except Schema.DoesNotExist:
+            continue
+        items = NewsItemCreator.objects.filter(user__id=userid, news_item__schema=schema)
+        items = items.select_related().order_by('-news_item__item_date')
+        items = [item.news_item for item in items]
+        items_by_schema.append({'schema': schema, 'items': items})
+
+    context = {'items_by_schema': items_by_schema, 'user': user,
+               'is_viewing_self': is_viewing_self}
+    return eb_render(request, "neighbornews/news_by_user.html", context)
+
+
