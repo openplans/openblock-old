@@ -40,8 +40,10 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
     sleep = 2
 
     def __init__(self, *args, **kwargs):
-        self.city = kwargs.pop('city')
-        self.state = kwargs.pop('state')
+        self.city = kwargs.pop('city', None)
+        if self.city:
+            self.city = self.city.replace(' ', '+')
+        self.state = kwargs.pop('state', None)
         super(SeeClickFixNewsFeedScraper, self).__init__(*args, **kwargs)
 
     def list_pages(self):
@@ -49,7 +51,9 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
         # See API docs at http://help.seeclickfix.com/faqs/api/listing-issues
         max_per_page = 500
         max_pages = 4
-        url = BASE_URL + 'issues.rss?at=%s,+%s&sort=issues.created_at&direction=DESC' % (self.city, self.state)
+        url = BASE_URL + 'issues.rss?sort=issues.created_at&direction=DESC'
+        if self.city and self.state:
+            url = '%s&at=%s,+%s' %  (url, self.city, self.state)
 
         # First, figure out how long it's been since the last scrape;
         # seeclickfix has a 'start' option in hours.  The idea is not
