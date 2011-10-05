@@ -204,8 +204,6 @@ Documentation
 
 * Lots more docs about loading geographic data.
 
-* Document the out-of-the-box scrapers provided by ebdata.
-
 * Document email configuration. (ticket #205)
 
 * Describe differences from Everyblock
@@ -219,36 +217,6 @@ Other
 * Removed some unused template tags (SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN).
 
 * Removed old version of map popups code.
-
-
-OpenBlock 1.0.1 (Sept 7 2011)
-================================
-
-This was a minor bugfix (and docs) release, and was mostly identical to 1.0.0.
-
- * The georss scraper now gets coordinates in the right order on the
-   first try, and populates location_name if it falls back to
-   geocoding.
-
- * Fix date formatting on newsitem-detail page. (ticket #201)
-
- * The ``import_blocks_tiger`` and ``import_blocks_esri`` scripts had
-   a circular import.
-
- * Fix a broken doctest in bootsrap.py.
-
- * Better handling of unicode in ebdata.textmining.
-
-Documentation
--------------
-
- * Added docs for cloning an EC2 instance from our Amazon AMI.
-
- * Document the scrapers that ship out-of-the-box with ebdata.
-
- * Remove nonexistent ``--city`` option from geodata docs.
-
- * Changed docs theme for easier navigation.
 
 
 Older Changes
