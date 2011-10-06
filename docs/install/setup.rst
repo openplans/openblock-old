@@ -101,7 +101,7 @@ You can create an openblock user by running:
 
 Depending on your database security setup, you may need to adjust the instructions, settings of postgres and/or settings of openblock.
 
-Postgres administration is beyond the scope of these instructions, but as a quickstart, you can disable postgres security for local users by changing the the ``pg_hba.conf`` file under ``etc`` (the precise location varies, but for postgresql
+Postgres administration is beyond the scope of these instructions, but as a quickstart, you can disable postgres security for local users by changing the ``pg_hba.conf`` file under ``etc`` (the precise location varies, but for postgresql
 8.4 on Ubuntu it's ``/etc/postgresql/8.4/main/pg_hba.conf``), comment
 out any line that starts with ``local all``, and add a line like
 this:
