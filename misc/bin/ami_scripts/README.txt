@@ -42,10 +42,11 @@ Finally run a script to install openblock, eg.::
 
 
 There's now a little wrapper script that can do all that in one go.
-The four parameters are: hostname, base setup script, db config file,
-install script.  Like so::
+The parameters are: hostname, distro version, global|local, dev|stable, install
+script. Like so::
 
- $ /scenario_runner.sh $EC2HOST  ubuntu1004_64_globalpkgs  ubuntu1004_db_config demo_setup_detailed.sh
+ $ /scenario_runner.sh ubuntu@$EC2HOST  ubuntu1004 local  dev demo_setup_detailed.sh
+
 
 CONFIGURATIONS TO TEST:
 =======================
