@@ -27,9 +27,10 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
-* ``updaterdaemon`` is now deprecated. Use cron or your favorite cron
+* ``updaterdaemon`` is now deprecated. It has not been removed,
+  but we no longer recommend or support its use. Use cron or your favorite cron
   alternative instead for running scrapers regularly. See the
-  "running scrapers" docs.  This allows us to close a bunch of tickets
+  "Running Scrapers" docs.  This allows us to close a bunch of tickets
   (#194, #51, #87, #180, #199, #222).
 
 * removed redundant get_metro_bbox function
