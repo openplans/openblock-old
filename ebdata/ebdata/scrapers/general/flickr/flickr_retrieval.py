@@ -77,7 +77,11 @@ class FlickrScraper(NewsItemListDetailScraper):
             # Ugh, we need to find out how many pages there are, so we parse here
             # and also in parse_list().
             adict = simplejson.loads(page)
-            pages = int(adict['photos']['pages'])
+            try:
+                pages = int(adict['photos']['pages'])
+            except KeyError:
+                self.logger.error("Page content:\n%s" %page)
+                raise StopScraping("Parsing error, missing 'photos' or 'pages', see above.")
             yield page
 
     def parse_list(self, page):
