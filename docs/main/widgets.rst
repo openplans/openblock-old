@@ -139,6 +139,9 @@ Basic Fields
   item.schema.name    The name of the type of item, eg "Restaurant Inspection".
 -------------------- ------------------------------------------------------------
   item.schema.slug    The unique identifier of the item's type.
+-------------------- ------------------------------------------------------------
+  item.intersecting   A mapping of Location Type slugs to Locations
+                      that overlap this item. (TODO: example of how to use this)
 ==================== ============================================================
 
 
