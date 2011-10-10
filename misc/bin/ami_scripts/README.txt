@@ -1,13 +1,60 @@
 .. -*- mode: rst; -*-
 
-Scripts in here are intended just for testing install docs
-remotely on fresh Ubuntu images, eg. on newly cloned EC2 AMIs.
+Scripts in here are for two purposes: creating a clone-able EC2 AMI,
+or for smoke testing of the install docs on fresh Ubuntu images,
+eg. on newly cloned EC2 AMIs.
 
 The scripts should be literal translations of the instructions from
 our docs.  I'm feeling out the approach, not sure yet if these are
-worth keeping around, or what.
+worth keeping around, or what.  Chef or some such would be a more
+robust alternative to a pile of ad-hoc shell scripts.
 
-First create an EC2 instance (micro is big enough) from the
+Creating a Redistributable Image
+================================
+
+Running on Port 80 via Apache
+-----------------------------
+
+First run these commands::
+
+ $ sudo a2enmod expires
+ $ sudo apt-get install libapache2-mod-wsgi
+
+Then try replacing /etc/apache2/sites-available/default with this
+(inserting the ec2 instance's hostname on the ServerName line),
+and then do `sudo /etc/init.d/apache2 reload` ::
+
+ <VirtualHost *:80>
+ 
+ ServerName ....compute-1.amazonaws.com
+
+ Alias /media/ /home/openblock/openblock/src/django/django/contrib/admin/media/
+ Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
+ Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
+ Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
+ Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
+
+ <Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/media/ >
+   # I'm assuming everything here safely has a version-specific URL
+   # whether via django-static or eg. the OpenLayers-2.9.1 directory.
+   ExpiresActive on  
+   ExpiresDefault "now plus 10 years"
+ </Directory>
+ 
+ WSGIScriptAlias / /home/openblock/openblock/src/openblock/obdemo/obdemo/wsgi/obdemo.wsgi
+ WSGIDaemonProcess obdemo_org user=openblock group=www-data processes=10 threads=1
+ WSGIProcessGroup obdemo_org
+ 
+ CustomLog /var/log/apache2/openblock-access.log combined
+ ErrorLog /var/log/apache2/openblock-error.log
+ </VirtualHost>
+
+
+Testing
+=============
+
+First create an EC2 instance (micro is big enough, but large is much
+faster for populating streets data) from the
 appropriate Ubuntu AMI. (Get the AMI numbers from here:
 https://help.ubuntu.com/community/EC2StartersGuide#Official%20Ubuntu%20Amazon%20Machine%20Images%20%28AMIs%29
 You want the EBS storage version, and I generally choose 64-bit.)
@@ -17,6 +64,8 @@ there is an etc/aws.conf script that you can use to create, stop,
 terminate, etc. some instances. Like so::
 
  $ aws start lucid-64
+ $ aws status lucid-64
+ $ aws terminate lucid-64
 
 Modify the config file as you like.
 
@@ -57,11 +106,11 @@ platforms:
 3. ubuntu 11.04 64 (natty) (ami-1aad5273)
 
 
-instructions:
+sets of instructions:
 
 1. demo_setup_quickstart.sh
 2. demo_setup_detailed.sh
-3. custom.rst  (TODO)
+3. custom.rst
 
 lib options:
 
@@ -69,43 +118,4 @@ lib options:
 2. gdal & lxml globally via distro packages (use *_noglobal)
 
 
-
-Running on Port 80 via Apache
-=============================
-
-First run these commands:
-$ sudo a2enmod expires
-$ sudo apt-get install libapache2-mod-wsgi
-
-Then try replacing /etc/apache2/sites-available/default with this
-(inserting the ec2 instance's hostname on the ServerName line),
-and then do `sudo /etc/init.d/apache2 reload` :
-
-
-<VirtualHost *:80>
-
-
-ServerName ....compute-1.amazonaws.com
-
-Alias /media/ /home/openblock/openblock/src/django/django/contrib/admin/media/
-Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
-Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
-Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
-Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
-
-<Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/media/ >
-  # I'm assuming everything here safely has a version-specific URL
-  # whether via django-static or eg. the OpenLayers-2.9.1 directory.
-  ExpiresActive on  
-  ExpiresDefault "now plus 10 years"
-</Directory>
-
-WSGIScriptAlias / /home/openblock/openblock/src/openblock/obdemo/obdemo/wsgi/obdemo.wsgi
-
-WSGIDaemonProcess obdemo_org user=openblock group=www-data processes=10 threads=1
-WSGIProcessGroup obdemo_org
-
-CustomLog /var/log/apache2/openblock-access.log combined
-ErrorLog /var/log/apache2/openblock-error.log
-</VirtualHost>
 
