@@ -47,7 +47,8 @@ echo OK
 
 echo Upgrading pip and distribute...
 $SUDO bin/easy_install --upgrade pip distribute || exit 1
-$SUDO hash -r
+$SUDO hash -r || echo "no hash"
+
 echo OK
 
 # Speed up pip if we run again
@@ -55,3 +56,4 @@ export PIP_DOWNLOAD_CACHE=/home/openblock/pip-download-cache
 
 echo Virtual env is in $VIRTUAL_ENV
 export PIP=$VIRTUAL_ENV/bin/pip
+

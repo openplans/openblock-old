@@ -27,15 +27,21 @@ export VIRTUAL_ENV=/home/openblock/openblock
 echo Virtual env is in $VIRTUAL_ENV
 export PIP=$VIRTUAL_ENV/bin/pip
 echo
+$SUDO mkdir -p src || exit 1
+
+echo Cleaning up old source, if any...
+$SUDO rm -rf src/openblock
 
 echo Getting openblock source...
 cd $VIRTUAL_ENV || exit 1
-$SUDO mkdir -p src || exit 1
-$SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 
-# TEMPORARY: branch
+$SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
+echo OK
+
+BRANCH=openblock-1.1-branch
+echo XXX TEMPORARY: getting $BRANCH
 cd src/openblock
-git checkout openblock-1.0-branch
+$SUDO git checkout -b origin/$BRANCH || exit 1
 
 echo
 export SRC=$VIRTUAL_ENV/src/openblock
