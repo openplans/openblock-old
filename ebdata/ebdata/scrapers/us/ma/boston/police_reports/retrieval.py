@@ -41,7 +41,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
 
     schema_slugs = ('police-reports',)
     has_detail = False
-    logname = 'us.ma.boston.police_reports'
+    logname = 'boston.police_reports'
 
     # Can't find a way to specify number of items.
     url = 'http://www.bpdnews.com/feed/'
