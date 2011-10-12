@@ -119,7 +119,6 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
                 log_exception(level=logging.DEBUG)
                 continue
             location_name = location['address']
-            block = location['block']
             location = location['point']
             break
         else:
