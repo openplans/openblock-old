@@ -37,6 +37,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
     schema_slugs = ('issues',)
     has_detail = True
+    logname = 'seeclickfix'
     sleep = 2
 
     def __init__(self, *args, **kwargs):
@@ -130,6 +131,7 @@ class SeeClickFixNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper
 
 def main(argv=None):
     from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    import ebdata.retrieval.log # Sets up standard handlers.
     import sys
     if argv is None:
         argv = sys.argv[1:]
