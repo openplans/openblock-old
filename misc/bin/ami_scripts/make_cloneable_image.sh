@@ -11,6 +11,7 @@ echo Installing apache modules
 $SSH $REMOTE <<EOF
     sudo a2enmod expires
     sudo apt-get -y install libapache2-mod-wsgi logrotate
+    sudo rm -rf /tmp/stuff/
     mkdir -p /tmp/stuff/
 EOF
 
@@ -30,10 +31,6 @@ $SSH $REMOTE <<EOF
     sudo /etc/init.d/apache2 restart
     echo Restarting cron...
     sudo service cron restart
-    echo Adding services...
-    sudo update-rc.d openblock-updaterdaemon defaults
-    sudo update-rc.d openblock-background-tasks defaults
-
 EOF
 echo OK
 

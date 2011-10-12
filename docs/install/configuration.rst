@@ -310,6 +310,18 @@ In your ``settings.py``, you'll want to set these::
   #EMAIL_HOST_PASSWORD=''
   #EMAIL_USE_TLS=False  # For secure SMTP connections.
 
-(If you don't have a suitable SMTP server, you may be able to use an
-appropriate account on Gmail or another public mail service.
-See for example `this blog post <http://www.mangoorange.com/2008/09/15/sending-email-via-gmail-in-django/>`_).
+Don't have an SMTP Server?
+-----------------------------
+
+You may be able to use an appropriate account on Gmail or another
+public mail service.  See for example `this blog post
+<http://www.mangoorange.com/2008/09/15/sending-email-via-gmail-in-django/>`_).
+
+.. admonition:: Email on AWS EC2
+
+  If you are :doc:`installing on amazon's EC2 servers <aws>`, note that you
+  must use a different server to send mail, as Amazon limits the
+  amount of mail you can send, and most ISPs will block it as likely
+  spam anyway. So use another service such as Gmail as per the previous
+  paragraph, or you might try Amazon's own email service: https://aws.amazon.com/ses/
+
