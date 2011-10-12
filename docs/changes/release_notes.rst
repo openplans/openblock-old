@@ -129,6 +129,9 @@ New Features in 1.1
 * Don't email scraper errors by default. That's just not nice, and
   cron already does that.
 
+* All provided scrapers now log to settings.SCRAPER_LOGFILE_NAME.
+
+
 Bugs fixed
 ----------
 
