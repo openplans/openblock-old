@@ -63,3 +63,15 @@ class OpenblockTemplate(templates.Template):
             ),
 
     ]
+
+    def post(self, command, output_dir, vars):
+        """Make some files executable. Pastescript forgets to do so,
+        see issue https://bitbucket.org/ianb/pastescript/issue/2/executable-files-in-templates-do-not-have
+        """
+        if command.command_name == 'create':
+            # not sure if there's a better thing to check.
+            import os.path
+            package_dir = os.path.join(output_dir, vars['project'])
+            for fname in ('manage.py', 'manage.sh'):
+                f = os.path.join(package_dir, fname)
+                os.chmod(f, 0770)
