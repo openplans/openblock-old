@@ -9,8 +9,8 @@ export RSYNC_RSH="$SSH"
 
 echo Installing apache modules
 $SSH $REMOTE <<EOF
-    sudo a2enmod expires
     sudo apt-get -y install libapache2-mod-wsgi logrotate
+    sudo a2enmod expires
     sudo rm -rf /tmp/stuff/
     mkdir -p /tmp/stuff/
 EOF
