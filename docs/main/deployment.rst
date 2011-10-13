@@ -8,8 +8,12 @@ Apache
 
 Most people use apache and mod_wsgi for deploying Django apps.
 If you're deploying obdemo, there's a suitable wsgi script at
-obdemo/wsgi/obdemo.wsgi.  Otherwise, see
-http://docs.djangoproject.com/en/1.2/howto/deployment/modwsgi/
+``obdemo/wsgi/obdemo.wsgi``; if you :doc:`generated a custom app
+<../install/custom>`, there's a wsgi script at
+``src/<projectname>/<projectname>/wsgi/<projectname>.wsgi``.
+
+For more info, see
+http://docs.djangoproject.com/en/1.3/howto/deployment/modwsgi/
 
 Threading
 =========
@@ -17,7 +21,7 @@ Threading
 Be warned that GeoDjango in general - and thus OpenBlock -
 is not safe to deploy multi-threaded. With mod_wsgi, this typically
 means setting the ``threads=1`` option in the ``WSGIDaemonProcess`` directive.
-See https://docs.djangoproject.com/en/1.2/ref/contrib/gis/deployment/
+See http://docs.djangoproject.com/en/1.3/ref/contrib/gis/deployment/
 for more info.
 
 
