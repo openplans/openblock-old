@@ -25,6 +25,8 @@ echo OK
 echo Putting files in place...
 $SSH $REMOTE <<EOF
     sudo rsync -av /tmp/stuff/ /
+    # fix ownership we just clobbered
+    sudo chown -R openblock /home/openblock
     sudo rm -f /home/openblock/openblock/wsgi
     sudo ln -s /home/openblock/openblock/src/myblock/myblock/wsgi /home/openblock/openblock/wsgi
     echo Restarting apache...
