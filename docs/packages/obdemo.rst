@@ -41,20 +41,7 @@ We don't currently use any of the other openblock-extras_ packages
 Deployment
 ==========
 
-For production deployment it's not generally recommended to run
-``manage.py runserver``.  Most people use apache and mod_wsgi.
-
-There's a suitable wsgi script at obdemo/wsgi/obdemo.wsgi.  It
-assumes that you installed OpenBlock in a virtualenv whose root
-directory is the same as the checkout root; that's how the
-bootstrap script sets things up.  If that's not true, you can copy
-and modify the script and adjust the ``env_root`` variable.  If you used
-the bootstrap script, it should just work.
-
-For more information on configuring Apache and running Django apps
-under mod_wsgi, see
-http://docs.djangoproject.com/en/1.1/howto/deployment/modwsgi/
-and see :ref:`example_apache_config`.
+See :doc:`../main/deployment`
 
 .. _ebgeo: https://github.com/openplans/openblock-extras/blob/master/docs/ebgeo.rst
 
