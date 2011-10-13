@@ -41,7 +41,7 @@ echo OK
 BRANCH=openblock-1.1-branch
 echo XXX TEMPORARY: getting $BRANCH
 cd src/openblock
-$SUDO git checkout -b origin/$BRANCH || exit 1
+$SUDO git checkout -b $BRANCH origin/$BRANCH || exit 1
 
 echo
 export SRC=$VIRTUAL_ENV/src/openblock
