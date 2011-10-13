@@ -43,7 +43,7 @@ Creating a Cloneable Image (AMI)
 ================================
 
 First, set up an EC2 instance via eg.
-``scenario_runner.sh ubuntu@$EC2HOST ubuntu1104 global dev custom.sh``
+``scenario_runner.sh $EC2HOST ubuntu1104 global dev custom.sh``
 
 Then try the ``make_cloneable_image.sh <HOST>`` script.
 This sets up apache, logrotate, cron jobs, openblock-related services.
@@ -88,7 +88,7 @@ platforms:
 
 1. ubuntu 10.04 64 (lucid) (ami-63be790a)
 2. ubuntu 10.10 64 (maverick) (ami-cef405a7)
-3. ubuntu 11.04 64 (natty) (ami-1aad5273)
+3. ubuntu 11.04 64 (natty) (ami-fd589594)
 
 
 sets of instructions:
