@@ -67,7 +67,11 @@ def save_file(f, suffix=None):
 
 class ImportZipcodeShapefilesForm(forms.Form):
 
-    state = forms.ChoiceField(required=True, choices=CENSUS_STATES)
+    # Don't have one chosen by default.
+    no_state = ''
+    state = forms.TypedChoiceField(required=True,
+                                   choices=((no_state, no_state),) + CENSUS_STATES,
+                                   empty_value=no_state)
     zip_codes = forms.CharField(required=True, widget=forms.Textarea())
 
     def save(self):
