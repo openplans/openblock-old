@@ -25,6 +25,7 @@ export SUDO="sudo -H -E -u openblock"
 export PIP_DOWNLOAD_CACHE=/home/openblock/pip-download-cache
 export VIRTUAL_ENV=/home/openblock/openblock
 echo Virtual env is in $VIRTUAL_ENV
+cd $VIRTUAL_ENV || exit 1
 export PIP=$VIRTUAL_ENV/bin/pip
 echo
 $SUDO mkdir -p src || exit 1
@@ -33,7 +34,6 @@ echo Cleaning up old source, if any...
 $SUDO rm -rf src/openblock
 
 echo Getting openblock source...
-cd $VIRTUAL_ENV || exit 1
 
 $SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 echo OK
