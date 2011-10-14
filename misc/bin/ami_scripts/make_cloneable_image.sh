@@ -26,7 +26,7 @@ echo Putting files in place...
 $SSH $REMOTE <<EOF
     sudo rsync -av /tmp/stuff/ /
     # fix ownership we just clobbered
-    sudo chown -R openblock /home/openblock
+    sudo chown -R openblock /home/openblock /var/log/openblock
     sudo chown root.root /etc/cron.d/openblock
 
     sudo rm -f /home/openblock/openblock/wsgi
