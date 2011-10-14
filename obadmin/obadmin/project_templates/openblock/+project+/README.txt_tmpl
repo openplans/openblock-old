@@ -8,3 +8,5 @@ http://openblockproject.org/docs/install/custom.html
 
 For deployment with apache's mod_wsgi, there is a suitable wsgi script
 in the wsgi/ directory.
+
+There are more example config files in etc/.
