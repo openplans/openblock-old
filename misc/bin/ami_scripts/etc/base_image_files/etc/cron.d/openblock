@@ -1,9 +1,7 @@
 SHELL=/bin/bash
 
-MAILTO= # YOUR EMAIL ADDRESS HERE
 DJANGO_SETTINGS_MODULE=myblock.settings
 VIRTUAL_ENV=/home/openblock/openblock
-USER=openblock
 SCRAPERS=/home/openblock/openblock/src/openblock/ebdata/ebdata/scrapers
 BINDIR=/home/openblock/openblock/bin
 PYTHON=/home/openblock/openblock/bin/python
@@ -15,18 +13,18 @@ HTTP_CACHE=/tmp/openblockproject_scraper_cache
 
 ######################################################################
 # Email alerts.
-@daily $USER $BINDIR/send_alerts  --frequency daily -v 
-@weekly  $USER $BINDIR/send_alerts --frequency weekly -v
+@daily openblock $BINDIR/send_alerts  --frequency daily -v
+@weekly openblock $BINDIR/send_alerts --frequency weekly -v
 
 ######################################################################
 # Aggregates. Update every few minutes.
-*/6 * * * * $USER $BINDIR/update_aggregates -q
+*/6 * * * * openblock $BINDIR/update_aggregates -q
 
 ######################################################################
 # Background tasks.
 # We re-start the task runner every 10 minutes just in case anything
 # goes wrong.  It's fine if one run overlaps with the next.
-*/10 * * * * $USER $BINDIR/django-admin.py process_tasks --settings=myblock.settings_background --duration=600 --log-std --log-level=ERROR --traceback --log-file=/var/log/openblock/background-tasks.log
+*/10 * * * * openblock /usr/bin/env DJANGO_SETTINGS_MODULE=myblock.settings_background $BINDIR/django-admin.py process_tasks --duration=600 --log-std --log-level=ERROR --traceback --log-file=/var/log/openblock/background-tasks.log
 
 ######################################################################
 # Examples of scraper configuration.
@@ -35,8 +33,8 @@ HTTP_CACHE=/tmp/openblockproject_scraper_cache
 # See "Running Scrapers" in the OpenBlock docs.
 
 # Flickr photos fetched every half hour.
-#0,30 * * * * $USER $PYTHON $SCRAPERS/general/flickr/flickr_retrieval.py --quiet
+#0,30 * * * * openblock $PYTHON $SCRAPERS/general/flickr/flickr_retrieval.py --quiet
 
 # Meetup scraper is a bit slow due to hitting rate limits.
 # Several times a day should be OK.
-#0 0,8,16 * * * $USER $PYTHON $SCRAPERS/general/meetup/meetup_retrieval.py --quiet
+#0 0,8,16 * * * openblock $PYTHON $SCRAPERS/general/meetup/meetup_retrieval.py --quiet
