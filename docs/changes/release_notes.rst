@@ -131,6 +131,17 @@ New Features in 1.1
 
 * All provided scrapers now log to settings.SCRAPER_LOGFILE_NAME.
 
+* Custom apps generated via `paster create -t openblock` now include a
+  wsgi file for use with mod_wsgi, an alternative settings file for
+  use with django-admin process_tasks, a skeleton cron config,
+  executable manage.sh and manage.py files. Also, manage.sh is now
+  better at automatically finding and activating the virtualenv.
+
+* obdemo also includes an example cron config file, and no longer has
+  an example updaterdaemon config.
+
+* Our Amazon EC2 AMI will now use cron rather than updaterdaemon.
+  Lots of other fixes in the EC2 scripts too.
 
 Bugs fixed
 ----------
@@ -146,6 +157,9 @@ Bugs fixed
   markup changes.
 
 * De-hardcoded "neighborhoods" from various URLs. (#148)
+
+* Zip code import UI has no default state (to avoid selecting Alabama
+  by mistake).
 
 * Zip code import now sets creation date (#233)
 
@@ -210,13 +224,21 @@ Documentation
 
 * Document email configuration. (ticket #205)
 
+* Document what you get when doing ``paster create -t openblock``.
+
+* More docs about running on Amazon EC2.
+
 * Describe differences from Everyblock
 
 * More help_text added to several Model fields, so admin UI is
   slightly more self-documenting.
 
+* Many many minor updates and tweaks.
+
 Other
 -----
+
+* Upgraded to OpenLayers 2.11.  (ticket #250)
 
 * Removed some unused template tags (SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN).
 
