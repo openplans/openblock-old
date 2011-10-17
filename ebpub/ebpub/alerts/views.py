@@ -27,6 +27,7 @@ from ebpub.alerts.models import EmailAlert
 from ebpub.db.models import Schema
 from ebpub.db.utils import url_to_place, block_radius_value
 from ebpub.db.utils import get_place_info_for_request
+from ebpub.db.views import _preconfigured_map
 from ebpub.streets.models import Block
 from ebpub.utils.view_utils import eb_render
 import datetime
@@ -101,6 +102,7 @@ def signup(request, *args, **kwargs):
             'displayed_schemas': schema_ids,
         }, email_required=email_required)
     context = get_place_info_for_request(request, *args, **kwargs)
+    context['map_configuration'] = _preconfigured_map(context);
     context['form'] = form
     context['schema_list'] = schema_list
     return eb_render(request, 'alerts/signup_form.html', context)
@@ -136,7 +138,7 @@ def finish_signup(request, place, data):
         return http.HttpResponseRedirect('/accounts/dashboard/')
 
     try:
-        user = User.objects.get(email=email)
+        User.objects.get(email=email)
     except User.DoesNotExist:
         # We haven't seen this e-mail address yet, so send out a confirmation
         # e-mail to create the account. But first, save the user's alert

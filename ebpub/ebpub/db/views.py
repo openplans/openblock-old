@@ -1227,4 +1227,5 @@ def place_detail_overview(request, *args, **kwargs):
 def feed_signup(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     context['schema_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
+    context['map_configuration'] = _preconfigured_map(context);
     return eb_render(request, 'db/feed_signup.html', context)
