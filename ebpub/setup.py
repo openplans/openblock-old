@@ -61,7 +61,7 @@ setup(
     license="GPLv3",
     keywords="openblock",
     install_requires=[
-        "django>=1.3",
+        "django>=1.3.1",
         "django-static",
         "GDAL",
         "pyyaml",

@@ -64,7 +64,7 @@ setup(
     maintainer_email="ebcode@groups.google.com",
     url="http://openblockproject.org/docs",
     install_requires=[
-        "django>=1.3",
+        "django>=1.3.1",
         "ebpub>=%s" % VERSION,   # Assumes ebpub and ebdata are versioned together.
         "lxml",
         "beautifulsoup",
