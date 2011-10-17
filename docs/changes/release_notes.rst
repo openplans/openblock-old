@@ -95,6 +95,10 @@ New Features in 1.1
 * Add a --reset option to ``update_aggregates`` script, deletes all
   aggregates and starts over. (ticket #221)
 
+* Add an ebpub/bin/delete_newsitems.py script, useful during schema
+  development: wipes all newsitems and attributes and lookups of a
+  given schema.
+
 * Also add --quiet, --verbose, --dry-run, and --help command-line options to
   ``update_aggregates``.
 
@@ -137,8 +141,9 @@ New Features in 1.1
   executable manage.sh and manage.py files. Also, manage.sh is now
   better at automatically finding and activating the virtualenv.
 
-* obdemo also includes an example cron config file, and no longer has
-  an example updaterdaemon config.
+* obdemo also includes an example cron config file, a manage.sh file,
+  and the alt. settings file. And no longer has an example
+  updaterdaemon config.
 
 * Our Amazon EC2 AMI will now use cron rather than updaterdaemon.
   Lots of other fixes in the EC2 scripts too.

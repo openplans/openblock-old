@@ -18,6 +18,15 @@ For background and additional detail, see also :ref:`ebpub-schemas`
 in the ebpub documentation, the code in ebpub.db.models and the 
 video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
 
+.. admonition:: Cleaning Up After Experiments
+
+  Typically it will take you a little while to settle on a schema you
+  like, and you may accumulate some junk newsitems while testing.
+  It's often useful to clean these up and start fresh. There is a
+  script at ``ebpub/db/bin/delete_newsitems.py`` that can delete all
+  NewsItems of a given Schema, plus all their Attributes and Lookups.
+
+
 Experimenting with Existing Schemas
 -----------------------------------
 
