@@ -10,7 +10,7 @@ function remove_saved_place(num, pid) {
 	this.blur();
 	$j('#savedplacestatus' + num).html('Removing...');
 	$j.ajax({
-		type: "POST", url: "/accounts/saved-places/delete/", data: {pid: pid},
+		type: "POST", url: "{% url saved-place-delete %}", data: {pid: pid},
 		error: function(XMLHttpRequest, textStatus, errorThrown) {
 			$j('#savedplacestatus' + num).html("Whoops, we had a technical hiccup. Please try again in a bit.");
 		},
@@ -24,12 +24,12 @@ $j(function() {
 		var url, action;
 		var button = $j(this);
 		if (button.html() == 'Hide') {
-			url = '/accounts/hidden-schemas/add/';
+			url = '{% url preferences-save-hidden-schema %}';
 			action = 'hide';
 			button.html('Hiding...').attr('disabled', 'on');
 			new_button_title = 'Show';
 		} else {
-			url = '/accounts/hidden-schemas/delete/';
+			url = '{% url preferences-remove-hidden-schema %}';
 			action = 'show';
 			button.html('Showing...').attr('disabled', 'on');
 			new_button_title = 'Hide';
@@ -62,12 +62,17 @@ $j(function() {
 {% block content %}
 <div id="content">
   <h1>Your account</h1>
-	<form action="/accounts/logout/" method="post">
+
+	<p>Logged in as <strong>{{ user.email }}</strong>.
+	<form action="{% url accounts-pw-change %}">
+		<p><button type="submit">Change Password</button></p>
+	</form>
+	<form action="{% url accounts-logout %}" method="post">
 		<p><button type="submit">Log out</button></p>
+		{% csrf_token %}
 	</form>
 	<p>You've had an account since {{ user.date_joined|date:"F j, Y" }}.</p>
-	<p>Logged in as <strong>{{ user.email }}</strong>.</p>
-	
+
 	{% if custom_message %}
 		<p>{{ custom_message }}</p>
 	{% endif %}
