@@ -146,6 +146,11 @@ New Features in 1.1
 Bugs fixed
 ----------
 
+* Added missing links to the password change form.
+
+* CSRF protection everywhere, ticket #185.
+  (As a side-effect we are now using JQuery 1.5.2.)
+
 * Block import: generated names now sort numerically correctly
   (eg. "12-100 Main St" rather than "100-12 Main St")
 
@@ -239,6 +244,10 @@ Other
 -----
 
 * Upgraded to OpenLayers 2.11.  (ticket #250)
+
+* Upgraded to Django 1.3.1.
+
+* Upgraded to JQuery 1.5.2.
 
 * Removed some unused template tags (SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN).
 

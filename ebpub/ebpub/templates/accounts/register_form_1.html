@@ -7,7 +7,8 @@
 	<h1>Create an account</h1>
 	<h2>Step 1: Verify your e-mail address</h2>
 	<h3>Enter your e-mail address below to create an account.</h3>
-	<form action="" method="post">
+	<form action="" method="POST">
+		{% csrf_token %}
 		{{ form.email.errors }}
 		<table>
 			<tr>

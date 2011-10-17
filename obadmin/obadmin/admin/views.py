@@ -25,6 +25,7 @@ from django.contrib.admin.helpers import Fieldset
 from django.contrib.gis.gdal import DataSource
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render, render_to_response
+from django.template.context import RequestContext
 from django.views.decorators.csrf import csrf_protect
 from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
@@ -243,7 +244,10 @@ def edit_schema_lookups(request, schema_id, schema_field_id):
             initial['%s-name' % look.id] = look.name
             initial['%s-description' % look.id] = look.description
         form = SchemaLookupsForm(lookup_ids, initial=initial)
-    return render_to_response('obadmin/edit_schema_lookups.html', {'schema': s, 'schema_field': sf, 'form': list(form)})
+    context = RequestContext(request,
+                             {'schema': s, 'schema_field': sf, 'form': list(form)})
+    return render_to_response('obadmin/edit_schema_lookups.html',
+                              context_instance=context)
 
 def schemafield_list(request):
     sf_list = SchemaField.objects.select_related().order_by('db_schema.name', 'display_order')
@@ -278,7 +282,8 @@ def add_blob_seed(request):
             return HttpResponseRedirect('../')
     else:
         form = BlobSeedForm()
-    return render_to_response('obadmin/add_blob_seed.html', {'form': form})
+    context = RequestContext(request, {'form': form})
+    return render_to_response('obadmin/add_blob_seed.html', context_instance=context)
 
 def scraper_history_list(request):
     schema_ids = [i['schema'] for i in DataUpdate.objects.select_related().order_by('schema__plural_name').distinct().values('schema')]
