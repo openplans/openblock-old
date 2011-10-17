@@ -47,7 +47,7 @@ else:
 
 urlpatterns += patterns('',
     url(r'^$', views.homepage, name="ebpub-homepage"),
-    (r'^search/$', views.search),
+    url(r'^search/$', views.search, name='ebpub-search'),
     (r'^news/$', views.schema_list),
     url(r'^locations/$', views.location_type_list, name='ebpub-loc-type-list'),
     url(r'^locations/([-_a-z0-9]{1,32})/$', views.location_type_detail, name='ebpub-loc-type-detail'),
