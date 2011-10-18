@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.contrib.gis.db import models
 from ebpub.db.models import NewsItem, Location, Schema
 import datetime
@@ -124,10 +125,16 @@ class Widget(models.Model):
         return query
 
     def embed_code(self):
-        return '<div id="%s"></div><script src="http://%s/widgets/%s.js"></script>' % (self.target_id, settings.EB_DOMAIN, self.slug)
-    
+        return '<div id="%s"></div><script src="http://%s/%s"></script>' % (
+            self.target_id, settings.EB_DOMAIN,
+            reverse('widget_javascript', args=(self.slug,)).lstrip('/')
+            )
+
     def transclude_url(self):
-        return "http://%s/widgets/%s" % (settings.EB_DOMAIN, self.slug)
+        return "http://%s/%s" % (settings.EB_DOMAIN, self.absolute_url().lstrip('/'))
+
+    def absolute_url(self):
+        return reverse('widget_content', args=(self.slug,))
 
 class PinnedItem(models.Model):
     """
