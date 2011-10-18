@@ -68,6 +68,17 @@ li {
 {% block content %}
 <h1>Configure Items For {{widget.name}}</h1>
 
+<p><a href="{% url admin:widgets_widget_change widget.id %}">configure widget (django admin)</a>
 <div id="widget_editor"></div>
+
+<hr>
+<h1>Preview
+ <a href="#widget_preview"
+    onclick="document.getElementById('widget_preview').contentDocument.location.reload(true);">reload</a>
+</h1>
+
+<iframe style="border: solid 1px" id="widget_preview" src="{% url widget_content widget.slug %}"
+        width="400" height="400">
+</iframe>
 
 {% endblock %}
