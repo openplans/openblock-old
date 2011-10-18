@@ -151,6 +151,8 @@ New Features in 1.1
 Bugs fixed
 ----------
 
+* Fixed broken map on feeds page, ticket #237.
+
 * Added missing links to the password change form.
 
 * CSRF protection everywhere, ticket #185.
