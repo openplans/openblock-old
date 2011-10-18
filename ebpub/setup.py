@@ -48,7 +48,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     long_description = long_description.split('Older Changes')[0]
 
 
-VERSION="1.1.0-dev"
+VERSION="1.1.0"
 
 setup(
     name='ebpub',
@@ -61,7 +61,7 @@ setup(
     license="GPLv3",
     keywords="openblock",
     install_requires=[
-        "django>=1.3",
+        "django>=1.3.1",
         "django-static",
         "GDAL",
         "pyyaml",

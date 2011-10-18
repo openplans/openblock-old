@@ -20,6 +20,6 @@ from django.conf.urls.defaults import *
 from ebdata.geotagger import views
 
 urlpatterns = patterns('',
-    (r'^api/geocode/$', views.geocode),
-    (r'^api/geotag/$', views.geotag),
+    url(r'^api/geocode/$', views.geocode, name='ebdata-geocode'),
+    url(r'^api/geotag/$', views.geotag, name='ebdata-geotag'),
 )

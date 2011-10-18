@@ -8,8 +8,10 @@ except ImportError:
 setup(
     name='${project}',
     version="0.1",
-    description="",
-    license="GPLv3",
+    author=${repr(author)},
+    author_email=${repr(author_email)},
+    description="${description}",
+    license="${license or 'GPLv3'}",
     install_requires=[
     "ebpub",
     "ebdata",

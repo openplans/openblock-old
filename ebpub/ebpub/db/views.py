@@ -764,6 +764,9 @@ def schema_filter(request, slug, args_from_url):
                 has_more = True
             else:
                 has_more = False
+            # Note we ordered by -total to get the top values, but since we don't
+            # display the count, that ordering is nonsensical to the user.
+            top_values = sorted(top_values, key = lambda x: x.lookup.name)
             lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
@@ -1224,4 +1227,5 @@ def place_detail_overview(request, *args, **kwargs):
 def feed_signup(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     context['schema_list'] = get_schema_manager(request).filter(is_special_report=False).order_by('plural_name')
+    context['map_configuration'] = _preconfigured_map(context);
     return eb_render(request, 'db/feed_signup.html', context)

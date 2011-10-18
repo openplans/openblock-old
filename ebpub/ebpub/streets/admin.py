@@ -103,7 +103,7 @@ class PlaceExportForm(forms.Form):
 class PlaceAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'place_type', 'address',)
     list_filter  = ('place_type',)
-    search_fields = ('pretty_name', 'place_type')
+    search_fields = ('pretty_name', 'address', 'place_type__name')
     fields = ('pretty_name', 'place_type', 'url', 'address', 'location')
     form = PlaceAdminForm
 

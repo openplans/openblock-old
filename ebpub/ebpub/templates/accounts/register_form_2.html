@@ -6,7 +6,8 @@
 <div id="content">
 	<h1>Create an account</h1>
 	<h2>Step 2: Set a password</h2>
-	<form action="" method="post">
+	<form action="" method="POST">
+		{% csrf_token %}
 		{{ form.e.errors }}
 		{{ form.e }}{{ form.h }}
 		<table>

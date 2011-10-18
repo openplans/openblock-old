@@ -77,7 +77,7 @@ Each widget must have a 'template' which is used to generate the
 output that is included on the page.  These templates are normal
 "Django Templates." You can read the official Django template docs at::
 
-    http://docs.djangoproject.com/en/dev/topics/templates/
+    http://docs.djangoproject.com/en/1.3/topics/templates/
 
 There are also a variety of other tutorials and sources of information about Django templates available by casual googling. 
 
@@ -121,10 +121,10 @@ Basic Fields
 -------------------- ------------------------------------------------------------
   item.pub_date       'Publication' date/time (the time when the content was added
                       to OpenBlock).  Must be formatted using a Django
-                      date filter, eg ``{{item.pub_date|date:"Y m d h i"}}``.  See http://docs.djangoproject.com/en/dev/ref/templates/builtins/#std:templatefilter-date
+                      date filter, eg ``{{item.pub_date|date:"Y m d h i"}}``.  See http://docs.djangoproject.com/en/1.3/ref/templates/builtins/#std:templatefilter-date
 -------------------- ------------------------------------------------------------
   item.item_date     Date (without time) associated with item. Meaning varies by item type.
-                     Must be formatted using a Django date filter, eg ``{{item.item_date|date:"Y m d"}}``.  See http://docs.djangoproject.com/en/dev/ref/templates/builtins/#std:templatefilter-date
+                     Must be formatted using a Django date filter, eg ``{{item.item_date|date:"Y m d"}}``.  See http://docs.djangoproject.com/en/1.3/ref/templates/builtins/#std:templatefilter-date
 -------------------- ------------------------------------------------------------
   item.description    Description, body text, or text content of the item.
 -------------------- ------------------------------------------------------------
@@ -139,6 +139,9 @@ Basic Fields
   item.schema.name    The name of the type of item, eg "Restaurant Inspection".
 -------------------- ------------------------------------------------------------
   item.schema.slug    The unique identifier of the item's type.
+-------------------- ------------------------------------------------------------
+  item.intersecting   A mapping of Location Type slugs to Locations
+                      that overlap this item. (TODO: example of how to use this)
 ==================== ============================================================
 
 

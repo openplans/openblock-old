@@ -28,19 +28,50 @@ def _random_string(length=12):
     return result
 
 class OpenblockTemplate(templates.Template):
+    """
+    A template for the ``paster create`` command that
+    bootstraps a custom OpenBlock Django app as described in
+    the OpenBlock `custom app` docs.
+    """
     required_templates = []
     use_cheetah = False
     summary = "Basic OpenBlock project template"
     _template_dir = 'project_templates/openblock'
-    
+
     vars = [
         var('password_salt',
             'Salt used to hash passwords',
             default=_random_string()),
         var('reset_salt',
-            'Salt used to hash password resets', 
+            'Salt used to hash password resets',
             default=_random_string()),
         var('staff_cookie_val',
-            'Secret cookie value used to identify staff', 
-            default=_random_string())
+            'Secret cookie value used to identify staff',
+            default=_random_string()),
+        var('description',
+            'project description',
+            default='A Django app that provides a custom OpenBlock site'),
+        var('author',
+            'Your name for the package metadata',
+            ),
+        var('author_email',
+            'Your email for the package metadata',
+            ),
+        var('license',
+            'License',
+            default='GPLv3',
+            ),
+
     ]
+
+    def post(self, command, output_dir, vars):
+        """Make some files executable. Pastescript forgets to do so,
+        see issue https://bitbucket.org/ianb/pastescript/issue/2/executable-files-in-templates-do-not-have
+        """
+        if command.command_name == 'create':
+            # not sure if there's a better thing to check.
+            import os.path
+            package_dir = os.path.join(output_dir, vars['project'])
+            for fname in ('manage.py', 'manage.sh'):
+                f = os.path.join(package_dir, fname)
+                os.chmod(f, 0770)

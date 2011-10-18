@@ -323,19 +323,19 @@ class NewsItemListDetailScraper(ListDetailScraper):
         except AmbiguousResult as result: 
             # try to resolve based on zipcode...
             if zipcode is None: 
-                self.logger.warning("Ambiguous results for address %s. (no zipcode to resolve dispute)" % (location_name, ))
+                self.logger.info("Ambiguous results for address %s. (no zipcode to resolve dispute)" % (location_name, ))
                 return None
             in_zip = [r for r in result.choices if r['zip'] == zipcode]
             if len(in_zip) == 0: 
-                self.logger.warning("Ambiguous results for address %s, but none in specified zipcode %s" % (location_name, zipcode))
+                self.logger.info("Ambiguous results for address %s, but none in specified zipcode %s" % (location_name, zipcode))
                 return None
             if len(in_zip) > 1:
-                self.logger.warning("Ambiguous results for address %s in zipcode %s, guessing first." % (location_name, zipcode))
+                self.logger.info("Ambiguous results for address %s in zipcode %s, guessing first." % (location_name, zipcode))
                 return in_zip[0]
             else: 
                 return in_zip[0]             
         except (GeocodingException, ParsingError):
-            self.logger.warning("Could not geocode location: %s: %s" % (location_name, traceback.format_exc()))
+            self.logger.info("Could not geocode location: %s: %s" % (location_name, traceback.format_exc()))
             return None
 
 

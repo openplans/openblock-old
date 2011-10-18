@@ -76,7 +76,7 @@ What You Have
   `/home/openblock/openblock`.
 
 * A "custom" app named "myblock" as per the :doc:`docs <custom>`,
-  installed at `/home/openblock/openblock/src/myblock/myblock`
+  installed at ``/home/openblock/openblock/src/myblock/myblock``
 
 * Ubuntu 11.04 ("Natty"), Python 2.7, Postgresql 8.4 and PostGIS 1.5, Apache2, mod_wsgi.
 
@@ -85,18 +85,14 @@ the :doc:`setup`, :doc:`base_install`, and :doc:`custom` instructions.
 
 A few other nice details are taken care of for you:
 
-* ``django-background-tasks`` is automatically started at boot via
-  ``/etc/init.d/openblock-background-tasks``
+* ``cron`` jobs are configured in ``/etc/cron.d/openblock``.
+  Notably, this cron config has some commented-out examples of
+  :doc:`running scraper scripts <../main/running_scrapers>`.
+  It also periodically runs any :ref:`background_tasks`.
+  It also sends the :doc:`alerts <../main/alerts>` email messages.
 
-* ``updaterdaemon`` is automatically started at boot via
-  ``/etc/init.d/openblock-updaterdaemon``.
-  The (empty) configuration file is at ``/home/openblock/scraper_config.py``.
-
-  TODO: deprecated, need to replace that with a crontab file.
-
-* ``logrotate`` is already configured to rotate the apache,
-  django-background-task, and updaterdaemon logs, so they won't fill
-  up your storage.
+* ``logrotate`` is already configured to rotate the apache and openblock
+  logs, so they won't fill up your storage.
 
 Get ssh access
 ===============
@@ -172,7 +168,7 @@ before you can see your changes take effect on your site:
   The solution is to use another email server to send your outgoing
   email. If you don't have an SMTP server available, you may be able to use
   a gmail account or similar; for example, see `this blog post <http://www.mangoorange.com/2008/09/15/sending-email-via-gmail-in-django/>`_.
-
+  Or you might try Amazon's own email service: https://aws.amazon.com/ses/
 
 Make an Admin User
 --------------------

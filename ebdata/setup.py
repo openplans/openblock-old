@@ -51,7 +51,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     # and doesn't belong on a pypi page anyway.
     long_description = long_description.split('Older Changes')[0]
 
-VERSION="1.1.0-dev"
+VERSION="1.1.0"
 
 setup(
     name='ebdata',
@@ -64,7 +64,7 @@ setup(
     maintainer_email="ebcode@groups.google.com",
     url="http://openblockproject.org/docs",
     install_requires=[
-        "django>=1.3",
+        "django>=1.3.1",
         "ebpub>=%s" % VERSION,   # Assumes ebpub and ebdata are versioned together.
         "lxml",
         "beautifulsoup",

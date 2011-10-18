@@ -42,7 +42,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     # and doesn't belong on a pypi page anyway.
     long_description = long_description.split('Older Changes')[0]
 
-VERSION="1.1.0-dev"
+VERSION="1.1.0"
 
 setup(
     name='obadmin',

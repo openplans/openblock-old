@@ -26,6 +26,7 @@
 import datetime
 import feedparser
 from httplib2 import Http
+import ebdata.retrieval.log  # sets up base handlers.
 import logging
 
 from django.contrib.gis.geos import Point
@@ -40,7 +41,7 @@ from ebpub.utils.geodjango import intersects_metro_bbox
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
 
-logger = logging.getLogger('georss.retrieval')
+logger = logging.getLogger('eb.retrieval.georss')
 
 
 class LocalNewsScraper(object):

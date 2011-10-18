@@ -144,10 +144,26 @@ class Scraper(NewsItemListDetailScraper):
             location_name=list_record['location']
         )
 
-def main():
-    from ebdata.retrieval import log_debug
-    start_date = datetime.date(2003, 1, 2)
-    Scraper(start_date=start_date).update()
+def main(argv=None):
+    import sys
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    from optparse import OptionParser
+    if argv is None:
+        argv = sys.argv[1:]
+    optparser = OptionParser()
+    optparser.add_option('-s', '--start-date',
+                         help='Date to start scraping, in YYYY/MM/DD format. If not passed, default is 7 days ago.'
+                         )
+    add_verbosity_options(optparser)
+    opts, args = optparser.parse_args(argv)
+    if opts.start_date:
+        from ebpub.utils.dates import parse_date
+        start_date = parse_date(opts.start_date, '%Y/%m/%d')
+    else:
+        start_date = None
+    scraper = Scraper(start_date=start_date)
+    setup_logging_from_opts(opts, scraper.logger)
+    scraper.update()
 
 if __name__ == "__main__":
     main()

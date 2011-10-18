@@ -1,0 +1,77 @@
+# Sample crontab config file for obdemo scrapers.
+
+#   Copyright 2011 OpenPlans and contributors
+#
+#   This file is part of OpenBlock
+#
+#   OpenBlock is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   OpenBlock is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with OpenBlock.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+SHELL=/bin/bash
+
+# Edit these as necessary
+DJANGO_SETTINGS_MODULE=obdemo.settings
+BINDIR=/path/to/virtualenv/bin
+PYTHON=/path/to/virtualenv/bin/python
+SCRAPERS=/path/to/ebdata/scrapers
+OBDEMO_SCRAPERS=/path/to/obdemo/scrapers
+HTTP_CACHE=/tmp/obdemo_scraper_cache
+# Where do errors get emailed?
+MAILTO=somebody@example.com
+
+
+# Format:
+# m  h dom mon dow user   command
+
+######################################################################
+# Email alerts.
+@daily openblock $BINDIR/send_alerts  --frequency daily -v
+@weekly openblock $BINDIR/send_alerts --frequency weekly -v
+
+######################################################################
+# Aggregates. Update every few minutes.
+*/6 * * * * openblock $BINDIR/update_aggregates -q
+
+######################################################################
+# Background tasks.
+# We re-start the task runner every 10 minutes just in case anything
+# goes wrong.  It's fine if one run overlaps with the next.  Note to
+# avoid tons of stdout blather we need a special settings module that
+# turns off the default logging config.
+*/10 * * * * openblock /usr/bin/env DJANGO_SETTINGS_MODULE=obdemo.settings_background $BINDIR/django-admin.py process_tasks --duration=600 --log-std --log-level=ERROR --traceback --log-file=/var/log/openblock/background-tasks.log
+
+######################################################################
+# Examples of scraper configuration.
+# Set API keys in your $DJANGO_SETTINGS_MODULE.
+# See "Running Scrapers" in the OpenBlock docs.
+
+0,20,40 * * * * openblock $PYTHON $OBDEMO_SCRAPERS/add_news.py -q "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=massachusetts&scope=bonzai&count=400"
+
+1,21,41 * * * * openblock $PYTHON $OBDEMO_SCRAPERS/add_news.py -q "http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=400&subject=massachusetts&format=atom"
+
+
+7,27,47 * * * * openblock $PYTHON $SCRAPERS/general/open311/georeportv2.py -q --html-url-template='http://seeclickfix.com/issues/{id}' --http-cache=$HTTP_CACHE 'http://seeclicktest.com/boston/open311/v2' --days-prior=14
+
+10,30,50 * * * * openblock $PYTHON $OBDEMO_SCRAPERS/add_events.py --quiet
+
+15,35,55 * * * * openblock $PYTHON $SCRAPERS/us/ma/boston/police_reports/retrieval.py -q
+
+19,19,57 * * * * openblock $PYTHON $SCRAPERS/general/flickr/flickr_retrieval.py -q
+
+# This one is very very slow, once a day is plenty!
+@daily openblock $PYTHON $SCRAPERS/us/ma/boston/restaurants/retrieval.py -q
+
+# Also a bit slow due to hitting rate limits.
+# Several times a day should be OK.
+0 7,18,22 * * * openblock $PYTHON $SCRAPERS/general/meetup/meetup_retrieval.py -q

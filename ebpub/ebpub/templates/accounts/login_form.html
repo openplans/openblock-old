@@ -9,6 +9,7 @@
 		<p>{{ custom_message }}</p>
 	{% endif %}
 	<form action="/accounts/login/" method="post">
+		{% csrf_token %}
 		{{ form.non_field_errors }}
 		<table>
 			<tr>

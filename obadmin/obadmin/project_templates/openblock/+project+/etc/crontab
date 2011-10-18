@@ -1,0 +1,51 @@
+# Example cron config for an openblock site.
+# You must change the directories to point to the location where
+# you installed openblock, and change the DJANGO_SETTINGS_MODULE,
+# and possibly change the value in the "user" column if you run
+# openblock under a different user account than "openblock".
+
+SHELL=/bin/bash
+
+DJANGO_SETTINGS_MODULE=myblock.settings
+VIRTUAL_ENV=/home/openblock/openblock
+SCRAPERS=/var/www/openblock/src/openblock/ebdata/ebdata/scrapers
+BINDIR=/var/www/openblock/bin
+PYTHON=/var/www/openblock/bin/python
+HTTP_CACHE=/tmp/openblockproject_scraper_cache
+
+# Where do errors get emailed?
+MAILTO=somebody@example.com
+
+# Format:
+# m  h dom mon dow user   command
+
+######################################################################
+# Email alerts.
+@daily openblock $BINDIR/send_alerts  --frequency daily -v
+@weekly openblock $BINDIR/send_alerts --frequency weekly -v
+
+######################################################################
+# Aggregates. Update every few minutes.
+*/6 * * * * openblock $BINDIR/update_aggregates -q
+
+######################################################################
+# Background tasks.
+# We re-start the task runner every 10 minutes just in case anything
+# goes wrong.  It's fine if one run overlaps with the next.  Note to
+# avoid tons of stdout blather we need a special settings module that
+# turns off the default logging config.
+
+*/10 * * * * openblock /usr/bin/env DJANGO_SETTINGS_MODULE=myblock.settings_background $BINDIR/django-admin.py process_tasks --duration=600 --log-std --log-level=ERROR --traceback --log-file=/var/log/openblock/background-tasks.log
+
+######################################################################
+# Examples of scraper configuration.
+# Set API keys in your $DJANGO_SETTINGS_MODULE and uncomment these,
+# or add other scrapers.
+# See "Running Scrapers" in the OpenBlock docs.
+
+# Flickr photos fetched every half hour.
+#0,30 * * * * openblock $PYTHON $SCRAPERS/general/flickr/flickr_retrieval.py --quiet
+
+# Meetup scraper is a bit slow due to hitting rate limits.
+# Several times a day should be OK.
+#0 0,8,16 * * * openblock $PYTHON $SCRAPERS/general/meetup/meetup_retrieval.py --quiet

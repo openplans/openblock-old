@@ -62,6 +62,7 @@ def wget(url, cwd=None, options="-N"):
     """Quick hack to invoke wget from python scripts.
     """
     # We could use httlib2, but meh, that's a bit more work.
+    # And this supports FTP too.
     return shell_command('wget', args='%s %s' % (options, url), cwd=cwd)
 
 def unzip(filename, cwd=None):

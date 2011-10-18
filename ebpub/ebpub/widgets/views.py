@@ -83,7 +83,29 @@ def template_context_for_item(newsitem):
     if newsitem.schema.has_newsitem_detail:
         ctx['internal_url'] = 'http://' + settings.EB_DOMAIN + newsitem.item_url()
 
+    # overlapping Locations, by type.
+    # This is a callable so you only pay for it if you access it.
+    # TODO: this is a pain for template authors b/c they must assign it w/ "with"
+    # before they can get at sub-objects. right? django only calls the last?
+    # Or no, looks like not.
+    def intersecting_locations_for_item():
+        from ebpub.db.models import Location
+        locations = Location.objects.filter(location__intersects=newsitem.location)
+        # TODO: we join on LocationType a bunch here. Can we cache those?
+        locations = locations.select_related()
+        by_type = {}
+        for loc in locations:
+            # Assume locations of a given type do not overlap.
+            # That will probably be wrong somewhere someday...
+            # eg. neighborhoods with fuzzy borders.
+            by_type[loc.location_type.slug] = loc
+        return by_type
+
+    ctx['intersecting'] = intersecting_locations_for_item
+
     return ctx
+
+
 
 def _template_ctx(newsitem, widget):
     ctx = template_context_for_item(newsitem)

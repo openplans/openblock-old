@@ -130,7 +130,7 @@
       "real_name": "text01",
       "pretty_name": "Violation Detail",
       "is_filter": false,
-      "display": false,
+      "display": true,
       "schema": [
         "restaurant-inspections"
       ]

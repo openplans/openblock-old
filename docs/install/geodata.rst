@@ -69,7 +69,7 @@ Like the `runserver` command, this won't immediately exit. It will sit quietly
 until there are background jobs to process for installing geographic data.
 
 NB. If you are :doc:`installed on EC2 <aws>`, then ``django-admin.py
-process_tasks`` is already running as a daemon.
+process_tasks`` is already run via a cron job.
 
 
 .. admonition:: Why not Celery?
@@ -181,7 +181,7 @@ Streets / Blocks
 Finding Blocks Data
 -------------------
 
-In the US, the Census Bureau's TIGER data website is again a good
+In the US, the Census Bureau's TIGER data website is a good
 source of data.
 From http://www2.census.gov/cgi-bin/shapefiles2009/national-files,
 you will need several files. First select the State you're interested
@@ -191,10 +191,10 @@ Next, select the County you're interested in. From the county's page,
 download the files labeled "All Lines", "Topological Faces (Polygons
 With All Geocodes)", and "Feature Names Relationship File".
 
-Loading Blocks from US Census: Admin UI
+Loading Blocks using the Admin UI
 ----------------------------------------
 
-It's easy to use the admin UI to load these shapefiles.
+It's easy to use the admin UI to load US Census shapefiles.
 First, be sure the :ref:`background task daemon <background_tasks>` is
 running.
 
@@ -218,7 +218,7 @@ When done, skip down to :ref:`verifying_blocks`.
 (TODO: screen shot?)
 
 
-Loading Blocks from the Command Line
+Loading Blocks using the Command Line
 --------------------------------------------
 
 You don't have to use the admin UI if you're happy at the command

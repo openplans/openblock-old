@@ -23,9 +23,9 @@ export SUDO="sudo -H -E -u openblock"
 
 export VIRTUAL_ENV=/home/openblock/openblock
 cd $VIRTUAL_ENV || exit 1
-source bin/activate
+source bin/activate || exit 1
 
-mkdir src
+$SUDO mkdir -p src
 cd src || exit 1
 
 echo Creating project from paster template

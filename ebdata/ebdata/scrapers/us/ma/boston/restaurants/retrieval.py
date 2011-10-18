@@ -55,11 +55,11 @@ class RestaurantScraper(NewsItemListDetailScraper):
         # scraper and it's broken several hours into it -- you can pick up
         # around where it left off.
         NewsItemListDetailScraper.__init__(self)
-        self.logger.info("WARNING, this is a VERY slow scraper, it typically takes hours!")
         self.name_start = (name_start or u'').lower().strip()
 
 
     def update(self, *args, **kwargs):
+        self.logger.info("This is a VERY slow scraper, it typically takes hours!")
         import time
         start = time.time()
         super(RestaurantScraper, self).update(*args, **kwargs)
@@ -84,6 +84,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
             if self.name_start and record['restaurant_name'].lower() < self.name_start:
                 self.logger.info('Skipping %r due to name_start %r', record['restaurant_name'], self.name_start)
                 continue
+            self.logger.info('Getting inspections for %s' % record['restaurant_name'])
             url = 'http://www.cityofboston.gov/isd/health/mfc/insphistory.asp?licno=%s' % record['restaurant_id']
             yield (record, self.get_html(url))
 

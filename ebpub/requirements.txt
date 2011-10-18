@@ -1,4 +1,4 @@
-django==1.3.0
+django==1.3.1
 
 # Not specifying GDAL version, since it depends on our platform. Rely
 # on the user (or a more sophisticated script like obadmin/pavement.py)
@@ -11,7 +11,7 @@ psycopg2>=2.2,<2.3
 slimmer>=0.1.30
 -e git://github.com/openplans/olwidget.git#egg=django-olwidget
 pyRFC3339>=0.1
-pytz>=2011h
+pytz>=2011k
 PyYAML==3.09
 http://www.voidspace.org.uk/downloads/mock-0.8.0alpha2.tar.gz#egg=mock-0.8.0alpha2
 South>=0.7.3

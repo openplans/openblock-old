@@ -25,7 +25,8 @@ Lookups
 
 	<h1>Edit lookups: {{ schema.plural_name|capfirst }} / {{ schema_field.name|capfirst }}</h1>
 
-	<form action="" method="post">
+	<form action="" method="POST">
+		{% csrf_token %}
 		<table>
 			<thead>
 			<tr><th>Code</th><th>Name</th><th>Description</th></tr>

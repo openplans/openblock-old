@@ -17,8 +17,9 @@
 #
 
 from django import http
-from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
+from django.template.context import RequestContext
 from ebpub.accounts import callbacks
 from ebpub.accounts.models import User, AnonymousUser, PendingUserAction
 from ebpub.alerts.models import EmailAlert
@@ -28,7 +29,7 @@ from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.utils.view_utils import eb_render
 import forms, utils # relative import
-import datetime
+
 
 ###########################
 # VIEWS FOR USER ACCOUNTS #
@@ -44,7 +45,7 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
 
     # If the user is already logged in, redirect to the dashboard.
     if not request.user.is_anonymous():
-        return http.HttpResponseRedirect('/accounts/dashboard/')
+        return http.HttpResponseRedirect(reverse(dashboard))
 
     if request.method == 'POST' and not force_form:
         form = forms.LoginForm(request, request.POST)
@@ -73,7 +74,7 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
                 if message:
                     request.session['login_message'] = message
 
-            next_url = request.session.pop('next_url', '/accounts/dashboard/')
+            next_url = request.session.pop('next_url', reverse(dashboard))
             return http.HttpResponseRedirect(next_url)
     else:
         form = forms.LoginForm(request, initial={'email': initial_email})
@@ -81,7 +82,11 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
     if request.GET.get('next'):
         request.session['next_url'] = request.GET['next']
     custom_message = request.session.pop('login_message', custom_message)
-    return eb_render(request, 'accounts/login_form.html', {'form': form, 'custom_message': custom_message})
+    context = RequestContext(request, {
+            'form': form,
+            'custom_message': custom_message,
+            })
+    return eb_render(request, 'accounts/login_form.html', context)
 
 def logout(request):
     if request.method == 'POST':
@@ -99,10 +104,10 @@ def logout(request):
             next_url = request.session.pop('next_url')
         else:
             request.session['login_message'] = "You're logged out. You can log in again below."
-            next_url = '/accounts/login/'
+            next_url = reverse(login)
 
         return http.HttpResponseRedirect(next_url)
-    return eb_render(request, 'accounts/logout_form.html')
+    return eb_render(request, reverse(logout))
 
 @utils.login_required
 def dashboard(request):
@@ -118,13 +123,15 @@ def dashboard(request):
     schema_list = []
     for schema in Schema.public_objects.filter(is_special_report=False).order_by('plural_name'):
         schema_list.append({'schema': schema, 'is_hidden': schema.id in hidden_schema_ids})
-
+    from ebpub.neighbornews.utils import is_neighbornews_enabled
     return eb_render(request, 'accounts/dashboard.html', {
         'custom_message': custom_message,
         'user': request.user,
         'alert_list': alert_list,
         'saved_place_list': saved_place_list,
         'schema_list': schema_list,
+        'is_neighbornews_enabled': is_neighbornews_enabled,
+
     })
 
 ####################################
@@ -140,7 +147,7 @@ class BadHash(Exception):
 
 def send_confirmation_and_redirect(request, email, task):
     utils.send_verification_email(email, task)
-    return http.HttpResponseRedirect('/accounts/email-sent/')
+    return http.HttpResponseRedirect(reverse('accounts-email-sent'))
 
 def confirm_request_hash(request, task):
     if request.method == 'GET':
@@ -156,8 +163,15 @@ def confirm_request_hash(request, task):
         if email_hash != utils.make_email_hash(email, task):
             raise KeyError
     except KeyError:
-        form_link = {utils.CREATE_TASK: '/accounts/register/', utils.RESET_TASK: '/accounts/password-change/'}[task]
-        response = http.HttpResponseNotFound(render_to_string('accounts/hash_error.html', {'form_link': form_link}))
+        if task == utils.CREATE_TASK:
+            form_link = reverse(register)
+        elif task == utils.RESET_TASK:
+            form_link = reverse(request_password_change)
+        else:
+            raise KeyError("Unknown task %r" % task)
+        context = RequestContext(request, {'form_link': form_link})
+        response = http.HttpResponseNotFound(render_to_string('accounts/hash_error.html',
+                                                              context_instance=context))
         raise BadHash(response)
 
     return email, email_hash
@@ -172,7 +186,7 @@ def confirm_request_hash(request, task):
 def register(request):
     # If the user is already logged in, redirect to the dashboard.
     if not request.user.is_anonymous():
-        return http.HttpResponseRedirect('/accounts/dashboard/')
+        return http.HttpResponseRedirect(reverse(dashboard))
 
     if request.method == 'POST':
         form = forms.EmailRegistrationForm(request.POST)
@@ -206,7 +220,7 @@ def confirm_email(request):
                 action.delete()
 
             request.session['login_message'] = 'Your account was created! Thanks for signing up.'
-            return http.HttpResponseRedirect('../dashboard/')
+            return http.HttpResponseRedirect(reverse(dashboard))
     else:
         form = forms.PasswordRegistrationForm(initial={'e': email, 'h': email_hash})
     return eb_render(request, 'accounts/register_form_2.html', {'form': form})
@@ -242,7 +256,7 @@ def password_reset(request):
             user.set_password(form.cleaned_data['password1'])
             user.save()
             request.session['login_message'] = 'Your password was changed successfully. Give it a shot by logging in below:'
-            return http.HttpResponseRedirect('/accounts/login/')
+            return http.HttpResponseRedirect(reverse(login))
     else:
         form = forms.PasswordResetForm(initial={'e': email, 'h': email_hash})
     return eb_render(request, 'accounts/password_change_form.html', {'form': form})

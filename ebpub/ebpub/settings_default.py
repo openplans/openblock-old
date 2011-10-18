@@ -146,6 +146,7 @@ SOUTH_TESTS_MIGRATE = True
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'ebpub.accounts.middleware.UserMiddleware',
@@ -206,8 +207,9 @@ EMAIL_PORT='25'
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
 
-# Do you want scrapers to email you errors?
+# Do you want scrapers to email you errors directly?
 # (Used by the framework in ebdata/ebdata/retrieval/scrapers/)
+# We default to false, because we typically have Cron send email on errors.
 required_settings.append('SCRAPER_LOG_DO_EMAIL_ERRORS')
 SCRAPER_LOG_DO_EMAIL_ERRORS = False
 
@@ -243,8 +245,8 @@ MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 120
 
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
-OPENLAYERS_URL = '/scripts/OpenLayers-2.11-rc2/OpenLayers.js'
-OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11-rc2/img/'
+OPENLAYERS_URL = '/scripts/OpenLayers-2.11/OpenLayers.js'
+OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11/img/'
 
 # For compatibility with django-olwidget
 OL_API = OPENLAYERS_URL
@@ -291,7 +293,7 @@ MAP_CUSTOM_BASE_LAYERS = {
 
 # For local development you might try this:
 #JQUERY_URL = '/media/js/jquery.js'
-JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js'
 
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme

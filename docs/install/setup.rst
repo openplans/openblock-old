@@ -43,7 +43,7 @@ Optionally, it may be helpful to install prebuilt packages for the following if 
 * python gdal bindings
 
 `GeoDjango's platform-specific instructions
-<http://docs.djangoproject.com/en/1.2/ref/contrib/gis/install/#platform-specific-instructions>`_
+<http://docs.djangoproject.com/en/1.3/ref/contrib/gis/install/#platform-specific-instructions>`_
 may have some useful information as well, as the majority of the requirements are just those of GeoDjango + PostGIS.
 
 
@@ -83,7 +83,7 @@ you'll want a PostGIS template database.  Some platforms install this
 automatically for you, some don't.
 
 You (or your database admin) should follow the instructions for `Creating a Spatial Database Template for PostGIS 
-<http://docs.djangoproject.com/en/1.2/ref/contrib/gis/install/#creating-a-spatial-database-template-for-postgis>`_ in the GeoDjango documentation and be sure to heed the **Note** about varying names and locations of the relevant files.
+<http://docs.djangoproject.com/en/1.3/ref/contrib/gis/install/#creating-a-spatial-database-template-for-postgis>`_ in the GeoDjango documentation and be sure to heed the **Note** about varying names and locations of the relevant files.
 
 
 .. _postgres_auth:
@@ -101,7 +101,7 @@ You can create an openblock user by running:
 
 Depending on your database security setup, you may need to adjust the instructions, settings of postgres and/or settings of openblock.
 
-Postgres administration is beyond the scope of these instructions, but as a quickstart, you can disable postgres security for local users by changing the the ``pg_hba.conf`` file under ``etc`` (the precise location varies, but for postgresql
+Postgres administration is beyond the scope of these instructions, but as a quickstart, you can disable postgres security for local users by changing the ``pg_hba.conf`` file under ``etc`` (the precise location varies, but for postgresql
 8.4 on Ubuntu it's ``/etc/postgresql/8.4/main/pg_hba.conf``), comment
 out any line that starts with ``local all``, and add a line like
 this:
