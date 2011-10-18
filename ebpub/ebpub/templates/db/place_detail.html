@@ -36,7 +36,7 @@ window.onload = function() {
 		$j('#saveplacestatus').html(action + '...');
 		$j.ajax({
 			type: "POST", url: url, data: {pid: pid},
-			error: function(XMLHttpRequest, textStatus, errorThrown) {
+			error: function(jqXHR, textStatus, errorThrown) {
 				$j('#saveplacestatus').html("Whoops, we had a technical hiccup. Please try again in a bit.");
 			},
 			success: function(data, textStatus) {
@@ -65,7 +65,7 @@ window.onload = function() {
                 all_links.html('Show');
 				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 			};
-			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
+			on_error = function(jqXHR, textStatus, errorThrown) {
                 all_links.html('Hide');
 			};
 		} else {
@@ -76,15 +76,15 @@ window.onload = function() {
 				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 			};
-			on_error = function(XMLHttpRequest, textStatus, errorThrown) {
+			on_error = function(jqXHR, textStatus, errorThrown) {
 				all_links.html('Show');
 			};
 		}
 		$j.ajax({
 			type: "POST", url: url, data: {schema:schema_slug},
-			error: function(XMLHttpRequest, textStatus, errorThrown) {
+			error: function(jqXHR, textStatus, errorThrown) {
 				alert("Whoops, we had a technical hiccup. Please try again in a bit.");
-				on_error(XMLHttpRequest, textStatus, errorThrown);
+				on_error(jqXHR, textStatus, errorThrown);
 			},
 			success: on_success
 		});

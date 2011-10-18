@@ -124,7 +124,8 @@
 
 <div id="leftpanel">    
     <div id="results"></div>
-    <form id="geotagger" action="/api/geotag/" method="POST">
+    <form id="geotagger" action="{% url ebdata-geotag %}" method="POST">
+        {% csrf_token %}
         <div>
             <textarea name="q" rows="10" cols="40"></textarea>
         </div>

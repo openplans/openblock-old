@@ -49,6 +49,22 @@ class MetroManager(models.GeoManager):
                 return metro
 
 class Metro(models.Model):
+    """
+    Note this is currently not used in the openblock codebase;
+    settings.METRO_LIST is used instead.
+
+    Metro is an in-database representation of a metropolitan region
+    covered by one OpenBlock site.  These look to be equivalent to the
+    data in settings.METRO_LIST.
+
+    It's unclear what the history is. Possibly, everyblock.com was in
+    the process of transitioning to in-database metro data at the time
+    they released their source code?
+
+    Given that the concept of 'metros' is a lot less important to
+    OpenBlock than it was to Everyblock.com, we can possibly safely
+    remove this.
+    """
     name = models.CharField(max_length=64)
     short_name = models.CharField(max_length=64, unique=True)
     metro_name = models.CharField(max_length=64)

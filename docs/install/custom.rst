@@ -4,8 +4,8 @@ Creating a Custom Site Based on OpenBlock
 
 If you want to do something much different than
 :doc:`../packages/obdemo`, you're better off starting from scratch with a
-custom Django app. We provide a script that will get you started with
-a skeleton app you can edit.
+custom Django project. We provide a script that will get you started with
+a skeleton app that you can edit.
 
 (You can skip this if you are :doc:`cloning an OpenBlock AMI <aws>`.)
 
@@ -43,6 +43,25 @@ your environment::
     $ cd myblock
     $ python setup.py develop
     ...
+
+
+What You Get
+-------------
+
+The created package is a minimal Django project that includes:
+
+* ``settings.py`` you can :ref:`edit <custom_settings>`.
+* ``urls.py`` that wraps :doc:`ebpub's <../packages/ebpub>` URLs; you
+  can override individual views here, add custom views and other
+  Django apps, etc.
+* ``manage.sh``, a tiny wrapper around ``manage.py`` / ``django-admin.py`` that saves
+  you the trouble of activating your virtualenv or exporting ``DJANGO_SETTINGS_MODULE``.
+* ``templates/homepage.html``, an example of overriding one of
+  ``ebpub``'s templates, edit as you like.
+* ``wsgi/<projectname>.wsgi``, suitable for
+  :doc:`deploying your project under Apache and mod_wsgi <../main/deployment>`.
+  It takes care of finding the containing
+  virtualenv and the ``DJANGO_SETTINGS_MODULE`` automatically.
 
 
 .. _custom_settings:

@@ -35,7 +35,10 @@ from django.conf import settings
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
 from ebpub.utils.logutils import log_exception
+from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+from optparse import OptionParser
 import dateutil.parser
+import ebdata.retrieval.log  # sets up base handlers.
 import logging
 import pytz
 import sys, feedparser, datetime
@@ -45,7 +48,7 @@ import sys, feedparser, datetime
 # to do this if we used the scraper framework in ebdata?
 from ebdata.retrieval.utils import convert_entities
 
-logger = logging.getLogger()
+logger = logging.getLogger('eb.retrieval.boston.events')
 
 local_tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -139,7 +142,13 @@ class EventsCalendarScraper(object):
                 log_exception()
         logger.info("EventsCalendarScraper finished: %d added, %d updated of %s total" % (addcount, updatecount, seencount))
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+    optparser = OptionParser()
+    add_verbosity_options(optparser)
+    opts, args = optparser.parse_args(argv)
+    setup_logging_from_opts(opts, logger)
     EventsCalendarScraper().update()
 
 if __name__ == '__main__':

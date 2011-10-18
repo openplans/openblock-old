@@ -1,0 +1,11 @@
+/var/log/openblock/*log {
+	weekly	
+	size 5M
+	missingok
+	rotate 26
+	compress
+	delaycompress
+	notifempty
+	create 640 openplans users
+	sharedscripts
+}

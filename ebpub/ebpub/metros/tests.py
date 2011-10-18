@@ -42,7 +42,11 @@ class MetroTest(TestCase):
 
 class MetroViewsTest(TestCase):
     fixtures = ['metros.json']
-    urls = 'ebpub.metros.urls'
+
+    # De-hardcoding ebpub's URLs means that to test 404 pages, we need
+    # ebpub's URL config or else the 404 page blows up with NoReverseMatch.
+    # So, cook up a URL config that includes both.
+    urls = 'ebpub.metros.test_urls'
 
     def setUp(self):
         # Don't log 404 warnings, we expect a lot of them during these
@@ -58,16 +62,16 @@ class MetroViewsTest(TestCase):
 
     def test_lookup_metro_success(self):
         # Tests getting a successful JSON response from a lng/lat query
-        response = self.client.get('/lookup/', {'lng': pt_in_chicago.x, 'lat': pt_in_chicago.y})
+        response = self.client.get('/metros/lookup/', {'lng': pt_in_chicago.x, 'lat': pt_in_chicago.y})
         self.assertContains(response, 'Chicago', status_code=200)
         self.assertEqual(response['content-type'], 'application/javascript')
 
     def test_lookup_metro_in_bbox_fails(self):
         # Tests getting a 404 from a lng/lat query not quite in the metro
-        response = self.client.get('/lookup/', {'lng': pt_in_chi_bbox.x, 'lat': pt_in_chi_bbox.y})
+        response = self.client.get('/metros/lookup/', {'lng': pt_in_chi_bbox.x, 'lat': pt_in_chi_bbox.y})
         self.assertEqual(response.status_code, 404)
 
     def test_lookup_metro_fails(self):
         # Tests getting a 404 from a lng/lat query not in any metro
-        response = self.client.get('/lookup/', {'lng': pt_in_lake_mi.x, 'lat': pt_in_lake_mi.y})
+        response = self.client.get('/metros/lookup/', {'lng': pt_in_lake_mi.x, 'lat': pt_in_lake_mi.y})
         self.assertEqual(response.status_code, 404)

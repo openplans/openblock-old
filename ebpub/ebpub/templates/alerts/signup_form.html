@@ -11,12 +11,13 @@
 	<h2>Subscribe to e-mail alerts</h2>
 	<h3>Enter your e-mail address and choose a frequency&hellip;</h3>
 	{% if USER_EMAIL %}
-	<form action="/accounts/logout/" method="post">
+	<form action="{% url accounts-logout %}" method="POST">
 		<p>E-mail address: <strong>{{ USER_EMAIL }}</strong> <input type="hidden" name="next_url" value="{{ place.alert_url }}"><button type="submit">Log out to change</button></p>
+		{% csrf_token %}
 	</form>
-	<form action="" method="post">
+	<form action="" method="POST">
 	{% else %}
-	<form action="" method="post">
+	<form action="" method="POST">
 	  {% if form.email.errors %}<p class="error">Please enter a valid e-mail address.</p>{% endif %}
 	  <p>{{ form.email }}</p>
 	{% endif %}
@@ -32,6 +33,7 @@
 		  {{ form.radius }}
 		{% endif %}
 		<p><input type="submit" value="Subscribe to alerts"></p>
+		{% csrf_token %}
 	</form>
 </div>
 {% endblock %}

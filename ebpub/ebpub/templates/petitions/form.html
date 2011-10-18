@@ -12,6 +12,7 @@
 	<blockquote>{{ petition.petition|safe|linebreaks }}</blockquote>
 	<h2>Sign here</h2>
 	<form action="." method="post">
+	{% csrf_token %}
   	<table>
   		<tr><th>Your name:</th><td>{{ form.name.errors }}{{ form.name }}</td></tr>
   		<tr><th>Location:</th><td>{{ form.location.errors }}{{ form.location }}</td></tr>

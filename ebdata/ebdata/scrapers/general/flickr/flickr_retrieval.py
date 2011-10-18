@@ -22,11 +22,14 @@ from ebdata.retrieval.scrapers.list_detail import StopScraping, SkipRecord
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
 from ebpub.db.models import NewsItem
 from ebpub.geocoder.reverse import reverse_geocode, ReverseGeocodeError
+from ebpub.utils.dates import parse_date
 from ebpub.utils.geodjango import get_default_bounds
 import datetime
 import flickrapi
 import logging
 import pytz
+import time
+
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
@@ -48,6 +51,17 @@ class FlickrScraper(NewsItemListDetailScraper):
         self.options = options
         self.schema_slugs = [options.schema]
         self.records_seen = 0
+        if options.end_date:
+            end_date = parse_date(options.end_date, '%Y/%m/%d')
+        else:
+            end_date = datetime.date.today()
+        # We want midnight at the *end* of the day.
+        end_date += datetime.timedelta(days = 1)
+        self.max_timestamp = time.mktime(end_date.timetuple())
+        start_date = end_date - datetime.timedelta(days=options.days)
+        self.min_timestamp = time.mktime(start_date.timetuple())
+
+
         super(FlickrScraper, self).__init__()
 
     def list_pages(self):
@@ -64,8 +78,8 @@ class FlickrScraper(NewsItemListDetailScraper):
         while pagenum < pages:
             pagenum += 1
             page = flickr.photos_search(has_geo=1, bbox=extent, safe_search='1',
-                                        min_taken_date=None, #XXX unix timestamp
-                                        max_taken_date=None, #XXX timestamp
+                                        min_taken_date=self.min_timestamp,
+                                        max_taken_date=self.max_timestamp,
                                         per_page='400',
                                         page=str(pagenum),
                                         extras='date_taken,date_upload,url_sq,description,geo,owner_name',
@@ -81,7 +95,7 @@ class FlickrScraper(NewsItemListDetailScraper):
                 pages = int(adict['photos']['pages'])
             except KeyError:
                 self.logger.error("Page content:\n%s" %page)
-                raise StopScraping("Parsing error, missing 'photos' or 'pages', see above.")
+                raise RuntimeError("Parsing error, missing 'photos' or 'pages', see above.")
             yield page
 
     def parse_list(self, page):
@@ -156,14 +170,16 @@ def main(argv=None):
         argv = sys.argv[1:]
     from optparse import OptionParser
     parser = OptionParser()
-    # parser.add_option(
-    #     "--start-date", help="Start date for photo search. Default is 30 days ago.",
-    #     action='store', default=None,
-    #     )
-    # parser.add_option(
-    #     "--end-date", help="Stop date for photo search. Default is now",
-    #     action='store', default=None,
-    #     )
+    parser.add_option(
+        '-d', "--days",
+        help="How many days (prior to stop date) to search. Default is 30 days.",
+        action='store', default=30, type='int',
+        )
+    parser.add_option(
+        '-e', "--end-date",
+        help="Stop date for photo search, format YYYY/MM/DD. Default is now.",
+        action='store', default=None,
+        )
     parser.add_option(
         "--schema", help="Slug of schema to use. Default is 'photos'.",
         action='store', default='photos',

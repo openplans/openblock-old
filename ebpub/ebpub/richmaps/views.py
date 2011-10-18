@@ -305,7 +305,7 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
 
 def headlines(request):
     html = ''
-    items = request.POST.getlist('item_id')
+    items = request.REQUEST.getlist('item_id')
     items = [x.split(':') for x in items]
     if len(items) == 0:
         cur_template = get_template('richmaps/no_headlines.html')

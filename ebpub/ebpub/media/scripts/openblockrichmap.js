@@ -183,7 +183,7 @@ OBMapItemList.prototype._refreshPage = function() {
     };
     jQuery.ajax({
        url: '/maps/headlines',
-       type: 'POST',
+       type: 'GET',
        data: {'item_id': items},
        traditional: true,
        dataType: 'html',

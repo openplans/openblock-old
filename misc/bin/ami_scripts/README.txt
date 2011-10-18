@@ -9,74 +9,56 @@ our docs.  I'm feeling out the approach, not sure yet if these are
 worth keeping around, or what.  Chef or some such would be a more
 robust alternative to a pile of ad-hoc shell scripts.
 
-Creating a Redistributable Image
-================================
+Creating Instances, Getting SSH Access
+========================================
 
-Running on Port 80 via Apache
------------------------------
+"Micro" EC2 instances are big enough, but "large" is much
+faster for populating streets data.
 
-First run these commands::
-
- $ sudo a2enmod expires
- $ sudo apt-get install libapache2-mod-wsgi
-
-Then try replacing /etc/apache2/sites-available/default with this
-(inserting the ec2 instance's hostname on the ServerName line),
-and then do `sudo /etc/init.d/apache2 reload` ::
-
- <VirtualHost *:80>
- 
- ServerName ....compute-1.amazonaws.com
-
- Alias /media/ /home/openblock/openblock/src/django/django/contrib/admin/media/
- Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
- Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
- Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
- Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
-
- <Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/media/ >
-   # I'm assuming everything here safely has a version-specific URL
-   # whether via django-static or eg. the OpenLayers-2.9.1 directory.
-   ExpiresActive on  
-   ExpiresDefault "now plus 10 years"
- </Directory>
- 
- WSGIScriptAlias / /home/openblock/openblock/src/openblock/obdemo/obdemo/wsgi/obdemo.wsgi
- WSGIDaemonProcess obdemo_org user=openblock group=www-data processes=10 threads=1
- WSGIProcessGroup obdemo_org
- 
- CustomLog /var/log/apache2/openblock-access.log combined
- ErrorLog /var/log/apache2/openblock-error.log
- </VirtualHost>
-
-
-Testing
-=============
-
-First create an EC2 instance (micro is big enough, but large is much
-faster for populating streets data) from the
-appropriate Ubuntu AMI. (Get the AMI numbers from here:
+I assume we're using Ubuntu AMI images. Get Ubuntu AMI numbers from here:
 https://help.ubuntu.com/community/EC2StartersGuide#Official%20Ubuntu%20Amazon%20Machine%20Images%20%28AMIs%29
-You want the EBS storage version, and I generally choose 64-bit.)
+You want the EBS storage version, and I generally choose 64-bit.
 
-NOTE, if you install mr.awsome (http://pypi.python.org/pypi/mr.awsome)
-there is an etc/aws.conf script that you can use to create, stop,
-terminate, etc. some instances. Like so::
+If you install mr.awsome (http://pypi.python.org/pypi/mr.awsome)
+locally, then there is an ``aws`` script and an ``etc/aws.conf``
+config file that you can use to create, stop, terminate, etc. some
+instances. Like so::
 
  $ aws start lucid-64
  $ aws status lucid-64
  $ aws terminate lucid-64
 
 Modify the config file as you like.
+(You could also of course use Amazon's ec-* scripts but I find mr.awsome
+convenient.)
 
 To ssh to an EC2 instance, you get the public dns info from the AWS
-control panel and::
+control panel (or ``aws status``) and::
 
  $ export EC2HOST=ubuntu@....compute-1.amazonaws.com  # <-- your hostname goes here
  $ ssh -i ~/.ssh/openblock.pem $EC2HOST
 
-More likely we'll be using ssh to run scripts remotely.
-First run a specific base system setup script over ssh remotely like
+
+Creating a Cloneable Image (AMI)
+================================
+
+First, set up an EC2 instance via eg.
+``scenario_runner.sh $EC2HOST ubuntu1104 global dev custom.sh``
+
+Then try the ``make_cloneable_image.sh <HOST>`` script.
+This sets up apache, logrotate, cron jobs, openblock-related services.
+
+Then you can use the EC2 management console (or scripts, if you like)
+to create a clone-able AMI from this instance. Directions:
+... TODO, find a good secure set of directions for this
+
+
+Using EC2 for Release Testing - Manual
+======================================
+
+First create a new instance as described above.
+
+Then run a specific base system setup script over ssh remotely like
 so, substituting the hostname as needed::
 
  $ ssh -i ~/.ssh/openblock.pem $EC2HOST < src/openblock/ami_scripts/ubuntu1004_64_globalpkgs
@@ -89,12 +71,15 @@ Finally run a script to install openblock, eg.::
 
  $ ssh -i ~/.ssh/openblock.pem $EC2HOST < demo_setup_detailed.sh
 
+Release Testing - More Automation
+=====================================
 
 There's now a little wrapper script that can do all that in one go.
-The four parameters are: hostname, base setup script, db config file,
-install script.  Like so::
+The parameters are: hostname, distro version, global|local, dev|stable, install
+script. Like so::
 
- $ /scenario_runner.sh $EC2HOST  ubuntu1004_64_globalpkgs  ubuntu1004_db_config demo_setup_detailed.sh
+ $ /scenario_runner.sh ubuntu@$EC2HOST  ubuntu1004 local  dev demo_setup_detailed.sh
+
 
 CONFIGURATIONS TO TEST:
 =======================
@@ -103,7 +88,7 @@ platforms:
 
 1. ubuntu 10.04 64 (lucid) (ami-63be790a)
 2. ubuntu 10.10 64 (maverick) (ami-cef405a7)
-3. ubuntu 11.04 64 (natty) (ami-1aad5273)
+3. ubuntu 11.04 64 (natty) (ami-fd589594)
 
 
 sets of instructions:

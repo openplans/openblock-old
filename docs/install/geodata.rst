@@ -69,7 +69,7 @@ Like the `runserver` command, this won't immediately exit. It will sit quietly
 until there are background jobs to process for installing geographic data.
 
 NB. If you are :doc:`installed on EC2 <aws>`, then ``django-admin.py
-process_tasks`` is already running as a daemon.
+process_tasks`` is already run via a cron job.
 
 
 .. admonition:: Why not Celery?
