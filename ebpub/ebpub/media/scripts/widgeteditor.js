@@ -37,7 +37,6 @@ WidgetEditor.prototype.init = function() {
         $(this.el).find('.current-items').append('<li class="empty-slot">Empty Slot</li>');
     }
 
-    var thisWidget = this;
     $(this.el).find('.load-items').click(function() {
         thisWidget.loadMoreItems();
     });
@@ -45,7 +44,7 @@ WidgetEditor.prototype.init = function() {
         thisWidget.savePins();
     });
     this.loadMoreItems();
-    this.loadStickyItems(); 
+    this.loadStickyItems();
 };
 
 WidgetEditor.prototype.hookupCurrentItems = function() {
@@ -54,10 +53,10 @@ WidgetEditor.prototype.hookupCurrentItems = function() {
         var theLi = $(evt.target).closest('li').remove();
         return false;
     });
-    
+
     $(this.el).find('.current-items .expire-date').calendricalDate({usa: true});
     $(this.el).find('.current-items .expire-time').calendricalTime({usa: true});
-    
+
 };
 
 WidgetEditor.prototype.savePins = function() {
@@ -76,8 +75,8 @@ WidgetEditor.prototype.savePins = function() {
         }
     });
     var outPins = {items: item_list};
-    
-    var setPinsURL = this.rootURL + '/pins/' + this.slug;    
+
+    var setPinsURL = this.rootURL + '/pins/' + this.slug;
     $.ajax({
         url: setPinsURL,
         type: 'POST',
@@ -86,8 +85,8 @@ WidgetEditor.prototype.savePins = function() {
         success: function() {
             document.location.reload();
         }
-    })
-    
+    });
+
 };
 
 
@@ -98,12 +97,12 @@ WidgetEditor.prototype.htmlForItem = function(item) {
     item_html += ' <a href="#" class="delete-button">Un-Pin</a>';
     item_html += '<div class="expiration">';
     item_html += '<h3>Expiration</h3>';
-    item_html += '<input type="text" class="expire-date" '; 
+    item_html += '<input type="text" class="expire-date" ';
     if (item.expiration_date) {
         item_html += 'value="' + item.expiration_date + '"';
     }
     item_html += ' />';
-    item_html += '<input type="text" class="expire-time" '; 
+    item_html += '<input type="text" class="expire-time" ';
     if (item.expiration_time) {
         item_html += 'value="' + item.expiration_time + '"';
     }
@@ -115,7 +114,6 @@ WidgetEditor.prototype.htmlForItem = function(item) {
 
 WidgetEditor.prototype.loadStickyItems = function() {
     var pinsURL = this.rootURL + '/pins/' + this.slug;
-    
     var thisWidget = this;
     var handleItemsLoaded = function(data) {
         for (var i =0; i < data.items.length; i++) {
@@ -125,7 +123,7 @@ WidgetEditor.prototype.loadStickyItems = function() {
         }
         thisWidget.hookupCurrentItems();
     };
-    
+
     $.ajax({
         url: pinsURL,
         type: "GET",
@@ -134,12 +132,12 @@ WidgetEditor.prototype.loadStickyItems = function() {
             handleItemsLoaded(data);
         }
     });
-    
-}
+
+};
 
 WidgetEditor.prototype.loadMoreItems = function() {
     var moreItemsURL = this.rootURL + '/raw_items/' + this.slug + '?start=' + this.itemStart + '&count=' + this.itemsToLoad;
-    
+
     this.disableMoreButton();
     var thisWidget = this;
     var handleItemsLoaded = function(data) {
@@ -149,7 +147,7 @@ WidgetEditor.prototype.loadMoreItems = function() {
             $(thisWidget.el).find('.available-items').append(item_html);
             thisWidget.itemStart += 1;
         }
-        
+
         $(thisWidget.el).find('.available-items li').draggable({
             connectToSortable: $(thisWidget.el).find(".current-items"),
     	    helper: "clone",
@@ -157,7 +155,7 @@ WidgetEditor.prototype.loadMoreItems = function() {
         });
         $(thisWidget.el).find("ul, ol, li" ).disableSelection();
     };
-    
+
     $.ajax({
         url: moreItemsURL,
         type: "GET",
@@ -165,7 +163,7 @@ WidgetEditor.prototype.loadMoreItems = function() {
         success: function(data) {
             handleItemsLoaded(data);
             thisWidget.enableMoreButton();
-        }, 
+        },
         error: function() {
             thisWidget.enableMoreButton();
         }
