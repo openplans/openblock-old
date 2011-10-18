@@ -95,7 +95,7 @@ WidgetEditor.prototype.htmlForItem = function(item) {
     var item_html = '<li class="pinnable-newsitem">' + item.title;
     item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '">view in admin</a>';
     item_html += '<span class="item-id">' +  item.id +'</span>';
-    item_html += ' <a href="#" class="delete-button">Delete Pin</a>';
+    item_html += ' <a href="#" class="delete-button">Un-Pin</a>';
     item_html += '<div class="expiration">';
     item_html += '<h3>Expiration</h3>';
     item_html += '<input type="text" class="expire-date" '; 
