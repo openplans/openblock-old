@@ -85,13 +85,10 @@ def template_context_for_item(newsitem):
 
     # overlapping Locations, by type.
     # This is a callable so you only pay for it if you access it.
-    # TODO: this is a pain for template authors b/c they must assign it w/ "with"
-    # before they can get at sub-objects. right? django only calls the last?
-    # Or no, looks like not.
     def intersecting_locations_for_item():
         from ebpub.db.models import Location
         locations = Location.objects.filter(location__intersects=newsitem.location)
-        # TODO: we join on LocationType a bunch here. Can we cache those?
+        # TODO: we join on LocationType a bunch here. Can we cache those or do something faster?
         locations = locations.select_related()
         by_type = {}
         for loc in locations:
@@ -122,19 +119,18 @@ def _template_ctx(newsitem, widget):
 def _eval_item_link_template(template, context): 
     t = Template(template)
     return t.render(Context(context)).strip()
-    
-    
-###########################################
+
+##########################################################################
 #
 # special widget administration API views
 #
-###########################################
+##########################################################################
 
 @login_required
 def widget_admin_list(request):
     
     if not request.user.is_superuser == True:
-        return HttpResponse("You must be an adminsitrator to access this function.", status=401)
+        return HttpResponse("You must be an administrator to access this function.", status=401)
     
     ctx = RequestContext(request, {'widgets': Widget.objects.all()})
     return render_to_response('widgets/stickylist.html', ctx)
@@ -145,7 +141,7 @@ def widget_admin(request, slug):
     """
     """
     if not request.user.is_superuser == True:
-        return HttpResponse("You must be an adminsitrator to access this function.", status=401)
+        return HttpResponse("You must be an administrator to access this function.", status=401)
 
     widget = get_object_or_404(Widget.objects, slug=slug)
     
@@ -179,7 +175,7 @@ def ajax_widget_raw_items(request, slug):
 
     """
     if not request.user.is_superuser == True:
-        return HttpResponse("You must be an adminsitrator to access this function.", status=401)
+        return HttpResponse("You must be an administrator to access this function.", status=401)
 
     widget = get_object_or_404(Widget.objects, slug=slug)
 
@@ -232,7 +228,7 @@ def ajax_widget_pins(request, slug):
     """
 
     if not request.user.is_superuser == True:
-        return HttpResponse("You must be an adminsitrator to access this function.", status=401)
+        return HttpResponse("You must be an administrator to access this function.", status=401)
 
     widget = get_object_or_404(Widget.objects, slug=slug)
 
