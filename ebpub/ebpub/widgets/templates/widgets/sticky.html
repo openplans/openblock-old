@@ -66,9 +66,10 @@ li {
 {% endblock %}
 
 {% block content %}
-<h1>Configure Items For {{widget.name}}</h1>
+<p><a href="{% url admin:widgets_widget_change widget.id %}">configure widget in django admin</a>
 
-<p><a href="{% url admin:widgets_widget_change widget.id %}">configure widget (django admin)</a>
+<h1>Configure Pinned Items For {{widget.name}}</h1>
+
 <div id="widget_editor"></div>
 
 <hr>
