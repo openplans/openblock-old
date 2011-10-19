@@ -7,21 +7,7 @@ var WidgetEditor = function(el, slug, rootURL) {
     this.init();
 };
 
-WidgetEditor.prototype.SKELETON_HTML = '\
-<div class="available-container">\
-  <h2>Latest Items</h2>\
-  <ul class="available-items"></ul>\
-  <button class="load-items">Load More</button>\
-</div>\
-<div class="current-container">\
-<h2>Pinned Items</h2>\
-<ol class="current-items"></ol>\
-<button class="save-button">Save</button>\
-</div>';
-
-
 WidgetEditor.prototype.init = function() {
-    $(this.el).html(this.SKELETON_HTML);
 
     var thisWidget = this;
     $(this.el).find('.current-items').droppable({
@@ -91,23 +77,24 @@ WidgetEditor.prototype.savePins = function() {
 
 
 WidgetEditor.prototype.htmlForItem = function(item) {
-    var item_html = '<li class="pinnable-newsitem">' + item.title;
-    item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '">view in admin</a>';
+    var item_html = '<li class="pinnable-newsitem">';
+    item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '"><button>Edit</button></a>';
     item_html += '<span class="item-id">' +  item.id +'</span>';
-    item_html += ' <a href="#" class="delete-button">Un-Pin</a>';
+    item_html += '<button class="delete-button">Un-Pin</button>';
+    item_html += '<button class="expiration-button">Expiration...</button>';
     item_html += '<div class="expiration">';
-    item_html += '<h3>Expiration</h3>';
-    item_html += '<input type="text" class="expire-date" ';
+    item_html += 'Date: <input type="text" size="10" class="expire-date" ';
     if (item.expiration_date) {
         item_html += 'value="' + item.expiration_date + '"';
     }
     item_html += ' />';
-    item_html += '<input type="text" class="expire-time" ';
+    item_html += 'Time: <input type="text" class="expire-time" size="10" ';
     if (item.expiration_time) {
         item_html += 'value="' + item.expiration_time + '"';
     }
     item_html += ' />';
     item_html += '</div>';
+    item_html += item.title;
     item_html += '</li>';
     return item_html;
 };
@@ -121,6 +108,12 @@ WidgetEditor.prototype.loadStickyItems = function() {
             var item_html = thisWidget.htmlForItem(item);
             $(item_html).insertBefore($(thisWidget.el).find('.current-items').children()[item.index]);
         }
+        $(thisWidget.el).find('.current-items .pinnable-newsitem').each(function(index, item) {
+	    $(item).find('.expiration-button').click(function(event) {
+	$(event.target).next('div.expiration').toggle();
+	    });
+	}
+								       );
         thisWidget.hookupCurrentItems();
     };
 
@@ -177,4 +170,5 @@ WidgetEditor.prototype.disableMoreButton = function() {
 
 WidgetEditor.prototype.enableMoreButton = function() {
     $(this.el).find('.load-items').removeAttr('disabled');
-};
+}
+;

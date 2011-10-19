@@ -18,7 +18,7 @@
 	});
 </script>
 <style>
-li {
+button, li {
 	font-size: 12px;
 	line-height; 15px;
 }
@@ -37,11 +37,18 @@ li {
 	margin: 10px;
 }
 
-.pinnable-newsitem .delete-button {
+
+.empty-slot {
+    color: #777;
+}
+.pinnable-newsitem .delete-button, .expiration-button {
 	display: none;
 }
 
 .current-container .pinnable-newsitem .delete-button {
+	display: inline;
+}
+.current-container .pinnable-newsitem .expiration-button {
 	display: inline;
 }
 
@@ -53,12 +60,6 @@ li {
 .pinnable-newsitem .expiration {
 	display: none;
 }
-.current-container .pinnable-newsitem .expiration {
-	display: block;
-}
-.pinnable-newsitem .expiration h3 {
-	font-size: 12px;
-}
 
 
 
@@ -69,7 +70,20 @@ li {
 
 <h1>Configure Pinned Items For {{widget.name}}</h1>
 
-<div id="widget_editor"></div>
+<div id="widget_editor">
+<p>Drag items from the left list into the right list to pin them.
+Drag up and down to re-order.</p>
+<div class="available-container">
+  <h2>Latest Items</h2>
+  <ul class="available-items"></ul>
+  <button class="load-items">Load More</button>
+</div>
+<div class="current-container">
+<h2>Pinned Items</h2>
+<ol class="current-items"></ol>
+<button class="save-button">Save</button>
+</div>
+</div>
 
 <hr>
 <h1>Preview
