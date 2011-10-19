@@ -151,7 +151,9 @@ def widget_admin(request, slug):
 
     widget = get_object_or_404(Widget.objects, slug=slug)
 
-    ctx = RequestContext(request, {'widget': widget})
+    ctx = RequestContext(request, {'widget': widget,
+                                   'max_items_range': range(widget.max_items),
+                                   })
     return render_to_response('widgets/sticky.html', ctx)
 
 
@@ -279,7 +281,6 @@ def _set_ajax_widget_pins(request, widget):
     Any existing pins are removed and replaced by the pins described in
     the given structure.
     """
-
     try:
         pin_info = json.loads(request.raw_post_data)
     except:
@@ -290,17 +291,17 @@ def _set_ajax_widget_pins(request, widget):
         ni = NewsItem.objects.get(id=pi['id'])
         new_pin = PinnedItem(news_item=ni, widget=widget, item_number=pi['index'])
         expiration = None
-        if 'expiration_date' in pi:
+        if pi.get('expiration_date'):
             try:
                 expiration = datetime.datetime.strptime(pi['expiration_date'], '%m/%d/%Y')
             except:
                 return HttpResponse("unable to parse expiration date %s" % pi['expiration_date'], status=400)
-        if 'expiration_time' in pi: 
-            if expiration is None: 
+        if pi.get('expiration_time'):
+            if expiration is None:
                 return HttpResponse("cannot specify expiration time without expiration date", status=400)
             try:
                 etime = datetime.datetime.strptime(pi['expiration_time'], '%I:%M%p')
-                expiration = expiration.replace(hours=etime.hours, minutes=etime.minutes)
+                expiration = expiration.replace(hour=etime.hour, minute=etime.minute)
             except:
                 return HttpResponse("unable to parse expiration time %s" % pi['expiration_time'], status=400)
         if expiration is not None: 

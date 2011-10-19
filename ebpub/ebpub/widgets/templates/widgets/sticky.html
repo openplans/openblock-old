@@ -70,19 +70,29 @@ button, li {
 
 <h1>Configure Pinned Items For {{widget.name}}</h1>
 
+<p>Max items in this widget: {{ widget.max_items }}.
+<a href="{% url admin:widgets_widget_change widget.id %}">Edit Widget</a>
+</p>
+
 <div id="widget_editor">
-<p>Drag items from the left list into the right list to pin them.
-Drag pinned items up and down to re-order.</p>
-<div class="available-container">
-  <h2>Latest Items</h2>
-  <ul class="available-items"></ul>
-  <button class="load-items">Load More</button>
-</div>
-<div class="current-container">
-<h2>Pinned Items</h2>
-<ol class="current-items"></ol>
-<button class="save-button">Save</button>
-</div>
+ <p>Drag items from the left list into the right list to pin them.
+ Drag pinned items up and down to re-order.</p>
+ <div class="available-container">
+   <h2>Latest Items</h2>
+   <!-- loaded via javascript. -->
+   <ul class="available-items"></ul>
+   <button class="load-items">Load More</button>
+ </div>
+
+ <div class="current-container">
+  <h2>Pinned Items </h2>
+   <ol class="current-items">
+    {% for n in max_items_range %}
+     <li class="empty-slot">Empty Slot</li>
+    {% endfor %}
+   </ol>
+  <button class="save-button">Save</button>
+ </div>
 </div>
 
 <hr>

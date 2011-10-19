@@ -19,10 +19,6 @@ WidgetEditor.prototype.init = function() {
     });
 
 
-    for (var i = 0; i < this.itemsToLoad; i++) {
-        $(this.el).find('.current-items').append('<li class="empty-slot">Empty Slot</li>');
-    }
-
     $(this.el).find('.load-items').click(function() {
         thisWidget.loadMoreItems();
     });
@@ -50,13 +46,13 @@ WidgetEditor.prototype.savePins = function() {
     $(this.el).find('.current-items li').each(function(index, item) {
         if (!$(item).hasClass('empty-slot')) {
             var item_id = parseInt($(item).find('.item-id').text());
-            var expire_date = $(item).find('.expire-date').val();
-            var expire_time = $(item).find('.expire-time').val();
+            var expiration_date = $(item).find('.expire-date').val();
+            var expiration_time = $(item).find('.expire-time').val();
             item_list.push({
                 id: item_id,
                 index: index,
-                expire_date: expire_date,
-                expire_time: expire_time
+                expiration_date: expiration_date,
+                expiration_time: expiration_time
             });
         }
     });
@@ -109,9 +105,20 @@ WidgetEditor.prototype.loadStickyItems = function() {
             $(item_html).insertBefore($(thisWidget.el).find('.current-items').children()[item.index]);
         }
         $(thisWidget.el).find('.current-items .pinnable-newsitem').each(function(index, item) {
-            $(item).find('.expiration-button').click(function(event) {
-                $(event.target).next('div.expiration').toggle();
-            });
+            $(item).find('.expiration-button').toggle(
+                function(event) {
+                    // Enable date editing, disable dragging.
+                    $('ol.current-items').droppable('disable');
+                    $('ol.current-items').sortable('disable');
+                    $(event.target).next('div.expiration').slideDown();
+                },
+                function(event) {
+                    // Disable date editing, enable dragging.
+                    $('ol.current-items').droppable('enable');
+                    $('ol.current-items').sortable('enable');
+                    $(event.target).next('div.expiration').slideUp();
+                }
+            );
         });
         thisWidget.hookupCurrentItems();
     };
@@ -145,6 +152,7 @@ WidgetEditor.prototype.loadMoreItems = function() {
     	    helper: "clone",
     	    revert: "invalid"
         });
+
         $(thisWidget.el).find("ul, ol, li" ).disableSelection();
     };
 

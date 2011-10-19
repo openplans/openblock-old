@@ -146,5 +146,5 @@ class PinnedItem(models.Model):
     item_number = models.IntegerField()
     news_item = models.ForeignKey(NewsItem)
     expiration_date = models.DateTimeField(null=True)
-    
+
 
