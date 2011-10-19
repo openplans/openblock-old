@@ -78,10 +78,9 @@ WidgetEditor.prototype.savePins = function() {
 
 WidgetEditor.prototype.htmlForItem = function(item) {
     var item_html = '<li class="pinnable-newsitem">';
-    item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '"><button>Edit</button></a>';
     item_html += '<span class="item-id">' +  item.id +'</span>';
-    item_html += '<button class="delete-button">Un-Pin</button>';
-    item_html += '<button class="expiration-button">Expiration...</button>';
+    item_html += '<button class="delete-button" alt="remove" title="remove">-</button>';
+    item_html += '<button class="expiration-button" title="set expiration date">Expiration...</button>';
     item_html += '<div class="expiration">';
     item_html += 'Date: <input type="text" size="10" class="expire-date" ';
     if (item.expiration_date) {
@@ -94,7 +93,8 @@ WidgetEditor.prototype.htmlForItem = function(item) {
     }
     item_html += ' />';
     item_html += '</div>';
-    item_html += item.title;
+    item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '">';
+    item_html += item.title + '</a>';
     item_html += '</li>';
     return item_html;
 };
