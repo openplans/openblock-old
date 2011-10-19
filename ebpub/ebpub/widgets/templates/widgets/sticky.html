@@ -68,6 +68,8 @@ button, li {
 
 {% block content %}
 
+<p><a href="{% url widget_admin_root %}">&larr; all widgets</a></p>
+
 <h1>Configure Pinned Items For {{widget.name}}</h1>
 
 <p>Max items in this widget: {{ widget.max_items }}.
