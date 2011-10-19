@@ -109,11 +109,10 @@ WidgetEditor.prototype.loadStickyItems = function() {
             $(item_html).insertBefore($(thisWidget.el).find('.current-items').children()[item.index]);
         }
         $(thisWidget.el).find('.current-items .pinnable-newsitem').each(function(index, item) {
-	    $(item).find('.expiration-button').click(function(event) {
-	$(event.target).next('div.expiration').toggle();
-	    });
-	}
-								       );
+            $(item).find('.expiration-button').click(function(event) {
+                $(event.target).next('div.expiration').toggle();
+            });
+        });
         thisWidget.hookupCurrentItems();
     };
 
