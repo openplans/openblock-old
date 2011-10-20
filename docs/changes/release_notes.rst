@@ -1,5 +1,5 @@
-OpenBlock 1.1.0 (TODO date here)
-====================================
+OpenBlock 1.1.0 (October 20, 2011)
+=====================================
 
 Upgrade Notes
 -------------
@@ -33,7 +33,7 @@ Backward Incompatibilities
   "Running Scrapers" docs.  This allows us to close a bunch of tickets
   (#194, #51, #87, #180, #199, #222).
 
-* removed redundant get_metro_bbox function
+* removed redundant ``get_metro_bbox function``.
 
 * remove unused template tags: SHORT_NAME, STATE_ABBREV, EB_SUBDOMAIN.
 
@@ -95,7 +95,7 @@ New Features in 1.1
 * Add a --reset option to ``update_aggregates`` script, deletes all
   aggregates and starts over. (ticket #221)
 
-* Add an ebpub/bin/delete_newsitems.py script, useful during schema
+* Add an ``ebpub/bin/delete_newsitems.py`` script, useful during schema
   development: wipes all newsitems and attributes and lookups of a
   given schema.
 
@@ -135,7 +135,7 @@ New Features in 1.1
 
 * All provided scrapers now log to settings.SCRAPER_LOGFILE_NAME.
 
-* Custom apps generated via `paster create -t openblock` now include a
+* Custom apps generated via ``paster create -t openblock`` now include a
   wsgi file for use with mod_wsgi, an alternative settings file for
   use with django-admin process_tasks, a skeleton cron config,
   executable manage.sh and manage.py files. Also, manage.sh is now
