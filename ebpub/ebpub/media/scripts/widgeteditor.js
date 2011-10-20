@@ -4,35 +4,54 @@ var WidgetEditor = function(el, slug, rootURL) {
     this.rootURL = rootURL;
     this.itemStart = 0;
     this.itemsToLoad = 25;
+    this.maxPinnedItems = $(el).find('.current-items li').length;
     this.init();
 };
 
 WidgetEditor.prototype.init = function() {
 
     var thisWidget = this;
+
     $(this.el).find('.current-items').droppable({
-        drop: function() {
+        drop: function(event) {
             thisWidget.hookupCurrentItems();
+            thisWidget.savePins(true);
         }
     }).sortable({
-    	revert: true
+    	revert: 100,
+        update: function(event) {
+            thisWidget.fixLengthOfCurrentItems();
+            thisWidget.savePins(false);
+        }
     });
-
 
     $(this.el).find('.load-items').click(function() {
         thisWidget.loadMoreItems();
     });
     $(this.el).find('.save-button').click(function() {
-        thisWidget.savePins();
+        thisWidget.savePins(true);
     });
     this.loadMoreItems();
     this.loadStickyItems();
 };
 
+WidgetEditor.prototype.fixLengthOfCurrentItems = function() {
+    while ($(this.el).find('.current-items li').length > this.maxPinnedItems) {
+        $(this.el).find('.current-items li').last().remove();
+    };
+    while ($(this.el).find('.current-items li').length < this.maxPinnedItems) {
+        $(this.el).find('.current-items li').last().append('<li class="empty-slot">Empty Slot</li>');
+    };
+
+};
+
 WidgetEditor.prototype.hookupCurrentItems = function() {
+    var thisWidget = this;
     $(this.el).find('.current-items .delete-button').click(function(evt) {
         evt.preventDefault();
         var theLi = $(evt.target).closest('li').remove();
+        thisWidget.savePins(false);
+        thisWidget.fixLengthOfCurrentItems();
         return false;
     });
 
@@ -41,7 +60,7 @@ WidgetEditor.prototype.hookupCurrentItems = function() {
 
 };
 
-WidgetEditor.prototype.savePins = function() {
+WidgetEditor.prototype.savePins = function(do_reload) {
     var item_list = [];
     $(this.el).find('.current-items li').each(function(index, item) {
         if (!$(item).hasClass('empty-slot')) {
@@ -56,6 +75,7 @@ WidgetEditor.prototype.savePins = function() {
             });
         }
     });
+
     var outPins = {items: item_list};
 
     var setPinsURL = this.rootURL + '/pins/' + this.slug;
@@ -65,7 +85,7 @@ WidgetEditor.prototype.savePins = function() {
         data: JSON.stringify(outPins),
         dataType: 'json',
         success: function() {
-            document.location.reload();
+            do_reload && document.location.reload();
         }
     });
 
@@ -120,7 +140,23 @@ WidgetEditor.prototype.loadStickyItems = function() {
                 }
             );
         });
+        $(thisWidget.el).find('.expiration input').change(
+            function(event) {
+                thisWidget.savePins(false);
+            }
+        );
+        $(thisWidget.el).find('.expiration input').focusout(
+            function(event) {
+                thisWidget.savePins(false);
+            }
+        );
+        $(thisWidget.el).find('.expiration input').focus(
+            function(event) {
+                thisWidget.savePins(false);
+            }
+        );
         thisWidget.hookupCurrentItems();
+        thisWidget.fixLengthOfCurrentItems();
     };
 
     $.ajax({
@@ -177,5 +213,4 @@ WidgetEditor.prototype.disableMoreButton = function() {
 
 WidgetEditor.prototype.enableMoreButton = function() {
     $(this.el).find('.load-items').removeAttr('disabled');
-}
-;
+};
