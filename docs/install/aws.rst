@@ -72,7 +72,7 @@ will be no locations and no news.
 What You Have
 =============
 
-* Openblock 1.0.  The stable packages are installed in a virtualenv at
+* Openblock 1.1.  A checkout of the stable branch is installed in a virtualenv at
   `/home/openblock/openblock`.
 
 * A "custom" app named "myblock" as per the :doc:`docs <custom>`,
