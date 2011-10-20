@@ -15,13 +15,12 @@ WidgetEditor.prototype.init = function() {
     $(this.el).find('.current-items').droppable({
         drop: function(event) {
             thisWidget.hookupCurrentItems();
-            thisWidget.savePins(true);
         }
     }).sortable({
     	revert: 100,
         update: function(event) {
             thisWidget.fixLengthOfCurrentItems();
-            thisWidget.savePins(false);
+            thisWidget.savePins(true);
         }
     });
 
@@ -131,30 +130,27 @@ WidgetEditor.prototype.loadStickyItems = function() {
                     $('ol.current-items').droppable('disable');
                     $('ol.current-items').sortable('disable');
                     $(event.target).next('div.expiration').slideDown();
+		    thisWidget.savePins(false);
                 },
                 function(event) {
-                    // Disable date editing, enable dragging.
+                    // Disable date editing, enable dragging, save.
                     $('ol.current-items').droppable('enable');
                     $('ol.current-items').sortable('enable');
                     $(event.target).next('div.expiration').slideUp();
+		    thisWidget.savePins(false);
                 }
             );
         });
-        $(thisWidget.el).find('.expiration input').change(
-            function(event) {
-                thisWidget.savePins(false);
-            }
-        );
-        $(thisWidget.el).find('.expiration input').focusout(
-            function(event) {
-                thisWidget.savePins(false);
-            }
-        );
-        $(thisWidget.el).find('.expiration input').focus(
-            function(event) {
-                thisWidget.savePins(false);
-            }
-        );
+        // UNfortunately we can't bind a handler that calls savePins()
+        // on change, blur, etc. of the expiration inputs, because
+        // Calendrical doesn't trigger any of those events.
+	// Hopefully, saving on any button press will be enough.
+        // $(thisWidget.el).find('.expiration input').bind(
+        //     'change focusout focus blur',
+        //     function(event) {
+        //         thisWidget.savePins(false);
+        //     }
+        // );
         thisWidget.hookupCurrentItems();
         thisWidget.fixLengthOfCurrentItems();
     };
