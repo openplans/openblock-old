@@ -37,9 +37,10 @@ unless you know what you're doing.
   way you *must* add the SSH and HTTP rules to open ports 22 and 80.
   Otherwise you won't be able to connect to your new instance at all.
 
-As part of the setup, you'll be prompted to create a key pair.  It's
-very important that you save the PEM file that it prompts you to
-download.  You'll use this to ssh to your server later.
+As part of the setup, you'll be prompted to create a key pair (if you
+don't have one already).  It's very important that you save the PEM
+file that it prompts you to download.  You'll use this to ssh to your
+server later.
 
 Or if you prefer, you can use Amazon's ``ec2-run-instances``
 command-line tool, which is beyond the scope of this document.
