@@ -77,30 +77,31 @@ button, li {
 </p>
 
 <div id="widget_editor">
- <p>Drag items from the left list into the right list to pin them.
- Drag pinned items up and down to re-order.</p>
- <div class="available-container">
-   <h2>Latest Items</h2>
-   <!-- loaded via javascript. -->
-   <ul class="available-items"></ul>
-   <button class="load-items">Load More</button>
- </div>
+  <p>Drag items from the left list into the right list to pin them.
+    Drag pinned items up and down to re-order.
+  </p>
+  <div class="available-container">
+    <h2>Latest Items</h2>
+    <!-- loaded via javascript. -->
+    <ul class="available-items"></ul>
+    <button class="load-items">Load More</button>
+  </div>
 
- <div class="current-container">
-  <h2>Pinned Items </h2>
-   <ol class="current-items">
-    {% for n in max_items_range %}
-     <li class="empty-slot">Empty Slot</li>
+  <div class="current-container">
+    <h2>Pinned Items </h2>
+    <ol class="current-items">
+      {% for n in max_items_range %}
+      <li class="empty-slot">Empty Slot</li>
     {% endfor %}
-   </ol>
-  <button class="save-button">Save</button>
- </div>
+    </ol>
+    <button class="save-button">Save</button>
+  </div>
 </div>
 
 <hr>
 <h1>Preview
- <a href="#widget_preview"
-    onclick="document.getElementById('widget_preview').contentDocument.location.reload(true);">reload</a>
+  <a href="#widget_preview"
+     onclick="document.getElementById('widget_preview').contentDocument.location.reload(true);">reload</a>
 </h1>
 
 <iframe style="border: solid 1px" id="widget_preview" src="{% url widget_content widget.slug %}"
