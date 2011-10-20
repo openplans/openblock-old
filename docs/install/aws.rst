@@ -23,7 +23,7 @@ Launch an Instance ...
 
 In the `AWS EC2 management console <https://console.aws.amazon.com/ec2/>`_,
 click "Launch Instance". Click "Community AMIs", and in the search box, type in
-"ami-9b08cbf2".  (You can also try searching for "openblock".)
+"ami-69d91600".  (You can also try searching for "openblock".)
 
 Select the OpenBlock AMI, then continue
 through the wizard until your instance is launched. You can leave all
@@ -37,9 +37,10 @@ unless you know what you're doing.
   way you *must* add the SSH and HTTP rules to open ports 22 and 80.
   Otherwise you won't be able to connect to your new instance at all.
 
-As part of the setup, you'll be prompted to create a key pair.  It's
-very important that you save the PEM file that it prompts you to
-download.  You'll use this to ssh to your server later.
+As part of the setup, you'll be prompted to create a key pair (if you
+don't have one already).  It's very important that you save the PEM
+file that it prompts you to download.  You'll use this to ssh to your
+server later.
 
 Or if you prefer, you can use Amazon's ``ec2-run-instances``
 command-line tool, which is beyond the scope of this document.
@@ -72,7 +73,7 @@ will be no locations and no news.
 What You Have
 =============
 
-* Openblock 1.0.  The stable packages are installed in a virtualenv at
+* Openblock 1.1.  A checkout of the stable branch is installed in a virtualenv at
   `/home/openblock/openblock`.
 
 * A "custom" app named "myblock" as per the :doc:`docs <custom>`,

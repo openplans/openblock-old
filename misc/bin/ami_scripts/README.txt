@@ -1,5 +1,9 @@
 .. -*- mode: rst; -*-
 
+==========================================
+Building OpenBlock on Amazon EC2
+==========================================
+
 Scripts in here are for two purposes: creating a clone-able EC2 AMI,
 or for smoke testing of the install docs on fresh Ubuntu images,
 eg. on newly cloned EC2 AMIs.
@@ -24,9 +28,9 @@ locally, then there is an ``aws`` script and an ``etc/aws.conf``
 config file that you can use to create, stop, terminate, etc. some
 instances. Like so::
 
- $ aws start lucid-64
- $ aws status lucid-64
- $ aws terminate lucid-64
+ $ aws start natty-64
+ $ aws status natty-64
+ $ aws terminate natty-64
 
 Modify the config file as you like.
 (You could also of course use Amazon's ec-* scripts but I find mr.awsome
@@ -49,8 +53,11 @@ Then try the ``make_cloneable_image.sh <HOST>`` script.
 This sets up apache, logrotate, cron jobs, openblock-related services.
 
 Then you can use the EC2 management console (or scripts, if you like)
-to create a clone-able AMI from this instance. Directions:
-... TODO, find a good secure set of directions for this
+to create a clone-able AMI from this instance. 
+On the web management console, this is as simple as:
+* Select the instance
+* Instance Actions -> Stop
+* Instance Actions -> Create Image (EBS AMI)
 
 
 Using EC2 for Release Testing - Manual
