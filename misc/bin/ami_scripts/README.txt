@@ -53,8 +53,11 @@ Then try the ``make_cloneable_image.sh <HOST>`` script.
 This sets up apache, logrotate, cron jobs, openblock-related services.
 
 Then you can use the EC2 management console (or scripts, if you like)
-to create a clone-able AMI from this instance. Directions:
-... TODO, find a good secure set of directions for this
+to create a clone-able AMI from this instance. 
+On the web management console, this is as simple as:
+* Select the instance
+* Instance Actions -> Stop
+* Instance Actions -> Create Image (EBS AMI)
 
 
 Using EC2 for Release Testing - Manual
