@@ -23,7 +23,7 @@ Launch an Instance ...
 
 In the `AWS EC2 management console <https://console.aws.amazon.com/ec2/>`_,
 click "Launch Instance". Click "Community AMIs", and in the search box, type in
-"ami-9b08cbf2".  (You can also try searching for "openblock".)
+"ami-69d91600".  (You can also try searching for "openblock".)
 
 Select the OpenBlock AMI, then continue
 through the wizard until your instance is launched. You can leave all
