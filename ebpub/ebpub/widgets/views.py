@@ -296,14 +296,21 @@ def _set_ajax_widget_pins(request, widget):
                 expiration = datetime.datetime.strptime(pi['expiration_date'], '%m/%d/%Y')
             except:
                 return HttpResponse("unable to parse expiration date %s" % pi['expiration_date'], status=400)
-        if pi.get('expiration_time'):
+        if pi.get('expiration_time', '').strip():
             if expiration is None:
                 return HttpResponse("cannot specify expiration time without expiration date", status=400)
+            # Be slightly broad about time formats accepted.
+            etime = pi['expiration_time'].replace(' ', '').lower()
             try:
-                etime = datetime.datetime.strptime(pi['expiration_time'], '%I:%M%p')
-                expiration = expiration.replace(hour=etime.hour, minute=etime.minute)
+                if etime.endswith('am') or etime.endswith('pm'):
+                    etime = datetime.datetime.strptime(etime, '%I:%M%p')
+                else:
+                    # Assume it's 24-hour.
+                    etime = datetime.datetime.strptime(etime, '%H:%M')
             except:
                 return HttpResponse("unable to parse expiration time %s" % pi['expiration_time'], status=400)
+            expiration = expiration.replace(hour=etime.hour, minute=etime.minute)
+
         if expiration is not None: 
             new_pin.expiration_date = expiration
         new_pins.append(new_pin)

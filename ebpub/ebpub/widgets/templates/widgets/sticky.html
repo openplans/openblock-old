@@ -41,23 +41,26 @@ button, li {
 .empty-slot {
     color: #777;
 }
-.pinnable-newsitem .delete-button, .expiration-button {
+.pinnable-newsitem .delete-button, .expiration-button, .expiration, div.buttons {
 	display: none;
 }
 
 .current-container .pinnable-newsitem .delete-button {
 	display: inline;
 }
-.current-container .pinnable-newsitem .expiration-button {
-	display: inline;
+.current-container .pinnable-newsitem .expiration {
+	display: block;
 }
 
+.current-container .buttons {
+    display: block;
+}
+.current-container .pinnable-newsitem {
+    background: white;
+    border: #CCC solid 1px;
+}
 
 .pinnable-newsitem .item-id {
-	display: none;
-}
-
-.pinnable-newsitem .expiration {
 	display: none;
 }
 
@@ -101,7 +104,7 @@ button, li {
 <hr>
 <h1>Preview
   <a href="#widget_preview"
-     onclick="document.getElementById('widget_preview').contentDocument.location.reload(true);">reload</a>
+     onclick="document.getElementById('widget_preview').contentDocument.location.reload(true);"><button>reload</button></a>
 </h1>
 
 <iframe style="border: solid 1px" id="widget_preview" src="{% url widget_content widget.slug %}"

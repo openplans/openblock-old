@@ -27,7 +27,7 @@ WidgetEditor.prototype.init = function() {
     $(this.el).find('.load-items').click(function() {
         thisWidget.loadMoreItems();
     });
-    $(this.el).find('.save-button').click(function() {
+    $(this.el).find('.save-button').live('click', function() {
         thisWidget.savePins(true);
     });
     this.loadMoreItems();
@@ -55,7 +55,13 @@ WidgetEditor.prototype.hookupCurrentItems = function() {
     });
 
     $(this.el).find('.current-items .expire-date').calendricalDate({usa: true});
-    $(this.el).find('.current-items .expire-time').calendricalTime({usa: true});
+    // Not using calendricalTime because it just interacts too poorly with
+    // jqueryUI sorting and dropping, which is more important to us here.
+    // Specifically, I haven't found a user-friendly way to switch between
+    // dragging behavior and time-scrolling behavior.
+    // So, let's just use a vanilla text widget.
+    // $(this.el).find('.current-items .expire-time').calendricalTime(
+    //     {usa: true, defaultTime: {hour: 12, minute: 0}});
 
 };
 
@@ -90,26 +96,26 @@ WidgetEditor.prototype.savePins = function(do_reload) {
 
 };
 
-
 WidgetEditor.prototype.htmlForItem = function(item) {
     var item_html = '<li class="pinnable-newsitem">';
     item_html += '<span class="item-id">' +  item.id +'</span>';
-    item_html += '<button class="delete-button" alt="remove" title="remove">-</button>';
-    item_html += '<button class="expiration-button" title="set expiration date">Expiration...</button>';
-    item_html += '<div class="expiration">';
-    item_html += 'Date: <input type="text" size="10" class="expire-date" ';
+    item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '">';
+    item_html += item.title + '</a>';
+    item_html += '<div class="expiration">Expiration Date:';
+    item_html += '<input type="text" size="10" class="expire-date" ';
     if (item.expiration_date) {
         item_html += 'value="' + item.expiration_date + '"';
     }
     item_html += ' />';
-    item_html += 'Time: <input type="text" class="expire-time" size="10" ';
+    item_html += 'Time: <input type="text" class="expire-time" size="7" ';
     if (item.expiration_time) {
-        item_html += 'value="' + item.expiration_time + '"';
+        item_html += ' value="' + item.expiration_time + '"';
     }
     item_html += ' />';
     item_html += '</div>';
-    item_html += ' <a target="_blank" href="/admin/db/newsitem/' + item.id + '">';
-    item_html += item.title + '</a>';
+    item_html += '<div class="buttons"><button class="save-button">Save</button>';
+    item_html += '<button class="delete-button" alt="remove" title="remove">x</button>';
+    item_html += '</div>';
     item_html += '</li>';
     return item_html;
 };
@@ -123,34 +129,10 @@ WidgetEditor.prototype.loadStickyItems = function() {
             var item_html = thisWidget.htmlForItem(item);
             $(item_html).insertBefore($(thisWidget.el).find('.current-items').children()[item.index]);
         }
-        $(thisWidget.el).find('.current-items .pinnable-newsitem').each(function(index, item) {
-            $(item).find('.expiration-button').toggle(
-                function(event) {
-                    // Enable date editing, disable dragging.
-                    $('ol.current-items').droppable('disable');
-                    $('ol.current-items').sortable('disable');
-                    $(event.target).next('div.expiration').slideDown();
-		    thisWidget.savePins(false);
-                },
-                function(event) {
-                    // Disable date editing, enable dragging, save.
-                    $('ol.current-items').droppable('enable');
-                    $('ol.current-items').sortable('enable');
-                    $(event.target).next('div.expiration').slideUp();
-		    thisWidget.savePins(false);
-                }
-            );
-        });
-        // UNfortunately we can't bind a handler that calls savePins()
+        // UNfortunately we can't just bind a handler that calls savePins()
         // on change, blur, etc. of the expiration inputs, because
         // Calendrical doesn't trigger any of those events.
 	// Hopefully, saving on any button press will be enough.
-        // $(thisWidget.el).find('.expiration input').bind(
-        //     'change focusout focus blur',
-        //     function(event) {
-        //         thisWidget.savePins(false);
-        //     }
-        // );
         thisWidget.hookupCurrentItems();
         thisWidget.fixLengthOfCurrentItems();
     };
@@ -184,8 +166,10 @@ WidgetEditor.prototype.loadMoreItems = function() {
     	    helper: "clone",
     	    revert: "invalid"
         });
+        // Text selection can interfere w/ dragging, but we need
+        // it for our time input, so only apply this to the "available" column.
+        $(thisWidget.el).find(".available-items li" ).disableSelection();
 
-        $(thisWidget.el).find("ul, ol, li" ).disableSelection();
     };
 
     $.ajax({
