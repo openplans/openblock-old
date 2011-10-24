@@ -107,7 +107,7 @@ def logout(request):
             next_url = reverse(login)
 
         return http.HttpResponseRedirect(next_url)
-    return eb_render(request, reverse(logout))
+    return eb_render(request, 'accounts/logout_form.html')
 
 @utils.login_required
 def dashboard(request):
