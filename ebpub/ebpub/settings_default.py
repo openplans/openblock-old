@@ -156,6 +156,8 @@ MIDDLEWARE_CLASSES = (
 
 SITE_ID = 1
 
+LOGIN_URL = '/accounts/login/'
+
 ##################################
 # CUSTOM EBPUB & OBDEMO SETTINGS #
 ##################################

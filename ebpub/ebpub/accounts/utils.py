@@ -21,12 +21,12 @@
 from django import http
 from django.conf import settings
 from django.contrib.auth import authenticate
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core.mail import get_connection, EmailMultiAlternatives
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.importlib import import_module
-from ebpub.metros.allmetros import get_metro
 import constants # relative import
-import random
 import urllib
 
 # In Python 2.5+, the sha library was deprecated in favor of hashlib.
@@ -107,8 +107,8 @@ def login_required(view_func):
     def inner_view(request, *args, **kwargs):
         if not request.user.is_anonymous():
             return view_func(request, *args, **kwargs)
-        request.session['next_url'] = request.path
-        return http.HttpResponseRedirect('/accounts/login/')
+        request.session[REDIRECT_FIELD_NAME] = request.path
+        return http.HttpResponseRedirect(reverse('accounts-login'))
     return inner_view
 
 

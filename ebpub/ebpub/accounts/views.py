@@ -17,6 +17,7 @@
 #
 
 from django import http
+from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.template.context import RequestContext
@@ -42,12 +43,16 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
     force_form is used when you want to force display of the original
     form (regardless of whether it's a POST request).
     """
-
-    # If the user is already logged in, redirect to the dashboard.
     if not request.user.is_anonymous():
-        return http.HttpResponseRedirect(reverse(dashboard))
+        # If the user is already logged in, redirect to the dashboard.
+        next_url = reverse(dashboard)
+        return http.HttpResponseRedirect(next_url)
 
     if request.method == 'POST' and not force_form:
+        next_url = (request.session.pop(REDIRECT_FIELD_NAME, None)
+                    or request.POST.get(REDIRECT_FIELD_NAME)
+                    or reverse(dashboard))
+
         form = forms.LoginForm(request, request.POST)
         if form.is_valid():
             utils.login(request, form.user)
@@ -74,13 +79,14 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
                 if message:
                     request.session['login_message'] = message
 
-            next_url = request.session.pop('next_url', reverse(dashboard))
             return http.HttpResponseRedirect(next_url)
     else:
         form = forms.LoginForm(request, initial={'email': initial_email})
+
+    # Rendering the form.
     request.session.set_test_cookie()
-    if request.GET.get('next'):
-        request.session['next_url'] = request.GET['next']
+    if request.REQUEST.get(REDIRECT_FIELD_NAME):
+        request.session[REDIRECT_FIELD_NAME] = request.REQUEST[REDIRECT_FIELD_NAME]
     custom_message = request.session.pop('login_message', custom_message)
     context = RequestContext(request, {
             'form': form,
@@ -98,10 +104,10 @@ def logout(request):
         # POST data, it can't be trusted, so we do a simple check that it
         # starts with a slash (so that people can't hack redirects to other
         # sites).
-        if 'next_url' in request.POST and request.POST['next_url'].startswith('/'):
-            next_url = request.POST['next_url']
-        elif 'next_url' in request.session:
-            next_url = request.session.pop('next_url')
+        if REDIRECT_FIELD_NAME in request.POST and request.POST[REDIRECT_FIELD_NAME].startswith('/'):
+            next_url = request.POST[REDIRECT_FIELD_NAME]
+        elif REDIRECT_FIELD_NAME in request.session:
+            next_url = request.session.pop(REDIRECT_FIELD_NAME)
         else:
             request.session['login_message'] = "You're logged out. You can log in again below."
             next_url = reverse(login)

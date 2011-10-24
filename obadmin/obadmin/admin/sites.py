@@ -17,33 +17,26 @@
 #
 
 from django.contrib.admin import AdminSite
-from django.views.decorators.cache import never_cache
+import ebpub.accounts.forms
 
 class OpenblockAdminSite(AdminSite):
     """
-    A custom AdminSite for using 
-    
-    This admin site specialized to use
-    the openblock login methods instead of the 
-    django.contrib.auth methods.
-    """
-    
-    def logout(self, request):
-        from ebpub.accounts.views import logout
-        return logout(request)
-    logout = never_cache(logout)
+    A custom AdminSite.
 
-    def login(self, request):
-        """
-        Displays the login form
-        """
-        from ebpub.accounts.views import login
-        request.session['next_url'] = request.get_full_path()
-        return login(request)
-    login = never_cache(login)
-    
+    This admin site specialized to use the openblock login methods
+    instead of the django.contrib.auth methods.
+    """
+
+    login_form = ebpub.accounts.forms.LoginForm
+    login_template = 'accounts/login_form.html'
+
+    logout_template = 'accounts/logout_form.html'
+
     def get_urls(self):
-        from django.conf.urls.defaults import patterns, url, include
+        """
+        Add some extra URLs to the admin site, as per
+        https://docs.djangoproject.com/en/dev/ref/contrib/admin/#adding-views-to-admin-sites
+        """
         from obadmin.admin.urls import urlpatterns as local_urls
 
         url_patterns = local_urls
@@ -55,14 +48,22 @@ site = OpenblockAdminSite()
 
 def autodiscover():
     global site
-    # workaround the somewhat short-sighted admin registry convention 
-    # by stealing the global admin site's registry after autodiscover
+    # workaround the somewhat short-sighted admin registry convention
+    # by copying the global admin site's registry after autodiscover,
+    # because our ModelAdmins got registered with the global admin site.
     from copy import copy
     from django.contrib import admin
     admin.autodiscover()
     site._registry = copy(admin.site._registry)
-    
+
     # unregister the django.contrib.auth.models, openblock
     # uses specialized versions.
     from django.contrib.auth.models import User, Group
     site.unregister([User, Group])
+
+    # Also, our registered ModelAdmin instances have a reference to
+    # the default admin site.  This has implications for eg. the admin
+    # site login form, which is looked up via that reference.  Patch
+    # those so we get the right login form. Sigh.
+    for admin_instance in site._registry.values():
+        admin_instance.admin_site = site

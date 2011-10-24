@@ -12,7 +12,7 @@
 	<h3>Enter your e-mail address and choose a frequency&hellip;</h3>
 	{% if USER_EMAIL %}
 	<form action="{% url accounts-logout %}" method="POST">
-		<p>E-mail address: <strong>{{ USER_EMAIL }}</strong> <input type="hidden" name="next_url" value="{{ place.alert_url }}"><button type="submit">Log out to change</button></p>
+		<p>E-mail address: <strong>{{ USER_EMAIL }}</strong> <input type="hidden" name="next" value="{{ place.alert_url }}"><button type="submit">Log out to change</button></p>
 		{% csrf_token %}
 	</form>
 	<form action="" method="POST">

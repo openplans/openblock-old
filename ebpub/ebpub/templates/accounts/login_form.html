@@ -11,6 +11,8 @@
 	<form action="/accounts/login/" method="post">
 		{% csrf_token %}
 		{{ form.non_field_errors }}
+		<input type="hidden" name="next" value="{{ next|default:'' }}" />
+
 		<table>
 			<tr>
 				<th><label for="id_email">E-mail address:</label></th>
