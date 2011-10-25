@@ -17,6 +17,7 @@
 #
 
 # Sanity-check python version.
+from __future__ import with_statement
 import sys
 if not ((2, 6) <= sys.version_info[:2] < (3, 0)):
     sys.exit("ERROR: ebpub requires Python >= 2.6 and < 3.0")

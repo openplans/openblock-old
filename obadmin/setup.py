@@ -16,6 +16,12 @@
 #   along with OpenBlock.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# Sanity-check python version.
+from __future__ import with_statement
+import sys
+if not ((2, 6) <= sys.version_info[:2] < (3, 0)):
+    sys.exit("ERROR: obadmin requires Python >= 2.6 and < 3.0")
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
