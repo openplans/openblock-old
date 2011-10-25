@@ -72,6 +72,7 @@ class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',
                     'has_newsitem_detail',)
     prepopulated_fields = {'slug': ('plural_name',)}
+    save_as = True
 
 class SchemaFieldAdmin(admin.ModelAdmin):
 

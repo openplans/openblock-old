@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
+
+
+{% block content %}
+<h1>Available Widgets</h1>
+
+<ul class="widgets-list">
+{% for widget in widgets %}
+	<li>
+		<a href="{% url widget_admin widget.slug %}">{{widget.name}}</a>
+	</li>
+{% endfor %}
+</ul>
+
+
+{% endblock %}
