@@ -7,6 +7,9 @@ Introduction
 
 OpenBlock's widgets allow you to integrate OpenBlock content in external sites and fully customize output using Django templates.
 
+You can also do some advanced configuration to :ref:`"pin"
+<pinned_items>` some news items so they don't expire from the widget
+even if no longer current.
 
 Widgets
 ======= 
@@ -232,3 +235,32 @@ You are free to use django's full template syntax as long as the result contains
     {% else %}
         http://mypublicsite.com/track_click_and_redirect?realurl={{item.external_url|urlencode}}
     {% endif %}
+
+
+.. _pinned_items:
+
+Pinned Items, aka "Sticky Widgets"
+==================================
+
+Normally, a widget will show only the NewsItems that currently best
+match the specified type(s) and location.  It's possible to configure
+widgets to "pin" certain NewsItems so they stay visible -- or "stick"
+-- either permanently, or until an expiration date you specify.
+
+To do so, go to the admin UI and navigate to the widget you want to
+change.  At top right, click the "configure sticky items" button.
+
+The "Pinned Items" form shows a list of currently visible NewsItems on
+the left column. To pin one, drag it into an empty slot on the right
+column.
+
+It will stay pinned in that position - either forever, or until the
+optional Expiration Date (and optionally a time).
+
+You can re-order the pinned items by dragging and dropping up and
+down.
+
+To manually remove a pinned item, just click the ``x`` button next to
+it.
+
+When done with your changes, click the Save button.
