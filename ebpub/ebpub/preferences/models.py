@@ -21,6 +21,7 @@ from django.db.models.signals import post_save
 from ebpub.db.models import Schema
 import ebpub.accounts.models
 from ebpub.openblockapi.apikey.models import MAX_KEYS
+from jsonfield.fields import JSONField
 
 class HiddenSchema(models.Model):
     user_id = models.IntegerField()
@@ -50,6 +51,10 @@ class Profile(models.Model):
 
     max_keys = models.IntegerField(default=MAX_KEYS,
                                    help_text="How many API keys can this user have?")
+
+    properties = JSONField(null=True, blank=True, default=dict,
+                           help_text="A bag of JSON for holding arbitrary user metadata."
+                           )
 
     def available_keys(self):
         """

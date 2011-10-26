@@ -74,6 +74,7 @@ setup(
         "django-olwidget",
         'setuptools-git',  # Only needed if building packages for distribution.
         'python-dateutil<2.0',  # 2.0 requires python >= 3.
+        'django-jsonfield>=0.6',  # The one on pypi, NOT the one by bradjasper on github.
     ],
     dependency_links=[
     "http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1",

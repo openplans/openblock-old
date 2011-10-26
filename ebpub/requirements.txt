@@ -16,4 +16,4 @@ PyYAML==3.09
 http://www.voidspace.org.uk/downloads/mock-0.8.0alpha2.tar.gz#egg=mock-0.8.0alpha2
 South>=0.7.3
 python-dateutil==1.5
-
+django-jsonfield==0.6
