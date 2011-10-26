@@ -18,5 +18,26 @@
 
 from django.contrib import admin
 from ebpub.accounts.models import User
+from ebpub.geoadmin import OSMModelAdmin
+from ebpub.preferences.models import Profile
+from ebpub.openblockapi.apikey.admin import ApiKeyForm, ApiKey
 
-admin.site.register(User)
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    fk_name = 'user'
+    can_delete = False
+    verbose_name_plural = 'Profile'
+
+class ApiKeyInline(admin.StackedInline):
+    model = ApiKey
+    form = ApiKeyForm
+    fk_name = 'user'
+    extra = 0
+
+class UserAdmin(OSMModelAdmin):
+    inlines = [
+        ApiKeyInline,
+        ProfileInline,
+        ]
+
+admin.site.register(User, UserAdmin)
