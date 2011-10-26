@@ -98,7 +98,6 @@ def logout(request):
     if request.method == 'POST':
         request.session.flush()
         request.user = AnonymousUser()
-
         # The `next_url` can be specified either as POST data or in the
         # session. If it's in the session, it can be trusted. If it's in
         # POST data, it can't be trusted, so we do a simple check that it
@@ -109,8 +108,18 @@ def logout(request):
         elif REDIRECT_FIELD_NAME in request.session:
             next_url = request.session.pop(REDIRECT_FIELD_NAME)
         else:
-            request.session['login_message'] = "You're logged out. You can log in again below."
-            next_url = reverse(login)
+            # See if the referrer is on our site, and is not this page,
+            # and if so, go there.
+            referrer = request.META['HTTP_REFERER']
+            host = request.get_host()
+            protocol = 'https://' if request.is_secure() else 'http://'
+            root_url = '%s%s' % (protocol, host)
+            if referrer != request.build_absolute_uri() and referrer.startswith(root_url):
+                next_url = referrer
+            else:
+                # Final fallback is the login page.
+                request.session['login_message'] = "You're logged out. You can log in again below."
+                next_url = reverse('accounts-login')
 
         return http.HttpResponseRedirect(next_url)
     return eb_render(request, 'accounts/logout_form.html')
