@@ -42,6 +42,11 @@ class LazyUser(User):
                 self._user_cache = None
         return getattr(self._user_cache, name)
 
+    def get_profile(self):
+        # For some reason this doesn't automatically work.
+        func = self.__getattr__('get_profile')
+        return func()
+
 class LazyUserDescriptor(object):
     # This class uses a Python descriptor so that a LazyUser isn't
     # actually created until request.user is accessed.
