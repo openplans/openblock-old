@@ -8,7 +8,7 @@
 	{% if custom_message %}
 		<p>{{ custom_message }}</p>
 	{% endif %}
-	<form action="/accounts/login/" method="post">
+	<form action="{% url accounts-login %}" method="post">
 		{% csrf_token %}
 		{{ form.non_field_errors }}
 		<input type="hidden" name="next" value="{{ next|default:'' }}" />
@@ -20,7 +20,7 @@
 			</tr>
 			<tr>
 				<th><label for="id_password">Password:</label></th>
-				<td>{{ form.password.errors }}{{ form.password }} <span><a href="/accounts/password-change/">Forgot password</a></span></td>
+				<td>{{ form.password.errors }}{{ form.password }} <span><a href="{% url accounts-pw-change %}">Forgot password</a></span></td>
 			</tr>
 			<tr>
 				<th>&nbsp;</th>
@@ -30,6 +30,6 @@
 			</tr>
 		</table>
 	</form>
-	<p><a href="/accounts/register/">Create account</a></p>
+	<p><a href="{% url accounts-register %}">Create account</a></p>
 </div><!--/ #content -->
 {% endblock %}
