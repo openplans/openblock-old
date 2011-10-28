@@ -2,16 +2,21 @@
 
 {% block title %}Log in{% endblock %}
 
+
 {% block content %}
 <div id="content">
 	<h1>Log into your account</h1>
 	{% if custom_message %}
-		<p>{{ custom_message }}</p>
+	<p>{{ custom_message }}</p>
 	{% endif %}
-	<form action="{% url accounts-login %}" method="post">
+	{% block form_override %}
+	<form action="{{ target|default:'' }}" method="POST">
+	{% endblock form_override %}
 		{% csrf_token %}
 		{{ form.non_field_errors }}
+		{% block next_override %}
 		<input type="hidden" name="next" value="{{ next|default:'' }}" />
+		{% endblock next_override %}
 
 		<table>
 			<tr>
@@ -32,4 +37,4 @@
 	</form>
 	<p><a href="{% url accounts-register %}">Create account</a></p>
 </div><!--/ #content -->
-{% endblock %}
+{% endblock content %}

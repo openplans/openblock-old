@@ -73,7 +73,6 @@ class LoginForm(forms.Form):
         # Note that because this is the form-wide clean() method, any
         # validation errors raised here will not be tied to a particular field.
         # Instead, use form.non_field_errors() in the template.
-
         email = self.cleaned_data.get('email')
         password = self.cleaned_data.get('password')
 

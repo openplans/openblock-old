@@ -36,12 +36,15 @@ import forms, utils # relative import
 # VIEWS FOR USER ACCOUNTS #
 ###########################
 
-def login(request, custom_message=None, force_form=False, initial_email=None):
+def login(request, custom_message=None, force_form=False, initial_email=None,
+          override_target=None):
     """
     View for logging in.
     custom_message is a string to display at the top of the login form.
     force_form is used when you want to force display of the original
     form (regardless of whether it's a POST request).
+    override_target can be used to set the form's target URL;
+    otherwise it's self-POSTing.
     """
     if not request.user.is_anonymous():
         # If the user is already logged in, redirect to the dashboard.
@@ -91,6 +94,7 @@ def login(request, custom_message=None, force_form=False, initial_email=None):
     context = RequestContext(request, {
             'form': form,
             'custom_message': custom_message,
+            'target': override_target or reverse(login),
             })
     return eb_render(request, 'accounts/login_form.html', context)
 
