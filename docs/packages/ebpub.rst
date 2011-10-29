@@ -248,10 +248,32 @@ NewsItem on the site. If you'd like to extend your NewsItems to include
 Schema-specific attributes, you can use SchemaFields and Attributes.
 
 A single NewsItem is described by one NewsItem instance, one
-corresponding Attribute instance containing metadata, and one Schema
-that identifies the "type" of NewsItem. The Schema in turn is
+corresponding Attribute instance which is a dictionary-like object
+containing metadata, and one Schema
+that identifies the "type" of NewsItem.
+
+The Schema in turn is
 described by a number of SchemaFields which describe the meaning of
-the fields of Attribute instances for this type of NewsItem.
+the values of Attribute dictionaries for this type of NewsItem.
+
+Given an appropriate Schema, using this to get/set attributes
+on NewsItems is trivial - it's just like a dictionary.
+To assign the whole dictionary::
+
+    ni = NewsItem.objects.get(...)
+    ni.attributes = {'some_schemafield_name': 'some value'}
+    # There is no need to call ni.save() or ni.attributes.save();
+    # the assignment operation does that behind the scenes.
+
+To assign a single value::
+
+    ni.attributes['some_schemafield_name'] = 'some other value'
+    # Again there is no need to save() anything explicilty.
+
+To get a value::
+
+    print ni.attributes['some_schemafield_name']
+
 
 Or, from a database perspective: The "db_attribute" table stores
 arbitrary attributes for each NewsItem, and the "db_schemafield" table
@@ -318,6 +340,23 @@ defining it:
 
 Once you've created this SchemaField, the value of "int01" for any db_attribute
 row with schema_id=5 will be the sale price.
+
+Python code using this Schema is the easy part; you can write things
+like this::
+
+   from ebpub.db.models import NewsItem
+   ni = NewsItem(schema__id=5, title='the title', description='the description', ...)
+   ni.save()
+   ni.attributes = {'sale_price': 59, ...}
+
+
+You can then search for items with the same price like so::
+
+   NewsItem.objects.filter(schema__id=5).by_attribute(sale_price=59)
+
+
+The ``by_attribute`` method is particular to NewsItems and allows
+searching for NewsItem by Attribute values.
 
 .. _lookups:
 
