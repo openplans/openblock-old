@@ -761,8 +761,15 @@ class NewsItem(models.Model):
                               help_text="Optional reference to a Block. Not really used")
 
     objects = NewsItemManager()
-    attributes = AttributesDescriptor()  # Treat it like a dict.
 
+    # Treat this like a dict. The related Schema and SchemaFields explain
+    # what keys/ types of values you can set.
+    # See the ``ebpub`` section of the docs for more information.
+    # Note you do NOT need to save() the NewsItem after setting or modifying
+    # this dictionary - but you do need to save() before the FIRST time you do so,
+    # because the underlying Attribute instance needs a reference to the NewsItem's
+    # primary key.
+    attributes = AttributesDescriptor()
 
     def clean(self):
         self.location = ensure_valid(flatten_geomcollection(self.location))
