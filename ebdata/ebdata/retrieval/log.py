@@ -27,6 +27,13 @@
 #     logger.warn('...')
 #     logger.info('...')
 
+
+"""
+Logging setup for ebdata scrapers.
+
+Warning, this gets done as an import-time side-effect!
+"""
+
 from django.conf import settings
 import logging
 import logging.handlers
