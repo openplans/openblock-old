@@ -19,9 +19,16 @@
 from django.db import models
 from django.db.models.signals import post_save
 from ebpub.db.models import Schema
-import ebpub.accounts.models
 from ebpub.openblockapi.apikey.models import MAX_KEYS
-from jsonfield.fields import JSONField
+import ebpub.accounts.models
+import warnings
+
+with warnings.catch_warnings():
+    # Okay, silencing deprecation warnings is not great,
+    # but a lot of OpenBlock's intended audience seem to think
+    # that DeprecationWarnings are actually errors.
+    warnings.simplefilter("ignore")
+    from jsonfield.fields import JSONField
 
 class HiddenSchema(models.Model):
     user_id = models.IntegerField()
