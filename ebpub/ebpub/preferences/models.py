@@ -50,9 +50,8 @@ class HiddenSchema(models.Model):
 
 class Profile(models.Model):
     """
-    Currently just metadata about the user's API keys, but this would
-    be the logical place to hang preferences information and such;
-    hence putting this in the preferences app.
+    User account metadata: API key limits, plus a big bag of JSON
+    for arbitrary other stuff.
     """
     user = models.ForeignKey(ebpub.accounts.models.User, unique=True)
 
