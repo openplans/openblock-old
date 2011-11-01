@@ -1,11 +1,10 @@
 {% load eb %}{% autoescape off %}
 {% for news_batch in news_groups %}
-{% if not news_batch.newsitems %}{{ news_batch.title|upper}} ITEMS: None nearby.
-{% endif %}
+{% if not news_batch.newsitems %}{{ news_batch.title|upper}} ITEMS: None nearby.{% endif %}
 {% regroup news_batch.newsitems by schema as schema_list %}{% for schema in schema_list %}
 {{ news_batch.title|upper }} {{ schema.grouper.plural_name|upper }}: {{ schema.list|length }}
-
-{% for newsitem in schema.list %}{{ newsitem.title }}
+{% for newsitem in schema.list %}
+{{ newsitem.title }}
 Location: {{ newsitem.location_name }}
 {{ newsitem.schema.date_name|capfirst }}: {{ newsitem.item_date|date:"F j, Y" }}
 {% if newsitem.description %}{{ newsitem.description }}{% endif %}
@@ -17,11 +16,14 @@ http://{{ domain }}{{ place_url }}
 
 ---------------------------------------------------------------------
 
-You've signed up to receive {% ifequal frequency 7 %}weekly{% else %}daily{% endifequal %} e-mails for {{ place_name }} in {% METRO_NAME %} at {{ email_address }}. To unsubscribe, just click this link:
+You've signed up to receive {% ifequal frequency 7 %}weekly{% else %}daily{% endifequal %} e-mails for {{ place_name }} in {% METRO_NAME %}
+at {{ email_address }}. To unsubscribe, just click this link:
 
 http://{{ domain }}{{ unsubscribe_url }}
 
-(When you click the link, you'll need to enter your password. If you don't remember it, or you haven't created one, just click the link on that page to send you a new password.)
+(When you click the link, you'll need to enter your password. If you
+don't remember it, or you haven't created one, just click the link on
+that page to send you a new password.)
 
 ---------------------------------------------------------------------
 {% endautoescape %}
