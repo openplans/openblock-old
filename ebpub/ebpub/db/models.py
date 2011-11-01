@@ -16,6 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
@@ -109,7 +110,8 @@ class Schema(models.Model):
                                           help_text="eg.'a' or 'an'")
     slug = models.SlugField(max_length=32, unique=True)
     min_date = models.DateField(
-        help_text="The earliest available pub_date for this Schema")
+        help_text="The earliest available pub_date for this Schema",
+        default=lambda: datetime.date(1970, 1, 1))
     last_updated = models.DateField()
     date_name = models.CharField(
         max_length=32, default='Date',
@@ -349,8 +351,10 @@ class Location(models.Model):
     is_public = models.BooleanField(
         help_text='Whether this is publically visible, or requires the staff cookie')
     description = models.TextField(blank=True)
-    creation_date = models.DateTimeField(blank=True, null=True)
-    last_mod_date = models.DateTimeField(blank=True, null=True)
+    creation_date = models.DateTimeField(blank=True, null=True,
+                                         default=datetime.datetime.now)
+    last_mod_date = models.DateTimeField(blank=True, null=True,
+                                         default=datetime.datetime.now)
     objects = LocationManager()
 
     @property
@@ -742,15 +746,19 @@ class NewsItem(models.Model):
         help_text="link to original source for this news")
     pub_date = models.DateTimeField(
         db_index=True,
-        help_text='Date/time this Item was added to the OpenBlock site.')  # TODO: default to now()
+        help_text='Date/time this Item was added to the OpenBlock site.',
+        default=datetime.datetime.now
+        )
     item_date = models.DateField(
         db_index=True,
-        help_text='Date (no time) this Item occurred, or was published on the original source site.')  # TODO: default to now()
+        help_text='Date (no time) this Item occurred, or was published on the original source site.',
+        default=datetime.date.today
+        )
 
     # automatic last modification tracking.  Note: if changing only attributes, the the
     # NewsItem should also be save()'d to update last_modification when complete. 
     last_modification = models.DateTimeField(db_index=True, auto_now=True)
-    
+
     location = models.GeometryField(blank=True, null=True, spatial_index=True,
                                     help_text="Coordinates where this news occurred.")
     location_name = models.CharField(max_length=255,
