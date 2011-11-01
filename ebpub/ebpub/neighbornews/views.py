@@ -1,4 +1,21 @@
-import datetime
+#   Copyright 2011 OpenPlans, and contributors
+#
+#   This file is part of ebpub
+#
+#   ebpub is free software: you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation, either version 3 of the License, or
+#   (at your option) any later version.
+#
+#   ebpub is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License
+#   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 from django.conf import settings
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
@@ -7,10 +24,12 @@ from django.views.decorators.csrf import csrf_protect
 from ebpub.accounts.models import User
 from ebpub.accounts.utils import login_required
 from ebpub.db.models import Schema, NewsItem, SchemaField, Lookup
-from ebpub.neighbornews.models import NewsItemCreator
-from ebpub.utils.view_utils import eb_render
 from ebpub.neighbornews.forms import NeighborMessageForm, NeighborEventForm
-from ebpub.neighbornews.utils import if_disabled404, NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
+from ebpub.neighbornews.models import NewsItemCreator
+from ebpub.neighbornews.utils import NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
+from ebpub.neighbornews.utils import if_disabled404
+from ebpub.utils.view_utils import eb_render
+import datetime
 import re
 
 @if_disabled404(NEIGHBOR_MESSAGE_SLUG)
@@ -20,7 +39,7 @@ def new_message(request):
     schema = Schema.objects.get(slug=NEIGHBOR_MESSAGE_SLUG)
     FormType = NeighborMessageForm
     return _new_usertype(request, schema, FormType, _create_message)
-    
+
 @if_disabled404(NEIGHBOR_EVENT_SLUG)
 @login_required
 @csrf_protect
@@ -30,15 +49,16 @@ def new_event(request):
     return _new_usertype(request, schema, FormType, _create_event)
 
 def _new_usertype(request, schema, FormType, create_item):
-    if request.method == 'POST': 
+    if request.method == 'POST':
         form = FormType(request.POST)
         if form.is_valid():
             item = create_item(request, schema, form)
-            detail_url = reverse('ebpub-newsitem-detail', args=(schema.slug, '%d' % item.id))
+            detail_url = reverse('ebpub-newsitem-detail',
+                                 args=(schema.slug, '%d' % item.id))
             return HttpResponseRedirect(detail_url)
     else:
         form = FormType()
-        
+
     mapconfig = {
         'locations': [],
         'layers': [],
@@ -68,28 +88,26 @@ def _create_message(request, schema, form):
 def _create_item(request, schema, form):
     item = NewsItem(schema=schema)
 
-    # common attributes
-    for attr in ('title', 'description', 'location_name', 'url'): 
-        setattr(item, attr, form.cleaned_data[attr])        
-    
-    
-    # location 
+    # Common attributes.
+    for attr in ('title', 'description', 'location_name', 'url'):
+        setattr(item, attr, form.cleaned_data[attr])
+
+    # Location.
     lon = form.cleaned_data['longitude']
     lat = form.cleaned_data['latitude']
     item.location = geos.Point(lon, lat)
 
-
-    # maybe specified ...
-    if 'item_date' in form.cleaned_data: 
+    # Maybe specified ...
+    if 'item_date' in form.cleaned_data:
         item.item_date = form.cleaned_data['item_date']
     else:
         item.item_date = datetime.datetime.now().date()
     item.pub_date = datetime.datetime.now()
     item.save()
-    
+
     # 'categories'
     cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
-    if len(cats): 
+    if len(cats):
         cat_field = SchemaField.objects.get(schema=schema, name='categories')
         lookups = set()
         for cat in cats:
@@ -98,20 +116,16 @@ def _create_item(request, schema, form):
             lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
             lookups.add(lu.id)
         item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
-    
-    # image link
-    if form.cleaned_data['image_url']: 
+
+    # Image link.
+    if form.cleaned_data['image_url']:
         item.attributes['image_url'] = form.cleaned_data['image_url']
-    
 
     item.save()
-
-    # add a NewsItemCreator association
-    # un-lazy the User.
+    # Add a NewsItemCreator association; un-lazy the User.
     user = User.objects.get(id=request.user.id)
     creator = NewsItemCreator(news_item=item, user=user)
     creator.save()
-    
     return item
 
 def _category_code(cat):
@@ -128,7 +142,6 @@ def _category_nice_name(cat):
     nice = re.sub('\s+', ' ', nice)
     nice = nice.lower()
     return nice
-
 
 def news_by_user(request, userid):
     user = User.objects.get(id=userid)
