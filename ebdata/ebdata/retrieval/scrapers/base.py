@@ -16,9 +16,16 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from django.conf import settings
+from django.db import transaction
 from ebdata.retrieval import Retriever
+from ebpub.db.models import NewsItem
+from ebpub.utils.text import address_to_block
 import datetime
 import logging
+import pytz
+
+local_tz = pytz.timezone(settings.TIME_ZONE)
 
 class ScraperBroken(Exception):
     "Something changed in the underlying data format and broke the scraper."
@@ -57,3 +64,123 @@ class BaseScraper(object):
         from lxml import etree
         from cStringIO import StringIO
         return etree.parse(StringIO(html), etree.HTMLParser())
+
+    @transaction.commit_on_success
+    def create_newsitem(self, attributes, **kwargs):
+        """
+        Creates and saves a NewsItem with the given kwargs. Returns the new
+        NewsItem.
+
+        kwargs MUST have the following keys:
+            title
+            item_date
+            location_name
+        For any other kwargs whose values aren't provided, this will use
+        sensible defaults.
+        
+        kwargs MAY have the following keys: 
+            zipcode - used to disambiguate geocoded locations
+
+        kwargs may optionally contain a 'convert_to_block' boolean. If True,
+        this will convert the given kwargs['location_name'] to a block level
+        but will use the real (non-block-level) address for geocoding and Block
+        association.
+
+        attributes is a dictionary to use to populate this NewsItem's Attribute
+        objects.
+        """
+
+        block = kwargs.get('block')
+        location = kwargs.get('location')
+        location_name = kwargs.get('location_name')
+        assert location or location_name, "At least one of location or location_name must be provided"
+        if location is None:
+            location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
+            if location:
+                block = location['block']
+                location = location['point']
+        if kwargs.pop('convert_to_block', False):
+            kwargs['location_name'] = address_to_block(kwargs['location_name'])
+            # If the exact address couldn't be geocoded, try using the
+            # normalized location name.
+            if location is None:
+                location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
+                if location:
+                    block = location['block']
+                    location = location['point']
+
+        # Normally we'd just use "schema = kwargs.get('schema', self.schema)",
+        # but self.schema will be evaluated even if the key is found in
+        # kwargs, which raises an error when using multiple schemas.
+        schema = kwargs.get('schema', None) or self.schema
+
+        ni = NewsItem.objects.create(
+            schema=schema,
+            title=kwargs['title'],
+            description=kwargs.get('description', ''),
+            url=kwargs.get('url', ''),
+            pub_date=kwargs.get('pub_date', self.start_time),
+            item_date=kwargs['item_date'],
+            location=location,
+            location_name=location_name,
+            location_object=kwargs.get('location_object', None),
+            block=block,
+        )
+        if attributes is not None:
+            ni.attributes = attributes
+        self.num_added += 1
+        self.logger.info(u'Created NewsItem %s: %s (total created in this scrape: %s)', schema.slug, ni.id, self.num_added)
+        return ni
+
+    @transaction.commit_on_success
+    def update_existing(self, newsitem, new_values, new_attributes):
+        """
+        Given an existing NewsItem and dictionaries new_values and
+        new_attributes, determines which values and attributes have changed
+        and saves the object and/or its attributes if necessary.
+        """
+        newsitem_updated = False
+        # First, check the NewsItem's values.
+        for k, v in new_values.items():
+            if isinstance(v, datetime.datetime) and v.tzinfo is not None:
+                # Django datetime fields are not timezone-aware, so we
+                # can't compare them without stripping the zone.
+                v = v.astimezone(local_tz).replace(tzinfo=None)
+            if getattr(newsitem, k) != v:
+                self.logger.info('ID %s %s changed from %r to %r' % (newsitem.id, k, getattr(newsitem, k), v))
+                setattr(newsitem, k, v)
+                newsitem_updated = True
+        if newsitem_updated:
+            newsitem.save()
+        else:
+            self.logger.debug("No change to %s <%s>" % (newsitem.id, newsitem))
+        # Next, check the NewsItem's attributes.
+        for k, v in new_attributes.items():
+            if isinstance(v, datetime.datetime) and v.tzinfo is not None:
+                # Django datetime fields are not timezone-aware, so we
+                # can't compare them without stripping the zone.
+                v = v.astimezone(local_tz).replace(tzinfo=None)
+            if newsitem.attributes.get(k) == v:
+                continue
+            elif k not in newsitem.attributes:
+                self.logger.info('ID %s %s was missing, setting to %r' %
+                                 (newsitem.id, k, v))
+            elif newsitem.attributes.get(k) != v:
+                self.logger.info('ID %s %s changed from %r to %r' %
+                                 (newsitem.id, k, newsitem.attributes[k], v))
+            newsitem.attributes[k] = v
+            newsitem_updated = True
+        if newsitem_updated:
+            self.num_changed += 1
+            self.logger.debug('Total changed in this scrape: %s', self.num_changed)
+        else:
+            self.logger.debug('No changes to NewsItem %s detected', newsitem.id)
+
+    def create_or_update(self, old_record, attributes, **kwargs):
+        """unified API for updating or creating a NewsItem.
+        """
+        if old_record:
+            self.update_existing(old_record, kwargs, attributes or {})
+        else:
+            self.create_newsitem(attributes=attributes, **kwargs)
+
