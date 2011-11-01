@@ -409,17 +409,17 @@ LOGGING = {
             'level':'INFO',
             },
         'django': {
-            'handlers':['console'],
+            'handlers': [],
             'propagate': True,
             'level':'WARN',
             },
         'ebpub': {
-            'handlers': ['console'],
+            'handlers': [],
             'propagate': True,
             'level': 'INFO',
             },
         'ebdata': {
-            'handlers': ['console'],
+            'handlers': [],
             'propagate': True,
             'level': 'INFO',
             },
@@ -429,7 +429,7 @@ LOGGING = {
         #     'propagate': False,
         # },
         'south': {
-            'handlers': ['console',],
+            'handlers': [],
             'level': 'INFO',
         }
     }
