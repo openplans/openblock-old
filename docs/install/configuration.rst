@@ -16,9 +16,10 @@ public place eg. a public version control system.
 
 * ``PASSWORD_CREATE_SALT`` - this is used when users create a new account.
 * ``PASSWORD_RESET_SALT`` - this is used when users reset their passwords.
-* ``STAFF_COOKIE_VALUE`` - this is used for allowing staff members to see
-  some parts of the site that other users cannot, such as :doc:`types
-  of news items <../main/schemas>` that you're still working on.
+* ``STAFF_COOKIE_NAME`` and ``STAFF_COOKIE_VALUE`` - this is used for
+  allowing staff members to see some parts of the site that other
+  users cannot, such as :doc:`types of news items <../main/schemas>`
+  that you're still working on.
 
 
 .. _base_layer_configs:
@@ -309,6 +310,10 @@ In your ``settings.py``, you'll want to set these::
   #EMAIL_HOST_USER=''
   #EMAIL_HOST_PASSWORD=''
   #EMAIL_USE_TLS=False  # For secure SMTP connections.
+  # This is used as "From:" in emails sent to users.
+  GENERIC_EMAIL_SENDER = 'admin@example.com'
+
+
 
 Don't have an SMTP Server?
 -----------------------------
@@ -324,4 +329,112 @@ public mail service.  See for example `this blog post
   amount of mail you can send, and most ISPs will block it as likely
   spam anyway. So use another service such as Gmail as per the previous
   paragraph, or you might try Amazon's own email service: https://aws.amazon.com/ses/
+
+
+OpenBlock REST API
+====================
+
+``MAX_KEYS_PER_USER`` -- how many API keys each OpenBlock user can register.
+Default 1.
+
+``API_THROTTLE_TIMEFRAME``, ``API_THROTTLE_AT`` -- Together these
+control how many API requests a user or API key can make in certain
+period of time.  If the user makes more than ``API_THROTTLE_AT``
+requests within a period of ``API_THROTTLE_TIMEFRAME`` seconds, then
+all further requests will be denied until another ``API_THROTTLE_TIMEFRAME``
+seconds have passed.
+
+``API_THROTTLE_EXPIRATION`` -- How long to keep track of last access
+times per user.  This is just for housekeeping, in practice it doesn't
+affect your users.
+
+.. admonition:: Enable caching too!
+
+  In order to enable throttling, you MUST also configure
+  CACHES['default'] to something other than a DummyCache, as per the
+  DJango caching documentation.
+
+
+Django-Static
+===============
+
+OpenBlock currently uses `Django-Static <https://github.com/peterbe/django-static>`_
+to manage static media such as Javascript and CSS files.
+The advantage over Django's built-in "StaticFiles" app is that
+Django-Static automatically handles timestamping media URLs
+and minify-ing scripts.  With eg. a suitable :ref:`Apache config <example_apache_config>`,
+you can safely set far-future expiration dates and never have stale scripts.
+
+
+The relevant settings are ``DJANGO_STATIC``, ``DJANGO_STATIC_MEDIA_ROOTS``,
+``DJANGO_STATIC_NAME_PREFIX``, ``DJANGO_STATIC_SAVE_PREFIX``.
+All have sensible defaults in ebpub/settings_default.py.
+If you need to override them, see
+`the README <https://github.com/peterbe/django-static/blob/master/README.md>`_.
+
+Note there are some exceptions: we don't use django-static for either
+JQuery or OpenLayers because you might want to use hosted versions of
+those, and django-static probably isn't the best way to minify large
+frameworks anyway.
+
+Django Background Tasks
+========================
+
+For long-running jobs, we currently use
+`django-background-task <https://github.com/lilspikey/django-background-task>`_.
+This is currently used only by some data loading pages in the admin
+UI.  The relevant settings are ``MAX_RUN_TIME`` and ``MAX_ATTEMPTS``.
+See the `README <https://github.com/lilspikey/django-background-task/blob/master/README.rst>`_
+for more information.
+
+
+Miscellaneous Settings
+=======================
+
+``AUTH_PROFILE_MODULE`` -- A module and class name to use for user
+profile data.  Default is "preferences.Profile", you can override this
+if you want to do something custom, but may require diving in to the
+code to understand what assumptions we make about profiles.
+
+``DEFAULT_DAYS`` -- How many days of news to show on many views.
+
+``DEFAULT_LOCTYPE_SLUG`` -- Which LocationType to show on the /locations page.
+Once you've :ref:`created some LocationTypes <locationtype>`,
+this should be set to the slug of your preferred ``LocationType``.
+
+``DEFAULT_MAP_CENTER_LAT``, ``DEFAULT_MAP_CENTER_LON``,
+``DEFAULT_MAP_ZOOM`` -- Where to center citywide maps by default,
+eg. on the home page.
+
+``EBPUB_CACHE_GEOCODER`` -- True by default; this caches geocoding
+results in the database, which makes geocoding faster, but
+debugging harder, and can add a bit to the size of database.
+
+
+``EB_DOMAIN`` -- The domain used for the root of some generated
+URLs, eg. in feeds, widgets, and generated emails.
+
+``EB_MEDIA_ROOT`` -- Directory that's the root of ebpub's static media files.
+By default this is calculated from the location of the installed ``ebpub`` package.
+
+``HTTP_CACHE`` -- Cache directory used by scrapers when fetching data
+from remote sites.  By default this goes in a subdirectory of '/tmp'.
+
+``JQUERY_URL`` --  URL where our version of JQuery lives. Default is a
+hosted version.
+
+``OPENLAYERS_URL`` -- URL where our version of OpenLayers
+lives. Default is currently OpenLayers 2.11, hosted locally.
+
+``OPENLAYERS_IMG_PATH`` -- URL where OpenLayers images are found.
+
+``SCRAPER_LOGFILE_NAME`` -- Where :doc:`scrapers <../main/scraper_tutorial.rst>`
+should log their output.
+
+``SCRAPER_LOG_DO_EMAIL_ERRORS`` -- Whether :doc:`scrapers <../main/scraper_tutorial.rst>`
+should log their output.
+
+``SHORT_NAME`` -- The short name for your city, in lowercase,
+eg. "chicago".  This is used mainly for determining the default metro
+(see :ref:`metro_config`), which is used through the OpenBlock code.
 
