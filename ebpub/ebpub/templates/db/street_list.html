@@ -17,8 +17,9 @@
 	{% endif %}
 	<h1>Streets{% if city %} in {{ city.name }}{% endif %}</h1>
 	<p>Choose a street to find recent news near an individual
-	block. You can also <a href="/locations/">browse by locations</a> such as
-	{{ example_loctype|lower }}.</p>
+	block. You can also <a href="/locations/">browse by locations</a>
+	{% if example_loctype %}such as {{ example_loctype|lower }}{% endif %}.
+	</p>
 	{% regroup street_list by street|upper|slice:":1" as alpha_list %}
 	{% for current_letter in alpha_list %}
 		<h2>{{ current_letter.grouper }}</h2>

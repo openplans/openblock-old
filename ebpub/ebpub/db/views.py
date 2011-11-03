@@ -921,11 +921,15 @@ def street_list(request, city_slug):
     streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
     if not streets:
         raise Http404('This city has no streets')
+    try:
+        example_loctype = LocationType.objects.get(slug=settings.DEFAULT_LOCTYPE_SLUG).plural_name
+    except LocationType.DoesNotExist:
+        example_loctype = None
     context = {
         'street_list': streets,
         'city': city,
         'bodyclass': 'street-list',
-        'example_loctype': LocationType.objects.get(slug=settings.DEFAULT_LOCTYPE_SLUG).plural_name,
+        'example_loctype': example_loctype,
     }
     context['breadcrumbs'] = breadcrumbs.street_list(context)
     return eb_render(request, 'db/street_list.html', context)
