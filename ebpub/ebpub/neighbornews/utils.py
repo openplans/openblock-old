@@ -47,6 +47,10 @@ def is_neighbornews_enabled():
     return is_neighbor_message_enabled() or is_neighbor_event_enabled()
 
 def if_disabled404(slug):
+    """
+    Decorator that checks whether the schema is disabled, and if so,
+    the decorated view returns 404.
+    """
     def decorator(func):
         def inner(*args, **kw):
             if not is_schema_enabled(slug):
