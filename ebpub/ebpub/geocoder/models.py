@@ -21,6 +21,11 @@ from ebpub.streets.models import Block
 from ebpub.streets.models import Intersection
 
 class GeocoderCache(models.Model):
+    """
+    Persistent cache for Geocoder results.
+    Not sure why this merits a custom model;
+    see http://developer.openblockproject.org/ticket/163
+    """
     normalized_location = models.CharField(max_length=255, db_index=True)
     address = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
@@ -51,3 +56,30 @@ class GeocoderCache(models.Model):
                 setattr(obj, relation, address[relation])
         obj.location = address['point']
         obj.save()
+
+
+from django.contrib.gis import admin
+
+class GeocoderCacheAdmin(admin.ModelAdmin):
+    """Adding to admin so you at least can delete them from *somewhere*
+    """
+    readonly_fields = ('normalized_location',
+                       'address',
+                       'city',
+                       'state',
+                       'zip',
+                       'location',
+                       'block',
+                       'intersection',
+                       'generated_at',
+                       )
+
+    list_display = ('normalized_location', 'city', 'state', 'zip', 'generated_at',
+                    )
+    list_filter = ('city', 'state', 'zip',
+                   )
+
+    search_fields = ('normalized_location',
+                     )
+
+admin.site.register(GeocoderCache, GeocoderCacheAdmin)
