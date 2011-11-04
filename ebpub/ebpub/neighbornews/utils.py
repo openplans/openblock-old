@@ -63,6 +63,8 @@ def if_disabled404(slug):
 def user_can_edit(request, item):
     """Can the current user edit this NewsItem?
     """
+    if request.user.is_anonymous():
+        return False
     allowed = False
     if request.user.has_perm('db.change_newsitem'):
         allowed = True
