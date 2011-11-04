@@ -366,6 +366,17 @@ required_settings.append('EBPUB_CACHE_GEOCODER')
 AUTH_PROFILE_MODULE = 'preferences.Profile'
 
 
+# ebpub.neighbornews optionally uses recaptcha.
+# This can be True, False, or a function that takes a request argument.
+def NEIGHBORNEWS_USE_CAPTCHA(request):
+    return False
+
+# You'll also need to sign up for Recaptcha API keys.
+RECAPTCHA_PUBLIC_KEY = ''
+RECAPTCHA_PRIVATE_KEY = ''
+
+
+
 ###################################################################
 # Logging.
 # See https://docs.djangoproject.com/en/dev/topics/logging
@@ -434,7 +445,6 @@ LOGGING = {
         }
     }
 }
-
 
 # Batch jobs (django-background-task): how long (in seconds) can a job
 # be locked before we decide it's dead?

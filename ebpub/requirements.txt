@@ -17,3 +17,4 @@ http://www.voidspace.org.uk/downloads/mock-0.8.0alpha2.tar.gz#egg=mock-0.8.0alph
 South>=0.7.3
 python-dateutil==1.5
 django-jsonfield==0.6
+recaptcha-client==1.0.6

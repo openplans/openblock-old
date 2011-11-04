@@ -17,12 +17,30 @@
 #
 
 from django import forms
+from django.conf import settings
 from ebpub.db.forms import NewsItemForm as NewsItemFormBase
 from ebpub.db.models import NewsItem
+from recaptcha.client import captcha
 
 class NewsItemForm(NewsItemFormBase):
 
+    need_captcha = False
+    recaptcha_ip = None
+
     def clean(self):
+        if self.need_captcha and \
+                getattr(settings, 'RECAPTCHA_PRIVATE_KEY', None) and \
+                getattr(settings, 'RECAPTCHA_PUBLIC_KEY', None):
+            challenge_field = self.data.get('recaptcha_challenge_field')
+            response_field = self.data.get('recaptcha_response_field')
+            client = self.recaptcha_ip  # Must be set by our view code.
+            check_captcha = captcha.submit(
+                challenge_field, response_field,
+                settings.RECAPTCHA_PRIVATE_KEY, client)
+
+            if check_captcha.is_valid is False:
+                self.errors['recaptcha'] = 'Invalid captcha value'
+
         cleaned_data = super(NewsItemForm, self).clean()
         # Note, any NewsItem fields that aren't listed in self._meta.fields
         # have to be manually saved here, because that's the list that's

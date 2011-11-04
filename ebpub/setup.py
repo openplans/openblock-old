@@ -69,6 +69,7 @@ setup(
         "psycopg2>=2.0",
         "slimmer",  # used by django-static.
         "pyrfc3339",
+        "recaptcha-client",
         "South",
         "mock>=0.8.0alpha1",
         "django-olwidget",

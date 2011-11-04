@@ -30,6 +30,7 @@ from ebpub.neighbornews.models import NewsItemCreator
 from ebpub.neighbornews.utils import NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
 from ebpub.neighbornews.utils import if_disabled404, can_edit
 from ebpub.utils.view_utils import eb_render
+from recaptcha.client import captcha
 import re
 
 @if_disabled404(NEIGHBOR_MESSAGE_SLUG)
@@ -114,6 +115,16 @@ def _new_item(request, schema, FormType):
 
 
 def _update_item(request, form, schema, action):
+    # Do we need to use need captcha? 
+    # This might depend on the request, so you can set it to a callable.
+    need_captcha = getattr(settings, 'NEIGHBORNEWS_USE_CAPTCHA', False)
+    if callable(need_captcha):
+        need_captcha = need_captcha(request)
+
+    if need_captcha:
+        form.need_captcha = True
+        form.recaptcha_ip = request.META['REMOTE_ADDR']
+
     cat_field = SchemaField.objects.get(schema=schema, name='categories')
     if form.is_bound and form.is_valid():
         form.instance.schema = schema
@@ -180,23 +191,20 @@ def _update_item(request, form, schema, action):
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
         'schema': schema,
         'action': action,
+        'need_captcha': need_captcha,
     }
     return eb_render(request, "neighbornews/new_message.html", ctx)
 
 
 def _category_code(cat):
-    code = cat
-    code = code.strip()
-    code = code.lower()
+    code = cat.strip().lower()
     code = re.sub('\s+', ' ', code)
     code = re.sub('[^\w]', '-', code)
     return code
 
 def _category_nice_name(cat):
-    nice = cat
-    nice = nice.strip()
+    nice = cat.strip().lower()
     nice = re.sub('\s+', ' ', nice)
-    nice = nice.lower()
     return nice
 
 def news_by_user(request, userid):
