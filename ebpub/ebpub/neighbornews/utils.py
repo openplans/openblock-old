@@ -66,6 +66,8 @@ def user_can_edit(request, item):
     if request.user.is_anonymous():
         return False
     allowed = False
+    if not isinstance(item, int):
+        item = item.id
     if request.user.has_perm('db.change_newsitem'):
         allowed = True
     elif NewsItemCreator.objects.filter(news_item__id=item,
