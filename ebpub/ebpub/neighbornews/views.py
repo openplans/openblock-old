@@ -17,16 +17,18 @@
 #
 
 from django.conf import settings
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from ebpub.accounts.models import User
 from ebpub.accounts.utils import login_required
-from ebpub.db.models import Schema, SchemaField, Lookup
+from ebpub.db.models import Schema, SchemaField, Lookup, NewsItem
 from ebpub.neighbornews.forms import NeighborMessageForm, NeighborEventForm
 from ebpub.neighbornews.models import NewsItemCreator
 from ebpub.neighbornews.utils import NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
-from ebpub.neighbornews.utils import if_disabled404
+from ebpub.neighbornews.utils import if_disabled404, can_edit
 from ebpub.utils.view_utils import eb_render
 import re
 
@@ -38,6 +40,7 @@ def new_message(request):
     FormType = NeighborMessageForm
     return _new_item(request, schema, FormType)
 
+
 @if_disabled404(NEIGHBOR_EVENT_SLUG)
 @login_required
 @csrf_protect
@@ -47,54 +50,121 @@ def new_event(request):
     return _new_item(request, schema, FormType)
 
 
-# @if_disabled404(NEIGHBOR_EVENT_SLUG)
-# @login_required
-# @csrf_protect
-# def edit_event(request):
-#     # XXX Get the existing event, validate was created by this user.
-#     schema = Schema.objects.get(slug=NEIGHBOR_EVENT_SLUG)
-#     form = NeighborEventForm(
-#     return _new_item(request, schema, FormType, _create_event)
+@if_disabled404(NEIGHBOR_MESSAGE_SLUG)
+@login_required
+@csrf_protect
+@can_edit
+def edit_message(request, newsitem):
+    FormType = NeighborMessageForm
+    return _edit_item(request, newsitem, FormType)
 
+@if_disabled404(NEIGHBOR_EVENT_SLUG)
+@login_required
+@csrf_protect
+@can_edit
+def edit_event(request, newsitem):
+    FormType = NeighborEventForm
+    return _edit_item(request, newsitem, FormType)
+
+
+@if_disabled404(NEIGHBOR_MESSAGE_SLUG)
+@login_required
+@csrf_protect
+@can_edit
+def delete_message(request, newsitem):
+    return _delete(request, newsitem)
+
+@if_disabled404(NEIGHBOR_EVENT_SLUG)
+@login_required
+@csrf_protect
+@can_edit
+def delete_event(request, newsitem):
+    return _delete(request, newsitem)
 
 
 ################################################################
 # Utility functions.
 
+def _delete(request, newsitem):
+    item = get_object_or_404(NewsItem, id=newsitem)
+    if request.method == 'POST':
+        item.delete()
+        messages.add_message(request, messages.INFO, 'Deleted.')
+        return HttpResponseRedirect(reverse('neighbornews_by_user',
+                                            args=(request.user.id,)))
+    else:
+        return eb_render(request, 'neighbornews/delete_form.html',
+                         {'newsitem': item})
+
+def _edit_item(request, newsitem_id, FormType):
+    instance = NewsItem.objects.get(id=newsitem_id)
+    if request.method == 'POST':
+        form = FormType(request.POST, instance=instance)
+    else:
+        form = FormType(instance=instance)
+    return _update_item(request, form, instance.schema, action='edit')
+
+
 def _new_item(request, schema, FormType):
     if request.method == 'POST':
         form = FormType(request.POST)
-        if form.is_valid():
-            form.instance.schema = schema
-            item = form.save()
-
-            # Add a NewsItemCreator association; un-lazy the User.
-            import pdb; pdb.set_trace()
-            user = User.objects.get(id=request.user.id)
-            creator = NewsItemCreator(news_item=item, user=user)
-            creator.save()
-
-            # Image link.
-            if form.cleaned_data['image_url']:
-                item.attributes['image_url'] = form.cleaned_data['image_url']
-
-            # 'categories'
-            cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
-            if len(cats):
-                cat_field = SchemaField.objects.get(schema=schema, name='categories')
-                lookups = set()
-                for cat in cats:
-                    code = _category_code(cat)
-                    nice_name = _category_nice_name(cat)
-                    lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
-                    lookups.add(lu.id)
-                item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
-
-            detail_url = reverse('ebpub-newsitem-detail',
-                                 args=(schema.slug, '%d' % item.id))
-            return HttpResponseRedirect(detail_url)
     else:
         form = FormType()
+    return _update_item(request, form, schema, action='create')
+
+
+def _update_item(request, form, schema, action):
+    cat_field = SchemaField.objects.get(schema=schema, name='categories')
+    if form.is_bound and form.is_valid():
+        form.instance.schema = schema
+        item = form.save()
+
+        # Add a NewsItemCreator association; un-lazy the User.
+        user = User.objects.get(id=request.user.id)
+        NewsItemCreator.objects.get_or_create(news_item=item, user=user)
+
+        # Image url.
+        if form.cleaned_data['image_url']:
+            item.attributes['image_url'] = form.cleaned_data['image_url']
+
+        # Times.
+        for key in ('start_time', 'end_time'):
+            if key in form.fields and form.cleaned_data.get(key):
+                item.attributes[key] = form.cleaned_data[key]
+
+        # 'categories'
+        cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
+        if len(cats):
+            lookups = set()
+            for cat in cats:
+                code = _category_code(cat)
+                nice_name = _category_nice_name(cat)
+                lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
+                lookups.add(lu.id)
+            item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
+
+        detail_url = reverse('ebpub-newsitem-detail',
+                             args=(schema.slug, '%d' % item.id))
+        if action == 'create':
+            messages.add_message(request, messages.INFO, '%s created.' % schema.name)
+        else:
+            messages.add_message(request, messages.INFO, '%s edited.' % schema.name)
+        return HttpResponseRedirect(detail_url)
+
+    elif form.instance:
+        if form.instance.attributes.get('categories'):
+            cat_ids = form.instance.attributes['categories'].split(',')
+            cat_lookups = Lookup.objects.filter(schema_field=cat_field, id__in=cat_ids)
+            form.fields['categories'].initial = ', '.join(
+                sorted([look.name for look in cat_lookups]))
+        if form.instance.location:
+            form.fields['location'].initial = form.instance.location.wkt
+        for key in ('start_time', 'end_time', 'image_url'):
+            if key in form.fields and form.instance.attributes.get(key):
+                value = form.instance.attributes[key]
+                if key.endswith('time'):
+                    value = value.strftime('%H:%M%p')
+                form.fields[key].initial = value
 
     mapconfig = {
         'locations': [],
@@ -108,7 +178,8 @@ def _new_item(request, schema, FormType):
         'default_lon': settings.DEFAULT_MAP_CENTER_LON,
         'default_lat': settings.DEFAULT_MAP_CENTER_LAT,
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
-        'schema': schema
+        'schema': schema,
+        'action': action,
     }
     return eb_render(request, "neighbornews/new_message.html", ctx)
 

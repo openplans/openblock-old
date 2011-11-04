@@ -1,0 +1,8 @@
+{% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+{% block content %}
+<form action="" method="POST">
+    Really delete "{{ newsitem.title }}"?
+    {% csrf_token %}
+    <input type="submit" value=" OK "/>
+</form>
+{% endblock content %}

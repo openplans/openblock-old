@@ -460,6 +460,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
                     " nor a reverse-geocodable location" % (ni, ni.id))
                 pass
 
+    from ebpub.neighbornews.utils import user_can_edit
     context = {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
@@ -472,6 +473,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         'map_center_y': center_y,
         'bodyclass': 'newsitem-detail',
         'bodyid': schema_slug,
+        'can_edit': user_can_edit(request, ni),
     }
     context['breadcrumbs'] = breadcrumbs.newsitem_detail(context)
     context['map_configuration'] = _preconfigured_map(context)

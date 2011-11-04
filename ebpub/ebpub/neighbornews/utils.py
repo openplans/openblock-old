@@ -18,10 +18,10 @@
 
 from django.http import HttpResponse
 from ebpub.db.models import Schema
+from ebpub.neighbornews.models import NewsItemCreator
 
 NEIGHBOR_MESSAGE_SLUG = 'neighbor-messages'
 NEIGHBOR_EVENT_SLUG = 'neighbor-events'
-
 
 def app_enabled():
     from django.conf import settings
@@ -59,3 +59,24 @@ def if_disabled404(slug):
                 return func(*args, **kw)
         return inner
     return decorator
+
+def user_can_edit(request, item):
+    """Can the current user edit this NewsItem?
+    """
+    allowed = False
+    if request.user.has_perm('db.change_newsitem'):
+        allowed = True
+    elif NewsItemCreator.objects.filter(news_item__id=item,
+                                        user__id=request.user.id).count():
+        allowed = True
+    return allowed
+
+def can_edit(func):
+    """Decorator that checks whether you created this NewsItem, or
+    have permission to edit all NewsItems.
+    """
+    def inner(request, newsitem, *args, **kw):
+        if not user_can_edit(request, newsitem):
+            return HttpResponse(status=403)
+        return func(request, newsitem, *args, **kw)
+    return inner
