@@ -38,7 +38,7 @@ import re
 def new_message(request):
     schema = Schema.objects.get(slug=NEIGHBOR_MESSAGE_SLUG)
     FormType = NeighborMessageForm
-    return _new_usertype(request, schema, FormType, _create_message)
+    return _new_item(request, schema, FormType)
 
 @if_disabled404(NEIGHBOR_EVENT_SLUG)
 @login_required
@@ -46,13 +46,52 @@ def new_message(request):
 def new_event(request):
     schema = Schema.objects.get(slug=NEIGHBOR_EVENT_SLUG)
     FormType = NeighborEventForm
-    return _new_usertype(request, schema, FormType, _create_event)
+    return _new_item(request, schema, FormType)
 
-def _new_usertype(request, schema, FormType, create_item):
+
+# @if_disabled404(NEIGHBOR_EVENT_SLUG)
+# @login_required
+# @csrf_protect
+# def edit_event(request):
+#     # XXX Get the existing event, validate was created by this user.
+#     schema = Schema.objects.get(slug=NEIGHBOR_EVENT_SLUG)
+#     form = NeighborEventForm(
+#     return _new_item(request, schema, FormType, _create_event)
+
+
+
+################################################################
+# Utility functions.
+
+def _new_item(request, schema, FormType):
     if request.method == 'POST':
         form = FormType(request.POST)
         if form.is_valid():
-            item = create_item(request, schema, form)
+            form.instance.schema = schema
+            item = form.save()
+
+            # Add a NewsItemCreator association; un-lazy the User.
+            import pdb; pdb.set_trace()
+            user = User.objects.get(id=request.user.id)
+            creator = NewsItemCreator(news_item=item, user=user)
+            creator.save()
+
+            # Image link.
+            if form.cleaned_data['image_url']:
+                item.attributes['image_url'] = form.cleaned_data['image_url']
+
+            # 'categories'
+            cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
+            if len(cats):
+                cat_field = SchemaField.objects.get(schema=schema, name='categories')
+                lookups = set()
+                for cat in cats:
+                    code = _category_code(cat)
+                    nice_name = _category_nice_name(cat)
+                    lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
+                    lookups.add(lu.id)
+                item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
+
             detail_url = reverse('ebpub-newsitem-detail',
                                  args=(schema.slug, '%d' % item.id))
             return HttpResponseRedirect(detail_url)
@@ -75,58 +114,6 @@ def _new_usertype(request, schema, FormType, create_item):
     }
     return eb_render(request, "neighbornews/new_message.html", ctx)
 
-def _create_event(request, schema, form):
-    item = _create_item(request, schema, form)
-    item.attributes['start_time'] = form.cleaned_data['start_time']
-    item.attributes['end_time'] = form.cleaned_data['end_time']
-    item.save()
-    return item
-
-def _create_message(request, schema, form):
-    return _create_item(request, schema, form)
-
-def _create_item(request, schema, form):
-    item = NewsItem(schema=schema)
-
-    # Common attributes.
-    for attr in ('title', 'description', 'location_name', 'url'):
-        setattr(item, attr, form.cleaned_data[attr])
-
-    # Location.
-    lon = form.cleaned_data['longitude']
-    lat = form.cleaned_data['latitude']
-    item.location = geos.Point(lon, lat)
-
-    # Maybe specified ...
-    if 'item_date' in form.cleaned_data:
-        item.item_date = form.cleaned_data['item_date']
-    else:
-        item.item_date = datetime.datetime.now().date()
-    item.pub_date = datetime.datetime.now()
-    item.save()
-
-    # 'categories'
-    cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
-    if len(cats):
-        cat_field = SchemaField.objects.get(schema=schema, name='categories')
-        lookups = set()
-        for cat in cats:
-            code = _category_code(cat)
-            nice_name = _category_nice_name(cat)
-            lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
-            lookups.add(lu.id)
-        item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
-
-    # Image link.
-    if form.cleaned_data['image_url']:
-        item.attributes['image_url'] = form.cleaned_data['image_url']
-
-    item.save()
-    # Add a NewsItemCreator association; un-lazy the User.
-    user = User.objects.get(id=request.user.id)
-    creator = NewsItemCreator(news_item=item, user=user)
-    creator.save()
-    return item
 
 def _category_code(cat):
     code = cat
@@ -163,5 +150,3 @@ def news_by_user(request, userid):
     context = {'items_by_schema': items_by_schema, 'user': user,
                'is_viewing_self': is_viewing_self}
     return eb_render(request, "neighbornews/news_by_user.html", context)
-
-

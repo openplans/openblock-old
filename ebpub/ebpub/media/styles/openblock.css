@@ -1131,6 +1131,7 @@ color: #C53300
     width: 392px;
 }
 
+.geocoder-result .wkt,
 .geocoder-result .lon,
 .geocoder-result .lat {
     display: none;

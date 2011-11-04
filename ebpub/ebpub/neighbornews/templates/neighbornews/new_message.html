@@ -46,29 +46,23 @@
         result_layer.addFeatures(feature);
         var pt = new OpenLayers.Geometry.Point(feature.geometry.x, feature.geometry.y);
         pt.transform(map.projection, map.displayProjection);
-        $j('#id_longitude').val(pt.x);
-        $j('#id_latitude').val(pt.y);
+        $j('#id_location').val(pt.toString());
       }
       
-      function recenterOn(lon, lat) {
-        var pt = new OpenLayers.Geometry.Point(lon, lat);
+      function recenterOn(pt) {
         pt.transform(map.displayProjection, map.projection);
         setPoint(new OpenLayers.Feature.Vector(pt));
-
-        var new_center = new OpenLayers.LonLat(lon, lat);
-        new_center.transform(map.displayProjection, map.projection);
+        var new_center = new OpenLayers.LonLat(pt.x, pt.y);
         map.setCenter(new_center, 15);
       }
-	    
+
       var selectResult = function(result) {
         var r = $j(result).closest('div');
         $j('.geocoder-result').removeClass('selected-result');
         r.addClass('selected-result');
 
-        var reslat = parseFloat(r.find('span.lat').text())
-        var reslon = parseFloat(r.find('span.lon').text())
-
-        recenterOn(reslon, reslat);
+        var reswkt = r.find('span.wkt').text();
+        recenterOn(new OpenLayers.Geometry.fromWKT(reswkt));
       };
 
       var selectNone = function() {
@@ -115,11 +109,9 @@
 
           var result_html = '<div class="geocoder-result">';
           result_html += result_title;
-          result_html += '<span class="lon">';
-          result_html += result.geometry.coordinates[0];
-          result_html += '</span>';
-          result_html += '<span class="lat">';
-          result_html += result.geometry.coordinates[1];
+          result_html += '<span class="wkt">';
+          result_html += 'POINT(' + result.geometry.coordinates[0] + ' ';
+          result_html += result.geometry.coordinates[1] + ')';
           result_html += '</span>';
           result_html += '</div>';
           results.append(result_html);
@@ -166,18 +158,14 @@
 	    map.addControl(drawpt);
       drawpt.activate();
 
-      var initLon = $j('#id_longitude').val().trim();
-      var initLat = $j('#id_latitude').val().trim();
-      if (initLat != '' && initLon != '') {
-        initLon = parseFloat(initLon);
-        initLat = parseFloat(initLat);
-        recenterOn(initLon, initLat);
+      var initLocation = $j('#id_location').val().trim();
+      if (initLocation != '') {
+        recenterOn(new OpenLayers.Geometry.fromWKT(initLocation));
       }
-	    
+
 	    $j('#neighbornews_form').submit(function(evt) {
-        var lon = $j('#id_longitude').val().trim();
-        var lat = $j('#id_latitude').val().trim();
-        if (lat == '' || lon == '') {
+        var loc = $j('#id_location').val().trim();
+        if (loc == '') {
           $j('#general_error').html('Please specify a location on the map.');
           evt.preventDefault();
         }
