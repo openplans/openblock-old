@@ -17,19 +17,17 @@
 #
 
 from django.conf import settings
-from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.views.decorators.csrf import csrf_protect
 from ebpub.accounts.models import User
 from ebpub.accounts.utils import login_required
-from ebpub.db.models import Schema, NewsItem, SchemaField, Lookup
+from ebpub.db.models import Schema, SchemaField, Lookup
 from ebpub.neighbornews.forms import NeighborMessageForm, NeighborEventForm
 from ebpub.neighbornews.models import NewsItemCreator
 from ebpub.neighbornews.utils import NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
 from ebpub.neighbornews.utils import if_disabled404
 from ebpub.utils.view_utils import eb_render
-import datetime
 import re
 
 @if_disabled404(NEIGHBOR_MESSAGE_SLUG)
