@@ -321,7 +321,7 @@ STATIC_URL='/'
 # REST API
 ###############
 
-MAX_KEYS_PER_USER=3
+MAX_KEYS_PER_USER=1
 
 API_THROTTLE_AT=150  # max requests per timeframe.
 API_THROTTLE_TIMEFRAME = 60 * 60 # default 1 hour.
