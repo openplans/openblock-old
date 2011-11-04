@@ -420,6 +420,14 @@ By default this is calculated from the location of the installed ``ebpub`` packa
 ``HTTP_CACHE`` -- Cache directory used by scrapers when fetching data
 from remote sites.  By default this goes in a subdirectory of '/tmp'.
 
+``NEIGHBORNEWS_USE_CAPTCHA`` -- Whether to put a ReCaptcha form on
+the forms for adding user-contributed news. Only relevant if
+``ebpub.neighbornews`` is in ``settings.INSTALLED_APPS``.
+This can be True, False, or a function that takes a "request" argument
+and returns True or False.  You'll also need to acquire API keys from
+recaptcha.org and set them as
+``RECAPTCHA_PUBLIC_KEY`` and ``RECAPTCHA_PRIVATE_KEY``.
+
 ``JQUERY_URL`` --  URL where our version of JQuery lives. Default is a
 hosted version.
 
