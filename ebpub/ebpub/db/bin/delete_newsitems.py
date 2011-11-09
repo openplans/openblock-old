@@ -34,6 +34,7 @@ def delete(schema=None, do_delete=False):
         print "Deleting %d for schema %s ..." % (qs.count(), schema)
         qs.delete()
         print "Deleted."
+        # This only matters if there are orphan Attribute rows.
         qs = Attribute.objects.filter(schema=schema).order_by('-id')
         print "Deleting %d attributes for schema %s ..." % (qs.count(), schema)
         qs.delete()
