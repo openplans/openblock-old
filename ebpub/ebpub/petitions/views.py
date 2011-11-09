@@ -21,7 +21,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from ebpub.metros.allmetros import get_metro
 from ebpub.petitions.models import Petition, Petitioner
-from ebpub.streets.utils import full_geocode
+from ebpub.geocoder import full_geocode
 from ebpub.utils.view_utils import eb_render
 import datetime
 

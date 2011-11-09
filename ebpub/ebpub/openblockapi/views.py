@@ -29,10 +29,10 @@ from django.utils.cache import patch_response_headers
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
-from .apikey.auth import KEY_HEADER
-from .apikey.auth import check_api_authorization
+from apikey.auth import KEY_HEADER  # relative import
+from apikey.auth import check_api_authorization  # relative import
 from ebpub.streets.models import PlaceType
-from ebpub.streets.utils import full_geocode
+from ebpub.geocoder.base import full_geocode
 from ebpub.utils.dates import parse_date, parse_time
 from ebpub.utils.geodjango import ensure_valid
 from functools import wraps

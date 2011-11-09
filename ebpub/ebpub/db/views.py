@@ -44,12 +44,12 @@ from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
 from ebpub.db.utils import url_to_place
 from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
+from ebpub.geocoder.base import full_geocode
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
-from ebpub.streets.utils import full_geocode
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager

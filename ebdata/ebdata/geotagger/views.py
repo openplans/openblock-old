@@ -22,8 +22,7 @@ from django.utils import simplejson as json
 
 from ebdata.nlp.addresses import tag_addresses
 from ebdata.nlp.places import place_tagger, location_tagger
-from ebpub.geocoder.base import DoesNotExist
-from ebpub.streets.utils import full_geocode
+from ebpub.geocoder.base import DoesNotExist, full_geocode
 
 def geocode(request): 
     """

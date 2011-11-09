@@ -16,9 +16,16 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Flexible geocoding against our models, including db.Location,
+streets.Place, streets.Block, streets.Intersection ...
+"""
+
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
+from ebpub.streets.models import Place, PlaceSynonym
 import logging
 import re
 
@@ -52,7 +59,7 @@ class InvalidBlockButValidStreet(GeocodingException):
         self.block_number = block_number
         self.street_name = street_name
         self.block_list = block_list
-    
+
 class Address(dict):
     "A simple container class for representing a single street address."
     def __init__(self, *args, **kwargs):
@@ -167,6 +174,9 @@ class Geocoder(object):
         return result
 
 class AddressGeocoder(Geocoder):
+    """
+    Treats the location_string as an address and looks for a matching Block.
+    """
     def _do_geocode(self, location_string):
         # Parse the address.
         try:
@@ -270,6 +280,9 @@ class AddressGeocoder(Geocoder):
         })
 
 class BlockGeocoder(AddressGeocoder):
+    """
+    Geocodes the location_string as a streets.Block.
+    """
     def _do_geocode(self, location_string):
         m = block_re.search(location_string)
         if not m:
@@ -278,6 +291,9 @@ class BlockGeocoder(AddressGeocoder):
         return AddressGeocoder._do_geocode(self, new_location_string)
 
 class IntersectionGeocoder(Geocoder):
+    """
+    Geocodes the location_string as a streets.Intersection.
+    """
     def _do_geocode(self, location_string):
         sides = intersection_re.split(location_string)
         if len(sides) != 2:
@@ -354,6 +370,10 @@ class IntersectionGeocoder(Geocoder):
 #         # TODO: Make a line from the two points, and return that.
 
 class SmartGeocoder(Geocoder):
+    """
+    Checks whether the location_string looks like an Intersection, Block,
+    or Address, and delegates to the appropriate Geocoder subclass.
+    """
     def _do_geocode(self, location_string):
         if intersection_re.search(location_string):
             logger.debug('%r looks like an intersection' % location_string)
@@ -365,3 +385,68 @@ class SmartGeocoder(Geocoder):
             logger.debug('%r assumed to be an address' % location_string)
             geocoder = AddressGeocoder()
         return geocoder._do_geocode(location_string)
+
+
+
+def full_geocode(query, search_places=True):
+    """
+    Tries the full geocoding stack on the given query (a string):
+        * Normalizes whitespace/capitalization
+        * Searches the Misspelling table to corrects location misspellings
+        * Searches the Location table
+        * Failing that, searches the Place table (if search_places is True)
+        * Failing that, uses the SmartGeocoder to parse this as an address, block,
+          or intersection
+        * Failing that, raises whichever error is raised by the geocoder --
+          except AmbiguousResult, in which case all possible results are
+          returned
+
+    Returns a dictionary of {type, result, ambiguous}, where ambiguous is True
+    or False, and type can be:
+        * 'location' -- in which case result is a Location object.
+        * 'place' -- in which case result is a Place object. (This is only
+          possible if search_places is True.)
+        * 'address' -- in which case result is an Address object as returned
+          by geocoder.geocode().
+        * 'block' -- in which case result is a list of Block objects.
+
+    If ambiguous is True, result will be a list of objects.
+    """
+    # Local import to avoid circular imports.
+    from ebpub.db.models import Location, LocationSynonym
+    # Search the Location table.
+    try:
+        canonical_loc = LocationSynonym.objects.get_canonical(query)
+        loc = Location.objects.get(normalized_name=canonical_loc)
+    except Location.DoesNotExist:
+        pass
+    else:
+        logger.debug('geocoded %r to Location %s' % (query, loc))
+        return {'type': 'location', 'result': loc, 'ambiguous': False}
+
+    # Search the Place table, for stuff like "Sears Tower".
+    if search_places:
+        canonical_place = PlaceSynonym.objects.get_canonical(query)
+        places = Place.objects.filter(normalized_name=canonical_place)
+        if len(places) == 1:
+            logger.debug(u'geocoded %r to Place %s' % (query, places[0]))
+
+            return {'type': 'place', 'result': places[0], 'ambiguous': False}
+        elif len(places) > 1:
+            logger.debug(u'geocoded %r to multiple Places: %s' % (query, unicode(places)))
+            return {'type': 'place', 'result': places, 'ambiguous': True}
+
+    # Try geocoding this as an address.
+    geocoder = SmartGeocoder(use_cache=getattr(settings, 'EBPUB_CACHE_GEOCODER', False))
+    try:
+        result = geocoder.geocode(query)
+    except AmbiguousResult, e:
+        logger.debug('Multiple addresses for %r' % query)
+        return {'type': 'address', 'result': e.choices, 'ambiguous': True}
+    except InvalidBlockButValidStreet, e:
+        logger.debug('Invalid block for %r, returning all possible blocks' % query)
+        return {'type': 'block', 'result': e.block_list, 'ambiguous': True, 'street_name': e.street_name, 'block_number': e.block_number}
+    except:
+        raise
+    logger.debug('SmartGeocoder for %r returned %s' % (query, result))
+    return {'type': 'address', 'result': result, 'ambiguous': False}
