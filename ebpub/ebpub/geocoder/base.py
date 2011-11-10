@@ -25,7 +25,6 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
-from ebpub.streets.models import Place, PlaceSynonym
 import logging
 import re
 
@@ -414,6 +413,8 @@ def full_geocode(query, search_places=True):
     """
     # Local import to avoid circular imports.
     from ebpub.db.models import Location, LocationSynonym
+    from ebpub.streets.models import Place, PlaceSynonym
+
     # Search the Location table.
     try:
         canonical_loc = LocationSynonym.objects.get_canonical(query)
