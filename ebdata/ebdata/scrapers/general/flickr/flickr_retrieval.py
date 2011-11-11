@@ -37,7 +37,7 @@ from ebdata.retrieval.utils import convert_entities
 local_tz = pytz.timezone(settings.TIME_ZONE)
 utc = pytz.timezone('utc')
 
-logger = logging.getLogger('flickr_retrieval')
+logger = logging.getLogger('eb.retrieval.flickr')
 
 class FlickrScraper(NewsItemListDetailScraper):
 

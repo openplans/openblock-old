@@ -12,7 +12,7 @@ import traceback
 import urllib
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger('eb.retrieval.georeportv2')
 
 class GeoReportV2Scraper(object): 
 
