@@ -676,6 +676,13 @@ class Intersection(models.Model):
 
     class Meta:
         db_table = 'intersections'
+        # TODO: This unique_together is just a silly assumption.
+        # There are places where the same two streets cross multiple
+        # times even within one area (city, zip code, whatever).
+        # Example off the top of my head -
+        # http://g.co/maps/pcxsm
+        # - route 28 and old route 28 intersect what, 4 times in the space of
+        # a mile or two?
         unique_together = ("predir_a", "street_a", "suffix_a", "postdir_a", "predir_b", "street_b", "suffix_b", "postdir_b")
         ordering = ('slug',)
 

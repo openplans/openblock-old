@@ -22,6 +22,7 @@ import optparse
 from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.gdal.error import OGRIndexError
 from ebdata.parsing import dbf
+from ebpub.geocoder.parser import parsing as geocoder_parsing
 from ebpub.streets.blockimport.base import BlockImporter
 
 STATE_FIPS = {
@@ -255,11 +256,28 @@ class TigerImporter(BlockImporter):
             block_fields[side + '_state'] = self._get_state(feature, side[0].upper()).upper()
 
         if tlid in self.featnames_db:
+            suffix_standardizer = geocoder_parsing.STANDARDIZERS['suffix']
+            suffix_matcher = geocoder_parsing.TOKEN_REGEXES['suffix']
             for featname in self.featnames_db[tlid]:
-                block_fields['street'] = featname['NAME'].upper()
-                block_fields['predir'] = featname['PREDIRABRV'].upper()
-                block_fields['suffix'] = featname['SUFTYPABRV'].upper()
-                block_fields['postdir'] = featname['SUFDIRABRV'].upper()
+                block_fields['street'] = featname['NAME'].upper().strip()
+                block_fields['predir'] = featname['PREDIRABRV'].upper().strip()
+                block_fields['suffix'] = featname['SUFTYPABRV'].upper().strip()
+                block_fields['postdir'] = featname['SUFDIRABRV'].upper().strip()
+                if not block_fields['suffix']:
+                    # Bug in the data:
+                    # Many streets named eg. 'Wilson Park' put the whole thing in the name
+                    # and nothing in the suffix.
+                    # This breaks our geocoder, because it parses 'Park' as the suffix
+                    # and expects to find it in that field.
+                    # So, check if the street name ends with a recognized suffix.
+                    if block_fields['street'].count(' '):
+                        name_parts = block_fields['street'].split()
+                        raw_suffix = name_parts.pop()
+                        street = ' '.join(name_parts)
+                        if suffix_matcher.match(raw_suffix):
+                            block_fields['suffix'] = suffix_standardizer(raw_suffix)
+                            block_fields['street'] = street
+
                 yield block_fields.copy()
 
                 self.tlids_with_blocks.add(tlid)
