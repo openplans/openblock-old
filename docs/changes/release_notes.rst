@@ -27,6 +27,11 @@ Backward Incompatibilities
 * Removed ebdata/retrieval/scrapers/new_newsitem_list_detail.py,
   which wasn't used anywhere.
 
+* Removed ebpub/streets/blockimport/tiger/import_blocks2010.py.
+  Census 2010 files are now supported by the main import_blocks.py
+  script.
+
+
 New Features in 1.2
 -------------------
 
