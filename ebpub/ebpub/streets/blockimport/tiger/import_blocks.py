@@ -146,9 +146,9 @@ class TigerImporter(BlockImporter):
         self.places = places = {}
         for feature in places_layer:
             try:
-                fips = feature.get('PLACEFP10')  # 2010 Census files.
+                fips = feature.get('PLACEFP10') or feature.get('PLACEFP00') # 2010 Census files.
             except OGRIndexError:
-                fips = feature.get('PLACEFP')  # Older Census files.
+                fips = feature.get('PLACEFP')
             values = dict(zip(fields, map(feature.get, fields)))
             places[fips] = values
         self.filter_city = filter_city and filter_city.upper() or None
@@ -191,7 +191,9 @@ class TigerImporter(BlockImporter):
             if fid in self.faces_db:
                 face = self.faces_db[fid]
                 # Handle both 2010 and older census files.
-                pid = face.get('PLACEFP10') or face['PLACEFP']
+                # If none of these work, we simply get no city.
+                pid = face.get('PLACEFP10') or face.get('PLACEFP00') or face.get('PLACEFP')
+
                 if pid in self.places:
                     place = self.places[pid]
                     # Handle both 2010 and earlier Census files.
