@@ -111,26 +111,22 @@ Load ZIP Codes via Command Line
 
 Alternately, you can use command-line scripts to install ZIP codes.
 
-The US Census Bureau has shapefiles for all USA zip codes.  Go to
-http://www2.census.gov/cgi-bin/shapefiles2009/national-files, select
-your state from the drop-down, and submit. Toward the bottom of the
-file list, you should see one labeled "5-Digit ZIP Code Tabulation
-Area (2002)".
+The US Census Bureau has shapefiles for all USA zip codes.  
+For the 2010 census files (now available for most parts of the USA),
+go to http://www.census.gov/cgi-bin/geo/shapefiles2010/main , select
+your state from the dropdown, and click "Download".
 
-Download that file. It should have a name that looks like
-``tl_2009_36_zcta5.zip`` where 36 is a state ID (in this case, 36 is
-for New York).
-
-Unzip the file. It should contain a number of files like this:
+Unzip the resulting file. It should contain a number of files like this:
 
 .. code-block:: bash
 
-  $ unzip tl_2009_36_zcta5.zip 
-  inflating: tl_2009_36_zcta5.dbf    
-  inflating: tl_2009_36_zcta5.prj    
-  inflating: tl_2009_36_zcta5.shp    
-  inflating: tl_2009_36_zcta5.shp.xml  
-  inflating: tl_2009_36_zcta5.shx
+  $ unzip tl_2010_25_zcta510.zip 
+  Archive:  tl_2010_25_zcta510.zip
+  inflating: tl_2010_25_zcta510.dbf  
+  inflating: tl_2010_25_zcta510.prj  
+  inflating: tl_2010_25_zcta510.shp  
+  inflating: tl_2010_25_zcta510.shp.xml  
+  inflating: tl_2010_25_zcta510.shx  
 
 
 The ZIP code file you downloaded is for an entire state. You're
@@ -183,13 +179,26 @@ Finding Blocks Data
 
 In the US, the Census Bureau's TIGER data website is a good
 source of data.
-From http://www2.census.gov/cgi-bin/shapefiles2009/national-files,
-you will need several files. First select the State you're interested
-in.  Download the file labeled "Place (Current)".
+From http://www.census.gov/cgi-bin/geo/shapefiles2010/main,
+you will need several files.
 
-Next, select the County you're interested in. From the county's page,
-download the files labeled "All Lines", "Topological Faces (Polygons
-With All Geocodes)", and "Feature Names Relationship File".
+First, select "Places" from the dropdown on the main page.
+On the next page, select your state, and download.
+
+Next, go back to the
+`main page <http://www.census.gov/cgi-bin/geo/shapefiles2010/main>`_,
+select "All Lines" and submit. You'll then be prompted to select first your
+state, and then your county.
+
+Next, go to the `Relationship Files
+<http://www.census.gov/cgi-bin/geo/shapefiles2010/layers.cgi>`_ page.
+Under "Topological Faces (Polygons with all Geocodes)", select your
+state, then select your county and download it.
+
+Finally, go back to the `Relationship Files
+<http://www.census.gov/cgi-bin/geo/shapefiles2010/layers.cgi>`_ page,
+then under "Feature Names Relationship File", select your state and submit;
+and on the next page, select your county and download it.
 
 Loading Blocks using the Admin UI
 ----------------------------------------
@@ -201,17 +210,17 @@ running.
 Then you can surf to ``http://<your domain>/admin/streets/blocks/``
 and click the link "Import Block Shapefiles".  Type in the city name
 that these blocks are in, upload the four zip files you downloaded
-above, click "Import" and wait for it to finish.
+above, click "Import", and wait for it to finish.
 
 (It is likely to take several minutes - more or less, depending on
-your hardware; this is the most computationally intensive thing that
+your hardware and the size of data; this is the most computationally intensive thing that
 OpenBlock ever does.)
 
 Streets, Intersections, and BlockIntersections will be done
 automatically.
 
 You can repeat this process if your area spans multiple shapefiles.
-(It tends to get slower as the number of intersections grows.)
+(It will get slower as the number of intersections grows.)
 
 When done, skip down to :ref:`verifying_blocks`.
 

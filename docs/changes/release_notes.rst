@@ -58,6 +58,9 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* block_import.py can now be safely re-run on the same file,
+  it won't create duplicate blocks anymore.
+
 * Fixed double-logging of scrapers to the console.
 
 * /streets/ list doesn't blow up if you haven't set
@@ -78,6 +81,8 @@ Bugs fixed
 
 Documentation
 -------------
+
+* Document how to get the 2010 census files instead of 2009.
 
 * Added docs on all the settings in settings_default.py.
 

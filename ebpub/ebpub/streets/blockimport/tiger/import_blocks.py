@@ -23,7 +23,7 @@ from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.gdal.error import OGRIndexError
 from ebdata.parsing import dbf
 from ebpub.geocoder.parser import parsing as geocoder_parsing
-from ebpub.streets.blockimport.base import BlockImporter
+from ebpub.streets.blockimport.base import BlockImporter, logger
 
 STATE_FIPS = {
     '02': ('AK', 'ALASKA'),
@@ -185,8 +185,7 @@ class TigerImporter(BlockImporter):
             overlapping_cities = list(get_city_locations().filter(location__intersects=feature.geom.geos))
             if overlapping_cities:
                 city = overlapping_cities[0].name
-                if self.verbose:
-                    print >> sys.stderr, "overriding city to %s" % city
+                logger.debug("overriding city to %s" % city)
         else:
             fid = feature.get('TFID' + side)
             if fid in self.faces_db:
@@ -212,13 +211,11 @@ class TigerImporter(BlockImporter):
     def skip_feature(self, feature):
         if self.filter_bounds:
             if not feature.geom.intersects(self.filter_bounds):
-                if self.verbose:
-                    print >> sys.stderr, "Skipping %s, out of bounds" % feature
+                logger.debug("Skipping %s, out of bounds" % feature)
                 return True
 
         if not feature.get('MTFCC') in VALID_MTFCC:
-            if self.verbose:
-                print >> sys.stderr, "Skipping %s, not a valid feature type" % feature.get('MTFCC')
+            logger.debug("Skipping %s, not a valid feature type" % feature.get('MTFCC'))
             return True
 
         if self.filter_city:
@@ -227,15 +224,13 @@ class TigerImporter(BlockImporter):
                 if self._get_city(feature, side).upper() == self.filter_city:
                     in_city = True
             if not in_city:
-                if self.verbose:
-                    print >> sys.stderr, "Skipping %s, out of city" % feature
+                logger.debug("Skipping %s, out of city" % feature)
                 return True
 
         if not (
             ((feature.get('RFROMADD') and feature.get('RTOADD')) or
             (feature.get('LFROMADD') and feature.get('LTOADD')))):
-            if self.verbose:
-                print >> sys.stderr, "Skipping %s, not enough address info" % feature
+            logger.debug("Skipping %s, not enough address info" % feature)
             return True
 
         return False
@@ -342,28 +337,29 @@ def main(argv=None):
                            filter_bounds=filter_bounds,
                            encoding=options.encoding,
                            fix_cities=options.fix_cities)
-    num_created = tiger.save()
-    print "Created %d blocks" % num_created
     if options.verbose:
-        print "... from %d feature names" % len(tiger.featnames_db)
-        print "feature tlids with blocks: %d" % len(tiger.tlids_with_blocks)
-        print
-        import pprint
-        tlids_wo_blocks = set(tiger.featnames_db.keys()).difference(tiger.tlids_with_blocks)
-        print "feature tlids WITHOUT blocks: %d" % len(tlids_wo_blocks)
-        all_rows = []
-        for t in tlids_wo_blocks:
-            all_rows.extend(tiger.featnames_db[t])
-        print "Rows: %d" % len(all_rows)
-        names = [(r['FULLNAME'], r['TLID']) for r in all_rows]
-        names.sort()
-        print "================="
-        for n, t in names:
-            print n, t
-        for tlid in sorted(tlids_wo_blocks)[:10]:
-            feat = tiger.featnames_db[tlid]
-            pprint.pprint(feat)
+        import logging
+        logger.setLevel(logging.DEBUG)
+    num_created = tiger.save()
+    logger.info( "Created %d new blocks" % num_created)
+    logger.debug("... from %d feature names" % len(tiger.featnames_db))
+    logger.debug("feature tlids with blocks: %d" % len(tiger.tlids_with_blocks))
 
+    import pprint
+    tlids_wo_blocks = set(tiger.featnames_db.keys()).difference(tiger.tlids_with_blocks)
+    logger.debug("feature tlids WITHOUT blocks: %d" % len(tlids_wo_blocks))
+    all_rows = []
+    for t in tlids_wo_blocks:
+        all_rows.extend(tiger.featnames_db[t])
+    logger.debug("Rows: %d" % len(all_rows))
+    names = [(r['FULLNAME'], r['TLID']) for r in all_rows]
+    names.sort()
+    logger.debug( "=================")
+    for n, t in names:
+        logger.debug("%s %s" % (n, t))
+    for tlid in sorted(tlids_wo_blocks)[:10]:
+        feat = tiger.featnames_db[tlid]
+        logger.debug(pprint.pformat(feat))
 
 if __name__ == '__main__':
     sys.exit(main())

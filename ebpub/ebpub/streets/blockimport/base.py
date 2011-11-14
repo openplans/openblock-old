@@ -17,7 +17,6 @@
 #
 
 import string
-import sys
 from django.contrib.gis.gdal import DataSource
 from django.core.exceptions import ValidationError
 from ebpub.streets.models import Block
@@ -36,10 +35,11 @@ class BlockImporter(object):
 
     def log(self, arg):
         "Deprecated: user logger instead"
-        if self.verbose:
-            print >> sys.stderr, arg
+        logger.debug(arg)
 
     def save(self):
+        import time
+        start = time.time()
         num_created = 0
         for feature in self.layer:
             parent_id = None
@@ -57,6 +57,7 @@ class BlockImporter(object):
                     for key, val in block_fields.items():
                         if isinstance(val, str):
                             block_fields[key] = val.decode(self.encoding)
+
 
                     block_fields['geom'] = feature.geom.geos
 
@@ -105,7 +106,39 @@ class BlockImporter(object):
                         logger.warn('Skipping %s: %s' % (block_fields['pretty_name'], e))
                         continue
 
-                    block = Block(**block_fields)
+                    # Separate out the uniquely identifying fields so
+                    # we can avoid duplicate blocks.
+                    # NOTE this doesn't work if you're updating from a more
+                    # recent shapefile and the street has significant
+                    # changes - eg. the street name has changed, or the
+                    # address range has changed, or the block has split...
+                    primary_fields = {}
+                    primary_field_keys = ('street_slug',
+                                          'from_num', 'to_num',
+                                          'left_city', 'right_city',
+                                          'left_zip', 'right_zip',
+                                          'left_state', 'right_state',
+                                          )
+                    for key in primary_field_keys:
+                        if block_fields[key] != u'':
+                            # Some empty fields are fixed
+                            # automatically by clean(), so 
+                            primary_fields[key] = block_fields[key]
+
+                    existing = list(Block.objects.filter(**primary_fields))
+                    if not existing:
+                        block = Block(**block_fields)
+                        num_created += 1
+                    elif len(existing) == 1:
+                        block = existing[0]
+                        logger.debug(u"Block %s already exists" % unicode(existing[0]))
+                        for key, val in block_fields.items():
+                            setattr(block, key, val)
+                    else:
+                        import pdb; pdb.set_trace()
+                        logger.warn("Multiple existing blocks like %s, skipping"
+                                    % existing[0])
+                        continue
                     try:
                         block.full_clean()
                     except ValidationError:
@@ -117,15 +150,16 @@ class BlockImporter(object):
                             logger.warn("validation error on %s, skipping" % str(block))
                             logger.warn(e)
                             continue
-
+                    logger.debug("CREATING %s" % unicode(block))
                     block.save()
                     if parent_id is None:
                         parent_id = block.id
                     else:
                         block.parent_id = parent_id
                         block.save()
-                    num_created += 1
                     logger.debug('%d\tCreated block %s for feature %d' % (num_created, block, feature.get('TLID')))
+        logger.info("Created %d new blocks in %.2f seconds" % (num_created,
+                                                               time.time() - start))
         return num_created
 
     def skip_feature(self, feature):
