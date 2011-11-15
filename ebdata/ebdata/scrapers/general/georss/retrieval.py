@@ -123,7 +123,6 @@ class LocalNewsScraper(object):
                             x, y = point.x, point.y
                             if not item.location_name:
                                 item.location_name = result['address']
-                            item.block = result['block']
                             break
                         except GeocodingException:
                             logger.debug("Geocoding exception on %r:" % text)
@@ -154,7 +153,6 @@ class LocalNewsScraper(object):
                         block, distance = reverse.reverse_geocode(item.location)
                         logger.debug(" Reverse-geocoded point to %r" % block.pretty_name)
                         item.location_name = block.pretty_name
-                        item.block = block
                     except reverse.ReverseGeocodeError:
                         logger.info(" Skip, failed to reverse geocode %s for %r" % (item.location.wkt, _short_title))
                         continue

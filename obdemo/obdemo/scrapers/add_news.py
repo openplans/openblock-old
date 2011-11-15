@@ -124,7 +124,6 @@ def update(argv=None):
                     block, distance = reverse.reverse_geocode(item.location)
                     logger.debug(" Reverse-geocoded point to %r" % block.pretty_name)
                     item.location_name = block.pretty_name
-                    item.block = block
                 except reverse.ReverseGeocodeError:
                     logger.debug(" Failed to reverse geocode %s for %r" % (item.location.wkt, item.title))
                     item.location_name = u''

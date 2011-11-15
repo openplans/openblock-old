@@ -441,18 +441,10 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         # and we don't have any criteria for deciding which if any
         # best corresponds to ni.location_name; but we can try
         # a few other fallbacks.
-        if ni.block:
-            location_url = ni.block.url()
-        elif ni.location:
+        if ni.location:
             # Try reverse-geocoding and see if we get a block.
             try:
                 block, distance = geocoder.reverse.reverse_geocode(ni.location)
-                # TODO: if this happens, we should really update
-                # ni.block, but this seems like a terrible place to do
-                # that.
-                logger.warn(
-                    "%r (id %d) can be reverse-geocoded to %r (id %d) but"
-                    " self.block isn't set" % (ni, ni.id, block, block.id))
                 location_url = block.url()
             except geocoder.reverse.ReverseGeocodeError:
                 logger.error(

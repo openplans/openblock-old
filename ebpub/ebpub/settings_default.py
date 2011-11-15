@@ -367,9 +367,10 @@ AUTH_PROFILE_MODULE = 'preferences.Profile'
 
 
 # ebpub.neighbornews optionally uses recaptcha.
-# This can be True, False, or a function that takes a request argument.
-def NEIGHBORNEWS_USE_CAPTCHA(request):
-    return True
+# This can be True, False, or a function that takes a request argument, eg.
+#def NEIGHBORNEWS_USE_CAPTCHA(request):
+#    return True
+NEIGHBORNEWS_USE_CAPTCHA = False
 
 # You'll also need to sign up for Recaptcha API keys.
 RECAPTCHA_PUBLIC_KEY = ''

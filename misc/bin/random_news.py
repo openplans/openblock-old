@@ -62,7 +62,6 @@ def save_random_newsitem(schema, i, block):
     item.pub_date = date
     item.item_date = date.date()
     item.location_name = block.pretty_name
-    item.block = block
     try:
         item.location = block.geom.centroid
     except AttributeError:

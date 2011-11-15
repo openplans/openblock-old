@@ -23,7 +23,6 @@ from django.core import urlresolvers
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
 from ebpub.geocoder.parser.parsing import normalize
-from ebpub.streets.models import Block
 from ebpub.utils.geodjango import flatten_geomcollection
 from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.text import slugify
@@ -730,9 +729,6 @@ class NewsItem(models.Model):
       "news item" other than which precinct it occurs in.
       eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
 
-    * self.block is optionally one Block. Also set during
-      scraping/geocoding.  So far can't find anything that actually
-      uses these.
     """
 
     # We don't have a natural_key() method because we don't know for
@@ -765,9 +761,6 @@ class NewsItem(models.Model):
                                      help_text="Human-readable address or name of place where this news item occurred.")
     location_object = models.ForeignKey(Location, blank=True, null=True,
                                         help_text="Optional reference to a Location where this item occurred, for use when we know the general area but not specific coordinates.")
-    block = models.ForeignKey(Block, blank=True, null=True,
-                              help_text="Optional reference to a Block. Not really used")
-
     objects = NewsItemManager()
 
     # Treat this like a dict. The related Schema and SchemaFields explain

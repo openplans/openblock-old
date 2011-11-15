@@ -43,7 +43,6 @@ def fix_newsitem_loc_name(item, dry_run=True):
         block, distance = reverse.reverse_geocode(item.location)
         print " Reverse-geocoded point to %r" % block.pretty_name
         item.location_name = block.pretty_name
-        item.block = block
         fixed = True
     except reverse.ReverseGeocodeError:
         print " Failed to reverse geocode %s for %s" % (item.location.wkt, item)
@@ -82,7 +81,6 @@ def fix_newsitem_coords(item, dry_run=True):
         if result and intersects_metro_bbox(result['point']):
             print "Fixing %r by geocoding %r" % (item.title, item.location_name)
             item.location = result['point']
-            item.block = result['block']
             fixed = True
 
     if loc and not fixed:

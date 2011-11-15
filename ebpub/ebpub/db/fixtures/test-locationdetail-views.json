@@ -83,7 +83,6 @@
       "item_date": "2006-09-26",
       "location_object": null,
       "pub_date": "2006-09-26 00:00:00",
-      "block": null,
       "schema": 1
     },
     "model": "db.newsitem",
@@ -99,7 +98,6 @@
       "item_date": "2006-11-08",
       "location_object": null,
       "pub_date": "2006-09-25 00:00:00",
-      "block": null,
       "schema": 1
     },
     "model": "db.newsitem",
@@ -115,7 +113,6 @@
       "item_date": "2006-11-08",
       "location_object": null,
       "pub_date": "2006-11-08 00:00:00",
-      "block": null,
       "schema": 1
     },
     "model": "db.newsitem",
@@ -131,7 +128,6 @@
       "item_date": "2006-09-23",
       "location_object": null,
       "pub_date": "2006-09-24 00:00:00",
-      "block": null,
       "schema": 1
     },
     "model": "db.newsitem",

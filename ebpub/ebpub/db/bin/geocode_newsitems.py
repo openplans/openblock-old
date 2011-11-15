@@ -61,7 +61,6 @@ def geocode(schema=None):
             raise
         else:
             ni.location = add['point']
-            ni.block = add['block']
             ni.save()
             print '%s (%s)' % (loc_name, ni.item_url())
             geocoded_count += 1

@@ -192,9 +192,6 @@ fields:
     location_object
       an optional associated Location object
 
-    block
-      an optional associated Block object
-
     attributes
       extensible metadata, described in the section on
       `SchemaFields and Attributes`_.
@@ -224,7 +221,7 @@ information for a news item other than which precinct it occurs in.
 In this case, you'd want a LocationType representing precincts,
 and a Location for each precinct; then, when creating a
 NewsItem, set its ``location_object`` to the relevant Location, and don't
-set ``location`` or ``block`` at all.  For a live example, see
+set ``location`` at all.  For a live example, see
 http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/
 
 
