@@ -90,14 +90,12 @@ class BaseScraper(object):
         objects.
         """
 
-        block = kwargs.get('block')
         location = kwargs.get('location')
         location_name = kwargs.get('location_name')
         assert location or location_name, "At least one of location or location_name must be provided"
         if location is None:
             location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
             if location:
-                block = location['block']
                 location = location['point']
         if kwargs.pop('convert_to_block', False):
             kwargs['location_name'] = address_to_block(kwargs['location_name'])
@@ -106,7 +104,6 @@ class BaseScraper(object):
             if location is None:
                 location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
                 if location:
-                    block = location['block']
                     location = location['point']
 
         # Normally we'd just use "schema = kwargs.get('schema', self.schema)",
@@ -124,7 +121,6 @@ class BaseScraper(object):
             location=location,
             location_name=location_name,
             location_object=kwargs.get('location_object', None),
-            block=block,
         )
         if attributes is not None:
             ni.attributes = attributes

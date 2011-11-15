@@ -39,7 +39,7 @@ class NewsItemAdmin(OSMModelAdmin):
         ]
 
     list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
-    raw_id_fields = ('location_object', 'block')
+    raw_id_fields = ('location_object',)
     list_filter = ('schema',)
     search_fields = ('title', 'description',)
     form = NewsItemForm
