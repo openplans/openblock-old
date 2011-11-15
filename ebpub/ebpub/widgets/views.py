@@ -49,7 +49,7 @@ def render_widget(widget, items=None):
     t = Template(widget.template.code)
     return t.render(Context(info))
 
-def template_context_for_item(newsitem, widget):
+def template_context_for_item(newsitem, widget=None):
     # try to make something ... reasonable for use in
     # templates.
     ctx = {
@@ -108,14 +108,15 @@ def template_context_for_item(newsitem, widget):
 
     ctx['intersecting'] = intersecting_locations_for_item
 
-    if widget.item_link_template and widget.item_link_template.strip():
-        try:
-            ctx['internal_url'] = _eval_item_link_template(widget.item_link_template,
-                                                           {'item': ctx, 'widget': widget})
-        except:
-            log_exception()
-            # TODO: some sort of error handling
-            return '#error'
+    if widget is not None:
+        if widget.item_link_template and widget.item_link_template.strip():
+            try:
+                ctx['internal_url'] = _eval_item_link_template(widget.item_link_template,
+                                                               {'item': ctx, 'widget': widget})
+            except:
+                log_exception()
+                # TODO: some sort of error handling
+                return '#error'
 
     return ctx
 
