@@ -67,7 +67,7 @@ def fix_newsitem_coords(item, dry_run=True):
                                                      loc.x, loc.y)
     else:
         loc = None
-        print "NO location on %s" % item
+        print "NO location on %s: %s" % (item.schema.slug, item.title)
     fixed = False
     if item.location_name:
         from ebpub.geocoder import SmartGeocoder, AmbiguousResult
