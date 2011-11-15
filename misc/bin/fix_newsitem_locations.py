@@ -74,7 +74,7 @@ def fix_newsitem_coords(item, dry_run=True):
         try:
             result = SmartGeocoder().geocode(item.location_name)
         except AmbiguousResult, e:
-            # Just pick one.
+            print "...%d choices, picking the first one" % len(e.choices)
             result = e.choices[0]
         except:
             result = None
