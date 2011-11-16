@@ -86,9 +86,13 @@ class RestaurantScraper(NewsItemListDetailScraper):
                 continue
             self.logger.info('Getting inspections for %s' % record['restaurant_name'])
             url = 'http://www.cityofboston.gov/isd/health/mfc/insphistory.asp?licno=%s' % record['restaurant_id']
+            # Normally we'd just yield the html, but we want the
+            # record dict for use in parse_list().
             yield (record, self.get_html(url))
 
     def parse_list(self, record_html):
+        # Normally this method gets passed raw html,
+        # but we return both the html and the list_record from list_pages().
         list_record, html = record_html
         # a better version of the restaurant address is available on this page,
         # attempt to extract additional location details to resolve ambiguities.
@@ -96,7 +100,7 @@ class RestaurantScraper(NewsItemListDetailScraper):
             info = self.detail_address_re.search(html).groupdict()
             list_record['zipcode'] = info['zipcode']
         except:
-            self.logger.warning("Could not get detailed address information for record %s" % list_record['restaurant_id'])
+            self.logger.info("Could not get detailed address information for record %s: %s" % (list_record['restaurant_id'], list_record['restaurant_name']))
 
         for record in NewsItemListDetailScraper.parse_list(self, html):
             yield dict(list_record, **record)
