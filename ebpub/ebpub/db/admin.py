@@ -44,6 +44,7 @@ class NewsItemAdmin(OSMModelAdmin):
     search_fields = ('title', 'description',)
     form = NewsItemForm
 
+    date_hierarchy = 'item_date'
     ## This really slows down the UI if there's lots of NewsItems,
     ## and olwidget doesn't seem to paginate them along with the change list?
     # list_map = ['location']
