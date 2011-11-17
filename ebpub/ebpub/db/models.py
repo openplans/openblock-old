@@ -88,6 +88,13 @@ class SchemaManager(models.Manager):
             'intro',
             )
 
+    def allowed_schema_ids(self):
+        """
+        Useful for filtering out schemas (or things related to
+        schemas) based on the current Manager.
+        """
+        return [s['id'] for s in self.all().values('id')]
+
 
 class SchemaPublicManager(SchemaManager):
 

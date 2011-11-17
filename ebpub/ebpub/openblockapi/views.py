@@ -29,6 +29,7 @@ from django.utils.cache import patch_response_headers
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
+from ebpub.openblockapi.itemquery import _copy_nomulti
 from apikey.auth import KEY_HEADER  # relative import
 from apikey.auth import check_api_authorization  # relative import
 from ebpub.streets.models import PlaceType
@@ -98,21 +99,6 @@ def get_datatype(schemafield):
             datatype = 'text'
     return datatype
 
-def _copy_nomulti(d):
-    """
-    make a copy of django wack-o immutable query mulit-dict
-    making single item values non-lists.
-    """
-    r = {}
-    for k,v in d.items():
-        try:
-            if len(v) == 1:
-                r[k] = v[0]
-            else:
-                r[k] = v
-        except TypeError:
-            r[k] = v
-    return r
 
 def api_items_geojson(items):
     """
@@ -226,6 +212,7 @@ def rest_view(methods, cache_timeout=None):
                 response['Content-Type'] = 'text/plain'
                 return response
             response = func(request, *args, **kwargs)
+            # TODO: we should vary based on either basic auth or API key.
             if cache_timeout is not None:
                 patch_response_headers(response, cache_timeout=cache_timeout)
             return response
@@ -300,7 +287,7 @@ def items_json(request):
     # adding extra info eg. popup html.  Together, that would allow
     # this to replace ebub.db.views.newsitems_geojson. See #81
     try:
-        items, params = build_item_query(_copy_nomulti(request.GET))
+        items, params = build_item_query(request)
         # could test for extra params aside from jsonp...
         items = [item for item in items if item.location is not None]
         items_geojson_dict = {'type': 'FeatureCollection',
@@ -316,7 +303,7 @@ def items_atom(request):
     handles the items.atom API endpoint
     """
     try:
-        items, params = build_item_query(_copy_nomulti(request.GET))
+        items, params = build_item_query(request)
         # could test for extra params aside from jsonp...
         return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
     except QueryError as err:
@@ -562,6 +549,9 @@ def _geocode_geojson(query):
 def list_types_json(request):
     """
     List the known NewsItem types (Schemas).
+
+    Note this includes all types, even types for which the user isn't allowed
+    to see any newsitems. Revisit that?
     """
     schemas = {}
     for schema in models.Schema.public_objects.all():

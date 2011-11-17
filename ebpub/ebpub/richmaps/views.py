@@ -235,7 +235,7 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
     api_startdate = startdate.strftime("%Y-%m-%d")  
     api_enddate = (enddate + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 
-    for schema in Schema.objects.filter(is_public=True).all():
+    for schema in get_schema_manager(request).all():
         layers.append({
             'id': 't%d' % schema.id,
             'title':  schema.plural_name,

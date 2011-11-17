@@ -23,6 +23,7 @@ from ebpub.db.models import NewsItem, Location
 from ebpub.db.utils import populate_attributes_if_needed, today
 from ebpub.db.utils import make_search_buffer, url_to_block, BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.streets.models import Block
+from ebpub.utils.view_utils import get_schema_manager
 import datetime
 import re
 
@@ -86,8 +87,9 @@ class AbstractLocationFeed(EbpubFeed):
         # Include future stuff, useful for events
         end_date = today_value + datetime.timedelta(days=5)
 
+        allowed_schema_ids = get_schema_manager(self.request).allowed_schema_ids()
         qs = NewsItem.objects.select_related().filter(
-            schema__is_public=True,
+            schema__ids__in=allowed_schema_ids,
             item_date__gte=start_date,
             item_date__lte=end_date).order_by('-item_date', 'schema__id', 'id')
 

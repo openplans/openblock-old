@@ -85,7 +85,27 @@ def has_staff_cookie(request):
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
 
 def get_schema_manager(request):
+    """
+    Returns a Manager that restricts the Schemas that can be seen
+    based on the current request.
+
+    By default, this just uses ``has_staff_cookie`` to decide whether
+    to show Schemas that are not public, but you can also name the
+    path to a wrapper function in settings.SCHEMA_MANAGER_HOOK.
+    """
     if has_staff_cookie(request):
-        return Schema.objects
+        manager = Schema.objects
     else:
-        return Schema.public_objects
+        manager = Schema.public_objects
+    # Hook to customize the Manager's behavior based on the current request.
+    # The named function should take (request, manager) arguments
+    # and return something that behaves like a manager but can do whatever
+    # extra filtering you like in eg. get_query_set().
+    mgr_filter = getattr(settings, 'SCHEMA_MANAGER_HOOK', None)
+    if mgr_filter is not None:
+        module, func = mgr_filter.split(':')
+        import importlib
+        module = importlib.import_module(module)
+        func = getattr(module, func)
+        manager = func(request, manager)
+    return manager

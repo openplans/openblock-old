@@ -138,8 +138,10 @@ def ajax_place_lookup_chart(request):
     """
     Returns HTML fragment -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
     """
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
     try:
-        sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
+        sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']),
+                                                      schema__id__in=allowed_schemas)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
     filters = FilterChain(request=request, schema=sf.schema)
@@ -245,8 +247,8 @@ def newsitems_geojson(request):
             filters.add('date', start_date, end_date)
         newsitem_qs = filters.apply()
         newsitem_qs = newsitem_qs
-        if not has_staff_cookie(request):
-            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+        allowed_schemas = get_schema_manager(request).allowed_schema_ids()
+        newsitem_qs = newsitem_qs.filter(schema__id__in=allowed_schemas)
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
@@ -404,7 +406,8 @@ def search(request, schema_slug=''):
 def newsitem_detail(request, schema_slug, newsitem_id):
     ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id,
                            schema__slug=schema_slug)
-    if not ni.schema.is_public and not has_staff_cookie(request):
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
+    if not ni.schema.id in allowed_schemas:
         raise Http404('Not public')
 
     if not ni.schema.has_newsitem_detail:
@@ -472,7 +475,8 @@ def newsitem_detail(request, schema_slug, newsitem_id):
     return eb_render(request, templates_to_try, context)
 
 def schema_list(request):
-    schema_list = Schema.objects.select_related().filter(is_public=True, is_special_report=False).order_by('plural_name')
+    allowed_schemas = get_schema_manager(request).all()
+    schema_list = allowed_schemas.select_related().filter(is_special_report=False).order_by('plural_name')
     schemafield_list = list(SchemaField.objects.filter(is_filter=True).order_by('display_order'))
     browsable_locationtype_list = LocationType.objects.filter(is_significant=True)
     # Populate s_list, which contains a schema and schemafield list for each schema.
@@ -1178,8 +1182,9 @@ def place_detail_overview(request, *args, **kwargs):
 
     # Mapping of schema id -> [schemafields], for building Lookup charts.
     sf_dict = {}
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
     charted_lookups = SchemaField.objects.filter(
-        is_lookup=True, is_charted=True, schema__is_public=True,
+        is_lookup=True, is_charted=True, schema__id__in=allowed_schemas,
         schema__is_special_report=False)
     charted_lookups = charted_lookups.values('id', 'schema_id', 'pretty_name')
     for sf in charted_lookups.order_by('schema__id', 'display_order'):

@@ -59,8 +59,15 @@ def email_for_subscription(alert, start_date, frequency):
     start_datetime = datetime.datetime(start_date.year, start_date.month, start_date.day)
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     end_datetime = datetime.datetime.combine(yesterday, datetime.time(23, 59, 59, 9999)) # the end of yesterday
-    # Order by schema__id to group schemas together.
+
+    # TODO: We should use get_schema_manager(request) to
+    # filter schemas, instead of assuming is_public is sufficient...
+    # but we have no request here.
+    # We could possibly instead look up the alert's user,
+    # and have a get_schema_manager(profile) function?
+    # Which falls back to whatever's most restrictive.
     qs = NewsItem.objects.select_related().filter(schema__is_public=True)
+
     if alert.include_new_schemas:
         if alert.schemas:
             qs = qs.exclude(schema__id__in=alert.schemas.split(','))
@@ -78,6 +85,7 @@ def email_for_subscription(alert, start_date, frequency):
         place = alert.location
         qs = qs.filter(newsitemlocation__location__id=alert.location.id)
 
+    # Order by schema__id to group schemas together.
     news_qs = qs.filter(schema__is_event=False,
                         pub_date__range=(start_datetime, end_datetime),
                         ).order_by('-schema__importance', 'schema__id', '-item_date', '-id')

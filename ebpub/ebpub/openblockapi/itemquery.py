@@ -15,26 +15,47 @@
 #   You should have received a copy of the GNU General Public License
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+Filtering of NewsItems for the openblock REST API.
+
+TODO: This is largely parallel to ebpub.db.schemafilters,
+and could be merged with that code?
+
+Filters accept and return:
+ * the current django model query
+ * the remaining set of parameters describing the query
+ * an arbitrary state dictionary for signaling / caching
+
+The first filter to use a parameter removes it.
+Related filters can communicate through the 'state' dict.
+
+This allows identification of unused/ill specified parameters and
+disallows overlapping interpretations of a parameter.
+
+The full set of parameters that control these filters is specified in
+the API documentation.
+"""
+
 from django.contrib.gis import geos
 from ebpub.utils.dates import parse_date
 from ebpub.db.models import NewsItem
 from ebpub.streets.models import Place
 import pyrfc3339
 
-__all__ = ['build_item_query']
+__all__ = ['build_item_query', 'build_place_query']
 
 
 class QueryError(Exception):
     def __init__(self, message):
         self.message = message
 
-def build_item_query(params):
+def build_item_query(request):
     """
     builds a NewsItem QuerySet according to the request parameters given as
-    specified in the API documentation.  raises QueryError if 
+    specified in the API documentation.  raises QueryError if
     invalid query parameters are specified.
     """
-
+    params = _copy_nomulti(request.GET)
     # some different ordering may be more optimal here /
     # some index could be specifically created
     filters = [_schema_filter, _daterange_filter, _predefined_place_filter,
@@ -44,43 +65,30 @@ def build_item_query(params):
     query = NewsItem.objects.all()
     params = dict(params)
     state = {}
-    for f in filters: 
+    from ebpub.utils.view_utils import get_schema_manager
+    params['_schema_manager'] = get_schema_manager(request)
+    for f in filters:
         query, params, state = f(query, params, state)
 
     return query, params
     
 
-# 
-# filters accept and return:
-# * the current django model query
-# * the remaining set of parameters describing the query 
-# * an arbitrary state dictionary for signaling / caching
-# 
-# the first filter to use a parameter removes it.
-# related filters can communicate through 'state' 
-#
-# this allows identification of unused/ill specified 
-# parameters and disallows overlapping interpretations of 
-# a parameter.
-#
-# The full set of parameters that control these filters
-# is specified in the API documentation.
-#
 
 def _schema_filter(query, params, state):
     """
     handles filtering items by schema type
-    parameters: type
+    parameters: type, _schema_manager (expected to be injected by caller)
     """
 
-    # always filter out items with non-public schema
-    query = query.filter(schema__is_public=True)
+    # always filter out items with non-public schema.
+    schema_manager = params.pop('_schema_manager')
+    allowed_schema_ids = schema_manager.allowed_schema_ids()
+    query = query.filter(schema__id__in=allowed_schema_ids)
 
-    slug = params.get('type')
+    slug = params.pop('type', None)
     if slug is not None:
-        del params['type']
         state['schema_slug'] = slug
-        query = query.filter(schema__slug=slug)    
+        query = query.filter(schema__slug=slug)
     return query, params, state
 
 
@@ -287,3 +295,19 @@ def build_place_query(params):
         query, params, state = f(query, params, state)
 
     return query, params
+
+def _copy_nomulti(d):
+    """
+    make a copy of django wack-o immutable query mulit-dict
+    making single item values non-lists.
+    """
+    r = {}
+    for k,v in d.items():
+        try:
+            if len(v) == 1:
+                r[k] = v[0]
+            else:
+                r[k] = v
+        except TypeError:
+            r[k] = v
+    return r
