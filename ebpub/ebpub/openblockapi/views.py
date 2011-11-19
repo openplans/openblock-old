@@ -26,6 +26,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import feedgenerator
 from django.utils import simplejson
 from django.utils.cache import patch_response_headers
+from django.utils.cache import patch_vary_headers
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
 from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
@@ -198,6 +199,7 @@ def rest_view(methods, cache_timeout=None):
     """
     Decorator that applies throttling and restricts the available HTTP
     methods, and optionally adds some HTTP cache headers based on cache_timeout.
+    Also sets the Vary header.
     """
     def inner(func):
         @wraps(func)
@@ -210,11 +212,12 @@ def rest_view(methods, cache_timeout=None):
                 response = HttpResponse(msg, status=503)
                 response['Retry-After'] = str(seconds_throttled)
                 response['Content-Type'] = 'text/plain'
-                return response
-            response = func(request, *args, **kwargs)
-            # TODO: we should vary based on either basic auth or API key.
-            if cache_timeout is not None:
-                patch_response_headers(response, cache_timeout=cache_timeout)
+            else:
+                response = func(request, *args, **kwargs)
+                if cache_timeout is not None:
+                    patch_response_headers(response, cache_timeout=cache_timeout)
+            # Different users may have different stuff filtered.
+            patch_vary_headers(response, ['Authorization', 'Cookie'])
             return response
 
         return wrapper
@@ -240,7 +243,6 @@ def throttle_check(request):
     Based originally on code from TastyPie, copyright Daniel Lindsley,
     BSD license.
     """
-    
     # First get best user identifier available.
     if request.user.is_authenticated():
         identifier = request.user.username
