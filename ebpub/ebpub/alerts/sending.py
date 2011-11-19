@@ -60,14 +60,10 @@ def email_for_subscription(alert, start_date, frequency):
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     end_datetime = datetime.datetime.combine(yesterday, datetime.time(23, 59, 59, 9999)) # the end of yesterday
 
-    # TODO: We should use get_schema_manager(request) to
-    # filter schemas, instead of assuming is_public is sufficient...
-    # but we have no request here.
-    # We could possibly instead look up the alert's user,
-    # and have a get_schema_manager(profile) function?
-    # Which falls back to whatever's most restrictive.
-    qs = NewsItem.objects.select_related().filter(schema__is_public=True)
-
+    from ebpub.utils.view_utils import get_schema_manager_for_user
+    manager = get_schema_manager_for_user(alert.user)
+    allowed_schemas = manager.allowed_schema_ids()
+    qs = NewsItem.objects.select_related().filter(schema__id__in=allowed_schemas)
     if alert.include_new_schemas:
         if alert.schemas:
             qs = qs.exclude(schema__id__in=alert.schemas.split(','))

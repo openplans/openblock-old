@@ -97,8 +97,18 @@ def get_schema_manager(request):
         manager = Schema.objects
     else:
         manager = Schema.public_objects
-    # Hook to customize the Manager's behavior based on the current request.
-    # The named function should take (request, manager) arguments
+    return _manager_filter_hook(manager, request.user)
+
+def get_schema_manager_for_user(user):
+    if user.is_superuser:
+        manager = Schema.objects
+    else:
+        manager = Schema.public_objects
+    return _manager_filter_hook(manager, user)
+
+def _manager_filter_hook(manager, user):
+    # Hook to customize the Manager's behavior based on the current user.
+    # The named function should take (user, manager) arguments
     # and return something that behaves like a manager but can do whatever
     # extra filtering you like in eg. get_query_set().
     mgr_filter = getattr(settings, 'SCHEMA_MANAGER_HOOK', None)
@@ -107,5 +117,5 @@ def get_schema_manager(request):
         import importlib
         module = importlib.import_module(module)
         func = getattr(module, func)
-        manager = func(request, manager)
+        manager = func(user, manager)
     return manager
