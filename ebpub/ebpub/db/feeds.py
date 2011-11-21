@@ -89,7 +89,7 @@ class AbstractLocationFeed(EbpubFeed):
 
         allowed_schema_ids = get_schema_manager(self.request).allowed_schema_ids()
         qs = NewsItem.objects.select_related().filter(
-            schema__ids__in=allowed_schema_ids,
+            schema__id__in=allowed_schema_ids,
             item_date__gte=start_date,
             item_date__lte=end_date).order_by('-item_date', 'schema__id', 'id')
 
