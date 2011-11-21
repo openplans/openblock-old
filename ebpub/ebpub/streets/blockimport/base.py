@@ -135,7 +135,6 @@ class BlockImporter(object):
                         for key, val in block_fields.items():
                             setattr(block, key, val)
                     else:
-                        import pdb; pdb.set_trace()
                         logger.warn("Multiple existing blocks like %s, skipping"
                                     % existing[0])
                         continue
