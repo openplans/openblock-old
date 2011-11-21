@@ -1013,7 +1013,7 @@ class FilterChain(SortedDict):
         identifying a location or block (and if a block, a radius).
         """
         place, block_radius, xy_radius = parse_pid(pid)
-        if isinstance(place, models.Block):
+        if isinstance(place, ebpub.streets.models.Block):
             self['location'] = BlockFilter(self.request, self.context, self.qs,
                                            block_radius, block=place)
         else:
