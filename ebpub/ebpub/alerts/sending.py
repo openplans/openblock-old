@@ -65,9 +65,11 @@ def email_for_subscription(alert, start_date, frequency):
     allowed_schemas = manager.allowed_schema_ids()
     qs = NewsItem.objects.select_related().filter(schema__id__in=allowed_schemas)
     if alert.include_new_schemas:
+        # We saved an opt-out list.
         if alert.schemas:
             qs = qs.exclude(schema__id__in=alert.schemas.split(','))
     else:
+        # We saved an opt-in list.
         if alert.schemas:
             qs = qs.filter(schema__id__in=alert.schemas.split(','))
 

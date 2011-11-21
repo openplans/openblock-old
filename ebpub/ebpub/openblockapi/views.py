@@ -15,7 +15,10 @@
 #   You should have received a copy of the GNU General Public License
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 
+from apikey.auth import KEY_HEADER  # relative import
+from apikey.auth import check_api_authorization  # relative import
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.http import HttpResponse
@@ -29,14 +32,13 @@ from django.utils.cache import patch_response_headers
 from django.utils.cache import patch_vary_headers
 from ebpub.db import models
 from ebpub.geocoder import DoesNotExist
-from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
-from ebpub.openblockapi.itemquery import _copy_nomulti
-from apikey.auth import KEY_HEADER  # relative import
-from apikey.auth import check_api_authorization  # relative import
-from ebpub.streets.models import PlaceType
 from ebpub.geocoder.base import full_geocode
+from ebpub.openblockapi.itemquery import _copy_nomulti
+from ebpub.openblockapi.itemquery import build_item_query, build_place_query, QueryError
+from ebpub.streets.models import PlaceType
 from ebpub.utils.dates import parse_date, parse_time
 from ebpub.utils.geodjango import ensure_valid
+from ebpub.utils.view_utils import get_schema_manager
 from functools import wraps
 import copy
 import datetime
@@ -206,6 +208,7 @@ def rest_view(methods, cache_timeout=None):
         def wrapper(request, *args, **kwargs):
             if request.method not in methods:
                 return HttpResponseNotAllowed(methods)
+            # Note throttle_check() does auth as a side effect.
             seconds_throttled = throttle_check(request)
             if seconds_throttled > 0:
                 msg = u'Throttle limit exceeded. Try again in %d seconds.\n' % seconds_throttled
@@ -217,7 +220,8 @@ def rest_view(methods, cache_timeout=None):
                 if cache_timeout is not None:
                     patch_response_headers(response, cache_timeout=cache_timeout)
             # Different users may have different stuff filtered.
-            patch_vary_headers(response, ['Authorization', 'Cookie'])
+            key_header = '-'.join(KEY_HEADER.split('_')[1:]).title()
+            patch_vary_headers(response, ['Authorization', 'Cookie', key_header])
             return response
 
         return wrapper
@@ -242,13 +246,23 @@ def throttle_check(request):
 
     Based originally on code from TastyPie, copyright Daniel Lindsley,
     BSD license.
+
+    Note this does API key auth as a side effect, if user is not
+    already logged in.
     """
     # First get best user identifier available.
+    if request.user.is_anonymous():
+        try:
+            check_api_authorization(request)
+        except PermissionDenied:
+            pass
     if request.user.is_authenticated():
         identifier = request.user.username
-    elif request.META.get(KEY_HEADER, None) is not None:
-        identifier = request.META[KEY_HEADER]
     else:
+        # We don't check KEY_HEADER here because check_api_authorization()
+        # should have resolved that to a valid user account.  So, if
+        # we're still not authenticated, any KEY_HEADER in the request
+        # was a bad key, and we should ignore it.
         identifier = "%s_%s" % (request.META.get('REMOTE_ADDR', 'noaddr'),
                                 request.META.get('REMOTE_HOST', 'nohost'))
 
@@ -425,9 +439,11 @@ def single_item_json(request, id_=None):
     GET a single item as GeoJSON.
     """
     assert request.method == 'GET'
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
     # TODO: handle PUT, DELETE?
     from ebpub.db.models import NewsItem
-    item = get_object_or_404(NewsItem.objects.select_related(), pk=id_)
+    item = get_object_or_404(
+        NewsItem.objects.filter(schema__id__in=allowed_schemas).select_related(), pk=id_)
     return APIGETResponse(request, item, content_type=JSON_CONTENT_TYPE)
 
 
@@ -551,12 +567,9 @@ def _geocode_geojson(query):
 def list_types_json(request):
     """
     List the known NewsItem types (Schemas).
-
-    Note this includes all types, even types for which the user isn't allowed
-    to see any newsitems. Revisit that?
     """
     schemas = {}
-    for schema in models.Schema.public_objects.all():
+    for schema in get_schema_manager(request).all():
         attributes = {}
         for sf in schema.schemafield_set.all():
             fieldtype = get_datatype(sf)

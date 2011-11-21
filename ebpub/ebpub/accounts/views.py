@@ -24,11 +24,11 @@ from django.template.context import RequestContext
 from ebpub.accounts import callbacks
 from ebpub.accounts.models import User, AnonymousUser, PendingUserAction
 from ebpub.alerts.models import EmailAlert
-from ebpub.db.models import Schema
 from ebpub.metros.allmetros import get_metro
 from ebpub.preferences.models import HiddenSchema
 from ebpub.savedplaces.models import SavedPlace
 from ebpub.utils.view_utils import eb_render
+from ebpub.utils.view_utils import get_schema_manager
 import forms, utils # relative import
 
 
@@ -140,7 +140,8 @@ def dashboard(request):
     hidden_schema_ids = set([x['schema_id'] for x in hidden_schema_ids])
 
     schema_list = []
-    for schema in Schema.public_objects.filter(is_special_report=False).order_by('plural_name'):
+    manager = get_schema_manager(request)
+    for schema in manager.filter(is_special_report=False).order_by('plural_name'):
         schema_list.append({'schema': schema, 'is_hidden': schema.id in hidden_schema_ids})
     from ebpub.neighbornews.utils import is_neighbornews_enabled
     return eb_render(request, 'accounts/dashboard.html', {

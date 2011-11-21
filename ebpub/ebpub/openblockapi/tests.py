@@ -1045,7 +1045,7 @@ class TestUtilFunctions(TestCase):
 
         result = foo(request)
         self.assertEqual(result.status_code, 200)
-        self.assertEqual(result['Vary'], 'Authorization, Cookie')
+        self.assertEqual(result['Vary'], 'Authorization, Cookie, X-Openblock-Key')
 
     @mock.patch('ebpub.openblockapi.throttle.cache')
     def test_cachethrottle(self, mock_cache):
@@ -1064,10 +1064,10 @@ class TestUtilFunctions(TestCase):
         mock_cache.get.return_value = [int(time.time())] * (throttle_at + 1)
         self.assertEqual(True, throttle.should_be_throttled('some_id'))
 
+    @mock.patch('ebpub.openblockapi.views.check_api_authorization')
     @mock.patch('ebpub.openblockapi.views._throttle')
-    def test_throttlecheck(self, mock_throttle):
+    def test_throttlecheck(self, mock_throttle, mock_check_api_auth):
         from ebpub.openblockapi.views import throttle_check
-
         request = mock.Mock(**{'user.is_authenticated.return_value': True,
                                'REQUEST.get.return_value': 'anything'})
         mock_throttle.should_be_throttled.return_value = True

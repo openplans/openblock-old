@@ -81,6 +81,12 @@ page, if the OpenBlock site makes that available to you; or the site
 administrators can create keys via the admin UI at
 ``admin/key/apikey/``.
 
+.. admonition:: Using Authentication All the Time
+
+  While many views don't require authentication, you should probably
+  use it all the time, because in some openblock configurations, it's
+  possible that some types of news are not available to anonymous
+  users.
 
 Support for Cross Domain Access
 -------------------------------

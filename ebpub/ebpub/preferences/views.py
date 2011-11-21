@@ -19,6 +19,7 @@
 from django import http
 from ebpub.db.models import Schema
 from ebpub.preferences.models import HiddenSchema
+from ebpub.utils.view_utils import get_schema_manager
 
 def ajax_save_hidden_schema(request):
     """
@@ -34,7 +35,8 @@ def ajax_save_hidden_schema(request):
     # Validate that the HiddenSchema hasn't already been created for this user,
     # to avoid duplicates.
     try:
-        schema = Schema.public_objects.get(slug=request.POST['schema'])
+        manager = get_schema_manager(request)
+        schema = manager.get(slug=request.POST['schema'])
         sp = HiddenSchema.objects.get(user_id=request.user.id, schema=schema)
     except Schema.DoesNotExist:
         return http.HttpResponse('0') # Schema doesn't exist.

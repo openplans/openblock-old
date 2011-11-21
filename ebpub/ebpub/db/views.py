@@ -53,7 +53,6 @@ from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
-from ebpub.utils.view_utils import has_staff_cookie
 
 import datetime
 import hashlib
@@ -164,8 +163,9 @@ def ajax_place_date_chart(request):
 
     Expects request.GET['pid'] and request.GET['s'] (a Schema ID).
     """
+    manager = get_schema_manager(request)
     try:
-        schema = Schema.public_objects.get(id=int(request.GET['s']))
+        schema = manager.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
     filters = FilterChain(request=request, schema=schema)
@@ -293,12 +293,13 @@ def homepage(request):
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     end_date += datetime.timedelta(days=1)
 
-    sparkline_schemas = list(Schema.public_objects.filter(allow_charting=True, is_special_report=False))
+    manager = get_schema_manager(request)
+    sparkline_schemas = list(manager.filter(allow_charting=True, is_special_report=False))
 
     # Order by slug to ensure case-insensitive ordering. (Kind of hackish.)
     lt_list = LocationType.objects.filter(is_significant=True).order_by('slug').extra(select={'count': 'select count(*) from db_location where is_public=True and location_type_id=db_locationtype.id'})
     street_count = Street.objects.count()
-    more_schemas = Schema.public_objects.filter(allow_charting=False).order_by('name')
+    more_schemas = manager.filter(allow_charting=False).order_by('name')
 
     # Get the public records.
     date_charts = get_date_chart_agg_model(sparkline_schemas, start_date, end_date, AggregateDay)

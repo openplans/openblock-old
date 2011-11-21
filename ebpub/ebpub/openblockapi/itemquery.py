@@ -71,7 +71,6 @@ def build_item_query(request):
         query, params, state = f(query, params, state)
 
     return query, params
-    
 
 
 def _schema_filter(query, params, state):
