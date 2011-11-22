@@ -58,6 +58,8 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Filtering NewsItems by Block no longer causes 500 error.
+
 * block_import.py can now be safely re-run on the same file,
   it won't create duplicate blocks anymore.
 

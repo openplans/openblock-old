@@ -61,11 +61,11 @@ def check_api_authorization(request):
     Check API access based on the current request.
 
     Currently requires that either the user is logged in (eg. via
-    basic auth), or there is a valid API key in the 'apikey' request
-    parameter.  If either fails, raises ``PermissionDenied``.
+    basic auth or cookie), or there is a valid API key in the '%s' request
+    header.  If either fails, raises ``PermissionDenied``.
 
     This should become more configurable.
-    """
+    """ % KEY_HEADER
     if request.user.is_authenticated():
         user = request.user
         if user.is_active:

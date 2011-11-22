@@ -47,8 +47,8 @@ from ebpub.geocoder import SmartGeocoder, AmbiguousResult, GeocodingException
 from ebpub.geocoder.parser.parsing import ParsingError
 from ebpub.metros.allmetros import get_metro
 from ebpub.utils.dates import parse_date
-from ebpub.utils.view_utils import has_staff_cookie
 from ebpub.utils.view_utils import parse_pid
+from ebpub.utils.view_utils import get_schema_manager
 
 import calendar
 import datetime
@@ -128,9 +128,11 @@ class FilterError(Exception):
 
 class SchemaFilter(NewsitemFilter):
     """
-    Filters by NewsItem.schema.
+    Filters by NewsItem.schema, which may be a list.
+
+    Schemas that the current user is not allowed to see will be filtered out.
     """
-    _sort_value = -9999
+    _sort_value = -1  # Me first!!
     slug = 'schema'
     url = None
     label = None  # Don't show this one in the UI.
@@ -145,9 +147,14 @@ class SchemaFilter(NewsitemFilter):
 
     def apply(self):
         if isinstance(self.schema, list):
-            self.qs = self.qs.filter(schema__in=self.schema)
+            schemas = self.schema
         else:
-            self.qs = self.qs.filter(schema=self.schema)
+            schemas = [self.schema]
+        schema_ids = [s.id for s in schemas]
+        if self.request:
+            allowed_schema_ids = [s['id'] for s in get_schema_manager(self.request).values('id')]
+            schema_ids = set(schema_ids).intersection(allowed_schema_ids)
+            self.qs = self.qs.filter(schema__id__in=allowed_schema_ids)
 
 
 class AttributeFilter(NewsitemFilter):
@@ -766,10 +773,10 @@ class FilterChain(SortedDict):
                 filt.qs = queryset
             filt.apply()
             queryset = filt.qs
-        # Don't show any NewsItems whose Schema isn't public yet.
-        # TODO: Is there a better place to do this?
-        if not has_staff_cookie(self.request):
-            queryset = queryset.filter(schema__is_public=True)
+
+        if self.request and (not 'schema' in self):
+            allowed_schemas = get_schema_manager(self.request).allowed_schema_ids()
+            queryset = queryset.filter(schema__id__in=allowed_schemas)
         return queryset
 
     def copy(self):
@@ -1006,7 +1013,7 @@ class FilterChain(SortedDict):
         identifying a location or block (and if a block, a radius).
         """
         place, block_radius, xy_radius = parse_pid(pid)
-        if isinstance(place, models.Block):
+        if isinstance(place, ebpub.streets.models.Block):
             self['location'] = BlockFilter(self.request, self.context, self.qs,
                                            block_radius, block=place)
         else:

@@ -95,7 +95,7 @@ cite, em, i {
     font-style: italic;
 }
 blockquote {
-    background: url("img/blockquote.png") no-repeat scroll 0 0 transparent;
+    /* background: url("img/blockquote.png") no-repeat scroll 0 0 transparent; */
     color: #666666;
     font-style: italic;
     margin: 0 40px 40px 0;

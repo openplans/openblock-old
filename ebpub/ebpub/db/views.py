@@ -53,7 +53,6 @@ from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
-from ebpub.utils.view_utils import has_staff_cookie
 
 import datetime
 import hashlib
@@ -138,8 +137,10 @@ def ajax_place_lookup_chart(request):
     """
     Returns HTML fragment -- expects request.GET['pid'] and request.GET['sf'] (a SchemaField ID).
     """
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
     try:
-        sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']), schema__is_public=True)
+        sf = SchemaField.objects.select_related().get(id=int(request.GET['sf']),
+                                                      schema__id__in=allowed_schemas)
     except (KeyError, ValueError, SchemaField.DoesNotExist):
         raise Http404('Invalid SchemaField')
     filters = FilterChain(request=request, schema=sf.schema)
@@ -162,8 +163,9 @@ def ajax_place_date_chart(request):
 
     Expects request.GET['pid'] and request.GET['s'] (a Schema ID).
     """
+    manager = get_schema_manager(request)
     try:
-        schema = Schema.public_objects.get(id=int(request.GET['s']))
+        schema = manager.get(id=int(request.GET['s']))
     except (KeyError, ValueError, Schema.DoesNotExist):
         raise Http404('Invalid Schema')
     filters = FilterChain(request=request, schema=schema)
@@ -245,8 +247,8 @@ def newsitems_geojson(request):
             filters.add('date', start_date, end_date)
         newsitem_qs = filters.apply()
         newsitem_qs = newsitem_qs
-        if not has_staff_cookie(request):
-            newsitem_qs = newsitem_qs.filter(schema__is_public=True)
+        allowed_schemas = get_schema_manager(request).allowed_schema_ids()
+        newsitem_qs = newsitem_qs.filter(schema__id__in=allowed_schemas)
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
@@ -291,12 +293,13 @@ def homepage(request):
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     end_date += datetime.timedelta(days=1)
 
-    sparkline_schemas = list(Schema.public_objects.filter(allow_charting=True, is_special_report=False))
+    manager = get_schema_manager(request)
+    sparkline_schemas = list(manager.filter(allow_charting=True, is_special_report=False))
 
     # Order by slug to ensure case-insensitive ordering. (Kind of hackish.)
     lt_list = LocationType.objects.filter(is_significant=True).order_by('slug').extra(select={'count': 'select count(*) from db_location where is_public=True and location_type_id=db_locationtype.id'})
     street_count = Street.objects.count()
-    more_schemas = Schema.public_objects.filter(allow_charting=False).order_by('name')
+    more_schemas = manager.filter(allow_charting=False).order_by('name')
 
     # Get the public records.
     date_charts = get_date_chart_agg_model(sparkline_schemas, start_date, end_date, AggregateDay)
@@ -404,7 +407,8 @@ def search(request, schema_slug=''):
 def newsitem_detail(request, schema_slug, newsitem_id):
     ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id,
                            schema__slug=schema_slug)
-    if not ni.schema.is_public and not has_staff_cookie(request):
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
+    if not ni.schema.id in allowed_schemas:
         raise Http404('Not public')
 
     if not ni.schema.has_newsitem_detail:
@@ -472,7 +476,8 @@ def newsitem_detail(request, schema_slug, newsitem_id):
     return eb_render(request, templates_to_try, context)
 
 def schema_list(request):
-    schema_list = Schema.objects.select_related().filter(is_public=True, is_special_report=False).order_by('plural_name')
+    allowed_schemas = get_schema_manager(request).all()
+    schema_list = allowed_schemas.select_related().filter(is_special_report=False).order_by('plural_name')
     schemafield_list = list(SchemaField.objects.filter(is_filter=True).order_by('display_order'))
     browsable_locationtype_list = LocationType.objects.filter(is_significant=True)
     # Populate s_list, which contains a schema and schemafield list for each schema.
@@ -1178,8 +1183,9 @@ def place_detail_overview(request, *args, **kwargs):
 
     # Mapping of schema id -> [schemafields], for building Lookup charts.
     sf_dict = {}
+    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
     charted_lookups = SchemaField.objects.filter(
-        is_lookup=True, is_charted=True, schema__is_public=True,
+        is_lookup=True, is_charted=True, schema__id__in=allowed_schemas,
         schema__is_special_report=False)
     charted_lookups = charted_lookups.values('id', 'schema_id', 'pretty_name')
     for sf in charted_lookups.order_by('schema__id', 'display_order'):

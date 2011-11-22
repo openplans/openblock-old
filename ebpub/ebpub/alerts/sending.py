@@ -59,12 +59,17 @@ def email_for_subscription(alert, start_date, frequency):
     start_datetime = datetime.datetime(start_date.year, start_date.month, start_date.day)
     yesterday = datetime.date.today() - datetime.timedelta(days=1)
     end_datetime = datetime.datetime.combine(yesterday, datetime.time(23, 59, 59, 9999)) # the end of yesterday
-    # Order by schema__id to group schemas together.
-    qs = NewsItem.objects.select_related().filter(schema__is_public=True)
+
+    from ebpub.utils.view_utils import get_schema_manager_for_user
+    manager = get_schema_manager_for_user(alert.user)
+    allowed_schemas = manager.allowed_schema_ids()
+    qs = NewsItem.objects.select_related().filter(schema__id__in=allowed_schemas)
     if alert.include_new_schemas:
+        # We saved an opt-out list.
         if alert.schemas:
             qs = qs.exclude(schema__id__in=alert.schemas.split(','))
     else:
+        # We saved an opt-in list.
         if alert.schemas:
             qs = qs.filter(schema__id__in=alert.schemas.split(','))
 
@@ -78,6 +83,7 @@ def email_for_subscription(alert, start_date, frequency):
         place = alert.location
         qs = qs.filter(newsitemlocation__location__id=alert.location.id)
 
+    # Order by schema__id to group schemas together.
     news_qs = qs.filter(schema__is_event=False,
                         pub_date__range=(start_datetime, end_datetime),
                         ).order_by('-schema__importance', 'schema__id', '-item_date', '-id')

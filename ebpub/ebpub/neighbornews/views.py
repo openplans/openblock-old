@@ -30,7 +30,6 @@ from ebpub.neighbornews.models import NewsItemCreator
 from ebpub.neighbornews.utils import NEIGHBOR_MESSAGE_SLUG, NEIGHBOR_EVENT_SLUG
 from ebpub.neighbornews.utils import if_disabled404, can_edit
 from ebpub.utils.view_utils import eb_render
-from recaptcha.client import captcha
 import re
 
 @if_disabled404(NEIGHBOR_MESSAGE_SLUG)
@@ -127,6 +126,7 @@ def _update_item(request, form, schema, action):
 
     cat_field = SchemaField.objects.get(schema=schema, name='categories')
     if form.is_bound and form.is_valid():
+        # Creating a NewsItem.
         form.instance.schema = schema
         item = form.save()
 
@@ -163,6 +163,7 @@ def _update_item(request, form, schema, action):
         return HttpResponseRedirect(detail_url)
 
     elif form.instance:
+        # Update.
         if form.instance.attributes.get('categories'):
             cat_ids = form.instance.attributes['categories'].split(',')
             cat_lookups = Lookup.objects.filter(schema_field=cat_field, id__in=cat_ids)

@@ -22,6 +22,14 @@ import sys
 if not ((2, 6) <= sys.version_info[:2] < (3, 0)):
     sys.exit("ERROR: ebpub requires Python >= 2.6 and < 3.0")
 
+# Version-specific dependencies.
+if sys.version_info[:2] < (2,7):
+    install_requires = [
+        'importlib',
+        ]
+else:
+    install_requires = []
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -61,7 +69,7 @@ setup(
     url="http://openblockproject.org/docs",
     license="GPLv3",
     keywords="openblock",
-    install_requires=[
+    install_requires= install_requires + [
         "django>=1.3.1",
         "django-static",
         "GDAL",

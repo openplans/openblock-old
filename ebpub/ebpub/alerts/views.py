@@ -24,41 +24,49 @@ from ebpub.accounts.models import User, PendingUserAction
 from ebpub.accounts.utils import login_required, CREATE_TASK
 from ebpub.accounts.views import login, send_confirmation_and_redirect
 from ebpub.alerts.models import EmailAlert
-from ebpub.db.models import Schema
 from ebpub.db.utils import url_to_place, block_radius_value
 from ebpub.db.utils import get_place_info_for_request
 from ebpub.db.views import _preconfigured_map
 from ebpub.streets.models import Block
-from ebpub.utils.view_utils import eb_render
+from ebpub.utils.view_utils import eb_render, get_schema_manager
 import datetime
 
 FREQUENCY_CHOICES = (('1', 'Daily'), ('7', 'Weekly'))
 RADIUS_CHOICES = (('1', '1 block'), ('3', '3 blocks'), ('8', '8 blocks'))
 
 class SchemaMultipleChoiceField(forms.ModelMultipleChoiceField):
-    def __init__(self, *args, **kwargs):
-        kwargs['queryset'] = Schema.public_objects.filter(is_special_report=False).order_by('plural_name')
-        super(SchemaMultipleChoiceField, self).__init__(*args, **kwargs)
+
+    # We don't assign self.queryset yet because we can only really do that
+    # at runtime, with access to a request.
+    # We do that during __init__().
 
     def label_from_instance(self, obj):
         return capfirst(obj.plural_name)
 
 class LocationAlertForm(forms.Form):
     frequency = forms.ChoiceField(choices=FREQUENCY_CHOICES, widget=forms.RadioSelect)
-    selected_schemas = SchemaMultipleChoiceField(widget=forms.CheckboxSelectMultiple)
-    displayed_schemas = SchemaMultipleChoiceField(widget=forms.MultipleHiddenInput)
     include_new_schemas = forms.BooleanField(required=False)
 
     # This form is slightly complicated because the e-mail address doesn't need
     # to be entered if the user is logged in. The __init__() method takes an
     # `email_required` argument, which specifies whether the `email` field
     # should be included in the form.
+    # Also, because the Schemas to display may depend on the request,
+    # we need to pass that to __init__ and create the selected_Schemas and
+    # displayed_schemas fields on the fly.
     def __init__(self, *args, **kwargs):
         self.email_required = kwargs.pop('email_required', True)
+        request = kwargs.pop('request')
         forms.Form.__init__(self, *args, **kwargs)
         if self.email_required:
             f = forms.EmailField(widget=forms.TextInput(attrs={'id': 'emailinput', 'class': 'textinput placeholder'}))
             self.fields['email'] = f
+        qs = get_schema_manager(request).all()
+        self.fields['selected_schemas'] = SchemaMultipleChoiceField(
+            widget=forms.CheckboxSelectMultiple, queryset=qs)
+        self.fields['displayed_schemas'] = SchemaMultipleChoiceField(
+            widget=forms.MultipleHiddenInput, queryset=qs)
+
 
     def clean(self):
         # Normalize e-mail address to lower case.
@@ -68,7 +76,8 @@ class LocationAlertForm(forms.Form):
         # Set cleaned_data['schemas'], which we'll use later. Its value depends...
         if 'include_new_schemas' in self.cleaned_data and 'selected_schemas' in self.cleaned_data:
             if self.cleaned_data['include_new_schemas']:
-                # Set it to the list of schemas to opt out of.
+                # Set it to the list of schemas to opt out of,
+                # i.e. everything the user did NOT select.
                 self.cleaned_data['schemas'] = set(self.cleaned_data['displayed_schemas']) - set(self.cleaned_data['selected_schemas'])
             else:
                 # Set it to the list of schemas to opt in to.
@@ -81,30 +90,34 @@ class BlockAlertForm(LocationAlertForm):
 
 def signup(request, *args, **kwargs):
     place = url_to_place(*args, **kwargs)
-    schema_list = Schema.public_objects.filter(is_special_report=False).order_by('plural_name')
+    manager = get_schema_manager(request)
     if isinstance(place, Block):
         FormClass, type_code = BlockAlertForm, 'b'
     else:
         FormClass, type_code = LocationAlertForm, 'l'
     email_required = request.user.is_anonymous()
     if request.method == 'POST':
-        form = FormClass(request.POST, email_required=email_required)
+        form = FormClass(request.POST, email_required=email_required, request=request)
         if form.is_valid():
             return finish_signup(request, place, form.cleaned_data)
     else:
+        schema_list = manager.filter(is_special_report=False).order_by('plural_name')
         schema_ids = [s.id for s in schema_list]
-        form = FormClass(initial={
-            'email': 'Enter your e-mail address',
-            'radius': block_radius_value(request)[1],
-            'frequency': '1',
-            'include_new_schemas': True,
-            'selected_schemas': schema_ids,
-            'displayed_schemas': schema_ids,
-        }, email_required=email_required)
+        form = FormClass(
+            initial={
+                'email': 'Enter your e-mail address',
+                'radius': block_radius_value(request)[1],
+                'frequency': '1',
+                'include_new_schemas': True,
+                'selected_schemas': schema_ids,
+                'displayed_schemas': schema_ids,
+                },
+            email_required=email_required,
+            request=request)
     context = get_place_info_for_request(request, *args, **kwargs)
     context['map_configuration'] = _preconfigured_map(context);
     context['form'] = form
-    context['schema_list'] = schema_list
+    #context['schema_list'] = schema_list
     return eb_render(request, 'alerts/signup_form.html', context)
 
 def finish_signup(request, place, data):

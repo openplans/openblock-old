@@ -990,8 +990,9 @@ class TestUtilFunctions(TestCase):
                                    'GET': {}, 'POST': {}})
         self.assertEqual(True, auth.check_api_authorization(get_request))
 
+    @mock.patch('ebpub.openblockapi.views.patch_vary_headers')
     @mock.patch('ebpub.openblockapi.views.throttle_check')
-    def test_rest_view_decorator__allowed_methods(self, throttle_check):
+    def test_rest_view_decorator__allowed_methods(self, throttle_check, patch_vary):
         from ebpub.openblockapi.views import rest_view
         from django.http import HttpResponseNotAllowed
         throttle_check.return_value = False
@@ -1013,8 +1014,9 @@ class TestUtilFunctions(TestCase):
         result = foo(request)
         self.assert_(isinstance(result, HttpResponseNotAllowed))
 
+    @mock.patch('ebpub.openblockapi.views.patch_vary_headers')
     @mock.patch('ebpub.openblockapi.views.throttle_check')
-    def test_rest_view_decorator__throttling(self, throttle_check):
+    def test_rest_view_decorator__throttling(self, throttle_check, patch_vary):
         from ebpub.openblockapi.views import rest_view
         request = mock.Mock(method='GET')
 
@@ -1030,6 +1032,20 @@ class TestUtilFunctions(TestCase):
         self.assertEqual(result.status_code, 503)
         self.assertEqual(result['Retry-After'], '1234')
 
+    @mock.patch('ebpub.openblockapi.views.throttle_check')
+    def test_rest_view_decorator__vary(self, throttle_check):
+        throttle_check.return_value = 0
+        from ebpub.openblockapi.views import rest_view
+        request = mock.Mock(method='GET')
+
+        @rest_view(['GET'])
+        def foo(request):
+            from django.http import HttpResponse
+            return HttpResponse('ok')
+
+        result = foo(request)
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result['Vary'], 'Authorization, Cookie, X-Openblock-Key')
 
     @mock.patch('ebpub.openblockapi.throttle.cache')
     def test_cachethrottle(self, mock_cache):
@@ -1048,10 +1064,10 @@ class TestUtilFunctions(TestCase):
         mock_cache.get.return_value = [int(time.time())] * (throttle_at + 1)
         self.assertEqual(True, throttle.should_be_throttled('some_id'))
 
+    @mock.patch('ebpub.openblockapi.views.check_api_authorization')
     @mock.patch('ebpub.openblockapi.views._throttle')
-    def test_throttlecheck(self, mock_throttle):
+    def test_throttlecheck(self, mock_throttle, mock_check_api_auth):
         from ebpub.openblockapi.views import throttle_check
-
         request = mock.Mock(**{'user.is_authenticated.return_value': True,
                                'REQUEST.get.return_value': 'anything'})
         mock_throttle.should_be_throttled.return_value = True
