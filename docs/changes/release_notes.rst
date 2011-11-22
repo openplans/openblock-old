@@ -24,6 +24,8 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed unused NewsItem.block field, part of ticket #93.
+
 * Removed ebdata/retrieval/scrapers/new_newsitem_list_detail.py,
   which wasn't used anywhere.
 
@@ -34,6 +36,15 @@ Backward Incompatibilities
 
 New Features in 1.2
 -------------------
+
+* Added advanced hook for filtering schemas based on arbitrary request
+  data; implement this by assigning settings.SCHEMA_MANAGER_HOOK =
+  'some_module:some_function', where some_module.some_function takes
+  arguments (request, manager) and returns a models.Manager instance
+  whose query sets will return the allowed Schemas.
+
+* Add Vary headers to REST API responses, for more correct HTTP
+  cache-ability.
 
 * Optional ReCaptcha on the user-contributed ("Neighbornews") add/edit
   forms.
@@ -60,7 +71,7 @@ Bugs fixed
 
 * Filtering NewsItems by Block no longer causes 500 error.
 
-* block_import.py can now be safely re-run on the same file,
+* block_import_tiger can now be safely re-run on the same file,
   it won't create duplicate blocks anymore.
 
 * Fixed double-logging of scrapers to the console.

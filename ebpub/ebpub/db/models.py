@@ -109,6 +109,13 @@ class Schema(models.Model):
     nb. to get all NewsItem instances for a Schema, you can do the usual as per
     http://docs.djangoproject.com/en/dev/topics/db/queries/#backwards-related-objects:
     schema.newsitem_set.all()
+
+    nb. Some Schemas may not be visible to some users, if eg. is_public=False.
+    To abstract this, use the get_schema_manager(request)
+    rather than directly using Schema.objects or Schema.public_objects.
+
+    To filter NewsItems appropriately, first do get_schema_manager(request),
+    and then look up NewsItems.objects.filter(schema__in=schema_manager.all())
     """
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)

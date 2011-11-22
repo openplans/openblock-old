@@ -233,12 +233,12 @@ required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 
 
 # SCHEMA_MANAGER_HOOK: Set this to a string like
-# 'package_name.module_name:function_name' This is an advanced feature
-# that can be used to modify all Schema queries based on the current
-# request.  The named function should take arguments (request, manager)
-# and return either a Manager or something that looks like one -
-# maybe by proxying it - for example by doing extra filtering in
-# get_query_set().
+# 'package_name.module_name:function_name'
+# This is an advanced feature that can be used to modify all Schema
+# queries based on the current request.  The named function should
+# take arguments (request, manager) and return either a Manager or
+# something that looks like one - maybe by proxying it - for example
+# by doing extra filtering in get_query_set().
 SCHEMA_MANAGER_HOOK = None
 
 ####################
