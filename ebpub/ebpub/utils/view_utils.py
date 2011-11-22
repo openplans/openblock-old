@@ -89,9 +89,15 @@ def get_schema_manager(request):
     Returns a Manager that restricts the Schemas that can be seen
     based on the current request.
 
+    This should be used in ALL public view queries that reference
+    NewsItems or Schemas.  There should probably be a more convenient
+    API for doing this.
+
     By default, this just uses ``has_staff_cookie`` to decide whether
     to show Schemas that are not public, but you can also name the
-    path to a wrapper function in settings.SCHEMA_MANAGER_HOOK.
+    path to a function in settings.SCHEMA_MANAGER_HOOK
+    that has a signature like func(manager, request.user)
+    and returns a manager.
     """
     if has_staff_cookie(request):
         manager = Schema.objects
@@ -100,6 +106,13 @@ def get_schema_manager(request):
     return _manager_filter_hook(manager, request.user)
 
 def get_schema_manager_for_user(user):
+    """Like get_schema_manager(request),
+    but useful in contexts where you have a User object available
+    but no request, eg. batch jobs like sending email.
+
+    This can also be overridden/enhanced by setting
+    settings.SCHEMA_MANAGER_HOOK.
+    """
     if user.is_superuser:
         manager = Schema.objects
     else:
