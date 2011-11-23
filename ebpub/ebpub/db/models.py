@@ -999,7 +999,13 @@ class LookupManager(models.Manager):
         return obj
 
 class Lookup(models.Model):
-    schema_field = models.ForeignKey(SchemaField)
+    """
+    Lookups are a normalized way to store Attributes that have only a
+    few possible values.
+    """
+    schema_field = models.ForeignKey(
+        SchemaField,
+        help_text="This must be a SchemaField whose real_name is an int or varchar column.")
     name = models.CharField(max_length=255)
     code = models.CharField(
         max_length=255, blank=True,
@@ -1044,10 +1050,12 @@ class NewsItemLocation(models.Model):
 
 #############################################################################
 # Aggregates.
-# These provide for quick lookups of NewsItems by various buckets,
-# eg. number of NewsItems added on one day.
 
 class AggregateBaseClass(models.Model):
+    """
+    Aggregates provide for quick lookups of NewsItems by various buckets,
+    eg. number of NewsItems added on one day.
+    """
     schema = models.ForeignKey(Schema)
     total = models.IntegerField()
 
