@@ -62,11 +62,9 @@ def build_item_query(request):
                _radius_filter, _bbox_filter, _attributes_filter, _order_by,
                _object_limit]
 
-    query = NewsItem.objects.all()
+    query = NewsItem.objects.by_request(request)
     params = dict(params)
     state = {}
-    from ebpub.utils.view_utils import get_schema_manager
-    params['_schema_manager'] = get_schema_manager(request)
     for f in filters:
         query, params, state = f(query, params, state)
 
@@ -76,13 +74,8 @@ def build_item_query(request):
 def _schema_filter(query, params, state):
     """
     handles filtering items by schema type
-    parameters: type, _schema_manager (expected to be injected by caller)
+    parameters: type
     """
-
-    # always filter out items with non-public schema.
-    schema_manager = params.pop('_schema_manager')
-    allowed_schema_ids = schema_manager.allowed_schema_ids()
-    query = query.filter(schema__id__in=allowed_schema_ids)
 
     slug = params.pop('type', None)
     if slug is not None:

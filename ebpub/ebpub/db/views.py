@@ -226,7 +226,7 @@ def newsitems_geojson(request):
 
     nid = request.GET.get('newsitem', '')
 
-    newsitem_qs = NewsItem.objects.all()
+    newsitem_qs = NewsItem.objects.by_request(request)
     if nid:
         newsitem_qs = newsitem_qs.filter(id=nid)
     else:
@@ -246,9 +246,7 @@ def newsitems_geojson(request):
             start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
             filters.add('date', start_date, end_date)
         newsitem_qs = filters.apply()
-        newsitem_qs = newsitem_qs
-        allowed_schemas = get_schema_manager(request).allowed_schema_ids()
-        newsitem_qs = newsitem_qs.filter(schema__id__in=allowed_schemas)
+        newsitem_qs = newsitem_qs.by_request(request)
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
@@ -405,11 +403,9 @@ def search(request, schema_slug=''):
 
 @csrf_protect
 def newsitem_detail(request, schema_slug, newsitem_id):
-    ni = get_object_or_404(NewsItem.objects.select_related(), id=newsitem_id,
+    ni = get_object_or_404(NewsItem.objects.by_request(request).select_related(),
+                           id=newsitem_id,
                            schema__slug=schema_slug)
-    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
-    if not ni.schema.id in allowed_schemas:
-        raise Http404('Not public')
 
     if not ni.schema.has_newsitem_detail:
         # Don't show detail pages.

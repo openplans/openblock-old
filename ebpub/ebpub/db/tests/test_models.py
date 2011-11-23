@@ -23,6 +23,7 @@ Unit tests for db.models.
 from ebpub.utils.django_testcase_backports import TestCase
 from ebpub.db.models import NewsItem, Attribute
 import datetime
+import mock
 
 class DatabaseExtensionsTestCase(TestCase):
     "Unit tests for the custom ORM stuff in models.py."
@@ -228,4 +229,10 @@ class DatabaseExtensionsTestCase(TestCase):
         self.assertEqual(Schema.public_objects.allowed_schema_ids(),
                          [])
 
-
+    @mock.patch('ebpub.utils.view_utils.get_schema_manager')
+    def test_by_request(self, mock_get_schema_manager):
+        mock_get_schema_manager.return_value.allowed_schema_ids.return_value = []
+        from ebpub.db.models import NewsItem
+        request = mock.Mock()
+        self.assertEqual(NewsItem.objects.by_request(request).count(), 0)
+        self.assertEqual(mock_get_schema_manager.call_count, 1)

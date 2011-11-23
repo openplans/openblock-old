@@ -152,9 +152,9 @@ class SchemaFilter(NewsitemFilter):
             schemas = [self.schema]
         schema_ids = [s.id for s in schemas]
         if self.request:
-            allowed_schema_ids = [s['id'] for s in get_schema_manager(self.request).values('id')]
+            allowed_schema_ids = get_schema_manager(self.request).allowed_schema_ids()
             schema_ids = set(schema_ids).intersection(allowed_schema_ids)
-            self.qs = self.qs.filter(schema__id__in=allowed_schema_ids)
+            self.qs = self.qs.filter(schema__id__in=schema_ids)
 
 
 class AttributeFilter(NewsitemFilter):
@@ -775,8 +775,7 @@ class FilterChain(SortedDict):
             queryset = filt.qs
 
         if self.request and (not 'schema' in self):
-            allowed_schemas = get_schema_manager(self.request).allowed_schema_ids()
-            queryset = queryset.filter(schema__id__in=allowed_schemas)
+            queryset = queryset.by_request(self.request)
         return queryset
 
     def copy(self):

@@ -439,11 +439,10 @@ def single_item_json(request, id_=None):
     GET a single item as GeoJSON.
     """
     assert request.method == 'GET'
-    allowed_schemas = get_schema_manager(request).allowed_schema_ids()
     # TODO: handle PUT, DELETE?
     from ebpub.db.models import NewsItem
     item = get_object_or_404(
-        NewsItem.objects.filter(schema__id__in=allowed_schemas).select_related(), pk=id_)
+        NewsItem.objects.by_request(request).select_related(), pk=id_)
     return APIGETResponse(request, item, content_type=JSON_CONTENT_TYPE)
 
 

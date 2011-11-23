@@ -87,9 +87,7 @@ class AbstractLocationFeed(EbpubFeed):
         # Include future stuff, useful for events
         end_date = today_value + datetime.timedelta(days=5)
 
-        allowed_schema_ids = get_schema_manager(self.request).allowed_schema_ids()
-        qs = NewsItem.objects.select_related().filter(
-            schema__id__in=allowed_schema_ids,
+        qs = NewsItem.objects.select_related().by_request(self.request).filter(
             item_date__gte=start_date,
             item_date__lte=end_date).order_by('-item_date', 'schema__id', 'id')
 

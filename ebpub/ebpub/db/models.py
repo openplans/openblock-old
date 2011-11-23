@@ -114,8 +114,8 @@ class Schema(models.Model):
     To abstract this, use the get_schema_manager(request)
     rather than directly using Schema.objects or Schema.public_objects.
 
-    To filter NewsItems appropriately, first do get_schema_manager(request),
-    and then look up NewsItems.objects.filter(schema__in=schema_manager.all())
+    (To filter NewsItems appropriately, do NewsItem.objects.by_request(request)
+    which will take care of using the right Schema manager.)
     """
     name = models.CharField(max_length=32)
     plural_name = models.CharField(max_length=32)
@@ -692,6 +692,18 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
                             params=("%%%s%%" % query,))
         return clone
 
+    def by_request(self, request):
+        """
+        Does additional request-specific filtering; currently this
+        just uses get_schema_manager(request) to limit the schemas that are
+        visible during this request.
+        """
+        clone = self._clone()
+        from ebpub.utils.view_utils import get_schema_manager
+        allowed_schema_ids = get_schema_manager(request).allowed_schema_ids()
+        return clone.filter(schema__id__in=allowed_schema_ids)
+
+
 class NewsItemManager(models.GeoManager):
     def get_query_set(self):
         return NewsItemQuerySet(self.model)
@@ -707,6 +719,9 @@ class NewsItemManager(models.GeoManager):
 
     def top_lookups(self, *args, **kwargs):
         return self.get_query_set().top_lookups(*args, **kwargs)
+
+    def by_request(self, request):
+        return self.get_query_set().by_request(request)
 
 class NewsItem(models.Model):
     """
