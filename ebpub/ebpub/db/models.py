@@ -69,17 +69,23 @@ def field_mapping(schema_id_list):
     return result
 
 
-class SchemaManager(models.Manager):
-
-    _allowed_ids_cache_key = 'allowed_schema_ids__all'
+class SchemaQuerySet(models.query.GeoQuerySet):
 
     def update(self, *args, **kwargs):
         # Django doesn't provide pre/post_update signals, rats.
         # See https://code.djangoproject.com/ticket/13021
         # So we define one and send it here.
-        result = super(SchemaManager, self).update(*args, **kwargs)
+        result = super(SchemaQuerySet, self).update(*args, **kwargs)
         post_update.send(sender=Schema)
         return result
+
+
+class SchemaManager(models.Manager):
+
+    _allowed_ids_cache_key = 'allowed_schema_ids__all'
+
+    def update(self, *args, **kwargs):
+        return self.get_query_set().update(*args, **kwargs)
 
     def get_by_natural_key(self, slug):
         return self.get(slug=slug)
@@ -89,7 +95,7 @@ class SchemaManager(models.Manager):
         See bug #82.
 
         """
-        return super(SchemaManager, self).get_query_set().defer(
+        return SchemaQuerySet(model=self.model, using=self._db).defer(
             'short_description',
             'summary',
             'source',
