@@ -20,8 +20,10 @@
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import connection, transaction
+from ebpub.db import constants
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.geodjango import flatten_geomcollection
 from ebpub.utils.geodjango import ensure_valid
@@ -69,6 +71,16 @@ def field_mapping(schema_id_list):
 
 class SchemaManager(models.Manager):
 
+    _allowed_ids_cache_key = 'allowed_schema_ids__all'
+
+    def update(self, *args, **kwargs):
+        # Django doesn't provide pre/post_update signals, rats.
+        # See https://code.djangoproject.com/ticket/13021
+        # So we define one and send it here.
+        result = super(SchemaManager, self).update(*args, **kwargs)
+        post_update.send(sender=Schema)
+        return result
+
     def get_by_natural_key(self, slug):
         return self.get(slug=slug)
 
@@ -93,10 +105,15 @@ class SchemaManager(models.Manager):
         Useful for filtering out schemas (or things related to
         schemas) based on the current Manager.
         """
-        return [s['id'] for s in self.all().values('id')]
-
+        ids = cache.get(self._allowed_ids_cache_key, None)
+        if ids is None:
+            ids = [s['id'] for s in self.all().values('id')]
+            cache.set(self._allowed_ids_cache_key, ids, constants.ALLOWED_IDS_CACHE_TIME)
+        return ids
 
 class SchemaPublicManager(SchemaManager):
+
+    _allowed_ids_cache_key = 'allowed_schema_ids__public'
 
     def get_query_set(self):
         return super(SchemaManager, self).get_query_set().filter(is_public=True)
@@ -1164,3 +1181,23 @@ def get_city_locations():
         return cities
     else:
         return Location.objects.filter(id=None)
+
+
+########################################################################
+# Signals
+
+# Django doesn't provide a pre_update() signal, rats.
+# See https://code.djangoproject.com/ticket/13021
+from django.dispatch import Signal
+from django.db.models.signals import post_save, post_delete
+
+post_update = Signal(providing_args=[])
+
+def clear_allowed_schema_ids_cache(sender, **kwargs):
+    cache.delete_many((SchemaPublicManager._allowed_ids_cache_key,
+                       SchemaManager._allowed_ids_cache_key))
+
+post_update.connect(clear_allowed_schema_ids_cache, sender=Schema)
+post_save.connect(clear_allowed_schema_ids_cache, sender=Schema)
+post_delete.connect(clear_allowed_schema_ids_cache, sender=Schema)
+

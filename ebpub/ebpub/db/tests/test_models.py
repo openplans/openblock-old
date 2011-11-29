@@ -216,6 +216,7 @@ class DatabaseExtensionsTestCase(TestCase):
         self.assertEqual(top_lookups[1]['count'], 2)
         self.assertEqual(top_lookups[1]['lookup'].slug, u'tag-2')
 
+
     def test_allowed_schema_ids(self):
         from ebpub.db.models import Schema
         self.assertEqual(Schema.objects.allowed_schema_ids(),

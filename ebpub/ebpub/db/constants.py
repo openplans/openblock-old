@@ -43,3 +43,6 @@ NUM_NEWS_ITEMS_PLACE_DETAIL = 300
 # the optional pre-directional and/or post-directional (for example,
 # 'n', 'ne', 'n-w', '-sw').
 BLOCK_URL_REGEX = r'(\d{1,6})-(\d{1,6})([nsew]{1,2})?(?:-([nsew]{0,2}))?'
+
+# How long the Schema managers should cache allowed_schema_ids()
+ALLOWED_IDS_CACHE_TIME = 60 * 10
