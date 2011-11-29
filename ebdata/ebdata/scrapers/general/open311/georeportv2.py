@@ -140,7 +140,7 @@ class GeoReportV2Scraper(object):
         service_request_id = self._get_request_field(sreq, 'service_request_id')
 
         if not service_request_id:
-            log.warning("Skipping request with no request id (may be in progress)!")
+            log.info("Skipping request with no request id (may be in progress)!")
             return
 
 
@@ -183,7 +183,7 @@ class GeoReportV2Scraper(object):
             ni.pub_date = pyrfc3339.parse(sreq.find('requested_datetime').text)
         except:
             ni.pub_date = datetime.datetime.utcnow()
-            log.warning("Filling in current time for pub_date on item with no requested_datetime (%s)" % service_request_id)
+            log.info("Filling in current time for pub_date on item with no requested_datetime (%s)" % service_request_id)
         ni.item_date = datetime.date(ni.pub_date.year, ni.pub_date.month, ni.pub_date.day)
 
         if self.html_url_template:
@@ -202,7 +202,7 @@ class GeoReportV2Scraper(object):
                 if len(val) < 4096:
                     ni.attributes[fieldname] = val
                 else: 
-                    log.warning("truncating value for %s (%s)" % (fieldname, val))
+                    log.info("truncating value for %s (%s)" % (fieldname, val))
                     ni.attributes[fieldname] = val[0:4096]
 
         # text fields
@@ -223,7 +223,7 @@ class GeoReportV2Scraper(object):
                 ni.attributes[fieldname] = pyrfc3339.parse(val) 
             except ValueError: 
                 # invalid date, just omit
-                log.warning('Omitting invalid datetime field %s = %s' % (fieldname, val))
+                log.info('Omitting invalid datetime field %s = %s' % (fieldname, val))
                 pass
         
         # lookups 
