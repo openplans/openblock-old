@@ -20,10 +20,13 @@ from django.conf import settings
 from django.db import transaction
 from ebdata.retrieval import Retriever
 from ebpub.db.models import NewsItem
+from ebpub.geocoder import SmartGeocoder, GeocodingException, ParsingError, AmbiguousResult
 from ebpub.utils.text import address_to_block
+
 import datetime
 import logging
 import pytz
+import traceback
 
 local_tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -37,14 +40,56 @@ class BaseScraper(object):
     """
     logname = 'basescraper'
     sleep = 0
+    timeout = 20
 
     def __init__(self, use_cache=True):
         if not use_cache:
-            self.retriever = Retriever(cache=None, sleep=self.sleep)
+            self.retriever = Retriever(cache=None, sleep=self.sleep, timeout=self.timeout)
         else:
-            self.retriever = Retriever(sleep=self.sleep)
+            self.retriever = Retriever(sleep=self.sleep, timeout=self.timeout)
         self.logger = logging.getLogger('eb.retrieval.%s' % self.logname)
         self.start_time = datetime.datetime.now()
+        self._geocoder = SmartGeocoder()
+
+    def geocode(self, location_name, zipcode=None):
+        """
+        Tries to geocode the given location string, returning a Point object
+        or None.
+        """
+
+        # Try to lookup the adress, if it is ambiguous, attempt to use
+        # any provided zipcode information to resolve the ambiguity.
+        # The zipcode is not included in the initial pass because it
+        # is often too picky yeilding no results when there is a
+        # legitimate nearby zipcode identified in either the address
+        # or street number data.
+        try:
+            return self._geocoder.geocode(location_name)
+        except AmbiguousResult as result: 
+            # try to resolve based on zipcode...
+            if zipcode is None: 
+                self.logger.info(
+                    "Ambiguous results for address %s. (no zipcode to resolve dispute)" % 
+                    (location_name, ))
+                return None
+            in_zip = [r for r in result.choices if r['zip'] == zipcode]
+            if len(in_zip) == 0:
+                self.logger.info(
+                    "Ambiguous results for address %s, but none in specified zipcode %s" % 
+                    (location_name, zipcode))
+                return None
+            elif len(in_zip) > 1:
+                self.logger.info(
+                    "Ambiguous results for address %s in zipcode %s, guessing first." % 
+                    (location_name, zipcode))
+                return in_zip[0]
+            else:
+                return in_zip[0]
+        except (GeocodingException, ParsingError):
+            self.logger.info(
+                "Could not geocode location: %s: %s" %
+                (location_name, traceback.format_exc()))
+            return None
 
     def update(self):
         'Run the scraper.'

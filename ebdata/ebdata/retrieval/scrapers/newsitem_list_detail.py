@@ -25,7 +25,6 @@ from ebpub.geocoder.reverse import reverse_geocode
 
 import datetime
 import pytz
-import traceback
 
 local_tz = pytz.timezone(settings.TIME_ZONE)
 
@@ -71,7 +70,6 @@ class NewsItemListDetailScraper(ListDetailScraper):
         self._lookups_cache = None
         self._schema_fields_cache = None
         self._schema_field_mapping_cache = None
-        self._geocoder = SmartGeocoder()
 
     # schemas, schema, lookups and schema_field_mapping are all lazily loaded
     # so that this scraper can be run (in raw_data(), xml_data() or
@@ -184,38 +182,6 @@ class NewsItemListDetailScraper(ListDetailScraper):
                     num_skipped=self.num_skipped,
                     got_error=got_error,
                 )
-
-    def geocode(self, location_name, zipcode=None):
-        """
-        Tries to geocode the given location string, returning a Point object
-        or None.
-        """
-
-        # Try to lookup the adress, if it is ambiguous, attempt to use 
-        # any provided zipcode information to resolve the ambiguity. 
-        # The zipcode is not included in the initial pass because it 
-        # is often too picky yeilding no results when there is a 
-        # legitimate nearby zipcode identified in either the address
-        # or street number data.
-        try:
-            return self._geocoder.geocode(location_name)
-        except AmbiguousResult as result: 
-            # try to resolve based on zipcode...
-            if zipcode is None: 
-                self.logger.info("Ambiguous results for address %s. (no zipcode to resolve dispute)" % (location_name, ))
-                return None
-            in_zip = [r for r in result.choices if r['zip'] == zipcode]
-            if len(in_zip) == 0: 
-                self.logger.info("Ambiguous results for address %s, but none in specified zipcode %s" % (location_name, zipcode))
-                return None
-            if len(in_zip) > 1:
-                self.logger.info("Ambiguous results for address %s in zipcode %s, guessing first." % (location_name, zipcode))
-                return in_zip[0]
-            else: 
-                return in_zip[0]             
-        except (GeocodingException, ParsingError):
-            self.logger.info("Could not geocode location: %s: %s" % (location_name, traceback.format_exc()))
-            return None
 
 
     def safe_location(self, location_name, geom, max_distance=200):
