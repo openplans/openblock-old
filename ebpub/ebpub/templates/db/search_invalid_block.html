@@ -10,11 +10,15 @@
 	<form action="/search/" method="get">
 		<input type="text" name="q" value="{{ query }}"> <input type="submit" value="Search again">
 	</form>
-	<h2>Choose a block of {{ street_name }}&hellip;</h2>
+
+	{% for choice in choices %}
+	<h2>Choose a block of {{ choice.name }}&hellip;</h2>
 	<ul>
-		{% for block in choices %}
+		{% for block in choice.blocks %}
 		<li><a href="{{ block.url }}">{{ block.from_num }}-{{ block.to_num }} {{ block.predir }}</a></li>
 		{% endfor %}
 	</ul>
+	{% endfor %}
+
 </div><!--/ #content-->
 {% endblock %}

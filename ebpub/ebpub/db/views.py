@@ -358,11 +358,19 @@ def search(request, schema_slug=''):
     else:
         if result['ambiguous']:
             if result['type'] == 'block':
+                streets = []
+                street_blocks = {}
+                for block in result['result']:
+                    street_name = block.street_pretty_name
+                    if street_name not in streets:
+                        streets.append(street_name)
+                        street_blocks[street_name] = []
+                    street_blocks[street_name].append(block)
+
+                choices = [{'name': s, 'blocks': street_blocks[s]} for s in streets]
                 return eb_render(request, 'db/search_invalid_block.html', {
                     'query': q,
-                    'choices': result['result'],
-                    'street_name': result['street_name'],
-                    'block_number': result['block_number']
+                    'choices': choices,
                 })
             else:
                 return eb_render(request, 'db/did_you_mean.html', {'query': q, 'choices': result['result']})
