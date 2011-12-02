@@ -109,6 +109,7 @@ STANDARDIZERS = {
     'post_dir': dir_standardizer,
     'city': Standardizer(cities),
     'state': Standardizer(states),
+    # XXX TODO: prefix standardizer? for things like 'US Hwy'.
 }
 
 # Regex which matches all punctuation, except for dashes (which
@@ -208,6 +209,7 @@ TOKEN_REGEXES = {
     'pre_dir': directional_re,
     'street': re.compile(r'^[0-9]{1,3}(?:ST|ND|RD|TH)|[A-Z]{1,25}|[0-9]{1,3}$'),
     'suffix': re.compile(abbrev_regex(suffixes)),
+    # XXX TODO: a prefix regex? What is the set of valid prefixes?
     'post_dir': directional_re,
 
     # Cities are assumed to have at least three letters and at most 25 letters.
@@ -246,18 +248,20 @@ def address_combinations():
     tokens. For example:
         ['number', 'pre_dir', 'street']
         ['number', 'street', 'city', 'state']
+
+    There were about 6000 combinations at last count.
     """
-    # There are about 2000 combinations at last count.
     for number_times in (0, 1):
         for pre_dir_times in (0, 1):
-            for street_times in (1, 2, 3, 4, 5):
-                for suffix_times in (0, 1):
-                    for post_dir_times in (0, 1):
-                        for city_times in (0, 1, 2, 3, 4):
-                            # If a city isn't given, then a state isn't allowed.
-                            for state_times in (city_times == 0 and (0,) or (0, 1, 2)):
-                                for zip_times in (0, 1):
-                                    yield ['number'] * number_times + ['pre_dir'] * pre_dir_times + ['street'] * street_times + ['suffix'] * suffix_times + ['post_dir'] * post_dir_times + ['city'] * city_times + ['state'] * state_times + ['zip'] * zip_times
+            for prefix_times in (0, 1, 2):
+                for street_times in (1, 2, 3, 4, 5):
+                    for suffix_times in (0, 1):
+                        for post_dir_times in (0, 1):
+                            for city_times in (0, 1, 2, 3, 4):
+                                # If a city isn't given, then a state isn't allowed.
+                                for state_times in (city_times == 0 and (0,) or (0, 1, 2)):
+                                    for zip_times in (0, 1):
+                                        yield ['number'] * number_times + ['pre_dir'] * pre_dir_times + ['prefix'] * prefix_times + ['street'] * street_times + ['suffix'] * suffix_times + ['post_dir'] * post_dir_times + ['city'] * city_times + ['state'] * state_times + ['zip'] * zip_times
 
 
 punc_split = re.compile(r"\S+").findall

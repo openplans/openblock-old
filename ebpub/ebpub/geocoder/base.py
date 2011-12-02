@@ -254,6 +254,7 @@ class AddressGeocoder(Geocoder):
                 street=location['street'],
                 number=location['number'],
                 predir=location['pre_dir'],
+                prefix=location['prefix'],
                 suffix=location['suffix'],
                 postdir=location['post_dir'],
                 city=location['city'],

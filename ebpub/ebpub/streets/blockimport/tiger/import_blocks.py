@@ -94,7 +94,7 @@ VALID_MTFCC.add('S1740') # private roads, often unnamed.
 
 class TigerImporter(BlockImporter):
     """
-    Imports blocks using TIGER/Line data from the US Census.
+    Imports blocks using TIGER/Line shapefile data from the US Census.
 
     If `filter_city` is passed, we will skip features which don't have
     at least one of left_city or right_city matching the string.
@@ -256,10 +256,16 @@ class TigerImporter(BlockImporter):
             suffix_standardizer = geocoder_parsing.STANDARDIZERS['suffix']
             suffix_matcher = geocoder_parsing.TOKEN_REGEXES['suffix']
             for featname in self.featnames_db[tlid]:
+                # Prefix eg. 'STATE HWY'.
+                block_fields['prefix'] = featname.get('PRETYPABRV', '').upper().strip()
+                # Main part of the name, eg. 'MAIN'
                 block_fields['street'] = featname['NAME'].upper().strip()
+                # Prefix direction eg. 'N'.
                 block_fields['predir'] = featname['PREDIRABRV'].upper().strip()
-                block_fields['suffix'] = featname['SUFTYPABRV'].upper().strip()
+                # Suffix direction eg. 'SW'.
                 block_fields['postdir'] = featname['SUFDIRABRV'].upper().strip()
+                # Road type, eg. 'ST', 'AVE', 'PKWY'.
+                block_fields['suffix'] = featname['SUFTYPABRV'].upper().strip()
                 if not block_fields['suffix']:
                     # Bug in the data:
                     # Many streets named eg. 'Wilson Park' put the whole thing in the name
@@ -342,8 +348,8 @@ def main(argv=None):
     if options.verbose:
         import logging
         logger.setLevel(logging.DEBUG)
-    num_created = tiger.save()
-    logger.info( "Created %d new blocks" % num_created)
+    num_created, num_existing = tiger.save()
+    logger.info( "Created %d new blocks; kept %d old ones" % (num_created, num_existing))
     logger.debug("... from %d feature names" % len(tiger.featnames_db))
     logger.debug("feature tlids with blocks: %d" % len(tiger.tlids_with_blocks))
 

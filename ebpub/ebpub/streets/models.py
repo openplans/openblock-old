@@ -80,7 +80,8 @@ def proper_city(block):
     return block_city
 
 class BlockManager(models.GeoManager):
-    def search(self, street, number=None, predir=None, suffix=None, postdir=None, city=None, state=None, zipcode=None):
+    def search(self, street, number=None, prefix=None, predir=None,
+               suffix=None, postdir=None, city=None, state=None, zipcode=None):
         """
         Searches the blocks for the given address bits. Returns a list
         of 2-tuples, (block, geocoded_pt).
@@ -99,6 +100,8 @@ class BlockManager(models.GeoManager):
         sided_filters = []
         if predir:
             filters['predir'] = predir.upper()
+        if prefix:
+            filters['prefix'] = prefix.upper()
         if suffix:
             filters['suffix'] = suffix.upper()
         if postdir:
@@ -158,9 +161,12 @@ class Block(models.Model):
         max_length=2, blank=True, db_index=True,
         help_text='Direction abbreviation before street name, UPPERCASE, eg. N or SW')
 
+    prefix =  models.CharField(max_length=32, blank=True, db_index=True,
+                               help_text='Prefix abbreviation in UPPERCASE, eg. US HWY')
+
     street = models.CharField(
         max_length=255, db_index=True,
-        help_text='Just the street part of the name, UPPERCASE, with no directionals or suffix')
+        help_text='Just the street part of the name, UPPERCASE, with no directionals, prefix, or suffix')
     suffix = models.CharField(max_length=32, blank=True, db_index=True,
                               help_text='Suffix abbreviation in UPPERCASE, eg. ST or AVE')
     postdir = models.CharField(
@@ -401,6 +407,7 @@ class Block(models.Model):
         for key in ('left_city', 'right_city',
                     'predir', 'postdir',
                     'street', 'suffix',
+                    'prefix',
                     'left_state', 'right_state'):
             val = getattr(self, key)
             if val is not None:
@@ -479,8 +486,8 @@ class StreetMisspellingManager(models.Manager):
             return street_name
 
 class StreetMisspelling(models.Model):
-    incorrect = models.CharField(max_length=255, unique=True, help_text="Incorrect street name in UPPERCASE, do not include a suffix, eg: MASS") # Always uppercase, single spaces
-    correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
+    incorrect = models.CharField(max_length=255, unique=True, help_text="Incorrect street name in UPPERCASE, do not include a suffix, eg: BWAY") # Always uppercase, single spaces
+    correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: BROADWAY")
     objects = StreetMisspellingManager()
 
     def save(self):
@@ -615,8 +622,8 @@ class BlockIntersection(models.Model):
 
 
 class IntersectionManager(models.GeoManager):
-    def search(self, predir_a=None, street_a=None, suffix_a=None, postdir_a=None,
-                     predir_b=None, street_b=None, suffix_b=None, postdir_b=None):
+    def search(self, predir_a=None, prefix_a=None, street_a=None, suffix_a=None, postdir_a=None,
+                     predir_b=None, prefix_b=None, street_b=None, suffix_b=None, postdir_b=None):
         """
         Returns a queryset of intersections.
         """
@@ -627,6 +634,8 @@ class IntersectionManager(models.GeoManager):
         filters = [{}, {}]
         if predir_a:
             filters[0]["predir"] = predir_a.upper()
+        if prefix_a:
+            filters[0]["prefix"] = prefix_a.upper()
         if street_a:
             filters[0]["street"] = street_a.upper()
         if suffix_a:
@@ -635,6 +644,8 @@ class IntersectionManager(models.GeoManager):
             filters[0]["postdir"] = postdir_a.upper()
         if predir_b:
             filters[1]["predir"] = predir_b.upper()
+        if prefix_b:
+            filters[0]["prefix"] = prefix_b.upper()
         if street_b:
             filters[1]["street"] = street_b.upper()
         if suffix_b:
@@ -658,11 +669,13 @@ class Intersection(models.Model):
     slug = models.SlugField(max_length=64) # eg., "n-kimball-ave-and-w-diversey-ave"
     # Street A
     predir_a = models.CharField(max_length=2, blank=True, db_index=True) # eg., "N"
+    prefix_a = models.CharField(max_length=32, blank=True, db_index=True) # eg., "US HWY"
     street_a = models.CharField(max_length=255, db_index=True) # eg., "KIMBALL"
     suffix_a = models.CharField(max_length=32, blank=True, db_index=True) # eg., "AVE"
     postdir_a = models.CharField(max_length=2, blank=True, db_index=True) # eg., "NW"
     # Street B
     predir_b = models.CharField(max_length=2, blank=True, db_index=True) # eg., "W"
+    prefix_b = models.CharField(max_length=32, blank=True, db_index=True) # eg., "US HWY"
     street_b = models.CharField(max_length=255, db_index=True) # eg., "DIVERSEY"
     suffix_b = models.CharField(max_length=32, blank=True, db_index=True) # eg., "AVE"
     postdir_b = models.CharField(max_length=2, blank=True, db_index=True) # eg., "SE"
@@ -681,7 +694,8 @@ class Intersection(models.Model):
         # http://g.co/maps/pcxsm
         # - route 28 and old route 28 intersect what, 4 times in the space of
         # a mile or two?
-        unique_together = ("predir_a", "street_a", "suffix_a", "postdir_a", "predir_b", "street_b", "suffix_b", "postdir_b")
+        unique_together = ("predir_a", "prefix_a", "street_a", "suffix_a", "postdir_a",
+                           "predir_b", "prefix_b", "street_b", "suffix_b", "postdir_b")
         ordering = ('slug',)
 
     def __unicode__(self):
