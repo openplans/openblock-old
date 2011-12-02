@@ -20,11 +20,11 @@
 import logging
 import traceback
 
-def log_exception(level=logging.ERROR):
+def log_exception(level=logging.ERROR, logger=logging.getLogger()):
     """Log the most recent exception & traceback
     at the given level (default ERROR).
     """
     logging.basicConfig()
     msg = traceback.format_exc()
-    logging.getLogger().log(level=level, msg=msg)
+    logger.log(level=level, msg=msg)
 
