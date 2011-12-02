@@ -24,6 +24,10 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed the ImproperCity exception, which only served to prevent
+  using blocks in places such as unincorporated parts of counties,
+  where there is nothing that could be called a 'city'.
+
 * Removed unused NewsItem.block field, part of ticket #93.
 
 * Removed ebdata/retrieval/scrapers/new_newsitem_list_detail.py,

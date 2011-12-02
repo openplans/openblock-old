@@ -29,9 +29,6 @@ import re
 
 logger = logging.getLogger('ebpub.streets.models')
 
-class ImproperCity(Exception):
-    pass
-
 
 def _first_not_false(*args):
     """Return the first non-falsish argument; if all are false,
@@ -52,10 +49,9 @@ def proper_city(block):
     about metros and cities to return the canonical city
     for our purposes for a block.
 
-    Note that if ImproperCity is raised, it implies that there is a
-    mismatch between the block data and our understanding about what
-    should be in there. i.e., neither the left nor right side city is
-    one of our metros or city within a multiple-city metro.
+    In some blocks, this may return an empty string - eg. in
+    unincorporated areas of rural counties, or when the city simply
+    isn't one we know anything about.
     """
     from ebpub.db.models import get_city_locations
     metro = get_metro()
@@ -67,7 +63,7 @@ def proper_city(block):
     # border two different municipalities, and because of metros
     # with multiple cities like NYC and Miami-Dade, means checking
     # both sides of the block and comparing with known city names.
-    block_city = None
+    block_city = u''
     if block.left_city != block.right_city:
         # Note that if both left_city and right_city are valid, then we
         # return the left_city.
@@ -77,8 +73,10 @@ def proper_city(block):
             block_city = block.right_city
     elif block.left_city in cities:
         block_city = block.left_city
-    if block_city is None:
-        raise ImproperCity("Error: Unknown city '%s' from block %s (%s)" % (block.left_city, block.id, block))
+    if not block_city:
+        # We may be in some other area that isn't a city we know about.
+        # That shouldn't prevent us from doing anything useful with this block.
+        block_city = _first_not_false(block.left_city, block.right_city, u'')
     return block_city
 
 class BlockManager(models.GeoManager):
