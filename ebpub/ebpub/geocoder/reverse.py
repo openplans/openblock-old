@@ -30,6 +30,8 @@ def reverse_geocode(point):
 
     Argument can be either a Point instance, or an (x, y) tuple, or a
     WKT string.
+
+    Returns (block, distance (in degrees I think??))
     """
     # Defer import to avoid cyclical import.
     from ebpub.streets.models import Block
