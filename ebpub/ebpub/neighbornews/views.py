@@ -115,8 +115,15 @@ def _new_item(request, schema, FormType):
 
 def _update_item(request, form, schema, action):
     # Do we need to use need captcha? 
-    # This might depend on the request, so you can set it to a callable.
+    # This might depend on the request, so you can set it to a callable,
+    # or rather a path to a callable.
     need_captcha = getattr(settings, 'NEIGHBORNEWS_USE_CAPTCHA', False)
+    if isinstance(need_captcha, basestring):
+        module, func = need_captcha.split(':')
+        import importlib
+        module = importlib.import_module(module)
+        need_captcha = getattr(module, func)
+
     if callable(need_captcha):
         need_captcha = need_captcha(request)
 
