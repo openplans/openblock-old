@@ -92,7 +92,7 @@ def template_context_for_item(newsitem, widget=None):
         ctx['internal_url'] = 'http://' + settings.EB_DOMAIN + newsitem.item_url()
 
     # overlapping Locations, by type.
-    # This is a callable so you only pay for it if you access it.
+    # This is a callable so you only pay for it if you access it in the template.
     def intersecting_locations_for_item():
         from ebpub.db.models import Location
         locations = Location.objects.filter(location__intersects=newsitem.location)
