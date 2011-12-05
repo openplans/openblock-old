@@ -16,12 +16,11 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.contrib.auth.models import User
-import constants # relative import
+from django.contrib import auth
 
 UNDEFINED = 123
 
-class LazyUser(User):
+class LazyUser(auth.models.User):
     # This class is a transparent wrapper around User that hits the database
     # only after an attribute is accessed.
     def __init__(self, user_id):
@@ -53,7 +52,7 @@ class LazyUserDescriptor(object):
     def __get__(self, request, obj_type=None):
         if not hasattr(request, '_cached_user'):
             try:
-                user_id = request.session[constants.USER_SESSION_KEY]
+                user_id = request.session[auth.SESSION_KEY]
             except KeyError:
                 from ebpub.accounts.models import AnonymousUser
                 user = AnonymousUser()

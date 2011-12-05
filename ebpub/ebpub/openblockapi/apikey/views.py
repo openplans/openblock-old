@@ -9,7 +9,7 @@ http://pypi.python.org/pypi/django-apikey
 
 from .models import ApiKey, generate_unique_api_key
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from ebpub.accounts.utils import login_required
 from django.core.cache import cache
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect

@@ -27,7 +27,7 @@ class OpenblockAdminSite(AdminSite):
     instead of the django.contrib.auth methods.
     """
 
-    login_form = ebpub.accounts.forms.LoginForm
+    login_form = ebpub.accounts.forms.AdminLoginForm
     login_template = 'accounts/login_form.html'
 
     logout_template = 'accounts/logout_form.html'

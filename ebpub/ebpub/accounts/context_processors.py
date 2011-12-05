@@ -21,7 +21,15 @@ from constants import EMAIL_SESSION_KEY # relative import
 
 def user(request):
     # Makes 'USER' and 'USER_EMAIL' available in templates.
-    if not request.user.is_anonymous():
-        return {'DEBUG': settings.DEBUG, 'USER': request.user, 'USER_EMAIL': request.session[EMAIL_SESSION_KEY]}
+    if request.user.is_anonymous():
+        return {
+            'DEBUG': settings.DEBUG,
+            'USER': request.user,
+            'USER_EMAIL': request.session.get(EMAIL_SESSION_KEY) or getattr(request.user, 'email', None),
+            }
     else:
-        return {'DEBUG': settings.DEBUG, 'USER': None, 'USER_EMAIL': None}
+        return {
+            'DEBUG': settings.DEBUG,
+            'USER': None,
+            'USER_EMAIL': None,
+            }

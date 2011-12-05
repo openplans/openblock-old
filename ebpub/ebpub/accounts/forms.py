@@ -17,6 +17,8 @@
 #
 
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth import authenticate
 from ebpub.accounts.models import User
 
 class UniqueEmailField(forms.EmailField):
@@ -61,13 +63,11 @@ class PasswordResetRequestForm(forms.Form):
             raise forms.ValidationError("This e-mail address isn't registered yet.")
         return email
 
-class LoginForm(forms.Form):
-    email = forms.EmailField()
-    password = forms.CharField(widget=forms.PasswordInput)
+class LoginForm(AuthenticationForm):
+    """Login form that uses email instead of username.
+    """
 
-    def __init__(self, request, *args, **kwargs):
-        forms.Form.__init__(self, *args, **kwargs)
-        self.request = request
+    email = forms.EmailField()
 
     def clean(self):
         # Note that because this is the form-wide clean() method, any
@@ -79,13 +79,31 @@ class LoginForm(forms.Form):
         # Check that both email and password were valid. If they're not valid,
         # there's no need to run the following bit of validation.
         if email and password:
-            self.user = User.objects.user_by_password(email.lower(), password)
-            if self.user is None:
+            user = User.objects.user_by_password(email.lower(), password)
+            # Calling authenticate() queries the db again, but we call
+            # it anyway because it has at least one important side
+            # effect that we shouldn't have to duplicate.
+            self.user_cache = authenticate(username=user.username, password=password)
+            if self.user_cache is None:
                 raise forms.ValidationError("That e-mail and password combo isn't valid. Note that the password is case-sensitive.")
-            elif not self.user.is_active:
+            elif not self.user_cache.is_active:
                 raise forms.ValidationError("This account is inactive.")
+            if not self.cleaned_data.get('username'):
+                self.cleaned_data['username'] = self.user_cache.username
+                self._errors.pop('username', None)
 
-        if not self.request.session.test_cookie_worked():
-            raise forms.ValidationError("Your Web browser doesn't appear to have cookies enabled. Enable cookies, then try again.")
-
+        self.check_for_test_cookie()
         return self.cleaned_data
+
+
+class AdminLoginForm(LoginForm):
+    """
+    Login form that uses email instead of username, for accessing the admin site.
+    """
+
+    def clean(self):
+        super(AdminLoginForm, self).clean()
+        if not self.user_cache.is_active or not self.user_cache.is_staff:
+            raise forms.ValidationError("Please enter a correct email address and password.")
+        return self.cleaned_data
+

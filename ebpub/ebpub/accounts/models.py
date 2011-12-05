@@ -100,7 +100,9 @@ class User(DjangoUser):
         return self.email
 
 class AuthBackend(ModelBackend):
-
+    """
+    Overridden ModelBackend that works with our User class.
+    """
     def authenticate(self, username=None, password=None):
         return User.objects.user_by_password(username, password)
 
