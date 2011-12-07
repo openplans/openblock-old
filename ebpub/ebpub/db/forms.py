@@ -23,4 +23,15 @@ class NewsItemForm(forms.ModelForm):
     class Meta:
         model = models.NewsItem
 
+    # This one is a m2m field with a 'through' model, so you can't
+    # assign to it directly.
+    exclude = ('location_set',)
+
     url = forms.URLField(widget=forms.TextInput(attrs={'size': 80}), required=False)
+
+    def clean(self):
+        # Remove this from cleaned_data, otherwise form.save() will try to assign it,
+        # even if it's in self.exclude ... and that's an error since it has a 'through'
+        # model.  Seems odd, maybe django should check the exclude list? shrug.
+        self.cleaned_data.pop('location_set', None)
+        return self.cleaned_data

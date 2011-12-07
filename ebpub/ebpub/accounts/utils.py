@@ -80,24 +80,12 @@ def login(request, user):
     """
     Logs the given user into the given HttpRequest, setting the correct
     bits in the session.
+
+    This is a thin wrapper around django.contrib.auth:login().
     """
-    if constants.USER_SESSION_KEY in request.session:
-        if request.session[constants.USER_SESSION_KEY] != user.id:
-            # To avoid reusing another user's session, create a new, empty
-            # session if the existing session corresponds to a different
-            # authenticated user.
-            request.session.flush()
-    else:
-        request.session.cycle_key()
-
-    # Set the session variables. Note that we save the user's e-mail address
-    # in the session, despite the fact that this is redundant, so that we can
-    # access it without having to do a database lookup.
-    request.session[constants.USER_SESSION_KEY] = user.id
+    from django.contrib import auth
     request.session[constants.EMAIL_SESSION_KEY] = user.email
-
-    if hasattr(request, 'user'):
-        request.user = user
+    return auth.login(request, user)
 
 def login_required(view_func):
     """

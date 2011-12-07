@@ -375,10 +375,10 @@ required_settings.append('EBPUB_CACHE_GEOCODER')
 AUTH_PROFILE_MODULE = 'preferences.Profile'
 
 
-# ebpub.neighbornews optionally uses recaptcha.
-# This can be True, False, or a function that takes a request argument, eg.
-#def NEIGHBORNEWS_USE_CAPTCHA(request):
-#    return True
+# ebpub.neighbornews optionally uses recaptcha.  This can be True,
+# False, or a string representing a path in the form
+# 'packagename.modulename:functionname' path to a function that takes
+# a request argument and returns True or False.
 NEIGHBORNEWS_USE_CAPTCHA = False
 
 # You'll also need to sign up for Recaptcha API keys.

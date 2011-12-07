@@ -50,15 +50,15 @@ def login(request, custom_message=None, force_form=False, initial_email=None,
         # If the user is already logged in, redirect to the dashboard.
         next_url = reverse(dashboard)
         return http.HttpResponseRedirect(next_url)
-
     if request.method == 'POST' and not force_form:
+
         next_url = (request.session.pop(REDIRECT_FIELD_NAME, None)
                     or request.POST.get(REDIRECT_FIELD_NAME)
                     or reverse(dashboard))
 
         form = forms.LoginForm(request, request.POST)
         if form.is_valid():
-            utils.login(request, form.user)
+            utils.login(request, form.user_cache)
             if request.session.test_cookie_worked():
                 request.session.delete_test_cookie()
 
@@ -69,7 +69,7 @@ def login(request, custom_message=None, force_form=False, initial_email=None,
             if 'pending_login' in request.session:
                 try:
                     callback, data = request.session['pending_login']
-                    message = callbacks.do_callback(callback, form.user, data)
+                    message = callbacks.do_callback(callback, form.user_cache, data)
                 except (TypeError, ValueError):
                     message = None
 
@@ -130,6 +130,10 @@ def logout(request):
 
 @utils.login_required
 def dashboard(request):
+    """
+    The user's account settings, saved places, alerts, and other
+    personalized stuff.
+    """
     custom_message = request.session.get('login_message')
     if 'login_message' in request.session:
         del request.session['login_message']

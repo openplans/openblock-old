@@ -42,12 +42,24 @@ class NewsItemForm(NewsItemFormBase):
                 self.errors['recaptcha'] = 'Invalid captcha value'
 
         cleaned_data = super(NewsItemForm, self).clean()
+
+        # Reverse-geocode if we need to.
+        if not cleaned_data['location_name']:
+            if cleaned_data['location']:
+                from ebpub.geocoder.reverse import reverse_geocode
+                try:
+                    block, distance = reverse_geocode(cleaned_data['location'])
+                    cleaned_data['location_name'] = block.pretty_name
+                except ReverseGeocodeErrror:
+                    logger.info("Saving NewsItem with no location_name because reverse-geocoding %(location)s failed" % cleaned_data)
+
         # Note, any NewsItem fields that aren't listed in self._meta.fields
         # have to be manually saved here, because that's the list that's
         # normally consulted when setting attributes on the instance.
         for key in forms.fields_for_model(self._meta.model):
             if key in cleaned_data.keys():
                 setattr(self.instance, key, cleaned_data[key])
+
         return cleaned_data
 
 class NeighborMessageForm(NewsItemForm):
