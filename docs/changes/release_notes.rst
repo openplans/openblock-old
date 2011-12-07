@@ -41,6 +41,9 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Added new ``userlinks.html`` template so you can override the links
+  at top right of the page.
+
 * Added a ``get_locations_for_item`` template tag, see :doc:`widgets`
   for more.
 
@@ -95,7 +98,9 @@ Bugs fixed
   more informative error, instead of SyntaxError due to a `with`
   statement.
 
-* Custom login view now works when going to admin site. Ticket #174
+* Custom login view now works when going to admin site, and is
+  compatible with (uses same cookies as) django.contrib.auth. Ticket
+  #174
 
 * Logout form was broken by bad template name. Fixed.
 
