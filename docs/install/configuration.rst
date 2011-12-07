@@ -401,6 +401,7 @@ code to understand what assumptions we make about profiles.
 ``DEFAULT_LOCTYPE_SLUG`` -- Which LocationType to show on the /locations page.
 Once you've :ref:`created some LocationTypes <locationtype>`,
 this should be set to the slug of your preferred ``LocationType``.
+(In older versions of OpenBlock, this was hardcoded to 'neighborhoods'.)
 
 ``DEFAULT_MAP_CENTER_LAT``, ``DEFAULT_MAP_CENTER_LON``,
 ``DEFAULT_MAP_ZOOM`` -- Where to center citywide maps by default,
