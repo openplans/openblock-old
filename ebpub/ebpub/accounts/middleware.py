@@ -17,10 +17,11 @@
 #
 
 from django.contrib import auth
+from django.contrib.auth.models import User as BaseUser
 
 UNDEFINED = 123
 
-class LazyUser(auth.models.User):
+class LazyUser(BaseUser):
     # This class is a transparent wrapper around User that hits the database
     # only after an attribute is accessed.
     def __init__(self, user_id):
