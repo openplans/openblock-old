@@ -143,8 +143,6 @@ Basic Fields
 -------------------- ------------------------------------------------------------
   item.schema.slug    The unique identifier of the item's type.
 -------------------- ------------------------------------------------------------
-  item.intersecting   A mapping of Location Type slugs to Locations
-                      that overlap this item. (TODO: example of how to use this)
 ==================== ============================================================
 
 
@@ -264,3 +262,42 @@ To manually remove a pinned item, just click the ``x`` button next to
 it.
 
 When done with your changes, click the Save button.
+
+
+Intersecting Locations
+=======================
+
+There is a custom template tag you can use in your widget templates,
+``get_locations_for_item``, which looks up any Locations that
+intersect with an item and provides some basic info about each.
+Usage looks like::
+
+    {% get_locations_for_item newsitem location_type_slug (location_type_slug2 ...) as varname %}
+
+The ``location_type_slug`` arguments will be used, in the order
+given, to specify which types of locations to find.
+
+The last argument is the name of the context variable in which to
+put the result.
+
+For each matching location, the result will contain a dictionary
+with these keys: 'location_slug', 'location_name', 'location_type_slug',
+'location_type_name'.
+
+Here's an example template in which we build links for each
+intersecting location::
+
+     {% for item in news_items %}
+       {% get_locations_for_item item 'village' 'town' 'city' as locations_info %}
+       {% for loc_info in locations_info %}
+         <li><a href="http://example.com/{{loc_info.location_slug}}/">
+             Other News in {{ loc_info.location_name }}</a></li>
+       {% endfor %}
+     {% endfor %}
+
+Example output might look like::
+
+     <li><a href="http://example.com/villages/setauket/">
+          Other News in Setauket</a></li>
+     <li><a href="http://example.com/towns/brookhaven/">
+          Other News in Brookhaven</a></li>

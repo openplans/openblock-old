@@ -391,6 +391,7 @@ class Location(models.Model):
                                          default=datetime.datetime.now)
     last_mod_date = models.DateTimeField(blank=True, null=True,
                                          default=datetime.datetime.now)
+
     objects = LocationManager()
 
     @property
@@ -762,25 +763,31 @@ class NewsItem(models.Model):
       it can be anything, but typically it describes an address,
       block, geographic area, or landmark.
 
-    * The NewsItemLocation model is for fast lookups of NewsItems to
-      all Locations where the .location fields overlap.  This is set
-      by a sql trigger whenever self.location changes; not set by any
-      python code. Used in various views for filtering.
-
     * self.location is typically a point, and is used in views for
       filtering newsitems. Theoretically (untested!!) could also be a
       GeometryCollection, for news items that mention multiple
       places. This is typically set during scraping, by geocoding if
       not provided in the source data.
 
-    * self.location_object is a Location and a) is usually Null in
-      practice, and b) is only needed by self.location_url(), so we
-      can link back to a location view from a newsitem view.  It would
-      be set during scraping.  (Example use case: NYC crime
-      aggregates, where there's no location or address data for the
-      "news item" other than which precinct it occurs in.
-      eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
+    * self.location_set uses a many-to-many relationship (via the
+      NewsItemLocation model) for fast lookups of all Locations that
+      intersect with self.location.  This is set by a sql trigger
+      whenever self.location changes; not set by any python code. Used
+      in various views for filtering.
 
+    * self.location_object is a single Location reference;
+      theoretically to be explicitly assigned by a scraper script when
+      there's no known address or geographic point for this NewsItem
+      but we know the name of an Area it's within.  For example, many
+      stories might mention a town or city name, or a police report
+      might tell you the precinct.  But a) it's usually Null in
+      practice, and b) it's only used currently (2011-12-06) by
+      self.location_url(), for linking back to a location view from a
+      newsitem view.  (Example of where everyblock.com uses this: NYC
+      crime aggregates, eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
+
+      See also this ticket http://developer.openblockproject.org/ticket/93
+      about possibly making more use of self.location_object.
     """
 
     # We don't have a natural_key() method because we don't know for
@@ -803,8 +810,8 @@ class NewsItem(models.Model):
         default=datetime.date.today
         )
 
-    # automatic last modification tracking.  Note: if changing only attributes, the the
-    # NewsItem should also be save()'d to update last_modification when complete. 
+    # Automatic last modification tracking.  Note: if changing only attributes, the
+    # NewsItem should also be save()'d to update last_modification when complete.
     last_modification = models.DateTimeField(db_index=True, auto_now=True)
 
     location = models.GeometryField(blank=True, null=True, spatial_index=True,
@@ -812,7 +819,13 @@ class NewsItem(models.Model):
     location_name = models.CharField(max_length=255,
                                      help_text="Human-readable address or name of place where this news item occurred.")
     location_object = models.ForeignKey(Location, blank=True, null=True,
-                                        help_text="Optional reference to a Location where this item occurred, for use when we know the general area but not specific coordinates.")
+                                        help_text="Optional reference to a Location where this item occurred, for use when we know the general area but not specific coordinates.",
+                                        related_name='+')
+
+    location_set = models.ManyToManyField(
+        Location, through='NewsItemLocation', blank=True, null=True,
+        help_text="db.Location objects that intersect with our .location geometry. These are set automatically, do not try to assign to them.")
+
     objects = NewsItemManager()
 
     # Treat this like a dict. The related Schema and SchemaFields explain

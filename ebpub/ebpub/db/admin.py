@@ -39,12 +39,15 @@ class NewsItemAdmin(OSMModelAdmin):
         ]
 
     list_display = ('title', 'schema', 'item_date', 'pub_date', 'location_name')
-    raw_id_fields = ('location_object',)
+    raw_id_fields = ('location_object', 'location_set',)
+    readonly_fields = ('location_set',)
     list_filter = ('schema',)
     search_fields = ('title', 'description',)
     form = NewsItemForm
 
     date_hierarchy = 'item_date'
+
+
     ## This really slows down the UI if there's lots of NewsItems,
     ## and olwidget doesn't seem to paginate them along with the change list?
     # list_map = ['location']
@@ -67,7 +70,8 @@ class LocationAdmin(OSMModelAdmin):
     readonly_fields = ('area', 'normalized_name')
 
     # Display a map of items on the change list page. (olwidget)
-    list_map = ['location']
+    # ... Or not; this gets so slow it's unusable.
+    #list_map = ['location']
 
 class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',

@@ -7,6 +7,7 @@ from django.utils import simplejson as json
 from ebpub.accounts.utils import login_required
 from ebpub.db.models import NewsItem
 from ebpub.utils.logutils import log_exception
+from ebpub.utils.text import smart_title
 from ebpub.widgets.models import Widget, PinnedItem
 import datetime
 from operator import attrgetter
@@ -46,7 +47,11 @@ def render_widget(widget, items=None):
         'widget': widget
     }
     # TODO: cache template compilation
-    t = Template(widget.template.code)
+    code = widget.template.code
+    if not ' load eb_widgets ' in code:
+        # Convenience so template authors don't have to remember this detail.
+        code = '{% load eb_widgets %}\n' + code
+    t = Template(code)
     return t.render(Context(info))
 
 def template_context_for_item(newsitem, widget=None):
@@ -55,6 +60,7 @@ def template_context_for_item(newsitem, widget=None):
     ctx = {
         'attributes': [],
         'attributes_by_name': {},
+        '_item': newsitem,  # cached in case downstream code really needs it.
     }
     for att in newsitem.attributes_for_template():
 
@@ -85,28 +91,13 @@ def template_context_for_item(newsitem, widget=None):
     if newsitem.location:
         ctx['location']['lon'] = newsitem.location.x
         ctx['location']['lat'] = newsitem.location.y
+        ctx['location']['point'] = newsitem.location
+
     ctx['location']['name'] = newsitem.location_name
 
     ctx['external_url'] =  newsitem.url
     if newsitem.schema.has_newsitem_detail:
         ctx['internal_url'] = 'http://' + settings.EB_DOMAIN + newsitem.item_url()
-
-    # overlapping Locations, by type.
-    # This is a callable so you only pay for it if you access it in the template.
-    def intersecting_locations_for_item():
-        from ebpub.db.models import Location
-        locations = Location.objects.filter(location__intersects=newsitem.location)
-        # TODO: we join on LocationType a bunch here. Can we cache those or do something faster?
-        locations = locations.select_related()
-        by_type = {}
-        for loc in locations:
-            # Assume there is at most one intersecting location of each type.
-            # That will probably be wrong somewhere someday...
-            # eg. neighborhoods with fuzzy borders.
-            by_type[loc.location_type.slug] = loc
-        return by_type
-
-    ctx['intersecting'] = intersecting_locations_for_item
 
     if widget is not None:
         if widget.item_link_template and widget.item_link_template.strip():
@@ -118,6 +109,8 @@ def template_context_for_item(newsitem, widget=None):
                 # TODO: some sort of error handling
                 return '#error'
 
+    ctx['foo'] = lambda: 'hello'
+    ctx['bar'] = 'this is bar'
     return ctx
 
 def _eval_item_link_template(template, context):

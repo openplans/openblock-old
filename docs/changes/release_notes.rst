@@ -33,9 +33,16 @@ Backward Incompatibilities
   Census 2010 files are now supported by the main import_blocks.py
   script.
 
+* Removed item.intersecting from Widgets context; it was never
+  documented properly. Instead use the new ``get_locations_for_item``
+  template tag.
+
 
 New Features in 1.2
 -------------------
+
+* Added a ``get_locations_for_item`` template tag, see :doc:`widgets`
+  for more.
 
 * Added advanced hook for filtering schemas based on arbitrary request
   data; implement this by assigning settings.SCHEMA_MANAGER_HOOK =
