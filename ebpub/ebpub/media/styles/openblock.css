@@ -266,7 +266,7 @@ float : right;
 /* #################################### New Styles #################################### */
 
 body {
-background : transparent url(/styles/bg.png) top left;
+background : transparent url("bg.png") top left;
 font : normal normal normal 1em/1.4em Georgia, Sans-serif;
 min-width: 900px;
 }
@@ -276,7 +276,7 @@ color : #0069a9;
 }
 
 #container {
-background : transparent url(/styles/heading-bg.jpg) top left repeat-x;
+background : transparent url("heading-bg.jpg") top left repeat-x;
 }
 
 #header, #main {
@@ -337,7 +337,7 @@ background-color : #f8f6f2;
 }
 
 #nav-breadcrumb li {
-background : transparent url(/styles/breadcrumb-separator.png) top right no-repeat;
+background : transparent url("breadcrumb-separator.png") top right no-repeat;
 padding : 5px 30px 7px 20px;
 }
 
@@ -410,6 +410,9 @@ text-decoration : none;
 color : #2C7CAE;
 text-decoration : underline
 }
+
+
+/* ############# map ################################## */
 
 #detailmap {
 width: 480px;
@@ -492,9 +495,78 @@ border : 1px solid #cac8c6;
     clear: both;
 }
 
+/* Popups */
+
+div li span.location {
+    display: block;
+}
+div li span.popupnav {
+    display: block;
+}
+div.popupnav {
+    clear: both;
+}
+
+.openblockFramedCloudPopupContent {
+    font-size: 12px;
+    overflow: hidden;
+    margin: 0px 6px 6px 12px;
+    padding: 0;
+}
+
+.olPopup .newsitem {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.openblockFramedCloudPopupContent .location {
+    display: inline;
+    font-size: 12px;
+    text-transform: none;
+}
 
 
+/* ###################  Rich Map Popups ###################################  */
 
+.popup-content .title {
+    font-size: 14px;
+} 
+
+.popup-content .title a {
+    text-decoration: none;
+}
+
+.popup-nav {
+    clear: both;
+}
+
+/* ############ Map control overrides ######################## */
+
+#mapwrapper .olControlZoomPanel {
+    top: 10px;
+    left: 10px;
+}
+
+#mapwrapper .olControlZoomPanel div {
+    width: 24px;
+    height: 24px;
+}
+
+#mapwrapper .olControlZoomPanel .olControlZoomInItemInactive {
+    background: transparent url("zoom-in.png") 2px 2px no-repeat scroll;
+}
+
+#mapwrapper .olControlZoomPanel .olControlZoomToMaxExtentItemInactive {
+    display: none;
+}
+
+#mapwrapper .olControlZoomPanel .olControlZoomOutItemInactive {
+    top: 25px;
+    background: transparent url("zoom-out.png") 2px 2px no-repeat scroll;
+}
+
+/* ############ content ###################################### */
 
 
 #content {
@@ -628,51 +700,6 @@ float : right;
   font-weight: bold;
 }
 
-/* Popups */
-
-div li span.location {
-    display: block;
-}
-div li span.popupnav {
-    display: block;
-}
-div.popupnav {
-    clear: both;
-}
-
-.openblockFramedCloudPopupContent {
-    font-size: 12px;
-    overflow: hidden;
-    margin: 0px 6px 6px 12px;
-    padding: 0;
-}
-
-.olPopup .newsitem {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
-.openblockFramedCloudPopupContent .location {
-    display: inline;
-    font-size: 12px;
-    text-transform: none;
-}
-
-
-/* Rich Map Popups */
-
-.popup-content .title {
-    font-size: 14px;
-} 
-
-.popup-content .title a {
-    text-decoration: none;
-}
-
-.popup-nav {
-    clear: both;
-}
 
 /* #################################### Timeline ############################ */
 
