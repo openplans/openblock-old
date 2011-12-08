@@ -561,8 +561,40 @@ var OBMap = function(options) {
     this._configurePopup();
     this._configureLayers();
 
-    
 };
+
+/* Custom pan/zoom control panel with no zoom-to-globe button.
+ * If OpenLayers was a little more sane, this would be doable
+ * with either a little external CSS work, or a simple constructor option
+ * or API call or something.
+ */
+var OBPanZoom = OpenLayers.Class(OpenLayers.Control.PanZoom, {
+    draw: function(px) {
+        // Copy/pasted from OpenLayers.Control.PanZoom,
+        // we're just removing the center "zoomworld" button and repositioning the
+        // "zoomout" button.
+        OpenLayers.Control.prototype.draw.apply(this, arguments);
+        px = this.position;
+
+        // place the controls
+        this.buttons = [];
+
+        var sz = new OpenLayers.Size(18,18);
+        var centered = new OpenLayers.Pixel(px.x+sz.w/2, px.y);
+
+        this._addButton("panup", "north-mini.png", centered, sz);
+        px.y = centered.y+sz.h;
+        this._addButton("panleft", "west-mini.png", px, sz);
+        this._addButton("panright", "east-mini.png", px.add(sz.w, 0), sz);
+        this._addButton("pandown", "south-mini.png",
+                        centered.add(0, sz.h*2), sz);
+        this._addButton("zoomin", "zoom-plus-mini.png",
+                        centered.add(0, sz.h*3+5), sz);
+        this._addButton("zoomout", "zoom-minus-mini.png",
+                        centered.add(0, sz.h*4+5), sz);
+        return this.div;
+    }
+});
 
 OBMap.prototype.events = null;
 OBMap.prototype.EVENT_TYPES = ["popupchanged"];
@@ -574,7 +606,11 @@ OBMap.prototype.map_options = {
     units: "m",
     numZoomLevels: 19,
     maxResolution: 156543.03390625,
-    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34),
+    controls: [
+        new OpenLayers.Control.Navigation(),
+        new OBPanZoom()
+    ]
 };
 
 OBMap.prototype._initBasicMap = function() {
