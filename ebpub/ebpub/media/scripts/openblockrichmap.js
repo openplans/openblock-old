@@ -3,8 +3,8 @@
 /***************************************************/
 
 function _obapi(path) {
-    var OB_API_ROOT = '/api/dev1';
-    return OB_API_ROOT + path;
+    /* you are expected to set OB_API_ROOT in your template */
+    return OB_API_ROOT.replace(/\/\b/, "") + "/" + path.replace(/\b\//, "");
 }
 
 function _report_error(error) {
@@ -65,7 +65,7 @@ OBMapItemList.prototype._setupNewLayer = function(layer) {
         'loadend': this.update,
         'scope': this
     });
-}
+};
 
 OBMapItemList.prototype.update = function() {
     this._findVisibleItems();
@@ -791,7 +791,7 @@ OBMap.prototype.loadAllNewsLayers = function() {
     /* load news item types, create a layer for each */
 
     jQuery.ajax({
-        url: _obapi('/items/types.json'),
+        url: _obapi('items/types.json'),
         dataType: 'json',
         context: this,
         success: function(data, status, request) {
@@ -800,7 +800,7 @@ OBMap.prototype.loadAllNewsLayers = function() {
                     var itemType = data[slug];
                     var layerConfig = {
                         title:  itemType["plural_name"],
-                        url:    _obapi('/items.json'),
+                        url:    _obapi('items.json'),
                         params: {'type': slug, limit: 150},
                         bbox: true,
                         visible: true
@@ -818,7 +818,7 @@ OBMap.prototype.loadAllNewsLayers = function() {
 OBMap.prototype.loadAllPlaceLayers = function() {
     /* load place types, create a layer for each */
     jQuery.ajax({
-        url: _obapi('/places/types.json'),
+        url: _obapi('places/types.json'),
         dataType: 'json',
         context: this,
         success: function(data, status, request) {
@@ -827,7 +827,7 @@ OBMap.prototype.loadAllPlaceLayers = function() {
                     var itemType = data[slug];
                     var layerConfig = {
                         title: itemType["plural_name"],
-                        url: _obapi('/places/' + slug +'.json'),
+                        url: _obapi('places/' + slug +'.json'),
                         params: {limit: 150},
                         bbox: true,
                         visible: false
@@ -837,7 +837,7 @@ OBMap.prototype.loadAllPlaceLayers = function() {
             }
         },
         error: function(request, status, error) {
-            _report_error('An error occurred loading news item types.');
+            _report_error('An error occurred loading place layers.');
         }
     });
 };
