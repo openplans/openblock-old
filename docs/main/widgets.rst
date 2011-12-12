@@ -138,6 +138,8 @@ Basic Fields
   item.location.lat   Latitude of primary Point location of item.  
 -------------------- ------------------------------------------------------------
   item.location.lon   Longitude of primary Point location of item.  
+-------------------- -----------------------------------------------------------
+  item.location.geom  The geometry object. See https://docs.djangoproject.com/en/dev/ref/contrib/gis/geos/#geometry-objects
 -------------------- ------------------------------------------------------------
   item.schema.name    The name of the type of item, eg "Restaurant Inspection".
 -------------------- ------------------------------------------------------------
