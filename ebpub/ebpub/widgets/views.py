@@ -127,8 +127,6 @@ def template_context_for_item(newsitem, widget=None):
                 # TODO: some sort of error handling
                 return '#error'
 
-    ctx['foo'] = lambda: 'hello'
-    ctx['bar'] = 'this is bar'
     return ctx
 
 def _eval_item_link_template(template, context):
