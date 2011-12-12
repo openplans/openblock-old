@@ -1,0 +1,10 @@
+			<div id="userlinks">
+			  {% if USER_EMAIL %}
+			  <form action="{% url ebpub.accounts.views.logout %}" method="POST">
+				{% csrf_token %}
+				<p>Logged in as <a href="{% url ebpub.accounts.views.dashboard %}">{{ USER_EMAIL }}</a>. <button type="submit">Log out</button></p>
+			  </form>
+			  {% else %}
+			  <p><a href="{% url ebpub.accounts.views.login %}" rel="nofollow">Sign in</a> or <a href="{% url ebpub.accounts.views.register %}" rel="nofollow">register</a> for extra features</p>
+			  {% endif %}
+			</div><!--/ #userlinks -->

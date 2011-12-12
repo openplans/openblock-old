@@ -3,6 +3,7 @@
 <!-- richmap.html  -->
 
 <script type="text/javascript">
+var OB_API_ROOT = "{% url check_api_available %}";
 {% comment %}
 /* this expects that a loadMap() function 
  * has been defined in the specific template. 
@@ -42,4 +43,3 @@ if (jQuery.browser.msie) {
 
 
 <!-- end richmap.html -->
-

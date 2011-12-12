@@ -23,7 +23,6 @@ based on django-olwidget.
 
 from copy import deepcopy
 from django.conf import settings
-from django.utils import simplejson
 from olwidget.admin import GeoModelAdmin
 from olwidget.fields import MapField, EditableLayerField
 from olwidget.widgets import Map

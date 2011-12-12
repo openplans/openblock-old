@@ -1,6 +1,9 @@
 <div id="{{ id }}"></div>
 <!-- Need this to load in our custom base layer constructor, at
      least until/unless olwidget gains this feature. -->
+<script type="text/javascript">
+var OB_API_ROOT = "{% url check_api_available %}";
+</script>
 <script type="text/javascript" src="/scripts/openblockrichmap.js" charset="utf-8"></script>
 
 {{ layer_html|join:"" }}

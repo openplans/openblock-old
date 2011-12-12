@@ -83,9 +83,10 @@ system, follow these steps:
        use the script ``import_locations`` to import them from shapefiles;
        or use the Django model API; or do a manual SQL INSERT statement.
 
-You'll need to create at least one LocationType with the slug "neighborhoods",
-because that's hard-coded in various places throughout the application.
-
+You'll want to create at least one LocationType with the slug set to
+the same value as ``settings.DEFAULT_LOCTYPE_SLUG``, because that's
+used in various default URLs.  By default this is set to
+"neighborhoods".
 
 .. _blocks:
 

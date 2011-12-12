@@ -24,12 +24,12 @@ def user(request):
     if request.user.is_anonymous():
         return {
             'DEBUG': settings.DEBUG,
-            'USER': request.user,
-            'USER_EMAIL': request.session.get(EMAIL_SESSION_KEY) or getattr(request.user, 'email', None),
+            'USER': None,
+            'USER_EMAIL': None,
             }
     else:
         return {
             'DEBUG': settings.DEBUG,
-            'USER': None,
-            'USER_EMAIL': None,
+            'USER': request.user,
+            'USER_EMAIL':  request.session.get(EMAIL_SESSION_KEY) or getattr(request.user, 'email', None),
             }
