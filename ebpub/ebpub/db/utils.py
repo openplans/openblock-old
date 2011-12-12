@@ -114,10 +114,14 @@ def populate_attributes_if_needed(newsitem_list, schema_list,
 
     # Cache attribute values for each NewsItem in preloaded_nis.
     for ni in preloaded_nis:
+        # Fix for #38: Schemas may not have any SchemaFields, and thus
+        # the ni will have no attributes, and the schema won't be in
+        # fmap, and that's OK.
         if not ni.id in att_dict:
-            # Fix for #38: Schemas may not have any SchemaFields, and
-            # thus the ni will have no attributes, and that's OK.
             continue
+        if not ni.schema_id in fmap:
+            continue
+
         att = att_dict[ni.id]
         att_values = {}
         for field_name, real_name in fmap[ni.schema_id]['fields']:
