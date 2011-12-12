@@ -838,7 +838,13 @@ class NewsItem(models.Model):
     attributes = AttributesDescriptor()
 
     def clean(self):
-        self.location = ensure_valid(flatten_geomcollection(self.location))
+        if self.location is None:
+            if self.location_object is None:
+                logger.warn(
+                    "Saving NewsItem with neither a location nor a location_object")
+        else:
+            if self.location is None:
+                self.location = ensure_valid(flatten_geomcollection(self.location))
 
     class Meta:
         ordering = ('title',)
