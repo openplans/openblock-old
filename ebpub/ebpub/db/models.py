@@ -148,7 +148,8 @@ class Schema(models.Model):
     min_date = models.DateField(
         help_text="The earliest available pub_date for this Schema",
         default=lambda: datetime.date(1970, 1, 1))
-    last_updated = models.DateField()
+    last_updated = models.DateField(
+        help_text=u"Last date any NewsItems were loaded for this Schema.")
     date_name = models.CharField(
         max_length=32, default='Date',
         help_text='Human-readable name for the item_date field')
@@ -193,6 +194,7 @@ class Schema(models.Model):
         default=5,
         help_text="Number of records to show on place_overview")
 
+    # TODO: maybe this should be either a FileField or a FilePathField instead?
     map_icon_url = models.TextField(
         blank=True, null=True,
         help_text="Set this to a URL to a small image icon and it will be displayed on maps.")
