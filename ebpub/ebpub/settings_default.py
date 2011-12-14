@@ -97,6 +97,7 @@ INSTALLED_APPS = (
     'ebpub.widgets',
     'obadmin.admin',
     'olwidget',
+    'easy_thumbnails',
 )
 
 APPS_FOR_TESTING = (
@@ -128,6 +129,7 @@ APPS_NOT_FOR_TESTING = (
         'olwidget.models',
         'south',
         'background_task',
+        'easy_thumbnails',
 )
 
 
@@ -189,8 +191,14 @@ required_settings.append('METRO_LIST')
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
 
-EB_MEDIA_ROOT = EBPUB_DIR + '/media'
+# Static files to serve.
+# For deployment, ensure your webserver can serve this.
+EB_MEDIA_ROOT = os.path.join(EBPUB_DIR, 'media')
 required_settings.extend(['EB_MEDIA_ROOT'])
+
+# Where to put files uploaded by users.
+MEDIA_ROOT = os.path.join(EB_MEDIA_ROOT, '/')
+EB_UPLOAD_ROOT = os.path.join(MEDIA_ROOT, 'uploads')
 
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
@@ -308,21 +316,21 @@ JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js'
 
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme
-# This supercedes the everyblock-specific template tags in
+# This supercedes the old everyblock-specific template tags in
 # everyblock.templatetags.staticmedia.
 DJANGO_STATIC = True
 DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
-                             EB_MEDIA_ROOT + '/styles',
-                             EB_MEDIA_ROOT + '/scripts',
+                             os.path.join(EB_MEDIA_ROOT, 'styles'),
+                             os.path.join(EB_MEDIA_ROOT, 'scripts'),
                              ]
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
-DJANGO_STATIC_SAVE_PREFIX = '%s%s' % (EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX)
+DJANGO_STATIC_SAVE_PREFIX = os.path.join(EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX[1:])
 
-# Django 1.3's staticfiles app ... we use django-static instead,
+# Django 1.3's staticfiles app ... we currently use django-static instead,
 # but olwidget needs this set:
 STATIC_URL='/'
 

@@ -17,6 +17,7 @@
 #
 
 
+from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
@@ -859,7 +860,6 @@ class NewsItem(models.Model):
                                     args=[self.schema.slug, self.id], kwargs={})
 
     def item_url_with_domain(self):
-        from django.conf import settings
         return 'http://%s%s' % (settings.EB_DOMAIN, self.item_url())
 
     def item_date_url(self):
@@ -1059,7 +1059,7 @@ class LookupManager(models.Manager):
 
 class Lookup(models.Model):
     """
-    Lookups are a normalized way to store Attributes that have only a
+    Lookups are a normalized way to store Attribute fields that have only a
     few possible values.
     """
     schema_field = models.ForeignKey(
@@ -1209,6 +1209,14 @@ def get_city_locations():
     else:
         return Location.objects.filter(id=None)
 
+
+from easy_thumbnails.fields import ThumbnailerImageField
+class NewsItemImage(models.Model):
+    """
+    NewsItems can optionally be associated with any number of images.
+    """
+
+    image = ThumbnailerImageField(upload_to=settings.EB_UPLOAD_ROOT)
 
 ########################################################################
 # Signals
