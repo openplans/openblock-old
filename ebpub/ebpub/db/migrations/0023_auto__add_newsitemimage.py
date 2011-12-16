@@ -6,6 +6,12 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('easy_thumbnails',
+         '0011_auto__add_field_source_storage_hash__add_field_thumbnail_storage_hash'
+         ),
+        )
+
     def forwards(self, orm):
         
         # Adding model 'NewsItemImage'
