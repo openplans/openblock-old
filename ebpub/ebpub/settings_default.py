@@ -58,6 +58,8 @@ TEMPLATE_LOADERS = (
 TEMPLATE_CONTEXT_PROCESSORS = (
     'ebpub.accounts.context_processors.user',
     'django.contrib.auth.context_processors.auth',
+    "django.core.context_processors.media",
+    "django.core.context_processors.static",
     'django.core.context_processors.csrf',
     'django.contrib.messages.context_processors.messages',
     'ebpub.db.context_processors.map_context',
@@ -158,16 +160,24 @@ MIDDLEWARE_CLASSES = (
 
 SITE_ID = 1
 
+# Limit size of uploads, then fall back to standard upload behavior.
+FILE_UPLOAD_HANDLERS = (
+    "ebpub.utils.uploadhandler.QuotaUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+    )
+
 LOGIN_URL = '/accounts/login/'
 
 ##################################
-# CUSTOM EBPUB & OBDEMO SETTINGS #
+# CUSTOM OPENBLOCK SETTINGS      #
 ##################################
 
 # Which LocationType to show when you visit /locations
 DEFAULT_LOCTYPE_SLUG = 'neighborhoods'
 required_settings.append('DEFAULT_LOCTYPE_SLUG')
 
+# This may be needed to get tests to build.
 POSTGIS_TEMPLATE = 'template_postgis'
 
 # The domain for your site.
@@ -187,32 +197,11 @@ required_settings.extend(['PASSWORD_CREATE_SALT', 'PASSWORD_RESET_SALT'])
 # There's an example in obdemo/settings.py.in
 required_settings.append('METRO_LIST')
 
-
 # How many days of news to show on many views.
 required_settings.append('DEFAULT_DAYS')
 
-# Static files to serve.
-# For deployment, ensure your webserver can serve this.
-EB_MEDIA_ROOT = os.path.join(EBPUB_DIR, 'media')
-required_settings.extend(['EB_MEDIA_ROOT'])
-
-# Where to put files uploaded by users.
-MEDIA_ROOT = os.path.join(EB_MEDIA_ROOT, '/')
-EB_UPLOAD_ROOT = os.path.join(MEDIA_ROOT, 'uploads')
-
 # Overrides datetime.datetime.today(), for development.
 EB_TODAY_OVERRIDE = None
-
-# This is used as a "From:" in e-mails sent to users.
-required_settings.append('GENERIC_EMAIL_SENDER')
-
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST='localhost'
-EMAIL_PORT='25'
-# Need authentication to send mail? Set these.
-#EMAIL_HOST_USER=''
-#EMAIL_HOST_PASSWORD=''
-#EMAIL_USE_TLS=False  # For secure SMTP connections.
 
 # Filesystem location of scraper log.
 required_settings.append('SCRAPER_LOGFILE_NAME')
@@ -229,12 +218,6 @@ SCRAPER_LOG_DO_EMAIL_ERRORS = False
 # or you'll likely have "File name too long" errors.)
 HTTP_CACHE = '/tmp/openblock_scraper_cache'
 
-# XXX Unused?
-#DATA_HARVESTER_CONFIG = {}
-
-# XXX Unused?
-#MAIL_STORAGE_PATH = '/home/mail'
-
 # If this cookie is set with the given value, then the site will give the user
 # staff privileges (including the ability to view non-public schemas).
 required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
@@ -249,9 +232,26 @@ required_settings.extend(['STAFF_COOKIE_NAME', 'STAFF_COOKIE_VALUE'])
 # by doing extra filtering in get_query_set().
 SCHEMA_MANAGER_HOOK = None
 
-####################
-# MAP CONFIGURATION
-####################
+
+######################################################
+#  EMAIL                                             #
+######################################################
+
+# This is used as a "From:" in e-mails sent to users.
+required_settings.append('GENERIC_EMAIL_SENDER')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST='localhost'
+EMAIL_PORT='25'
+# Need authentication to send mail? Set these.
+#EMAIL_HOST_USER=''
+#EMAIL_HOST_PASSWORD=''
+#EMAIL_USE_TLS=False  # For secure SMTP connections.
+
+
+##############################################
+# OPENBLOCK MAP CONFIGURATION                #
+##############################################
 
 # Where to center citywide maps by default.
 required_settings.append('DEFAULT_MAP_CENTER_LON')
@@ -261,14 +261,6 @@ required_settings.append('DEFAULT_MAP_ZOOM')
 # XXX UNUSED?
 required_settings.append('MAP_SCALES')
 MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
-
-# It's important that it be named exactly OpenLayers.js,
-# see http://trac.osgeo.org/openlayers/ticket/2982
-OPENLAYERS_URL = '/scripts/OpenLayers-2.11/OpenLayers.js'
-OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11/img/'
-
-# For compatibility with django-olwidget
-OL_API = OPENLAYERS_URL
 
 # Which base layer to use on maps.
 # May be any of the default olwidget base layers,
@@ -306,37 +298,65 @@ MAP_CUSTOM_BASE_LAYERS = {
          }
 }
 
-##################
-# MEDIA
-##################
+##########################
+#  MEDIA                 #
+##########################
 
-# For local development you might try this:
-#JQUERY_URL = '/media/js/jquery.js'
-JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js'
+# Core Django settings for static media and uploaded files,
+# see https://docs.djangoproject.com/en/dev/ref/settings/#media-root
+
+# Where static media live.
+STATIC_ROOT = os.path.join(EBPUB_DIR, 'media')
+# Where to serve these files.  For production deployment, ensure your
+# webserver makes STATIC_ROOT available at this URL.
+STATIC_URL = '/'
+
+# Where to put files uploaded by users.
+MEDIA_ROOT = os.path.join(STATIC_ROOT, 'uploads')
+# Where to serve these files.  For production deployment, ensure your
+# webserver makes MEDIA_ROOT available at this URL.
+MEDIA_URL = '/uploads/'
+
+required_settings.extend(['STATIC_ROOT', 'MEDIA_ROOT', 'STATIC_URL', 'MEDIA_URL'])
+
 
 # Static media optimizations: whitespace slimming, URL timestamping.
 # see https://github.com/peterbe/django-static#readme
 # This supercedes the old everyblock-specific template tags in
 # everyblock.templatetags.staticmedia.
 DJANGO_STATIC = True
-DJANGO_STATIC_MEDIA_ROOTS = [EB_MEDIA_ROOT,
-                             os.path.join(EB_MEDIA_ROOT, 'styles'),
-                             os.path.join(EB_MEDIA_ROOT, 'scripts'),
-                             ]
+DJANGO_STATIC_MEDIA_ROOTS = [MEDIA_ROOT, STATIC_ROOT,]
+
 
 # Putting django-static's output in a separate directory and URL space
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
-DJANGO_STATIC_SAVE_PREFIX = os.path.join(EB_MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX[1:])
+DJANGO_STATIC_SAVE_PREFIX = os.path.join(MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX[1:])
 
-# Django 1.3's staticfiles app ... we currently use django-static instead,
-# but olwidget needs this set:
-STATIC_URL='/'
 
-###############
-# REST API
-###############
+#############################
+# JAVASCRIPT LIBRARIES      #
+#############################
+
+
+# For local development you might try this:
+#JQUERY_URL = '/media/js/jquery.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js'
+
+# It's important that it be named exactly OpenLayers.js,
+# see http://trac.osgeo.org/openlayers/ticket/2982
+OPENLAYERS_URL = '/scripts/OpenLayers-2.11/OpenLayers.js'
+OPENLAYERS_IMG_PATH = '/scripts/OpenLayers-2.11/img/'
+
+# For compatibility with django-olwidget
+OL_API = OPENLAYERS_URL
+
+
+
+########################################
+#  OPENBLOCK REST API                  #
+########################################
 
 MAX_KEYS_PER_USER=1
 
@@ -350,9 +370,10 @@ API_THROTTLE_EXPIRATION = 60 * 60 * 24 * 7
 # setting.
 
 
-###########
-# Caching.
-###########
+#########################################
+# CACHING                               #
+#########################################
+
 ## For development & testing, DummyCache makes for easiest troubleshooting.
 ## See https://docs.djangoproject.com/en/1.3/ref/settings/#std:setting-CACHES
 #
@@ -368,10 +389,18 @@ CACHES = {
     # }
 }
 
+###############################################
+# API KEYS for third-party services           #
+###############################################
 
-#############
-# OTHER
-#############
+# Neighbornews app opptionally uses ReCaptcha.
+RECAPTCHA_PUBLIC_KEY = ''
+RECAPTCHA_PRIVATE_KEY = ''
+
+
+################################################
+#  OTHER                                       #
+################################################
 
 # Set this True to cache geocoder results in the database;
 # it's faster but makes troubleshooting harder.
@@ -382,21 +411,26 @@ required_settings.append('EBPUB_CACHE_GEOCODER')
 # Required by openblockapi.apikey to associate keys with user profiles.
 AUTH_PROFILE_MODULE = 'preferences.Profile'
 
-
 # ebpub.neighbornews optionally uses recaptcha.  This can be True,
 # False, or a string representing a path in the form
 # 'packagename.modulename:functionname' path to a function that takes
 # a request argument and returns True or False.
 NEIGHBORNEWS_USE_CAPTCHA = False
 
-# You'll also need to sign up for Recaptcha API keys.
-RECAPTCHA_PUBLIC_KEY = ''
-RECAPTCHA_PRIVATE_KEY = ''
+# Batch jobs (django-background-task): how long (in seconds) can a job
+# be locked before we decide it's dead?
+MAX_RUN_TIME = 60 * 15
+# How many failures to retry?
+MAX_ATTEMPTS = 4
 
+# Maximum size of user-uploaded images, relevant to eg. the
+# NeighborNews schemas.
+UPLOAD_MAX_MB = 10.0
 
+########################################################
+# LOGGING                                              #
+########################################################
 
-###################################################################
-# Logging.
 # See https://docs.djangoproject.com/en/dev/topics/logging
 # We import this first because South annoyingly overrides its log level at import time.
 from south import logger as _unused
@@ -464,10 +498,5 @@ LOGGING = {
     }
 }
 
-# Batch jobs (django-background-task): how long (in seconds) can a job
-# be locked before we decide it's dead?
-MAX_RUN_TIME = 60 * 15
-# How many failures to retry?
-MAX_ATTEMPTS = 4
 
 __doc__ = __doc__ % required_settings

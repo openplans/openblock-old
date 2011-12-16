@@ -99,7 +99,7 @@ def _delete(request, newsitem):
 def _edit_item(request, newsitem_id, FormType):
     instance = NewsItem.objects.get(id=newsitem_id)
     if request.method == 'POST':
-        form = FormType(request.POST, instance=instance)
+        form = FormType(request.POST, request.FILES, instance=instance)
     else:
         form = FormType(instance=instance)
     return _update_item(request, form, instance.schema, action='edit')
@@ -107,7 +107,7 @@ def _edit_item(request, newsitem_id, FormType):
 
 def _new_item(request, schema, FormType):
     if request.method == 'POST':
-        form = FormType(request.POST)
+        form = FormType(request.POST, request.FILES)
     else:
         form = FormType()
     return _update_item(request, form, schema, action='create')
@@ -133,7 +133,7 @@ def _update_item(request, form, schema, action):
 
     cat_field = SchemaField.objects.get(schema=schema, name='categories')
     if form.is_bound and form.is_valid():
-        # Creating a NewsItem.
+        # Creating or updating a NewsItem.
         form.instance.schema = schema
         item = form.save()
 
@@ -142,8 +142,22 @@ def _update_item(request, form, schema, action):
         NewsItemCreator.objects.get_or_create(news_item=item, user=user)
 
         # Image url.
-        if form.cleaned_data['image_url']:
+        if form.cleaned_data['image_url'] is not None:
             item.attributes['image_url'] = form.cleaned_data['image_url']
+
+        # Image.
+        uploaded = form.cleaned_data['image']
+        if uploaded is False:
+            # This is apparently how File fields announce deletion. Is
+            # that in the docs??
+            item.newsitemimage_set.all().delete()
+        elif uploaded:
+            from ebpub.db.models import NewsItemImage
+            # TODO: allow more than one? For now, we just delete and recreate.
+            item.newsitemimage_set.all().delete()
+            ni_image, created = NewsItemImage.objects.get_or_create(news_item=item,
+                                                                    image=uploaded.name)
+            ni_image.image.save(uploaded.name, uploaded)
 
         # Times.
         for key in ('start_time', 'end_time'):
@@ -170,7 +184,7 @@ def _update_item(request, form, schema, action):
         return HttpResponseRedirect(detail_url)
 
     elif form.instance:
-        # Update.
+        # Update form.
         if form.instance.attributes.get('categories'):
             cat_ids = form.instance.attributes['categories'].split(',')
             cat_lookups = Lookup.objects.filter(schema_field=cat_field, id__in=cat_ids)
@@ -178,6 +192,15 @@ def _update_item(request, form, schema, action):
                 sorted([look.name for look in cat_lookups]))
         if form.instance.location:
             form.fields['location'].initial = form.instance.location.wkt
+
+        existing_images = list(form.instance.newsitemimage_set.all())
+        if existing_images:
+            img = existing_images[0].image
+            # TODO: allow uploading more than one?
+            form.fields['image'].initial = img
+        else:
+            img = None
+
         for key in ('start_time', 'end_time', 'image_url'):
             if key in form.fields and form.instance.attributes.get(key):
                 value = form.instance.attributes[key]
@@ -200,6 +223,7 @@ def _update_item(request, form, schema, action):
         'schema': schema,
         'action': action,
         'need_captcha': need_captcha,
+        'image': img,
     }
     return eb_render(request, "neighbornews/new_message.html", ctx)
 

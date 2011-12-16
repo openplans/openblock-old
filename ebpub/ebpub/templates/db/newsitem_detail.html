@@ -41,13 +41,13 @@
 				{% if not newsitem.location %}<p>This location couldn't be mapped.</p>{% endif %}
 			</td>
 		</tr>
-		{% block newsitem_detail_date %}
+		<!-- block newsitem_detail_date -->{% block newsitem_detail_date %}
 			<tr>
 				<th>{{ newsitem.schema.date_name|capfirst }}</th>
 				<td><a href="{{ newsitem.item_date_url }}">{{ newsitem.item_date|date:"F j, Y" }}</a></td>
 			</tr>
-		{% endblock newsitem_detail_date %}
-		{% block newsitem_detail_description %}
+		{% endblock newsitem_detail_date %}<!-- endblock: newsitem_detail_date -->
+		<!-- block newsitem_detail_description -->{% block newsitem_detail_description %}
 			<tr>
 				<th>Description</th>
 				<td>{{ newsitem.description|truncatewords_html:20}}
@@ -56,8 +56,18 @@
 				  {% endif %}
 				</td>
 			</tr>
-		{% endblock newsitem_detail_description %}
-		{% block newsitem_detail_attribute_list %}
+		{% endblock newsitem_detail_description %}<!-- endblock: newsitem_detail_description -->
+		<!-- block newsitem_detail_image_list -->{% block newsitem_detail_image_list %}
+			{% for image in images %}
+				<tr>
+					<th>Image {{ forloop.counter }}</th>
+					<td>
+					  <img src="{{ image.url }}" width="640">
+					</td>
+				</tr>
+			{% endfor %}
+		{% endblock %}<!-- endblock: newsitem_detail_image_list -->
+		<!-- block newsitem_detail_attribute_list -->{% block newsitem_detail_attribute_list %}
 			{% for attribute in attribute_list %}
 				<tr>
 					<th>
@@ -80,7 +90,7 @@
 					</td>
 				</tr>
 			{% endfor %}
-		{% endblock newsitem_detail_attribute_list %}
+		{% endblock newsitem_detail_attribute_list %}<!-- endblock: newsitem_detail_image_list -->
 	</table>
 
   {% block extracontent %}
@@ -136,7 +146,7 @@
 	{% endblock %}
 
 
-	{% block similaritems %}
+	<!-- block similaritems -->{% block similaritems %}
 		{% if not newsitem.schema.is_special_report %}
 			{% if locations_within %}
 				<h2>Other {{ newsitem.schema.plural_name }} nearby</h2>
@@ -148,7 +158,7 @@
 				</ul>
 			{% endif %}
 		{% endif %}
-	{% endblock %}
+	{% endblock %}<!-- endblock similaritems -->
 
 
 	<h2>About {{ schema.plural_name }}...</h2>

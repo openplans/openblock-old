@@ -24,6 +24,9 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed the EB_MEDIA_ROOT and EB_MEDIA_URL settings; now use
+  django's normal MEDIA_ROOT and MEDIA_URL instead.
+
 * Removed the ImproperCity exception, which only served to prevent
   using blocks in places such as unincorporated parts of counties,
   where there is nothing that could be called a 'city'.
@@ -45,6 +48,9 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* User-uploaded images now supported for NewsItems, and enabled for
+  the NeighborNews user-contributed content.
+
 * Added new ``userlinks.html`` template so you can override the links
   at top right of the page.
 
@@ -52,9 +58,9 @@ New Features in 1.2
   for more.
 
 * Added advanced hook for filtering schemas based on arbitrary request
-  data; implement this by assigning settings.SCHEMA_MANAGER_HOOK =
-  'some_module:some_function', where some_module.some_function takes
-  arguments (request, manager) and returns a models.Manager instance
+  data; implement this by assigning ``settings.SCHEMA_MANAGER_HOOK =
+  'some_module:some_function'``, where ``some_module.some_function`` takes
+  arguments (``request, manager``) and returns a ``models.Manager`` instance
   whose query sets will return the allowed Schemas.
 
 * Add Vary headers to REST API responses, for more correct HTTP

@@ -185,7 +185,8 @@
 
 
 <div id="content">
-  <form id="neighbornews_form" class="neighbornews" action="" method="POST">
+  <form id="neighbornews_form" class="neighbornews" action="" method="POST"
+        enctype="multipart/form-data">
 
     {% csrf_token %}
 
@@ -200,12 +201,12 @@
         {% if not field.is_hidden %}
         {{field.label_tag}}
         {% endif %}
-        
+
         {{field}}
         {% if field.name == "location_name" %}
         <a href="#" class="mapit-link">map it</a>
         {% endif %}
-        
+
         <div class="form-help">{{ field.help_text }}</div>
         <div id="{{field.name}}_error" class="form-error">{{field.errors}}</div>
       </div>

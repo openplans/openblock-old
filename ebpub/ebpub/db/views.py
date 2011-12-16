@@ -440,7 +440,6 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         center_y = settings.DEFAULT_MAP_CENTER_LAT
 
     hide_ads = (request.COOKIES.get(HIDE_ADS_COOKIE_NAME) == 't')
-
     templates_to_try = ('db/newsitem_detail/%s.html' % ni.schema.slug, 'db/newsitem_detail.html')
 
     # Try to find a usable URL to link to from the location name.
@@ -463,6 +462,10 @@ def newsitem_detail(request, schema_slug, newsitem_id):
                 pass
 
     from ebpub.neighbornews.utils import user_can_edit
+    from easy_thumbnails.files import get_thumbnailer
+    size = getattr(settings, 'UPLOADED_IMAGE_DIMENSIONS', (640, 480))
+    images = [get_thumbnailer(i.image).get_thumbnail({'size': size})
+              for i in ni.newsitemimage_set.all()]
     context = {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
@@ -476,6 +479,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         'bodyclass': 'newsitem-detail',
         'bodyid': schema_slug,
         'can_edit': user_can_edit(request, ni),
+        'images': images,
     }
     context['breadcrumbs'] = breadcrumbs.newsitem_detail(context)
     context['map_configuration'] = _preconfigured_map(context)

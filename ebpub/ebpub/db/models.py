@@ -29,6 +29,7 @@ from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.geodjango import flatten_geomcollection
 from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.text import slugify
+from .fields import OpenblockImageField
 
 import datetime
 import logging
@@ -791,6 +792,11 @@ class NewsItem(models.Model):
 
       See also this ticket http://developer.openblockproject.org/ticket/93
       about possibly making more use of self.location_object.
+
+    NewsItems also can have any number of images associated with them,
+    via the NewsItemImage model.
+    All the images for a NewsItem can be retrieved like: item.newsitemimage_set.all()
+
     """
 
     # We don't have a natural_key() method because we don't know for
@@ -1210,16 +1216,27 @@ def get_city_locations():
         return Location.objects.filter(id=None)
 
 
-from easy_thumbnails.fields import ThumbnailerImageField
+
 class NewsItemImage(models.Model):
     """
     NewsItems can optionally be associated with any number of images.
     """
 
-    image = ThumbnailerImageField(upload_to=settings.EB_UPLOAD_ROOT)
+    news_item = models.ForeignKey(NewsItem)
+    # Note max_length = filename.
+    image = OpenblockImageField(upload_to=settings.MEDIA_ROOT, max_length=256,
+                                help_text='Upload an image')
 
-########################################################################
-# Signals
+    class Meta(object):
+        unique_together = (('news_item', 'image'),)
+
+    def __unicode__(self):
+        return u'%s - %s' % (self.news_item, self.image.name)
+
+
+###########################################
+# Signals                                 #
+###########################################
 
 # Django doesn't provide a pre_update() signal, rats.
 # See https://code.djangoproject.com/ticket/13021

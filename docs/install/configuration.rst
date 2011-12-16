@@ -377,6 +377,13 @@ JQuery or OpenLayers because you might want to use hosted versions of
 those, and django-static probably isn't the best way to minify large
 frameworks anyway.
 
+
+The core settings ``STATIC_ROOT`` and ``STATIC_URL`` affect
+Django-Static as well.  By default this is calculated from the
+location of the installed ``ebpub`` package; you probably don't need
+to change them.
+
+
 Django Background Tasks
 ========================
 
@@ -415,8 +422,9 @@ debugging harder, and can add a bit to the size of database.
 ``EB_DOMAIN`` -- The domain used for the root of some generated
 URLs, eg. in feeds, widgets, and generated emails.
 
-``EB_MEDIA_ROOT`` -- Directory that's the root of ebpub's static media files.
-By default this is calculated from the location of the installed ``ebpub`` package.
+``MEDIA_ROOT``, ``MEDIA_URL`` -- Directory and base URL for
+user-uploaded images and files.  By default this is calculated from
+the location of the installed ``ebpub`` package.
 
 ``HTTP_CACHE`` -- Cache directory used by scrapers when fetching data
 from remote sites.  By default this goes in a subdirectory of '/tmp'.
@@ -447,3 +455,8 @@ should log their output.
 eg. "chicago".  This is used mainly for determining the default metro
 (see :ref:`metro_config`), which is used through the OpenBlock code.
 
+``UPLOAD_MAX_MB`` -- maximum size of user-uploaded images, in
+megabytes.
+
+``UPLOADED_IMAGE_DIMENSIONS`` -- a tuple of (width, height) integers,
+used for limiting the size of NeighborNews images for display.
