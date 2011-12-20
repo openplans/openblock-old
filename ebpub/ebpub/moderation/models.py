@@ -50,16 +50,12 @@ class Flag(models.Model):
     state = models.CharField(max_length=64, db_index=True,
                              choices=(('new', u'New'),
                                       ('approved', u'Item Approved'),
-                                      ('deleted', u'Item Deleted')),
+                                      ),
                              blank=True,
                              default='new',
                              )
 
 
-
-    def clean(self):
-        if self.news_item_id is None and self.state != 'deleted':
-            raise ValidationError(u'A NewsItem must be specified if state is not Deleted')
 
     # Extra stuff for admin convenience.
     @property
@@ -92,4 +88,3 @@ class CommentFlag(Flag):
     """
     Flags on Comments.
     """
-

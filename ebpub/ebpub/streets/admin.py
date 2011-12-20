@@ -127,7 +127,7 @@ class PlaceAdmin(OSMModelAdmin):
              url(r'^export/csv$', self.admin_site.admin_view(self.export_csv_view), name="streets_place_export_csv")
          )
          return my_urls + urls
-    
+
     def export_csv_view(self, request):
 
         if request.method == 'GET':

@@ -16,111 +16,116 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.contrib.gis import admin
-from ebpub.geoadmin import OSMModelAdmin
 from .models import NewsItemFlag
-
-from django.forms.widgets import Input, MultiWidget
-from django.utils.safestring import mark_safe
-
 from django import forms
+from django.conf.urls.defaults import patterns, url
+from django.contrib import messages
+from django.contrib.gis import admin
+from django.forms.widgets import Widget
+from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response, redirect
+from django.template import RequestContext
+from django.utils.safestring import mark_safe
+from ebpub.geoadmin import OSMModelAdmin
 
-class SubmitInput(Input):
-    input_type = 'submit'
 
-APPROVE=u'approve item'
-REJECT=u'delete item'
+class ModerationWidget(Widget):
 
-class ModerationWidget(MultiWidget):
+    instance = None  # Gets bound at widget init time.
 
-    # Two buttons whose output is a single string.
-    # There's probably a cleaner/shorter way to do this?
-
-    def __init__(self, attrs=None):
-        widgets=[SubmitInput(attrs={'value': APPROVE}),
-                 SubmitInput(attrs={'value': REJECT})]
-        MultiWidget.__init__(self, widgets, attrs=attrs)
-
-    def decompress(self, value):
-        # We don't actually care about this, but get
-        # NotImplementedError without it.
-        return [value, value]
-
-    def format_output(self, rendered_widgets):
-        """
-        Given a list of rendered widgets (as strings), returns a Unicode string
-        representing the HTML for the whole lot.
-
-        This hook allows you to format the HTML design of the widgets, if
-        needed.
-        """
-        return u'&nbsp;'.join(rendered_widgets)
-
-    def value_from_datadict(self, data, files, name):
-        result = MultiWidget.value_from_datadict(self, data, files, name)
-        # What we have is a list of the strings that were submitted to
-        # our sub-widgets and Nones for the others.
-        # Since input is destined for a single CharField, merge it.
-        result = u' '.join([s for s in result if s])
-        return result
+    def render(self, name, value, attrs=None):
+        # TODO: this is OK, but if the instance isn't saved yet, I'd
+        # like to totally hide the widget label too.
+        if self.instance and self.instance.pk is not None:
+            output = u'''
+        <a href="moderate/?delete=1" class="button">Delete it!</a>
+        <a href="moderate/?approve=1" class="button">Approve it!</a>
+'''
+            return mark_safe(output)
+        return u''
 
 class ModerationForm(forms.ModelForm):
     class Meta:
         model = NewsItemFlag
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
         super(ModerationForm, self).__init__(*args, **kwargs)
+        self.fields['moderate'].widget.instance = self.instance
 
     moderate = forms.CharField(widget=ModerationWidget(), required=False)
 
-    def clean(self):
-        moderation = self.cleaned_data.get('moderate')
-        if moderation == APPROVE:
-            self.cleaned_data['state'] = u'approved'
-        elif moderation == REJECT:
-            self.cleaned_data['state'] = u'deleted'
-            if self.instance:
-                item = self.instance.news_item
-                if item is not None:
-                    msg = u'Deleted news item %d' % item.id
-                    item.delete()
-                    # XXX self.instance will get auto-deleted anyway
-                    # XXX can i somehow trigger a redirect?? argh i don't
-                    # have a response and we don't have redirects as exceptions!
-                    self.instance.news_item = None
-                    if self.request is not None:
-                        from django.contrib import messages
-                        messages.add_message(self.request, messages.INFO, msg)
+
+def bulk_delete_action(modeladmin, request, queryset):
+    """
+    Delete a batch of NewsItemFlags and their associated NewsItems.
+    """
+    # Admin bulk action as per
+    # https://docs.djangoproject.com/en/1.3/ref/contrib/admin/actions/
+    ids = [v['news_item_id'] for v in queryset.values('news_item_id')]
+    queryset.delete()
+    from ebpub.db.models import NewsItem
+    NewsItem.objects.filter(id__in=ids).delete()
+    messages.add_message(request, messages.INFO,
+                         u'%d NewsItems, and all associated flags, deleted' % len(ids))
+
+bulk_delete_action.short_description = u'Reject all selected items'
+
+def bulk_approve_action(modeladmin, request, queryset):
+    """
+    Approve a batch of NewsItemFlags.
+    """
+    # Admin bulk action as per
+    # https://docs.djangoproject.com/en/1.3/ref/contrib/admin/actions/
+    queryset.update(state='approved')
+    messages.add_message(request, messages.INFO, u'%d flagged items approved'
+                         % queryset.count())
+
+bulk_approve_action.short_description = u'Approve all selected NewsItems (un-flag)'
 
 
 class NewsItemFlagAdmin(OSMModelAdmin):
 
     form = ModerationForm
 
-    def get_form(self, request, obj=None, **kwargs):
-        # Jumping through hoops to make request available
-        # to the form instance, so it can be accessed during clean().
-        # See eg http://stackoverflow.com/questions/1057252/django-how-do-i-access-the-request-object-or-any-other-variable-in-a-forms-cle
-        _base = super(NewsItemFlagAdmin, self).get_form(request, obj, **kwargs)
-        class ModelFormMetaClass(_base):
-            def __new__(cls, *args, **kwargs):
-                kwargs['request'] = request
-                return _base(*args, **kwargs)
-        return ModelFormMetaClass
-
     list_display = ('item_title', 'item_schema', 'state', 'reason', 'submitted', 'updated')
     search_fields = ('item_title', 'item_description', 'comment',)
 
     list_filter = ('reason', 'state', 'news_item__schema__slug',)
-    # XXX TODO: Allow deleting the NewsItem directly from our form.
 
     raw_id_fields = ('news_item',)
 
     date_hierarchy = 'submitted'
-    readonly_fields = ('item_title', 'item_schema', 'item_description', 'item_url',
-                       'item_pub_date',
-                       'submitted',
-                       )
+    readonly_fields = (
+        'state',
+        'item_title', 'item_schema', 'item_description', 'item_url',
+        'item_pub_date',
+        'submitted',
+        )
+
+
+    actions = [bulk_approve_action, bulk_delete_action]
+
+    def get_urls(self):
+        urls = patterns(
+            '',
+            url(r'^(.+)/moderate/$', self.admin_site.admin_view(self.handle_moderation)),
+            )
+        urls = urls + super(NewsItemFlagAdmin, self).get_urls()
+        return urls
+
+    def handle_moderation(self, request, object_id):
+        deleting = request.REQUEST.get('delete')
+        approving = request.REQUEST.get('approve')
+        qs = NewsItemFlag.objects.filter(id=object_id)
+        if request.method == 'GET':
+            context = RequestContext(request,
+                                     {'deleting': deleting, 'approving': approving,})
+            return render_to_response('moderation/moderate_confirmation.html', context)
+        elif request.method == 'POST':
+            if deleting:
+                bulk_delete_action(self, request, qs)
+            elif approving:
+                bulk_approve_action(self, request, qs)
+        return HttpResponseRedirect('../../')
 
 admin.site.register(NewsItemFlag, NewsItemFlagAdmin)
