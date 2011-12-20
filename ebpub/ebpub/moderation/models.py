@@ -38,8 +38,8 @@ class Flag(models.Model):
                                        ('other', u'other (please explain below)')),
                               help_text=u'Why are you flagging this item?')
 
-    email = models.CharField(max_length=128, null=True, blank=True,
-                             default='anonymous')
+    user = models.CharField(max_length=128, null=True, blank=True,
+                            default='anonymous')
 
     comment = models.CharField(max_length=512, blank=True, null=True)
 
