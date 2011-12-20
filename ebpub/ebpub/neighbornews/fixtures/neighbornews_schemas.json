@@ -3,6 +3,7 @@
     "fields": {
       "allow_charting": true,
       "allow_comments": true,
+      "allow_flagging": true,
       "can_collapse": false,
       "date_name": "Date",
       "date_name_plural": "Dates",
@@ -36,6 +37,7 @@
     "fields": {
       "allow_charting": true,
       "allow_comments": true,
+      "allow_flagging": true,
       "can_collapse": false,
       "date_name": "Date",
       "date_name_plural": "Dates",
