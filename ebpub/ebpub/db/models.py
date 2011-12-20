@@ -183,6 +183,11 @@ class Schema(models.Model):
         help_text="Whether to allow users to add comments to NewsItems of the schema. Only applies to items with detail page."
     )
 
+    allow_flagging = models.BooleanField(
+        default=False,
+        help_text="Whether to allow uses to flag NewsItems of this schema as spam or inappropriate."
+        )
+
     allow_charting = models.BooleanField(
         default=False,
         help_text="Whether aggregate charts are displayed on the home page of this Schema")
@@ -1233,7 +1238,6 @@ class NewsItemImage(models.Model):
     def __unicode__(self):
         return u'%s - %s' % (self.news_item, self.image.name)
 
-
 ###########################################
 # Signals                                 #
 ###########################################
@@ -1252,4 +1256,3 @@ def clear_allowed_schema_ids_cache(sender, **kwargs):
 post_update.connect(clear_allowed_schema_ids_cache, sender=Schema)
 post_save.connect(clear_allowed_schema_ids_cache, sender=Schema)
 post_delete.connect(clear_allowed_schema_ids_cache, sender=Schema)
-

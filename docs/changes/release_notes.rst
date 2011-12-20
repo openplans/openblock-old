@@ -48,6 +48,8 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Added ``ebpub.moderation`` app that allows users to flag
+
 * User-uploaded images now supported for NewsItems, and enabled for
   the NeighborNews user-contributed content.
 
