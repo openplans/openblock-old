@@ -102,11 +102,11 @@ class NewsItemFlagAdmin(OSMModelAdmin):
     date_hierarchy = 'submitted'
     readonly_fields = (
         'state',
-        'item_title', 'item_schema', 'item_description', 'item_url',
+        'view_item',
+        'item_title', 'item_schema', 'item_description', 'item_original_url',
         'item_pub_date',
         'submitted',
         )
-
 
     actions = [bulk_approve_action, bulk_delete_action]
 

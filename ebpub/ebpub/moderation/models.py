@@ -21,7 +21,7 @@ Users can flag NewsItems or comments as spam, offensive, or 'other'.
 """
 
 from django.contrib.gis.db import models
-from django.core.exceptions import ValidationError
+from django.utils.safestring import mark_safe
 from ebpub.db.models import NewsItem
 
 class Flag(models.Model):
@@ -71,12 +71,17 @@ class Flag(models.Model):
         return self.news_item.description
 
     @property
-    def item_url(self):
+    def item_original_url(self):
         return self.news_item.url
 
     @property
     def item_pub_date(self):
         return self.news_item.pub_date
+
+    @property
+    def view_item(self):
+        _url = self.news_item.item_url()
+        return mark_safe('<a href="%s">%s</a>' % (_url, _url))
 
 
 class NewsItemFlag(Flag):
