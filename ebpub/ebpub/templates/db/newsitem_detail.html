@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
 {% load eb humanize mapping eb_filter comments thumbnail %}
 
@@ -31,6 +31,33 @@
 	  {% include "richmaps/richmap.html" %}
 	</div>
 
+    <!-- block flagging -->{% block flagging %}
+	{% if allow_flagging %}
+
+	  <div id="flag-form-wrapper"></div>
+	  <script type="text/javascript">
+        var formURL = '{% url moderation_flag_form newsitem.id %}';
+		// Handler for receiving POST response.
+		var handlePostResponse = function(html) {
+			$j('#flag-form-wrapper').html(html);
+			$j('#flag-submit').click(submitFlagForm);
+		};
+
+		// Handler for submitting the flag form.
+		var submitFlagForm = function(evt) {
+		    evt.preventDefault();
+			var data = $('#flag-form').serialize();
+			$j.post(formURL, data, handlePostResponse);
+		};
+		// Hook up the submit handler.
+		var formLoaded = function(text, status, xhr) {
+			$j('#flag-submit').click(submitFlagForm);
+		};
+		$j('#flag-form-wrapper').load(formURL, formLoaded);
+	  </script>
+
+	{% endif %}
+	{% endblock flagging %}<!-- endblock flagging -->
 	<table>
 		<tr>
 			<th>Location</th>

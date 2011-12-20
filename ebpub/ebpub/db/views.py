@@ -466,6 +466,10 @@ def newsitem_detail(request, schema_slug, newsitem_id):
     size = getattr(settings, 'UPLOADED_IMAGE_DIMENSIONS', (640, 480))
     images = [get_thumbnailer(i.image).get_thumbnail({'size': size})
               for i in ni.newsitemimage_set.all()]
+    if 'ebpub.moderation' in settings.INSTALLED_APPS:
+        allow_flagging = ni.schema.allow_flagging
+    else:
+        allow_flagging = False
     context = {
         'newsitem': ni,
         'attribute_list': [att for att in atts if att.sf.display],
@@ -479,11 +483,13 @@ def newsitem_detail(request, schema_slug, newsitem_id):
         'bodyclass': 'newsitem-detail',
         'bodyid': schema_slug,
         'can_edit': user_can_edit(request, ni),
+        'allow_flagging': allow_flagging,
         'images': images,
     }
     context['breadcrumbs'] = breadcrumbs.newsitem_detail(context)
     context['map_configuration'] = _preconfigured_map(context)
     return eb_render(request, templates_to_try, context)
+
 
 def schema_list(request):
     allowed_schemas = get_schema_manager(request).all()
