@@ -48,15 +48,21 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
-* Added ``ebpub.moderation`` app that allows users to flag
+* Added ``ebpub.moderation`` app that allows users to flag NewsItems
+  as spam or inappropriate, and an admin UI for it;
+  see :ref:`moderation` for more.
+
+* Added ``Schema.allow_flagging`` boolean to toggle moderation
+  flagging per schema. Allowed by default on the
+  ``ebpub.neighbornews`` schemas.
 
 * User-uploaded images now supported for NewsItems, and enabled for
-  the NeighborNews user-contributed content.
+  the ``ebpub.neighbornews`` user-contributed content schemas.
 
 * Added new ``userlinks.html`` template so you can override the links
   at top right of the page.
 
-* Added a ``get_locations_for_item`` template tag, see :doc:`widgets`
+* Added a ``get_locations_for_item`` template tag, see :doc:`../main/widgets`
   for more.
 
 * Added advanced hook for filtering schemas based on arbitrary request
@@ -119,11 +125,13 @@ Bugs fixed
 Documentation
 -------------
 
+* Basic docs for ``ebpub.neighbornews``, see :ref:`user_content`
+
 * Document how to get the 2010 census files instead of 2009.
 
 * Added docs on all the settings in settings_default.py.
 
-* Better documentation about Schemas, Attributes, and how they relate.
+* Better documentation about Schemas, SchemaFields, Attributes, and how they relate.
 
 Other
 -----
