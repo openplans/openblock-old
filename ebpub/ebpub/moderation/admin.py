@@ -23,7 +23,7 @@ from django.contrib import messages
 from django.contrib.gis import admin
 from django.forms.widgets import Widget
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response, redirect
+from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
 from ebpub.geoadmin import OSMModelAdmin
@@ -38,7 +38,7 @@ class ModerationWidget(Widget):
         # like to totally hide the widget label too.
         if self.instance and self.instance.pk is not None:
             output = u'''
-        <a href="moderate/?delete=1" class="button">Reject it!</a>
+        <a href="moderate/?delete=1" class="button">Reject and delete it!</a>
         <a href="moderate/?approve=1" class="button">Approve it!</a>
 '''
             return mark_safe(output)
@@ -68,7 +68,7 @@ def bulk_delete_action(modeladmin, request, queryset):
     messages.add_message(request, messages.INFO,
                          u'%d NewsItems, and all associated flags, deleted' % len(ids))
 
-bulk_delete_action.short_description = u'Reject all selected items'
+bulk_delete_action.short_description = u'Reject (and delete) all selected items'
 
 def bulk_approve_action(modeladmin, request, queryset):
     """
