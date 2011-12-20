@@ -38,7 +38,7 @@ class ModerationWidget(Widget):
         # like to totally hide the widget label too.
         if self.instance and self.instance.pk is not None:
             output = u'''
-        <a href="moderate/?delete=1" class="button">Delete it!</a>
+        <a href="moderate/?delete=1" class="button">Reject it!</a>
         <a href="moderate/?approve=1" class="button">Approve it!</a>
 '''
             return mark_safe(output)
@@ -102,10 +102,22 @@ class NewsItemFlagAdmin(OSMModelAdmin):
     date_hierarchy = 'submitted'
     readonly_fields = (
         'state',
+        'submitted', 'updated',
         'view_item',
         'item_title', 'item_schema', 'item_description', 'item_original_url',
         'item_pub_date',
-        'submitted',
+        )
+
+    fieldsets = (
+        (None, {'fields': ('moderate',
+                           'reason',
+                           'news_item',
+                           'comment',
+                           'state',
+                           'submitted', 'updated',
+                          )
+                }),
+        ('NewsItem info', {'fields': readonly_fields[3:]}),
         )
 
     actions = [bulk_approve_action, bulk_delete_action]
@@ -119,9 +131,12 @@ class NewsItemFlagAdmin(OSMModelAdmin):
         return urls
 
     def handle_moderation(self, request, object_id):
+        """
+        View to delete or approve a single flagged item.
+        """
         deleting = request.REQUEST.get('delete')
         approving = request.REQUEST.get('approve')
-        qs = NewsItemFlag.objects.filter(id=object_id)
+        qs = self.form.Meta.model.objects.filter(id=object_id)
         if request.method == 'GET':
             context = RequestContext(request,
                                      {'deleting': deleting, 'approving': approving,})
