@@ -1,0 +1,23 @@
+{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+
+<div id="flag-form-title"><a href="#">Flag this item ...</a> </div>
+<script type="text/javascript">
+  $j('#flag-form-title').click(function(evt) {
+    evt.preventDefault();
+    $j('div.flag-form').slideToggle();
+    return false;
+  });
+</script>
+<div class="flag-form {% if not form.errors %}hidden{% endif %}">
+
+<form id="flag-form" method="POST" action="" class="neighbornews">
+  {% csrf_token %}
+  {% if form.errors %}
+    <div class="error form-error">Please correct the errors below:</div>
+  {% endif %}
+  <table summary="">
+	{{ form.as_table }}
+  </table>
+  <input id="flag-submit" type="submit" value="Report it">
+</form>
+</div>
