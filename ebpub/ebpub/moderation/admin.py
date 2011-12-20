@@ -85,11 +85,16 @@ bulk_approve_action.short_description = u'Approve all selected NewsItems (un-fla
 
 class NewsItemFlagAdmin(OSMModelAdmin):
 
+    # We want new items first.
+    ordering = ('-state', '-submitted')
+
     form = ModerationForm
 
     list_display = ('item_title', 'item_schema', 'state', 'reason', 'submitted', 'updated')
     search_fields = ('item_title', 'item_description', 'comment',)
 
+    # TODO: filtering on news_item__schema__slug gives the filter the label 'slug',
+    # which is not very user-friendly.  Don't see any way around that?
     list_filter = ('reason', 'state', 'news_item__schema__slug',)
 
     raw_id_fields = ('news_item',)
