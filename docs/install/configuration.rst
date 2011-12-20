@@ -331,8 +331,40 @@ public mail service.  See for example `this blog post
   paragraph, or you might try Amazon's own email service: https://aws.amazon.com/ses/
 
 
+.. _user_content:
+
+User-Contributed Content
+========================
+
+The ``ebpub.neighbornews`` package provides two schemas for
+user-contributed content: "Neighbor Messages" and "Neighbor Events".
+
+To disable this feature entirely, just remove ``"ebpub.neighbornews"``
+from ``settings.INSTALLED_APPS``.  (If you re-enable it later, you may
+need to re-run ``django-admin.py syncdb --migrate`` to prepare your
+database.)
+
+Relevant settings:
+
+``NEIGHBORNEWS_USE_CAPTCHA`` -- Whether to put a ReCaptcha form on
+the forms for adding user-contributed news.
+This can be True, False, or a function that takes a "request" argument
+and returns True or False.
+
+You'll also need to acquire API keys from recaptcha.org and set them
+as ``RECAPTCHA_PUBLIC_KEY`` and ``RECAPTCHA_PRIVATE_KEY``.
+
+You will probably also want ``ebpub.moderation`` in
+``INSTALLED_APPS``, to allow users to flag content as spam or
+objectionable.  This is on by default.
+
 OpenBlock REST API
 ====================
+
+To disable this feature, remove ``"ebpub.openblockapi"``
+and ``"ebpub.openblockapi.apikey"``. from ``settings.INSTALLED_APPS``.
+
+Relevant settings:
 
 ``MAX_KEYS_PER_USER`` -- how many API keys each OpenBlock user can register.
 Default 1.
@@ -350,9 +382,9 @@ affect your users.
 
 .. admonition:: Enable caching too!
 
-  In order to enable throttling, you MUST also configure
-  CACHES['default'] to something other than a DummyCache, as per the
-  DJango caching documentation.
+  In order to enable throttling, you **must** also configure
+  ``CACHES['default']`` to something other than a DummyCache, as per the
+  `Django caching documentation <https://docs.djangoproject.com/en/1.3/ref/settings/#std:setting-CACHES>`_.
 
 
 Django-Static
@@ -429,14 +461,6 @@ the location of the installed ``ebpub`` package.
 ``HTTP_CACHE`` -- Cache directory used by scrapers when fetching data
 from remote sites.  By default this goes in a subdirectory of '/tmp'.
 
-``NEIGHBORNEWS_USE_CAPTCHA`` -- Whether to put a ReCaptcha form on
-the forms for adding user-contributed news. Only relevant if
-``ebpub.neighbornews`` is in ``settings.INSTALLED_APPS``.
-This can be True, False, or a function that takes a "request" argument
-and returns True or False.  You'll also need to acquire API keys from
-recaptcha.org and set them as
-``RECAPTCHA_PUBLIC_KEY`` and ``RECAPTCHA_PRIVATE_KEY``.
-
 ``JQUERY_URL`` --  URL where our version of JQuery lives. Default is a
 hosted version.
 
@@ -445,10 +469,10 @@ lives. Default is currently OpenLayers 2.11, hosted locally.
 
 ``OPENLAYERS_IMG_PATH`` -- URL where OpenLayers images are found.
 
-``SCRAPER_LOGFILE_NAME`` -- Where :doc:`scrapers <../main/scraper_tutorial.rst>`
+``SCRAPER_LOGFILE_NAME`` -- Where :doc:`scrapers <../main/scraper_tutorial>`
 should log their output.
 
-``SCRAPER_LOG_DO_EMAIL_ERRORS`` -- Whether :doc:`scrapers <../main/scraper_tutorial.rst>`
+``SCRAPER_LOG_DO_EMAIL_ERRORS`` -- Whether :doc:`scrapers <../main/scraper_tutorial>`
 should log their output.
 
 ``SHORT_NAME`` -- The short name for your city, in lowercase,
