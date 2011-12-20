@@ -42,3 +42,58 @@ located under the various app directories, notably
 ``ebpub/ebpub/db/migrations/`` to see what the existing migration
 scripts look like.
 
+.. _moderation:
+
+Moderating User-Submitted Content
+=================================
+
+If you have any Schemas with ``allow_flagging=True``, eg. if you have
+``ebpub.neighbornews`` in your ``settings.INSTALLED_APPS`` (it is by
+default), then users can flag NewsItems of that type as possible spam
+or inappropriate content.
+
+To moderate these messages, go to the admin UI and, under the
+"Moderation" heading, click on "News Item Flags".
+
+The resulting list is sorted to the most recent new, unmoderated flags
+at top.
+
+There are two ways you can moderate items: in bulk, or one at a time.
+
+Moderating One at a Time
+------------------------
+
+If you click on a News Item Flag in the list, you'll see details about
+the flagged News Item, who flagged it, when, and why.
+
+There is also a link to the public view of the NewsItem if you want to
+examine it more fully in context.
+
+You'll see two buttons at top: "Reject and Delete it" and "Approve it".
+Click one of those and you're done.
+
+Moderating in Bulk
+-------------------
+
+From the main list of News Item Flags, you can check all items you
+want to approve or reject, and then from the "Action" pull-down menu,
+you can select Approve, Reject, or Delete.
+
+What effect does each action have?
+----------------------------------
+
+Whether singly or in bulk, here is the meaning of the actions you can
+take:
+
+* **Approve** - This will mark *all* flags on this NewsItem as
+  "approved".  The flags are not deleted (though we might revisit that
+  decision), but the NewsItem is no longer shown as flagged on the
+  public site, and those Flags will be moved off the top of the list
+  of new flags.
+
+* **Reject and delete** - This will **permanently** delete the NewsItem and all
+  Flags on it.  You cannot undo this action.
+
+* **Delete flag** - The selected Flag(s) is/are deleted. This has no
+  effect on the associated NewsItem(s) and any Flags not specifically
+  selected.
