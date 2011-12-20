@@ -41,7 +41,7 @@ class Flag(models.Model):
     email = models.CharField(max_length=128, null=True, blank=True,
                              default='anonymous')
 
-    comment = models.CharField(max_length=512)
+    comment = models.CharField(max_length=512, blank=True, null=True)
 
     submitted = models.DateTimeField(auto_now_add=True)
 

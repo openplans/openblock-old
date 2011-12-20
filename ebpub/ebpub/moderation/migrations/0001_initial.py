@@ -14,7 +14,7 @@ class Migration(SchemaMigration):
             ('news_item', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='moderation_newsitemflag_related', null=True, to=orm['db.NewsItem'])),
             ('reason', self.gf('django.db.models.fields.CharField')(max_length=128, db_index=True)),
             ('email', self.gf('django.db.models.fields.CharField')(default='anonymous', max_length=128, null=True, blank=True)),
-            ('comment', self.gf('django.db.models.fields.CharField')(max_length=512)),
+            ('comment', self.gf('django.db.models.fields.CharField')(max_length=512, null=True, blank=True)),
             ('submitted', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('state', self.gf('django.db.models.fields.CharField')(default='new', max_length=64, db_index=True, blank=True)),
