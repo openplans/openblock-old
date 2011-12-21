@@ -11,6 +11,11 @@ class Migration(DataMigration):
         ('neighbornews', '0002_add_is_event'),
         )
 
+    needed_by = (
+        # We were created before allow_flagging existed.
+        ('db', '0024_auto__add_field_schema_allow_flagging'),
+        )
+
     def forwards(self, orm):
         def _create_or_update(model_id, key, attributes):
             Model = orm[model_id]

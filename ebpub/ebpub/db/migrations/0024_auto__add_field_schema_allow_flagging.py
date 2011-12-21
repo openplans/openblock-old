@@ -6,11 +6,6 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
-    depends_on = (
-        # This one blows up if we run it after adding this field.
-        ('obdemo', '0007_add_meetup_and_neighbornews'),
-        )
-
     def forwards(self, orm):
 
         # Adding field 'Schema.allow_flagging'
