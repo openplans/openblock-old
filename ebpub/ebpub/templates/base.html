@@ -9,8 +9,8 @@
 <link rel="home" title="Home" href="{% url ebpub-homepage %}">
 
 {% slimall %}
-<link rel="stylesheet" type="text/css" href="/styles/style-reset.css" />
-<link rel="stylesheet" type="text/css" href="/styles/openblock.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/style-reset.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/openblock.css" />
 {% endslimall %}
 
 <script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
@@ -22,7 +22,7 @@
 var $j = $;
 </script>
 {% slimall %}
-<script src="/scripts/ob-jquery-csrf.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ STATIC_URL }}scripts/ob-jquery-csrf.js" type="text/javascript" charset="utf-8"></script>
 {% endslimall %}
 
 <!-- begin block extrahead -->

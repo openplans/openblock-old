@@ -1,0 +1,16 @@
+<!-- Combine images and attributes.image_url.  Since I can't do
+     anything like a list comprehension here, this would be much
+     easier to do in view code, but django doesn't make it as easy to
+     swap a view as to swap a template. -->
+{% with images|add:attribute_dict.image_url.value_list as all_images %}
+	{% for image in all_images %}
+	  {% with image.value|default:image.url as url %}{% if url and url != 'N/A' %}
+		<tr>
+			<th>Image {{ forloop.counter }}</th>
+			<td>
+			  <img src="{{ url }}">
+			</td>
+		</tr>
+	  {% endif %}{% endwith %}
+	{% endfor %}
+{% endwith %}

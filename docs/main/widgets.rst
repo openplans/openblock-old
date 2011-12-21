@@ -131,13 +131,15 @@ Basic Fields
 -------------------- ------------------------------------------------------------
   item.description    Description, body text, or text content of the item.
 -------------------- ------------------------------------------------------------
-  item.location.name  Text of location, address, place etc. Depending on item type 
-                      and method of determining location, this may not be present or 
-                      of varying meaning.
+  item.location.name  Text of location, address, place etc. Depending on item
+                      type and method of determining location, this
+                      may be absent or of varying meaning.
 -------------------- ------------------------------------------------------------
   item.location.lat   Latitude of primary Point location of item.  
 -------------------- ------------------------------------------------------------
   item.location.lon   Longitude of primary Point location of item.  
+-------------------- ------------------------------------------------------------
+  item.location.geom  The geometry object. See https://docs.djangoproject.com/en/dev/ref/contrib/gis/geos/#geometry-objects
 -------------------- ------------------------------------------------------------
   item.schema.name    The name of the type of item, eg "Restaurant Inspection".
 -------------------- ------------------------------------------------------------

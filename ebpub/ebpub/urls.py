@@ -26,8 +26,7 @@ from ebpub.metros.allmetros import get_metro
 
 
 if settings.DEBUG:
-    # This stuff can probably go away if/when we switch to Django 1.3,
-    # not sure yet how that interacts with django-static.
+    # URLs for the various static files we need to serve for development.
     import olwidget
     import os
     olwidget_media_path=os.path.join(
@@ -35,12 +34,21 @@ if settings.DEBUG:
 
     urlpatterns = patterns('',
         (r'^(?P<path>(?:olwidget).*)$',
-         'django.views.static.serve', {'document_root': olwidget_media_path}),
-        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
-         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
-        (r'^(?P<path>(?:images|scripts|styles|openlayers).*)$', 'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
-        (r'^(?P<path>(?:%s).*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
-         'django.views.static.serve', {'document_root': settings.EB_MEDIA_ROOT}),
+         'django.views.static.serve',
+         {'document_root': olwidget_media_path}),
+
+        (r'^(?P<path>(?:%s).*)/?$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+         'django.views.static.serve',
+         {'document_root': settings.DJANGO_STATIC_SAVE_PREFIX}),
+
+        (r'^(?:%s)(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
+         'django.views.static.serve',
+          {'document_root': settings.MEDIA_ROOT}),
+
+        (r'^(?:%s)(?P<path>(?:images|scripts|styles|openlayers).*)$' % (settings.STATIC_URL or '').lstrip('/'),
+         'django.views.static.serve',
+         {'document_root': settings.STATIC_ROOT}),
+
     )
 else:
     urlpatterns = patterns('')
@@ -74,6 +82,7 @@ urlpatterns += patterns('',
     (r'^widgets/', include('ebpub.widgets.urls')),
     (r'^maps/', include('ebpub.richmaps.urls')),
     (r'^neighbornews/', include('ebpub.neighbornews.urls')),
+    (r'^moderation/', include('ebpub.moderation.urls')),
     (r'^comments/', include('django.contrib.comments.urls')),
 )
 

@@ -1,0 +1,43 @@
+{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+
+<div id="flag-form-title"><a href="#">Flag this item ...</a>
+</div>
+
+<script type="text/javascript">
+  $j('#flag-form-title').click(function(evt) {
+    evt.preventDefault();
+    $j('div.flag-form').slideToggle();
+    return false;
+  });
+</script>
+
+{% if flag_counts %}
+<div id="flag-counts">
+  <b class="flagged">This item has already been flagged for moderation:</b>
+  <div>
+	{% for dict in flag_counts %}
+	{{ dict.reason|title }}: {{ dict.count }}{% if not forloop.last %},{% endif %}
+	{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="flag-form {% if not form.errors %}hidden{% endif %}">
+  {% if flag_counts %}
+  <div>Site administrators will review this item soon. You can still
+	add a flag if you like.</div>
+  {% endif %}
+
+  <form id="flag-form" method="POST" action="" class="neighbornews">
+	{% csrf_token %}
+	{% if form.errors %}
+    <div class="error form-error">Please correct the errors below:</div>
+	{% endif %}
+	<table summary="">
+	  {{ form.as_table }}
+	</table>
+	<input id="flag-submit" type="submit" value="Report it">
+  </form>
+
+</div>
+

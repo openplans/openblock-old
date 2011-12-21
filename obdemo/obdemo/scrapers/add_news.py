@@ -30,6 +30,7 @@ from ebdata.nlp.addresses import parse_addresses
 from ebpub.db.models import NewsItem, Schema
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
+from ebpub.geocoder.parser.parsing import ParsingError
 from ebpub.utils.logutils import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
@@ -101,7 +102,7 @@ def update(argv=None):
                         logger.debug("internally geocoded %r" % addr)
                         x, y = point.x, point.y
                         break
-                    except GeocodingException:
+                    except (GeocodingException, ParsingError):
                         logger.debug("Geocoding exception on %r:" % text)
                         log_exception(level=logging.DEBUG)
                         continue

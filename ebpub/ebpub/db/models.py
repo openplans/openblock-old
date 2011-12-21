@@ -17,6 +17,7 @@
 #
 
 
+from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.gis.db.models import Count
 from django.core import urlresolvers
@@ -28,6 +29,7 @@ from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.geodjango import flatten_geomcollection
 from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.text import slugify
+from .fields import OpenblockImageField
 
 import datetime
 import logging
@@ -148,7 +150,8 @@ class Schema(models.Model):
     min_date = models.DateField(
         help_text="The earliest available pub_date for this Schema",
         default=lambda: datetime.date(1970, 1, 1))
-    last_updated = models.DateField()
+    last_updated = models.DateField(
+        help_text=u"Last date any NewsItems were loaded for this Schema.")
     date_name = models.CharField(
         max_length=32, default='Date',
         help_text='Human-readable name for the item_date field')
@@ -180,6 +183,11 @@ class Schema(models.Model):
         help_text="Whether to allow users to add comments to NewsItems of the schema. Only applies to items with detail page."
     )
 
+    allow_flagging = models.BooleanField(
+        default=False,
+        help_text="Whether to allow uses to flag NewsItems of this schema as spam or inappropriate."
+        )
+
     allow_charting = models.BooleanField(
         default=False,
         help_text="Whether aggregate charts are displayed on the home page of this Schema")
@@ -193,6 +201,7 @@ class Schema(models.Model):
         default=5,
         help_text="Number of records to show on place_overview")
 
+    # TODO: maybe this should be either a FileField or a FilePathField instead?
     map_icon_url = models.TextField(
         blank=True, null=True,
         help_text="Set this to a URL to a small image icon and it will be displayed on maps.")
@@ -788,6 +797,11 @@ class NewsItem(models.Model):
 
       See also this ticket http://developer.openblockproject.org/ticket/93
       about possibly making more use of self.location_object.
+
+    NewsItems also can have any number of images associated with them,
+    via the NewsItemImage model.
+    All the images for a NewsItem can be retrieved like: item.newsitemimage_set.all()
+
     """
 
     # We don't have a natural_key() method because we don't know for
@@ -857,7 +871,6 @@ class NewsItem(models.Model):
                                     args=[self.schema.slug, self.id], kwargs={})
 
     def item_url_with_domain(self):
-        from django.conf import settings
         return 'http://%s%s' % (settings.EB_DOMAIN, self.item_url())
 
     def item_date_url(self):
@@ -881,7 +894,8 @@ class NewsItem(models.Model):
             return []
         if not self.attributes:
             logger.warn("%s has fields in its schema, but no attributes!" % self)
-            return []
+            # Hopefully we can cope with an empty dict.
+            #return []
         return [AttributeForTemplate(f, self.attributes) for f in fields]
 
 
@@ -1057,7 +1071,7 @@ class LookupManager(models.Manager):
 
 class Lookup(models.Model):
     """
-    Lookups are a normalized way to store Attributes that have only a
+    Lookups are a normalized way to store Attribute fields that have only a
     few possible values.
     """
     schema_field = models.ForeignKey(
@@ -1208,8 +1222,26 @@ def get_city_locations():
         return Location.objects.filter(id=None)
 
 
-########################################################################
-# Signals
+
+class NewsItemImage(models.Model):
+    """
+    NewsItems can optionally be associated with any number of images.
+    """
+
+    news_item = models.ForeignKey(NewsItem)
+    # Note max_length = filename.
+    image = OpenblockImageField(upload_to=settings.MEDIA_ROOT, max_length=256,
+                                help_text='Upload an image')
+
+    class Meta(object):
+        unique_together = (('news_item', 'image'),)
+
+    def __unicode__(self):
+        return u'%s - %s' % (self.news_item, self.image.name)
+
+###########################################
+# Signals                                 #
+###########################################
 
 # Django doesn't provide a pre_update() signal, rats.
 # See https://code.djangoproject.com/ticket/13021
@@ -1225,4 +1257,3 @@ def clear_allowed_schema_ids_cache(sender, **kwargs):
 post_update.connect(clear_allowed_schema_ids_cache, sender=Schema)
 post_save.connect(clear_allowed_schema_ids_cache, sender=Schema)
 post_delete.connect(clear_allowed_schema_ids_cache, sender=Schema)
-

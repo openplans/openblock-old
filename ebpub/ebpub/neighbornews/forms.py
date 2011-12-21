@@ -21,13 +21,16 @@ from django.conf import settings
 from ebpub.db.forms import NewsItemForm as NewsItemFormBase
 from ebpub.db.models import NewsItem
 from recaptcha.client import captcha
+from ebpub.db.fields import OpenblockImageFormField
 
 class NewsItemForm(NewsItemFormBase):
 
     need_captcha = False
     recaptcha_ip = None
 
-    def clean(self):
+    image = OpenblockImageFormField(required=False, label="Upload image")
+
+    def _clean_captcha(self):
         if self.need_captcha and \
                 getattr(settings, 'RECAPTCHA_PRIVATE_KEY', None) and \
                 getattr(settings, 'RECAPTCHA_PUBLIC_KEY', None):
@@ -41,6 +44,8 @@ class NewsItemForm(NewsItemFormBase):
             if check_captcha.is_valid is False:
                 self.errors['recaptcha'] = 'Invalid captcha value'
 
+    def clean(self):
+        self._clean_captcha()
         cleaned_data = super(NewsItemForm, self).clean()
 
         # Reverse-geocode if we need to.
@@ -56,6 +61,8 @@ class NewsItemForm(NewsItemFormBase):
         # Note, any NewsItem fields that aren't listed in self._meta.fields
         # have to be manually saved here, because that's the list that's
         # normally consulted when setting attributes on the instance.
+        # ... And yes, clean() is normally responsible for setting
+        # attributes on the bound instance.
         for key in forms.fields_for_model(self._meta.model):
             if key in cleaned_data.keys():
                 setattr(self.instance, key, cleaned_data[key])
@@ -66,8 +73,9 @@ class NeighborMessageForm(NewsItemForm):
 
     class Meta:
         model = NewsItem
-        # Hide some fields.
-        fields = ('title', 'location_name', 'url', 'description',
+        # Hide some fields, re-order others.
+        fields = ('title', 'location_name', 'url',
+                  'image',
                   'image_url', 'categories',
                   'description',
                   'location',
@@ -75,7 +83,7 @@ class NeighborMessageForm(NewsItemForm):
 
     location_name = forms.CharField(max_length=255, label="Address or Location",
                                     required=False)
-    image_url = forms.CharField(max_length=2048, label="Link to image",
+    image_url = forms.CharField(max_length=2048, label="Link to external image",
                                 required=False)
     categories = forms.CharField(max_length=10240, required=False,
                                  help_text="Separate with commas")
@@ -90,7 +98,7 @@ class NeighborEventForm(NeighborMessageForm):
         fields = ('title', 'location_name',
                   'item_date',
                   'start_time', 'end_time',
-                  'url', 'image_url',
+                  'url', 'image', 'image_url',
                   'categories',
                   'description',
                   )

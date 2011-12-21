@@ -107,9 +107,10 @@ def template_context_for_item(newsitem, widget=None):
     ctx['item_date'] = newsitem.item_date
     ctx['location'] = {}
     if newsitem.location:
-        ctx['location']['lon'] = newsitem.location.x
-        ctx['location']['lat'] = newsitem.location.y
-        ctx['location']['point'] = newsitem.location
+        # TODO: Is centroid really what we want for non-Point geometries?
+        ctx['location']['lon'] = newsitem.location.centroid.x
+        ctx['location']['lat'] = newsitem.location.centroid.y
+        ctx['location']['geom'] = newsitem.location
 
     ctx['location']['name'] = newsitem.location_name
 
@@ -127,8 +128,6 @@ def template_context_for_item(newsitem, widget=None):
                 # TODO: some sort of error handling
                 return '#error'
 
-    ctx['foo'] = lambda: 'hello'
-    ctx['bar'] = 'this is bar'
     return ctx
 
 def _eval_item_link_template(template, context):

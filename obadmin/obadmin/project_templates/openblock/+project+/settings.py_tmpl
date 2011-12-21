@@ -48,12 +48,10 @@ SHORT_NAME = 'yourcity'
 PASSWORD_CREATE_SALT = '${password_salt}%s%s'
 PASSWORD_RESET_SALT = '${reset_salt}%s%s'
 
-# You probably don't need to override this, the setting in settings.py
-# should work out of the box.
-#EB_MEDIA_ROOT = '' # necessary for static media versioning.
-
-EB_MEDIA_URL = '' # leave at '' for development
-
+# You probably don't need to override STATIC_ROOT or STATIC_URL, the
+# settings in settings.py should work out of the box.
+# You may want to override MEDIA_ROOT (where to upload user-uploaded files)
+# and MEDIA_URL (where to serve them).
 
 # This is used as a "From:" in e-mails sent to users.
 GENERIC_EMAIL_SENDER = 'openblock@' + EB_DOMAIN

@@ -30,8 +30,8 @@ following::
        PASSWORD_CREATE_SALT
        PASSWORD_RESET_SALT
        METRO_LIST
-       EB_MEDIA_ROOT
-       EB_MEDIA_URL
+       MEDIA_ROOT
+       MEDIA_URL
        EB_DOMAIN
        DEFAULT_MAP_CENTER_LON
        DEFAULT_MAP_CENTER_LAT
@@ -150,7 +150,7 @@ Each type of news is referred to as a ``Schema``.
 To add a new Schema, add a row to the "db_schema" database table or
 use the Django database API. See the :doc:`../main/schemas` documentation, or
 see the ``Schema`` model in
-``ebpub/db/models.py`` for information on all of the fields
+``ebpub/db/models.py`` for information on all of the fields.
 
 .. _newsitems:
 
@@ -205,6 +205,9 @@ fields:
       A color hex code (eg. #FF0000) to use for marking this news type
       on maps.  Only used if map_icon_url is not provided. Optional.
 
+    newsitemimage_set
+      A reverse relationship with the NewsItemImage model, allowing
+      any number of images to be associated with one NewsItem.
 
 
 The difference between ``pub_date`` and ``item_date`` might be confusing. The
@@ -225,6 +228,8 @@ NewsItem, set its ``location_object`` to the relevant Location, and don't
 set ``location`` at all.  For a live example, see
 http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/
 
+You can also see all associated locations via the NewsItemLocation
+relationship by querying ``item.location_set.all()``
 
 NewsItemLocations
 ------------------
@@ -235,6 +240,9 @@ may be relevant in any number of places.  Normally you don't have to
 worry about this: there are database triggers that update this table
 whenever a NewsItem's location is set or updated.
 
+The relationship makes all associated Locations available on a
+NewsItem by doing ``newsitem.location_set.all()``, and all associated
+NewsItems available on a Location by doing ``location.newsitem_set.all()``.
 
 .. _ebpub-schemas:
 

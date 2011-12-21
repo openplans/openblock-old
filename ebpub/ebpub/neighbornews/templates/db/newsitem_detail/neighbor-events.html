@@ -1,12 +1,15 @@
 {% extends "db/newsitem_detail.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
+{% block extra_title %}{% if can_edit %}
+    <a class="button" href="{% url edit_message newsitem.id %}">Edit</a>
+    <a class="button" href="{% url delete_message newsitem.id %}">Delete</a>
+{% endif %}{% endblock extra_title %}
+
+{% block newsitem_detail_image_list %}
+{% include "neighbornews/image_list_snippet.html" %}
+{% endblock %}
 
 {% block extracontent %}
-
-{% if newsitem.attributes.image_url %}
-<img class="item-image" src="{{newsitem.attributes.image_url}}" />
-{% endif %}
-
 {% if newsitem.newsitemcreator_set.all %}
   {% with creator=newsitem.newsitemcreator_set.all.0.user %}
     Created by

@@ -285,3 +285,26 @@ Lookups: normalized enums
 For attributes that have only a few possible values, you can add
 another layer of indirection called a Lookup to confuse you... err,
 normalize the data somewhat.  See :ref:`lookups` for more.
+
+Other Fields
+------------
+
+A few more fields worth mentioning:
+
+* ``allow_comments`` - whether users can comment on these NewsItems.
+  You should also set has_newsitem_detail=True.
+
+* ``allow_flagging`` - whether users can flag these NewsItems as
+  inappropriate or spam. This leverages the ``ebpub.moderation``
+  package.
+
+* ``allow_charting`` - whether to show aggregate statistic charts on
+  the home page of this schema, such as number of recent items found
+  in each Location, and number of recent items loaded per day.
+
+
+Further Reading
+---------------
+
+For complete details on Schemas, you'll have to refer to the source
+code in ``ebpub.db.models``.

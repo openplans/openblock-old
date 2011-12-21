@@ -1201,13 +1201,13 @@ form.neighbornews textarea {
     font-color: #cfcfcf;
 }
 
-form.neighbornews .form-error {
-    font-size: 80%;
+form.neighbornews .form-error, ul.errorlist li {
+    font-size: 90%;
     color: #ff2020;
 }
 
 form.neighbornews .form-help {
-    font-size: 80%;
+    font-size: 90%;
     color: #8f8f8f;
 }
 

@@ -7,264 +7,22 @@ from django.db import models
 class Migration(DataMigration):
 
     depends_on = (
-        ("db", "0020_auto__add_field_schema_is_event"),
-        ('neighbornews', '0002_add_is_event'),
-        )
-
-    needed_by = (
-        # We were created before allow_flagging existed.
-        ('db', '0024_auto__add_field_schema_allow_flagging'),
+        ("db", "0024_auto__add_field_schema_allow_flagging"),
         )
 
     def forwards(self, orm):
-        def _create_or_update(model_id, key, attributes):
-            Model = orm[model_id]
-            params = {'defaults': attributes}
-            params.update(key)
-            ob, created = Model.objects.get_or_create(**params)
-            for k, v in attributes.items(): 
-                setattr(ob, k, v)
-            ob.save()
-            return ob
-
-        # Meetups schema
-        schema = _create_or_update(
-            'db.schema', {'slug': 'meetups'},
-            {
-                "allow_charting": True,
-                "can_collapse": False,
-                "date_name": "Date",
-                "date_name_plural": "Dates",
-                "grab_bag": "",
-                "grab_bag_headline": "",
-                "has_newsitem_detail": True,
-                "importance": 0,
-                "indefinite_article": "a",
-                "intro": "",
-                "is_event": True,
-                "is_public": True,
-                "is_special_report": False,
-                "last_updated": "2011-09-09",
-                "min_date": "2011-01-01",
-                "name": "Meetup",
-                "number_in_overview": 5,
-                "plural_name": "Meetups",
-                "short_description": "Meetups",
-                "short_source": "http://meetup.com",
-                "slug": "meetups",
-                "source": "http://meetup.com",
-                "summary": "Local Meetup meetings",
-                "update_frequency": "",
-                "uses_attributes_in_list": True,
-                })
-
-        _create_or_update(
-            'db.schemafield', {'schema': schema, 'name': "group_name",},
-            {
-                "display": True,
-                "display_order": 1,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": True,
-                "pretty_name": "Group Name",
-                "pretty_name_plural": "Group Names",
-                "real_name": "varchar01",
-                })
-
-        _create_or_update(
-            'db.schemafield', {'schema': schema, 'name': "venue_name",},
-            {
-                "display": True,
-                "display_order": 5,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": True,
-                "pretty_name": "Venue Name",
-                "pretty_name_plural": "Venue Names",
-                "real_name": "varchar02",
-                })
-
-        _create_or_update(
-            'db.schemafield', {'schema': schema, 'name': "venue_phone",},
-            {
-                "display": True,
-                "display_order": 10,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": False,
-                "pretty_name": "Venue Phone",
-                "pretty_name_plural": "Venue Phones",
-                "real_name": "varchar03",
-                })
-
-        _create_or_update(
-            'db.schemafield', {'schema': schema, 'name': 'start_time',},
-            {
-                "display": True,
-                "display_order": 0,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": False,
-                "pretty_name": "Start Time",
-                "real_name": "time01",
-                })
-
-        # Neighbornews schemas.
-        schema = _create_or_update(
-            'db.schema', {'slug': 'neighbor-events'},
-            {
-                "allow_charting": True,
-                "allow_comments": True,
-                "can_collapse": False,
-                "date_name": "Date",
-                "date_name_plural": "Dates",
-                "grab_bag": "",
-                "grab_bag_headline": "",
-                "has_newsitem_detail": True,
-                "importance": 0,
-                "indefinite_article": "a",
-                "intro": "",
-                "is_public": True,
-                "is_special_report": False,
-                "last_updated": "2011-08-03",
-                "map_color": "",
-                "map_icon_url": "",
-                "min_date": "2011-08-03",
-                "name": "Neighbor Event",
-                "number_in_overview": 5,
-                "plural_name": "Neighbor Events",
-                "short_description": "User contributed events",
-                "short_source": "",
-                "slug": "neighbor-events",
-                "source": "",
-                "summary": "",
-                "update_frequency": "",
-                "uses_attributes_in_list": False,
-                'is_event': True,
-                })
-        _create_or_update(
-            'db.schemafield', {"name": "categories", "schema": schema},
-            {
-                "display": True,
-                "display_order": 10,
-                "is_charted": False,
-                "is_filter": True,
-                "is_lookup": True,
-                "is_searchable": False,
-                "pretty_name": "Categories",
-                "pretty_name_plural": "Categories",
-                "real_name": "varchar01",
-                })
-        _create_or_update(
-            'db.schemafield', {"name": "start_time", "schema": schema},
-            {
-                "display": True,
-                "display_order": 24,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": False,
-                "pretty_name": "Start Time",
-                "pretty_name_plural": "Start Times",
-                "real_name": "time01",
-                })
-        _create_or_update(
-            'db.schemafield', {"name": "end_time", "schema": schema},
-            {
-                "display": True,
-                "display_order": 25,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": False,
-                "pretty_name": "End Time",
-                "pretty_name_plural": "End Times",
-                "real_name": "time02",
-                })
-
-        _create_or_update(
-            'db.schemafield', {"name": "image_url", "schema": schema},
-            {
-                "display": False,
-                "display_order": 10,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": False,
-                "pretty_name": "Image URL",
-                "pretty_name_plural": "Image URLs",
-                "real_name": "text01",
-                })
-
-        # Neighbornews neighbor-messages schema.
-        schema = _create_or_update(
-            'db.schema', {'slug': 'neighbor-messages'},
-            {
-                "allow_charting": True,
-                "allow_comments": True,
-                "can_collapse": False,
-                "date_name": "Date",
-                "date_name_plural": "Dates",
-                "grab_bag": "",
-                "grab_bag_headline": "",
-                "has_newsitem_detail": True,
-                "importance": 0,
-                "indefinite_article": "a",
-                "intro": "",
-                "is_public": True,
-                "is_special_report": False,
-                "last_updated": "2011-08-03",
-                "map_color": "",
-                "map_icon_url": "",
-                "min_date": "2011-08-03",
-                "name": "Neighbor Message",
-                "number_in_overview": 5,
-                "plural_name": "Neighbor Messages",
-                "short_description": "User contributed messages and news",
-                "short_source": "",
-                "slug": "neighbor-messages",
-                "source": "",
-                "summary": "",
-                "update_frequency": "",
-                "uses_attributes_in_list": False,
-                'is_event': False,
-                })
-
-        _create_or_update(
-            'db.schemafield', {"name": "categories", "schema": schema},
-            {
-                "display": True,
-                "display_order": 10,
-                "is_charted": False,
-                "is_filter": True,
-                "is_lookup": True,
-                "is_searchable": False,
-                "pretty_name": "Categories",
-                "pretty_name_plural": "Categories",
-                "real_name": "varchar01",
-                })
-
-        _create_or_update(
-            'db.schemafield', {"name": "image_url", "schema": schema},
-            {
-                "display": False,
-                "display_order": 10,
-                "is_charted": False,
-                "is_filter": False,
-                "is_lookup": False,
-                "is_searchable": False,
-                "pretty_name": "Image URL",
-                "pretty_name_plural": "Image URLs",
-                "real_name": "text01",
-                })
+        """
+        Just in case somebody loaded the neighbornews fixtures
+        before we added the Schema.allow_flagging field.
+        """
+        schemas = orm['db.schema'].objects.filter(slug__in=('neighbor-events', ('neighbor-messages')))
+        for schema in schemas:
+            schema.allow_flagging = True
+            schema.save()
 
 
     def backwards(self, orm):
-        pass
+        "Write your backwards methods here."
 
 
     models = {
@@ -398,12 +156,12 @@ class Migration(DataMigration):
             'Meta': {'ordering': "('slug',)", 'unique_together': "(('slug', 'location_type'),)", 'object_name': 'Location'},
             'area': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'city': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'creation_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'creation_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'display_order': ('django.db.models.fields.SmallIntegerField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_public': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'last_mod_date': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'last_mod_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'null': 'True', 'blank': 'True'}),
             'location': ('django.contrib.gis.db.models.fields.GeometryField', [], {'null': 'True'}),
             'location_type': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.LocationType']"}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
@@ -431,7 +189,7 @@ class Migration(DataMigration):
             'slug': ('django.db.models.fields.SlugField', [], {'unique': 'True', 'max_length': '32', 'db_index': 'True'})
         },
         'db.lookup': {
-            'Meta': {'ordering': "('slug',)", 'unique_together': "(('slug', 'schema_field'),)", 'object_name': 'Lookup'},
+            'Meta': {'ordering': "('slug',)", 'unique_together': "(('slug', 'schema_field'), ('code', 'schema_field'))", 'object_name': 'Lookup'},
             'code': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -441,18 +199,24 @@ class Migration(DataMigration):
         },
         'db.newsitem': {
             'Meta': {'ordering': "('title',)", 'object_name': 'NewsItem'},
-            'block': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['streets.Block']", 'null': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'item_date': ('django.db.models.fields.DateField', [], {'db_index': 'True'}),
+            'item_date': ('django.db.models.fields.DateField', [], {'default': 'datetime.date.today', 'db_index': 'True'}),
             'last_modification': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'db_index': 'True', 'blank': 'True'}),
             'location': ('django.contrib.gis.db.models.fields.GeometryField', [], {'null': 'True', 'blank': 'True'}),
             'location_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'location_object': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Location']", 'null': 'True', 'blank': 'True'}),
-            'pub_date': ('django.db.models.fields.DateTimeField', [], {'db_index': 'True'}),
+            'location_object': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'+'", 'null': 'True', 'to': "orm['db.Location']"}),
+            'location_set': ('django.db.models.fields.related.ManyToManyField', [], {'symmetrical': 'False', 'to': "orm['db.Location']", 'null': 'True', 'through': "orm['db.NewsItemLocation']", 'blank': 'True'}),
+            'pub_date': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'db_index': 'True'}),
             'schema': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Schema']"}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'url': ('django.db.models.fields.TextField', [], {'blank': 'True'})
+        },
+        'db.newsitemimage': {
+            'Meta': {'unique_together': "(('news_item', 'image'),)", 'object_name': 'NewsItemImage'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'image': ('django.db.models.fields.files.ImageField', [], {'max_length': '256'}),
+            'news_item': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.NewsItem']"})
         },
         'db.newsitemlocation': {
             'Meta': {'unique_together': "(('news_item', 'location'),)", 'object_name': 'NewsItemLocation'},
@@ -464,6 +228,7 @@ class Migration(DataMigration):
             'Meta': {'ordering': "('name',)", 'object_name': 'Schema'},
             'allow_charting': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'allow_comments': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'allow_flagging': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'can_collapse': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'date_name': ('django.db.models.fields.CharField', [], {'default': "'Date'", 'max_length': '32'}),
             'date_name_plural': ('django.db.models.fields.CharField', [], {'default': "'Dates'", 'max_length': '32'}),
@@ -480,7 +245,7 @@ class Migration(DataMigration):
             'last_updated': ('django.db.models.fields.DateField', [], {}),
             'map_color': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'map_icon_url': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
-            'min_date': ('django.db.models.fields.DateField', [], {}),
+            'min_date': ('django.db.models.fields.DateField', [], {'default': 'datetime.date(1970, 1, 1)'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
             'number_in_overview': ('django.db.models.fields.SmallIntegerField', [], {'default': '5'}),
             'plural_name': ('django.db.models.fields.CharField', [], {'max_length': '32'}),
@@ -515,37 +280,34 @@ class Migration(DataMigration):
             'redirect_to': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '128', 'blank': 'True'})
         },
+        'moderation.commentflag': {
+            'Meta': {'ordering': "('news_item',)", 'object_name': 'CommentFlag'},
+            'comment': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'news_item': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'moderation_commentflag_related'", 'null': 'True', 'to': "orm['db.NewsItem']"}),
+            'reason': ('django.db.models.fields.CharField', [], {'max_length': '128', 'db_index': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'default': "'new'", 'max_length': '64', 'db_index': 'True', 'blank': 'True'}),
+            'submitted': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'user': ('django.db.models.fields.CharField', [], {'default': "'anonymous'", 'max_length': '128', 'null': 'True', 'blank': 'True'})
+        },
+        'moderation.newsitemflag': {
+            'Meta': {'ordering': "('news_item',)", 'object_name': 'NewsItemFlag'},
+            'comment': ('django.db.models.fields.CharField', [], {'max_length': '512', 'null': 'True', 'blank': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'news_item': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "'moderation_newsitemflag_related'", 'null': 'True', 'to': "orm['db.NewsItem']"}),
+            'reason': ('django.db.models.fields.CharField', [], {'max_length': '128', 'db_index': 'True'}),
+            'state': ('django.db.models.fields.CharField', [], {'default': "'new'", 'max_length': '64', 'db_index': 'True', 'blank': 'True'}),
+            'submitted': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'updated': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'user': ('django.db.models.fields.CharField', [], {'default': "'anonymous'", 'max_length': '128', 'null': 'True', 'blank': 'True'})
+        },
         'neighbornews.newsitemcreator': {
             'Meta': {'ordering': "('news_item',)", 'unique_together': "(('news_item', 'user'),)", 'object_name': 'NewsItemCreator'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'news_item': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.NewsItem']"}),
             'user': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['accounts.User']"})
-        },
-        'streets.block': {
-            'Meta': {'ordering': "('pretty_name',)", 'object_name': 'Block', 'db_table': "'blocks'"},
-            'from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'geom': ('django.contrib.gis.db.models.fields.LineStringField', [], {}),
-            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'left_city': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
-            'left_from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'left_state': ('django.contrib.localflavor.us.models.USStateField', [], {'max_length': '2', 'db_index': 'True'}),
-            'left_to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'left_zip': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '10', 'null': 'True', 'blank': 'True'}),
-            'parent_id': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'postdir': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '2', 'blank': 'True'}),
-            'predir': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '2', 'blank': 'True'}),
-            'pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'right_city': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '255', 'blank': 'True'}),
-            'right_from_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'right_state': ('django.contrib.localflavor.us.models.USStateField', [], {'max_length': '2', 'db_index': 'True'}),
-            'right_to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'}),
-            'right_zip': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '10', 'null': 'True', 'blank': 'True'}),
-            'street': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
-            'street_pretty_name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
-            'street_slug': ('django.db.models.fields.SlugField', [], {'max_length': '50', 'db_index': 'True'}),
-            'suffix': ('django.db.models.fields.CharField', [], {'db_index': 'True', 'max_length': '32', 'blank': 'True'}),
-            'to_num': ('django.db.models.fields.IntegerField', [], {'db_index': 'True', 'null': 'True', 'blank': 'True'})
         }
     }
 
-    complete_apps = ['db', 'neighbornews', 'obdemo']
+    complete_apps = ['db', 'moderation', 'neighbornews']

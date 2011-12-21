@@ -30,6 +30,7 @@ docs/_build
 .noseids
 .ropeproject
 *,cover
+ebpub/ebpub/media/uploads
 cover
 build
 dist
