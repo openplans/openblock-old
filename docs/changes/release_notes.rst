@@ -48,6 +48,10 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Added 'prefix' to the Streets models, used for things like "State Hwy" in the
+  US census TIGER data; without it, we were getting geocoding failures,
+  confusing/ambigous street names in the UI, etc. Closes #264.
+
 * Added ``ebpub.moderation`` app that allows users to flag NewsItems
   as spam or inappropriate, and an admin UI for it;
   see :ref:`moderation` for more.
