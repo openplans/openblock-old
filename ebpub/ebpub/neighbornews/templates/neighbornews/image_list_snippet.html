@@ -4,7 +4,7 @@
      swap a view as to swap a template. -->
 {% with images|add:attribute_dict.image_url.value_list as all_images %}
 	{% for image in all_images %}
-	  {% with image.value|default:image.url as url %}{% if url %}
+	  {% with image.value|default:image.url as url %}{% if url and url != 'N/A' %}
 		<tr>
 			<th>Image {{ forloop.counter }}</th>
 			<td>

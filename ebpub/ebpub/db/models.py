@@ -894,7 +894,8 @@ class NewsItem(models.Model):
             return []
         if not self.attributes:
             logger.warn("%s has fields in its schema, but no attributes!" % self)
-            return []
+            # Hopefully we can cope with an empty dict.
+            #return []
         return [AttributeForTemplate(f, self.attributes) for f in fields]
 
 
