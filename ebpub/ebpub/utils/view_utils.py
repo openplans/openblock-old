@@ -90,8 +90,9 @@ def get_schema_manager(request):
     based on the current request.
 
     This should be used in ALL public view queries that reference
-    NewsItems or Schemas.  There should probably be a more convenient
-    API for doing this.
+    NewsItems or Schemas.
+    Note that it's called internally by NewsItem.objects.by_request(request)
+    (also available on NewsItemQuerySet).
 
     By default, this just uses ``has_staff_cookie`` to decide whether
     to show Schemas that are not public, but you can also name the
