@@ -78,6 +78,8 @@ class Standardizer(object):
         else:
             return s
 
+_number_standardizer_re = re.compile(r'^(\d+)[A-Z]?(?:-\d+[A-Z]?)?$')
+
 def number_standardizer(s):
     """
     Removes the second number in hyphenated addresses such as '123-02', as
@@ -93,7 +95,7 @@ def number_standardizer(s):
     >>> number_standardizer('x')
     'x'
     """
-    m = re.search(r'^(\d+)[A-Z]?(?:-\d+[A-Z]?)?$', s)
+    m = _number_standardizer_re.search(s)
     if not m:
         # We shouldn't reach this, but if the regex doesn't match, just return the input.
         return s
