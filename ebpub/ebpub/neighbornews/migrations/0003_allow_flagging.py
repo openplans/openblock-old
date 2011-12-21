@@ -13,7 +13,7 @@ class Migration(DataMigration):
     def forwards(self, orm):
         """
         Just in case somebody loaded the neighbornews fixtures
-        before we added the Schema.is_event field.
+        before we added the Schema.allow_flagging field.
         """
         schemas = orm['db.schema'].objects.filter(slug__in=('neighbor-events', ('neighbor-messages')))
         for schema in schemas:
