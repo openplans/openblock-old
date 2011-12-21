@@ -23,9 +23,10 @@
 {% endif %}
 
 <div class="flag-form {% if not form.errors %}hidden{% endif %}">
-
+  {% if flag_counts %}
   <div>Site administrators will review this item soon. You can still
 	add a flag if you like.</div>
+  {% endif %}
 
   <form id="flag-form" method="POST" action="" class="neighbornews">
 	{% csrf_token %}
