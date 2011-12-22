@@ -24,6 +24,7 @@ from httplib2 import Http
 from lxml import etree
 import datetime
 import pyrfc3339
+import socket
 import sys
 import time
 import traceback
@@ -131,8 +132,10 @@ class GeoReportV2Scraper(object):
                 log.error("Error retrieving %s: status was %d" % (url, response.status))
                 log.error(content)
                 return 0
+        except socket.error:
+            log.error("Couldn't connect to %s" % url)
         except:
-            log.error("Error retrieving %s: %s" % (url, traceback.format_exc()))
+            log.error("Unhandled error retrieving %s: %s" % (url, traceback.format_exc()))
             return 0
         log.info("Got %s OK" % url)
 
