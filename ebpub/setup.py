@@ -74,7 +74,7 @@ setup(
         "django-static",
         "GDAL",
         "pyyaml",
-        "psycopg2>=2.0",
+        "psycopg2>=2.0,<2.4.2",
         "slimmer",  # used by django-static.
         "pyrfc3339",
         "recaptcha-client",
