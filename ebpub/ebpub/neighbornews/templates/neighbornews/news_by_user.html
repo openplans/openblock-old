@@ -1,5 +1,6 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 {% block content %}
+{% block title %}News by {{user.first_name}}{% endblock %}
 <h1>News posted by {{user.first_name}}</h1>
 
 {% for row in items_by_schema %}
