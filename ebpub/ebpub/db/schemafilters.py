@@ -815,14 +815,21 @@ class FilterChain(SortedDict):
 
 
     def add(self, key, *values, **kwargs):
-        """Given a string key, or a SchemaField, construct an
+        """Given a key that is a string or a SchemaField, construct an
         appropriate NewsitemFilter with the values as arguments, and
-        save it as self[key], where key is either the string key or
-        derived automatically from the SchemaField.
+        save it as self[key], where the new key is either the string
+        key or derived automatically from the SchemaField.
 
-        This does no parsing of values.
+        This does no parsing of values.  The filter added may be
+        determined by the type of the values passed. Eg. if the value
+        is a Block, Location, or LocationType, a LocationFilter or
+        BlockFilter will be added under the key 'location'.  If the
+        value is a datetime, a DateFilter or PubDateFilter will be
+        added depending on the key.
 
-        For convenience, returns self.
+        Yes, this smells too complicated.
+
+        For convenience, this returns self.
         """
         # Unfortunately there's no way to accept a single optional named arg
         # at the same time as accepting arbitrary *values.
