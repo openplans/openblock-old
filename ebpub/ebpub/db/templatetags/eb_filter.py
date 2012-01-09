@@ -84,8 +84,13 @@ def do_filter_url(parser, token):
     {% filter_url filter_chain -"key_to_remove" %}
     {% filter_url filter_chain -key1 -key2 ... %}
 
-    To add NewsitemFilters to the url, specify the key with a leading "+",
-    followed by args to use for constructing a NewsitemFilter.
+    To add NewsitemFilters to the url, specify the key with a leading
+    "+", followed by args to use for constructing a NewsitemFilter.
+
+    Keys and values will be passed to FilterChain.add(); see its docs
+    for info on legal values. But briefly, the keys are either
+    SchemaField instances, or a string understood by SchemaFilter,
+    such as 'pubdate'.
 
     {% filter_url filter_chain +"key" value %}
     {% filter_url filter_chain +key value1 value 2 ... %}
