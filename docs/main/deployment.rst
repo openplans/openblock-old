@@ -28,6 +28,9 @@ for more info.
 Note on Virtual Hosting and Paths
 =================================
 
+Ensure that the user that openblock runs as has write permission
+to the directory at settings.DJANGO_STATIC_SAVE_PREFIX.
+
 Currently (2011/04/20), OpenBlock's views and templates (in the ebpub
 package) contain a lot of hard-coded URLs that only work if the site
 is deployed at the root of your domain.
@@ -53,7 +56,11 @@ Adjust the paths according to your installation.
  # Static media handling.
  # You'll want the "expires" module enabled.
 
+
+ # Django admin static files; these may be under $VIRTUAL_ENV/lib/python2.x
  Alias /media/ /home/openblock/openblock/src/django/django/contrib/admin/media/
+
+ # You want aliases for all top-level subdirectories of ebpub/media
  Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
  Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
  Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/

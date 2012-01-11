@@ -333,6 +333,7 @@ DJANGO_STATIC_MEDIA_ROOTS = [MEDIA_ROOT, STATIC_ROOT,]
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
+# Make sure you have write permission here!!
 DJANGO_STATIC_SAVE_PREFIX = os.path.join(STATIC_ROOT, DJANGO_STATIC_NAME_PREFIX[1:])
 
 
