@@ -50,6 +50,8 @@ class BaseScraper(object):
         self.logger = logging.getLogger('eb.retrieval.%s' % self.logname)
         self.start_time = datetime.datetime.now()
         self._geocoder = SmartGeocoder()
+        self.num_added = 0
+        self.num_changed = 0
 
     def geocode(self, location_name, zipcode=None):
         """
