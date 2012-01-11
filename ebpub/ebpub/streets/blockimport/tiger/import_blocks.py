@@ -195,6 +195,8 @@ class TigerImporter(BlockImporter):
                 logger.debug(msg.format(correct, primary['TLID'], incorrect,
                                         pprint.pformat(primary),
                                         pprint.pformat(alternate)))
+                # the following code generates a lot of unique constraint
+                # violations on the incorrect column
                 # try:
                 #     StreetMisspelling.objects.get(incorrect=incorrect,
                 #                                   correct=correct)
