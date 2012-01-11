@@ -37,7 +37,7 @@ if settings.DEBUG:
          'django.views.static.serve',
          {'document_root': olwidget_media_path}),
 
-        (r'^(?P<path>(?:%s).*)/?$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+        (r'^(?:%s)(?P<path>.*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
          'django.views.static.serve',
          {'document_root': settings.DJANGO_STATIC_SAVE_PREFIX}),
 
