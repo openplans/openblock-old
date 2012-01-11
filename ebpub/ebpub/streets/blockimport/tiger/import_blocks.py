@@ -18,12 +18,15 @@
 #
 
 import sys
+import pprint
 import optparse
+from collections import defaultdict
 from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.gdal.error import OGRIndexError
 from ebdata.parsing import dbf
 from ebpub.geocoder.parser import parsing as geocoder_parsing
 from ebpub.streets.blockimport.base import BlockImporter, logger
+from ebpub.streets.models import StreetMisspelling
 
 STATE_FIPS = {
     '02': ('AK', 'ALASKA'),
@@ -121,24 +124,7 @@ class TigerImporter(BlockImporter):
         BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
                                verbose=verbose, encoding=encoding)
         self.fix_cities = fix_cities
-        self.featnames_db = featnames_db = {}
-        for tlid, row in self._load_rel_db(featnames_dbf, 'TLID').iteritems():
-            # TLID is Tiger/Line ID, unique per edge.
-            # We use TLID instead of LINEARID as the key because
-            # LINEARID is only unique per 'linear feature', which is
-            # an implicit union of some edges. So if we used LINEARID,
-            # we'd clobber a lot of keys in the call to
-            # _load_rel_db().
-            # Fixes #14 ("missing blocks").
-            if row['MTFCC'] not in VALID_MTFCC:
-                continue
-            if not row.get('FULLNAME'):
-                self.log("skipping tlid %r, no fullname" % tlid)
-                continue
-
-            featnames_db.setdefault(tlid, [])
-            featnames_db[tlid].append(row)
-
+        self.featnames_db = self._clean_featnames(featnames_dbf)
         self.faces_db = self._load_rel_db(faces_dbf, 'TFID')
         # Load places keyed by FIPS code
         places_layer = DataSource(place_shp)[0]
@@ -157,18 +143,17 @@ class TigerImporter(BlockImporter):
         self.filter_bounds = filter_bounds
         self.tlids_with_blocks = set()
 
-
     def _load_rel_db(self, dbf_file, rel_key):
         """
         Reads rows as dicts from a .dbf file.
         Returns a mapping of rel_key -> row dict.
         """
         f = open(dbf_file, 'rb')
-        db = {}
+        db = defaultdict(list)
         rowcount = 0
         try:
             for row in dbf.dict_reader(f, strip_values=True):
-                db[row[rel_key]] = row
+                db[row[rel_key]].append(row)
                 rowcount += 1
                 self.log(
                     " GOT DBF ROW %s for %s" % (row[rel_key], row.get('FULLNAME', 'unknown')))
@@ -177,6 +162,46 @@ class TigerImporter(BlockImporter):
         self.log("Rows in %s: %d" % (dbf_file, rowcount))
         self.log("Unique keys for %r: %d" % (rel_key, len(db)))
         return db
+
+    def _clean_featnames(self, featnames_dbf):
+        rel_db = self._load_rel_db(featnames_dbf, 'TLID')
+        featnames_db = defaultdict(list)
+        for tlid, rows in rel_db.iteritems():
+            primary = None
+            alternates = []
+            for row in rows:
+                # TLID is Tiger/Line ID, unique per edge.
+                # We use TLID instead of LINEARID as the key because
+                # LINEARID is only unique per 'linear feature', which is
+                # an implicit union of some edges. So if we used LINEARID,
+                # we'd clobber a lot of keys in the call to
+                # _load_rel_db().
+                # Fixes #14 ("missing blocks").
+                if row['MTFCC'] not in VALID_MTFCC:
+                    continue
+                if not row.get('FULLNAME'):
+                    self.log("skipping tlid %r, no fullname" % tlid)
+                    continue
+                if row['PAFLAG'] == 'P':
+                    primary = row
+                    featnames_db[tlid].append(row)
+                else:
+                    alternates.append(row)
+            # create StreetMisspelling for alternates
+            for alternate in alternates:
+                correct = primary['NAME'].upper()
+                incorrect = alternate['NAME'].upper()
+                msg = 'Found alternate name for {0} ({1}): {2}\n{3}\n{4}'
+                logger.debug(msg.format(correct, primary['TLID'], incorrect,
+                                        pprint.pformat(primary),
+                                        pprint.pformat(alternate)))
+                # try:
+                #     StreetMisspelling.objects.get(incorrect=incorrect,
+                #                                   correct=correct)
+                # except StreetMisspelling.DoesNotExist:
+                #     StreetMisspelling(incorrect=incorrect,
+                #                       correct=correct).save()
+        return featnames_db
 
     def _get_city(self, feature, side):
         city = ''
@@ -189,7 +214,7 @@ class TigerImporter(BlockImporter):
         else:
             fid = feature.get('TFID' + side)
             if fid in self.faces_db:
-                face = self.faces_db[fid]
+                face = self.faces_db[fid][0]
                 # Handle both 2010 and older census files.
                 # If none of these work, we simply get no city.
                 pid = face.get('PLACEFP10') or face.get('PLACEFP00') or face.get('PLACEFP')
@@ -203,7 +228,7 @@ class TigerImporter(BlockImporter):
     def _get_state(self, feature, side):
         fid = feature.get('TFID' + side)
         if fid in self.faces_db:
-            face = self.faces_db[fid]
+            face = self.faces_db[fid][0]
             # Handle both 2010 and older census files.
             state_fip = STATE_FIPS[face.get('STATEFP10') or face['STATEFP']]
             return state_fip[0]
