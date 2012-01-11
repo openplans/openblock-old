@@ -1,4 +1,5 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+{% block title %}News by {{user.first_name}}{% endblock %}
 {% block content %}
 <h1>News posted by {{user.first_name}}</h1>
 
