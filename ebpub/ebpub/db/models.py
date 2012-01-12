@@ -614,22 +614,30 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
 
         This handles many-to-many lookups correctly behind the scenes.
 
-        If is_lookup is True, then att_value is treated as the 'code' of a
-        Lookup object, and the Lookup's ID will be retrieved for use in the
-        query.
+        If is_lookup is True, then each att_value must be either a
+        Lookup instance, or the 'code' of a Lookup instance, or an id
+        of a Lookup instance.  (If is_lookup is False, then only ids
+        will work.)
         """
 
         clone = self.prepare_attribute_qs()
         real_name = str(schema_field.real_name)
+        if isinstance(att_value, models.query.QuerySet):
+            att_value = list(att_value)
         if not isinstance(att_value, (list, tuple)):
             att_value = [att_value]
         if is_lookup:
-            if not isinstance(att_value[0], Lookup):
-                # Assume all are Lookup.code values.
+            if isinstance(att_value[0], int):
+                # Assume all are Lookup.id values. Get just the ones
+                # that exist.
+                att_value = Lookup.objects.filter(schema_field__id=schema_field.id, id__in=att_value)
+            elif not isinstance(att_value[0], Lookup):
+                # Assume all are Lookup.code values. Get just the ones
+                # that exist.
                 att_value = Lookup.objects.filter(schema_field__id=schema_field.id, code__in=att_value)
             if not att_value:
                 # If the lookup values don't exist, then there aren't any
-                # NewsItems with this attribute value. Note that we aren't
+                # NewsItems with these attribute values. Note that we aren't
                 # using QuerySet.none() here, because we want the result to
                 # be a NewsItemQuerySet, and none() returns a normal QuerySet.
                 clone = clone.extra(where=('1=0',))
@@ -1077,7 +1085,8 @@ class Lookup(models.Model):
     schema_field = models.ForeignKey(
         SchemaField,
         help_text="This must be a SchemaField whose real_name is an int or varchar column.")
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255,
+                            help_text='Human-readable name of this lookup value.')
     code = models.CharField(
         max_length=255, blank=True,
         help_text='Optional internal code to use for retrieval if `name` is modified from the original data source, eg. to make `name` prettier.')

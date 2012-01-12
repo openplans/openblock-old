@@ -408,6 +408,17 @@
  },
  {
   "fields": {
+   "description": "A police beat, unused.",
+   "code": "999",
+   "schema_field": 7,
+   "name": "Police Beat 999 UNUSED",
+   "slug": "beat-999"
+  },
+  "model": "db.lookup",
+  "pk": 9991
+ },
+ {
+  "fields": {
    "description": "A crime type.",
    "code": "97",
    "schema_field": 8,
@@ -504,5 +515,16 @@
   },
   "model": "db.lookup",
   "pk": 73
+ },
+ {
+  "fields": {
+   "description": "Tag 999 UNUSED",
+   "code": "999",
+   "schema_field": 13,
+   "name": "Tag 999 UNUSED",
+   "slug": "tag-999"
+  },
+  "model": "db.lookup",
+  "pk": 9992
  }
 ]

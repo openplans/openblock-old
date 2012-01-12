@@ -237,3 +237,46 @@ class DatabaseExtensionsTestCase(TestCase):
         request = mock.Mock()
         self.assertEqual(NewsItem.objects.by_request(request).count(), 0)
         self.assertEqual(mock_get_schema_manager.call_count, 1)
+
+    def test_by_attribute__lookup_single(self):
+        from ebpub.db.models import NewsItem, SchemaField, Lookup
+        by_attribute = NewsItem.objects.by_attribute
+        sf = SchemaField.objects.get(name='beat')
+        lookups = Lookup.objects.filter(schema_field=sf, code__in=['214', '64'])
+        qs = by_attribute(sf, lookups, is_lookup=True)
+        self.assertEqual(qs.count(), 3)
+        lookups = Lookup.objects.filter(schema_field=sf, code='214')
+        qs = by_attribute(sf, lookups, is_lookup=True)
+        self.assertEqual(qs.count(), 1)
+
+
+    def test_by_attribute__lookup_m2m(self):
+        from ebpub.db.models import NewsItem, SchemaField, Lookup
+        by_attribute = NewsItem.objects.by_attribute
+        sf = SchemaField.objects.get(name='tags many-to-many')
+        lookups = Lookup.objects.filter(schema_field=sf, code__in=['1', '2'])
+        qs = by_attribute(sf, lookups, is_lookup=True)
+        self.assertEqual(qs.count(), 3)
+        lookups = Lookup.objects.filter(schema_field=sf, code__in=['2', '3'])
+        qs = by_attribute(sf, lookups, is_lookup=True)
+        self.assertEqual(qs.count(), 2)
+        lookups = Lookup.objects.filter(schema_field=sf, code__in=['3'])
+        qs = by_attribute(sf, lookups, is_lookup=True)
+        self.assertEqual(qs.count(), 1)
+        lookups = Lookup.objects.filter(schema_field=sf, code__in=['999'])
+        qs = by_attribute(sf, lookups, is_lookup=True)
+        self.assertEqual(qs.count(), 0)
+
+
+    def test_by_attribute__lookup_m2m__by_code(self):
+        from ebpub.db.models import NewsItem, SchemaField
+        by_attribute = NewsItem.objects.by_attribute
+        sf = SchemaField.objects.get(name='tags many-to-many')
+        qs = by_attribute(sf, ['1', '2'], is_lookup=True)
+        self.assertEqual(qs.count(), 3)
+        qs = by_attribute(sf, ['2', '3'], is_lookup=True)
+        self.assertEqual(qs.count(), 2)
+        qs = by_attribute(sf, ['3'], is_lookup=True)
+        self.assertEqual(qs.count(), 1)
+        qs = by_attribute(sf, ['999'], is_lookup=True)
+        self.assertEqual(qs.count(), 0)
