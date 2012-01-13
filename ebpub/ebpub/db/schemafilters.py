@@ -172,7 +172,7 @@ class AttributeFilter(NewsitemFilter):
         self.slug = self.schemafield.name
         self.argname = 'by-%s' % self.slug
         self.url = 'by-%s=' % self.slug
-        self.value = self.short_value = ''
+        self.value = self.short_value = ''  # Descriptions of this filter, for display.
         self.label = self.schemafield.pretty_name
         if args:
             # This should work for int and varchar fields. (TODO: UNTESTED)
@@ -260,32 +260,36 @@ class LookupFilter(AttributeFilter):
     """
     Filters on Lookup attributes (see ebpub.db.models for more info).
 
-    TODO: currently handles only one lookup value
+    Note we query by Lookup.slug, not Lookup.code, because the slugs
+    are safe for use in URLs.
     """
 
     _sort_value = 900.0
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         AttributeFilter.__init__(self, request, context, queryset, *args, **kwargs)
-        try:
-            slug = args[0]
-            self._got_args = True
-        except IndexError:
-            self._got_args = False
-            self.look = None
+        self.lookups = []
+        slugs = []
+        maybe_lookups = args
+        self._got_args = bool(maybe_lookups)
         if self._got_args:
-            if isinstance(slug, models.Lookup):
-                self.look = slug
-                slug = self.look.slug
-            else:
-                try:
-                    self.look = models.Lookup.objects.get(
-                        schema_field__id=self.schemafield.id, slug=slug)
-                except models.Lookup.DoesNotExist:
-                    raise FilterError("No such lookup %r" % slug)
-            self.value = self.look.name
+            if not isinstance(maybe_lookups, (list, tuple)):
+                maybe_lookups = [maybe_lookups]
+            for candidate in maybe_lookups:
+                if isinstance(candidate, models.Lookup):
+                    self.lookups.append(candidate)
+                    slugs.append(candidate.slug)
+                else:
+                    try:
+                        lookup = models.Lookup.objects.get(
+                            schema_field__id=self.schemafield.id, slug=candidate)
+                        self.lookups.append(lookup)
+                        slugs.append(lookup.slug)
+                    except models.Lookup.DoesNotExist:
+                        raise FilterError("No such lookup %r" % candidate)
+            self.value = ', '.join([lk.name for lk in self.lookups])
             self.short_value = self.value
-            self.url = 'by-%s=%s' % (self.schemafield.name, slug)
+            self.url = 'by-%s=%s' % (self.schemafield.name, ','.join(slugs))
 
     def validate(self):
         if self._got_args:
@@ -298,7 +302,7 @@ class LookupFilter(AttributeFilter):
         }
 
     def apply(self):
-        self.qs = self.qs.by_attribute(self.schemafield, self.look, is_lookup=True)
+        self.qs = self.qs.by_attribute(self.schemafield, self.lookups, is_lookup=True)
 
 
 class LocationFilter(NewsitemFilter):
@@ -578,7 +582,7 @@ class FilterChain(SortedDict):
             # We do this to force our __setitem__ to get called
             # so it will raise error on dupes.
             self.update(data)
-        self.lookup_descriptions = []  # Blurbs for templates.
+        self.lookup_descriptions = []  # Lookup instances used for blurbs for templates.
         self.schema = schema
         if schema:
             self.add('schema', SchemaFilter(request, context, queryset, schema=schema))
@@ -855,7 +859,7 @@ class FilterChain(SortedDict):
             val = LocationFilter(self.request, self.context, self.qs, *values[1:], location_type=values[0])
             key = val.slug
         elif isinstance(values[0], models.Lookup):
-            val = LookupFilter(self.request, self.context, self.qs, values[0],
+            val = LookupFilter(self.request, self.context, self.qs, values,
                                schemafield=values[0].schema_field)
         elif isinstance(values[0], (datetime.date, datetime.datetime)):
             if len(values) == 1:
@@ -926,9 +930,8 @@ class FilterChain(SortedDict):
 
         self[key] = filterclass(self.request, self.context, self.qs, schemafield=schemafield, *values)
 
-        if schemafield.is_lookup and getattr(self[key], 'look', None) is not None:
-            self.lookup_descriptions.append(self[key].look)
-
+        if schemafield.is_lookup:
+            self.lookup_descriptions.extend(getattr(self[key], 'lookups', []))
         return self
 
 

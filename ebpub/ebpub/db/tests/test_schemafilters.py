@@ -253,10 +253,11 @@ class TestLookupFilter(TestCase):
         url = filter_reverse('crime', [url_args])
         req = RequestFactory().get(url)
         context = {'schema': crime}
-        sf_name = url_args[0][3:]   # 'by-foo' -> 'foo'
+        sf_name, lookups = url_args[0], url_args[1:]
+        sf_name = sf_name[3:]   # 'by-foo' -> 'foo'
         sf = models.SchemaField.objects.get(name=sf_name)
         self.mock_qs = mock.Mock()
-        filt = LookupFilter(req, context, self.mock_qs, *url_args[1:], schemafield=sf)
+        filt = LookupFilter(req, context, self.mock_qs, *lookups, schemafield=sf)
         return filt
 
     def test_filter__errors(self):
@@ -272,20 +273,33 @@ class TestLookupFilter(TestCase):
         self.assert_(more_needed)
         self.assertEqual(more_needed['lookup_type'], 'Beat')
         self.assertEqual(more_needed['lookup_type_slug'], 'beat')
-        self.assertEqual(len(more_needed['lookup_list']), 2)
+        self.assert_(len(more_needed['lookup_list']) > 0)
 
-    def test_filter__ok(self):
-        filt = self._make_filter('by-beat', 'beat-214', )
+    def test_filter__ok_single(self):
         filt = self._make_filter('by-beat', 'beat-214', )
         self.assertEqual(filt.validate(), {})
         filt.apply()
-        self.assertEqual(filt.look.id, 214)
+        self.assertEqual(filt.lookups[0].id, 214)
         self.assertEqual(self.mock_qs.by_attribute.call_args,
-                         ((filt.schemafield, filt.look), {'is_lookup': True}))
+                         ((filt.schemafield, filt.lookups), {'is_lookup': True}))
         self.assertEqual(filt.value, 'Police Beat 214')
         self.assertEqual(filt.short_value, 'Police Beat 214')
         self.assertEqual(filt.label, 'Beat')
         self.assertEqual(filt.argname, 'by-beat')
+
+    def test_filter__ok_multi(self):
+        filt = self._make_filter('by-beat', 'beat-214', 'beat-64')
+        self.assertEqual(filt.validate(), {})
+        filt.apply()
+        self.assertEqual(filt.lookups[0].id, 214)
+        self.assertEqual(filt.lookups[1].id, 64)
+        self.assertEqual(self.mock_qs.by_attribute.call_args,
+                         ((filt.schemafield, filt.lookups), {'is_lookup': True}))
+        self.assertEqual(filt.value, 'Police Beat 214, Police Beat 64')
+        self.assertEqual(filt.short_value, 'Police Beat 214, Police Beat 64')
+        self.assertEqual(filt.label, 'Beat')
+        self.assertEqual(filt.argname, 'by-beat')
+
 
 class TestTextFilter(TestCase):
 
