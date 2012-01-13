@@ -997,14 +997,6 @@ class FilterChain(SortedDict):
                 break
         return crumbs
 
-    def make_urls(self, additions=(), removals=(), stop_at=None, base_url=None):
-        """
-        Just like ``make_breadcrumbs`` but only URLs are included in
-        the output.
-        """
-        crumbs = self.make_breadcrumbs(additions, removals, stop_at, base_url)
-        return [crumb[1] for crumb in crumbs]
-
     def make_url(self, additions=(), removals=(), stop_at=None, base_url=None):
         """
         Makes one URL representing all the filters of this filter chain,
