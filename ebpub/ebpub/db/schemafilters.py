@@ -178,13 +178,13 @@ class AttributeFilter(NewsitemFilter):
             # This should work for int and varchar fields. (TODO: UNTESTED)
             self.att_value = args[0]
             self._got_args = True
-            if isinstance(self.att_value, datetime.date):
+            if isinstance(self.att_value, datetime.datetime):
+                # Zone??
+                str_att_value = self.att_value.strftime('%Y-%m-%dT%H:%M:%S')
+            elif isinstance(self.att_value, datetime.date):
                 str_att_value = self.att_value.strftime('%Y-%m-%d')
             elif isinstance(self.att_value, datetime.time):
                 str_att_value = self.att_value.strftime('%H:%M:%S')
-            elif isinstance(self.att_value, datetime.datetime):
-                # Zone??
-                str_att_value = self.att_value.strftime('%Y-%m-%dT%H:%M:%S')
             else:
                 str_att_value = str(self.att_value)
             self.url += str_att_value
