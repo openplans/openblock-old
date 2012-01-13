@@ -520,6 +520,29 @@ class TestFilterChain(TestCase):
         self.assertEqual(chain['date'].start_date, datetime.date(2011, 8, 1))
         self.assertEqual(chain['date'].end_date, datetime.date(2011, 8, 31))
 
+    def test_add__pubdate(self):
+        # Key gets overridden.
+        chain = FilterChain()
+        import datetime
+        chain.add('pubdate', datetime.date(2011, 8, 13))
+        self.assert_(chain.has_key('date'))
+        self.failIf(chain.has_key('pubdate'))
+        self.assertEqual(chain['date'].start_date, datetime.date(2011, 8, 13))
+
+
+
+    def test_add__bogus_keyword_arg(self):
+        chain = FilterChain()
+        self.assertRaises(TypeError, chain.add, 'date', '2011-01-1', foo='bar')
+
+    def test_add__no_value(self):
+        chain = FilterChain()
+        self.assertRaises(FilterError, chain.add, 'date')
+
+    def test_update_from_request__bad(self):
+        chain = FilterChain()
+        argstring = 'foobar'
+        self.assertRaises(FilterError, chain.update_from_request, argstring, {})
 
 
 
