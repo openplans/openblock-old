@@ -28,6 +28,7 @@ from ebpub.db.schemafilters import FilterError
 from ebpub.db.urlresolvers import filter_reverse
 from ebpub.db.views import BadAddressException
 from ebpub.db import models
+import datetime
 import mock
 import random
 
@@ -61,6 +62,28 @@ class TestSchemaFilter(TestCase):
         self.assert_(len(fil.qs) > 0)
         for item in fil.qs:
             self.assertEqual(item.schema.natural_key(), schema.natural_key())
+
+    def test_apply__multi_schema(self):
+        from ebpub.db.schemafilters import SchemaFilter
+        schema = models.Schema.objects.get(slug='crime')
+        fil = SchemaFilter(request=None, context={}, queryset=None,
+                           schema=[schema, schema])
+        fil.apply()
+        self.assert_(len(fil.qs) > 0)
+        for item in fil.qs:
+            self.assertEqual(item.schema.natural_key(), schema.natural_key())
+
+
+    @mock.patch('ebpub.db.schemafilters.get_schema_manager')
+    def test_apply__with_request(self, mock_get_mgr):
+        from ebpub.db.schemafilters import SchemaFilter
+        schema = models.Schema.objects.get(slug='crime')
+        request = mock.Mock()
+        mock_get_mgr.return_value = models.Schema.objects
+        fil = SchemaFilter(request=request, context={}, queryset=None,
+                           schema=[schema, schema])
+        fil.apply()
+        self.assertEqual(mock_get_mgr.call_count, 1)
 
 
 class TestLocationFilter(TestCase):
@@ -205,6 +228,53 @@ class TestDateFilter(TestCase):
         self.assertEqual(filt2.date_field_name, 'pub_date')
         self.assertEqual(filt2.label, 'date published')
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt2.kwargs))
+
+
+class TestAttributeFilter(TestCase):
+
+    def _mock_schemafield(self, name='mock-sf', pretty_name='Mock SF', **kwargs):
+        # This is because the 'name' argument to mock.Mock
+        # means something special, so we have to assign to it
+        # after instantiation.
+        sf = mock.Mock(pretty_name=pretty_name, **kwargs)
+        sf.name = name
+        return sf
+
+    def test_init__no_args(self):
+        from ebpub.db.schemafilters import AttributeFilter
+        schemafield = self._mock_schemafield(name='mock-sf')
+        qs = {}
+        request = context = None
+        filter = AttributeFilter(request, context, qs, schemafield=schemafield)
+        self.assertEqual(filter.url, 'by-mock-sf=')
+
+
+    def test_init__with_date(self):
+        from ebpub.db.schemafilters import AttributeFilter
+        schemafield = self._mock_schemafield(name='mock-sf')
+        when = datetime.date(2009, 1, 23)
+        qs = {}
+        request = context = None
+        filter = AttributeFilter(request, context, qs, when, schemafield=schemafield)
+        self.assertEqual(filter.url, 'by-mock-sf=2009-01-23')
+
+    def test_init__with_datetime(self):
+        from ebpub.db.schemafilters import AttributeFilter
+        schemafield = self._mock_schemafield(name='mock-sf')
+        when = datetime.datetime(2009, 1, 23, 22, 40)
+        qs = {}
+        request = context = None
+        filter = AttributeFilter(request, context, qs, when, schemafield=schemafield)
+        self.assertEqual(filter.url, 'by-mock-sf=2009-01-23T22:40:00')
+
+    def test_init__with_time(self):
+        from ebpub.db.schemafilters import AttributeFilter
+        schemafield = self._mock_schemafield(name='mock-sf')
+        when = datetime.time(22, 40)
+        qs = {}
+        request = context = None
+        filter = AttributeFilter(request, context, qs, when, schemafield=schemafield)
+        self.assertEqual(filter.url, 'by-mock-sf=22:40:00')
 
 
 class TestBoolFilter(TestCase):
