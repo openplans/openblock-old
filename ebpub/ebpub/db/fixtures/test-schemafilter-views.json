@@ -225,16 +225,16 @@
   },
   {
     "fields": {
-      "is_lookup": true,
-      "pretty_name_plural": "Tags",
-      "is_charted": false,
-      "name": "tags many-to-many",
+      "display": true,
       "display_order": 0,
-      "is_searchable": false,
-      "real_name": "varchar04",
-      "pretty_name": "Tag",
+      "is_charted": false,
       "is_filter": true,
-      "display": false,
+      "is_lookup": true,
+      "is_searchable": false,
+      "name": "tag",
+      "pretty_name": "Tag Many-to-Many",
+      "pretty_name_plural": "Tags Many-to-Many",
+      "real_name": "varchar04",
       "schema": 1
     },
     "model": "db.schemafield",
@@ -524,6 +524,18 @@
     "model": "db.lookup",
     "pk": 73
   },
+  {
+    "fields": {
+      "description": "Tag 999 UNUSED",
+      "code": "999",
+      "schema_field": 13,
+      "name": "Tag 999 UNUSED",
+      "slug": "tag-999"
+    },
+    "model": "db.lookup",
+    "pk": 9992
+  },
+
   {
     "fields": {
       "from_num": 200,

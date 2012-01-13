@@ -440,9 +440,14 @@ class TestSchemaFilterView(BaseTestCase):
         self.assertEqual(response.template[0].name, 'db/filter_lookup_list.html')
 
     def test_filter__by_m2m_lookup_attr(self):
-        # XXX todo.
-        # I don't think there are any m2m lookups in crimes.json yet
-        pass
+        url = filter_reverse('crime', [('by-tag', 'tag-1', 'tag-2',),])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tag 1')
+        self.assertContains(response, 'Tag 2')
+        self.assertNotContains(response, 'Tag 999')
+        self.assertContains(response, 'crime title 1')
+        self.assertContains(response, 'crime title 2')
 
     def test_filter__by_boolean_attr__true(self):
         url = filter_reverse('crime', [('by-arrests', 'yes',),])
