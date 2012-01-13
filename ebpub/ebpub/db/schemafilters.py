@@ -859,7 +859,7 @@ class FilterChain(SortedDict):
             val = LocationFilter(self.request, self.context, self.qs, *values[1:], location_type=values[0])
             key = val.slug
         elif isinstance(values[0], models.Lookup):
-            val = LookupFilter(self.request, self.context, self.qs, values,
+            val = LookupFilter(self.request, self.context, self.qs, *values,
                                schemafield=values[0].schema_field)
         elif isinstance(values[0], (datetime.date, datetime.datetime)):
             if len(values) == 1:
