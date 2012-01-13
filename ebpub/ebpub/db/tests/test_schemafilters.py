@@ -529,8 +529,6 @@ class TestFilterChain(TestCase):
         self.failIf(chain.has_key('pubdate'))
         self.assertEqual(chain['date'].start_date, datetime.date(2011, 8, 13))
 
-
-
     def test_add__bogus_keyword_arg(self):
         chain = FilterChain()
         self.assertRaises(TypeError, chain.add, 'date', '2011-01-1', foo='bar')
@@ -544,6 +542,28 @@ class TestFilterChain(TestCase):
         argstring = 'foobar'
         self.assertRaises(FilterError, chain.update_from_request, argstring, {})
 
+    def test_add_by_place_id__bad(self):
+        chain = FilterChain()
+        from django.http import Http404
+        self.assertRaises(Http404, chain.add_by_place_id, '')
+        self.assertRaises(Http404, chain.add_by_place_id, 'blah')
+        self.assertRaises(Http404, chain.add_by_place_id, 'b:123.1')
+        self.assertRaises(Http404, chain.add_by_place_id, 'l:9999')
+
+    @mock.patch('ebpub.utils.view_utils.get_object_or_404')
+    def test_add_by_place_id(self, mock_get_object_or_404):
+        chain = FilterChain()
+        from ebpub.streets.models import Block
+        from ebpub.db.schemafilters import BlockFilter
+        block = Block(city='city', street_slug='street_slug',
+                      pretty_name='pretty_name',
+                      street_pretty_name='street_pretty_name',
+                      street='street',
+                      from_num='123', to_num='456',
+                      )
+        mock_get_object_or_404.return_value = block
+        chain.add_by_place_id('b:123.1')
+        self.assert_(isinstance(chain['location'], BlockFilter))
 
 
 class TestUrlNormalization(TestCase):
