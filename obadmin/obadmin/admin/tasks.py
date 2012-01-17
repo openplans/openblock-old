@@ -26,11 +26,13 @@ from ebpub.db.bin.import_locations import layer_from_shapefile
 from ebpub.db.bin.import_zips import ZipImporter
 from ebpub.streets.blockimport.tiger.import_blocks import TigerImporter
 from ebpub.streets.bin import populate_streets
-from ebpub.utils.logutils import log_exception
 import glob
+import logging
 import os
 import shutil
 import tempfile
+
+logger = logging.getLogger('obadmin.admin.tasks')
 
 # These may look suspiciously like numbers, but we're matching identifiers
 # by the Census, and who knows what they'll do. Extracted from the source of
@@ -114,7 +116,7 @@ def download_state_shapefile(state, zipcodes):
         ZipFile(path, 'r').extractall(cache_dir, files)
         print "extracted"
     except:
-        log_exception()
+        logger.exception('Problem downloading zipcodes for %s' % state)
         return
     for zipcode in zipcodes:
         print "importing %s" % zipcode
@@ -129,7 +131,7 @@ def import_zip_from_shapefile(filename, zipcode):
     try:
         importer.import_zip(zipcode)
     except:
-        log_exception()
+        logger.exception('Zipcode import failed')
         return
 
 @background
@@ -143,7 +145,7 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
             ZipFile(path, 'r').extractall(outdir)
     except:
         # TODO: display error in UI
-        log_exception()
+        logger.exception('Extracting zipfile failed')
         shutil.rmtree(outdir)
         raise
     finally:

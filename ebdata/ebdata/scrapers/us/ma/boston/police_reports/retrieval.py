@@ -32,8 +32,6 @@ from ebpub.db.models import NewsItem
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
 from ebpub.geocoder.parser.parsing import ParsingError
-from ebpub.utils.logutils import log_exception
-import logging
 import datetime
 
 
@@ -116,7 +114,7 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
             try:
                 location = SmartGeocoder().geocode(addr)
             except (GeocodingException, ParsingError):
-                log_exception(level=logging.DEBUG)
+                self.logger.debug('Could not geocode', exc_info=True)
                 continue
             location_name = location['address']
             location = location['point']

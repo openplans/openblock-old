@@ -53,7 +53,6 @@ from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.utils.dates import daterange, parse_date
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
-from ebpub.utils.logutils import log_exception
 
 import datetime
 import hashlib
@@ -355,8 +354,8 @@ def search(request, schema_slug=''):
     try:
         result = full_geocode(q, search_places=False)
     except:
-        logger.debug('Unhandled exception from full_geocode:')
-        log_exception(level=logging.DEBUG, logger=logger)
+        logger.debug('Unhandled exception from full_geocode:',
+                     exc_info=True)
     else:
         if result['ambiguous']:
             if result['type'] == 'block':

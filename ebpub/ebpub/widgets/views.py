@@ -24,11 +24,12 @@ from django.template.context import RequestContext
 from django.utils import simplejson as json
 from ebpub.accounts.utils import login_required
 from ebpub.db.models import NewsItem
-from ebpub.utils.logutils import log_exception
-from ebpub.utils.text import smart_title
 from ebpub.widgets.models import Widget, PinnedItem
-import datetime
 from operator import attrgetter
+import datetime
+import logging
+
+logger = logging.getLogger('ebpub.widgets.views')
 
 def widget_javascript(request, slug):
     """
@@ -124,7 +125,7 @@ def template_context_for_item(newsitem, widget=None):
                 ctx['internal_url'] = _eval_item_link_template(widget.item_link_template,
                                                                {'item': ctx, 'widget': widget})
             except:
-                log_exception()
+                logger.exception('failed to create link for widget')
                 # TODO: some sort of error handling
                 return '#error'
 
@@ -201,7 +202,7 @@ def ajax_widget_raw_items(request, slug):
     try:
         start = int(request.GET.get('start', 0))
         count = int(request.GET.get('count', widget.max_items))
-    except:
+    except ValueError:
         return HttpResponse(status=400)
 
     items = widget.raw_item_query(start, count).all()
@@ -219,8 +220,8 @@ def ajax_widget_raw_items(request, slug):
 
 @login_required
 def ajax_widget_pins(request, slug):
-    """
-    view that exposes and allows setting of 'pinned' items
+    '''
+    view that exposes and allows setting of "pinned" items
     in a widget.
 
     Example of the structure returned/accepted:
@@ -243,8 +244,7 @@ def ajax_widget_pins(request, slug):
             ...
         ]
     }
-
-    """
+    '''
 
     if not request.user.is_superuser == True:
         return HttpResponse("You must be an administrator to access this function.", status=401)
@@ -294,7 +294,8 @@ def _set_ajax_widget_pins(request, widget):
     """
     try:
         pin_info = json.loads(request.raw_post_data)
-    except:
+    except ValueError:
+        logger.exception('bad json')
         return HttpResponse("Unable to parse json body", status=400)
 
     new_pins = []
@@ -305,7 +306,7 @@ def _set_ajax_widget_pins(request, widget):
         if pi.get('expiration_date'):
             try:
                 expiration = datetime.datetime.strptime(pi['expiration_date'], '%m/%d/%Y')
-            except:
+            except ValueError:
                 return HttpResponse("unable to parse expiration date %s" % pi['expiration_date'], status=400)
         if pi.get('expiration_time', '').strip():
             if expiration is None:
@@ -318,7 +319,7 @@ def _set_ajax_widget_pins(request, widget):
                 else:
                     # Assume it's 24-hour.
                     etime = datetime.datetime.strptime(etime, '%H:%M')
-            except:
+            except ValueError:
                 return HttpResponse("unable to parse expiration time %s" % pi['expiration_time'], status=400)
             expiration = expiration.replace(hour=etime.hour, minute=etime.minute)
 
