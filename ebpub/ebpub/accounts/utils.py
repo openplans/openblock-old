@@ -92,6 +92,8 @@ def login_required(view_func):
     Decorator that requires login before a given view function can be
     accessed.
     """
+    # TODO: Is there still any reason we still need to use this
+    # instead of django.contrib.auth.decorators.login_required?
     def inner_view(request, *args, **kwargs):
         if not request.user.is_anonymous():
             return view_func(request, *args, **kwargs)
