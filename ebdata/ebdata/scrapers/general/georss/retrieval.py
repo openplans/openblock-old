@@ -34,7 +34,6 @@ from ebdata.nlp.addresses import parse_addresses
 from ebpub.db.models import NewsItem, Schema
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
-from ebpub.utils.logutils import log_exception
 from ebpub.utils.geodjango import intersects_metro_bbox
 
 # Note there's an undocumented assumption in ebdata that we want to
@@ -125,12 +124,11 @@ class LocalNewsScraper(object):
                                 item.location_name = result['address']
                             break
                         except GeocodingException:
-                            logger.debug("Geocoding exception on %r:" % text)
-                            log_exception(level=logging.DEBUG)
+                            logger.debug("Geocoding exception on %r:" % text,
+                                         exc_info=True)
                             continue
                         except:
-                            logger.error('uncaught geocoder exception on %r\n' % addr)
-                            log_exception()
+                            logger.exception('uncaught geocoder exception on %r\n' % addr)
                     if None in (x, y):
                         logger.debug("Skip, couldn't geocode any addresses in item '%s...'"
                                      % _short_title)
@@ -163,8 +161,7 @@ class LocalNewsScraper(object):
                     updatecount += 1
                 logger.info("%s: %s" % (status, _short_title))
             except:
-                logger.error("Warning: couldn't save %r. Traceback:" % _short_title)
-                log_exception()
+                logger.exception("Warning: couldn't save %r. Traceback:" % _short_title)
         logger.info("Finished LocalNewsScraper update: %d added, %d updated" % (addcount, updatecount))
 
 def main(argv=None):

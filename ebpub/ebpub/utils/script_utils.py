@@ -21,12 +21,13 @@ Utils for command-line scripts.
 """
 
 from django.core.management.base import CommandError
-from ebpub.utils.logutils import log_exception
 import logging
 import os
 import subprocess
 import sys
 import zipfile
+
+logger = logging.getLogger(__name__)
 
 def die(msg):
     """
@@ -44,7 +45,7 @@ def makedirs(path):
         os.makedirs(path)
         return True
     except:
-        log_exception()
+        logger.exception('Failed to create %r' % path)
         return False
 
 def shell_command(cmd, args="", cwd=None):
@@ -73,7 +74,7 @@ def unzip(filename, cwd=None):
         zfile.extractall(path=cwd)
         return True
     except:
-        log_exception()
+        logger.exception('Failed to unzip %r' % filename)
         return False
 
 

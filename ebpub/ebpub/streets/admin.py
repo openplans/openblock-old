@@ -27,7 +27,6 @@ from django import forms, template
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.encoding import force_unicode
-from ebpub.utils.logutils import log_exception
 from ebpub.streets.models import Block, Street, BlockIntersection, \
     Intersection, Suburb, Place, PlaceType, PlaceSynonym, StreetMisspelling
 from ebpub.geocoder import SmartGeocoder, AmbiguousResult, GeocodingException
@@ -278,7 +277,7 @@ class PlaceAdmin(OSMModelAdmin):
                     message = 'Updated place %s' % (pretty_name)
                 context['actions_taken'].append(message)
             except: 
-                log_exception()
+                logger.exception('Place saving %r failed' % pretty_name)
                 message = 'Error adding place "%s"' % pretty_name
                 context['errors'].append(message)
                 continue

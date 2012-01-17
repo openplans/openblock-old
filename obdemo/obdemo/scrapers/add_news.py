@@ -31,7 +31,6 @@ from ebpub.db.models import NewsItem, Schema
 from ebpub.geocoder import SmartGeocoder
 from ebpub.geocoder.base import GeocodingException
 from ebpub.geocoder.parser.parsing import ParsingError
-from ebpub.utils.logutils import log_exception
 
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
@@ -103,12 +102,11 @@ def update(argv=None):
                         x, y = point.x, point.y
                         break
                     except (GeocodingException, ParsingError):
-                        logger.debug("Geocoding exception on %r:" % text)
-                        log_exception(level=logging.DEBUG)
+                        logger.debug("Geocoding exception on %r:" % text,
+                                     exc_info=True)
                         continue
                     except:
-                        logger.error('uncaught geocoder exception on %r\n' % addr)
-                        log_exception()
+                        logger.exception('uncaught geocoder exception on %r\n' % addr)
                 if None in (x, y):
                     logger.info("couldn't geocode '%s...'" % item.title[:30])
                     continue
@@ -135,8 +133,8 @@ def update(argv=None):
                 updatecount += 1
             logger.info("%s: %s" % (status, item.title))
         except:
-            logger.error("Warning: couldn't save %r. Traceback:" % item.title)
-            log_exception()
+            logger.exception("Warning: couldn't save %r. Traceback:" % item.title)
+
     logger.info("Finished add_news: %d added, %d updated" % (addcount, updatecount))
 
 def main(argv=None):
