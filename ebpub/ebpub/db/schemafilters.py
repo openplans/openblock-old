@@ -904,7 +904,7 @@ class FilterChain(SortedDict):
                 _unused, end = calendar.monthrange(values[0].year, values[0].month)
                 values[0] = values[0].replace(day=1)
                 values[1] = values[0].replace(day=end)
-            if key == 'pubdate':
+            if key in ('pubdate', 'pub_date'):  # argh
                 key = 'date'
                 val = PubDateFilter(self.request, self.context, self.qs, *values, schema=self.schema)
             else:
