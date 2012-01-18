@@ -341,6 +341,7 @@ class LocationFilter(NewsitemFilter):
                     raise FilterError("Not enough args, need a location type")
                 self.location_type_slug = args[0]
             self.value = 'Choose %s' % self.location_type_slug.title()
+            self.query_param_value = self.location_type_slug
             try:
                 self.location_slug = args[1]
                 self._got_args = True
@@ -373,6 +374,9 @@ class LocationFilter(NewsitemFilter):
             if not lookup_list:
                 raise FilterError("empty lookup list")
             location_type = lookup_list[0].location_type
+            # Note these 'lookups' aren't db.Lookups, just anything
+            # we can provide a list of that the user can select...
+            # in this case, Locations.
             return {
                 'lookup_type': location_type.name,
                 'lookup_type_slug': self.location_type_slug,

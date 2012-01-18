@@ -105,12 +105,14 @@ class TestLocationFilter(TestCase):
     def test_filter__empty(self):
         self.assertRaises(FilterError, self._make_filter)
 
-    def test_filter_by_location_choices(self):
+    def test_filter_by_location__choices(self):
         filt = self._make_filter('neighborhoods')
         more_needed = filt.validate()
         self.assertEqual(more_needed['lookup_type'], u'Neighborhood')
         self.assertEqual(more_needed['lookup_type_slug'], 'neighborhoods')
         self.assert_(len(more_needed['lookup_list']) > 0)
+        self.assertEqual(filt.get_query_params(),
+                         {'locations': 'neighborhoods'})
 
     @mock.patch('ebpub.db.schemafilters.models.Location.objects.filter')
     def test_filter_by_location__no_locations(self, mock_location_query):
