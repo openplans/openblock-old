@@ -33,34 +33,33 @@ from ebpub.db.schemafilters import FilterError
 from ebpub.db.schemafilters import FilterChain
 from ebpub.db.schemafilters import BadAddressException
 from ebpub.db.schemafilters import BadDateException
+from ebpub.db.views import _get_filter_schemafields
 from ebpub.streets.models import Place, PlaceType
 from ebpub.utils.view_utils import get_schema_manager
 import datetime
+import logging
 import re
 
 
+logger = logging.getLogger('ebpub.richmaps.views')
 
+def bigmap_filter(request, slug):
 
-def bigmap_filter(request, slug, args_from_url):
-    
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponse(status=404)
 
-    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
-    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
-
-    # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+    filter_sf_dict = _get_filter_schemafields(s)
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, schema=s)
     try:
-        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filterchain.update_from_request(filter_sf_dict)
         filters_need_more = filterchain.validate()
     except:
+        logger.exception("Unhandled error")
         return HttpResponse(status=404)
-        
+
     config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
 
     new_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
