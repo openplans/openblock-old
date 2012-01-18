@@ -125,7 +125,10 @@ def _item_geojson_dict(item):
         if attr.sf.is_many_to_many_lookup():
             props[key] = attr.values
         else:
-            props[key] = attr.values[0]
+            try:
+                props[key] = attr.values[0]
+            except IndexError:
+                props[key] = None
 
     props.update(
         {'type': item.schema.slug,
