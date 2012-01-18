@@ -614,7 +614,7 @@ class TestUrlNormalization(TestCase):
 
     def test_urls__intersection(self):
         url = urlresolvers.reverse(
-            'ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+            'ebpub-schema-filter', args=['crime']) + '?address=foo+and+bar'
         from ebpub.streets.models import Block, Intersection, BlockIntersection
         intersection = mock.Mock(spec=Intersection)
         blockintersection = mock.Mock(spec=BlockIntersection)
@@ -629,7 +629,7 @@ class TestUrlNormalization(TestCase):
 
     def test_urls__bad_intersection(self):
         url = urlresolvers.reverse(
-            'ebpub-schema-filter', args=['crime', 'filter']) + '?address=foo+and+bar'
+            'ebpub-schema-filter', args=['crime']) + '?address=foo+and+bar'
         from ebpub.streets.models import Block, Intersection, BlockIntersection
         intersection = mock.Mock(spec=Intersection)
         blockintersection = mock.Mock(spec=BlockIntersection)
@@ -647,7 +647,7 @@ class TestUrlNormalization(TestCase):
 
 
     def test_make_url__bad_address(self):
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         url += '?address=anything'  # doesn't matter because of mock_geocode
 
         from ebpub.geocoder.parser.parsing import ParsingError
@@ -676,7 +676,7 @@ class TestUrlNormalization(TestCase):
             'block': block,
             }
 
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         url += '?address=216+n+wabash+st&radius=8' # geocode result is mocked anyway.
 
         expected_url = filter_reverse('crime', [('streets', 'wabash-ave', '216-299n-s', '8-blocks'),])
@@ -685,7 +685,7 @@ class TestUrlNormalization(TestCase):
 
     def test_make_url__bad_dates(self):
         from ebpub.db.views import BadDateException
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         # Error if either date is way too old.
         self.assertRaises(BadDateException, self._make_chain,
                           url + '?start_date=12/31/1899&end_date=01/01/2011')
@@ -700,7 +700,7 @@ class TestUrlNormalization(TestCase):
 
 
     def test_make_url__date_query(self):
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         url += '?start_date=2010/12/01&end_date=2011/01/01'
         chain = self._make_chain(url)
         expected = filter_reverse('crime', [('start_date', '2010-12-01'),
@@ -708,13 +708,13 @@ class TestUrlNormalization(TestCase):
         self.assertEqual(chain.make_url(), expected)
 
     def test_make_url__no_such_schemafield(self):
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         url += '?textsearch=foo&q=hello+goodbye'
         self.assertRaises(models.SchemaField.DoesNotExist,
                           self._make_chain, url)
 
     def test_make_url__textsearch_query(self):
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         url += '?textsearch=status&q=hello+goodbye'
         chain = self._make_chain(url)
         expected = filter_reverse('crime', [('by-status', 'hello goodbye')])

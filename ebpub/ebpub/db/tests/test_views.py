@@ -517,7 +517,7 @@ class TestSchemaFilterView(BaseTestCase):
         mock_item.return_value = mock_item
         mock_item.alters_data = False
         mock_aggr().select_related().order_by.return_value = [mock_item] * 100
-        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
+        url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         lookup_list = response.context['lookup_list']

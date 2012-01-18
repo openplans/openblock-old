@@ -644,7 +644,7 @@ def _get_filter_schemafields(schema):
     return filter_sf_dict
 
 
-def schema_filter_geojson(request, slug, args_from_url):
+def schema_filter_geojson(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponse(status=404)
@@ -701,10 +701,10 @@ def schema_filter_geojson(request, slug, args_from_url):
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
 
-def schema_filter(request, slug, args_from_url):
+def schema_filter(request, slug):
     """
     List NewsItems for one schema, filtered by various criteria in the
-    URL (date, location, or values of SchemaFields).
+    query params (eg. date, location, or values of SchemaFields).
     """
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
