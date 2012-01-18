@@ -338,7 +338,7 @@ class LocationFilter(NewsitemFilter):
                 self.label = self.location_type.name
             else:
                 if not args:
-                    raise FilterError("not enough args")
+                    raise FilterError("Not enough args, need a location type")
                 self.location_type_slug = args[0]
             self.value = 'Choose %s' % self.location_type_slug.title()
             try:
@@ -434,7 +434,7 @@ class BlockFilter(NewsitemFilter):
                 self.street_slug = args.pop(0)
                 self.block_range = args.pop(0)
             except IndexError:
-                raise FilterError("not enough args")
+                raise FilterError("not enough args, need a street and a block range")
 
         try:
             block_radius = args.pop(0)
