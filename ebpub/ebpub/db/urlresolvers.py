@@ -18,6 +18,7 @@
 
 from django.core import urlresolvers
 import posixpath
+import urllib
 
 def filter_reverse(slug, args):
     """Generate a reverse schema_filter URL.
@@ -28,21 +29,25 @@ def filter_reverse(slug, args):
             if len(a) > 1:
                 name = a[0]
                 values = ','.join(a[1:])
-                args[i] = '%s=%s' % (name, values)
+                args[i] = (name, values)
             else:
+                # No values.
                 # This is allowed eg. for showing a list of available
                 # Blocks, or Lookup values, etc.
-                args[i] = a[0]
+                args[i] = (a[0], '')
         else:
-            assert isinstance(a, basestring)
-    #argstring = urllib.quote(';'.join(args)) #['%s=%s' % (k, v) for (k, v) in args])
-    argstring = ';'.join(args) #['%s=%s' % (k, v) for (k, v) in args])
+            raise TypeError("Need a list or tuple, got: %s" % a)
 
-    if not argstring.lstrip('/').startswith('filter'):
-        argstring = 'filter/%s' % argstring
     url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
-    url = '%s/%s/' % (url, argstring)
+    # TODO: does this really need hardcodign here?
+    if not url.rstrip('/').endswith('filter'):
+        url = '%s/filter/' % url
     # Normalize duplicate slashes, dots, and the like.
     url = posixpath.normpath(url) + '/'
+    if args:
+        # Normalize a bit.
+        args = sorted(args)
+        querystring = urllib.urlencode(args)
+        url = '%s?%s' % (url, querystring)
     return url
 

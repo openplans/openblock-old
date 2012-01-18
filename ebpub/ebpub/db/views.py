@@ -240,7 +240,8 @@ def newsitems_geojson(request):
         # More copy/paste from ebpub.db.views...
         # As an optimization, limit the NewsItems to those published in the
         # last few days.
-        filters.update_from_query_params(request)
+        filter_sf_dict = _get_filter_schemafields(schema)
+        filters.update_from_request(filter_sf_dict)
         if not filters.has_key('date'):
             end_date = today()
             start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
@@ -629,21 +630,30 @@ def schema_detail_special_report(request, schema):
     })
 
 
+def _get_filter_schemafields(schema):
+    """Given a Schema, get a sorted mapping of schemafield names to
+    SchemaField instances.
+
+    Only SchemaFields that have is_searchable or is_filter enabled
+    will be returned.
+    """
+    filter_sf_list = list(SchemaField.objects.filter(schema=schema, is_filter=True).order_by('display_order'))
+    textsearch_sf_list = list(SchemaField.objects.filter(schema=schema, is_searchable=True).order_by('display_order'))
+    # Use SortedDict to preserve the display_order.
+    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+    return filter_sf_dict
+
+
 def schema_filter_geojson(request, slug, args_from_url):
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponse(status=404)
 
-    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
-    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
-
-    # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
-
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, schema=s)
+    filter_sf_dict = _get_filter_schemafields(s)
     try:
-        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filterchain.update_from_request(filter_sf_dict)
         filters_need_more = filterchain.validate()
     except FilterError:
         return HttpResponse(status=400)
@@ -709,17 +719,13 @@ def schema_filter(request, slug, args_from_url):
     # so it'll get the full context no matter what.
     context['breadcrumbs'] = breadcrumbs.schema_filter(context)
 
-    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
-    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
-
-    # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+    filter_sf_dict = _get_filter_schemafields(s)
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, context=context, schema=s)
     context['filters'] = filterchain
     try:
-        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filterchain.update_from_request(filter_sf_dict)
         filters_need_more = filterchain.validate()
     except FilterError, e:
         if getattr(e, 'url', None) is not None:

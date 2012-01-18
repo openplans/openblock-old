@@ -54,6 +54,7 @@ import calendar
 import datetime
 import ebpub.streets.models
 import logging
+import posixpath
 import re
 import urllib
 
@@ -72,10 +73,11 @@ class NewsitemFilter(object):
     # If these are None, they should not be shown to the user.
 
     slug = None   # ID for this type of filter. Used with FilterChain.add() / .remove()
-    url = None  # Actually a URL fragment.
     value = None  # Value fed to the filter, for display.
     label = None  # Human-readable name of the filter, for display.
     short_value = None  # Shorter version of value fed to the filter, for display.
+    argname = None  # For generating query parameters for URLs.
+    query_param_value = None  # For generating query parameters for URLs.
 
     def __init__(self, request, context, queryset=None, *args, **kw):
         self.qs = queryset if (queryset is not None) else models.NewsItem.objects.all()
@@ -110,6 +112,12 @@ class NewsitemFilter(object):
             return getattr(self, key)
         except AttributeError:
             raise KeyError(key)
+
+    def get_query_params(self):
+        """
+        Suitable for composing query strings out of dictionaries.
+        """
+        return {self.argname: self.query_param_value or ''}
 
 
 class FilterError(Exception):
@@ -171,7 +179,6 @@ class AttributeFilter(NewsitemFilter):
         self.schemafield = kwargs['schemafield']
         self.slug = self.schemafield.name
         self.argname = 'by-%s' % self.slug
-        self.url = 'by-%s=' % self.slug
         self.value = self.short_value = ''  # Descriptions of this filter, for display.
         self.label = self.schemafield.pretty_name
         if args:
@@ -187,7 +194,7 @@ class AttributeFilter(NewsitemFilter):
                 str_att_value = self.att_value.strftime('%H:%M:%S')
             else:
                 str_att_value = str(self.att_value)
-            self.url += str_att_value
+            self.query_param_value = str_att_value
 
     def apply(self):
         self.qs = self.qs.by_attribute(self.schemafield, self.att_value)
@@ -208,7 +215,8 @@ class TextSearchFilter(AttributeFilter):
         self.query = ', '.join(args)
         self.short_value = self.query
         self.value = self.query
-        self.url = 'by-%s=%s' % (self.schemafield.name, self.query)
+        self.argname = 'by-' + self.schemafield.name
+        self.query_param_value = ','.join(args)
 
     def apply(self):
         self.qs = self.qs.text_search(self.schemafield, self.query)
@@ -233,7 +241,8 @@ class BoolFilter(AttributeFilter):
             self.real_val = {'yes': True, 'no': False, 'na': None}.get(self.boolslug, self.boolslug)
             if self.real_val not in (True, False, None):
                 raise FilterError('Invalid boolean value %r' % self.boolslug)
-            self.url = 'by-%s=%s' % (self.schemafield.name, self.boolslug)
+            self.argname = 'by-%s' % self.schemafield.name
+            self.query_param_value = self.boolslug
             self._got_args = True
         else:
             # No args.
@@ -289,7 +298,7 @@ class LookupFilter(AttributeFilter):
                         raise FilterError("No such lookup %r" % candidate)
             self.value = ', '.join([lk.name for lk in self.lookups])
             self.short_value = self.value
-            self.url = 'by-%s=%s' % (self.schemafield.name, ','.join(slugs))
+            self.query_param_value = ','.join(slugs)
 
     def validate(self):
         if self._got_args:
@@ -314,6 +323,7 @@ class LocationFilter(NewsitemFilter):
     _sort_value = 200.0
 
     slug = 'location'
+    argname = 'locations'
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -330,7 +340,6 @@ class LocationFilter(NewsitemFilter):
                 if not args:
                     raise FilterError("not enough args")
                 self.location_type_slug = args[0]
-            self.url = 'locations=%s' % self.location_type_slug
             self.value = 'Choose %s' % self.location_type_slug.title()
             try:
                 self.location_slug = args[1]
@@ -349,9 +358,11 @@ class LocationFilter(NewsitemFilter):
         self.label = loc.location_type.name
         self.short_value = loc.name
         self.value = loc.name
-        self.url = 'locations=%s,%s' % (self.location_type_slug, self.location_slug)
         self.location_name = loc.name
         self.location_object = loc
+        self.query_param_value = '%s,%s' % (self.location_type_slug,
+                                            self.location_slug)
+
 
     def validate(self):
         # List of available locations for this location type.
@@ -396,12 +407,14 @@ class BlockFilter(NewsitemFilter):
         value = '%s block%s around %s' % (self.block_radius, (self.block_radius != '1' and 's' or ''), block.pretty_name)
         self.short_value = value
         self.value = value
-        self.url = 'streets='
+        self.argname = 'streets'
+        self.query_param_value = []
         if get_metro()['multiple_cities']:
-            self.url += self.city_slug + ','
-        self.url += '%s,%s%s,%s' % (block.street_slug,
-                                    block.number(), block.dir_url_bit(),
-                                    radius_slug(self.block_radius))
+            self.query_param_value.append(self.city_slug)
+        self.query_param_value.extend([block.street_slug,
+                                       block.number() + block.dir_url_bit(),
+                                       radius_slug(self.block_radius)])
+        self.query_param_value = ','.join(self.query_param_value)
         self.location_name = block.pretty_name
 
 
@@ -437,8 +450,8 @@ class BlockFilter(NewsitemFilter):
                 # redirect URL is tailored only for the schema_filter
                 # view.
                 xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-                radius_url = u'%s,%s/' % (request.path.rstrip('/'),
-                                          radius_slug(block_radius))
+                radius_param = urllib.quote(',' + radius_slug(block_radius))
+                radius_url = request.get_full_path() + radius_param
                 raise FilterError('missing radius', url=radius_url)
 
         if 'block' in kwargs:
@@ -476,11 +489,12 @@ class DateFilter(NewsitemFilter):
 
     """Filters on NewsItem.item_date.
     The start_date and end_date args are *inclusive*.
+    They can be the same; missing end_date implies start == end.
     """
 
     slug = 'date'
     date_field_name = 'item_date'
-    _argname = 'by-date'
+    argname = 'by-date'
 
     _sort_value = 1.0
 
@@ -497,16 +511,43 @@ class DateFilter(NewsitemFilter):
             self.label = self.slug
         gte_kwarg = '%s__gte' % self.date_field_name
         lt_kwarg = '%s__lt' % self.date_field_name
-        try:
-            start_date, end_date = args
-            if isinstance(start_date, basestring):
-                start_date = datetime.date(*map(int, start_date.split('-')))
-            self.start_date = start_date
-            if isinstance(end_date, basestring):
-                end_date = datetime.date(*map(int, end_date.split('-')))
-            self.end_date = end_date
-        except (IndexError, ValueError, TypeError):
-            raise FilterError("Missing or invalid date range")
+        if not args:
+            raise FilterError("Missing date range")
+
+        start_date = args[0]
+        end_date = args[-1]
+
+        def _parse(date):
+            # Ugh, papering over wild proliferation of date formats.
+            try:
+                date = parse_date(date, '%m/%d/%Y')
+            except ValueError:
+                try:
+                    date = parse_date(date, '%Y/%m/%d')
+                except ValueError:
+                    try:
+                        date = datetime.date(*map(int, date.split('-')))
+                    except ValueError:
+                        raise BadDateException("Unknown date format on %r" % date)
+            return date
+
+        assert end_date is not None
+
+        if isinstance(start_date, basestring):
+            start_date = _parse(start_date)
+        if isinstance(end_date, basestring):
+            end_date = _parse(end_date)
+        elif end_date is None:
+            end_date = start_date
+
+        for d in (start_date, end_date):
+            if d and d.year < 1900:
+                # This prevents strftime from throwing a ValueError.
+                raise BadDateException('Dates before 1900 are not supported.')
+
+        assert end_date is not None
+        self.start_date = start_date
+        self.end_date = end_date
 
         self.kwargs = {
             gte_kwarg: self.start_date,
@@ -518,12 +559,9 @@ class DateFilter(NewsitemFilter):
         else:
             self.value = u'%s - %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
 
-        self.short_value = self.value
-        self.url = '%s=%s,%s' % (self._argname,
-                                 self.start_date.strftime('%Y-%m-%d'),
-                                 self.end_date.strftime('%Y-%m-%d'))
-
-
+    def get_query_params(self):
+        return {'start_date': self.start_date.strftime('%Y-%m-%d'),
+                'end_date': self.end_date.strftime('%Y-%m-%d')}
 
     def validate(self):
         # Filtering UI does not provide a page for selecting a block.
@@ -540,7 +578,7 @@ class PubDateFilter(DateFilter):
     Filters on NewsItem.pub_date.
     """
 
-    _argname = 'by-pub-date'
+    argname = 'by-pubdate'
     date_field_name = 'pub_date'
 
     _sort_value = 1.0
@@ -548,6 +586,10 @@ class PubDateFilter(DateFilter):
     def __init__(self, request, context, queryset, *args, **kwargs):
         DateFilter.__init__(self, request, context, queryset, *args, **kwargs)
         self.label = 'date published'
+
+    def get_query_params(self):
+        return {'start_pubdate': self.start_date.strftime('%Y-%m-%d'),
+                'end_pubdate': self.end_date.strftime('%Y-%m-%d')}
 
 
 class DuplicateFilterError(FilterError):
@@ -606,11 +648,12 @@ class FilterChain(SortedDict):
             # This works for tuples, lists, and other iterators too.
             self[k] = v
 
-    def update_from_request(self, argstring, filter_sf_dict):
-        """Update the list of filters based on the path and/or query string.
+    def update_from_request(self, filter_sf_dict):
+        """Update the list of filters based on the request params.
 
-        ``argstring`` is the portion of the path that describes the
-        filters (or None, in the case of "/filter/").
+        After this is called, it's recommended to redirect to a
+        normalized form of the URL, which you can get via self.sort();
+        self.make_url()
 
         ``filter_sf_dict`` is a mapping of name -> SchemaField which have
         either is_filter or is_searchable True.  We remove
@@ -619,82 +662,34 @@ class FilterChain(SortedDict):
         already filtering by.)
         """
         request, context = self.request, self.context
-        # TODO: can we remove some args now that we're not using
-        # get_place_info_for_request?
-        argstring = urllib.unquote((argstring or '').rstrip('/'))
-        argstring = argstring.replace('+', ' ')
-        args = []
-
-        if argstring and argstring != 'filter':
-            for arg in argstring.split(';'):
-                try:
-                    argname, argvalues = arg.split('=', 1)
-                except ValueError:
-                    raise FilterError('Invalid filter parameter %r, no equals sign' % arg)
-                argname = argname.strip()
-                argvalues = [v.strip() for v in argvalues.split(',')]
-                if argname:
-                    args.append((argname, argvalues))
-        else:
-            # No filters specified. Do nothing?
-            pass
-
         qs = self.qs
-        while args:
-            argname, argvalues = args.pop(0)
-            argvalues = [v for v in argvalues if v]
-            # Date range
-            if argname == 'by-date':
-                self['date'] = DateFilter(request, context, qs, *argvalues, schema=self.schema)
-            elif argname == 'by-pub-date':
-                self['date'] = PubDateFilter(request, context, qs, *argvalues, schema=self.schema)
-
-            # Street/address
-            elif argname.startswith('streets'):
-                self['location'] = BlockFilter(request, context, qs, *argvalues)
-            # Location filtering
-            elif argname.startswith('locations'):
-                self['location'] = LocationFilter(request, context, qs, *argvalues)
-
-            # Attribute filtering
-            elif argname.startswith('by-'):
-                sf_name = argname[3:]
-                try:
-                    sf = filter_sf_dict.pop(sf_name)
-                except KeyError:
-                    raise FilterError('Invalid or duplicate SchemaField name %r' % sf_name)
-                self.add_by_schemafield(sf, *argvalues, _replace=True)
-
-            else:
-                raise FilterError('Invalid filter type')
-
-        self.update_from_query_params(request)
-        self.sort()
-        return self
-
-    def update_from_query_params(self, request):
-        """
-        Update the filters based on query parameters.
-
-        After this is called, it's recommended to redirect
-        to a normalized form of the URL, eg. self.sort(); self.make_url()
-
-        This takes care to preserve query parameters that aren't used
-        by any of the NewsitemFilters.
-        """
-        # Make a mutable copy so we can leave only the params that FilterChain
-        # doesn't know about.
         params = request.GET.copy()
-        def pop_key(key):
-            # request.GET.pop() returns a sequence.
-            # We only want a single value, stripped.
-            val = params.pop(key, [''])[0]
-            return val.strip()
 
-        address = pop_key('address')
+        def pop_key(key, single=False):
+            """
+            Pop the value(s) from params, treat it as a
+            comma-separated list of values, and split that into a
+            list. So ?foo=bar,baz is equivalent to ?foo=bar&foo=baz.
+
+            If single==True, return only the first one; in the example
+            we'd return 'bar'.  Otherwise, by default, return the
+            list; in the example we'd return ['bar', 'baz']
+            """
+            result = []
+            for value in params.pop(key, [u'']):
+                value = value.replace(u'+', u' ') # XXX does django do this already?
+                values = [s.strip() for s in value.split(u',')]
+                result.extend(values)
+            result = [r for r in result if r]
+            if single:
+                return result[0] if result else u''
+            return result
+
+        # Address.
+        address = pop_key('address', single=True)
         if address:
             xy_radius, block_radius, cookies_to_set = block_radius_value(request)
-            params.pop('radius', None)
+            pop_key('radius')  # Just to remove it, block_radius_value() used it.
             result = None
             try:
                 result = SmartGeocoder().geocode(address)
@@ -702,7 +697,6 @@ class FilterChain(SortedDict):
                 raise BadAddressException(address, block_radius, address_choices=e.choices)
             except (GeocodingException, ParsingError):
                 raise BadAddressException(address, block_radius, address_choices=())
-
             assert result
             if result['block']:
                 block = result['block']
@@ -721,38 +715,73 @@ class FilterChain(SortedDict):
                 raise NotImplementedError('Reached invalid geocoding type: %r' % result)
             self.replace('location', block, block_radius)
 
+        # Dates.
+        # For hysterical reasons we support several ways of passing
+        # these in.  TODO: consolidate these into ONLY the start_ and
+        # end_ variants, no more of the comma-separated by-date stuff.
+        # The latter are more compact, but a) more work on the client
+        # side, and b) look uglier in URLs due to the url-quoted
+        # comma.
+        pub_start_and_end = [pop_key('start_pubdate', single=True),
+                             pop_key('end_pubdate', single=True)]
+        pub_start_and_end = [s for s in pub_start_and_end if s]
+        pub_dates = pop_key('by-pubdate') or pub_start_and_end
 
-        start_date = pop_key('start_date')
-        end_date = pop_key('end_date')
-        if start_date and end_date:
-            try:
-                start_date = parse_date(start_date, '%m/%d/%Y')
-                end_date = parse_date(end_date, '%m/%d/%Y')
-            except ValueError, e:
-                old_e = str(e)
-                del(e)
-                try:
-                    # Ugh, papering over wild proliferation of date formats.
-                    start_date = parse_date(start_date, '%Y/%m/%d')
-                    end_date = parse_date(end_date, '%Y/%m/%d')
-                except ValueError, e:
-                    raise BadDateException("%s; %s" % (str(e), old_e))
-            if start_date.year < 1900 or end_date.year < 1900:
-                # This prevents strftime from throwing a ValueError.
-                raise BadDateException('Dates before 1900 are not supported.')
+        start_and_end = [pop_key('start_date', single=True),
+                         pop_key('end_date', single=True)]
+        start_and_end = [s for s in start_and_end if s]
+        dates = pop_key('by-date') or start_and_end
 
-            self.replace('date', start_date, end_date)
+        if dates and pub_dates:
+            raise DuplicateFilterError("You can only filter by one set of dates.")
+        elif dates:
+            self['date'] = DateFilter(request, context, qs, *dates,
+                                      schema=self.schema)
+        elif pub_dates:
+            self['date'] = PubDateFilter(request, context, qs, *pub_dates,
+                                         schema=self.schema)
 
-        lookup_name = pop_key('textsearch')
-        search_string = pop_key('q')
+        # Text searches. Apparently we only support one at a time.
+        lookup_name = pop_key('textsearch', single=True)
+        search_string = pop_key('q', single=True)
         if lookup_name and search_string:
             # Can raise DoesNotExist. Should that be FilterError?
             schemafield = models.SchemaField.objects.get(name=lookup_name,
                                                          schema=self.schema)
             self.replace(schemafield, search_string)
 
-        # Stash away all query params we didn't consume.
+        # All remaining args.
+        for argname in params.keys():
+
+            # Street/address
+            if argname.startswith('streets'):
+                argvalues = pop_key(argname)
+                self['location'] = BlockFilter(request, context, qs, *argvalues)
+
+            # Location filtering
+            elif argname.startswith('locations'):
+                argvalues = pop_key(argname)
+                self['location'] = LocationFilter(request, context, qs, *argvalues)
+
+            # Attribute filtering
+            elif argname.startswith('by-'):
+                argvalues = pop_key(argname)
+                sf_name = argname[3:]
+                try:
+                    sf = filter_sf_dict.pop(sf_name)
+                except KeyError:
+                    raise FilterError('Invalid or duplicate SchemaField name %r' % sf_name)
+                self.add_by_schemafield(sf, *argvalues, _replace=True)
+            else:
+                # Unknown param, ignore it.
+                pass
+
+
+        self.sort()
+        # Stash any un-consumed query params for URL construction.
         self.other_query_params = params
+        return self
+
 
     def validate(self):
         """Check whether any of the filters were requested without
@@ -934,7 +963,6 @@ class FilterChain(SortedDict):
             self.lookup_descriptions.extend(getattr(self[key], 'lookups', []))
         return self
 
-
     def make_breadcrumbs(self, additions=(), removals=(), stop_at=None, 
                          base_url=None):
         """
@@ -963,6 +991,8 @@ class FilterChain(SortedDict):
         be used to add or preserve query parameters that aren't
         relevant to the FilterChain.
 
+        In all URLs, query parameters will be sorted alphabetically by
+        name.
         """
         # TODO: Can filter_reverse leverage this? Or vice-versa?
         clone = self.copy()
@@ -976,22 +1006,22 @@ class FilterChain(SortedDict):
             clone.replace(key, *values)
 
         base_url = base_url or clone.base_url
+        base_url = posixpath.normpath(base_url) + '/'
 
         crumbs = []
-        filter_params = []
-        other_query_params = urllib.urlencode(sorted(self.other_query_params.items()),
-                                              doseq=True)
+        params_so_far = self.other_query_params.copy()
         for key, filt in clone._items_with_labels():
             # I'm not sure why we prefer short_value to label, but that's what
             # the old code did.
             label = getattr(filt, 'short_value', None) or getattr(filt, 'value', None) or getattr(filt, 'label', None)
             assert label is not None
             label = label.title()
-            if label and getattr(filt, 'url', None) is not None:
-                filter_params.append(filt.url)
-                url = '%s%s/' % (base_url, ';'.join(filter_params))
-                if other_query_params:
-                    url = '%s?%s' % (url, other_query_params)
+            if label:
+                params_so_far.update(filt.get_query_params())
+                # We need doseq=True in case any of other_query_params have multiple values.
+                query_string = urllib.urlencode(sorted(params_so_far.items()),
+                                                doseq=True)
+                url = '%s?%s' % (base_url, query_string)
                 crumbs.append((label, url))
             if key == stop_at:
                 break
@@ -1006,7 +1036,11 @@ class FilterChain(SortedDict):
         if crumbs:
             return crumbs[-1][1]
         else:
-            return base_url or self.base_url
+            if self.other_query_params:
+                return '%s?%s' % (base_url or self.base_url,
+                                  urllib.urlencode(self.other_query_params))
+            else:
+                return base_url or self.base_url
 
     def add_by_place_id(self, pid):
         """
@@ -1048,7 +1082,7 @@ class BadAddressException(Exception):
         self.radius_slug = radius_slug(block_radius)
 
 
-class BadDateException(Exception):
+class BadDateException(FilterError):
     pass
 
 

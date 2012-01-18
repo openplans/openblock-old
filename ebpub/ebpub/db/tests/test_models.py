@@ -205,7 +205,7 @@ class DatabaseExtensionsTestCase(TestCase):
 
     def test_top_lookups__m2m(self):
         from ebpub.db.models import SchemaField
-        sf = SchemaField.objects.get(name='tags many-to-many')
+        sf = SchemaField.objects.get(name='tag')
         # from ebpub.db.bin.update_aggregates import update_aggregates
         # update_aggregates(sf.schema.id)
         qs = NewsItem.objects.all()
@@ -253,7 +253,7 @@ class DatabaseExtensionsTestCase(TestCase):
     def test_by_attribute__lookup_m2m(self):
         from ebpub.db.models import NewsItem, SchemaField, Lookup
         by_attribute = NewsItem.objects.by_attribute
-        sf = SchemaField.objects.get(name='tags many-to-many')
+        sf = SchemaField.objects.get(name='tag')
         lookups = Lookup.objects.filter(schema_field=sf, code__in=['1', '2'])
         qs = by_attribute(sf, lookups, is_lookup=True)
         self.assertEqual(qs.count(), 3)
@@ -271,7 +271,7 @@ class DatabaseExtensionsTestCase(TestCase):
     def test_by_attribute__lookup_m2m__by_code(self):
         from ebpub.db.models import NewsItem, SchemaField
         by_attribute = NewsItem.objects.by_attribute
-        sf = SchemaField.objects.get(name='tags many-to-many')
+        sf = SchemaField.objects.get(name='tag')
         qs = by_attribute(sf, ['1', '2'], is_lookup=True)
         self.assertEqual(qs.count(), 3)
         qs = by_attribute(sf, ['2', '3'], is_lookup=True)

@@ -272,7 +272,13 @@ class TestSchemaFilterView(BaseTestCase):
         self.assertEqual(response.status_code, 301)
         self.assertEqual(response['location'], 'http://testserver/crime/')
 
-    @mock.patch('ebpub.db.schemafilters.FilterChain.update_from_query_params')
+    def test_filter__bad_params(self):
+        url = filter_reverse('crime', [('by-foo', 'bar')])
+        url = url.replace(urllib.quote('='), 'X')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    @mock.patch('ebpub.db.schemafilters.FilterChain.update_from_request')
     def test_filter__bad_date(self, mock_update):
         from ebpub.db.views import BadDateException
         mock_update.side_effect = BadDateException("oh no")
@@ -280,14 +286,9 @@ class TestSchemaFilterView(BaseTestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_filter__bad_params(self):
-        url = filter_reverse('crime', [('by-foo', 'bar')])
-        url = url.replace(urllib.quote('='), 'X')
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
     def test_filter_by_daterange(self):
-        url = filter_reverse('crime', [('by-date', '2006-11-01', '2006-11-30')])
+        url = filter_reverse('crime', [('start_date', '2006-11-01'),
+                                       ('end_date', '2006-11-30')])
         response = self.client.get(url)
         self.assertContains(response, 'Clear')
         self.assertNotContains(response, "crime title 1")
@@ -295,7 +296,8 @@ class TestSchemaFilterView(BaseTestCase):
         self.assertContains(response, "crime title 3")
 
     def test_filter_by_pubdate_daterange(self):
-        url = filter_reverse('crime', [('by-pub-date', '2006-11-01', '2006-11-30')])
+        url = filter_reverse('crime', [('start_pubdate', '2006-11-01'),
+                                       ('end_pubdate', '2006-11-30')])
         response = self.client.get(url)
         self.assertContains(response, 'Clear')
         self.assertNotContains(response, "crime title 1")
@@ -305,29 +307,55 @@ class TestSchemaFilterView(BaseTestCase):
     def test_filter__only_one_date_allowed(self):
         url = filter_reverse('crime',
                              [('by-date', '2006-11-01', '2006-11-30'),
-                              ('by-pub-date', '2006-11-01', '2006-11-30')])
+                              ('by-pubdate', '2006-11-01', '2006-11-30')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
+
+    def test_filter__date_missing(self):
+        url = filter_reverse('crime', [('start_date', '')])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assert_(response['location'].endswith('/crime/filter/'))
 
     def test_filter__invalid_daterange(self):
-        url = filter_reverse('crime', [('by-date', '')])
+        url = filter_reverse('crime', [('start_date', 'whoops'),
+                                       ('end_date', 'ouchie')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
-        url = filter_reverse('crime', [('by-date', 'whoops', 'ouchie')])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-        url = filter_reverse('crime', [('by-date', '2006-11-30', 'ouchie')])
+        url = filter_reverse('crime', [('start_date', '2006-11-30'),
+                                       ('end_date', 'ouchie')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
 
     def test_filter_by_day(self):
-        url = filter_reverse('crime', [('by-date', '2006-09-26', '2006-09-26')])
+        url = filter_reverse('crime', [('start_date', '2006-09-26'),
+                                       ('end_date', '2006-09-26')])
         response = self.client.get(url)
         self.assertContains(response, "crime title 1")
         self.assertNotContains(response, "crime title 2")
         self.assertNotContains(response, "crime title 3")
+
+
+    def test_filter__by_date__legacy_redirects(self):
+        base = 'http://testserver' + filter_reverse('crime', [])
+        expected_to_actual = (
+            (filter_reverse('crime', [('by-date', '2011-09-25', '2012-10-31')]),
+             base + '?end_date=2012-10-31&start_date=2011-09-25'
+             ),
+            (filter_reverse('crime', [('by-pubdate', '2011-09-25', '2012-10-31')]),
+             base + '?end_pubdate=2012-10-31&start_pubdate=2011-09-25'
+             ),
+
+            )
+        for expected, actual in expected_to_actual:
+            response = self.client.get(expected)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response['location'], actual)
+            response2 = self.client.get(actual)
+            self.assertEqual(response2.status_code, 200)
+
 
 
     def test_filter_by_attributes__text(self):
@@ -383,7 +411,7 @@ class TestSchemaFilterView(BaseTestCase):
         self.assertEqual(response.status_code, 302)
         fixed_url = filter_reverse('crime', [
                 ('streets', 'wabash-ave', '216-299n-s', '8-blocks')])
-        self.assert_(response['location'].endswith(urllib.unquote(fixed_url)))
+        self.assertEqual(response['location'], 'http://testserver' + fixed_url)
 
     @mock.patch('ebpub.streets.models.proper_city')
     def test_filter_by_block(self, mock_proper_city):
@@ -474,10 +502,10 @@ class TestSchemaFilterView(BaseTestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_filter__invalid_argname(self):
+        # These are ignored.
         url = filter_reverse('crime', [('bogus-key', 'bogus-value')])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-
+        self.assertEqual(response.status_code, 200)
 
     @mock.patch('ebpub.db.schemafilters.logger')
     @mock.patch('ebpub.db.models.AggregateFieldLookup.objects.filter')
@@ -499,20 +527,20 @@ class TestSchemaFilterView(BaseTestCase):
 
     def test_filter__pagination__invalid_page(self):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
-        url += '?page=oops'
+        url += '&page=oops'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
     def test_filter__pagination__empty_page(self):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
-        url += '?page=99'
+        url += '&page=99'
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
     @mock.patch('ebpub.db.views.FilterChain', spec=True)
     def test_filter__pagination__has_more(self, mock_chain):
         url = filter_reverse('crime', [('by-status', 'status 9-19')])
-        url += '?page=2'
+        url += '&page=2'
         # We can mock the FilterChain to get a very long list of NewsItems
         # without actually creating them in the db, but it means
         # also mocking a ton of methods used by schema_filter or filter.html.

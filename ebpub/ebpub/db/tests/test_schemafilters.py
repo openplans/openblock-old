@@ -32,7 +32,6 @@ import datetime
 import mock
 import random
 
-
 class TestNewsitemFilter(TestCase):
 
     def test_getitem(self):
@@ -103,7 +102,7 @@ class TestLocationFilter(TestCase):
         filt = LocationFilter(req, context, None, *reverse_args[1:])
         return filt
 
-    def test_filter__errors(self):
+    def test_filter__empty(self):
         self.assertRaises(FilterError, self._make_filter)
 
     def test_filter_by_location_choices(self):
@@ -134,6 +133,8 @@ class TestLocationFilter(TestCase):
         self.assertEqual(filt.location_object, expected_loc)
         # TODO: have some NewsItems overlapping this location?
 
+        self.assertEqual(filt.get_query_params(),
+                         {'locations': 'neighborhoods,hood-1'})
 
 class TestBlockFilter(TestCase):
 
@@ -201,7 +202,6 @@ class TestDateFilter(TestCase):
         self.assertRaises(FilterError, self._make_filter, 'by-date')
         self.assertRaises(FilterError, self._make_filter, 'by-date', 'bogus')
         self.assertRaises(FilterError, self._make_filter, 'by-date', 'bogus', 'bogus')
-        self.assertRaises(FilterError, self._make_filter, 'by-date', '2011-04-07')
 
     def test_filter__ok(self):
         filt = self._make_filter('by-date', '2006-11-08', '2006-11-09')
@@ -209,6 +209,11 @@ class TestDateFilter(TestCase):
         filt.apply()
         self.assertEqual(filt.value, u'Nov. 8, 2006 - Nov. 9, 2006')
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt.kwargs))
+
+    def test__single_arg_date(self):
+        filt = self._make_filter('by-date', '2011-04-07')
+        filt.apply()
+        self.assertEqual(filt.value, u'April 7, 2011')
 
 
     def test_filter__ok__one_day(self):
@@ -219,7 +224,7 @@ class TestDateFilter(TestCase):
         self.assertEqual(self.mock_qs.filter.call_args, ((), filt.kwargs))
 
     def test_pub_date_filter(self):
-        filt = self._make_filter('by-pub-date', '2006-11-08', '2006-11-09')
+        filt = self._make_filter('by-pubdate', '2006-11-08', '2006-11-09')
         from ebpub.db.schemafilters import PubDateFilter
         filt2 = PubDateFilter(filt.request, filt.context, filt.qs,
                               '2006-11-08', '2006-11-09')
@@ -246,7 +251,8 @@ class TestAttributeFilter(TestCase):
         qs = {}
         request = context = None
         filter = AttributeFilter(request, context, qs, schemafield=schemafield)
-        self.assertEqual(filter.url, 'by-mock-sf=')
+        self.assertEqual(filter.get_query_params(),
+                         {'by-mock-sf': ''})
 
 
     def test_init__with_date(self):
@@ -256,7 +262,8 @@ class TestAttributeFilter(TestCase):
         qs = {}
         request = context = None
         filter = AttributeFilter(request, context, qs, when, schemafield=schemafield)
-        self.assertEqual(filter.url, 'by-mock-sf=2009-01-23')
+        self.assertEqual(filter.get_query_params(),
+                         {'by-mock-sf': '2009-01-23'})
 
     def test_init__with_datetime(self):
         from ebpub.db.schemafilters import AttributeFilter
@@ -265,7 +272,8 @@ class TestAttributeFilter(TestCase):
         qs = {}
         request = context = None
         filter = AttributeFilter(request, context, qs, when, schemafield=schemafield)
-        self.assertEqual(filter.url, 'by-mock-sf=2009-01-23T22:40:00')
+        self.assertEqual(filter.get_query_params(),
+                         {'by-mock-sf': '2009-01-23T22:40:00'})
 
     def test_init__with_time(self):
         from ebpub.db.schemafilters import AttributeFilter
@@ -274,7 +282,8 @@ class TestAttributeFilter(TestCase):
         qs = {}
         request = context = None
         filter = AttributeFilter(request, context, qs, when, schemafield=schemafield)
-        self.assertEqual(filter.url, 'by-mock-sf=22:40:00')
+        self.assertEqual(filter.get_query_params(), 
+                         {'by-mock-sf': '22:40:00'})
 
 
 class TestBoolFilter(TestCase):
@@ -369,6 +378,8 @@ class TestLookupFilter(TestCase):
         self.assertEqual(filt.short_value, 'Police Beat 214, Police Beat 64')
         self.assertEqual(filt.label, 'Beat')
         self.assertEqual(filt.argname, 'by-beat')
+        self.assertEqual(filt.get_query_params(),
+                         {'by-beat': 'beat-214,beat-64'})
 
 
 class TestTextFilter(TestCase):
@@ -537,10 +548,12 @@ class TestFilterChain(TestCase):
         chain = FilterChain()
         self.assertRaises(FilterError, chain.add, 'date')
 
-    def test_update_from_request__bad(self):
-        chain = FilterChain()
-        argstring = 'foobar'
-        self.assertRaises(FilterError, chain.update_from_request, argstring, {})
+    def test_update_from_request__empty(self):
+        request = mock.Mock()
+        request.GET = {}
+        chain = FilterChain(request=request)
+        chain.update_from_request({})
+        self.assertEqual(len(chain), 0)
 
     def test_add_by_place_id__bad(self):
         chain = FilterChain()
@@ -587,11 +600,10 @@ class TestUrlNormalization(TestCase):
 
     def _make_chain(self, url):
         request = RequestFactory().get(url)
-        argstring = request.path.split('filter/', 1)[-1]
         crime = models.Schema.objects.get(slug='crime')
         context = {'schema': crime}
         chain = FilterChain(request=request, context=context, schema=crime)
-        chain.update_from_request(argstring=argstring, filter_sf_dict={})
+        chain.update_from_request(filter_sf_dict={})
         return chain
 
     def test_urls__ok(self):
@@ -691,7 +703,8 @@ class TestUrlNormalization(TestCase):
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime', 'filter'])
         url += '?start_date=2010/12/01&end_date=2011/01/01'
         chain = self._make_chain(url)
-        expected = filter_reverse('crime', [('by-date', '2010-12-01', '2011-01-01')])
+        expected = filter_reverse('crime', [('start_date', '2010-12-01'),
+                                            ('end_date', '2011-01-01')])
         self.assertEqual(chain.make_url(), expected)
 
     def test_make_url__no_such_schemafield(self):
@@ -707,23 +720,17 @@ class TestUrlNormalization(TestCase):
         expected = filter_reverse('crime', [('by-status', 'hello goodbye')])
         self.assertEqual(chain.make_url(), expected)
 
-    def test_make_url__both_args_and_query(self):
-        url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
-        url += '?textsearch=status&q=bar'
-        chain = self._make_chain(url)
-        expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
-                                            ('by-status', 'bar')])
-        self.assertEqual(chain.make_url(), expected)
-
-
     def test_make_url__preserves_other_query_params_sorted(self):
-        url = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06')])
-        url += '?textsearch=status&q=bar'
-        # Add some params that we don't know about.
-        url += '&B=no&A=yes'
+        url = filter_reverse('crime', [('start_date', '2011-04-05'),
+                                       ('end_date', '2011-04-06')])
+        url += '&textsearch=status&q=bar'
+        # Add the extra params.
+        url += '&zzz=yes&A=no'
         chain = self._make_chain(url)
-        expected = filter_reverse('crime', [('by-date', '2011-04-05', '2011-04-06'),
+        expected = filter_reverse('crime', [('start_date', '2011-04-05'),
+                                            ('end_date', '2011-04-06'),
                                             ('by-status', 'bar')])
-        expected += '?A=yes&B=no'
+        # The extra params should end up sorted alphanumerically.
+        expected = expected.replace('?', '?A=no&') + '&zzz=yes'
         self.assertEqual(chain.make_url(), expected)
 
