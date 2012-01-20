@@ -839,19 +839,28 @@ def schema_filter(request, slug):
     # if there is no richmap app hooked in...
     try:
         bigmap_base = reverse('bigmap_filter', args=(slug,))
-        large_map_url = filterchain.make_url(base_url=bigmap_base)
-        if filterchain.get('date') is None:
-            # force a date range; not sure why Luke wanted that?
-            large_map_url = filterchain.make_url(
-                base_url=bigmap_base,
-                additions=[('date',
-                            [ni_list[0].item_date, ni_list[-1].item_date])])
-        context.update({
-            'large_map_url': large_map_url
-        })
+        have_richmaps = True
     except:
-        logger.exception("Unhandled exception making large_map_url")
-        pass
+        have_richmaps = False
+    if have_richmaps:
+        try:
+            large_map_url = filterchain.make_url(base_url=bigmap_base)
+            if filterchain.get('date') is None:
+                # force a date range; not sure why Luke wanted that?
+                if ni_list:
+                    additions=[('date',
+                                [ni_list[0].item_date, ni_list[-1].item_date])]
+                else:
+                    additions=[]
+                large_map_url = filterchain.make_url(
+                    base_url=bigmap_base,
+                    additions=additions)
+            context.update({
+                'large_map_url': large_map_url
+            })
+        except:
+            logger.exception("Unhandled exception making large_map_url")
+            pass
 
     context.update({
         'newsitem_list': ni_list,
