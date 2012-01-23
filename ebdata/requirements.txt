@@ -3,5 +3,5 @@ lxml
 beautifulsoup==3.2.0
 chardet==1.0.1
 feedparser==4.1
-httplib2==0.7.1
+httplib2==0.7.2
 xlrd==0.7.1
