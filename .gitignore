@@ -37,3 +37,5 @@ dist
 tiger_data
 neighborhood_data
 zip_data
+*_flymake.*
+file:/
