@@ -164,6 +164,10 @@ class SchemaFilter(NewsitemFilter):
             schema_ids = set(schema_ids).intersection(allowed_schema_ids)
             self.qs = self.qs.filter(schema__id__in=schema_ids)
 
+    def get_query_params(self):
+        # This one is part of the URL path so doesn't need any.
+        return {}
+
 
 class AttributeFilter(NewsitemFilter):
 
