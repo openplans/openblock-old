@@ -849,32 +849,24 @@ margin-bottom : 2em;
 }
 
 
-#schemanav ul, 
-#schemanav li {
-margin : 0;
-padding : 0;
-list-style-type : none;
-}
 
 #schemanav h4 {
 text-transform: none;
 }
 
-#schemanav li {
-padding : .4em;
-border : 1px solid blue; 
-float : left;
+ul.schemanav, ul.schemanav li {
+margin : 0;
+padding : 0;
+list-style-type : none;
 margin-bottom : .5em;
 }
 
-
-#schemanav ul {
-margin-bottom : .5em;
+ul.schemanav {
 clear : both;
 display : inline-block;
 }
 
-#schemanav ul li {
+ul.schemanav li {
     -moz-border-radius: 10px 10px 10px 10px;
     background-color: #EDEBE6;
     border: 1px solid #C8C7C5;
@@ -887,13 +879,13 @@ display : inline-block;
 }
 
 
-#schemanav ul li a {
+ul.schemanav li a {
 text-decoration : none;
 padding : .15em .5em;
 color : #aaa;
 }
 
-#schemanav ul li a:hover {
+ul.schemanav li a:hover {
 color : #e82100;
 }
 
@@ -906,6 +898,10 @@ margin-top : 1em;
 border : 1px solid #dbdbdb;
 background-color : #EDEBE6;
 padding : .5em;
+}
+
+#schemanav .filtergroup form {
+border : none;
 }
 
 #schemanav .filtergroup p {
@@ -924,7 +920,6 @@ margin : 0;
 .schema-filter #maintext h3 {
 margin-top : 0;
 }
-
 
 
 /* #################################### Schema Detail #################################### */

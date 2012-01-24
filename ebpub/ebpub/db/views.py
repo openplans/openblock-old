@@ -533,15 +533,15 @@ def schema_detail(request, slug):
         # Populate schemafield_list and lookup_list.
         schemafield_list = list(s.schemafield_set.filter(is_filter=True).order_by('display_order'))
         # XXX this duplicates part of schema_filter()
-        LOOKUP_MIN_DISPLAYED = 7
+        LOOKUP_MAX_DISPLAYED = 7
         LOOKUP_BUFFER = 4
         lookup_list = []
         for sf in schemafield_list:
             if not (sf.is_charted and sf.is_lookup):
                 continue
-            top_values = list(AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER])
-            if len(top_values) == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
-                top_values = top_values[:LOOKUP_MIN_DISPLAYED]
+            top_values = list(AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER])
+            if len(top_values) == LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER:
+                top_values = top_values[:LOOKUP_MAX_DISPLAYED]
                 has_more = True
             else:
                 has_more = False
@@ -766,10 +766,10 @@ def schema_filter(request, slug):
     #########################################################################
 
     # Get the list of top values for each lookup that isn't being filtered-by.
-    # LOOKUP_MIN_DISPLAYED sets the number of records to display for each lookup
+    # LOOKUP_MAX_DISPLAYED sets the number of records to display for each lookup
     # type. Normally, the UI displays a "See all" link, but the link is removed
-    # if there are fewer than (LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER) records.
-    LOOKUP_MIN_DISPLAYED = 7
+    # if there are fewer than (LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER) records.
+    LOOKUP_MAX_DISPLAYED = 100
     LOOKUP_BUFFER = 4
     lookup_list, boolean_lookup_list, search_list = [], [], []
     for sf in filter_sf_dict.values():
@@ -778,17 +778,27 @@ def schema_filter(request, slug):
         elif sf.is_type('bool'):
             boolean_lookup_list.append(sf)
         elif sf.is_lookup:
-            top_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MIN_DISPLAYED+LOOKUP_BUFFER]
+            all_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup')
+            top_values = all_values.order_by('-total')[:LOOKUP_MAX_DISPLAYED+LOOKUP_BUFFER]
             top_values = list(top_values)
-            if len(top_values) == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
-                top_values = top_values[:LOOKUP_MIN_DISPLAYED]
+            if len(top_values) < LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER:
+                total_value_count = len(top_values)
+                has_more = False
+            elif len(top_values) == LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER:
+                top_values = top_values[:LOOKUP_MAX_DISPLAYED]
+                total_value_count = all_values.count()
                 has_more = True
             else:
-                has_more = False
+                raise Exception("impossible to get here")
+
             # Note we ordered by -total to get the top values, but since we don't
             # display the count, that ordering is nonsensical to the user.
             top_values = sorted(top_values, key = lambda x: x.lookup.name)
-            lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
+            lookup_list.append({'sf': sf,
+                                'top_values': top_values,
+                                'has_more': has_more,
+                                'total_value_count': total_value_count,
+                                })
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
     if 'location' in filterchain:

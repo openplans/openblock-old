@@ -516,7 +516,7 @@ class TestSchemaFilterView(BaseTestCase):
         mock_item = mock.Mock()
         mock_item.return_value = mock_item
         mock_item.alters_data = False
-        mock_aggr().select_related().order_by.return_value = [mock_item] * 100
+        mock_aggr().select_related().order_by.return_value = [mock_item] * 999
         url = urlresolvers.reverse('ebpub-schema-filter', args=['crime'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -550,7 +550,7 @@ class TestSchemaFilterView(BaseTestCase):
         mock_qs = mock.Mock()
         mock_qs.filter.return_value = mock_qs
         newsitem = models.NewsItem.objects.all()[0]
-        mock_qs.order_by.return_value = [newsitem] * 100
+        mock_qs.order_by.return_value = [newsitem] * 999
 
         mock_chain.return_value = mock_chain
         mock_chain.apply.return_value = mock_qs
