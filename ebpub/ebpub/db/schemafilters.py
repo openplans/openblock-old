@@ -566,6 +566,7 @@ class DateFilter(NewsitemFilter):
             self.value = dateformat.format(self.start_date, 'N j, Y')
         else:
             self.value = u'%s - %s' % (dateformat.format(self.start_date, 'N j, Y'), dateformat.format(self.end_date, 'N j, Y'))
+        self.short_value = self.value
 
     def get_query_params(self):
         return {'start_date': self.start_date.strftime('%Y-%m-%d'),
