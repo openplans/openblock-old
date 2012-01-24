@@ -684,7 +684,11 @@ class FilterChain(SortedDict):
             list; in the example we'd return ['bar', 'baz']
             """
             result = []
-            for value in params.pop(key, [u'']):
+            # Doesn't seem to be a way to get a list of values *and*
+            # remove it in one call; so use both getlist() and pop().
+            values = params.getlist(key) or [u'']
+            params.pop(key, None)
+            for value in values:
                 value = value.replace(u'+', u' ') # XXX does django do this already?
                 values = [s.strip() for s in value.split(u',')]
                 result.extend(values)

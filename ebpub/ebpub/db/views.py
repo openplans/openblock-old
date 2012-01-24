@@ -723,6 +723,7 @@ def schema_filter(request, slug):
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, context=context, schema=s)
+
     context['filters'] = filterchain
     try:
         filterchain.update_from_request(filter_sf_dict)

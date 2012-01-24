@@ -18,8 +18,8 @@ $j(document).ready(function() {
 
 <div id="schemanav">
 	<h2>{% if filters %}Refine your search{% else %}Filter this section{% endif %}</h2>
-	{% if filters %}
-	<ul>
+	{% if filters %}<!-- FILTERS W/ EXISTING VALUES -->
+	<ul> ... this can go away?
 		{% for filter in filters.filters_for_display %}
         {% if filter.label %}
 		<li class="filter changed">
@@ -31,6 +31,7 @@ $j(document).ready(function() {
 		{% endfor %}
 	</ul>
 	{% endif %}
+	<!-- FILTERS W/O VALUES -->
 	{% if not location_filter_applied %}
 	<div class="filtergroup" id="location-filtergroup">
 		<h3>Location</h3>
@@ -74,14 +75,17 @@ $j(document).ready(function() {
 	{% endif %}
 	{% for schemafield in lookup_list %}
 		<div class="filtergroup">
-			<h3>{{ schemafield.sf.pretty_name|capfirst }}</h3>
-			<ul>
-				{% for value in schemafield.top_values %}
-					<li><a href="{% filter_url filters +schemafield.sf.name value.lookup %}" rel="nofollow">{{ value.lookup.name }}</a></li>
-
-				{% endfor %}
-				{% if schemafield.has_more %}<li class="more"><a href="{% filter_url filters +schemafield.sf %}" rel="nofollow">See all&hellip;</a></li>{% endif %}
-			</ul>
+		<h3>{{ schemafield.sf.pretty_name|capfirst }}</h3>
+		<form action="{% filter_url schema %}" method="GET">
+		  {% filter_form_inputs filters -schemafield.sf %}
+		  <select name="by-{{schemafield.sf.name}}" data-placeholder="Choose a Thing" style="width:200px;" multiple>
+			{% for value in schemafield.top_values %}
+			<option value="{{value.lookup.slug}}">{{value.lookup.name}}</option>
+			{% endfor %}
+		  </select>
+			{% if schemafield.has_more %}<li class="more"><a href="{% filter_url filters +schemafield.sf %}" rel="nofollow">See all&hellip;</a></li>{% endif %}
+			<button type="submit">Thingy</button>
+		</form>
 		</div>
 	{% endfor %}
 	{% for schemafield in search_list %}
@@ -89,7 +93,7 @@ $j(document).ready(function() {
 			<h3>{{ schemafield.pretty_name|capfirst }}</h3>
 			<form action="{% filter_url schema %}" method="GET">
 				<p class="inlineform">
-					{% filter_form_inputs filters -schemafield %}
+					{% filter_form_inputs filters -schemafield.sf %}
 					<input type="hidden" name="textsearch" value="{{ schemafield.name }}">
 					<input type="text" name="q" value="">
 					<button type="submit">Search</button>
