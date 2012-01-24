@@ -84,20 +84,20 @@ $j(document).ready(function() {
 	<!-- LOOKUP FIELDS -->
 	{% for schemafield_dict in lookup_list %}
 		<div class="filtergroup">
-		<h3>{{ schemafield_dict.sf.pretty_name|capfirst }}</h3>
+		<h3>{{ schemafield_dict.sf.pretty_name_plural|capfirst }}</h3>
 		<form action="{% filter_url schema %}" method="GET">
 		  {% filter_form_inputs filters -schemafield_dict.sf %}
 		  <select name="by-{{schemafield_dict.sf.name}}"
 			  multiple
-			  data-placeholder="Choose {{schemafield_dict.sf.pretty_name}}"
+			  data-placeholder="Choose {{schemafield_dict.sf.pretty_name_plural}}"
 			  style="width: 400px;"
 			  class="chzn-select">
 			{% for value in schemafield_dict.top_values %}
 			<option value="{{value.lookup.slug}}">{{value.lookup.name}}</option>
 			{% endfor %}
 		  </select>
-		  {% if schemafield_dict.has_more %}<p class="more"><a href="{% filter_url filters +schemafield_dict.sf %}" rel="nofollow">See all {{ schemafield_dict.total_value_count }}&hellip;</a></li>{% endif %}
 		  <button type="submit">go</button>
+		  {% if schemafield_dict.has_more %}<p class="more"><a href="{% filter_url filters +schemafield_dict.sf %}" rel="nofollow">See all {{ schemafield_dict.total_value_count }}&hellip;</a></li>{% endif %}
 		</form>
 		</div>
 	{% endfor %}

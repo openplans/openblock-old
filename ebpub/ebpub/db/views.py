@@ -532,20 +532,13 @@ def schema_detail(request, slug):
 
         # Populate schemafield_list and lookup_list.
         schemafield_list = list(s.schemafield_set.filter(is_filter=True).order_by('display_order'))
-        # XXX this duplicates part of schema_filter()
-        LOOKUP_MAX_DISPLAYED = 7
+        LOOKUP_MAX_DISPLAYED = 12
         LOOKUP_BUFFER = 4
         lookup_list = []
         for sf in schemafield_list:
             if not (sf.is_charted and sf.is_lookup):
                 continue
-            top_values = list(AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER])
-            if len(top_values) == LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER:
-                top_values = top_values[:LOOKUP_MAX_DISPLAYED]
-                has_more = True
-            else:
-                has_more = False
-            lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
+            lookup_list.append(_get_lookup_list_for_sf(sf, LOOKUP_MAX_DISPLAYED, LOOKUP_BUFFER))
 
         location_chartfield_list = []
 
@@ -701,6 +694,36 @@ def schema_filter_geojson(request, slug):
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
 
+def _get_lookup_list_for_sf(sf, top_value_count=100, orphan_buffer=4):
+    """
+    Given a schemafield where is_lookup = True, make a dictionary
+    that contains the ``top_values`` list, the ``total_value_count`` int,
+    and (if total count is more than the number of top values) a boolean
+    ``has_more``.  And the schemafield itself.
+
+    Useful for creating UI elements where you want to show only the
+    most common values of a Lookup, eg. tags, and maybe link to a page
+    that has the rist.
+    """
+    all_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup')
+    top_values = all_values.order_by('-total')[:top_value_count+orphan_buffer]
+    top_values = list(top_values)
+    if len(top_values) < top_value_count + orphan_buffer:
+        total_value_count = len(top_values)
+        has_more = False
+    elif len(top_values) == top_value_count + orphan_buffer:
+        top_values = top_values[:top_value_count]
+        total_value_count = all_values.count()
+        has_more = True
+    else:
+        raise Exception("impossible to get here")
+
+    return({'sf': sf,
+            'top_values': top_values,
+            'has_more': has_more,
+            'total_value_count': total_value_count,
+            })
+
 def schema_filter(request, slug):
     """
     List NewsItems for one schema, filtered by various criteria in the
@@ -772,33 +795,19 @@ def schema_filter(request, slug):
     LOOKUP_MAX_DISPLAYED = 100
     LOOKUP_BUFFER = 4
     lookup_list, boolean_lookup_list, search_list = [], [], []
+
     for sf in filter_sf_dict.values():
         if sf.is_searchable:
             search_list.append(sf)
         elif sf.is_type('bool'):
             boolean_lookup_list.append(sf)
         elif sf.is_lookup:
-            all_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup')
-            top_values = all_values.order_by('-total')[:LOOKUP_MAX_DISPLAYED+LOOKUP_BUFFER]
-            top_values = list(top_values)
-            if len(top_values) < LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER:
-                total_value_count = len(top_values)
-                has_more = False
-            elif len(top_values) == LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER:
-                top_values = top_values[:LOOKUP_MAX_DISPLAYED]
-                total_value_count = all_values.count()
-                has_more = True
-            else:
-                raise Exception("impossible to get here")
-
+            top_for_sf = _get_lookup_list_for_sf(sf, LOOKUP_MAX_DISPLAYED, LOOKUP_BUFFER)
             # Note we ordered by -total to get the top values, but since we don't
             # display the count, that ordering is nonsensical to the user.
-            top_values = sorted(top_values, key = lambda x: x.lookup.name)
-            lookup_list.append({'sf': sf,
-                                'top_values': top_values,
-                                'has_more': has_more,
-                                'total_value_count': total_value_count,
-                                })
+            top_for_sf['top_values'] = sorted(top_for_sf['top_values'],
+                                              key = lambda x: x.lookup.name)
+            lookup_list.append(top_for_sf)
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
     if 'location' in filterchain:
