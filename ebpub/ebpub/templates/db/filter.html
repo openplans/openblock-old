@@ -19,19 +19,6 @@
 
 		<div id="maintext">
 
-		{% if lookup_descriptions %}
-			<dl>
-				{% for lookup in lookup_descriptions %}
-				<dt>{{ lookup.name }}</dt>
-				<dd>{{ lookup.description|safe }}</dd>
-				{% endfor %}
-			</dl>
-		{% endif %}
-
-		{% if filters.location %}
-			<h3>{{ filters.location.location_name }}</h3>
-		{% endif %}
-
 		{% if newsitem_list %}
 
 			<p>{% map_icon_img schema %} <strong>{{ schema.plural_name|capfirst }} {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
