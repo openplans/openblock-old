@@ -8,10 +8,13 @@
 {% ifnotequal place.slug "unknown" %}<link rel="alternate" type="application/rss+xml" title="RSS" href="{{ place.rss_url }}" />{% endifnotequal %}
 <meta name="description" content="Recent news {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %} in {{ place.city_object.name }}{% endif %}.">
 {{ block.super }}
+
 <script type="text/javascript" charset="utf-8">
 var pid = '{{ pid }}';
 
 window.onload = function() {
+	$j(".chzn-select").chosen({no_results_text: "No results matched"});
+
 	$j('#sectionfilterbutton').click(function() {
 		var url = $j('#sectionfilter').val();
 		if (url) { window.location = url; }
@@ -93,6 +96,7 @@ window.onload = function() {
 	$j('h4.unloaded').removeClass('unloaded');
 	{% endif %}
 }
+
 </script>
 
 {% endblock extrahead %}
@@ -129,9 +133,11 @@ window.onload = function() {
 		<li>{% ifequal block_radius "8" %}8 blocks{% else %}<a href="?radius=8" rel="nofollow">8 blocks</a>{% endifequal %}</li>
 	  </ul>
 	  {% endif %}
-	  <form class="select-filter">
-		<select id="sectionfilter">
-		  <option value="">Choose a type of information&hellip;</option>
+	  <form class="select-filter" method="GET">
+		<select id="sectionfilter" class="chzn-select"
+			style="width: 260px;"
+			data-placeholder="Choose a type of information&hellip;">
+		  <option value=""></option>
 		  {% for schema in filtered_schema_list %}
 			<option value="{% filter_url filters +'schema' schema %}">{{ schema.plural_name|capfirst }}</option>
 		  {% endfor %}
