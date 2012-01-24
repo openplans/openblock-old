@@ -20,19 +20,18 @@ $j(document).ready(function() {
 
 <div id="schemanav">
 	<h2>{% if filters %}Refine your search{% else %}Filter this section{% endif %}</h2>
-
 	<!-- FILTERS W/ EXISTING VALUES -->
 	{% if filters %}
-	<ul class="schemanav">
-		{% for filter in filters.filters_for_display %}
-        {% if filter.label %}
+	  <ul class="schemanav">
+	  {% for filter in filters.filters_for_display %}
+            {% if filter.label %}
 		<li class="filter changed">
 			<span class="filter-label">{{ filter.label|capfirst }}:</span>
 			<strong class="filter-value">{{ filter.short_value }}</strong>
 			<a class="filter-clear" href="{% filter_url filters -filter.slug %}" title="Remove this filter" rel="nofollow">Clear</a>
 		</li>
-		{% endif %}
-		{% endfor %}
+	    {% endif %}
+	  {% endfor %}
 	</ul>
 	{% endif %}
 
