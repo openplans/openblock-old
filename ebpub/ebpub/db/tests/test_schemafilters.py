@@ -552,7 +552,13 @@ class TestFilterChain(TestCase):
 
     def test_update_from_request__empty(self):
         request = mock.Mock()
-        request.GET = {}
+        class StubQueryDict(dict):
+            def getlist(self, key):
+                return []
+            def copy(self):
+                return StubQueryDict(self.items())
+
+        request.GET = StubQueryDict()
         chain = FilterChain(request=request)
         chain.update_from_request({})
         self.assertEqual(len(chain), 0)
