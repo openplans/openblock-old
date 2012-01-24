@@ -101,7 +101,7 @@ class FilterFormInputsNode(Base):
                 pass
         for key, values in self._get_additions(context):
             filterchain.replace(key, *values)
-        output = []
+        output = ['<!-- filter_form_inputs tag output -->']
         for name, filter in filterchain.items():
             for name, values in filter.get_query_params().items():
                 if not isinstance(values, (list, tuple)):
@@ -109,6 +109,7 @@ class FilterFormInputsNode(Base):
                     for v in values:
                         output.append('<input type="hidden" name="%s" value="%s" />'
                                       % (name, v))
+        output.append('<!-- end filter_form_inputs -->')
         from django.utils.safestring import mark_safe
         output = '\n'.join(output)
         return mark_safe(output)
