@@ -17,7 +17,9 @@
 #
 
 """
-Template tags for the custom filter.
+Template tags mostly related to the schema_filter view:
+generating URLs and forms to link/submit to that view.
+
 """
 
 from django import template
@@ -26,7 +28,8 @@ from ebpub.db.schemafilters import FilterChain
 
 register = template.Library()
 
-class FilterUrlNode(template.Node):
+class Base(template.Node):
+
     def __init__(self, filterchain_var, additions, removals, clear=False):
         self.filterchain_var = template.Variable(filterchain_var)
         self.clear = clear
@@ -44,36 +47,78 @@ class FilterUrlNode(template.Node):
                                    ))
         self.additions = tuple(self.additions)
 
-    def render(self, context):
-        filterchain = self.filterchain_var.resolve(context)
-        if isinstance(filterchain, FilterChain):
-            schema = filterchain.schema
-        elif isinstance(filterchain, Schema):
-            schema = filterchain
-            # Note, context['request'] only works if
-            # django.core.context_processors.request is enabled in
-            # TEMPLATE_CONTEXT_PROCESSORS.
-            filterchain = FilterChain(context=context, request=context['request'],
-                                      schema=schema)
-        else:
-            raise template.TemplateSyntaxError(
-                "%r is neither a FilterChain nor a Schema" % filterchain)
-        removals = [r.resolve(context) for r in self.removals]
-        if self.clear:
-            filterchain = filterchain.copy()
-            filterchain.clear()
+    def _get_additions(self, context):
         additions = []
         for key, values in self.additions:
             key = key.resolve(context)
             additions.append((key, [v.resolve(context) for v in values]))
-        schema = filterchain.schema
+        return additions
+
+    def _get_removals(self, context):
+        removals = [r.resolve(context) for r in self.removals]
+        return removals
+
+    def _get_filterchain(self, context):
+        filterchain_or_schema = self.filterchain_var.resolve(context)
+        if isinstance(filterchain_or_schema, FilterChain):
+            filterchain = filterchain_or_schema
+        elif isinstance(filterchain_or_schema, Schema):
+            # Note, context['request'] only works if
+            # django.core.context_processors.request is enabled in
+            # TEMPLATE_CONTEXT_PROCESSORS.
+            filterchain = FilterChain(context=context, request=context['request'],
+                                      schema=filterchain_or_schema)
+        else:
+            raise template.TemplateSyntaxError(
+                "%r is neither a FilterChain nor a Schema" % filterchain_or_schema)
+        if self.clear:
+            filterchain = filterchain.copy()
+            filterchain.clear()
+        return filterchain
+
+class FilterUrlNode(Base):
+
+    """Node for the filter_url tag
+    """
+
+    def render(self, context):
+        filterchain = self._get_filterchain(context)
+        additions = self._get_additions(context)
+        removals = self._get_removals(context)
         return filterchain.make_url(additions=additions, removals=removals)
+
+
+class FilterFormInputsNode(Base):
+
+    """Node for the filter_form_inputs tag"""
+
+    def render(self, context):
+        filterchain = self._get_filterchain(context)
+        for key in self._get_removals(context):
+            try:
+                del filterchain[key]
+            except KeyError:
+                pass
+        for key, values in self._get_additions(context):
+            filterchain.replace(key, *values)
+        output = []
+        for name, filter in filterchain.items():
+            for name, values in filter.get_query_params().items():
+                if not isinstance(values, (list, tuple)):
+                    values = [values]
+                    for v in values:
+                        output.append('<input type="hidden" name="%s" value="%s" />'
+                                      % (name, v))
+        from django.utils.safestring import mark_safe
+        output = '\n'.join(output)
+        return mark_safe(output)
+
 
 def do_filter_url(parser, token):
     """
-    Outputs a URL based on the filter chain, with optional
-    additions/removals of filters.  The first argument is required
-    and can be either an existing FilterChain or a Schema.
+    Template tag that outputs a URL based on the filter chain, with
+    optional additions/removals of filters.  The first argument is
+    required and can be either an existing FilterChain or a Schema.
 
     {% filter_url filter_chain %}
     {% filter_url schema %}
@@ -100,6 +145,29 @@ def do_filter_url(parser, token):
 
     {% filter_url filter_chain -key1 +key2 arg2 -key3 +key4 arg4 ... %}
     """
+    args = _parse(parser, token)
+    return FilterUrlNode(*args)
+
+
+
+def do_filter_form_inputs(parser, token):
+    """
+    Template tag that takes same args as filter_url, but outputs a set
+    of hidden form inputs encapsulating the current filter chain.
+
+    Examples::
+
+     {% filter_form_inputs filter_chain %}
+     {% filter_form_inputs schema %}
+
+    etc.
+    """
+    args = _parse(parser, token)
+    return FilterFormInputsNode(*args)
+
+
+def _parse(parser, token):
+    # Handle parsing of filter_url and filter_form_inputs tags.
     bits = token.split_contents()
     additions, removals = [], []
     try:
@@ -135,6 +203,8 @@ def do_filter_url(parser, token):
             additions.append((key, values))
         else:
             raise template.TemplateSyntaxError('Invalid argument: %r' % bit)
-    return FilterUrlNode(filterchain_var, additions, removals, clear=clear)
+    return (filterchain_var, additions, removals, clear)
+
 
 register.tag('filter_url', do_filter_url)
+register.tag('filter_form_inputs', do_filter_form_inputs)

@@ -35,8 +35,9 @@ $j(document).ready(function() {
 	<div class="filtergroup" id="location-filtergroup">
 		<h3>Location</h3>
 		<h4>Search near an address:</h4>
-		<form action="{{ search_url }}" method="get">
+		<form action="{% filter_url schema %}" method="GET">
 			<p>
+				{% filter_form_inputs filters -"location" %}
 				<input type="text" id="locationsearch-input" name="address">
 				<button type="submit">Search</button>
 				<label class="radius-search">
@@ -60,8 +61,9 @@ $j(document).ready(function() {
 	{% if not date_filter_applied %}
 	<div class="filtergroup" id="date-filtergroup">
 		<h3>{{ schema.date_name|capfirst }}</h3>
-		<form action="{% filter_url filters %}" method="get">
+		<form action="{% filter_url schema %}" method="GET">
 			<p>
+			  	{% filter_form_inputs filters -"date" %}
 				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"m/d/Y" }}">
 					 - 
 					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"m/d/Y" }}">
@@ -85,8 +87,9 @@ $j(document).ready(function() {
 	{% for schemafield in search_list %}
 		<div class="filtergroup">
 			<h3>{{ schemafield.pretty_name|capfirst }}</h3>
-			<form action="{{ search_url }}" method="get">
+			<form action="{% filter_url schema %}" method="GET">
 				<p class="inlineform">
+					{% filter_form_inputs filters -schemafield %}
 					<input type="hidden" name="textsearch" value="{{ schemafield.name }}">
 					<input type="text" name="q" value="">
 					<button type="submit">Search</button>
