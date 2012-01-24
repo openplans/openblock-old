@@ -8,9 +8,6 @@
 <div id="content">
 	<h2>
 		<a href="{% filter_url filters -all %}">{{ schema.plural_name|capfirst }}</a>
-		{% comment %} we already have breadcrumbs in the base template
- {% for crumb in filters.make_breadcrumbs %} {% if forloop.last %}{{ crumb.0|capfirst }}{% else %}<a href="{{ crumb.1 }}">{{ crumb.0|capfirst }}</a> &rsaquo; {% endif %}{% endfor %} 
-		{% endcomment %}
 	</h2>
 	<h2>Select {{ lookup_type }}</h2>
 	{% if lookup_list|length|greaterthan:"100" %}
