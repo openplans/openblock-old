@@ -669,6 +669,10 @@ class FilterChain(SortedDict):
         SchemaFields that we create filters for. (This is so that
         templates can display input widgets for the ones we're not
         already filtering by.)
+
+        TODO: This should not bail out on the first error,
+        it should do as much as possible and signal multiple errors.
+        (Use the forms framework?)
         """
         request, context = self.request, self.context
         qs = self.qs

@@ -13,7 +13,7 @@
 		{% endfor %}
 		</ul>
 	{% else %}
-		<p>We couldn’t find the address <strong>{{ address }}</strong>. Please try again below, or <a href="../">go back to your search</a>.</p>
+		<p>We couldn’t find the address <strong>{{ address }}</strong>. Please try again below, or <a href="{% filter_url filters %}">go back to your search</a>.</p>
 		<form action="" method="get">
 			<input type="hidden" name="radius" value="{{ radius }}">
 			<input type="text" name="address" value="{{ address }}">
