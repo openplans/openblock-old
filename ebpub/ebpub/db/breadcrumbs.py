@@ -98,10 +98,7 @@ def schema_about(context):
 
 def schema_filter(context):
     crumbs = schema_detail(context)
-    filterchain = context.get('filters')
-    if filterchain is not None:
-        url = crumbs[-1][1]
-        crumbs += filterchain.make_breadcrumbs(base_url=url)
+    crumbs.append(('Search', ''))
     # This one's a generator because we want to evaluate it lazily,
     # and django's 'for' template tag doesn't accept callables.
     for crumb in crumbs:
