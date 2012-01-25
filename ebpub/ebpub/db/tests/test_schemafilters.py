@@ -108,9 +108,10 @@ class TestLocationFilter(TestCase):
     def test_filter_by_location__choices(self):
         filt = self._make_filter('neighborhoods')
         more_needed = filt.validate()
-        self.assertEqual(more_needed['lookup_type'], u'Neighborhood')
-        self.assertEqual(more_needed['lookup_type_slug'], 'neighborhoods')
-        self.assert_(len(more_needed['lookup_list']) > 0)
+        self.assertEqual(more_needed['filter_key'], u'location')
+        self.assertEqual(more_needed['param_name'], 'locations')
+        self.assertEqual(more_needed['param_label'], u'Neighborhood')
+        self.assert_(len(more_needed['option_list']) > 0)
         self.assertEqual(filt.get_query_params(),
                          {'locations': 'neighborhoods'})
 
@@ -321,7 +322,8 @@ class TestBoolFilter(TestCase):
     def test_filter__more_needed(self):
         filt = self._make_filter('by-arrests')
         more_needed = filt.validate()
-        self.assertEqual(more_needed['lookup_type_slug'], 'arrests')
+        self.assertEqual(more_needed['filter_key'], 'arrests')
+        self.assertEqual(more_needed['param_name'], 'by-arrests')
 
 
 class TestLookupFilter(TestCase):
@@ -352,9 +354,10 @@ class TestLookupFilter(TestCase):
         filt = self._make_filter('by-beat')
         more_needed = filt.validate()
         self.assert_(more_needed)
-        self.assertEqual(more_needed['lookup_type'], 'Beat')
-        self.assertEqual(more_needed['lookup_type_slug'], 'beat')
-        self.assert_(len(more_needed['lookup_list']) > 0)
+        self.assertEqual(more_needed['filter_key'], 'beat')
+        self.assertEqual(more_needed['param_name'], 'by-beat')
+        self.assertEqual(more_needed['param_label'], 'Beats')
+        self.assert_(len(more_needed['option_list']) > 0)
 
     def test_filter__ok_single(self):
         filt = self._make_filter('by-beat', 'beat-214', )

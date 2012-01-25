@@ -99,7 +99,16 @@ class NewsitemFilter(object):
 
         If we have enough information, returns an empty dict.
 
-        ... or maybe should be something more generic across both REST
+        The dict keys are::
+            'filter_key': The filter slug.
+            'param_name': Query parameter for this filter, for forms or URLs.
+            'param_label': Human-readable name of this filter.
+            'option_list': A list of possible argument values for this
+            filter. Each is a dict with keys 'value' (usable for input
+            values) and 'name' (human-readable).
+            'select_multiple': boolean, whether you can filter on more than one value.
+
+        ... or maybe this should be something more generic across both REST
         and UI views
         """
         # TODO: Maybe split this into .get_extra_context() -> dict
@@ -257,9 +266,11 @@ class BoolFilter(AttributeFilter):
         if self._got_args:
             return {}
         return {
-            'lookup_type': self.value[3:],
-            'lookup_type_slug': self.schemafield.name,
-            'lookup_list': [{'slug': 'yes', 'name': 'Yes'}, {'slug': 'no', 'name': 'No'}, {'slug': 'na', 'name': 'N/A'}],
+            'filter_key': self.slug,
+            'param_name': self.argname,
+            'param_label': self.value[3:],
+            'option_list': [{'value': 'yes', 'name': 'Yes'}, {'value': 'no', 'name': 'No'}, {'value': 'na', 'name': 'N/A'}],
+            'select_multiple': True,
             }
 
 
@@ -307,11 +318,15 @@ class LookupFilter(AttributeFilter):
     def validate(self):
         if self._got_args:
             return {}
-        lookup_list = models.Lookup.objects.filter(schema_field__id=self.schemafield.id).order_by('name')
+        option_list = models.Lookup.objects.filter(schema_field__id=self.schemafield.id).order_by('name')
+        option_list = [{'name': lookup.name, 'value': lookup.slug}
+                       for lookup in option_list]
         return {
-            'lookup_type': self.schemafield.pretty_name,
-            'lookup_type_slug': self.schemafield.name,
-            'lookup_list': lookup_list,
+            'filter_key': self.slug,
+            'param_name': self.argname,
+            'param_label': self.schemafield.pretty_name_plural,
+            'option_list': option_list,
+            'select_multiple': True,
         }
 
     def apply(self):
@@ -374,17 +389,20 @@ class LocationFilter(NewsitemFilter):
         if self._got_args:
             return {}
         else:
-            lookup_list = models.Location.objects.filter(location_type__slug=self.location_type_slug, is_public=True).order_by('display_order')
-            if not lookup_list:
+            option_list = models.Location.objects.filter(location_type__slug=self.location_type_slug, is_public=True).order_by('display_order')
+            if not option_list:
                 raise FilterError("empty lookup list")
-            location_type = lookup_list[0].location_type
-            # Note these 'lookups' aren't db.Lookups, just anything
-            # we can provide a list of that the user can select...
-            # in this case, Locations.
+            location_type = option_list[0].location_type
+            option_list = [
+                {'name': loc.pretty_name,
+                 'value': '%s,%s' % (self.location_type_slug, loc.slug)}
+                for loc in option_list]
             return {
-                'lookup_type': location_type.name,
-                'lookup_type_slug': self.location_type_slug,
-                'lookup_list': lookup_list,
+                'filter_key': self.slug,
+                'param_name': self.argname,
+                'param_label': location_type.name,
+                'option_list': option_list,
+                'select_multiple': False,
                 }
 
 
@@ -573,7 +591,7 @@ class DateFilter(NewsitemFilter):
                 'end_date': self.end_date.strftime('%Y-%m-%d')}
 
     def validate(self):
-        # Filtering UI does not provide a page for selecting a block.
+        # Filtering UI does not provide a page for selecting a date.
         return {}
 
     def apply(self):
