@@ -442,7 +442,7 @@ class BlockFilter(NewsitemFilter):
                                        radius_slug(self.block_radius)])
         self.query_param_value = ','.join(self.query_param_value)
         self.location_name = block.pretty_name
-
+        self.got_args = True
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -484,18 +484,18 @@ class BlockFilter(NewsitemFilter):
             # needs block_radius to already be there.
             self._update_block(kwargs['block'])
 
-        m = re.search('^%s$' % constants.BLOCK_URL_REGEX, self.block_range)
-        if not m:
-            raise FilterError('Invalid block URL: %r' % self.block_range)
-        self.url_to_block_args = m.groups()
-        self._got_args = True
-
         if self.location_object is not None:
             block = self.location_object
         else:
+            m = re.search('^%s$' % constants.BLOCK_URL_REGEX, self.block_range)
+            if not m:
+                raise FilterError('Invalid block URL: %r' % self.block_range)
+            url_to_block_args = m.groups()
+
             block = url_to_block(self.city_slug, self.street_slug,
-                                 *self.url_to_block_args)
+                                 *url_to_block_args)
             self._update_block(block)
+        self._got_args = True
 
 
     def validate(self):
