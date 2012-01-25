@@ -36,9 +36,10 @@ window.onload = function() {
 		$j('#saveplacestatus').html(action + '...');
 		$j.ajax({
 			type: "POST", url: url, data: {pid: pid},
-			error: function(jqXHR, textStatus, errorThrown) {
-				$j('#saveplacestatus').html("Whoops, we had a technical hiccup. Please try again in a bit.");
-			},
+			error: setTimeout(function(jqXHR, textStatus, errorThrown) {
+				$j('#saveplacestatus').html("Whoops, we had a technical hiccup on line 46. Please try again in a bit.");
+			},5000),
+			//Timeout set if page not saving because it refreshes too quickly.
 			success: function(data, textStatus) {
 				$j('#saveplacestatus').html(result + '.');
 				$j('#saveplacebutton').html(button);
@@ -82,10 +83,11 @@ window.onload = function() {
 		}
 		$j.ajax({
 			type: "POST", url: url, data: {schema:schema_slug},
-			error: function(jqXHR, textStatus, errorThrown) {
+			error: setTimeout(function(jqXHR, textStatus, errorThrown) {
 				alert("Whoops, we had a technical hiccup. Please try again in a bit.");
 				on_error(jqXHR, textStatus, errorThrown);
-			},
+			},5000),
+			//See note above
 			success: on_success
 		});
 		return false;
