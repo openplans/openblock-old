@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
+
+{% block title %}Your API Keys{% endblock %}
+
 <h1>API keys for {{ user.username }}</h1>
 
 <div>You have {{ keys|length }}. You can make {{ available_keys }} more.
