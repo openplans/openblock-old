@@ -36,8 +36,8 @@ MAILTO=somebody@example.com
 
 ######################################################################
 # Email alerts.
-@daily openblock $BINDIR/send_alerts  --frequency daily -v
-@weekly openblock $BINDIR/send_alerts --frequency weekly -v
+@daily openblock $BINDIR/send_alerts  --frequency=daily -v
+@weekly openblock $BINDIR/send_alerts --frequency=weekly -v
 
 ######################################################################
 # Aggregates. Update every few minutes.
