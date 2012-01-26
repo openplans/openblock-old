@@ -652,7 +652,8 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
             # column. The [[:<:]] thing is a word boundary, and the
             # (?:) groups the possible values to distinguish them from
             # the word boundary part of the regex.
-            clone = clone.extra(where=("db_attribute.%s ~ '[[:<:]](?:%s)[[:>:]]'" % (real_name, '|'.join([str(val) for val in att_value])),))
+            pattern = '[[:<:]](?:%s)[[:>:]]' % '|'.join([str(val) for val in att_value])
+            clone = clone.extra(where=("db_attribute.%s ~ '%s'" % (real_name, pattern),))
 
         elif None in att_value:
             if att_value != [None]:
