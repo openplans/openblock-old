@@ -644,13 +644,16 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
                 return clone
             att_value = [val.id for val in att_value]
         if schema_field.is_many_to_many_lookup():
-            # We have to use a regular expression search to look for all rows
-            # with the given att_value *somewhere* in the column. The [[:<:]]
-            # thing is a word boundary.
             for value in att_value:
                 if not str(value).isdigit():
                     raise ValueError('Only integer strings allowed for att_value in many-to-many SchemaFields')
-            clone = clone.extra(where=("db_attribute.%s ~ '[[:<:]]%s[[:>:]]'" % (real_name, '|'.join([str(val) for val in att_value])),))
+            # We have to use a regular expression search to look for
+            # all rows with the given att_value *somewhere* in the
+            # column. The [[:<:]] thing is a word boundary, and the
+            # (?:) groups the possible values to distinguish them from
+            # the word boundary part of the regex.
+            clone = clone.extra(where=("db_attribute.%s ~ '[[:<:]](?:%s)[[:>:]]'" % (real_name, '|'.join([str(val) for val in att_value])),))
+
         elif None in att_value:
             if att_value != [None]:
                 raise ValueError('by_attribute() att_value list cannot have more than one element if it includes None')
