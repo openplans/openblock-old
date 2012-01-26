@@ -910,9 +910,9 @@ def schema_filter(request, slug):
 
 def _default_date_filtering(filterchain):
     """
-    Make sure we do some date limiting, but don't force a
-    DateFilter into the filterchain, because that would prevent
-    users from choosing dates.
+    Apply the filterchain, and make sure we do some date limiting, but
+    don't force a DateFilter into the filterchain, because that would
+    prevent users from choosing dates.
     """
     schema = filterchain['schema'].schema
     date_filter = filterchain.get('date') or filterchain.get('pubdate')
