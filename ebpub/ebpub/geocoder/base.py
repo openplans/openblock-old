@@ -196,6 +196,8 @@ class AddressGeocoder(Geocoder):
                              % loc['street'])
                 try:
                     misspelling = StreetMisspelling.objects.get(incorrect=loc['street'])
+                    # TODO: stash away the original 'street' value for
+                    # possible disambiguation later?
                     loc['street'] = misspelling.correct
                     logger.debug(' ... corrected to %r' % loc['street'])
                 except StreetMisspelling.DoesNotExist:
