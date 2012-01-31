@@ -347,7 +347,7 @@ class LocationType(models.Model):
                             help_text='for example, "Ward" or "Congressional District"')
     plural_name = models.CharField(max_length=64)
     scope = models.CharField(max_length=64,
-                             help_text='e.g., "Chicago" or "U.S.A."')
+                             help_text='e.g., "Chicago" or "U.S.A.". For display only; has no effect.')
     slug = models.SlugField(max_length=32, unique=True)
     is_browsable = models.BooleanField(
         default=True, help_text="Whether this is displayed on location_type_list.") #  XXX unused??
