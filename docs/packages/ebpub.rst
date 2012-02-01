@@ -526,7 +526,30 @@ regularly by :doc:`../main/running_scrapers`.
 Accounts
 ========
 
-This system uses a customized version of Django's User objects and authentication
-infrastructure. ebpub comes with its own User object and Django middleware that
-sets request.user to the User if somebody's logged in.
+OpenBlock uses a customized version of Django's User objects and
+authentication infrastructure. ``ebpub.accounts`` comes with its own User
+object and Django middleware that sets request.user to the User if
+somebody's logged in.
 
+See the package's docstrings for more detail.
+
+
+FilterChains: Searching NewsItems, Making URLs for Searches
+============================================================
+
+Since searching NewsItems according to some schema, and building URLs
+that represent those searches, are so important to OpenBlock, these
+features have been encapsulated in the ``ebpub.db.schemafilters``
+package.  It provides a ``FilterChain`` class, which you can treat as
+an ordered collection of filters to apply to a NewsItem query.  Each
+filter is represented by a subclass of ``NewsItemFilter`` and
+represents filtering according to one criteria, eg. a date search, or
+a search for some values of a ``SchemaField.``
+
+Given a FilterChain, you can generate a URL to the ``schema_filter``
+view with those parameters by calling ``filterchain.get_url()``.
+There is also a ``{% filter_url %}`` template tag in
+``ebpub.db.templatetags.eb_filter`` which you can use in templates.
+
+See the ``schemafilter`` package's docstrings for more detail.  Most
+of the views in ``ebpub.db.views`` make use of a FilterChain.
