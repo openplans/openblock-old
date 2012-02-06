@@ -219,7 +219,7 @@ class Schema(models.Model):
         return (self.slug,)
 
     def url(self):
-        return urlresolvers.reverse('ebpub-schema-detail', args=(self.slug,))
+        return urlresolvers.reverse('ebpub-schema-filter', args=(self.slug,))
 
     ######################################################################
     # Metadata fields that used to live in a separate SchemaInfo model.
@@ -382,7 +382,7 @@ class Location(models.Model):
     location_type = models.ForeignKey(LocationType)
     location = models.GeometryField(null=True)
     display_order = models.SmallIntegerField()
-    city = models.CharField(max_length=255)
+    city = models.CharField(max_length=255, db_index=True)
     source = models.CharField(max_length=64)
     area = models.FloatField(
         blank=True, null=True,
@@ -646,7 +646,7 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         if schema_field.is_many_to_many_lookup():
             for value in att_value:
                 if not str(value).isdigit():
-                    raise ValueError('Only integer strings allowed for att_value in many-to-many SchemaFields')
+                    raise ValueError('Only integer strings allowed for att_value in many-to-many SchemaFields; got %r' % value)
             # We have to use a regular expression search to look for
             # all rows with the given att_value *somewhere* in the
             # column. The [[:<:]] thing is a word boundary, and the
@@ -1038,8 +1038,11 @@ class LookupManager(models.Manager):
         Lookup.code, creating it (with the given name/code/description) if it
         doesn't already exist.
 
-        If make_text_slug is True, then a slug will be created from the given
-        name. If it's False, then the slug will be the Lookup's ID.
+        If ``code`` is not provided, ``name`` will be also used as code.
+
+        If ``make_text_slug`` is True (the default), then a slug will
+        be created from the given name. If it's False, then the slug
+        will be the Lookup's ID.
         """
         def log_info(message):
             if logger is None:
@@ -1093,13 +1096,15 @@ class Lookup(models.Model):
                             help_text='Human-readable name of this lookup value.')
     code = models.CharField(
         max_length=255, blank=True,
-        help_text='Optional internal code to use for retrieval if `name` is modified from the original data source, eg. to make `name` prettier.')
+        help_text='Value used for queries. May differ from `name` if `name` is modified from the original data source, eg. to make `name` prettier. `code` should not be modified from the original source data.',
+        db_index=True)
     # ... For example, in scraping Chicago crimes, we use the crime type code
     # to find the appropriate crime type in this table. We can't use `name`
     # in that case, because we've massaged `name` to use a "prettier"
     # formatting than exists in the data source.
 
-    slug = models.SlugField(max_length=32, db_index=True)
+    slug = models.SlugField(max_length=32, db_index=True,
+                            help_text="URL-safe identifier")
     description = models.TextField(blank=True)
 
     objects = LookupManager()
