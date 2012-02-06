@@ -65,15 +65,31 @@
 		{% endif %}
 	</div><!--/ #public-records -->
 	<div id="more">
-    {% if more_schemas %}
+	{% if more_schemas %}
 		<h2>More news</h2>
 		<ul>
 		{% for schema in more_schemas %}
 			<li><a href="{{ schema.url }}">{% map_icon_img schema %}{{ schema.plural_name|capfirst }}</a></li>
 		{% endfor %}
 		</ul>
-    {% endif %}
-    </div><!--/ #more -->
+	{% endif %}
+	</div><!--/ #more -->
+	<!--  begin block featured_tags -->
+	{% block featured_tags %}
+	{% if featured_categories %}
+	<!-- This only shows up if you have some instances of neighbornews.FeaturedTag -->
+	<div id="featured-tags">
+		<h2>Featured Tags</h2>
+		<ul>
+		{% for schema, tags in featured_categories.items %}
+		{% for tag in tags %}
+			<li><a href="{{ tag.url }}">{{ tag.tag }}</a></li>
+		{% endfor %}
+		{% endfor %}
+		</ul>
+	</div><!--/ #tag_info -->
+	{% endif %}
+	{% endblock featured_tags %}<!--  end bloc featured_tags -->
 
     </div><!-- / #frontpage-text -->
 

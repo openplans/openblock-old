@@ -39,9 +39,6 @@ def filter_reverse(slug, args):
             raise TypeError("Need a list or tuple, got: %s" % a)
 
     url = urlresolvers.reverse('ebpub-schema-filter', args=[slug])
-    # TODO: does this really need hardcodign here?
-    if not url.rstrip('/').endswith('filter'):
-        url = '%s/filter/' % url
     # Normalize duplicate slashes, dots, and the like.
     url = posixpath.normpath(url) + '/'
     if args:

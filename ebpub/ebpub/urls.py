@@ -143,14 +143,18 @@ else:
 
 urlpatterns += patterns(
     '',
-    url(r'^([-\w]{4,32})/$', views.schema_detail, name='ebpub-schema-detail'),
+    url(r'^([-\w]{4,32})/schema/$', views.schema_detail, name='ebpub-schema-detail'),
     (r'^([-\w]{4,32})/search/$', views.search),
     (r'^([-\w]{4,32})/petition/$', petition_views.form_view, {'is_schema': True}),
     (r'^([-\w]{4,32})/petition/thanks/$', petition_views.form_thanks, {'is_schema': True}),
     url(r'^([-\w]{4,32})/detail/(\d{1,8})/$', views.newsitem_detail, name='ebpub-newsitem-detail'),
     url(r'^([-\w]{4,32})/filter_json/$', views.schema_filter_geojson,
         name='ebpub-schema-filter-geojson'),
-    url(r'^([-\w]{4,32})/(?:filter/)$', views.schema_filter,
+
+    # Redirect from the old 'filter' url.
+    # url(r'^([-\w]{4,32})/filter/$', views.schema_filter,  # XXX redirect
+    #     name='ebpub-schema-filter'),
+    url(r'^([-\w]{4,32})/$', views.schema_filter,
         name='ebpub-schema-filter'),
 
 )

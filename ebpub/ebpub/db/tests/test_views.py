@@ -316,7 +316,7 @@ class TestSchemaFilterView(BaseTestCase):
         url = filter_reverse('crime', [('start_date', '')])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
-        self.assert_(response['location'].endswith('/crime/filter/'))
+        self.assert_(response['location'].endswith('/crime/'))
 
     def test_filter__invalid_daterange(self):
         url = filter_reverse('crime', [('start_date', 'whoops'),

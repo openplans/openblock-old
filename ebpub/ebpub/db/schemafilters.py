@@ -284,8 +284,9 @@ class LookupFilter(AttributeFilter):
     """
     Filters on Lookup attributes (see ebpub.db.models for more info).
 
-    Note we query by Lookup.slug, not Lookup.code, because the slugs
-    are safe for use in URLs.
+    *Note* the args are expected to be either Lookup instances or
+    Lookup.slug, but *not* Lookup.code, because the slugs are safe for use
+    in URLs and the codes may not be.
     """
 
     _sort_value = 900.0
@@ -923,8 +924,9 @@ class FilterChain(SortedDict):
             val = LocationFilter(self.request, self.context, self.qs, *values[1:], location_type=values[0])
             key = val.slug
         elif isinstance(values[0], models.Lookup):
+            key = values[0].schema_field
             val = LookupFilter(self.request, self.context, self.qs, *values,
-                               schemafield=values[0].schema_field)
+                               schemafield=key)
         elif isinstance(values[0], (datetime.date, datetime.datetime)):
             if len(values) == 1:
                 # start and end are the same date.
@@ -1102,7 +1104,7 @@ class FilterChain(SortedDict):
         return [(k, v) for (k, v) in self.items() if getattr(v, 'label', None)]
 
     def _get_base_url(self):
-        return self._base_url or self.schema.url() + 'filter/'
+        return self._base_url or self.schema.url()
     def _set_base_url(self, url):
         self._base_url = url
     base_url = property(_get_base_url, _set_base_url)

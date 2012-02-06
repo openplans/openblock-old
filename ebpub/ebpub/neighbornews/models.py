@@ -18,6 +18,7 @@
 
 from django.contrib.gis.db import models
 from ebpub.accounts.models import User
+from ebpub.db.models import Lookup
 from ebpub.db.models import NewsItem
 
 class NewsItemCreator(models.Model):
@@ -33,3 +34,25 @@ class NewsItemCreator(models.Model):
     class Meta:
         unique_together = (('news_item', 'user'),)
         ordering = ('news_item',)
+
+class FeaturedTag(models.Model):
+    """
+    This allows admins to designate some tags as special,
+    for eg. use in extra-prominent links.
+
+    Assumes that tags are implemented as ebpub.db.models.Lookup.
+    """
+
+    lookup = models.ForeignKey(Lookup, help_text='Which Lookup value to feature')
+
+    @property
+    def name(self):
+        return self.lookup.name
+
+    @property
+    def code(self):
+        return self.lookup.code
+
+    @property
+    def slug(self):
+        return self.lookup.slug

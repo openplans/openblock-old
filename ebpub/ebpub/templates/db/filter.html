@@ -15,6 +15,7 @@
 	<div id="content">
 
 		<h1>Search {{ schema.plural_name }}</h1>
+		<div id="schema-detail-link"><a href="{% url ebpub-schema-detail schema.slug %}">Statistics and more ...</a></div>
 		{% include "db/snippets/filter_left_nav.html" %}
 
 		<div id="maintext">
