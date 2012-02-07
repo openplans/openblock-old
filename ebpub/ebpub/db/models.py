@@ -119,12 +119,14 @@ class SchemaManager(models.Manager):
             cache.set(self._allowed_ids_cache_key, ids, constants.ALLOWED_IDS_CACHE_TIME)
         return ids
 
+
 class SchemaPublicManager(SchemaManager):
 
     _allowed_ids_cache_key = 'allowed_schema_ids__public'
 
     def get_query_set(self):
         return super(SchemaManager, self).get_query_set().filter(is_public=True)
+
 
 class Schema(models.Model):
     """
@@ -237,10 +239,12 @@ class Schema(models.Model):
     class Meta:
         ordering = ('name',)
 
+
 class SchemaFieldManager(models.Manager):
 
     def get_by_natural_key(self, schema_slug, real_name):
         return self.get(schema__slug=schema_slug, real_name=real_name)
+
 
 class SchemaField(models.Model):
     """
@@ -342,6 +346,7 @@ class LocationTypeManager(models.Manager):
     def get_by_natural_key(self, slug):
         return self.get(slug=slug)
 
+
 class LocationType(models.Model):
     name = models.CharField(max_length=255,
                             help_text='for example, "Ward" or "Congressional District"')
@@ -374,6 +379,7 @@ class LocationType(models.Model):
 class LocationManager(models.GeoManager):
     def get_by_natural_key(self, slug, location_type_slug):
         return self.get(slug=slug, location_type__slug=location_type_slug)
+
 
 class Location(models.Model):
     name = models.CharField(max_length=255) # e.g., "35th Ward"
@@ -469,6 +475,7 @@ class LocationSynonymManager(models.Manager):
         except self.model.DoesNotExist:
             return normalized_name
 
+
 class LocationSynonym(models.Model):
     """
     represents a synonym for a Location
@@ -490,6 +497,7 @@ class LocationSynonym(models.Model):
 
     def __unicode__(self):
         return self.pretty_name
+
 
 class AttributesDescriptor(object):
     """
@@ -530,6 +538,7 @@ class AttributesDescriptor(object):
                 VALUES (%%s, %%s, %s)""" % (Attribute._meta.db_table, ','.join([v for k, v in mapping]), ','.join(['%s' for k in mapping])),
                 [instance.id, instance.schema_id] + values)
         transaction.commit_unless_managed()
+
 
 class AttributeDict(dict):
     """
@@ -592,6 +601,7 @@ class AttributeDict(dict):
                 [self.news_item_id, self.schema_id, value])
         transaction.commit_unless_managed()
         dict.__setitem__(self, name, value)
+
 
 class NewsItemQuerySet(models.query.GeoQuerySet):
 
@@ -978,6 +988,7 @@ class AttributeForTemplate(object):
             values = [self.raw_value]
         return [{'value': value, 'url': url, 'description': description} for value, url, description in zip(values, urls, descriptions)]
 
+
 class Attribute(models.Model):
     """
     Extended metadata for NewsItems.
@@ -1024,6 +1035,7 @@ class Attribute(models.Model):
 
     def __unicode__(self):
         return u'Attributes for news item %s' % self.news_item_id
+
 
 class LookupManager(models.Manager):
 
@@ -1084,6 +1096,7 @@ class LookupManager(models.Manager):
             log_info('Created %s %r' % (schema_field.name, name))
         return obj
 
+
 class Lookup(models.Model):
     """
     Lookups are a normalized way to store Attribute fields that have only a
@@ -1122,6 +1135,7 @@ class Lookup(models.Model):
     def __unicode__(self):
         return u'%s - %s' % (self.schema_field, self.name)
 
+
 class NewsItemLocation(models.Model):
     """
     Many-to-many mapping of NewsItems to Locations where the geometries intersect.
@@ -1151,15 +1165,18 @@ class AggregateBaseClass(models.Model):
     class Meta:
         abstract = True
 
+
 class AggregateAll(AggregateBaseClass):
     """Total items in the schema.
     """
     pass
 
+
 class AggregateDay(AggregateBaseClass):
     """Total items in the schema with item_date on the given day
     """
     date_part = models.DateField(db_index=True)
+
 
 class AggregateLocation(AggregateBaseClass):
     """Total items in the schema in location, summed over that last 30 days
@@ -1174,11 +1191,13 @@ class AggregateLocationDay(AggregateBaseClass):
     location = models.ForeignKey(Location)
     date_part = models.DateField(db_index=True)
 
+
 class AggregateFieldLookup(AggregateBaseClass):
     """Total items in the schema with schema_field's value = lookup
     """
     schema_field = models.ForeignKey(SchemaField)
     lookup = models.ForeignKey(Lookup)
+
 
 class SearchSpecialCase(models.Model):
     """
@@ -1202,6 +1221,7 @@ class SearchSpecialCase(models.Model):
 
     def __unicode__(self):
         return self.query
+
 
 class DataUpdate(models.Model):
     """Scraper scripts can use this to keep track of
@@ -1238,7 +1258,6 @@ def get_city_locations():
         return cities
     else:
         return Location.objects.filter(id=None)
-
 
 
 class NewsItemImage(models.Model):
