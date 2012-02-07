@@ -35,15 +35,20 @@ class NewsItemCreator(models.Model):
         unique_together = (('news_item', 'user'),)
         ordering = ('news_item',)
 
-class FeaturedTag(models.Model):
-    """
-    This allows admins to designate some tags as special,
-    for eg. use in extra-prominent links.
 
-    Assumes that tags are implemented as ebpub.db.models.Lookup.
+class FeaturedLookupManager(models.Manager):
+
+    def get_by_natural_key(self, slug):
+        return self.get(lookup__slug=slug)
+
+
+class FeaturedLookup(models.Model):
+    """
+    This allows admins to designate some lookup values as special, for
+    eg. use in extra-prominent links, navigation categories, etc.
     """
 
-    lookup = models.ForeignKey(Lookup, help_text='Which Lookup value to feature')
+    lookup = models.ForeignKey(Lookup, help_text='Which Lookup value to feature', unique=True)
 
     @property
     def name(self):
@@ -56,3 +61,9 @@ class FeaturedTag(models.Model):
     @property
     def slug(self):
         return self.lookup.slug
+
+    objects = FeaturedLookupManager()
+
+    def natural_key(self):
+        return (self.lookup.slug,)
+

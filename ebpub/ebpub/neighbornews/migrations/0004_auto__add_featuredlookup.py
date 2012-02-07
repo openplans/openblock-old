@@ -8,18 +8,18 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         
-        # Adding model 'FeaturedTag'
-        db.create_table('neighbornews_featuredtag', (
+        # Adding model 'FeaturedLookup'
+        db.create_table('neighbornews_featuredlookup', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('lookup', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['db.Lookup'])),
+            ('lookup', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['db.Lookup'], unique=True)),
         ))
-        db.send_create_signal('neighbornews', ['FeaturedTag'])
+        db.send_create_signal('neighbornews', ['FeaturedLookup'])
 
 
     def backwards(self, orm):
         
-        # Deleting model 'FeaturedTag'
-        db.delete_table('neighbornews_featuredtag')
+        # Deleting model 'FeaturedLookup'
+        db.delete_table('neighbornews_featuredlookup')
 
 
     models = {
@@ -171,10 +171,10 @@ class Migration(SchemaMigration):
             'real_name': ('django.db.models.fields.CharField', [], {'max_length': '10'}),
             'schema': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Schema']"})
         },
-        'neighbornews.featuredtag': {
-            'Meta': {'object_name': 'FeaturedTag'},
+        'neighbornews.featuredlookup': {
+            'Meta': {'object_name': 'FeaturedLookup'},
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'lookup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Lookup']"})
+            'lookup': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['db.Lookup']", 'unique': 'True'})
         },
         'neighbornews.newsitemcreator': {
             'Meta': {'ordering': "('news_item',)", 'unique_together': "(('news_item', 'user'),)", 'object_name': 'NewsItemCreator'},
