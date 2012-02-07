@@ -1168,6 +1168,7 @@ a.add-content-link {
     text-decoration: none;
     padding: .75em;
     border: 1px solid #a0a0a0;
+    display: inline-block;
 }
 
 div.selected-result {
