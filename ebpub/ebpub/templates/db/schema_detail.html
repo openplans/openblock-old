@@ -17,7 +17,9 @@
 	<div id="content">
 		<h1>{% map_icon_img schema %} {{ schema.plural_name|capfirst }}</h1>
 		<p>{{ schema.short_description }}</p>
+		<!-- block extradescription -->
 		{% block extradescription %}{%endblock%}
+		<!-- end block extradescription -->
 		<h2>About this section</h2>
 		<dl>
 			<dt>Source</dt>
