@@ -1027,9 +1027,9 @@ class Attribute(models.Model):
 
 class LookupManager(models.Manager):
 
-    def get_by_natural_key(self, slug, schema_field__slug,
+    def get_by_natural_key(self, slug, schema__slug,
                            schema_field__real_name):
-        return self.get(slug=slug, schema_field__slug=schema_field__slug,
+        return self.get(slug=slug, schema_field__schema__slug=schema__slug,
                         schema_field__real_name=schema_field__real_name)
 
     def get_or_create_lookup(self, schema_field, name, code=None, description='', make_text_slug=True, logger=None):
