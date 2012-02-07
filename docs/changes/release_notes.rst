@@ -48,6 +48,9 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Allow overriding the template for schema_filter view on a per-schema
+  basis, by creating a template named db/schema_filter/<schema>.html
+
 * Added ``ebpub.moderation`` app that allows users to flag NewsItems
   as spam or inappropriate, and an admin UI for it;
   see :ref:`moderation` for more.
