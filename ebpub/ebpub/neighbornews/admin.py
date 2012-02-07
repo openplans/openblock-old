@@ -17,11 +17,11 @@
 #
 
 from django.contrib.gis import admin
-from ebpub.neighbornews.models import FeaturedTag
+from ebpub.neighbornews.models import FeaturedLookup
 from ebpub.geoadmin import OSMModelAdmin
 
-class FeaturedTagAdmin(OSMModelAdmin):
+class FeaturedLookupAdmin(OSMModelAdmin):
 
     list_display = ('name', 'code', 'slug')
 
-admin.site.register(FeaturedTag, FeaturedTagAdmin)
+admin.site.register(FeaturedLookup, FeaturedLookupAdmin)

@@ -71,7 +71,7 @@
     "fields": {
       "display": true,
       "display_order": 10,
-      "is_charted": false,
+      "is_charted": true,
       "is_filter": true,
       "is_lookup": true,
       "is_searchable": false,
@@ -89,7 +89,7 @@
     "fields": {
       "display": true,
       "display_order": 10,
-      "is_charted": false,
+      "is_charted": true,
       "is_filter": true,
       "is_lookup": true,
       "is_searchable": false,
