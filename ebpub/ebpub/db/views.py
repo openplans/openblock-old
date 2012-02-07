@@ -905,7 +905,8 @@ def schema_filter(request, slug):
     })
     context['map_configuration'] = _preconfigured_map(context);
 
-    return eb_render(request, 'db/filter.html', context)
+    templates_to_try = ('db/schema_filter/%s.html' % s.slug, 'db/filter.html')
+    return eb_render(request, templates_to_try, context)
 
 
 def _default_date_filtering(filterchain):
