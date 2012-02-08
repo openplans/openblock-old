@@ -5,13 +5,6 @@
 {% comment %}
 {% endcomment %}
 
-{% block extrahead %}
-{% slimall %}
-<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
-<script src="/scripts/jquery.calendrical.js"></script>
-{% endslimall %}
-{% endblock %}
-
 {% block title %}New {{schema.name}}{% endblock %}
 
 <!-- begin block content -->
@@ -24,6 +17,7 @@
 	<div id="mapwrapper" class="neighbornews">
 		<script type="text/javascript">
 		{% autoescape off %}
+    // Set up the map config.
     function loadMap() {
 		  var config = {{map_configuration}};
     	config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
@@ -33,7 +27,8 @@
       _setupMessagePage(map);
     	return map;
 		}
-		  
+
+    // Connect the map to other form widgets, and set up date picker etc.
     function _setupMessagePage(obmap) {
       $j('#id_item_date').calendricalDate({usa: true});
       $j('#id_start_time, #id_end_time').calendricalTimeRange({usa: true});
@@ -175,7 +170,49 @@
         }
       });
       
-    }
+    };
+
+    // Auto-complete for categories.
+    $(document).ready(function () {
+	    var availableTags = {% lookup_values_for_attribute schema.slug 'categories' %};
+	    function split( val ) {
+		return val.split( /,\s*/ );
+	    };
+	    function extractLast( term ) {
+		return split( term ).pop();
+	    };
+	    $j( "input#id_categories" )
+	    // don't navigate away from the field on tab when selecting an item
+	    .bind( "keydown", function( event ) {
+		if ( event.keyCode === $j.ui.keyCode.TAB &&
+		     $j( this ).data( "autocomplete" ).menu.active ) {
+		    event.preventDefault();
+		}
+	    }).autocomplete({
+		minLength: 0,
+		source: function( request, response ) {
+		    // delegate back to autocomplete, but extract the last term
+		    response( $j.ui.autocomplete.filter(
+			availableTags, extractLast( request.term ) ) );
+		},
+		focus: function() {
+		    // prevent value inserted on focus
+		    return false;
+		},
+		select: function( event, ui ) {
+		    var terms = split( this.value );
+		    // remove the current input
+		    terms.pop();
+		    // add the selected item
+		    terms.push( ui.item.value );
+		    // add placeholder to get the comma-and-space at the end
+		    terms.push( "" );
+		    this.value = terms.join( ", " );
+		    return false;
+		}
+	    });
+      });
+
 	 	{% endautoescape %}
 		</script>
 		{% include "richmaps/richmap.html" %}
@@ -192,7 +229,6 @@
         enctype="multipart/form-data">
 
     {% csrf_token %}
-
 
     {% if form.errors %}
        <div id="error_title" class="form-error">Correct the errors below:</div>
