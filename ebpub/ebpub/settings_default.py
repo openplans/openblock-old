@@ -344,7 +344,7 @@ DJANGO_STATIC_SAVE_PREFIX = os.path.join(STATIC_ROOT, DJANGO_STATIC_NAME_PREFIX[
 
 # For local development you might try this:
 #JQUERY_URL = '/media/js/jquery.js'
-JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'
 
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982
