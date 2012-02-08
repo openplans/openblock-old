@@ -165,7 +165,7 @@ def _update_item(request, form, schema, action):
                 item.attributes[key] = form.cleaned_data[key]
 
         # 'categories'
-        cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
+        cats = [cat.strip() for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
         if len(cats):
             lookups = set()
             for cat in cats:
