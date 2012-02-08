@@ -17,21 +17,20 @@
 #
 
 from django.conf import settings
-from ebpub.db.models import SchemaField
 from ebpub.db.schemafilters import FilterChain
 
 def _get_featured_categories():
-    from ebpub.neighbornews.models import FeaturedTag
-    tags = {}
-    for tag in FeaturedTag.objects.all().select_related():
-        lookup = tag.lookup
+    from ebpub.db.models import Lookup
+    lookups = {}
+    for lookup in Lookup.objects.filter(featured=True).select_related():
+        lookup = lookup.lookup
         sf = lookup.schema_field
         schema = sf.schema
         filters = FilterChain(schema=schema)
         filters.add(sf, lookup)
-        info = {'tag': lookup.name, 'url': filters.make_url()}
-        tags.setdefault(schema.slug, []).append(info)
-    return tags
+        info = {'lookup': lookup.name, 'url': filters.make_url()}
+        lookups.setdefault(schema.slug, []).append(info)
+    return lookups
 
 def neighbornews_context(request):
     """

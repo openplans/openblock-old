@@ -1087,6 +1087,12 @@ class LookupManager(models.Manager):
                 if not description:
                     description = old_name
                 log_warn("Trimming name %r to %r in order to fit 255-char limit." % (old_name, name))
+            if Lookup.objects.filter(schema_field=schema_field, name=name).count():
+                # Avoid integrity errors on 'name'.
+                old_name = name
+                name = name + ' b'
+                log_warn("Munging name %r to %r in order to avoid dupe." % (old_name, name))
+
             obj = Lookup(schema_field_id=schema_field.id, name=name, code=code, slug=slug, description=description)
             obj.save()
             if not make_text_slug:
@@ -1095,6 +1101,22 @@ class LookupManager(models.Manager):
                 obj.save()
             log_info('Created %s %r' % (schema_field.name, name))
         return obj
+
+    def featured_lookups_for(self, newsitem, attribute_key):
+        """
+        Return a list of the Lookups that are featured and that the
+        newsitem has for the given attribute.
+        """
+        # This uses several queries, not very efficient...
+        sf = SchemaField.objects.get(schema__id=newsitem.schema_id, name=attribute_key)
+        # Yet another manual decode of the comma-separated value,
+        # refs #265
+        if sf.is_many_to_many_lookup():
+            ni_lookup_ids = [int(i) for i in newsitem.attributes[attribute_key].split(',')]
+        else:
+            ni_lookup_ids = [newsitem.attributes[attribute_key]]
+        featured = self.filter(featured=True, id__in=ni_lookup_ids)
+        return featured
 
 
 class Lookup(models.Model):
@@ -1120,11 +1142,15 @@ class Lookup(models.Model):
                             help_text="URL-safe identifier")
     description = models.TextField(blank=True)
 
+    featured = models.BooleanField(blank=True, default=False,
+                                   help_text="Whether this lookup value is 'special' eg. for use in navigation.")
+
     objects = LookupManager()
 
     class Meta:
         unique_together = (('slug', 'schema_field'),
                            ('code', 'schema_field'),
+                           ('name', 'schema_field'),
                           )
         ordering = ('slug',)
 

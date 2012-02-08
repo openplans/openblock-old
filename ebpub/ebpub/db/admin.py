@@ -99,9 +99,10 @@ class SchemaFieldAdmin(admin.ModelAdmin):
 class LookupAdmin(admin.ModelAdmin):
     # TODO: this would make more sense to edit inline on NewsItem,
     # but that would require some custom wackiness.
-    list_display = ('name', 'schema_field')
+    list_display = ('name', 'featured', 'slug', 'code', 'schema_field')
     search_fields = ('description', 'name', 'code')
     prepopulated_fields = {'slug': ('name',)}
+    list_filter = ('featured', 'schema_field')
 
 class LocationSynonymAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'location')

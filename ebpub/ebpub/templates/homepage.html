@@ -74,22 +74,22 @@
 		</ul>
 	{% endif %}
 	</div><!--/ #more -->
-	<!--  begin block featured_tags -->
-	{% block featured_tags %}
+	<!--  begin block featuredlookups -->
+	{% block featuredlookups %}
 	{% if featured_categories %}
-	<!-- This only shows up if you have some instances of neighbornews.FeaturedTag -->
+	<!-- This only shows up if you have some instances of neighbornews.FeaturedLookup -->
 	<div id="featured-tags">
 		<h2>Featured Tags</h2>
 		<ul>
 		{% for schema, tags in featured_categories.items %}
 		{% for tag in tags %}
-			<li><a href="{{ tag.url }}">{{ tag.tag }}</a></li>
+			<li><a href="{{ tag.url }}">{{ tag.lookup }}</a></li>
 		{% endfor %}
 		{% endfor %}
 		</ul>
 	</div><!--/ #tag_info -->
 	{% endif %}
-	{% endblock featured_tags %}<!--  end bloc featured_tags -->
+	{% endblock featuredlookups %}<!--  end bloc featuredlookups -->
 
     </div><!-- / #frontpage-text -->
 

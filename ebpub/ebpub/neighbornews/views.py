@@ -171,7 +171,15 @@ def _update_item(request, form, schema, action):
             for cat in cats:
                 code = _category_code(cat)
                 nice_name = _category_nice_name(cat)
-                lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
+                try:
+                    # We don't call get_or_create() yet because we
+                    # only want to look up by the normalized code, to
+                    # avoid dupes with slightly different names.
+                    lu = Lookup.objects.get(code=code, schema_field=cat_field)
+                except Lookup.objects.DoesNotExist:
+                    # We know it doesn't exist, but use get_or_create()
+                    # here b/c that takes care of the slug.
+                    lu = Lookup.objects.get_or_create(cat_field, nice_name, code=code)
                 lookups.add(lu.id)
             item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
 

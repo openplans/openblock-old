@@ -29,11 +29,20 @@ def bunch(lst, size):
     return [lst[i:i+size] for i in range(0, len(lst), size)]
 
 def bunchlong(lst, size):
-    """Like bunch(), but size is given as a percentage of the total list
+    """Like bunch(), but size is given as a divisor of the total list
     length.
 
-    >>> bunch([1, 2, 3, 4], 0.25)
+    >>> bunchlong([1, 2, 3, 4], 1)
+    [[1, 2, 3, 4]]
+    >>> bunchlong([1, 2, 3, 4], 2)
+    [[1, 2], [3, 4]]
+    >>> bunchlong([1, 2, 3, 4], 3)
+    [[1, 2], [3, 4]]
+    >>> bunchlong([1, 2, 3, 4], 4)
     [[1], [2], [3], [4]]
+    >>> bunchlong([1, 2, 3, 4], 999)
+    [[1], [2], [3], [4]]
+
     """
     size = float(int(size))
     return bunch(lst, int(math.ceil(len(lst) / size)))

@@ -15,13 +15,3 @@
 #   You should have received a copy of the GNU General Public License
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
-
-from django.contrib.gis import admin
-from ebpub.neighbornews.models import FeaturedLookup
-from ebpub.geoadmin import OSMModelAdmin
-
-class FeaturedLookupAdmin(OSMModelAdmin):
-
-    list_display = ('name', 'code', 'slug')
-
-admin.site.register(FeaturedLookup, FeaturedLookupAdmin)
