@@ -410,3 +410,19 @@ def do_search_placeholder(parser, token):
 
 register.tag('set_search_placeholder', do_search_placeholder)
 
+
+@register.simple_tag(takes_context="true")
+def featured_lookup_for_item(context, newsitem, attribute_key):
+    """Given a NewsItem, what FeaturedLookups correspond to its values
+    for the named attribute?  Saves them in the current context under
+    the same name as 'attribute_key'.
+
+    Example:
+    {% featured_lookup_for_item item 'tags' %}
+    {% for tag in tags %} This item has tag {{ tag }} {% endfor %}
+
+    """
+    from ebpub.db.models import Lookup
+    lookups = Lookup.objects.featured_lookups_for(newsitem, attribute_key)
+    context[attribute_key] = lookups
+    return ""
