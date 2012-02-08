@@ -30,11 +30,14 @@ import re
 
 register = template.Library()
 
+# Split a list into sub-lists in various ways; See ebpub.utils.bunch.
 register.filter('bunch', bunch)
 register.filter('bunchlong', bunchlong)
 register.filter('stride', stride)
 
 def METRO_NAME():
+    """Prints the metro_name from get_metro(), titlecase.
+    """
     name = get_metro()['metro_name']
     if name[0] != name[0].upper:
         name = name.title()
@@ -42,19 +45,34 @@ def METRO_NAME():
 register.simple_tag(METRO_NAME)
 
 def isdigit(value):
+    """Filter that returns whether the value is a digit.
+
+    Eg. {% if foo|isdigit %} It's a digit {% endif %}
+    """
     return value.isdigit()
 isdigit = stringfilter(isdigit)
 register.filter('isdigit', isdigit)
 
 def lessthan(value, arg):
+    """Obsolete since Django 1.1:  Use the < operator instead.
+    """
     return int(value) < int(arg)
 register.filter('lessthan', lessthan)
 
 def greaterthan(value, arg):
+    """Obsolete since Django 1.1:  Use the > operator instead.
+    """
     return int(value) > int(arg)
 register.filter('greaterthan', greaterthan)
 
 def schema_plural_name(schema, value):
+    """
+    Get singular or plural name of a schema, depending on 'value'.
+
+    Eg. {% schema_plural_name schema 3 %}  --> Restaurant Inspections
+        {% schema_plural_name schema 1 %}  --> Restaurant Inspection
+
+    """
     if isinstance(value, (list, tuple)):
         value = len(value)
     return (value == 1) and schema.name or schema.plural_name
@@ -64,6 +82,9 @@ def safe_id_sort(value, arg):
     """
     Like Django's built-in "dictsort", but sorts second by the ID attribute, to
     ensure sorts always end up the same.
+
+    Example:
+    {% for item in itemlist|safe_id_sort %} ... {% endfor %}
     """
     var_resolve = template.Variable(arg).resolve
     decorated = [(var_resolve(item), item.id, item) for item in value]
@@ -73,6 +94,8 @@ safe_id_sort.is_safe = False
 register.filter('safe_id_sort', safe_id_sort)
 
 def safe_id_sort_reversed(value, arg):
+    """safe_id_sort in reverse.
+    """
     var_resolve = template.Variable(arg).resolve
     decorated = [(var_resolve(item), item.id, item) for item in value]
     decorated.sort()
@@ -127,7 +150,11 @@ class GetMetroListNode(template.Node):
         return ''
 
 def do_get_metro_list(parser, token):
-    # {% get_metro_list %}
+    """
+    Puts settings.METRO_LIST into the context as METRO_LIST.
+
+    Example: {% get_metro_list %}
+    """
     return GetMetroListNode()
 register.tag('get_metro_list', do_get_metro_list)
 
@@ -137,7 +164,11 @@ class GetMetroNode(template.Node):
         return ''
 
 def do_get_metro(parser, token):
-    # {% get_metro %}
+    """
+    Puts get_metro() into the context as METRO>
+
+    Example: {% get_metro %}
+    """
     return GetMetroNode()
 register.tag('get_metro', do_get_metro)
 
@@ -155,7 +186,13 @@ class GetNewsItemNode(template.Node):
         return ''
 
 def do_get_newsitem(parser, token):
-    # {% get_newsitem [id_or_var_containing_id] as [context_var] %}
+    """
+    Puts a newsitem with the given ID in the context with the given
+    variable name
+
+    {% get_newsitem some_id as my_item %}
+    {% get_newsitem '23' as my_other_item %}
+    """
     bits = token.split_contents()
     if len(bits) != 4:
         raise template.TemplateSyntaxError('%r tag requires 3 arguments' % bits[0])
@@ -178,7 +215,13 @@ class GetNewerNewsItemNode(template.Node):
         return ''
 
 def do_get_newer_newsitem(parser, token):
-    # {% get_more_recent_newsitem [newsitem] [comparison_list] as [context_var] %}
+    """Given a newsitem, and a list of other newsitems,
+    puts only those items more recent than the first item into a new
+    context variable.
+
+    Example:
+    {% get_more_recent_newsitem [newsitem] [item_list] as [context_var] %}
+    """
     bits = token.split_contents()
     if len(bits) != 5:
         raise template.TemplateSyntaxError('%r tag requires 4 arguments' % bits[0])
@@ -211,8 +254,15 @@ class GetNewsItemListByAttributeNode(template.Node):
         return ''
 
 def do_get_newsitem_list_by_attribute(parser, token):
-    # {% get_newsitem_list_by_attribute [schema_id] [newsitem_id_to_ignore] [att_name]=[value_or_var_containing_value] as [context_var] %}
-    # {% get_newsitem_list_by_attribute schema.id newsitem.id business_id=attributes.business_id as other_licenses %}
+    """
+
+    Syntax:
+    {% get_newsitem_list_by_attribute [schema_id] [newsitem_id_to_ignore] [att_name]=[value_or_var_containing_value] as [context_var] %}
+
+    Example:
+    {% get_newsitem_list_by_attribute schema.id newsitem.id business_id=attributes.business_id as other_licenses %}
+
+    """
     bits = token.split_contents()
     if len(bits) != 6:
         raise template.TemplateSyntaxError('%r tag requires 5 arguments' % bits[0])
@@ -221,6 +271,7 @@ def do_get_newsitem_list_by_attribute(parser, token):
     att_name, att_value_variable = bits[3].split('=')
     return GetNewsItemListByAttributeNode(bits[1], bits[2], att_name, att_value_variable, bits[5])
 register.tag('get_newsitem_list_by_attribute', do_get_newsitem_list_by_attribute)
+
 
 class NewsItemListBySchemaNode(template.Node):
     def __init__(self, newsitem_list_variable, is_ungrouped):
@@ -250,8 +301,20 @@ class NewsItemListBySchemaNode(template.Node):
             'today': today,
         }))
 
+
 def do_newsitem_list_by_schema(parser, token):
-    # {% newsitem_list_by_schema [newsitem_or_newsitem_list] [ungrouped?] %}
+    """
+    {% newsitem_list_by_schema [newsitem_or_newsitem_list] [ungrouped?] %}
+
+    Renders the items with the appropriate newsitem_list template,
+    optionally grouped by schema.
+
+    Examples:
+
+    {% newsitem_list_by_schema newsitem "ungrouped" %}
+    {% newsitem_list_by_schema newsitem_list %}
+
+    """
     bits = token.split_contents()
     if len(bits) not in (2, 3):
         raise template.TemplateSyntaxError('%r tag requires one or two arguments' % bits[0])
@@ -264,7 +327,11 @@ def do_newsitem_list_by_schema(parser, token):
     return NewsItemListBySchemaNode(bits[1], is_ungrouped)
 register.tag('newsitem_list_by_schema', do_newsitem_list_by_schema)
 
+
 def contains(value, arg):
+    """Filter to check whether ``arg`` is in ``value``.
+    Obsolete since Django 1.2, use the 'in' operator instead.
+    """
     return arg in value
 register.filter('contains', contains)
 
@@ -342,3 +409,4 @@ def do_search_placeholder(parser, token):
     return SearchPlaceholderNode(prefix[1:-1], var_name)
 
 register.tag('set_search_placeholder', do_search_placeholder)
+
