@@ -83,9 +83,9 @@
 		<h2>Featured Tags</h2>
 		<ul>
 		{% for schema, tags in featured_lookups.items %}
-		{% for tag in tags %}
+		  {% for tag in tags %}
 			<li><a href="{{ tag.url }}">{{ tag.lookup }}</a></li>
-		{% endfor %}
+		  {% endfor %}
 		{% endfor %}
 		</ul>
 	</div><!--/ #tag_info -->
