@@ -76,12 +76,13 @@
 	</div><!--/ #more -->
 	<!--  begin block featuredlookups -->
 	{% block featuredlookups %}
-	{% if featured_categories %}
-	<!-- This only shows up if you have some instances of neighbornews.FeaturedLookup -->
+	{% get_featured_lookups_by_schema %}
+	{% if featured_lookups %}
+	<!-- This only shows up if you have some Lookups with featured=True -->
 	<div id="featured-tags">
 		<h2>Featured Tags</h2>
 		<ul>
-		{% for schema, tags in featured_categories.items %}
+		{% for schema, tags in featured_lookups.items %}
 		{% for tag in tags %}
 			<li><a href="{{ tag.url }}">{{ tag.lookup }}</a></li>
 		{% endfor %}
