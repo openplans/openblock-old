@@ -1,0 +1,12 @@
+{# This snippet requires these variables: schema, newsitem_list #}
+{% load eb %}
+{% load neighbornews_tags %}
+{% for newsitem in newsitem_list %}
+	<li id="newsitem-{{ newsitem.id }}" class="newsitem">
+		{% if location_url != "" %}<a href="{{ location_url }}">{% endif %}<span class="location">{{ newsitem.location_name }}</span>{% if location_url != "" %}</a>{% endif %}
+		<strong class="title"><a href="{{ newsitem.item_url}}" class="url">{{ newsitem.title|truncatewords_html:20 }}</a></strong>
+		<b>{% featured_lookup_for_item newsitem "categories" %}</b>
+		<p class="info"><span class="date">{{ newsitem.item_date|date:"F j, Y" }}</span> {% if newsitem.description %}{{ newsitem.description|truncatewords_html:20}}{% endif %}</p>
+	</li>
+{% endfor %}
+
