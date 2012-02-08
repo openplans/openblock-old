@@ -85,6 +85,8 @@ New Features in 1.2
 * Add Vary headers to REST API responses, for more correct HTTP
   cache-ability.
 
+* Auto-complete categories on the "neighbornews" add/edit forms.
+
 * Optional ReCaptcha on the user-contributed ("Neighbornews") add/edit
   forms.
 
