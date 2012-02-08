@@ -16,16 +16,20 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ebpub.db.models import NewsItem, SchemaField
-from ebpub.db.utils import populate_attributes_if_needed
-from ebpub.utils.bunch import bunch, bunchlong, stride
-from ebpub.metros.allmetros import METRO_LIST, get_metro
 from django import template
 from django.core.cache import cache
 from django.template.defaultfilters import stringfilter
 from django.template.loader import select_template
+from ebpub.db.models import Lookup
+from ebpub.db.models import NewsItem
+from ebpub.db.models import SchemaField
+from ebpub.db.schemafilters import FilterChain
+from ebpub.db.utils import populate_attributes_if_needed
 from ebpub.db.utils import today
+from ebpub.metros.allmetros import METRO_LIST, get_metro
+from ebpub.utils.bunch import bunch, bunchlong, stride
 import datetime
+import json
 import re
 
 register = template.Library()
@@ -445,8 +449,6 @@ def get_featured_lookups_by_schema(context):
         {% endfor %}
     {% endfor %}
     """
-    from ebpub.db.models import Lookup
-    from ebpub.db.schemafilters import FilterChain
     lookups = {}
     for lookup in Lookup.objects.filter(featured=True).select_related():
         sf = lookup.schema_field
@@ -458,3 +460,21 @@ def get_featured_lookups_by_schema(context):
     context['featured_lookups'] = lookups
     return u''
 
+
+@register.simple_tag()
+def lookup_values_for_attribute(schema_slug, sf_name):
+    """Given a schema slug and attribute name, returns
+    all the current values of the relevant attribute,
+    as a JSON-formatted list.
+
+    Assumes the relevant schemafield has is_lookup=True.
+
+    Example:
+
+    {% lookup_values_for_attribute 'police-reports' 'violations' %}
+
+    """
+    values = Lookup.objects.filter(schema_field__schema__slug=schema_slug,
+                                   schema_field__name=sf_name).values_list('name')
+    values = [d[0] for d in values]
+    return json.dumps(sorted(values))
