@@ -1071,9 +1071,7 @@ class LookupManager(models.Manager):
             if make_text_slug:
                 slug = slugify(name)
                 if len(slug) > 32:
-                    # Only bother to warn if we're actually going to use the slug.
-                    if make_text_slug:
-                        log_warn("Trimming slug %r to %r in order to fit 32-char limit." % (slug, slug[:32]))
+                    log_warn("Trimming slug %r to %r in order to fit 32-char limit." % (slug, slug[:32]))
                     slug = slug[:32]
             else:
                 # To avoid integrity errors in the slug when creating the Lookup,
