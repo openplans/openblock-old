@@ -283,11 +283,14 @@ def place_kml(request, *args, **kwargs):
 # VIEWS #
 #########
 
-
 def homepage(request):
     """Front page of the default OpenBlock theme.
     """
+    context = _homepage_context(request)
+    return eb_render(request, 'homepage.html', context)
 
+def _homepage_context(request):
+    # Factored out to make easier to override or wrap.
     end_date = today()
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     end_date += datetime.timedelta(days=1)
@@ -300,6 +303,16 @@ def homepage(request):
     street_count = Street.objects.count()
     more_schemas = manager.filter(allow_charting=False).order_by('name')
 
+    # Get schemas that are restricted / allowed for this user.  Note,
+    # in some use cases you might want to override these so that
+    # eg. allowed_schema_ids includes only ids that are always visible
+    # to all users, so the template can display restricted schemas but
+    # mark them specially eg. with CSS classes.  But by default we
+    # don't have anything on which to make such a distinction,
+    # so these mean allowed & restricted *for the current user*.
+    allowed_schema_ids = get_schema_manager(request).allowed_schema_ids()
+    restricted_schemas = Schema.objects.exclude(id__in=allowed_schema_ids)
+
     # Get the public records.
     date_charts = get_date_chart_agg_model(sparkline_schemas, start_date, end_date, AggregateDay)
     empty_date_charts, non_empty_date_charts = [], []
@@ -310,8 +323,7 @@ def homepage(request):
             empty_date_charts.append(chart)
     non_empty_date_charts.sort(lambda a, b: cmp(b['total_count'], a['total_count']))
     empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
-
-    return eb_render(request, 'homepage.html', {
+    return {
         'location_type_list': lt_list,
         'street_count': street_count,
         'more_schemas': more_schemas,
@@ -323,8 +335,11 @@ def homepage(request):
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
         'bodyclass': 'homepage',
         'breadcrumbs': breadcrumbs.home({}),
-        'map_configuration': _preconfigured_map({})
-    })
+        'map_configuration': _preconfigured_map({}),
+        'restricted_schemas': restricted_schemas,
+        'allowed_schema_ids': allowed_schema_ids,
+        }
+
 
 def search(request, schema_slug=''):
     "Performs a location search and redirects to the address/xy page."

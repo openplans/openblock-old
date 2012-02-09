@@ -1079,13 +1079,13 @@ width: 480px;
 }
 
 
-.homepage #public-records ul {
+.homepage #public-records ul, .homepage #more ul {
 list-style-type : none;
 padding : 0;
 margin : 0 0 1em 0;
 }
 
-.homepage #public-records ul li {
+.homepage #public-records ul li, .homepage #more ul li {
 margin-bottom : .5em;
 }
 

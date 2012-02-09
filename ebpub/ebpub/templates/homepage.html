@@ -50,7 +50,7 @@
 		<p>New in the last {{ num_days }} days</p>
 		<ul>
 			{% for chart in non_empty_date_charts %}
-			<li>
+			<li {% if chart.schema.id not in allowed_schema_ids %}class="restricted-schema"{% endif %}>
 				{% map_icon_img chart.schema %}
 				<strong>{{ chart.total_count|intcomma }}</strong> <a href="{{ chart.schema.url }}">{% filter capfirst %}{% schema_plural_name chart.schema chart.total_count %}{% endfilter %}</a>
 			</li>
@@ -59,7 +59,7 @@
 		{% endif %}
 		{% if empty_date_charts %}
 		<ul>Older: {% for chart in empty_date_charts %}
-            <li><a href="{{ chart.schema.url }}">{% map_icon_img chart.schema %}{{ chart.schema.plural_name|capfirst }}</a>
+            <li {% if chart.schema.id not in allowed_schema_ids %}class="restricted-schema"{% endif %}><a href="{{ chart.schema.url }}">{% map_icon_img chart.schema %}{{ chart.schema.plural_name|capfirst }}</a>
             </li>{% endfor %}
         </ul>
 		{% endif %}
@@ -73,7 +73,15 @@
 		{% endfor %}
 		</ul>
 	{% endif %}
+
+	<!-- begin block restrictedschemas -->
+	{% block restrictedschemas %}
+	<!-- override this block to do something with restricted_schemas -->
+	{% endblock restrictedschemas %}
+	<!-- end block restrictedschemas -->
+
 	</div><!--/ #more -->
+
 	<!--  begin block featuredlookups -->
 	{% block featuredlookups %}
 	{% get_featured_lookups_by_schema %}
@@ -90,7 +98,7 @@
 		</ul>
 	</div><!--/ #tag_info -->
 	{% endif %}
-	{% endblock featuredlookups %}<!--  end bloc featuredlookups -->
+	{% endblock featuredlookups %}<!--  end block featuredlookups -->
 
     </div><!-- / #frontpage-text -->
 
@@ -99,8 +107,8 @@
 <div id="sidebar">
   <!-- begin block extracontent -->
   {% block extracontent %}
-  {% endblock %}
+  {% endblock extracontent %}
   <!-- end block extracontent -->
 </div><!--/ #sidebar -->
 
-{% endblock %}
+{% endblock content %}
