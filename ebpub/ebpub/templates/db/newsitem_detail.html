@@ -7,9 +7,6 @@
 {% block content %}
 
 <div id="content">
-	<p>
-		<a href="{{ newsitem.schema.url }}">{% if newsitem.schema.is_special_report %}Special report: {% endif %}{{ newsitem.schema.plural_name|capfirst }}</a>
-	</p>
 	<h1>{{ newsitem.title }}{% block extra_title %}{% endblock %}</h1>
 	{% block newsitem_detail_summary %}{% endblock %}
 

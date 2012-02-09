@@ -63,7 +63,10 @@ def update():
     feed = feedparser.parse(url)
     addcount = updatecount = 0
     for entry in feed.entries:
-        title = convert_entities(entry.title)
+        title = convert_entities(entry.title).strip()
+        # Putting 'event' in the title is redundant, ticket #227
+        if title.lower().startswith('event: '):
+            title = title[7:]
         try:
             item = NewsItem.objects.get(title=title,
                                         schema__id=schema.id)
