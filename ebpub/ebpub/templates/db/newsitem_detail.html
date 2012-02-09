@@ -10,8 +10,6 @@
 	<h1>{{ newsitem.title }}{% block extra_title %}{% endblock %}</h1>
 	{% block newsitem_detail_summary %}{% endblock %}
 
-	{% if not newsitem.schema.is_special_report %}<h2>{{ newsitem.schema.name|capfirst }} details</h2>{% endif %}
-
 	<div id="mapwrapper">
 	  <script type="text/javascript">
 	  {% autoescape off %}
