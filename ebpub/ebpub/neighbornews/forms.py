@@ -22,6 +22,8 @@ from ebpub.db.forms import NewsItemForm as NewsItemFormBase
 from ebpub.db.models import NewsItem
 from recaptcha.client import captcha
 from ebpub.db.fields import OpenblockImageFormField
+import logging
+logger = logging.getLogger('neighbornews.forms')
 
 class NewsItemForm(NewsItemFormBase):
 
@@ -52,10 +54,11 @@ class NewsItemForm(NewsItemFormBase):
         if not cleaned_data['location_name']:
             if cleaned_data['location']:
                 from ebpub.geocoder.reverse import reverse_geocode
+                from ebpub.geocoder.reverse import ReverseGeocodeError
                 try:
                     block, distance = reverse_geocode(cleaned_data['location'])
                     cleaned_data['location_name'] = block.pretty_name
-                except ReverseGeocodeErrror:
+                except ReverseGeocodeError:
                     logger.info("Saving NewsItem with no location_name because reverse-geocoding %(location)s failed" % cleaned_data)
 
         # Note, any NewsItem fields that aren't listed in self._meta.fields
