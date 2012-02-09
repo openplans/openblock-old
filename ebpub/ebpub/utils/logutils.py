@@ -19,7 +19,6 @@
 
 import logging
 import warnings
-warnings.warn("logutils.log_exception is deprecated. You can use logging.exception() instead")
 
 def log_exception(level=logging.ERROR, logger=logging.getLogger()):
     """Log the most recent exception & traceback at the given level
@@ -28,5 +27,6 @@ def log_exception(level=logging.ERROR, logger=logging.getLogger()):
     Note this can be replaced by logger.exception() or, if you want a
     level other than ERROR, you can do eg. logger.debug(exc_info=True)
     """
+    warnings.warn("logutils.log_exception is deprecated. You can use logging.exception() instead")
     logging.basicConfig()
     logger.log(level=level, exc_info=True)
