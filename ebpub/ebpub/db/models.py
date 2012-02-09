@@ -1114,8 +1114,12 @@ class LookupManager(models.Manager):
         # refs #265
         if sf.is_many_to_many_lookup():
             try:
-                ni_lookup_ids = [int(i) for i in newsitem.attributes[attribute_key].split(',')]
-            except (KeyError, TypeError):
+                value = newsitem.attributes.get(attribute_key, None)
+                if not value:
+                    ni_lookup_ids = []
+                else:
+                    ni_lookup_ids = [int(i) for i in value.split(',')]
+            except (KeyError, AttributeError):
                 # This item may be lacking an Attributes row entirely?
                 # Or the value may be None.
                 # Not sure when/how that happens, but it'll get fixed
