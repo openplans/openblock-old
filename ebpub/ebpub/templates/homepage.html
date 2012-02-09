@@ -7,7 +7,7 @@
 		<div id="homepage-search">
 		  <h2>Discover News on your Block</h2>
 			{% set_search_placeholder "" as placeholder %}
-			<form action="/search/" method="get" onsubmit="if ($j('#homepage-searchinput').val() == '{{ placeholder }}') return false; return true;">
+			<form action="{% url ebpub-search %}" method="get" onsubmit="if ($j('#homepage-searchinput').val() == '{{ placeholder }}') return false; return true;">
 				<p class="form"><input id="homepage-searchinput" type="text" name="q" value="{{ placeholder }}" onfocus="if (this.value == '{{ placeholder }}') { this.value = ''; }" onblur="if (this.value == '') { this.value = '{{ placeholder }}'; }" /> <input type="submit" value="Search" /></p>
 			</form>
 		</div><!--/ #homepage-search -->
@@ -36,7 +36,7 @@
 				{% for location_type in location_type_list %}
 					<li><a href="{{ location_type.url }}"><strong class="number">{{ location_type.count|intcomma }}</strong> {{ location_type.plural_name|capfirst }}</a></li>
 				{% endfor %}
-				<li><a href="/streets/"><strong class="number">{{ street_count|intcomma }}</strong> Streets</a></li>
+				<li><a href="{% url ebpub-street-list '' %}"><strong class="number">{{ street_count|intcomma }}</strong> Streets</a></li>
 			</ul>
 		</div><!--/ #intro-explore-->
 	</div><!-- end nav-location -->

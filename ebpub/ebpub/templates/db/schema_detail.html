@@ -6,8 +6,8 @@
 
 {% block extrahead %}
 {% slimall %}
-<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
-<script src="/scripts/jquery.calendrical.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/calendrical.css" />
+<script src="{{ STATIC_URL }}scripts/jquery.calendrical.js"></script>
 {% endslimall %}
 
 <meta name="description" content="{% if schema.short_description %}{{ schema.short_description }}{% else %}{{ schema.plural_name|capfirst }} in {% METRO_NAME %}.{% endif %}{% if schema.update_frequency %} Updated {{ schema.update_frequency|lower }}.{% endif %}">

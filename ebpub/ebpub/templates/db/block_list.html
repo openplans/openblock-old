@@ -7,7 +7,7 @@
 {% block content %}
 <div id="content">
 	<p>
-		<a href="/streets/">Streets</a>
+		<a href="{% url ebpub-street-list city|default:'' %}">Streets</a>
 		{% if city %} / <a href="../">{{ city.name }}</a>{% endif %}
 	</p>
 	<h1>{{ first_block.street_pretty_name }}</h1>
