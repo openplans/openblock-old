@@ -924,7 +924,10 @@ class NewsItem(models.Model):
 class AttributeForTemplate(object):
     def __init__(self, schema_field, attribute_row):
         self.sf = schema_field
-        self.raw_value = attribute_row[schema_field.name]
+        if not schema_field.name in attribute_row:
+            logger.warn("Attribute row %s is missing field %s" %
+                        (attribute_row, schema_field.name))
+        self.raw_value = attribute_row.get(schema_field.name)
         self.schema_slug = schema_field.schema.slug
         self.is_lookup = schema_field.is_lookup
         self.is_filter = schema_field.is_filter
