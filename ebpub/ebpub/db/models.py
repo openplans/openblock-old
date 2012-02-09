@@ -1110,7 +1110,14 @@ class LookupManager(models.Manager):
         # Yet another manual decode of the comma-separated value,
         # refs #265
         if sf.is_many_to_many_lookup():
-            ni_lookup_ids = [int(i) for i in newsitem.attributes[attribute_key].split(',')]
+            try:
+                ni_lookup_ids = [int(i) for i in newsitem.attributes[attribute_key].split(',')]
+            except KeyError:
+                # This item may be lacking an Attributes row entirely?
+                # Not sure when/how that happens, but it'll get fixed
+                # on any write to item.attributes, so don't worry
+                # about it here.
+                ni_lookup_ids = []
         else:
             ni_lookup_ids = [newsitem.attributes[attribute_key]]
         featured = self.filter(featured=True, id__in=ni_lookup_ids)
