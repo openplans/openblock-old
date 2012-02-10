@@ -1228,14 +1228,13 @@ def place_detail_overview(request, *args, **kwargs):
 
     # We actually want two lists of schemas, since we care whether
     # they are news-like or future-event-like.
-    import copy
-    eventish_schema_list = copy.deepcopy(schema_list)
-    newsish_schema_list = copy.deepcopy(schema_list)
+    eventish_schema_list = SortedDict()
+    newsish_schema_list = SortedDict()
     for s_id, schema in schema_list.items():
         if schema.is_event:
-            del(newsish_schema_list[s_id])
+            eventish_schema_list[s_id] = schema
         else:
-            del(eventish_schema_list[s_id])
+            newsish_schema_list[s_id] = schema
 
     filterchain = FilterChain(request=request, context=context)
     filterchain.add('location', context['place'])
