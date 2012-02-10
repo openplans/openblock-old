@@ -407,7 +407,6 @@ class Block(models.Model):
                 setattr(self, key, val.strip().upper())
 
 
-
 class Street(models.Model):
     street = models.CharField(max_length=255, db_index=True,
                               help_text='Always uppercase.')
@@ -502,6 +501,10 @@ class PlaceTypeManager(models.Manager):
         return self.get(slug=slug)
 
 class PlaceType(models.Model):
+    """
+    A kind of Place, this could be anything, eg. 'Building', 'Park',
+    'Monument', 'Theater', 'Restaurant', ...
+    """
     objects = PlaceTypeManager()
 
     name = models.CharField(max_length=255)
