@@ -110,6 +110,9 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Should be possible to run OpenBlock at a URL prefix now; removed all
+  hardcoded URLs. Ticket #90.
+
 * Filtering NewsItems by Block no longer causes 500 error.
 
 * block_import_tiger can now be safely re-run on the same file,
