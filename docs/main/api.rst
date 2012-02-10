@@ -523,6 +523,8 @@ Example:
      }
 
 
+.. _get_place_types:
+
 GET places/types.json
 ---------------------
 
@@ -554,6 +556,7 @@ Example:
     }
 
 
+.. _get_places:
 
 GET places/<placetype>.json
 ---------------------------

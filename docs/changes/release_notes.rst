@@ -143,6 +143,8 @@ Bugs fixed
 Documentation
 -------------
 
+* Document ``ebpub.streets.Places``, see :ref:`places`
+
 * Basic docs for ``ebpub.neighbornews``, see :ref:`user_content`
 
 * Document how to get the 2010 census files instead of 2009.
