@@ -21,13 +21,18 @@ from django import template
 register = template.Library()
 
 def raw(parser, token):
-    # Whatever is between {% raw %} and {% endraw %} will be preserved as
-    # raw, unrendered template code.
-    # If 'silent' is passed in -- {% raw silent %} -- then the resulting output
-    # will not contain the {% raw %} and {% endraw %} tags themselves.
-    # Otherwise, the output will include an {% endraw %} at the start and
-    # {% raw %} at the end, so that other parts of the page aren't vulnerable
-    # to Django template escaping injection.
+    """
+    Whatever is between {% raw %} and {% endraw %} will be preserved as
+    raw, unrendered template code.
+    If 'silent' is passed in -- {% raw silent %} -- then the resulting output
+    will not contain the {% raw %} and {% endraw %} tags themselves.
+    Otherwise, the output will include an {% endraw %} at the start and
+    {% raw %} at the end, so that other parts of the page aren't vulnerable
+    to Django template escaping injection.
+
+    Probably only useful for development.
+    """
+
     silent = 'silent' in token.contents
     if silent:
         text = []

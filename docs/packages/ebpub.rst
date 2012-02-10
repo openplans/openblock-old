@@ -553,3 +553,13 @@ There is also a ``{% filter_url %}`` template tag in
 
 See the ``schemafilter`` package's docstrings for more detail.  Most
 of the views in ``ebpub.db.views`` make use of a FilterChain.
+
+
+Template Tags
+==============
+
+``ebpub`` provides a number of custom tags for use in templates.  If
+you are customizing templates, you will want to peruse the docstrings
+of all the modules under ``ebpub.db.templatetags``.
+
+

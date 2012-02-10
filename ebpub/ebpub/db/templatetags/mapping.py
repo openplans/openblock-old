@@ -29,6 +29,12 @@ def map_icon_img(obj):
 
     (If there's no image configured but there's a fill color, makes a
     little box of the right color.)
+
+    Example::
+
+      {% map_icon_img [schema] %}
+      {% map_icon_img [place_type] %}
+
     """
     url = getattr(obj, 'map_icon_url', '') or ''
     url = url.strip()

@@ -28,6 +28,15 @@ register = template.Library()
 
 
 def json_value(value, arg=None):
+    """
+    Filter that turns a JSON string into a data structure.
+
+    Example::
+
+      {% for item in "[1,2,3]"|json_value %}
+        {{ item }}
+      {% endfor %}
+    """
     data = simplejson.loads(value)
     if arg is not None:
         try:

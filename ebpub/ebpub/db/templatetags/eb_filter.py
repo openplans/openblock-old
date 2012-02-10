@@ -119,16 +119,16 @@ def do_filter_url(parser, token):
     """
     Template tag that outputs a URL based on the filter chain, with
     optional additions/removals of filters.  The first argument is
-    required and can be either an existing FilterChain or a Schema.
+    required and can be either an existing FilterChain or a Schema::
 
-    {% filter_url filter_chain %}
-    {% filter_url schema %}
+      {% filter_url filter_chain %}
+      {% filter_url schema %}
 
-    To remove a NewsitemFilter from the url, specify the key with a leading "-".
+    To remove a NewsitemFilter from the url, specify the key with a leading "-"::
 
-    {% filter_url filter_chain -key_to_remove %}
-    {% filter_url filter_chain -"key_to_remove" %}
-    {% filter_url filter_chain -key1 -key2 ... %}
+      {% filter_url filter_chain -key_to_remove %}
+      {% filter_url filter_chain -"key_to_remove" %}
+      {% filter_url filter_chain -key1 -key2 ... %}
 
     To add NewsitemFilters to the url, specify the key with a leading
     "+", followed by args to use for constructing a NewsitemFilter.
@@ -136,15 +136,15 @@ def do_filter_url(parser, token):
     Keys and values will be passed to FilterChain.add(); see its docs
     for info on legal values. But briefly, the keys are either
     SchemaField instances, or a string understood by SchemaFilter,
-    such as 'pubdate'.
+    such as 'pubdate'::
 
-    {% filter_url filter_chain +"key" value %}
-    {% filter_url filter_chain +key value1 value 2 ... %}
-    {% filter_url filter_chain +key1 "arg1a" "arg1b" +key2 "arg2a" ... %}
+      {% filter_url filter_chain +"key" value %}
+      {% filter_url filter_chain +key value1 value 2 ... %}
+      {% filter_url filter_chain +key1 "arg1a" "arg1b" +key2 "arg2a" ... %}
 
-    You can even mix and match additions and removals:
+    You can even mix and match additions and removals::
 
-    {% filter_url filter_chain -key1 +key2 arg2 -key3 +key4 arg4 ... %}
+      {% filter_url filter_chain -key1 +key2 arg2 -key3 +key4 arg4 ... %}
     """
     args = _parse(parser, token)
     return FilterUrlNode(*args)
