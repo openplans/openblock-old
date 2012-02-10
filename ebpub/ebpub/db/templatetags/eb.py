@@ -72,8 +72,9 @@ register.filter('greaterthan', greaterthan)
 def schema_plural_name(schema, value):
     """
     Get singular or plural name of a schema, depending on 'value'.
+    Example::
 
-    Eg. {% schema_plural_name schema 3 %}  --> Restaurant Inspections
+        {% schema_plural_name schema 3 %}  --> Restaurant Inspections
         {% schema_plural_name schema 1 %}  --> Restaurant Inspection
 
     """
@@ -87,8 +88,10 @@ def safe_id_sort(value, arg):
     Like Django's built-in "dictsort", but sorts second by the ID attribute, to
     ensure sorts always end up the same.
 
-    Example:
-    {% for item in itemlist|safe_id_sort %} ... {% endfor %}
+    Example::
+
+      {% for item in itemlist|safe_id_sort %} ... {% endfor %}
+
     """
     var_resolve = template.Variable(arg).resolve
     decorated = [(var_resolve(item), item.id, item) for item in value]
@@ -171,7 +174,9 @@ def do_get_metro(parser, token):
     """
     Puts get_metro() into the context as METRO>
 
-    Example: {% get_metro %}
+    Examples::
+
+      {% get_metro %}
     """
     return GetMetroNode()
 register.tag('get_metro', do_get_metro)
@@ -192,10 +197,10 @@ class GetNewsItemNode(template.Node):
 def do_get_newsitem(parser, token):
     """
     Puts a newsitem with the given ID in the context with the given
-    variable name
+    variable name. Examples::
 
-    {% get_newsitem some_id as my_item %}
-    {% get_newsitem '23' as my_other_item %}
+      {% get_newsitem some_id as my_item %}
+      {% get_newsitem '23' as my_other_item %}
     """
     bits = token.split_contents()
     if len(bits) != 4:
@@ -223,8 +228,9 @@ def do_get_newer_newsitem(parser, token):
     puts only those items more recent than the first item into a new
     context variable.
 
-    Example:
-    {% get_more_recent_newsitem [newsitem] [item_list] as [context_var] %}
+    Examples::
+
+      {% get_more_recent_newsitem [newsitem] [item_list] as [context_var] %}
     """
     bits = token.split_contents()
     if len(bits) != 5:
@@ -259,11 +265,11 @@ class GetNewsItemListByAttributeNode(template.Node):
 
 def do_get_newsitem_list_by_attribute(parser, token):
     """
-
+    Get a list of NewsItems with a given attribute value.
     Syntax:
     {% get_newsitem_list_by_attribute [schema_id] [newsitem_id_to_ignore] [att_name]=[value_or_var_containing_value] as [context_var] %}
 
-    Example:
+    Example::
     {% get_newsitem_list_by_attribute schema.id newsitem.id business_id=attributes.business_id as other_licenses %}
 
     """
@@ -313,10 +319,10 @@ def do_newsitem_list_by_schema(parser, token):
     Renders the items with the appropriate newsitem_list template,
     optionally grouped by schema.
 
-    Examples:
+    Examples::
 
-    {% newsitem_list_by_schema newsitem "ungrouped" %}
-    {% newsitem_list_by_schema newsitem_list %}
+      {% newsitem_list_by_schema newsitem "ungrouped" %}
+      {% newsitem_list_by_schema newsitem_list %}
 
     """
     bits = token.split_contents()
