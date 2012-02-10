@@ -530,10 +530,13 @@ class Place(models.Model):
     (and maybe a URL).
     """
     pretty_name = models.CharField(max_length=255)
-    normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
+    normalized_name = models.CharField(max_length=255, db_index=True,
+                                       blank=True,
+                                       help_text='Always uppercase, single spaces; will be calculated from pretty_name if needed.')
     place_type = models.ForeignKey(PlaceType)
     address = models.CharField(max_length=255, blank=True)
-    url = models.TextField(blank=True, null=True, db_index=True) # link to additional information
+    url = models.TextField(blank=True, null=True, db_index=True,
+                           help_text='link to additional information')
 
     location = models.PointField(blank=True)
     objects = models.GeoManager()
@@ -552,9 +555,11 @@ class Place(models.Model):
 class PlaceSynonymManager(models.Manager):
     def get_canonical(self, name):
         """
-        Returns the 'correct' or canonical spelling of the given place name. 
-        If the given place name is already correctly spelled, then it's returned as-is.
-        """        
+        Returns the 'correct' or canonical spelling of the given place name.
+
+        If the given place name is already correctly spelled, then
+        it's returned as-is.
+        """
         try:
             normalized_name = normalize(name)
             return self.get(normalized_name=normalized_name).place.normalized_name
@@ -567,7 +572,8 @@ class PlaceSynonym(models.Model):
     represents a synonym for a Place (point of interest)
     """
     pretty_name = models.CharField(max_length=255)
-    normalized_name = models.CharField(max_length=255, db_index=True)
+    normalized_name = models.CharField(max_length=255, db_index=True,
+                                       help_text='Always uppercase, single spaces; will be calculated from pretty_name if needed.')
     place = models.ForeignKey(Place)
     objects = PlaceSynonymManager()
 
@@ -578,6 +584,7 @@ class PlaceSynonym(models.Model):
 
     def __unicode__(self):
         return self.pretty_name
+
 
 class City(object):
     def __init__(self, name, slug, norm_name):
@@ -652,6 +659,7 @@ class IntersectionManager(models.GeoManager):
         qs = qs.extra(select={"point": "AsText(location)"})
         return qs
 
+
 class Intersection(models.Model):
     """
     A point representing the meeting of two Streets
@@ -704,6 +712,7 @@ class Intersection(models.Model):
 
     def alert_url(self):
         return '%salerts/' % self.url()
+
 
 class Suburb(models.Model):
     """This model keeps track of nearby cities that we don't care about.
