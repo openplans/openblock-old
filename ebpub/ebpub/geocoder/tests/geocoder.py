@@ -16,7 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet, DoesNotExist
 import os.path
 import unittest
 import django.test
@@ -83,6 +83,22 @@ class BaseGeocoderTestCase(django.test.TestCase):
     def test_intersection_geocoder(self):
         address = self.geocoder.geocode('Wabash and Jackson')
         self.assertEqual(address['city'], 'CHICAGO')
+
+
+class FullGeocodeTestCase(django.test.TestCase):
+
+    fixtures = ['wabash.yaml', 'places.yaml']
+
+    def test_full_geocode_place(self):
+        from ebpub.geocoder.base import full_geocode
+        place = full_geocode('Sears Tower', search_places=True)
+        self.assertEqual(place['type'], 'place')
+        self.assertEqual(place['result'].normalized_name, 'SEARS TOWER')
+
+    def test_full_geocode__no_place(self):
+        from ebpub.geocoder.base import full_geocode
+        full_geocode('Sears Tower')
+
 
 if __name__ == '__main__':
     pass

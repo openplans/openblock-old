@@ -368,7 +368,7 @@ def search(request, schema_slug=''):
 
     # Try to geocode it using full_geocode().
     try:
-        result = full_geocode(q, search_places=False)
+        result = full_geocode(q, search_places=True)
     except:
         logger.debug('Unhandled exception from full_geocode:',
                      exc_info=True)
@@ -390,9 +390,14 @@ def search(request, schema_slug=''):
                     'choices': choices,
                 })
             else:
+                # TODO: does this work with Places?
                 return eb_render(request, 'db/did_you_mean.html', {'query': q, 'choices': result['result']})
         elif result['type'] == 'location':
             return HttpResponseRedirect(url_prefix + getattr(result['result'], url_method)())
+        elif result['type'] == 'place':
+            block, distance = geocoder.reverse.reverse_geocode(result['result'].location)
+            return HttpResponseRedirect(url_prefix + getattr(block, url_method)())
+
         elif result['type'] == 'address':
             # Block
             if result['result']['block']:

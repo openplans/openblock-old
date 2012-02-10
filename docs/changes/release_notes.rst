@@ -48,6 +48,8 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Search form now searches Places too.
+
 * Allow overriding the template for schema_filter view on a per-schema
   basis, by creating a template named db/schema_filter/<schema>.html
 
