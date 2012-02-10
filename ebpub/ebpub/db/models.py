@@ -948,7 +948,7 @@ class AttributeForTemplate(object):
                     self.values = []
                 else:
                     lookups = Lookup.objects.in_bulk(id_values)
-                    self.values = [lookups[i] for i in id_values]
+                    self.values = [lookups[i] for i in id_values if i in lookups]
             else:
                 self.values = [Lookup.objects.get(id=self.raw_value)]
         else:
