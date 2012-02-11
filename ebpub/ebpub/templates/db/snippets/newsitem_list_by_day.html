@@ -1,0 +1,48 @@
+{% comment %}<!-- -*- tab-width: 4 -*- -->
+Expects these variables: newsitem_list, next_day, hidden_schema_list, show_upcoming, is_latest_page
+{% endcomment %}
+{% load eb eb_filter mapping %}
+{% if newsitem_list %}
+	{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
+	{% for daygroup in newsitem_list_byday %}
+		<h2>{% if not show_upcoming %}New{% endif %} {{ daygroup.grouper }}</h2>
+		{% regroup daygroup.list by schema as newsitem_list_byschema %}
+		{% for schemagroup in newsitem_list_byschema %}
+			{% with schemagroup.list|length as num_newsitems %}
+				{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
+				<h4 class="schema_{{ schemagroup.grouper.slug }}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
+				{% map_icon_img schemagroup.grouper %}
+
+				{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
+				{% if USER %}<a class="toggle show" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
+				</h4>
+				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
+					{% newsitem_list_by_schema schemagroup.list %}
+				</div>
+				{% endwith %}
+			{% endwith %}
+		{% endfor %}
+	{% endfor %}
+	<p>
+	{% if not is_latest_page %}
+		<a href="./">&larr;
+		  {% if show_upcoming %}Earlier upcoming events
+		  {% else %}Most recent news
+		  {% endif %}
+		  {% if place %} for {{ place.pretty_name }}{% endif %}</a>
+	{% endif %}
+	{% if next_day %}
+		<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow"
+		>{% if show_upcoming %}More upcoming
+		  {% else %}Older news
+		  {% endif %}
+		  &rarr;</a>
+	{% endif %}
+    </p>
+{% else %}
+	<p>We haven't found any 
+	  {% if show_upcoming %}events
+	  {% else %} news
+	  {% endif %}
+	  available for this area recently.</p>
+{% endif %}

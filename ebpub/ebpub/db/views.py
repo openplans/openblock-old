@@ -1053,12 +1053,36 @@ def place_detail_timeline(request, *args, **kwargs):
         return response
 
     show_upcoming = kwargs.get('show_upcoming')
-    schema_manager = get_schema_manager(request)
-
     if show_upcoming:
         context['breadcrumbs'] = breadcrumbs.place_detail_upcoming(context)
     else:
         context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
+
+    context = _news_context(request, context,
+                            max_items=constants.NUM_NEWS_ITEMS_PLACE_DETAIL,
+                            show_upcoming=show_upcoming,
+                            location=context['place'],
+                            )
+
+    context['map_configuration'] = _preconfigured_map(context)
+    context['bodyclass'] = 'place-detail-timeline'
+    context['bodyid'] = context.get('place_type') or ''
+
+    response = eb_render(request, 'db/place_detail.html', context)
+    for k, v in context['cookies_to_set'].items():
+        response.set_cookie(k, v)
+    return response
+
+
+def _news_context(request, context, max_items, show_upcoming=False, **filterargs):
+    """
+    Puts a list of recent -or- upcoming NewsItems in the context,
+    and returns the context.
+
+    **filterargs are passed to FilterChain.add().
+
+    """
+    schema_manager = get_schema_manager(request)
 
     is_latest_page = True
     # Check the query string for the max date to use. Otherwise, fall
@@ -1070,9 +1094,11 @@ def place_detail_timeline(request, *args, **kwargs):
             is_latest_page = False
         except ValueError:
             raise Http404('Invalid date %s' % request.GET['start'])
-
     filterchain = FilterChain(request=request, context=context)
-    filterchain.add('location', context['place'])
+
+    for key, val in filterargs.items():
+        filterchain.add(key, val)
+
     # As an optimization, limit the NewsItems to those on the
     # last (or next) few days.
     # And only fetch for relevant schemas - either event-ish or not.
@@ -1093,7 +1119,7 @@ def place_detail_timeline(request, *args, **kwargs):
     newsitem_qs = newsitem_qs.extra(
         select={'item_date_date': 'date(db_newsitem.item_date)'},
         order_by=(order_by, '-schema__importance', 'schema')
-    )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+    )[:max_items]
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
@@ -1116,19 +1142,13 @@ def place_detail_timeline(request, *args, **kwargs):
         'next_day': next_day,
         'is_latest_page': is_latest_page,
         'hidden_schema_list': hidden_schema_list,
-        'bodyclass': 'place-detail-timeline',
-        'bodyid': context.get('place_type') or '',
         'filters': filterchain,
         'show_upcoming': show_upcoming,
     })
 
-
     context['filtered_schema_list'] = s_list
-    context['map_configuration'] = _preconfigured_map(context);
-    response = eb_render(request, 'db/place_detail.html', context)
-    for k, v in context['cookies_to_set'].items():
-        response.set_cookie(k, v)
-    return response
+    return context
+
 
 def _preconfigured_map(context):
     """
@@ -1217,6 +1237,9 @@ def _preconfigured_map(context):
 
 
 def place_detail_overview(request, *args, **kwargs):
+    """Recent news AND upcoming events for a Location or Block,
+    grouped by Schema.
+    """
     context, response = _place_detail_normalize_url(request, *args, **kwargs)
     if response is not None:
         return response

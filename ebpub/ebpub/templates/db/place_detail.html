@@ -153,41 +153,7 @@ window.onload = function() {
   {% endifnotequal %}
 
   <div id="place-detail-content">
-	{% if newsitem_list %}
-		{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
-		{% for daygroup in newsitem_list_byday %}
-			<h2>{% if not show_upcoming %}New{% endif %} {{ daygroup.grouper }}</h2>
-			{% regroup daygroup.list by schema as newsitem_list_byschema %}
-			{% for schemagroup in newsitem_list_byschema %}
-				{% with schemagroup.list|length as num_newsitems %}
-					{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
-				<h4 class="schema_{{ schemagroup.grouper.slug }}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
-					{% map_icon_img schemagroup.grouper %}
-
-					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
-					{% if USER %}<a class="toggle show" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
-				</h4>
-				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
-					{% newsitem_list_by_schema schemagroup.list %}
-					</ul>
-				</div>
-				{% endwith %}
-				{% endwith %}
-			{% endfor %}
-		{% endfor %}
-	  <p>
-		{% if show_upcoming %}
-			{% if not is_latest_page %}<a href="./">&larr; Earlier upcoming events for {{ place.pretty_name }}</a>{% endif %}
-			{% if next_day %}<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow">More upcoming &rarr;</a>{% endif %}
-		{% else %}
-			{% if not is_latest_page %}<a href="./">&larr; Most recent news for {{ place.pretty_name }}</a>{% endif %}
-			{% if next_day %}<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow">Older news &rarr;</a>{% endif %}
-		{% endif %}
-    </p>
-	{% else %}
-		<p>We haven't found any news available for this area recently.</p>
-	{% endif %}
-
+	{% include "db/snippets/newsitem_list_by_day.html" %}
 	{% ifnotequal place.slug "unknown" %}
 	<div id="alerts-signup">	
 		<h2>Sign up for:</h2>
