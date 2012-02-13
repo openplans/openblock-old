@@ -84,6 +84,7 @@ class ImportZipcodeShapefilesForm(forms.Form):
 
         return True
 
+
 class UploadShapefileForm(forms.Form):
 
     zipped_shapefile = forms.FileField(
@@ -126,6 +127,7 @@ class UploadShapefileForm(forms.Form):
                 fp.write(chunk)
         finally:
             fp.close()
+
 
 class PickShapefileLayerForm(forms.Form):
     shapefile = forms.CharField(required=True)
@@ -206,6 +208,7 @@ user_is_staff = lambda username: settings.DEBUG
 def index(request):
     return render_to_response('obadmin/index.html', {})
 
+
 def schema_list(request):
     s_list = []
     for s in Schema.objects.order_by('name'):
@@ -214,6 +217,7 @@ def schema_list(request):
             'lookups': s.schemafield_set.filter(is_lookup=True).order_by('pretty_name_plural'),
         })
     return render_to_response('obadmin/schema_list.html', {'schema_list': s_list})
+
 
 def set_staff_cookie(request):
     r = HttpResponseRedirect('../')
@@ -249,9 +253,11 @@ def edit_schema_lookups(request, schema_id, schema_field_id):
     return render_to_response('obadmin/edit_schema_lookups.html',
                               context_instance=context)
 
+
 def schemafield_list(request):
     sf_list = SchemaField.objects.select_related().order_by('db_schema.name', 'display_order')
     return render_to_response('obadmin/schemafield_list.html', {'schemafield_list': sf_list})
+
 
 def geocoder_success_rates(request):
     from django.db import connection
@@ -269,9 +275,11 @@ def geocoder_success_rates(request):
     schema_list = [{'name': r[0], 'geocoded': r[1], 'total': r[2], 'ratio': float(r[1]) / float(r[2])} for r in results]
     return render_to_response('obadmin/geocoder_success_rates.html', {'schema_list': schema_list})
 
+
 def blob_seed_list(request):
     s_list = Seed.objects.order_by('autodetect_locations', 'pretty_name').filter(is_rss_feed=True)
     return render_to_response('obadmin/blob_seed_list.html', {'seed_list': s_list})
+
 
 def add_blob_seed(request):
     if request.method == 'POST':
@@ -285,16 +293,19 @@ def add_blob_seed(request):
     context = RequestContext(request, {'form': form})
     return render_to_response('obadmin/add_blob_seed.html', context_instance=context)
 
+
 def scraper_history_list(request):
     schema_ids = [i['schema'] for i in DataUpdate.objects.select_related().order_by('schema__plural_name').distinct().values('schema')]
     s_dict = Schema.objects.in_bulk(schema_ids)
     s_list = [s_dict[i] for i in schema_ids]
     return render_to_response('obadmin/scraper_history_list.html', {'schema_list': s_list})
 
+
 def scraper_history_schema(request, slug):
     s = get_object_or_404(Schema, slug=slug)
     du_list = DataUpdate.objects.filter(schema__id=s.id).order_by('schema__name', '-update_start')
     return render_to_response('obadmin/scraper_history_schema.html', {'schema': s, 'dataupdate_list': du_list})
+
 
 def newsitem_details(request, news_item_id):
     """
@@ -325,6 +336,7 @@ def newsitem_details(request, news_item_id):
     return render_to_response('obadmin/news_item_detail.html', {
         'news_item': ni, 'attributes': attributes
     })
+
 
 def jobs_status(request, appname, modelname):
     """
@@ -378,6 +390,7 @@ def jobs_status(request, appname, modelname):
     else:
         return HttpResponse("No background tasks running.")
 
+
 @csrf_protect
 def import_zipcode_shapefiles(request):
     form = ImportZipcodeShapefilesForm(request.POST or None)
@@ -388,6 +401,7 @@ def import_zipcode_shapefiles(request):
       'fieldset': fieldset,
       'form': form,
     })
+
 
 @csrf_protect
 def upload_shapefile(request):
@@ -421,6 +435,7 @@ def pick_shapefile_layer(request):
         'location_types': LocationType.objects.all(),
         'fieldset': fieldset,
     })
+
 
 @csrf_protect
 def import_blocks(request):
