@@ -32,7 +32,6 @@ if settings.DEBUG:
 else:
     urlpatterns = patterns('')
 
-print "ADMIN SITE IS", admin.site
 
 urlpatterns += patterns(
     '',
