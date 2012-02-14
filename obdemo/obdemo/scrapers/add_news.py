@@ -18,6 +18,9 @@
 
 
 """A quick-hack news scraper script for Boston; consumes RSS feeds.
+
+TODO: This should not be used; the generic georss scraper in
+ebdata/ebdata/scrapers/general/georss/ is more full-featured and robust.
 """
 
 import datetime
