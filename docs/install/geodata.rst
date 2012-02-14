@@ -571,7 +571,7 @@ the result will be a view of the block on which that Place exists.
 Places in the REST API
 ----------------------
 
-Places also can be accessed via the :doc:`../api` REST API, using the
+Places also can be accessed via the :doc:`../main/api` REST API, using the
 :ref:`get_places` and :ref:`get_place_types` resources.
 
 
