@@ -39,6 +39,7 @@ from ebpub.utils.geodjango import intersects_metro_bbox
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
+from ebdata.retrieval.utils import get_point
 
 logger = logging.getLogger('eb.retrieval.georss')
 
@@ -92,27 +93,33 @@ class LocalNewsScraper(object):
                 item.schema = schema
                 item.description = description
                 item.url = item_url
-                # Support both georss and xcal for getting the location name.
-                # TODO: should also support ev:location per http://web.resource.org/rss/1.0/modules/event/
-                item.location_name = entry.get('xCal_x-calconnect-street') or entry.get('x-calconnect-street') or entry.get('georss_featurename') or entry.get('featurename')
+
+                # Support any of georss, xcal, or ev for getting the
+                # location name.
+                for key in ('xCal_x-calconnect-street',
+                            'x-calconnect-street',
+                            'georss_featurename',
+                            'featurename',
+                            'ev-location',
+                            'location'):
+                    val = entry.get(key)
+                    if val:
+                        item.location_name = val
+                        break
+
                 item.item_date = datetime.datetime(*entry.updated_parsed[:6])
                 item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
                 _short_title = item.title[:30] + '...'
 
-                # feedparser bug: depending on which parser it magically uses,
-                # we either get the xml namespace in the key name, or we don't.
-                point = entry.get('georss_point') or entry.get('point')
-                x, y = None, None
-                if point:
-                    # GeoRSS puts latitude (Y) first.
-                    y, x = point.split(' ')
-                else:
+                point = get_point(entry)
+                if point is None:
                     if item.location_name:
                         text = item.location_name
                     else:
                         # Geocode whatever we can find.
+                        # TODO: check this against columbia's weird feed XXX
                         text = item.title + ' ' + item.description
-                    logger.debug("...Falling back on geocoding from %r..." % text[:50])
+                    logger.debug("...Falling back on geocoding from '%s...'" % text[:50])
                     addrs = parse_addresses(text)
                     for addr, unused in addrs:
                         try:

@@ -49,10 +49,14 @@ Utilities useful for scraping.
 # PERFORMANCE OF THIS SOFTWARE.
 
 
-import re
-import htmlentitydefs
-from ebpub.utils.geodjango import smart_transform
 from django.contrib.gis.geos import GEOSGeometry
+from django.contrib.gis.geos import Point
+from ebpub.utils.geodjango import smart_transform
+import htmlentitydefs
+import logging
+import re
+
+logger = logging.getLogger('ebdata.retrieval.utils')
 
 multispace_re = re.compile(r'\s\s+')
 
@@ -145,3 +149,67 @@ def locations_are_close(geom_a, geom_b, max_distance=200):
     geom_b = smart_transform(geom_b, carto_srid)
     distance = geom_a.distance(geom_b)
     return (distance < max_distance), distance
+
+
+def get_point(record):
+    """
+    Given a dict, eg. a record as returned by feedparser, tries to
+    find either flavor of georss or geo attributes, as well as some
+    other common non-standard conventions.
+
+    Returns a Point or None.
+
+    Locations with both lat = 0 and lon = 0 are assumed to be bad; we
+    return None for those.
+    """
+    # This tries to work around feedparser bugs where depending on
+    # whether you get a loose or strict parser, you might or might
+    # not see the namespace prefix on the attribute name.
+
+    # TODO: support other georss geometry types as per
+    # http://www.georss.org/simple ... so far only handles Point.
+
+    # TODO: support xCal geometries
+    # https://tools.ietf.org/html/rfc6321#section-3.4.1.2
+
+    if 'gml_point' in record:
+        # Looks like georss gml.
+        lat, lon = record['gml_pos'].split()
+    elif 'point' in record:
+        # Unfortunately, with broken namespace handling, this
+        # might be georss_simple or georss gml. Try both.
+        if 'where' in record and 'pos' in record:
+            # It's GML.
+            lat, lon = record['pos'].strip().split()
+        else:
+            lat, lon = record['point'].strip().split()
+    elif 'georss_point' in record:
+        # It's georss simple.
+        lat, lon = record['georss_point'].strip().split()
+    elif 'geo_lat' in record:
+        # It's the rdf geo namespace.
+        lat, lon = record['geo_lat'], record['geo_lon']
+    elif 'lat' in record:
+        lat = record['lat']
+        # 'lon' = geo with broken namespace handling.
+        # The others are non-standard, but I've seen 'lng' in eg.
+        # seeclickfix issues json.
+        lon = record.get('lng') or record.get('lon') or record.get('lng')
+        if lon is None:
+            logger.debug("Found lat %r, but nothing like a longitude" % lat)
+            return None
+    elif 'latitude' in record:
+        # Another common non-standard convention.
+        lat, lon = record['latitude'], record['longitude']
+    elif 'xCal_latitude' in record:
+        # Looks like xCal.
+        # Not sure about capitalization of namespace?
+        lat, lon = record['xCal_latitude'], record['xCal_longitude']
+    else:
+        logger.debug("no known geometry types found in record %s" % record)
+        return None
+    lat, lon = float(lat), float(lon)
+    if (lat, lon) == (0.0, 0.0):
+        logger.warn("Ignoring location with bad coordinates (0, 0)")
+        return None
+    return Point(lon, lat)

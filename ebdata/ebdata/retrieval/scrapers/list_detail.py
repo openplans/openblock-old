@@ -396,61 +396,14 @@ class RssListDetailScraper(ListDetailScraper):
         return self.fetch_data(record['link'])
 
     def get_location(self, record):
-        """Try both flavors of georss and geo attributes, as well as
-        some other common non-standard conventions.
+        """Try to get a point from the record, trying both georss,
+        geo, and some non-standard conventions.
 
-        Locations with both lat = 0 and lon = 0 are assumed to be bad; we
-        return None for those.
+        Returns a Point or None.
 
         This is not called automatically; if you want to use it, your
         scraper should do ``newsitem.location = self.get_location(record)``
         sometime prior to ``self.save()``.
         """
-        # This tries to work around feedparser bugs where depending on
-        # whether you get a loose or strict parser, you might or might
-        # not see the namespace prefix on the attribute name.
-
-        # TODO: support other georss geometry types as per
-        # http://www.georss.org/simple ... so far only handles Point.
-
-        # TODO: support xCal geometries
-        # https://tools.ietf.org/html/rfc6321#section-3.4.1.2
-
-        if 'gml_point' in record:
-            # Looks like georss gml.
-            lat, lon = record['gml_pos'].split()
-        elif 'point' in record:
-            # Unfortunately, with broken namespace handling, this
-            # might be georss_simple or georss gml. Try both.
-            if 'where' in record and 'pos' in record:
-                # It's GML.
-                lat, lon = record['pos'].split()
-            else:
-                lat, lon = record['point'].split()
-        elif 'georss_point' in record:
-            # It's georss simple.
-            lat, lon = record['georss_point'].split()
-        elif 'geo_lat' in record:
-            # It's the rdf geo namespace.
-            lat, lon = record['geo_lat'], record['geo_lon']
-        elif 'lat' in record:
-            if 'lon' in record:
-                # It's geo with broken namespace handling.
-                lat, lon = record['lat'], record['lon']
-            elif 'lng' in record:
-                # This is not a standard AFAIK, but I've seen it eg. in
-                # seeclickfix issues json.
-                lat, lon = record['lat'], record['lng']
-        elif 'latitude' in record:
-            # Another common non-standard convention.
-            lat, lon = record['latitude'], record['longitude']
-        else:
-            self.logger.debug(
-                "no known geometry types found in record %s"
-                % record)
-            return None
-        lat, lon = float(lat), float(lon)
-        if (lat, lon) == (0.0, 0.0):
-            self.logger.warn("Ignoring location with bad coordinates (0, 0)")
-            return None
-        return Point(lon, lat)
+        from ebpub.retrieval.utils import get_point
+        return get_point(record)
