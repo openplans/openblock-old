@@ -4,7 +4,9 @@ OpenBlock 1.2.0 (UNRELEASED)
 Upgrade Notes
 -------------
 
-* As usual, install all dependencies, eg if you are upgrading a source checkout::
+* As usual, install all dependencies, eg if you are upgrading a source checkout:
+
+.. code-block:: bash
 
    pip install -r ebpub/requirements.txt
    pip install -e ebpub
@@ -15,7 +17,9 @@ Upgrade Notes
    pip install -r obdemo/requirements.txt
    pip install -e obdemo
 
-* As usual, sync and migrate the database::
+* As usual, sync and migrate the database:
+
+.. code-block:: bash
 
    django-admin.py syncdb
    django-admin.py migrate
