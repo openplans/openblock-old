@@ -879,8 +879,7 @@ class NewsItem(models.Model):
                 logger.warn(
                     "Saving NewsItem with neither a location nor a location_object")
         else:
-            if self.location is None:
-                self.location = ensure_valid(flatten_geomcollection(self.location))
+            self.location = ensure_valid(flatten_geomcollection(self.location))
 
     class Meta:
         ordering = ('title',)
