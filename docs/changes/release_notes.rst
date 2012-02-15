@@ -28,10 +28,13 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Changed URLs used by the schema_filter view, so some bookmarks may
+  break. (Ticket # 266)
+
 * Removed the EB_MEDIA_ROOT and EB_MEDIA_URL settings; now use
   django's normal MEDIA_ROOT and MEDIA_URL instead.
 
-* Removed the ImproperCity exception, which only served to prevent
+* Removed the ``ImproperCity`` exception, which only served to prevent
   using blocks in places such as unincorporated parts of counties,
   where there is nothing that could be called a 'city'.
 
@@ -48,22 +51,41 @@ Backward Incompatibilities
   documented properly. Instead use the new ``get_locations_for_item``
   template tag.
 
+* Removed the old map javascript since we're now using
+  openblockrichmap.js everywhere.
+
 
 New Features in 1.2
 -------------------
 
+* ``ebdata.scrapers.general.georss`` address-extraction fallback now
+  looks in all tags that look like text.
+
 * Search form now searches Places too.
+
+* Neighbornews schemas now have chartable ``categories``.
 
 * Allow overriding the template for schema_filter view on a per-schema
   basis, by creating a template named db/schema_filter/<schema>.html
+
+* Nieghbornews schemas now have specific templates for the
+  schema_filter view.
 
 * Added ``featured`` flag on ``ebpub.db.Lookup`` model, allowing admins
   to designate some Lookup values as "special", for use in
   eg. navigation.
 
+* Added a ``get_featured_lookups_by_schema`` template tag, puts into
+  context a list of the "special" Lookup values for that schema.
+
 * Added ``Lookup.objects.get_featured_lookup_for_item(newsitem, attribute_key)``
   method to find out which "featured" Lookups a newsitem has for a
   given attribute.
+
+* Added a ``lookup_values_for_attribute`` template tag, dumps all
+  values of a given db.attribute field as a JSON list.
+
+* Made schema_filter the default view of Schemas, ticket # 272
 
 * Added ``ebpub.moderation`` app that allows users to flag NewsItems
   as spam or inappropriate, and an admin UI for it;
@@ -81,6 +103,10 @@ New Features in 1.2
 
 * Added a ``get_locations_for_item`` template tag, see :doc:`../main/widgets`
   for more.
+
+* Now works with Postgresql 9.1, ticket #262
+
+* Nicer map controls thanks to Frank Hebbert, ticket #225
 
 * Added advanced hook for filtering schemas based on arbitrary request
   data; implement this by assigning ``settings.SCHEMA_MANAGER_HOOK =
@@ -112,12 +138,50 @@ New Features in 1.2
   admin UI to make certain NewsItems stay visible in the widget
   permanently or until an expiration date that you set.
 
+* settings.NEIGHBORNEWS_USE_CAPTCHA can now be a string path to a
+  function.
+
+* New NewsItem.objects.by_request() method for filtering based on
+  eg. user privileges.
+
+* New get_schema_manager(request) method for filtering based on
+  current request, with an extensibility hook too.
+
+* At least put the darn geocoder cache results in the admin so you can
+  delete them manually if desired. Refs #163
+
+* Admin UI option to save a copy of a schema as a new schema.
+
 
 Bugs fixed
 ----------
 
+* Fix KeyError when an Attribute references a non-existent Lookup.
+
+* Fix error on FilterChain.add(key, lookup) when key isn't a SchemaField.
+
 * Should be possible to run OpenBlock at a URL prefix now; removed all
   hardcoded URLs. Ticket #90.
+
+* Fix missing AJAX timeouts on "save place" button, thanks Tim Shedor
+
+* Fix error in NewsItem.objects.by_attribute() with many-to-many
+  lookups: looking for [3,47] was finding any number starting with 3
+  or ending with 47.
+
+* Make ``manage.sh`` script executable.
+
+* Fix rare error when we have a Block instance but its block range
+  doesn't match the block range regex. Known example: 1600-7-1600-9
+  Hanover Blvd. in Columbia, MO.
+
+* Allow choosing multiple values when filtering via Lookups.
+  Ticket # 267.
+
+* Use query params instead of weird URIs for schema_filter view,
+  ticket # 266.
+
+* Remove bogus breadcrumbs from schema_filter page; ticket #270
 
 * Filtering NewsItems by Block no longer causes 500 error.
 
@@ -144,10 +208,21 @@ Bugs fixed
 
 * Logout form was broken by bad template name. Fixed.
 
+* Fix 500 error when user doesn't exist.
+
+* Don't barf constructing richmaps url if there are no matching
+  newsitems
+
+* Group blocks by street on "choose a block" page, ticket # 263
+
+* Store suffixes on streets with names like 'Wilson Park'; fixes some
+  geocoding failures.
+
+
 Documentation
 -------------
 
-* Document ``ebpub.streets.Places``, see :ref:`places`
+* Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253
 
 * Basic docs for ``ebpub.neighbornews``, see :ref:`user_content`
 
@@ -157,11 +232,38 @@ Documentation
 
 * Better documentation about Schemas, SchemaFields, Attributes, and how they relate.
 
+* Fixes to example crontab, thanks Tim Shedor
+
+* Fix 500 error on newsitem.geojson, ticket #38
+
+
 Other
 -----
 
+* Factored out the georss scraper's point-parsing code into a
+  ``get_point()`` function in ebdata.retrieval.utils.
+
+* Generic rss scraper is now the basis for
+  ``obdemo.scrapers.add_news`` which did the same thing.
+
+* Generic rss scraper is now a ListDetailScraper and
+  RssListDetailScraper subclass.
+
+* Upgrade jquery-ui to 1.8.17.
+
+* Upgrade jquery to 1.7.1.
+
 * Moved some NewsItemListDetailScraper functionality up into
   BaseScraper, so it's more widely usable.
+
+* Deprecate log_exception(), the logging module actually does that
+  already
+
+* Move full_geocode() to ebpub.geocoder.base;  it was in an obscure place
+
+* By default, one API key per user.  3 was kind of silly.
+
+
 
 Older Changes
 -------------

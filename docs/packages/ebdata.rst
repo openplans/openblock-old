@@ -29,6 +29,8 @@ page that was crawled from a Seed.
 
 TODO: This really needs more explanation.
 
+.. _ebdata-nlp:
+
 ebdata.nlp
 ==========
 
@@ -105,6 +107,37 @@ These generally leverage the tools in ebdata.retrieval.
 All of them can be run as command-line scripts. Use the ``-h`` option to
 see what options, if any, each script takes.
 
+GeoRSS: ebdata.scrapers.general.georss
+---------------------------------------
+
+Loads any RSS or Atom feed from a URL.
+
+It tries to extract a point location and a location name (eg. address)
+from the feed, according to the following strategy:
+
+* First look for a latitude/longitude point expressed in several
+  standard formats:
+  `GeoRSS (simple or GML) <http://www.georss.org/Main_Page>`_,
+  `RDF geo <http://www.w3.org/2003/01/geo/>`_,
+  `xCal <http://tools.ietf.org/html/rfc6321>`_.
+* Next try some common but non-standardized tags such as
+  ``<latitude>`` and ``<longitude>``.
+* If no point is found, look for a location name in
+  standard GeoRSS or xCal elements; if found, geocode that to derive a point.
+* If no location name is found, try to extract and geocode any
+  addresses or location names from any tags that contain text.
+  (Uses :ref:`ebdata-nlp`)
+* If a point was found, but a location name was not,
+  try to reverse-geocode the point to derive an address.
+* If all of the above fail, do not create a NewsItem.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/georss/retrieval.py``
+and a generic "local news" schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/georss/local_news_schema.json``.  
+
+If you want to use another schema, you can give the ``--schema``
+command-line option.
+
 Flickr: ebdata.scrapers.general.flickr
 ---------------------------------------
 
@@ -123,26 +156,6 @@ library.)
 The scraper script is ``PATH/TO/ebdata/scrapers/general/flickr/flickr_retrieval.py``
 and the schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/flickr/photos_schema.json``.
-
-
-GeoRSS: ebdata.scrapers.general.georss
----------------------------------------
-
-Loads any RSS or Atom feed.  It tries to extract a point location and
-a location name from any feed according to the following strategy:
-
-* First look for a GeoRSS point.
-* If no point is found, look for a location name in
-  standard GeoRSS or xCal elements; if found, geocode that.
-* If no location name is found, try to find addresses
-  in the title and/or description, and geocode that.
-* If a point was found, but a location name was not,
-  try to reverse-geocode the point.
-* If all of the above fail, skip this item.
-
-The scraper script is ``PATH/TO/ebdata/scrapers/general/georss/retrieval.py``
-and a generic "local news" schema can be loaded by doing
-``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/georss/local_news_schema.json``.
 
 Meetup: ebdata.scrapers.general.meetup
 ---------------------------------------

@@ -153,7 +153,7 @@ from boston.com and creates a NewsItem for each entry:
         main()
 
 
-This script actually runs. A longer version is at ``obdemo/scrapers/add_news.py``.
+This script actually runs.
 
 So, what's left out? Among other things:
 
