@@ -163,7 +163,8 @@ Bugs fixed
 * Should be possible to run OpenBlock at a URL prefix now; removed all
   hardcoded URLs. Ticket #90.
 
-* Fix missing AJAX timeouts on "save place" button, thanks Tim Shedor
+* Fix missing AJAX timeouts on "save place" button, thanks Tim Shedor.
+  Ticket #269
 
 * Fix error in NewsItem.objects.by_attribute() with many-to-many
   lookups: looking for [3,47] was finding any number starting with 3
@@ -224,7 +225,8 @@ Documentation
 
 * Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253
 
-* Basic docs for ``ebpub.neighbornews``, see :ref:`user_content`
+* Basic docs for ``ebpub.neighbornews``, see :ref:`user_content`.
+  Ticket #211
 
 * Document how to get the 2010 census files instead of 2009.
 
@@ -247,7 +249,7 @@ Other
   ``obdemo.scrapers.add_news`` which did the same thing.
 
 * Generic rss scraper is now a ListDetailScraper and
-  RssListDetailScraper subclass.
+  RssListDetailScraper subclass. Ticket #242
 
 * Upgrade jquery-ui to 1.8.17.
 
