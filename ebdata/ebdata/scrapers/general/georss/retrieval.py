@@ -44,9 +44,9 @@ from ebdata.retrieval.utils import get_point
 logger = logging.getLogger('eb.retrieval.georss')
 
 
-class LocalNewsScraper(object):
+class RssScraper(object):
 
-    def __init__(self, url, schema_slug='local-news', http_cache=None):
+    def __init__(self, url=None, schema_slug='local-news', http_cache=None):
         self.url = url
         self.schema_slug=schema_slug
         self.http = Http(http_cache)
@@ -71,7 +71,7 @@ class LocalNewsScraper(object):
             title = convert_entities(entry.title)
             description = convert_entities(entry.description)
 
-            if entry.id.startswith('http'):
+            if entry.get('id', '').startswith('http'):
                 item_url = entry.id
             else:
                 item_url = entry.link
@@ -112,13 +112,18 @@ class LocalNewsScraper(object):
                 _short_title = item.title[:30] + '...'
 
                 point = get_point(entry)
-                if point is None:
+                if point:
+                    item.location = point
+                else:
+                    # Fall back to geocoding.
+                    x = y = None
                     if item.location_name:
                         text = item.location_name
                     else:
-                        # Geocode whatever we can find.
-                        # TODO: check this against columbia's weird feed XXX
-                        text = item.title + ' ' + item.description
+                        # Just smush all string values together and try it.
+                        text = u'\n'.join([v for v in entry.values()
+                                           if isinstance(v, basestring)])
+                    text = convert_entities(text)
                     logger.debug("...Falling back on geocoding from '%s...'" % text[:50])
                     addrs = parse_addresses(text)
                     for addr, unused in addrs:
@@ -140,9 +145,8 @@ class LocalNewsScraper(object):
                         logger.debug("Skip, couldn't geocode any addresses in item '%s...'"
                                      % _short_title)
                         continue
-                item.location = Point((float(x), float(y)))
-                if not intersects_metro_bbox(item.location):
-                    reversed_loc = Point((float(y), float(x)))
+                if item.location and not intersects_metro_bbox(item.location):
+                    reversed_loc = Point(item.location.y, item.location.x)
                     if intersects_metro_bbox(reversed_loc):
                         logger.info(
                             "Got points in apparently reverse order, flipping them")
@@ -171,7 +175,8 @@ class LocalNewsScraper(object):
                 logger.exception("Warning: couldn't save %r. Traceback:" % _short_title)
         logger.info("Finished LocalNewsScraper update: %d added, %d updated" % (addcount, updatecount))
 
-def main(argv=None):
+
+def main(argv=None, default_url=None):
     import sys
     if argv is None:
         argv = sys.argv[1:]
@@ -195,11 +200,16 @@ def main(argv=None):
     options, args = parser.parse_args(argv)
     setup_logging_from_opts(options, logger)
 
-    if len(args) < 1:
-        parser.print_usage()
-        sys.exit(0)
+    if len(args) >= 1:
+        url = args[0]
+    else:
+        if default_url:
+            url = default_url
+        else:
+            parser.print_usage()
+            sys.exit(0)
 
-    scraper = LocalNewsScraper(url=args[0],  schema_slug=options.schema, http_cache=options.http_cache)
+    scraper = RssScraper(url=url, schema_slug=options.schema, http_cache=options.http_cache)
 
     scraper.update()
 
