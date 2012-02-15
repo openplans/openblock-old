@@ -155,7 +155,7 @@ class ListDetailScraper(BaseScraper):
                 list_record = self.clean_list_record(list_record)
             except SkipRecord, e:
                 self.num_skipped += 1
-                self.logger.debug("Skipping list record for %r: %s " % (list_record, e))
+                self.logger.debug(u"Skipping list record for %r: %s " % (list_record, e))
                 continue
             except ScraperBroken, e:
                 # Re-raise the ScraperBroken with some addtional helpful information.
@@ -405,5 +405,5 @@ class RssListDetailScraper(ListDetailScraper):
         scraper should do ``newsitem.location = self.get_location(record)``
         sometime prior to ``self.save()``.
         """
-        from ebpub.retrieval.utils import get_point
+        from ebdata.retrieval.utils import get_point
         return get_point(record)
