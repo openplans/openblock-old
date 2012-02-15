@@ -70,25 +70,25 @@ class BaseScraper(object):
         except AmbiguousResult as result: 
             # try to resolve based on zipcode...
             if zipcode is None: 
-                self.logger.info(
+                self.logger.debug(
                     "Ambiguous results for address %s. (no zipcode to resolve dispute)" % 
                     (location_name, ))
                 return None
             in_zip = [r for r in result.choices if r['zip'] == zipcode]
             if len(in_zip) == 0:
-                self.logger.info(
+                self.logger.debug(
                     "Ambiguous results for address %s, but none in specified zipcode %s" % 
                     (location_name, zipcode))
                 return None
             elif len(in_zip) > 1:
-                self.logger.info(
+                self.logger.debug(
                     "Ambiguous results for address %s in zipcode %s, guessing first." % 
                     (location_name, zipcode))
                 return in_zip[0]
             else:
                 return in_zip[0]
         except (GeocodingException, ParsingError):
-            self.logger.info(
+            self.logger.debug(
                 "Could not geocode location: %s: %s" %
                 (location_name, traceback.format_exc()))
             return None
@@ -190,7 +190,7 @@ class BaseScraper(object):
                 # can't compare them without stripping the zone.
                 v = v.astimezone(local_tz).replace(tzinfo=None)
             if getattr(newsitem, k) != v:
-                self.logger.info('ID %s %s changed from %r to %r' % (newsitem.id, k, getattr(newsitem, k), v))
+                self.logger.debug('ID %s %s changed from %r to %r' % (newsitem.id, k, getattr(newsitem, k), v))
                 setattr(newsitem, k, v)
                 newsitem_updated = True
         if newsitem_updated:
@@ -206,10 +206,10 @@ class BaseScraper(object):
             if newsitem.attributes.get(k) == v:
                 continue
             elif k not in newsitem.attributes:
-                self.logger.info('ID %s %s was missing, setting to %r' %
+                self.logger.debug('ID %s %s was missing, setting to %r' %
                                  (newsitem.id, k, v))
             elif newsitem.attributes.get(k) != v:
-                self.logger.info('ID %s %s changed from %r to %r' %
+                self.logger.debug('ID %s %s changed from %r to %r' %
                                  (newsitem.id, k, newsitem.attributes[k], v))
             newsitem.attributes[k] = v
             newsitem_updated = True
