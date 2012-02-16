@@ -38,7 +38,6 @@ from ebpub.utils.geodjango import intersects_metro_bbox
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
 
-
 class RssScraper(RssListDetailScraper, NewsItemListDetailScraper):
     """
     A generic RSS scraper. Suitable for use with any Schema that
@@ -138,7 +137,7 @@ class RssScraper(RssListDetailScraper, NewsItemListDetailScraper):
                 point = reversed_loc
             else:
                 raise SkipRecord("Skipping %r as %s,%s is out of bounds" %
-                                 (_short_title, y, x))
+                                 (_short_title, point.y, point.x))
 
         if not location_name:
             # Fall back to reverse-geocoding.
@@ -201,7 +200,6 @@ def main(argv=None, default_url=None):
     add_verbosity_options(parser)
 
     options, args = parser.parse_args(argv)
-
     if len(args) >= 1:
         url = args[0]
     else:
