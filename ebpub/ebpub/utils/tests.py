@@ -115,6 +115,8 @@ class PidTests(TestCase):
 
 
 def suite():
+    # Note, not used by django.nose;
+    # for that, run eg. django-admin.py test --with-doctest ebpub/ebpub/utils/
     suite = unittest.TestLoader().loadTestsFromTestCase(PidTests)
     import doctest
     import ebpub.utils.text
