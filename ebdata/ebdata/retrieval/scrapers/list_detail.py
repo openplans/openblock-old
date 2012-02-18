@@ -280,7 +280,7 @@ class ListDetailScraper(BaseScraper):
 
     def existing_record(self, record):
         """
-        Given a cleaned list record as returned by clean_list_record(), returns
+        Given a *cleaned* list record as returned by clean_list_record(), returns
         the existing record from the data store, if it exists.
 
         If an existing record doesn't exist, this should return None.
@@ -431,15 +431,16 @@ class RssListDetailScraper(ListDetailScraper):
         return None
 
 
-    def get_point_and_location_name(self, record):
+    def get_point_and_location_name(self, record, address_text=None):
         """Try to get and return a (Point, location_name) pair, using
         any standards supported by get_location() and
         get_location_name(); if either can't be determined, fall back
         to using geocoding or reverse geocoding as needed.
 
         If *neither* can be determined, use address extraction from
-        ebdata.nlp on everything in ``record`` that looks like text,
-        and try to geocode the result.
+        ebdata.nlp on ``address_text`` if passed, or if it's not passed,
+        on *everything* in ``record`` that looks like text,
+        and try to geocode the resulting addresses.
 
         Either returned value may be None if it can't be determined.
 
@@ -453,16 +454,17 @@ class RssListDetailScraper(ListDetailScraper):
         """
         location_name = self.get_location_name(record)
         point = self.get_location(record)
-        text = ''
         if not point:
             # Fall back to geocoding.
             if not location_name:
                 # Just smush all string values together and try it.
-                text = u'\n'.join([v for k, v in record.items()
-                                   if (isinstance(v, basestring)
-                                       and k not in ('updated', 'link',))
-                                   ])
-        point, location_name = self.geocode_if_needed(point, location_name, text)
+                if not address_text:
+                    address_text = u'\n'.join(
+                        [v for k, v in record.items()
+                         if (isinstance(v, basestring)
+                             and k not in ('updated', 'link',))
+                         ])
+        point, location_name = self.geocode_if_needed(point, location_name, address_text)
         return (point, location_name)
 
 
