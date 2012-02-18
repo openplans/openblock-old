@@ -27,7 +27,6 @@ import datetime
 import ebdata.retrieval.log  # sets up base handlers.
 
 from django.contrib.gis.geos import Point
-from ebdata.nlp.addresses import parse_addresses
 from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
 from ebdata.retrieval.scrapers.list_detail import SkipRecord, StopScraping
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
@@ -77,55 +76,18 @@ class RssScraper(RssListDetailScraper, NewsItemListDetailScraper):
         if record.get('id', '').startswith('http'):
             record['link'] = record['id']
 
-        # Support any of georss, xcal, or ev for getting the
-        # location name.
-        location_name = None
-        for key in ('xCal_x-calconnect-street',
-                    'x-calconnect-street',
-                    'georss_featurename',
-                    'featurename',
-                    'ev-location',
-                    'location'):
-            val = record.get(key)
-            if val:
-                location_name = val
-                break
+        # This tries GeoRSS, RDF Geo, xCal, ...
+        point, location_name = self.get_point_and_location_name(record)
 
         _short_title = record['title'][:30] + '...'
 
-        point = self.get_location(record)
         if not point:
-            # Fall back to geocoding.
-            x = y = None
-            if location_name:
-                text = location_name
-            else:
-                # Just smush all string values together and try it.
-                text = u'\n'.join([v for k, v in record.items()
-                                   if (isinstance(v, basestring)
-                                       and k not in ('updated', 'link',))
-                                   ])
-            text = convert_entities(text)
-            self.logger.debug("...Falling back on geocoding from '%s...'" % text[:50])
-            addrs = parse_addresses(text)
-            for addr, unused in addrs:
-                try:
-                    result = self.geocode(addr)
-                    if result is not None:
-                        point = result['point']
-                        self.logger.debug("internally geocoded %r" % addr)
-                        x, y = point.x, point.y
-                        if not location_name:
-                            location_name = result['address']
-                        break
-                except:
-                    self.logger.exception('uncaught geocoder exception on %r\n' % addr)
-                    continue
-            if None in (x, y):
-                raise SkipRecord("couldn't geocode any addresses in item '%s...'"
-                                 % _short_title)
+            raise SkipRecord("couldn't geocode any addresses in item '%s...'"
+                             % _short_title)
 
-        assert point
+        if not location_name:
+            raise SkipRecord(
+                "Skip, no location name and failed to reverse geocode %s for %r" % (point.wkt, _short_title))
 
         if not intersects_metro_bbox(point):
             # Check if latitude, longitude seem to be reversed; I've
@@ -138,16 +100,6 @@ class RssScraper(RssListDetailScraper, NewsItemListDetailScraper):
             else:
                 raise SkipRecord("Skipping %r as %s,%s is out of bounds" %
                                  (_short_title, point.y, point.x))
-
-        if not location_name:
-            # Fall back to reverse-geocoding.
-            from ebpub.geocoder import reverse
-            try:
-                block, distance = reverse.reverse_geocode(point)
-                self.logger.debug(" Reverse-geocoded point to %r" % block.pretty_name)
-                location_name = block.pretty_name
-            except reverse.ReverseGeocodeError:
-                raise SkipRecord("Skip, no location name and failed to reverse geocode %s for %r" % (point.wkt, _short_title))
 
         record['location_name'] = location_name
         record['location'] = point

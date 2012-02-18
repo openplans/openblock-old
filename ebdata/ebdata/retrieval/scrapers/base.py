@@ -18,9 +18,11 @@
 
 from django.conf import settings
 from django.db import transaction
+from ebdata.nlp.addresses import parse_addresses
 from ebdata.retrieval import Retriever
+from ebdata.retrieval.utils import convert_entities
 from ebpub.db.models import NewsItem
-from ebpub.geocoder import SmartGeocoder, GeocodingException, ParsingError, AmbiguousResult
+from ebpub.geocoder.base import full_geocode, GeocodingException, ParsingError
 from ebpub.utils.text import address_to_block
 
 import datetime
@@ -49,56 +51,88 @@ class BaseScraper(object):
             self.retriever = Retriever(sleep=self.sleep, timeout=self.timeout)
         self.logger = logging.getLogger('eb.retrieval.%s' % self.logname)
         self.start_time = datetime.datetime.now()
-        self._geocoder = SmartGeocoder()
         self.num_added = 0
         self.num_changed = 0
 
-    def geocode(self, location_name, zipcode=None):
+
+    def geocode(self, location_name, **kwargs):
         """
         Tries to geocode the given location string, returning a Point object
         or None.
-        """
 
-        # Try to lookup the adress, if it is ambiguous, attempt to use
-        # any provided zipcode information to resolve the ambiguity.
-        # The zipcode is not included in the initial pass because it
-        # is often too picky yeilding no results when there is a
-        # legitimate nearby zipcode identified in either the address
-        # or street number data.
+        Override this if you want to replace with (or fall back to) an
+        external geocoding service.
+
+        If the result is ambiguous -- multiple matches -- then tries
+        to use optional args to resolve the ambiguity, and if still
+        ambiguous, returns the first remaining result.
+        """
         try:
-            return self._geocoder.geocode(location_name)
-        except AmbiguousResult as result: 
-            # try to resolve based on zipcode...
-            if zipcode is None: 
-                self.logger.debug(
-                    "Ambiguous results for address %s. (no zipcode to resolve dispute)" % 
-                    (location_name, ))
-                return None
-            in_zip = [r for r in result.choices if r['zip'] == zipcode]
-            if len(in_zip) == 0:
-                self.logger.debug(
-                    "Ambiguous results for address %s, but none in specified zipcode %s" % 
-                    (location_name, zipcode))
-                return None
-            elif len(in_zip) > 1:
-                self.logger.debug(
-                    "Ambiguous results for address %s in zipcode %s, guessing first." % 
-                    (location_name, zipcode))
-                return in_zip[0]
-            else:
-                return in_zip[0]
+            result = full_geocode(location_name, guess=True, **kwargs)
+            if result['result']:
+                if result['type'] == 'block' and result.get('ambiguous'):
+                    self.logger.debug("Invalid Block but valid street for %r; results unlikely to be useful, giving up" % location_name)
+                    return None
+
+                return result['result']
         except (GeocodingException, ParsingError):
             self.logger.debug(
                 "Could not geocode location: %s: %s" %
                 (location_name, traceback.format_exc()))
-            return None
+        return None
+
+    def geocode_if_needed(self, point, location_name, address_text='',
+                          **kwargs):
+        """
+        If either ``point`` or ``location_name`` is not set, try to
+        geocode / reverse-geocode as needed to derive one from the
+        other.  Returns (point, location_name).
+
+        If neither one is set, try to parse addresses out of
+        ``address_text`` and derive both.
+
+        Either value may be None if it can't be determined.
+
+        Any other keyword args are passed to ``full_geocode()``.
+        """
+        if not point:
+            text = convert_entities(location_name or address_text)
+            self.logger.debug("...Falling back on geocoding from '%s...'" % text[:50])
+            addrs = parse_addresses(text)
+            for addr, unused in addrs:
+                try:
+                    result = self.geocode(addr, **kwargs)
+                    if result is not None:
+                        point = result['point']
+                        self.logger.debug("internally geocoded %r" % addr)
+                        # TODO: what if it's a Place?
+                        if not location_name:
+                            location_name = result['address']
+                        break
+                except:
+                    self.logger.exception('uncaught geocoder exception on %r\n' % addr)
+                    continue
+
+        if point and not location_name:
+            # Fall back to reverse-geocoding.
+            from ebpub.geocoder import reverse
+            try:
+                block, distance = reverse.reverse_geocode(point)
+                self.logger.debug(" Reverse-geocoded point to %r" % block.pretty_name)
+                location_name = block.pretty_name
+            except reverse.ReverseGeocodeError:
+                location_name = None
+
+        return (point, location_name)
 
     def update(self):
         'Run the scraper.'
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
+
 
     def fetch_data(self, *args, **kwargs):
         return self.retriever.fetch_data(*args, **kwargs)
+
 
     def get_html(self, *args, **kwargs):
         """An alias for fetch_data().
@@ -106,11 +140,13 @@ class BaseScraper(object):
         """
         return self.fetch_data(*args, **kwargs)
 
+
     @classmethod
     def parse_html(cls, html):
         from lxml import etree
         from cStringIO import StringIO
         return etree.parse(StringIO(html), etree.HTMLParser())
+
 
     @transaction.commit_on_success
     def create_newsitem(self, attributes, **kwargs):
@@ -121,37 +157,38 @@ class BaseScraper(object):
         kwargs MUST have the following keys:
             title
             item_date
-            location_name
+            location_name AND/OR location
         For any other kwargs whose values aren't provided, this will use
         sensible defaults.
-        
+
+        ``attributes`` is a dictionary to use to populate this
+        NewsItem's Attribute objects.
+
         kwargs MAY have the following keys: 
-            zipcode - used to disambiguate geocoded locations
-
-        kwargs may optionally contain a 'convert_to_block' boolean. If True,
-        this will convert the given kwargs['location_name'] to a block level
-        but will use the real (non-block-level) address for geocoding and Block
-        association.
-
-        attributes is a dictionary to use to populate this NewsItem's Attribute
-        objects.
+            zipcode, city, and/or state - used to disambiguate geocoded locations.
+            convert_to_block - convert the given kwargs['location_name']
+              to a block level but will try to use the real
+              (non-block-level) address for geocoding.
+              Default False.
         """
 
-        location = kwargs.get('location')
-        location_name = kwargs.get('location_name')
+        convert_to_block = kwargs.pop('convert_to_block', False)
+        location, location_name = self.geocode_if_needed(
+            kwargs.get('location', None),
+            kwargs.get('location_name', None),
+            zipcode=kwargs.pop('zipcode', None),
+            city=kwargs.pop('city', None),
+            state=kwargs.pop('state', None),
+            convert_to_block=convert_to_block,
+            )
+
         assert location or location_name, "At least one of location or location_name must be provided"
-        if location is None:
-            location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
-            if location:
-                location = location['point']
-        if kwargs.pop('convert_to_block', False):
-            kwargs['location_name'] = address_to_block(kwargs['location_name'])
-            # If the exact address couldn't be geocoded, try using the
-            # normalized location name.
-            if location is None:
-                location = self.geocode(kwargs['location_name'], zipcode=kwargs.get('zipcode'))
-                if location:
-                    location = location['point']
+
+        if convert_to_block:
+            location_name = address_to_block(location_name)
+
+        kwargs['location_name'] = location_name
+        kwargs['location'] = location
 
         # Normally we'd just use "schema = kwargs.get('schema', self.schema)",
         # but self.schema will be evaluated even if the key is found in
@@ -174,6 +211,7 @@ class BaseScraper(object):
         self.num_added += 1
         self.logger.info(u'Created NewsItem %s: %s (total created in this scrape: %s)', schema.slug, ni.id, self.num_added)
         return ni
+
 
     @transaction.commit_on_success
     def update_existing(self, newsitem, new_values, new_attributes):
@@ -218,6 +256,7 @@ class BaseScraper(object):
             self.logger.debug('Total changed in this scrape: %s', self.num_changed)
         else:
             self.logger.debug('No changes to NewsItem %s detected', newsitem.id)
+
 
     def create_or_update(self, old_record, attributes, **kwargs):
         """unified API for updating or creating a NewsItem.

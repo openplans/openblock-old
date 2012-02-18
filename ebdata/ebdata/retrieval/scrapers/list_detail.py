@@ -16,8 +16,8 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.contrib.gis.geos import Point
 from base import BaseScraper, ScraperBroken
+from django.contrib.gis.geos import Point
 
 class SkipRecord(Exception):
     "Exception that signifies a detail record should be skipped over."
@@ -370,12 +370,14 @@ class ListDetailScraper(BaseScraper):
         """
         raise NotImplementedError()
 
+
 class RssListDetailScraper(ListDetailScraper):
     """
     A ListDetailScraper for sites whose lists are RSS feeds.
 
     Subclasses should not have to implement parse_list() or get_detail().
     """
+
     def parse_list(self, page):
         # The page is an RSS feed, so use feedparser to parse it.
         import feedparser
@@ -407,3 +409,60 @@ class RssListDetailScraper(ListDetailScraper):
         """
         from ebdata.retrieval.utils import get_point
         return get_point(record)
+
+    def get_location_name(self, record):
+        """Try to get a location name from the record, via any of
+        georss, xcal, or ev.
+
+        This is not called automatically; if you want to use it, your
+        scraper should do something like ``newsitem.location_name =
+        self.get_location_name(record)`` sometime prior to
+        ``self.save()``.
+        """
+        for key in ('xCal_x-calconnect-street',
+                    'x-calconnect-street',
+                    'georss_featurename',
+                    'featurename',
+                    'ev-location',
+                    'location'):
+            val = record.get(key)
+            if val:
+                return val
+        return None
+
+
+    def get_point_and_location_name(self, record):
+        """Try to get and return a (Point, location_name) pair, using
+        any standards supported by get_location() and
+        get_location_name(); if either can't be determined, fall back
+        to using geocoding or reverse geocoding as needed.
+
+        If *neither* can be determined, use address extraction from
+        ebdata.nlp on everything in ``record`` that looks like text,
+        and try to geocode the result.
+
+        Either returned value may be None if it can't be determined.
+
+        This is not called automatically; if you want to use it, your
+        scraper should do something like this prior to ``self.save()``::
+
+           point, location_name = self.get_point_and_location_name(record)
+           newsitem.location = point
+           newsitem.location_name = location_name
+
+        """
+        location_name = self.get_location_name(record)
+        point = self.get_location(record)
+        text = ''
+        if not point:
+            # Fall back to geocoding.
+            if not location_name:
+                # Just smush all string values together and try it.
+                text = u'\n'.join([v for k, v in record.items()
+                                   if (isinstance(v, basestring)
+                                       and k not in ('updated', 'link',))
+                                   ])
+        point, location_name = self.geocode_if_needed(point, location_name, text)
+        return (point, location_name)
+
+
