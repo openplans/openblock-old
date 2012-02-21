@@ -106,7 +106,7 @@ this can be installed like:
 
 .. code-block:: bash
 
-   $ sudo apt-get install libgdal libdal1-dev
+   $ sudo apt-get install libgdal libgdal1-dev
    $ sudo ldconfig
 
 Next, make sure you are in your openblock environment and it is activated:
