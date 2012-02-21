@@ -89,7 +89,9 @@ this will work:
 
 (Note that if you want to take this approach, you *must not* run virtualenv
 with the ``--no-site-packages`` option, as that will prevent your
-virtualenv from being able to use this package.)
+virtualenv from being able to use this package.  If you prefer the
+``--no-site-packages`` way of using virtualenv, you will have to
+install GDAL from source, as described below.)
 
 
 GDAL the hard way
@@ -125,7 +127,7 @@ this command:
 
 
 The output will be a version number like "1.6.3".  Your Python GDAL
-package version number needs to match the first two digits.  So if
+package version number  **must match the first two digits**.  So if
 ``gdal-config --version`` tells you "1.6.3", then you would need a version
 of Python GDAL that's at least 1.6.0, but less than 1.7.  Or if
 gdal-config tells you that you have 1.7.0, then you would need version
@@ -135,6 +137,10 @@ gdal-config tells you that you have 1.7.0, then you would need version
 .. code-block:: bash
 
    $ pip install --no-install "GDAL>=1.6,<1.7a"  # adjust version as needed
+
+Or if ``gdal-config --version`` tells you "1.5.1", then instead you
+would need to do ``pip install --no-install "GDAL>=1.5,<1.6a"``. Et
+cetera.
 
 Next, remove the bogus setup.cfg file, if any:
 
