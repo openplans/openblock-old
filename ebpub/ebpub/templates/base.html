@@ -1,5 +1,5 @@
 {% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-{% load eb %}{% load django_static %}
+{% load eb %}{% load compress %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
 <head>
@@ -8,12 +8,12 @@
 <meta name="robots" content="noarchive">
 <link rel="home" title="Home" href="{% url ebpub-homepage %}">
 
-{% slimall %}
+{% compress css %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/style-reset.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}scripts/chosen.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/openblock.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/calendrical.css" />
-{% endslimall %}
+{% endcompress %}
 
 <script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}styles/smoothness/jquery-ui-1.8.17.custom.css" />
@@ -24,12 +24,12 @@
 // But a lot of existing everyblock code expects $j instead of $
 var $j = $;
 </script>
-{% slimall %}
+{% compress js %}
 <script src="{{ STATIC_URL }}scripts/ob-jquery-csrf.js" type="text/javascript" charset="utf-8"></script>
 <script src="{{ STATIC_URL }}scripts/chosen.jquery.js" type="text/javascript" charset="utf-8"></script>
 <script src="{{ STATIC_URL}}scripts/jquery.calendrical.js"></script>
 <script src="{{ STATIC_URL}}scripts/json2.js"></script>
-{% endslimall %}
+{% endcompress %}
 
 <script src="{{ STATIC_URL }}scripts/jquery-ui-1.8.17.custom.min.js" type="text/javascript" charset="utf-8"></script>
 <!-- begin block extrahead -->

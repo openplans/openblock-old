@@ -37,9 +37,10 @@ if settings.DEBUG:
          'django.views.static.serve',
          {'document_root': olwidget_media_path}),
 
-        (r'^(?:%s)(?P<path>.*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
-         'django.views.static.serve',
-         {'document_root': settings.DJANGO_STATIC_SAVE_PREFIX}),
+        # Don't need this as long as 'staticfiles' is in INSTALLED_APPS
+        # (r'^(?:%s)(?P<path>.*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+        #  'django.views.static.serve',
+        #  {'document_root': settings.DJANGO_STATIC_SAVE_PREFIX}),
 
         (r'^(?:%s)(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
          'django.views.static.serve',

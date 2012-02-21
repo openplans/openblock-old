@@ -71,11 +71,10 @@ setup(
     keywords="openblock",
     install_requires= install_requires + [
         "django>=1.3.1",
-        "django-static",
+        "django-compressor",
         "GDAL",
         "pyyaml",
         "psycopg2>=2.0,<2.4.2",
-        "slimmer",  # used by django-static.
         "pyrfc3339",
         "recaptcha-client",
         "South",

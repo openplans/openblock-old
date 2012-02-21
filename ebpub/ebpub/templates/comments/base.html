@@ -1,5 +1,5 @@
 {% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-{% load eb %}{% load django_static %}
+{% load eb %}{% load compress %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
 <head>
@@ -8,10 +8,10 @@
 <meta name="robots" content="noarchive">
 <link rel="home" title="Home" href="{% url ebpub-homepage %}">
 
-{% slimall %}
+{% compress css %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}styles/style-reset.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}styles/openblock.css" />
-{% endslimall %}
+{% endcompress %}
 
 <script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
 
