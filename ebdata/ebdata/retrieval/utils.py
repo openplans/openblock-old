@@ -133,6 +133,7 @@ def convert_entities(text):
         return text # leave as is
     return re.sub("&#?\w+;", fixup, text)
 
+
 def locations_are_close(geom_a, geom_b, max_distance=200):
     """
     Verifies that two locations are within a certain distance from
