@@ -1,6 +1,6 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 
-{% load eb eb_filter humanize mapping django_static %}
+{% load eb eb_filter humanize mapping %}
 
 {% block title %}{% if not filters.filters_for_display %}Search {{ schema.plural_name }}{% else %}{{ schema.plural_name|capfirst }}{% endif %}{% for filter in filters.filters_for_display %} &rsaquo; {{ filter.value }} {% endfor %}{% endblock %}
 

@@ -306,17 +306,15 @@ MAP_CUSTOM_BASE_LAYERS = {
 # Core Django settings for static media and uploaded files,
 # see http://docs.djangoproject.com/en/dev/ref/settings/#media-root
 
-# Where static media live, as collected by the staticfiles app.
+# Where static media are collected to, via the staticfiles app.
 # See http://docs.djangoproject.com/en/1.3/ref/contrib/staticfiles
-STATIC_ROOT = os.path.join(EBPUB_DIR, 'media')
+STATIC_ROOT = os.path.join(EBPUB_DIR, 'static_root')
 # Where to serve these files.  For production deployment, ensure your
 # webserver makes STATIC_ROOT available at this URL.
-# By default we make subdirectories directly available,
-# eg. STATIC_ROOT/scripts is available at /scripts
-STATIC_URL = '/'
+STATIC_URL = '/static/'
 
 # Where to put files uploaded by users.
-MEDIA_ROOT = os.path.join(STATIC_ROOT, 'uploads')
+MEDIA_ROOT = os.path.join(EBPUB_DIR, 'media_root')
 # Where to serve these files.  For production deployment, ensure your
 # webserver makes MEDIA_ROOT available at this URL.
 MEDIA_URL = '/uploads/'
@@ -335,17 +333,35 @@ required_settings.extend(['STATIC_ROOT', 'MEDIA_ROOT', 'STATIC_URL', 'MEDIA_URL'
 # and easier to have eg. apache set appropriate expiration dates.
 # Make sure you have write permission here!!
 
-#COMPRESS_ROOT = STATIC_ROOT
-COMPRESS_OUTPUT_DIR = 'cache-forever'
+# We use the default django-compressor settings.
+#COMPRESS_OUTPUT_DIR = 'CACHE'  # Relative to COMPRESS_ROOT or STATIC_ROOT
+#COMPRESS_URL = STATIC_URL
 
+# Make CSS files smaller too.
+COMPRESS_CSS_FILTERS = (
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSMinFilter',
+)
+
+# Need this to use both django.contrib.staticfiles and django-compressor:
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    # other finders..
+    'compressor.finders.CompressorFinder',
+)
+
+# ebpub currently all its static files in one place rather than in
+# each app:
+STATICFILES_DIRS = (
+    os.path.join(EBPUB_DIR, 'static'),
+)
 
 #############################
 # JAVASCRIPT LIBRARIES      #
 #############################
 
 
-# For local development you might download jquery andtry something like this:
-#JQUERY_URL = '/media/js/jquery.js'
 JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'
 
 # It's important that it be named exactly OpenLayers.js,

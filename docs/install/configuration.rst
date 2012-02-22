@@ -387,31 +387,39 @@ affect your users.
   `Django caching documentation <https://docs.djangoproject.com/en/1.3/ref/settings/#std:setting-CACHES>`_.
 
 
-Django-Static
-===============
+Django-Compressor
+=================
 
-OpenBlock currently uses `Django-Static <https://github.com/peterbe/django-static>`_
+OpenBlock currently uses `Django-Compressor <https://github.com/peterbe/django-static>`_
 to manage static media such as Javascript and CSS files.
-The advantage over Django's built-in "StaticFiles" app is that
-Django-Static automatically handles timestamping media URLs
-and minify-ing scripts.  With eg. a suitable :ref:`Apache config <example_apache_config>`,
+
+.. admonition:: Changed in OpenBlock 1.2
+
+   Prior to the 1.2 release, we used `Django-Static `Django-Compressor <https://github.com/peterbe/django-static>`_.
+   This was very similar but did not integrate with the built-in
+   "StaticFiles" app, which was getting to be a problem.
+
+.. admonition:: Collecting static files
+
+   As always with ``django.contrib.staticfiles``,
+   anytime you install third-party software or add new media files,
+   you'll want to run ``django-admin.py collectstatic``.
+
+With eg. a suitable :ref:`Apache config <example_apache_config>`,
 you can safely set far-future expiration dates and never have stale scripts.
 
+The relevant setting you'll want to look at is ``COMPRESS_OUTPUT_DIR``.
+Everything should have sensible defaults in ``ebpub/settings_default.py``.
+If you need to override anything, see
+`the django-compressor documentation <http://django_compressor.readthedocs.org/en/latest/index.html>`_.
 
-The relevant settings are ``DJANGO_STATIC``, ``DJANGO_STATIC_MEDIA_ROOTS``,
-``DJANGO_STATIC_NAME_PREFIX``, ``DJANGO_STATIC_SAVE_PREFIX``.
-All have sensible defaults in ebpub/settings_default.py.
-If you need to override them, see
-`the README <https://github.com/peterbe/django-static/blob/master/README.md>`_.
-
-Note there are some exceptions: we don't use django-static for either
+Note there are some exceptions: we don't use django-compressor for either
 JQuery or OpenLayers because you might want to use hosted versions of
-those, and django-static probably isn't the best way to minify large
+those, and django-compressor probably isn't the best way to minify large
 frameworks anyway.
 
-
 The core settings ``STATIC_ROOT`` and ``STATIC_URL`` affect
-Django-Static as well.  By default this is calculated from the
+django-compressor as well.  By default this is calculated from the
 location of the installed ``ebpub`` package; you probably don't need
 to change them.
 

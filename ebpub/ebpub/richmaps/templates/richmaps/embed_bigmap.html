@@ -1,13 +1,13 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-{% load django_static eb humanize mapping %}
+{% load compress eb humanize mapping %}
 <html lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-{% slimall %}
+{% compress css %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/style-reset.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}styles/openblock.css" />
-{% endslimall %}
+{% endcompress %}
 
 <script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
 

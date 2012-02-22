@@ -434,7 +434,7 @@ def map_items_json(request):
                                     item.id)
         props = {'id': item.id,
                  'openblock_type': 'newsitem',
-                 'icon': item.schema.map_icon_url,
+                 'icon': item.schema.get_map_icon_url(),
                  'color': item.schema.map_color,
                  'sort': sort_key
                 }

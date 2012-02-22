@@ -139,7 +139,7 @@ def _item_geojson_dict(item):
          'item_date': item.item_date,
          'id': item.id,
          'openblock_type': 'newsitem',
-         'icon': item.schema.map_icon_url,
+         'icon': item.schema.get_map_icon_url(),
          'color': item.schema.map_color,
          'location_name': item.location_name,
          })
@@ -690,7 +690,7 @@ def place_detail_json(request, placetype):
                    'properties': {'type': placetype,
                                   'name': place.pretty_name,
                                   'address': place.address,
-                                  'icon': place.place_type.map_icon_url,
+                                  'icon': place.place_type.get_map_icon_url(),
                                   'color': place.place_type.map_color,
                                   'id': place.id,
                                   'openblock_type': 'place'

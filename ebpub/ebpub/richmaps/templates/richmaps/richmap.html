@@ -1,5 +1,5 @@
 {% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-{% load django_static %}
+{% load compress %}
 <!-- richmap.html  -->
 
 <script type="text/javascript">
@@ -35,9 +35,9 @@ if (jQuery.browser.msie) {
 
 {{ MAP_MEDIA_HTML|safe }}
 
-{% slimall %}
+{% compress js %}
 <script type="text/javascript" src="{{ STATIC_URL }}scripts/openblockrichmap.js" charset="utf-8"></script>
-{% endslimall %}
+{% endcompress %}
 
 <div id="detailmap"></div>
 

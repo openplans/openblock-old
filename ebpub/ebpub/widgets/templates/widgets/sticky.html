@@ -1,10 +1,10 @@
 {% extends "base.html" %}{% comment %} -*- mode: django-html; tab-width: 4 -*- {% endcomment %}
-{% load django_static %}
+{% load compress %}
 {% block extrahead %}
 
-{% slimall %}
+{% compress js %}
 <script type="text/javascript" src="{{ STATIC_URL }}scripts/widgeteditor.js" charset="utf-8"></script>
-{% endslimall %}
+{% endcompress %}
 
 <script type="text/javascript">
 	$(document).ready(function() {

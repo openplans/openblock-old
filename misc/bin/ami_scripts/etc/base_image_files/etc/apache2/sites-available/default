@@ -2,25 +2,24 @@
 ServerAdmin webmaster@localhost
 DocumentRoot /var/www/
 
-# We're serving OpenBlock by default.
-Alias /static/admin/ /home/openblock/openblock/lib/python2.7/site-packages/django/contrib/admin/media/
-Alias /media/ /home/openblock/openblock/lib/python2.7/site-packages/django/contrib/admin/media/
-Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
-Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
-Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
-Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
-Alias /olwidget/  /home/openblock/openblock/src/django-olwidget/
-#Alias /uploads/ /home/openblock/demo.openblockproject.org/var/uploads/
+# You want aliases for both MEDIA_ROOT at MEDIA_URL and STATIC_ROOT at STATIC_URL
+Alias /static/ /home/openblock/openblock/src/openblock/ebpub/ebpub/static_root/
+Alias /uploads/ /home/openblock/openblock/src/openblock/ebpub/ebput/media_root/
 
+# We're serving OpenBlock by default.
 WSGIScriptAlias / /home/openblock/openblock/wsgi/myblock.wsgi
 # GeoDjango is not safe to use with multiple threads, see its docs.
 WSGIDaemonProcess openblock user=openblock group=www-data threads=1 processes=5
-WSGIProcessGroup openblock 
+WSGIProcessGroup openblock
 
-<Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/media/ >
+<Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/media_root/ >
   # I'm assuming everything here safely has a version-specific URL
-  # whether via django-static or eg. the OpenLayers-2.9.1 directory.
-  ExpiresActive on  
+  # whether via django-compressor or eg. the OpenLayers-2.9.1 directory.
+  ExpiresActive on
+  ExpiresDefault "now plus 10 years"
+</Directory>
+<Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/static_root/ >
+  ExpiresActive on
   ExpiresDefault "now plus 10 years"
 </Directory>
 

@@ -1,9 +1,5 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
-{% load django_static %}
-{% load neighbornews_tags %}
-{% load eb %}
-{% comment %}
-{% endcomment %}
+{% load neighbornews_tags eb %}
 
 {% block title %}New {{schema.name}}{% endblock %}
 

@@ -1,14 +1,16 @@
 {% extends "base.html" %}
 
-{% load eb humanize eb_filter django_static mapping %}
+{% load eb humanize eb_filter compress mapping %}
 
 {% block title %}{% METRO_NAME %} {{ schema.plural_name }}{% endblock %}
 
 {% block extrahead %}
-{% slimall %}
+{% compress css %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/calendrical.css" />
+{% endcompress %}
+{% compress js %}
 <script src="{{ STATIC_URL }}scripts/jquery.calendrical.js"></script>
-{% endslimall %}
+{% endcompress %}
 
 <meta name="description" content="{% if schema.short_description %}{{ schema.short_description }}{% else %}{{ schema.plural_name|capfirst }} in {% METRO_NAME %}.{% endif %}{% if schema.update_frequency %} Updated {{ schema.update_frequency|lower }}.{% endif %}">
 {% endblock %}
