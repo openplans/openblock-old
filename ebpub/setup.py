@@ -71,7 +71,7 @@ setup(
     keywords="openblock",
     install_requires= install_requires + [
         "django>=1.3.1",
-        "django-compressor",
+        "django-compressor>=1.1.2",
         "GDAL",
         "pyyaml",
         "psycopg2>=2.0,<2.4.2",
