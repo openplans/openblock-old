@@ -345,10 +345,13 @@ COMPRESS_CSS_FILTERS = (
 
 # Need this to use both django.contrib.staticfiles and django-compressor:
 STATICFILES_FINDERS = (
+    # This one goes first, contrary to compressor docs,
+    # because that way the runserver wsgi app finds collected files
+    # first; otherwise, the non-collected ones get used.
+    'compressor.finders.CompressorFinder',
+    # Default finders.
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-    # other finders..
-    'compressor.finders.CompressorFinder',
 )
 
 # ebpub currently all its static files in one place rather than in
