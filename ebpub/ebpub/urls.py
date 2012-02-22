@@ -27,28 +27,16 @@ from ebpub.metros.allmetros import get_metro
 
 if settings.DEBUG:
     # URLs for the various static files we need to serve for development.
-    import olwidget
     import os
-    olwidget_media_path=os.path.join(
-        os.path.abspath(os.path.dirname(olwidget.__file__)), 'static')
-
     urlpatterns = patterns('',
-        (r'^(?P<path>(?:olwidget).*)$',
-         'django.views.static.serve',
-         {'document_root': olwidget_media_path}),
-
         # Don't need this as long as 'staticfiles' is in INSTALLED_APPS
         # (r'^(?:%s)(?P<path>.*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
         #  'django.views.static.serve',
         #  {'document_root': settings.DJANGO_STATIC_SAVE_PREFIX}),
 
-        (r'^(?:%s)(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
-         'django.views.static.serve',
-          {'document_root': settings.MEDIA_ROOT}),
-
-        (r'^(?:%s)(?P<path>(?:images|scripts|styles|openlayers).*)$' % (settings.STATIC_URL or '').lstrip('/'),
-         'django.views.static.serve',
-         {'document_root': settings.STATIC_ROOT}),
+        # (r'^(?:%s)(?P<path>.*)$' % settings.MEDIA_URL.lstrip('/'),
+        #  'django.views.static.serve',
+        #   {'document_root': settings.MEDIA_ROOT}),
 
     )
 else:
