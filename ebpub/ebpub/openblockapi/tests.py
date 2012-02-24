@@ -31,7 +31,6 @@ from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
 from ebpub.openblockapi import views
 from ebpub.openblockapi.apikey import auth
-from django.test.testcases import TransactionTestCase
 
 
 class BaseTestCase(TestCase):
@@ -1082,20 +1081,3 @@ class TestUtilFunctions(TestCase):
         mock_throttle.should_be_throttled.return_value = False
         self.assertEqual(0, throttle_check(request))
         self.assertEqual(mock_throttle.accessed.call_count, 1)
-
-
-class TestMoreUtilFunctions(TransactionTestCase):
-
-    # For things that mess with the db too much and need to be in a
-    # transaction... eg. creating models on the fly and such
-    # shenanigans.
-
-    def test_is_instance_of_model(self):
-        from django.contrib.gis.db import models
-        class Foo(models.Model):
-            class Meta:
-                app_label = 'openblockapi'
-        f = Foo()
-        self.assertEqual(True, views.is_instance_of_model(f, Foo))
-        self.assertRaises(TypeError, views.is_instance_of_model, f, Foo())
-
