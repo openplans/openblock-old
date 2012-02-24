@@ -219,6 +219,8 @@ class BaseScraper(object):
         Given an existing NewsItem and dictionaries new_values and
         new_attributes, determines which values and attributes have changed
         and saves the object and/or its attributes if necessary.
+
+        Returns the NewsItem.
         """
         newsitem_updated = False
         # First, check the NewsItem's values.
@@ -256,13 +258,14 @@ class BaseScraper(object):
             self.logger.debug('Total changed in this scrape: %s', self.num_changed)
         else:
             self.logger.debug('No changes to NewsItem %s detected', newsitem.id)
+        return newsitem
 
 
     def create_or_update(self, old_record, attributes, **kwargs):
         """unified API for updating or creating a NewsItem.
         """
         if old_record:
-            self.update_existing(old_record, kwargs, attributes or {})
+            return self.update_existing(old_record, kwargs, attributes or {})
         else:
-            self.create_newsitem(attributes=attributes, **kwargs)
+            return self.create_newsitem(attributes=attributes, **kwargs)
 
