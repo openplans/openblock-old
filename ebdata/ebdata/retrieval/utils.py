@@ -173,7 +173,7 @@ def get_point(record):
     # TODO: support xCal geometries
     # https://tools.ietf.org/html/rfc6321#section-3.4.1.2
 
-    if 'gml_point' in record:
+    if 'gml_pos' in record:
         # Looks like georss gml.
         lat, lon = record['gml_pos'].split()
     elif 'point' in record:
@@ -195,7 +195,7 @@ def get_point(record):
         # 'lon' = geo with broken namespace handling.
         # The others are non-standard, but I've seen 'lng' in eg.
         # seeclickfix issues json.
-        lon = record.get('lng') or record.get('lon') or record.get('lng')
+        lon = record.get('lng') or record.get('lon') or record.get('long')
         if lon is None:
             logger.debug("Found lat %r, but nothing like a longitude" % lat)
             return None
