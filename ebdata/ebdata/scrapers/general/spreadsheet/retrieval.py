@@ -18,9 +18,11 @@
 
 from cStringIO import StringIO
 from ebdata.parsing import unicodecsv
-from ebdata.retrieval.scrapers.list_detail import ListDetailScraper
-from ebpub.db.models import NewsItem
-from ebpub.utils.dates import today, now
+from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
+from ebdata.retrieval.scrapers.list_detail import SkipRecord
+from ebpub.utils.dates import now, today
+import urllib2
+
 
 def get_dictreader(items_csv, map_csv=None):
     """
@@ -109,7 +111,7 @@ def get_dictreader(items_csv, map_csv=None):
     if isinstance(map_csv, basestring):
         map_csv = StringIO(map_csv)
     mapping = unicodecsv.UnicodeDictReader(map_csv)
-    map_rows = list(mapping)
+    map_rows = [row for row in list(mapping) if row]
     if len(map_rows) == 0:
         return unicodecsv.UnicodeDictReader(items_csv, fieldnames=mapping.fieldnames)
     elif len(map_rows) == 1:
@@ -131,16 +133,27 @@ class RemappingDictReader(unicodecsv.UnicodeDictReader):
         return result
 
 
-class CsvListDetailScraper(ListDetailScraper):
+class CsvListDetailScraper(NewsItemListDetailScraper):
     has_detail = False
+    schema_slugs = None
 
     def __init__(self, items_csv, map_csv, *args, **kwargs):
+        self.schema_slugs = [kwargs.pop('schema_slug', None)]
         super(CsvListDetailScraper, self).__init__(*args, **kwargs)
         self.items_csv = items_csv
         self.map_csv = map_csv
 
     def list_pages(self):
-        pass
+        return [self.items_csv]
+
+    def parse_list(self, page):
+        reader = get_dictreader(page, self.map_csv)
+        # DictReaders are iterable and yield dicts, so, we're done.
+        return reader
+
+    def existing_record(self, record):
+        # TODO: No generic way to know?
+        return None
 
     def clean_list_record(self, list_record):
         """
@@ -152,6 +165,7 @@ class CsvListDetailScraper(ListDetailScraper):
 
         Unrecognized keys will be ignored (and logged).
         """
+        from ebpub.db.models import NewsItem
         fieldnames = [f.name for f in NewsItem._meta.fields]
         core_fields = {}
         from ebdata.retrieval.utils import get_point
@@ -174,7 +188,6 @@ class CsvListDetailScraper(ListDetailScraper):
                 # TODO: coerce types
                 attributes[sf.name] = list_record.pop(sf.name)
         core_fields['attributes'] = attributes
-        core_fields.setdefault('schema', self.schema) # XXX
         if len(list_record):
             self.logger.debug("Unused stuff from list_record: %s" % list_record)
         return core_fields
@@ -190,6 +203,50 @@ class CsvListDetailScraper(ListDetailScraper):
             return self.create_or_update(old_record, attributes,
                                          **form.cleaned_data)
         else:
-            # XXX TODO: does anything check return value of save()?
-            # What to do w/ errors?
-            return {'errors': form.errors}
+            raise SkipRecord(form.errors)
+
+
+def open_url(url):
+    """maybe it's a URI, maybe a local file.
+    """
+    try:
+        return file(url)
+    except IOError:
+        return urllib2.urlopen(url)
+
+def main(argv=None):
+    import sys
+    if argv is None:
+        argv = sys.argv[1:]
+    from optparse import OptionParser
+    usage = "usage: %prog [options] <spreadsheet> [<config spreadsheet>]"
+    parser = OptionParser(usage=usage)
+
+    parser.add_option(
+        "--schema", help="which news item type to create when scraping",
+        default="local-news"
+        )
+    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+    add_verbosity_options(parser)
+
+    options, args = parser.parse_args(argv)
+    if len(args) >= 1:
+        item_sheet = args[0]
+        if len(args) >= 2:
+            map_sheet = args[1]
+        else:
+            map_sheet = None
+    else:
+        parser.print_usage()
+        sys.exit(0)
+
+    item_data = open_url(item_sheet).read()
+    map_data = map_sheet and open_url(map_sheet).read()
+    scraper = CsvListDetailScraper(items_csv=item_data, map_csv=map_data,
+                                   schema_slug=options.schema)
+    setup_logging_from_opts(options, scraper.logger)
+    scraper.update()
+
+
+if __name__ == '__main__':
+    main()

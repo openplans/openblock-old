@@ -36,55 +36,63 @@ class TestCsvScraper(django.test.TestCase):
 
     def _make_scraper(self):
         from ..spreadsheet import retrieval
-        scraper = retrieval.CsvListDetailScraper(None, None, use_cache=False)
+        schema = self._get_schema()
+        scraper = retrieval.CsvListDetailScraper(None, None, use_cache=False,
+                                                 schema_slug=schema.slug)
         # Be quiet!
         scraper.logger = mock.Mock()
-        scraper.schema = self._get_schema()
         return scraper
 
     def test_clean_list_record__no_info(self):
         scraper = self._make_scraper()
         cleaned = scraper.clean_list_record({})
         self.assertEqual(cleaned,
-                         {'attributes': {}, 'schema': scraper.schema,
+                         {'attributes': {},
                           'location': None, 'location_name': None})
 
     def test_clean_list_record__ok(self):
         scraper = self._make_scraper()
         cleaned = scraper.clean_list_record({'title': 't1', 'description': 'd1'})
-        self.assertEqual(cleaned, {'title': 't1', 'description': 'd1',
-                                   'schema': scraper.schema,
-                                   'location': None, 'location_name': None,
+        self.assertEqual(cleaned, {'title': 't1',
+                                   'description': 'd1',
+                                   'location': None,
+                                   'location_name': None,
                                    'attributes': {}})
 
         cleaned = scraper.clean_list_record({'title': 't2', 'unknown': 'blah'})
-        self.assertEqual(cleaned, {'title': 't2', 'schema': scraper.schema,
-                                   'location': None, 'location_name': None,
+        self.assertEqual(cleaned, {'title': 't2',
+                                   'location': None,
+                                   'location_name': None,
                                    'attributes': {}})
 
         cleaned = scraper.clean_list_record({'title': 't3', 'attr1': 'a1'})
-        self.assertEqual(cleaned, {'title': 't3', 'schema': scraper.schema,
-                                   'location': None, 'location_name': None,
+        self.assertEqual(cleaned, {'title': 't3',
+                                   'location': None,
+                                   'location_name': None,
                                    'attributes': {'attr1': 'a1'}})
 
     @mock.patch('ebpub.db.models.logger')
     def test_save__no_info(self, mock_logger):
         scraper = self._make_scraper()
-        result = scraper.save(None, {}, None)
-        self.assertEqual(result['errors']['location_name'],
-                         [u'This field is required.'])
-        result = scraper.save(None, {'blah': 'blech'}, None)
-        self.assertEqual(result['errors']['location_name'],
-                         [u'This field is required.'])
+        from ebdata.retrieval.scrapers.list_detail import SkipRecord
+        with self.assertRaises(SkipRecord) as e:
+            scraper.save(None, {}, None)
+        self.assertEqual(e.exception.message['location_name'],
+                          [u'This field is required.'])
+        with self.assertRaises(SkipRecord) as e:
+            scraper.save(None, {'blah': 'blech'}, None)
+        self.assertEqual(e.exception.message['location_name'],
+                          [u'This field is required.'])
 
 
     @mock.patch('ebpub.db.models.logger')
     def test_save__not_enough_info(self, mock_logger):
+        from ebdata.retrieval.scrapers.list_detail import SkipRecord
         info = {'title': 't1', 'description': 'd1', 'attr1': 'a1', 'bad': 'b1'}
         scraper = self._make_scraper()
-        result = scraper.save(None, info, None)
-        self.assert_(isinstance(result, dict))
-        self.assertEqual(result['errors']['location_name'],
+        with self.assertRaises(SkipRecord) as e:
+            scraper.save(None, info, None)
+        self.assertEqual(e.exception.message['location_name'],
                          [u'This field is required.'])
 
 
