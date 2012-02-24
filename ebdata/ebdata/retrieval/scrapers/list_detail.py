@@ -17,7 +17,7 @@
 #
 
 from base import BaseScraper, ScraperBroken
-from django.contrib.gis.geos import Point
+
 
 class SkipRecord(Exception):
     "Exception that signifies a detail record should be skipped over."
