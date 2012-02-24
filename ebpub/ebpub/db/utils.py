@@ -32,6 +32,8 @@ from ebpub.utils.view_utils import make_pid
 from ebpub.savedplaces.models import SavedPlace
 import datetime
 
+# For backward compatibility
+from ebpub.utils.dates import today
 
 def populate_attributes_if_needed(newsitem_list, schema_list,
                                   get_lookups=True):
@@ -142,10 +144,6 @@ def populate_schema(newsitem_list, schema):
         # TODO: This relies on undocumented Django APIs -- the "_schema_cache" name.
         ni._schema_cache = schema
 
-def today():
-    if settings.EB_TODAY_OVERRIDE:
-        return settings.EB_TODAY_OVERRIDE
-    return datetime.date.today()
 
 def get_locations_near_place(place, block_radius=3):
     nearby = Location.objects.filter(location_type__is_significant=True)
