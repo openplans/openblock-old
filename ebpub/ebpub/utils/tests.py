@@ -129,7 +129,6 @@ class TestModelUtils(TransactionTestCase):
         f = Foo()
         self.assertEqual(True, is_instance_of_model(f, Foo))
         self.assertRaises(TypeError, is_instance_of_model, f, Foo())
-        self.assertEqual(1, 2)
 
 
 def suite():
