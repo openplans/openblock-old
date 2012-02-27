@@ -147,7 +147,7 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
 
     has_detail = False
     schema_slugs = None
-    unique_fields = []
+    unique_fields = ()
 
     def __init__(self, items_csv_file, map_csv_file, *args, **kwargs):
         self.schema_slugs = [kwargs.pop('schema_slug', None)]
@@ -177,15 +177,19 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
         """
         Uses the fields named in self.unique_fields.
         """
+        from ebpub.db.models import NewsItem
         query_args = {}
-        for field in self.unique_fields:
+        default_unique_fields = [f.name for f in NewsItem._meta.fields
+                                 if f.name not in ('item_date', 'pub_date')]
+        # Don't use dates.
+        unique_fields = self.unique_fields or default_unique_fields
+        for field in unique_fields:
             arg = record.get(field)
             if arg:
                 query_args[field] = arg
 
         if not query_args:
             return None
-        from ebpub.db.models import NewsItem
         qs = list(NewsItem.objects.filter(schema__id=self.schema.id, **query_args))
         if not qs:
             return None

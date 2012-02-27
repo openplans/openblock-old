@@ -123,6 +123,49 @@ class TestCsvScraper(django.test.TestCase):
                           (('bar.txt',),)])
 
 
+    def test_existing_record__default_unique_fields(self):
+        scraper = self._make_scraper()
+        record = {'title': 't1', 'location_name': 'ln1', 'description': 'd1',
+                  'schema': self._get_schema(),
+                  }
+        from ebpub.db.models import NewsItem
+        self.assertEqual(scraper.unique_fields, ())
+        self.assertEqual(scraper.existing_record(record), None)
+        ni = NewsItem.objects.create(**record)
+        try:
+            self.assertEqual(scraper.existing_record(record), ni)
+        finally:
+            ni.delete()
+
+    def test_existing_record__unknown_field(self):
+        scraper = self._make_scraper()
+        record = {'title': 't1', 'location_name': 'ln1', 'description': 'd1',
+                  'schema': self._get_schema(),
+                  }
+        from ebpub.db.models import NewsItem
+        scraper.unique_fields = ('No Such Thing',)
+        ni = NewsItem.objects.create(**record)
+        try:
+            self.assertEqual(scraper.existing_record(record), None)
+        finally:
+            ni.delete()
+
+    def test_existing_record__changed_value(self):
+        scraper = self._make_scraper()
+        record = {'title': 't1', 'location_name': 'ln1', 'description': 'd1',
+                  'schema': self._get_schema(),
+                  }
+        from ebpub.db.models import NewsItem
+        scraper.unique_fields = ('location_name',)
+        ni = NewsItem.objects.create(**record)
+        try:
+            self.assertEqual(scraper.existing_record(record), ni)
+            record['location_name'] = 'ln2'
+            self.assertEqual(scraper.existing_record(record), None)
+        finally:
+            ni.delete()
+
+
 def suite():
     import doctest
     from ..spreadsheet import retrieval
