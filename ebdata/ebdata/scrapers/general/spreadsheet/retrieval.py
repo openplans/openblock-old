@@ -176,12 +176,14 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
     def existing_record(self, record):
         """
         Uses the fields named in self.unique_fields.
+        If self.unique_fields isn't set, use all non-date core fields
+        of NewsItem.
         """
         from ebpub.db.models import NewsItem
         query_args = {}
+        # Don't use dates.
         default_unique_fields = [f.name for f in NewsItem._meta.fields
                                  if f.name not in ('item_date', 'pub_date')]
-        # Don't use dates.
         unique_fields = self.unique_fields or default_unique_fields
         for field in unique_fields:
             arg = record.get(field)
@@ -280,6 +282,12 @@ def main(argv=None):
         "--schema", help="which news item type to create when scraping",
         default="local-news"
         )
+
+    parser.add_option(
+        "--unique-fields", help="Which NewsItem fields identify a unique record in this data source. Comma-separated, eg. --unique-fields='url,location_name,title",
+        action="store", default=None
+        )
+
     from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
     add_verbosity_options(parser)
 
@@ -294,7 +302,13 @@ def main(argv=None):
         parser.print_usage()
         sys.exit(0)
 
-    scraper = CsvListDetailScraper(item_sheet, map_sheet, schema_slug=options.schema)
+    if options.unique_fields:
+        unique_fields = [s.strip() for s in options.unique_fields.split(',')]
+    else:
+        unique_fields = []
+    scraper = CsvListDetailScraper(item_sheet, map_sheet,
+                                   schema_slug=options.schema,
+                                   unique_fields=unique_fields)
     setup_logging_from_opts(options, scraper.logger)
     scraper.update()
 
