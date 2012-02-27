@@ -53,6 +53,7 @@ class BaseScraper(object):
         self.start_time = datetime.datetime.now()
         self.num_added = 0
         self.num_changed = 0
+        self.num_skipped = 0
 
 
     def geocode(self, location_name, **kwargs):
