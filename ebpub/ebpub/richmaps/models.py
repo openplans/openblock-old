@@ -16,6 +16,4 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.db import models
-
-# Create your models here.
+# No models, but need this for django to see this as an app.
