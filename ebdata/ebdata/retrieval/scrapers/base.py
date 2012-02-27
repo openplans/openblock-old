@@ -258,6 +258,7 @@ class BaseScraper(object):
             self.logger.debug('Total changed in this scrape: %s', self.num_changed)
         else:
             self.logger.debug('No changes to NewsItem %s detected', newsitem.id)
+            self.num_skipped += 1
         return newsitem
 
 
