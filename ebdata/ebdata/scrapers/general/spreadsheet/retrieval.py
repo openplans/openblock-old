@@ -134,14 +134,35 @@ class RemappingDictReader(unicodecsv.UnicodeDictReader):
 
 
 class CsvListDetailScraper(NewsItemListDetailScraper):
+    """General-purpose CSV file scraper.
+
+    You should set ``unique_fields`` to a list of the fields that can
+    be used to uniquely identify a row in the input file.
+    (TODO: this currently doesn't support Attributes, only core
+    NewsItem fields.)
+
+    If you don't set ``unique_fields``, multiple runs of this scraper
+    will create duplicate NewsItems.
+    """
+
     has_detail = False
     schema_slugs = None
+    unique_fields = []
 
-    def __init__(self, items_csv, map_csv, *args, **kwargs):
+    def __init__(self, items_csv_file, map_csv_file, *args, **kwargs):
         self.schema_slugs = [kwargs.pop('schema_slug', None)]
+        self.unique_fields = kwargs.pop('unique_fields', self.unique_fields)
         super(CsvListDetailScraper, self).__init__(*args, **kwargs)
-        self.items_csv = items_csv
-        self.map_csv = map_csv
+        self.items_csv_file = items_csv_file
+        if items_csv_file:
+            self.items_csv = open_url(items_csv_file).read()
+        else:
+            # In this case you'll have to manually set it after __init__.
+            self.items_csv = None
+        if map_csv_file:
+            self.map_csv = open_url(map_csv_file).read()
+        else:
+            self.map_csv = None
 
     def list_pages(self):
         return [self.items_csv]
@@ -151,9 +172,27 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
         # DictReaders are iterable and yield dicts, so, we're done.
         return reader
 
+
     def existing_record(self, record):
-        # TODO: No generic way to know?
-        return None
+        """
+        Uses the fields named in self.unique_fields.
+        """
+        query_args = {}
+        for field in self.unique_fields:
+            arg = record.get(field)
+            if arg:
+                query_args[field] = arg
+
+        if not query_args:
+            return None
+        from ebpub.db.models import NewsItem
+        qs = list(NewsItem.objects.filter(schema__id=self.schema.id, **query_args))
+        if not qs:
+            return None
+        if len(qs) > 1:
+            self.logger.warn("Multiple entries matched args %r. Expected unique! Using first one." % str(query_args))
+        return qs[0]
+
 
     def clean_list_record(self, list_record):
         """
@@ -192,11 +231,13 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
             self.logger.debug("Unused stuff from list_record: %s" % list_record)
         return core_fields
 
+
     def save(self, old_record, list_record, detail_record):
         attributes = list_record.pop('attributes', {})
         list_record.setdefault('schema', self.schema.id)
-        list_record.setdefault('item_date', today())
-        list_record.setdefault('pub_date', now())
+        if not old_record:
+            list_record.setdefault('item_date', today())
+            list_record.setdefault('pub_date', now())
         from ebpub.db.forms import NewsItemForm
         form = NewsItemForm(list_record, instance=old_record)
         if form.is_valid():
@@ -206,6 +247,14 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
             raise SkipRecord(form.errors)
 
 
+    def update(self, *args, **kwargs):
+        self.logger.info("Retrieving %s" % self.items_csv_file)
+        result = super(CsvListDetailScraper, self).update(*args, **kwargs)
+        self.logger.info("Added: %d; Updated: %d; Skipped: %d" %
+                         (self.num_added, self.num_changed, self.num_skipped))
+        return result
+
+
 def open_url(url):
     """maybe it's a URI, maybe a local file.
     """
@@ -213,6 +262,7 @@ def open_url(url):
         return file(url)
     except IOError:
         return urllib2.urlopen(url)
+
 
 def main(argv=None):
     import sys
@@ -240,10 +290,7 @@ def main(argv=None):
         parser.print_usage()
         sys.exit(0)
 
-    item_data = open_url(item_sheet).read()
-    map_data = map_sheet and open_url(map_sheet).read()
-    scraper = CsvListDetailScraper(items_csv=item_data, map_csv=map_data,
-                                   schema_slug=options.schema)
+    scraper = CsvListDetailScraper(item_sheet, map_sheet, schema_slug=options.schema)
     setup_logging_from_opts(options, scraper.logger)
     scraper.update()
 

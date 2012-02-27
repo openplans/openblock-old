@@ -110,6 +110,19 @@ class TestCsvScraper(django.test.TestCase):
         self.failIf(hasattr(item, 'bad2'))
 
 
+    @mock.patch('ebdata.scrapers.general.spreadsheet.retrieval.open_url')
+    def test_init_opens_files(self, mock_opener):
+        from ..spreadsheet import retrieval
+        schema = self._get_schema()
+        scraper = retrieval.CsvListDetailScraper('foo.txt', 'bar.txt',
+                                                 use_cache=False,
+                                                 schema_slug=schema.slug)
+        self.assertEqual(mock_opener.call_count, 2)
+        self.assertEqual(mock_opener.call_args_list,
+                         [(('foo.txt',),),
+                          (('bar.txt',),)])
+
+
 def suite():
     import doctest
     from ..spreadsheet import retrieval
