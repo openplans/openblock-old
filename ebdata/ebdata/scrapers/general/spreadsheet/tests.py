@@ -165,6 +165,25 @@ class TestCsvScraper(django.test.TestCase):
         finally:
             ni.delete()
 
+    def test_existing_record__dates(self):
+        scraper = self._make_scraper()
+        record = {'title': 't1', 'location_name': 'ln1', 'description': 'd1',
+                  'schema': self._get_schema(),
+                  'item_date': '2011-12-31', 'pub_date': '2011-12-31 11:59:59',
+                  }
+        from ebpub.db.models import NewsItem
+        scraper.unique_fields = ('location_name',)
+        ni = NewsItem.objects.create(**record)
+        try:
+            self.assertEqual(scraper.existing_record(record), ni)
+            # Still works if you change dates.
+            record['item_date'] = '2012-01-01'
+            self.assertEqual(scraper.existing_record(record), ni)
+            record['pub_date'] = '2012-01-01 12:01:01'
+            self.assertEqual(scraper.existing_record(record), ni)
+        finally:
+            ni.delete()
+
 
 def suite():
     import doctest
