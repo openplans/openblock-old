@@ -18,9 +18,11 @@
 
 from cStringIO import StringIO
 from ebdata.parsing import unicodecsv
+from ebdata.parsing import excel
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
 from ebdata.retrieval.scrapers.list_detail import SkipRecord
 from ebpub.utils.dates import now, today
+import mimetypes
 import re
 import urllib2
 
@@ -37,19 +39,19 @@ def get_default_unique_field_names():
         [f.name for f in NewsItem._meta.fields if f.name not in blacklist]
         )
 
-def get_dictreader(items_csv, map_csv=None):
+def get_dictreader(items_sheet, items_type='text/csv', map_sheet=None, map_type='text/csv'):
     """
-    Given one or two spreadsheets, return a DictReader that can be
-    used to retrieve rows from ``items_csv``.
+    Given one or two spreadsheets as File objects, return a DictReader
+    that can be used to retrieve rows from ``items_sheet``.
 
-    If no ``map_csv`` is passed, assume that ``items_csv`` includes headers,
+    If no ``map_sheet`` is passed, assume that ``items_sheet`` includes headers,
     and return a normal DictReader.
 
-    If ``map_csv`` is passed, assume it describes which columns from
-    ``items_csv`` should be used for which fields of the output
+    If ``map_sheet`` is passed, assume it describes which columns from
+    ``items_sheet`` should be used for which fields of the output
     dicts.
 
-    Examples follow. First with no map_csv::
+    Examples follow. First with no map_sheet::
 
       >>> rows = [['attendee', 'unused', 'event'],
       ...         ['Bob', 'xyz', 'film premiere'],
@@ -61,11 +63,11 @@ def get_dictreader(items_csv, map_csv=None):
       [{'attendee': u'Bob', 'event': u'film premiere', 'unused': u'xyz'},
        {'attendee': u'Carol', 'event': u'workshop', 'unused': u'pdq'}]
 
-    If ``map_csv`` is passed and has *two* rows, then each column
+    If ``map_sheet`` is passed and has *two* rows, then each column
     desribes an old key and a new key for use in re-mapping the output
-    dictionaries from items_csv. Each key of the mapping (from row 1
-    of map_csv) represents the original key from the ``items_csv``
-    header; each value (from row 2 of map_csv) represents a new key
+    dictionaries from items_sheet. Each key of the mapping (from row 1
+    of map_sheet) represents the original key from the ``items_sheet``
+    header; each value (from row 2 of map_sheet) represents a new key
     for use in the output dict.  Columns whose headers do not appear
     in ``mapping`` are dropped from the output. Example::
 
@@ -74,8 +76,8 @@ def get_dictreader(items_csv, map_csv=None):
       ...         ['Carol', 'pdq', 'workshop']]
       >>> csv = '\\n'.join([','.join(map(str, r)) for r in rows])
       >>> mapping = {'event': 'where', 'attendee': 'who'}
-      >>> map_csv = 'attendee,event\\nwho,where'
-      >>> reader = get_dictreader(csv, map_csv)
+      >>> map_sheet = 'attendee,event\\nwho,where'
+      >>> reader = get_dictreader(csv, map_sheet=map_sheet)
       >>> reader.mapping == mapping
       True
       >>> pprint.pprint(list(reader))
@@ -83,70 +85,77 @@ def get_dictreader(items_csv, map_csv=None):
        {u'where': u'workshop', u'who': u'Carol'}]
 
 
-    If ``map_csv`` is passed and has **one** row, then assume
-    ``item_csv`` has no header; use the row from ``map_csv`` as a list of
+    If ``map_sheet`` is passed and has **one** row, then assume
+    ``items_sheet`` has no header; use the row from ``map_sheet`` as a list of
     fieldnames to set in each output dict. The index of each fieldname
-    determines the column number of items_csv that contains that
+    determines the column number of items_sheet that contains that
     field.::
 
       >>> fieldnames = ['animal', 'color', 'number']
-      >>> map_csv = ','.join(fieldnames)
+      >>> map_sheet = ','.join(fieldnames)
       >>> rows = [['cat', 'purple', 3], ['dog', 'white', 0], ['bird', 'yellow']]
       >>> csv = '\\n'.join([','.join(map(str, r)) for r in rows])
-      >>> reader = get_dictreader(csv, map_csv)
+      >>> reader = get_dictreader(csv, map_sheet=map_sheet)
       >>> pprint.pprint(list(reader))
       [{'animal': u'cat', 'color': u'purple', 'number': u'3'},
        {'animal': u'dog', 'color': u'white', 'number': u'0'},
        {'animal': u'bird', 'color': u'yellow'}]
 
-    If ``map_csv`` has more than two rows, it's an error::
+    If ``map_sheet`` has more than two rows, it's an error::
 
-      >>> map_csv = 'one,two,three\\nfour,five,six\\n7,8,9\\n'
-      >>> get_dictreader(csv, map_csv) # doctest: +ELLIPSIS
+      >>> map_sheet = 'one,two,three\\nfour,five,six\\n7,8,9\\n'
+      >>> get_dictreader(csv, map_sheet=map_sheet) # doctest: +ELLIPSIS
       Traceback (most recent call last):
       ...
       ValueError: Too many rows...
 
-    A map_csv with zero rows is the same as not passing one at all:
+    A map_sheet with zero rows is the same as not passing one at all:
 
       >>> reader1 = get_dictreader(csv)
-      >>> reader2 = get_dictreader(csv, '\\n')
+      >>> reader2 = get_dictreader(csv, map_sheet='\\n')
       >>> list(reader2) == list(reader1)
       True
 
     """
 
-    if isinstance(items_csv, basestring):
-        items_csv = StringIO(items_csv)
-    if map_csv is None:
-        # Assume items_csv is properly set up to just use with a DictReader.
-        return unicodecsv.UnicodeDictReader(items_csv)
-    if isinstance(map_csv, basestring):
-        map_csv = StringIO(map_csv)
-    mapping = unicodecsv.UnicodeDictReader(map_csv)
+    reader_factory = unicodecsv.UnicodeDictReader
+    map_reader_factory = unicodecsv.UnicodeDictReader
+    if isinstance(items_sheet, basestring):
+        items_sheet = StringIO(items_sheet)
+    if map_sheet is None:
+        # Assume items_sheet is properly set up to just use with a DictReader.
+        return reader_factory(items_sheet)
+    if isinstance(map_sheet, basestring):
+        map_sheet = StringIO(map_sheet)
+    mapping = map_reader_factory(map_sheet)
     map_rows = [row for row in list(mapping) if row]
     if len(map_rows) == 0:
-        return unicodecsv.UnicodeDictReader(items_csv, fieldnames=mapping.fieldnames)
+        return reader_factory(items_sheet, fieldnames=mapping.fieldnames)
     elif len(map_rows) == 1:
-        return RemappingDictReader(items_csv, map_rows[0])
+        return RemappingDictReader(items_sheet, map_rows[0], reader_factory)
     else:
-        raise ValueError("Too many rows in map_csv, you can only have 1 or 2")
+        raise ValueError("Too many rows in map_sheet, you can only have 1 or 2")
 
 
-class RemappingDictReader(unicodecsv.UnicodeDictReader):
-    def __init__(self, f, mapping, **kwargs):
+class RemappingDictReader(object):
+
+    """Wraps another Reader instance and remaps its column names
+    according to the ``mapping`` argument.
+    """
+
+    def __init__(self, f, mapping, readerclass, **kwargs):
         self.mapping = mapping
-        super(RemappingDictReader, self).__init__(f, **kwargs)
+        self.reader = readerclass(f, **kwargs)
 
-    def next(self):
-        row = super(RemappingDictReader, self).next()
-        result = {}
-        for oldkey, newkey in self.mapping.items():
-            result[newkey] = row.get(oldkey)
-        return result
+    def __iter__(self):
+        for row in self.reader:
+            result = {}
+            for oldkey, newkey in self.mapping.items():
+                result[newkey] = row.get(oldkey)
+            yield result
 
 
-class CsvListDetailScraper(NewsItemListDetailScraper):
+class SpreadsheetScraper(NewsItemListDetailScraper):
     """General-purpose CSV file scraper.
 
     You should set ``unique_fields`` to a list of the fields that can
@@ -154,34 +163,38 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
     (TODO: this currently doesn't support Attributes, only core
     NewsItem fields.)
 
-    If you don't set ``unique_fields``, multiple runs of this scraper
-    will create duplicate NewsItems.
+    If you don't set ``unique_fields``, the default is to assume
+    that all non-date fields must be unique.
     """
 
     has_detail = False
     schema_slugs = None
     unique_fields = ()
 
-    def __init__(self, items_csv_file, map_csv_file, *args, **kwargs):
+    def __init__(self, items_sheet_file, map_sheet_file, *args, **kwargs):
         self.schema_slugs = [kwargs.pop('schema_slug', None)]
         self.unique_fields = kwargs.pop('unique_fields', self.unique_fields)
-        super(CsvListDetailScraper, self).__init__(*args, **kwargs)
-        self.items_csv_file = items_csv_file
-        if items_csv_file:
-            self.items_csv = open_url(items_csv_file).read()
+        super(SpreadsheetScraper, self).__init__(*args, **kwargs)
+        self.items_sheet_file = items_sheet_file
+        if items_sheet_file:
+            self.items_sheet, self.items_type = open_url(items_sheet_file)
+            self.items_sheet = self.items_sheet.read()
         else:
             # In this case you'll have to manually set it after __init__.
-            self.items_csv = None
-        if map_csv_file:
-            self.map_csv = open_url(map_csv_file).read()
+            self.items_sheet = self.items_type = None
+        if map_sheet_file:
+            self.map_sheet, self.map_type = open_url(map_sheet_file)
+            self.map_sheet = self.map_sheet.read()
         else:
-            self.map_csv = None
+            self.map_sheet = self.map_type = None
 
     def list_pages(self):
-        return [self.items_csv]
+        return [self.items_sheet]
 
     def parse_list(self, page):
-        reader = get_dictreader(page, self.map_csv)
+        reader = get_dictreader(page, items_type=self.items_type,
+                                map_sheet=self.map_sheet,
+                                map_type=self.map_type)
         # DictReaders are iterable and yield dicts, so, we're done.
         return reader
 
@@ -285,8 +298,8 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
 
 
     def update(self, *args, **kwargs):
-        self.logger.info("Retrieving %s" % self.items_csv_file)
-        result = super(CsvListDetailScraper, self).update(*args, **kwargs)
+        self.logger.info("Retrieving %s" % self.items_sheet_file)
+        result = super(SpreadsheetScraper, self).update(*args, **kwargs)
         self.logger.info("Added: %d; Updated: %d; Skipped: %d" %
                          (self.num_added, self.num_changed, self.num_skipped))
         return result
@@ -294,11 +307,12 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
 
 def open_url(url):
     """maybe it's a URI, maybe a local file.
+    Either way, return a file-like object and a mimetype.
     """
     try:
-        return file(url)
+        return (file(url), mimetypes.guess_type(url))
     except IOError:
-        return urllib2.urlopen(url)
+        return (urllib2.urlopen(url), mimetypes.guess_type(url))
 
 
 def main(argv=None):
@@ -324,7 +338,7 @@ def main(argv=None):
 
     options, args = parser.parse_args(argv)
     if len(args) >= 1:
-        item_sheet = args[0]
+        items_sheet = args[0]
         if len(args) >= 2:
             map_sheet = args[1]
         else:
@@ -337,9 +351,9 @@ def main(argv=None):
         unique_fields = [s.strip() for s in options.unique_fields.split(',')]
     else:
         unique_fields = []
-    scraper = CsvListDetailScraper(item_sheet, map_sheet,
-                                   schema_slug=options.schema,
-                                   unique_fields=unique_fields)
+    scraper = SpreadsheetScraper(items_sheet, map_sheet,
+                                 schema_slug=options.schema,
+                                 unique_fields=unique_fields)
     setup_logging_from_opts(options, scraper.logger)
     scraper.update()
 

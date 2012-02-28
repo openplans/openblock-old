@@ -37,8 +37,8 @@ class TestCsvScraper(django.test.TestCase):
     def _make_scraper(self):
         from ..spreadsheet import retrieval
         schema = self._get_schema()
-        scraper = retrieval.CsvListDetailScraper(None, None, use_cache=False,
-                                                 schema_slug=schema.slug)
+        scraper = retrieval.SpreadsheetScraper(
+            None, None, use_cache=False, schema_slug=schema.slug)
         # Be quiet!
         scraper.logger = mock.Mock()
         return scraper
@@ -130,9 +130,9 @@ class TestCsvScraper(django.test.TestCase):
     def test_init_opens_files(self, mock_opener):
         from ..spreadsheet import retrieval
         schema = self._get_schema()
-        scraper = retrieval.CsvListDetailScraper('foo.txt', 'bar.txt',
-                                                 use_cache=False,
-                                                 schema_slug=schema.slug)
+        mock_opener.return_value = (mock.Mock(), 'text/csv')
+        retrieval.SpreadsheetScraper(
+            'foo.txt', 'bar.txt', use_cache=False, schema_slug=schema.slug)
         self.assertEqual(mock_opener.call_count, 2)
         self.assertEqual(mock_opener.call_args_list,
                          [(('foo.txt',),),

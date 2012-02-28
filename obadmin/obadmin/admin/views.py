@@ -461,13 +461,14 @@ def import_items_from_spreadsheets(items_file, schema, mapping_file=None,
     Imports NewsItems from the given files; returns
     (number added, number changed, number skipped).
     """
-    scraper = retrieval.CsvListDetailScraper(items_file,
-                                             map_csv_file=mapping_file,
-                                             schema_slug=schema.slug,
-                                             unique_fields=unique_fields
-                                             )
+    scraper = retrieval.SpreadsheetScraper(items_file,
+                                           map_sheet_file=mapping_file,
+                                           schema_slug=schema.slug,
+                                           unique_fields=unique_fields,
+                                           )
     scraper.update()
     return (scraper.num_added, scraper.num_changed, scraper.num_skipped)
+
 
 class ImportNewsForm(forms.Form):
 
