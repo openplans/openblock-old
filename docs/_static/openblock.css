@@ -16,3 +16,34 @@ table.docutils td, table.docutils th {
 table.docutils caption {
     margin-bottom: 12px;
 }
+
+/* Better styling of multi-level left-nav TOC */
+
+.sidebar li a.reference {
+    font-size: 100%;
+    text-decoration: none;
+    font-weight: bold;
+    margin-left: 0;
+}
+
+.sidebar li li a.reference {
+    font-size: 100%;
+    font-weight: normal;
+    text-decoration: none;
+    margin-left: 6px;
+
+}
+
+.sidebar li li li a.reference {
+    font-size: 0.94%;
+    font-weight: normal;
+    text-decoration: none;
+    margin-left: 12px;
+}
+
+.sidebar li li li li a.reference {
+    font-size: 0.94%;
+    font-weight: normal;
+    text-decoration: none;
+    margin-left: 18px;
+}
