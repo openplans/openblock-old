@@ -109,7 +109,7 @@ These generally leverage the tools in ebdata.retrieval.
 All of them can be run as command-line scripts. Use the ``-h`` option to
 see what options, if any, each script takes.
 
-Feeds: ebdata.scrapers.general.georss
+Feeds: scrapers.general.georss
 ---------------------------------------
 
 Loads any RSS or Atom feed from a URL.
@@ -140,7 +140,7 @@ and a generic "local news" schema can be loaded by doing
 If you want to use another schema, you can give the ``--schema``
 command-line option.
 
-Spreadsheets: ebdata.scrapers.general.spreadsheet
+Spreadsheets: scrapers.general.spreadsheet
 ---------------------------------------------------
 
 .. admonition:: Importing spreadsheets via the admin UI
@@ -155,19 +155,36 @@ Spreadsheets: ebdata.scrapers.general.spreadsheet
 This scraper can handle many single-sheet spreadsheets.
 The spreadsheet can be given as a URL or as a local file.
 
+The scraper script is ``PATH/TO/ebdata/scrapers/general/spreadsheet/retrieval.py``
+and a generic "local news" schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/georss/local_news_schema.json``.  
+
 Any rows that don't yield valid NewsItems will be skipped.
 
-To run it, you must provide information about which columns map to
-which fields of ``NewsItem`` (or attributes of the relevant ``Schema``).
-There are three ways you can do this:
+The ``--schema`` command-line option defaults to "local-news".
+
+The script takes one or two positional arguments.
+The first is the spreadsheet containing NewsItem data, which may be a
+local file or a URL.  The second is an optional spreadsheet explaining
+how to interpret the data in the first spreadsheet. Details follow.
+
+What Goes Where
+~~~~~~~~~~~~~~~
+
+The scraper needs to know how to map the cells of your spreadsheet
+to fields of ``NewsItem`` (or attributes of the relevant
+``Schema``).
+
+There are three ways you can handle this:
 
 * Modify or create your spreadsheet so the first row contains NewsItem
-  field names (or Attribute names relevant to your Schema).  This is
+  field names (or Attribute names relevant to your Schema).
+  Do not give a second argument to the script. This is
   fine for a one-time deal, or for manual uploads via the admin UI.
   Not recommended if you're going to be loading similar spreadsheets
   frequently.
 
-  .. list-table:: Example:
+  .. list-table:: Example items sheet:
    :header-rows: 1
 
    * - title
@@ -274,6 +291,31 @@ There are three ways you can do this:
      - location_name
      - reason
 
+Avoiding Duplicates
+~~~~~~~~~~~~~~~~~~~~
+
+By default, the scraper assumes that any change in any field
+except ``item_date`` or ``pub_date`` indicates a new NewsItem.
+
+This can result in duplicates if eg. a minor correction is made in a
+description or title.  To avoid this, you would need to figure out
+what really is unique about each row. Then pass a comma-separated list
+of NewsItem field names to the ``--unique-fields`` option.
+
+(Note you can't currently use Attribute names here.)
+
+Example:
+
+.. code-block:: bash
+
+  python ebdata/scrapers/general/spreadsheet/retrieval.py \
+    --unique-fields=title,item_date \
+    http://example.com/spreadsheet.csv
+
+
+Locations
+~~~~~~~~~
+
 After figuring out which cells to use for which fields of the
 NewsItem, the scraper will attempt to determine each NewsItem's
 location according to this procedure:
@@ -288,16 +330,8 @@ location according to this procedure:
   using ebdata.nlp_ and geocode them.
 * If all of the above fails, just save the item with no location.
 
-TODO: Example sheets.
 
-The scraper script is ``PATH/TO/ebdata/scrapers/general/spreadsheet/retrieval.py``
-and a generic "local news" schema can be loaded by doing
-``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/georss/local_news_schema.json``.  
-
-The ``--schema`` command-line option defaults to "local-news".
-
-
-Flickr: ebdata.scrapers.general.flickr
+Flickr: scrapers.general.flickr
 ---------------------------------------
 
 Loads Flickr photos that are geotagged at a location within your
@@ -316,7 +350,7 @@ The scraper script is ``PATH/TO/ebdata/scrapers/general/flickr/flickr_retrieval.
 and the schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/flickr/photos_schema.json``.
 
-Meetup: ebdata.scrapers.general.meetup
+Meetup: scrapers.general.meetup
 ---------------------------------------
 
 Retrieves upcoming Meetups from `meetup.com <http://meetup.com>`_.  USA-only.
@@ -339,7 +373,7 @@ the limit is lifted (typically 1 hour), and repeat until all pages for
 all zip codes have been loaded.  If you'd rather do smaller batches,
 try the ``--help`` option to see what options you have.
 
-Open311 / GeoReport: ebdata.scrapers.general.open311
+Open311 / GeoReport: scrapers.general.open311
 ------------------------------------------------------
 
 A scraper for the
@@ -360,7 +394,7 @@ and a suitable schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/open311/open311_service_requests_schema.json``.
 
 
-SeeClickFix: ebdata.scrapers.general.seeclickfix
+SeeClickFix: scrapers.general.seeclickfix
 -------------------------------------------------
 
 A scraper for issues reported to `SeeClickFix <http://seeclickfix.com>`_.
