@@ -20,16 +20,18 @@ substantially in future versions.
 See Also
 --------
 
-The OpenBlock API uses several standards for formats and protocols.  Please see the (externally maintained) documentation focused on the particular formats for more details. These include GeoJSON, Atom, and JSONP. Some helpful links:
+The OpenBlock API uses several standards for formats and protocols.
+Please see the (externally maintained) documentation focused on the
+particular formats for more details. These include GeoJSON, Atom, and
+JSONP. Some helpful links:
 
 ================== ============================================================
     Format			    URL
------------------- ------------------------------------------------------------
+================== ============================================================
     GeoJSON                   http://geojson.org/
 ------------------ ------------------------------------------------------------
      Atom                     http://www.atomenabled.org
 ------------------ ------------------------------------------------------------
-.. _georss:
      GeoRSS                   http://www.georss.org/Main_Page
 ------------------ ------------------------------------------------------------
      JSONP                    http://en.wikipedia.org/wiki/JSON#JSONP
@@ -158,7 +160,7 @@ Response
 
 ================== ============================================================
     Status                                Meaning
------------------- ------------------------------------------------------------
+================== ============================================================
       200             This version of the API is available.
 ------------------ ------------------------------------------------------------
       404             This version of the API is not available.
@@ -185,7 +187,7 @@ Response
 
 ================== ============================================================
     Status                                Meaning
------------------- ------------------------------------------------------------
+================== ============================================================
       200          The request was valid, the response contains news items 
                    that match the criteria.
 ------------------ ------------------------------------------------------------
@@ -237,7 +239,7 @@ Response
 
 ================== ============================================================
     Status                                Meaning
------------------- ------------------------------------------------------------
+================== ============================================================
       200          The request was valid, the response contains news items 
                    that match the criteria.
 ------------------ ------------------------------------------------------------
@@ -276,7 +278,7 @@ Response
 
 ================== ============================================================
     Status                                Meaning
------------------- ------------------------------------------------------------
+================== ============================================================
       200          Found. The body will be the NewsItem represented as
                    :ref:`newsitem_json`.
 ------------------ ------------------------------------------------------------
@@ -297,18 +299,18 @@ Geocode a street address or location name to geographic location.
 Parameters
 ~~~~~~~~~~
 
-================== ==========================================================================
+================== ============================================================
     Parameter                                Description
------------------- --------------------------------------------------------------------------
+================== ============================================================
         q          address or location name to geocode 
-================== ==========================================================================
+================== ============================================================
 
 Response
 ~~~~~~~~
 
 ================== ============================================================
     Status                                Meaning
------------------- ------------------------------------------------------------
+================== ============================================================
       200          The request was valid and locations matching the query 
                    were found
 ------------------ ------------------------------------------------------------
@@ -409,12 +411,12 @@ Retrieve all predefined locations on the server as a list.
 Parameters
 ~~~~~~~~~~
 
-================== ==========================================================================
-    Parameter                                Description
------------------- --------------------------------------------------------------------------
-     type            (optional) return only locations of the specified type, eg "neighborhoods"
-                     see See :ref:`get_location_types` for types.
-================== ==========================================================================
+============ ===========================================================================
+ Parameter                                Description
+============ ===========================================================================
+  type       (optional) return only locations of the specified type, eg "neighborhoods"
+              see See :ref:`get_location_types` for types.
+============ ===========================================================================
 
 
 Response
@@ -617,7 +619,11 @@ Example:
 Item Search Parameters
 ======================
 
-Search parameters specified select all items that match all criteria simultaneously, eg specifying type="crimereport"&locationid="neighborhoods/roxbury" selects all items that are of type "crimereport" AND in the Roxbury neighborhood and no other items.
+Search parameters specified select all items that match all criteria
+simultaneously, eg specifying
+``type=crimereport&locationid=neighborhoods/roxbury`` selects all
+items that are of type "crimereport" AND in the Roxbury neighborhood
+and no other items.
 
 Spatial Filtering
 -----------------
@@ -631,12 +637,12 @@ Predefined Area
 
 Selects items in some predefined area on the server, eg a neighborhood, zipcode etc. To discover predefined areas see the endpoint "GET locations.json"
 
-================== ==========================================================================
+================== =======================================================
     Parameter                                Description
------------------- --------------------------------------------------------------------------
+================== =======================================================
    locationid      server provided identifier for predefined location.
                    eg: "neighborhoods/roxbury"
-================== ==========================================================================
+================== =======================================================
 
 
 Bounding Circle
@@ -644,17 +650,16 @@ Bounding Circle
 
 Selects items within some distance of a given point.
 
-================== ==========================================================================
+================== =======================================================
     Parameter                                Description
------------------- --------------------------------------------------------------------------
-      center	    <lon>,<lat> comma separated list of 2 floating point 
-                    values representing the longitude and latitude of the 
+================== =======================================================
+      center	    <lon>,<lat> comma separated list of 2 floating point
+                    values representing the longitude and latitude of the
                     center of the circle. eg: center=-71.191153,42.227865
-
------------------- --------------------------------------------------------------------------
-      radius	   positive floating point maximum distance in meters from the specified 
-                   center point
-================== ==========================================================================
+------------------ -------------------------------------------------------
+      radius	   positive floating point maximum distance in meters
+                   from the specified center point
+================== =======================================================
 
 
 Other Filters
@@ -668,11 +673,11 @@ Restricts results to a single type of news item, eg only crime reports.  The ful
 set of types available can be retrieved by querying the schema types list api endpoint or by inspection of the values of the 'type' field of news items returned from the api. 
 See 'GET newsitems/types.json' 
 
-================== ==========================================================================
+================== =============================================================
     Parameter                                Description
------------------- --------------------------------------------------------------------------
+================== =============================================================
       type         schemaid of the type to retrict results to, eg crimereport
-================== ==========================================================================
+================== =============================================================
 
 
 Date Range
@@ -683,7 +688,7 @@ Restricts results to items within a time range
 
 ================== ==========================================================================
     Parameter                                Description
------------------- --------------------------------------------------------------------------
+================== ==========================================================================
      startdate     limits items to only those whose pub_date is newer than the given date.
                    date format is YYYY-MM-DD or rfc3339 for date/time
 ------------------ --------------------------------------------------------------------------
@@ -695,13 +700,13 @@ Restricts results to items within a time range
 Result Limit and Offset
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-================== ==========================================================================
+================== ==================================================================
     Parameter                                Description
------------------- --------------------------------------------------------------------------
+================== ==================================================================
      limit         maximum number of items to return. default is 25, max 200
------------------- --------------------------------------------------------------------------
+------------------ ------------------------------------------------------------------
      offset        skip this number of items before returning results. default is 0 
-================== ==========================================================================
+================== ==================================================================
 
 
 Write API Endpoints
@@ -740,7 +745,7 @@ Response
 
 ================== ============================================================
     Status                                Meaning
------------------- ------------------------------------------------------------
+================== ============================================================
       201          Created the NewsItem successfully. The
                    'Location' header will be a URI to the JSON
                    representation of this NewsItem.
@@ -823,7 +828,7 @@ present:
 
 ============= ================== ==========================================
 Name          Type               Meaning
-------------- ------------------ ------------------------------------------
+============= ================== ==========================================
 title         text               Headline or other title from the source.
 ------------- ------------------ ------------------------------------------
 type          text               Name (slug) of the item's type; this
@@ -860,7 +865,7 @@ type if one exists, otherwise a formatted string is used.
 
 ================== ==========================================================================
     Field Type                  JSON Representation
------------------- --------------------------------------------------------------------------
+================== ==========================================================================
       string        string
 ------------------ --------------------------------------------------------------------------
       number        number
@@ -881,7 +886,7 @@ NewsItem Atom Format
 --------------------
 
 Generally follows the :ref:`Atom <atom>` specification.
-Location information is specified with :ref:`GeoRSS-Simple <georss>`.
+Location information is specified with GeoRSS-Simple.
 
 Extended schema attributes are specified in the
 "http://openblock.org/ns/0" namespace.
@@ -915,5 +920,3 @@ Example:
         </openblock:attributes>
      </entry>
   </feed>
-
-
