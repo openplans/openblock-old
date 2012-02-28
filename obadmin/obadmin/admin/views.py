@@ -21,6 +21,7 @@ from background_task.models import Task
 from datetime import datetime, timedelta
 from django import forms
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.admin.helpers import Fieldset
 from django.contrib.gis.gdal import DataSource
 from django.http import HttpResponse, HttpResponseRedirect
@@ -29,6 +30,7 @@ from django.template.context import RequestContext
 from django.views.decorators.csrf import csrf_protect
 from ebdata.blobs.create_seeds import create_rss_seed
 from ebdata.blobs.models import Seed
+from ebdata.scrapers.general.spreadsheet import retrieval
 from ebpub.db.bin import import_locations
 from ebpub.db.models import LocationType
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
@@ -39,7 +41,6 @@ from tempfile import mkstemp, mkdtemp
 import glob
 import os
 import zipfile
-
 
 class SchemaLookupsForm(forms.Form):
     def __init__(self, lookup_ids, *args, **kwargs):
@@ -57,7 +58,7 @@ class BlobSeedForm(forms.Form):
     guess_article_text = forms.BooleanField(required=False)
     strip_noise = forms.BooleanField(required=False)
 
-def save_file(f, suffix=None):
+def save_file(f, suffix=''):
     fd, name = mkstemp(suffix)
     fp = os.fdopen(fd, 'wb')
     for chunk in f.chunks():
@@ -439,7 +440,6 @@ def pick_shapefile_layer(request):
 
 @csrf_protect
 def import_blocks(request):
-    print request.FILES
     form = ImportBlocksForm(request.POST or None, request.FILES or None)
     if form.save():
         return HttpResponseRedirect('../')
@@ -453,3 +453,76 @@ def import_blocks(request):
         'fieldsets': fieldsets,
         'form': form,
     })
+
+
+def import_items_from_spreadsheets(items_file, schema, mapping_file=None,
+                                   unique_fields=None):
+    """
+    Imports NewsItems from the given files; returns
+    (number added, number changed, number skipped).
+    """
+    scraper = retrieval.CsvListDetailScraper(items_file,
+                                             map_csv_file=mapping_file,
+                                             schema_slug=schema.slug,
+                                             unique_fields=unique_fields
+                                             )
+    scraper.update()
+    return (scraper.num_added, scraper.num_changed, scraper.num_skipped)
+
+class ImportNewsForm(forms.Form):
+
+    items_file = forms.FileField(label='NewsItems spreadsheet',
+                                 required=True)
+
+    schema = forms.ModelChoiceField(queryset=Schema.objects.all(),
+                                    required=True,
+                                    )
+
+    mapping_file = forms.FileField(label='Mapping spreadsheet',
+                                   help_text=u'Describes which columns of the above spreadsheet are used for which fields of a NewsItem.  If not provided, the NewsItem spreadsheet must have column headers that match fields of NewsItem and/or attributes of the chosen Schema.',
+                                   required=False)
+
+    unique_fields = forms.MultipleChoiceField(
+        label='Unique fields',
+        help_text=u'Which NewsItem fields can be used to uniquely identify NewsItems of this schema.',
+        choices = [(name, name) for name in retrieval.get_default_unique_field_names()],
+        required=False,
+        )
+
+
+    added = updated = skipped = 0
+
+    def save(self):
+        if not self.is_valid():
+            return False
+
+        added, updated, skipped = import_items_from_spreadsheets(
+            save_file(self.cleaned_data['items_file']),
+            self.cleaned_data['schema'],
+            mapping_file=self.cleaned_data.get('mapping_file') and save_file(self.cleaned_data['mapping_file']),
+            unique_fields=self.cleaned_data['unique_fields'],
+            )
+        self.added = added
+        self.updated = updated
+        self.skipped = skipped
+        return True
+
+@csrf_protect
+def import_newsitems(request):
+    form = ImportNewsForm(request.POST or None, request.FILES or None)
+    if form.save():
+        # TODO: Capture logging output and put that in message too?
+        msg = u'Added %d, Updated %d, Skipped %d.' % (form.added, form.updated, form.skipped)
+        msg += u' See the server error log if you need more info.'
+        messages.add_message(request, messages.INFO, msg)
+        return HttpResponseRedirect('./')
+
+    fieldsets = (
+        Fieldset(form, fields=('items_file', 'schema', 'mapping_file', 'unique_fields')),
+        )
+
+    return render(request, 'obadmin/import_news.html', {
+        'form': form,
+        'fieldsets': fieldsets,
+    })
+

@@ -21,8 +21,21 @@ from ebdata.parsing import unicodecsv
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
 from ebdata.retrieval.scrapers.list_detail import SkipRecord
 from ebpub.utils.dates import now, today
+import re
 import urllib2
 
+
+def get_default_unique_field_names():
+    """
+    Which fields of NewsItem uniquely identify a particular NewsItem.
+    """
+    # Don't use dates
+    blacklist = ('item_date', 'pub_date', 'id', 'schema', 'last_modification',
+                 )
+    from ebpub.db.models import NewsItem
+    return sorted(
+        [f.name for f in NewsItem._meta.fields if f.name not in blacklist]
+        )
 
 def get_dictreader(items_csv, map_csv=None):
     """
@@ -181,10 +194,7 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
         """
         from ebpub.db.models import NewsItem
         query_args = {}
-        # Don't use dates.
-        default_unique_fields = [f.name for f in NewsItem._meta.fields
-                                 if f.name not in ('item_date', 'pub_date')]
-        unique_fields = self.unique_fields or default_unique_fields
+        unique_fields = self.unique_fields or get_default_unique_field_names()
         for field in unique_fields:
             arg = record.get(field)
             if arg:
@@ -209,19 +219,40 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
         will be set as an 'attributes' sub-dictionary.
 
         Unrecognized keys will be ignored (and logged).
+
+        Locations are found heuristically:
+         - If there's a 'location' key, try to split the value into (lat, lon) points
+         - If there's keys like 'latitude'/'lat' and 'longitude'/'lon'/'long'/'lng', use those
+         - If there's a 'location_name', geocode if needed
+         - If there's no 'location_name', reverse-geocode if needed
+
         """
         from ebpub.db.models import NewsItem
         fieldnames = [f.name for f in NewsItem._meta.fields]
         core_fields = {}
         from ebdata.retrieval.utils import get_point
+        if 'location' in list_record:
+            # If there's a comma- or space-separated location in the
+            # orginal, this gives us a way to use it by mapping it to
+            # "location"
+            try:
+                lat, lon = re.split(r'[\s,]+', list_record.pop('location'))
+                list_record.setdefault('lat', lat)
+                list_record.setdefault('lon', lon)
+            except ValueError:
+                pass
+        # Now try all the field names recognized by get_point(), eg
+        # lat, latitude, lon, long, lng, georss_point, etc.
         point = get_point(list_record)
         for fieldname in fieldnames:
             if fieldname in list_record:
-                # TODO: coerce types
+                # TODO: coerce types? Or maybe Django's implicit conversion is OK.
                 core_fields[fieldname] = list_record.pop(fieldname)
-        # TODO: parse addresses out of... what?
-        point, location_name = self.geocode_if_needed(
-            point, core_fields.get('location_name'))
+
+        # Try to ensure we have both point and location_name;
+        # fall back to address extraction from *all* fields.
+        address_text = core_fields.get('location_name') or '\n'.join([unicode(s) for s in list_record.values()])
+        point, location_name = self.geocode_if_needed(point, address_text)
         core_fields['location'] = point
         core_fields['location_name'] = location_name
 
@@ -230,7 +261,7 @@ class CsvListDetailScraper(NewsItemListDetailScraper):
         schemafields = self.schema.schemafield_set.all()
         for sf in schemafields:
             if sf.name in list_record:
-                # TODO: coerce types
+                # TODO: coerce types? Or maybe Django's implicit conversion is OK.
                 attributes[sf.name] = list_record.pop(sf.name)
         core_fields['attributes'] = attributes
         if len(list_record):

@@ -73,6 +73,7 @@ class LocationAdmin(OSMModelAdmin):
     # ... Or not; this gets so slow it's unusable.
     #list_map = ['location']
 
+
 class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',
                     'has_newsitem_detail',)
@@ -116,6 +117,7 @@ class LocationSynonymAdmin(OSMModelAdmin):
 try:
     import obadmin.admin
     LocationAdmin.change_list_template = 'admin/db/location/change_list.html'
+    NewsItemAdmin.change_list_template = 'admin/db/newsitem/change_list.html'
 except ImportError:
     pass
 

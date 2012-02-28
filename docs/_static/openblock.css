@@ -1,0 +1,18 @@
+table.docutils {
+    margin: 20px 0px 20px 0px;
+    padding: 0px;
+    border-style: none;
+    border-collapse: collapse;
+}
+
+table.docutils td, table.docutils th {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #AAA;
+    padding: 5px;
+    margin: 0px;
+}
+
+table.docutils caption {
+    margin-bottom: 12px;
+}

@@ -48,7 +48,7 @@ class TestCsvScraper(django.test.TestCase):
         cleaned = scraper.clean_list_record({})
         self.assertEqual(cleaned,
                          {'attributes': {},
-                          'location': None, 'location_name': None})
+                          'location': None, 'location_name': ''})
 
     def test_clean_list_record__ok(self):
         scraper = self._make_scraper()
@@ -56,20 +56,36 @@ class TestCsvScraper(django.test.TestCase):
         self.assertEqual(cleaned, {'title': 't1',
                                    'description': 'd1',
                                    'location': None,
-                                   'location_name': None,
+                                   'location_name': '',
                                    'attributes': {}})
 
         cleaned = scraper.clean_list_record({'title': 't2', 'unknown': 'blah'})
         self.assertEqual(cleaned, {'title': 't2',
                                    'location': None,
-                                   'location_name': None,
+                                   'location_name': u'blah',
                                    'attributes': {}})
 
         cleaned = scraper.clean_list_record({'title': 't3', 'attr1': 'a1'})
         self.assertEqual(cleaned, {'title': 't3',
                                    'location': None,
-                                   'location_name': None,
-                                   'attributes': {'attr1': 'a1'}})
+                                   'location_name': u'a1',
+                                   'attributes': {u'attr1': 'a1'}})
+
+    def test_clean_list_record__locations(self):
+        scraper = self._make_scraper()
+        cleaned = scraper.clean_list_record({'title': 't3', 'location': '1.1 2.2'})
+        self.assertEqual(cleaned['location'].x, 2.2)
+        self.assertEqual(cleaned['location'].y, 1.1)
+
+        cleaned = scraper.clean_list_record({'title': 't3', 'location': '1.1, 2.2'})
+        self.assertEqual(cleaned['location'].x, 2.2)
+        self.assertEqual(cleaned['location'].y, 1.1)
+
+        scraper = self._make_scraper()
+        cleaned = scraper.clean_list_record({'title': 't3', 'lat': -9.0, 'lon': 3.3})
+        self.assertEqual(cleaned['location'].x, 3.3)
+        self.assertEqual(cleaned['location'].y, -9.0)
+
 
     @mock.patch('ebpub.db.models.logger')
     def test_save__no_info(self, mock_logger):
