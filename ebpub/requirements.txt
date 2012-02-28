@@ -11,11 +11,11 @@ psycopg2>=2.2,<2.3
 slimmer>=0.1.30
 -e git://github.com/openplans/olwidget.git#egg=django-olwidget
 pyRFC3339>=0.1
-pytz>=2011k
+pytz>=2011n
 PyYAML==3.09
 http://www.voidspace.org.uk/downloads/mock-0.8.0beta4.tar.gz#egg=mock-dev
 South>=0.7.3
 python-dateutil==1.5
-django-jsonfield==0.6
+django-jsonfield==0.7.1
 recaptcha-client==1.0.6
-easy-thumbnails>=1.0-alpha-20,<1.1a
+easy-thumbnails>=1.0-alpha-21,<1.1a
