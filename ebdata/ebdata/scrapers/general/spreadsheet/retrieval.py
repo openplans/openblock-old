@@ -41,8 +41,9 @@ def get_default_unique_field_names():
 
 def get_dictreader(items_sheet, items_type='text/csv', map_sheet=None, map_type='text/csv'):
     """
-    Given one or two spreadsheets as File objects, return a DictReader
-    that can be used to retrieve rows from ``items_sheet``.
+    Given one or two spreadsheets as File objects, or bytestrings,
+    return a DictReader that can be used to retrieve rows from
+    ``items_sheet``.
 
     If no ``map_sheet`` is passed, assume that ``items_sheet`` includes headers,
     and return a normal DictReader.
@@ -116,13 +117,32 @@ def get_dictreader(items_sheet, items_type='text/csv', map_sheet=None, map_type=
       >>> list(reader2) == list(reader1)
       True
 
+    The sheets can be file objects:
+
+      >>> import StringIO
+      >>> reader3 = get_dictreader(csv)
+      >>> reader4 = get_dictreader(StringIO.StringIO(csv))
+      >>> list(reader3) == list(reader4)
+      True
+
+    You can pass an old-style Excel spreadsheet (we should probably test with a real one):
+
+      >>> import mock
+      >>> with mock.patch('ebdata.scrapers.general.spreadsheet.retrieval.excel.ExcelDictReader') as mock_factory:
+      ...     mock_factory.return_value = 'yup it was excel'
+      ...     print get_dictreader("blah", items_type='application/vnd.ms-excel')
+      yup it was excel
+
     """
 
     factory_map = {
         'text/plain': unicodecsv.UnicodeDictReader,
         'text/csv': unicodecsv.UnicodeDictReader,
         'application/vnd.ms-excel': excel.ExcelDictReader,
+        'application/msexcel': excel.ExcelDictReader,
         }
+    # TODO: use http://packages.python.org/openpyxl/ to handle new-style
+    # xslx files. Would require a DictReader-like facade to be written.
     reader_factory = factory_map.get(items_type, unicodecsv.UnicodeDictReader)
     map_reader_factory = factory_map.get(map_type, unicodecsv.UnicodeDictReader)
 
