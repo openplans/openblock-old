@@ -845,12 +845,14 @@ class NewsItem(models.Model):
     pub_date = models.DateTimeField(
         db_index=True,
         help_text='Date/time this Item was added to the OpenBlock site.',
-        default=datetime.datetime.now
+        default=datetime.datetime.now,
+        blank=True,
         )
     item_date = models.DateField(
         db_index=True,
         help_text='Date (no time) this Item occurred, or was published on the original source site.',
-        default=datetime.date.today
+        default=datetime.date.today,
+        blank=True,
         )
 
     # Automatic last modification tracking.  Note: if changing only attributes, the

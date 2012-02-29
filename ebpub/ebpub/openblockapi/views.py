@@ -38,6 +38,7 @@ from ebpub.openblockapi.itemquery import build_item_query, build_place_query, Qu
 from ebpub.streets.models import PlaceType
 from ebpub.utils.dates import parse_date, parse_time
 from ebpub.utils.geodjango import ensure_valid
+from ebpub.utils.models import is_instance_of_model
 from ebpub.utils.view_utils import get_schema_manager
 from functools import wraps
 import copy
@@ -145,14 +146,6 @@ def _item_geojson_dict(item):
          })
     result['properties'] = props
     return result
-
-def is_instance_of_model(obj, model):
-    # isinstance(foo, model) seems to work *sometimes* with django models,
-    # but not always; no idea what's going on there.
-    # This should always work.
-    return (isinstance(obj, model)
-            or type(obj) is model
-            or model in obj.__class__.__bases__)
 
 def _serialize_unknown(obj):
     # Handle NewsItems and various other types that default json serializer

@@ -54,10 +54,13 @@ def build_item_query(request):
     builds a NewsItem QuerySet according to the request parameters given as
     specified in the API documentation.  raises QueryError if
     invalid query parameters are specified.
+
+    Returns the queryset, and a dictionary of *unused* parameters.
     """
     params = _copy_nomulti(request.GET)
     # some different ordering may be more optimal here /
-    # some index could be specifically created
+    # some index could be specifically created.
+    # Also this could be rewritten to use ebpub.db.schemafilter
     filters = [_schema_filter, _daterange_filter, _predefined_place_filter,
                _radius_filter, _bbox_filter, _attributes_filter, _order_by,
                _object_limit]

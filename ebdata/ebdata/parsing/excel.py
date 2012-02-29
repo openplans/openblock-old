@@ -54,6 +54,7 @@ class ExcelDictReader(object):
     """
     def __init__(self, filename, sheet_index=0, header_row_num=0, start_row_num=0,
             use_last_header_if_duplicate=True, custom_headers=None):
+        XXX need to handle things other than filenames here
         self.workbook = xlrd.open_workbook(filename)
         self.sheet_index = sheet_index
         self.header_row, self.start_row = header_row_num, start_row_num

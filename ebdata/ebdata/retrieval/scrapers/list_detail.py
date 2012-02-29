@@ -17,7 +17,7 @@
 #
 
 from base import BaseScraper, ScraperBroken
-from django.contrib.gis.geos import Point
+
 
 class SkipRecord(Exception):
     "Exception that signifies a detail record should be skipped over."
@@ -183,7 +183,11 @@ class ListDetailScraper(BaseScraper):
                 self.logger.debug("Detail page is not required")
                 detail_record = None
 
-            self.save(old_record, list_record, detail_record)
+            try:
+                self.save(old_record, list_record, detail_record)
+            except SkipRecord, e:
+                self.logger.debug(u"Skipping list record during save: %r " % e)
+                self.num_skipped += 1
 
     def update_from_dir(self, dirname):
         """

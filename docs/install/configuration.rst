@@ -361,7 +361,7 @@ objectionable.  This is on by default.
 OpenBlock REST API
 ====================
 
-To disable this feature, remove ``"ebpub.openblockapi"``
+To disable :doc:`this feature <../main/api>`, remove ``"ebpub.openblockapi"``
 and ``"ebpub.openblockapi.apikey"``. from ``settings.INSTALLED_APPS``.
 
 Relevant settings:

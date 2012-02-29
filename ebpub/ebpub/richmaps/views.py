@@ -415,18 +415,19 @@ def place_popup(request, place_id):
 def map_items_json(request):
     """
     slightly briefer and less attribute-accessing 
-    rendition of the api's geojson response. includes
+    rendition of the REST api's geojson response. includes
     only attributes used by the map.
     """
-    items, params = build_item_query(_copy_nomulti(request.GET))
-    
+
+    items, params = build_item_query(request)
+
     def _item_to_feature(item):
         geom = simplejson.loads(item.location.geojson)
         result = {
             'type': 'Feature',
             'geometry': geom,
             }
-    
+
         sort_key = '%d-%d-%d-%s-%d' % (9999 - item.item_date.year,
                                     13 - item.item_date.month,
                                     32 - item.item_date.day,

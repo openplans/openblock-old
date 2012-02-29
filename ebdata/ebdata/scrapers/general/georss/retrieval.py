@@ -66,7 +66,7 @@ class RssScraper(RssListDetailScraper, NewsItemListDetailScraper):
             return None
 
         if len(qs) > 1:
-            self.logger.warn("Multiple entries matched title %r and description %r. Expected unique!" % (record.title, record.description))
+            self.logger.warn("Multiple entries matched url %r and schema %r. Expected unique! Using first one." % (url, qs[0].schema.slug))
         return qs[0]
 
     def clean_list_record(self, record):

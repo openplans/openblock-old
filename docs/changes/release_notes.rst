@@ -58,6 +58,13 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Added an admin UI for importing NewsItems from spreadsheets
+  (currently CSV only).  (Ticket #126)
+
+* Added a generic spreadsheet scraper in
+  ``ebdata/scrapers/general/spreadsheet/retrieval.py``,
+  currently only handles CSV. (Ticket #274)
+
 * ``ebdata.scrapers.general.georss`` address-extraction fallback now
   looks in all tags that look like text.
 

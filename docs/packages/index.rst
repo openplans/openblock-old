@@ -52,6 +52,8 @@ Administrative UI, installation and utilities package for OpenBlock.
 
 For more information, see :doc:`obadmin`.
 
+.. _other_packages:
+
 Other Packages
 ==============
 

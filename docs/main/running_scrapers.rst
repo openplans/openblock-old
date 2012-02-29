@@ -35,7 +35,7 @@ Here's an example config file for running scrapers via
 
 ::
 
-  # Put this in 
+  # Put this in a file in /etc/cron.d/
   SHELL=/bin/bash
   
   # Edit these as necessary

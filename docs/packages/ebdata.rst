@@ -57,11 +57,11 @@ ebdata.retrieval
 
 The retrieval package contains a framework for writing scrapers for structured
 data. Some examples can be found in
-``ebdata/ebdata/scrapers/``.  There are more (unmaintained) examples of how to use this
-framework in different situations in the everyblock_ package.
+ebdata.scrapers_.  There are more (unmaintained) examples of how to use this
+framework in different situations in the ``everyblock`` package (see :ref:`other_packages`).
 
 (For scraping data from unstructured sites, eg. sites that lack feeds
-or machine-consumable API, it may be better to build on the
+or machine-consumable API, you might consider building on the
 ebdata.blobs_ package.)
 
 The most commonly used scraper base class is the
@@ -74,7 +74,7 @@ to retrieve any detail pages.)
 
 Generally, to run a scraper, you need to instantiate it, and then call its
 ``update()`` method. Sometimes the scraper will take arguments, but it varies on a
-case-by-case basis; see the scrapers in ``ebdata/ebdata/scrapers`` for
+case-by-case basis; see the scrapers in ebdata.scrapers_ for
 examples. You can also run a scraper by calling its ``display_data()`` method. This
 will run the scraper, but won't actually save any of the scraped data. It's
 very useful for debugging, or when writing a scraper for the first time.
@@ -84,6 +84,8 @@ docstrings of ``ebdata.retrieval.scrapers.list_detail.ListDetailScraper`` and in
 ``ebdata.retrieval.scrapers.newsitem_list_detail.NewsItemListDetailScraper``.
 ``ListDetailScraper`` is a base class that handles
 scraping, but doesn't actually have any methods for saving data.
+
+(TODO: Document the base class methods and their interactions here)
 
 The retrieval package also contains ``updaterdaemon``, which is a
 (*deprecated*) cron-like
@@ -107,7 +109,7 @@ These generally leverage the tools in ebdata.retrieval.
 All of them can be run as command-line scripts. Use the ``-h`` option to
 see what options, if any, each script takes.
 
-GeoRSS: ebdata.scrapers.general.georss
+Feeds: scrapers.general.georss
 ---------------------------------------
 
 Loads any RSS or Atom feed from a URL.
@@ -138,7 +140,198 @@ and a generic "local news" schema can be loaded by doing
 If you want to use another schema, you can give the ``--schema``
 command-line option.
 
-Flickr: ebdata.scrapers.general.flickr
+Spreadsheets: scrapers.general.spreadsheet
+---------------------------------------------------
+
+.. admonition:: Importing spreadsheets via the admin UI
+
+  If you point your browser at /admin/db/newsitem/ you can manually
+  upload spreadsheets using a form. It works much the same way as this
+  scraper.  The admin form is convenient when you get spreadsheets
+  rarely, or if you want to manually create a large number of
+  NewsItems at once; the scraper is more useful if there's a regularly-updated
+  spreadsheet on the web that you want.
+
+This scraper can handle many single-sheet spreadsheets.
+The spreadsheet can be given as a URL or as a local file.
+
+The scraper script is ``PATH/TO/ebdata/scrapers/general/spreadsheet/retrieval.py``
+and a generic "local news" schema can be loaded by doing
+``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/georss/local_news_schema.json``.  
+
+Any rows that don't yield valid NewsItems will be skipped.
+
+The ``--schema`` command-line option defaults to "local-news".
+
+The script takes one or two positional arguments.
+The first is the spreadsheet containing NewsItem data, which may be a
+local file or a URL.  The second is an optional spreadsheet explaining
+how to interpret the data in the first spreadsheet. Details follow.
+
+What Goes Where
+~~~~~~~~~~~~~~~
+
+The scraper needs to know how to map the cells of your spreadsheet
+to fields of ``NewsItem`` (or attributes of the relevant
+``Schema``).
+
+There are three ways you can handle this:
+
+* Modify or create your spreadsheet so the first row contains NewsItem
+  field names (or Attribute names relevant to your Schema).
+  Do not give a second argument to the script. This is
+  fine for a one-time deal, or for manual uploads via the admin UI.
+  Not recommended if you're going to be loading similar spreadsheets
+  frequently.
+
+  .. list-table:: Example items sheet:
+   :header-rows: 1
+
+   * - title
+     - item_date
+     - description
+     - location_name
+     - reason
+   * - Bob
+     - 12/31/2011
+     - group therapy
+     - 123 Main St
+     - feeling depressed
+   * - Carol
+     - 2012-01-01
+     - film premiere
+     - 456 Broadway
+     - got free tickets
+
+  (In all these examples, we assume the Schema has a text field named
+  "reason". If it doesn't, the fourth column would just be ignored.)
+
+* -Or- if your spreadsheet's first row is a header with column names:
+
+  1. Before the first time you want to run the scraper, save a second
+     copy of the spreadsheet.
+  2. In the copy, delete all rows but that first header row.
+  3. In the copy, in each cell of the *second* row, enter a NewsItem
+     field name (or Attribute name relevant to your Schema).
+  4. In the second row, leave un-needed cells blank.
+  5. Provide the copy as the second argument to the scraper.
+
+  The scraper will use this second spreadsheet to "map" the original
+  column names to NewsItem fields and attributes. This "mapping"
+  spreadsheet can be re-used for future scraper runs, too.
+
+  .. list-table:: Example items sheet:
+   :header-rows: 1
+
+   * - Who
+     - When
+     - What
+     - Where
+     - Why
+   * - Bob
+     - 12/31/2011
+     - group therapy
+     - 123 Main St
+     - feeling depressed
+   * - Carol
+     - 2012-01-01
+     - film premiere
+     - 456 Broadway
+     - got free tickets
+
+  .. list-table:: Example mapping sheet:
+   :header-rows: 1
+
+   * - Who
+     - When
+     - What
+     - Where
+     - Why
+   * - title
+     - item_date
+     - description
+     - location_name
+     - reason
+
+
+* -Or- if your spreadsheet does not have a header with column names:
+
+  1. Before the first time you want to run the scraper, save a second
+     copy of the spreadsheet.
+  2. In the copy, delete all rows but the first row.
+  3. In the copy, *replace* each cell in the first row with a NewsItem
+     field name (or Attribute name relevant to your Schema).
+  4. In the first row, leave un-needed cells blank.
+  5. Provide the copy as the second argument to the scraper.
+
+  In this case, the scraper will use this second spreadsheet to "map"
+  original column numbers to NewsItem fields and attributes. This
+  "mapping" spreadsheet can be re-used for future scraper runs, too.
+
+  .. list-table:: Example items sheet:
+   :header-rows: 0
+
+   * - Bob
+     - 12/31/2011
+     - group therapy
+     - 123 Main St
+     - feeling depressed
+   * - Carol
+     - 2012-01-01
+     - film premiere
+     - 456 Broadway
+     - got free tickets
+
+  .. list-table:: Example mapping sheet:
+   :header-rows: 0
+
+   * - title
+     - item_date
+     - description
+     - location_name
+     - reason
+
+Avoiding Duplicates
+~~~~~~~~~~~~~~~~~~~~
+
+By default, the scraper assumes that any change in any field
+except ``item_date`` or ``pub_date`` indicates a new NewsItem.
+
+This can result in duplicates if eg. a minor correction is made in a
+description or title.  To avoid this, you would need to figure out
+what really is unique about each row. Then pass a comma-separated list
+of NewsItem field names to the ``--unique-fields`` option.
+
+(Note you can't currently use Attribute names here.)
+
+Example:
+
+.. code-block:: bash
+
+  python ebdata/scrapers/general/spreadsheet/retrieval.py \
+    --unique-fields=title,item_date \
+    http://example.com/spreadsheet.csv
+
+
+Locations
+~~~~~~~~~
+
+After figuring out which cells to use for which fields of the
+NewsItem, the scraper will attempt to determine each NewsItem's
+location according to this procedure:
+
+* If there is a "location" field, try to split it into a
+  latitude,longitude pair; if that's not within bounds, try treating
+  it as a longitude,latitude pair.
+* If there are fields named "latitude" and "longitude", or "lat" and
+  "lon" or "long" or "lng", use those.
+* If there is field we can use as "location_name", try geocoding that.
+* Otherwise, combine all text fields and try to extract addresses
+  using ebdata.nlp_ and geocode them.
+* If all of the above fails, just save the item with no location.
+
+
+Flickr: scrapers.general.flickr
 ---------------------------------------
 
 Loads Flickr photos that are geotagged at a location within your
@@ -157,7 +350,7 @@ The scraper script is ``PATH/TO/ebdata/scrapers/general/flickr/flickr_retrieval.
 and the schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/flickr/photos_schema.json``.
 
-Meetup: ebdata.scrapers.general.meetup
+Meetup: scrapers.general.meetup
 ---------------------------------------
 
 Retrieves upcoming Meetups from `meetup.com <http://meetup.com>`_.  USA-only.
@@ -180,7 +373,7 @@ the limit is lifted (typically 1 hour), and repeat until all pages for
 all zip codes have been loaded.  If you'd rather do smaller batches,
 try the ``--help`` option to see what options you have.
 
-Open311 / GeoReport: ebdata.scrapers.general.open311
+Open311 / GeoReport: scrapers.general.open311
 ------------------------------------------------------
 
 A scraper for the
@@ -201,7 +394,7 @@ and a suitable schema can be loaded by doing
 ``django-admin.py loaddata PATH/TO/ebdata/scrapers/general/open311/open311_service_requests_schema.json``.
 
 
-SeeClickFix: ebdata.scrapers.general.seeclickfix
+SeeClickFix: scrapers.general.seeclickfix
 -------------------------------------------------
 
 A scraper for issues reported to `SeeClickFix <http://seeclickfix.com>`_.

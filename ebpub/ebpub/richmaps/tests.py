@@ -23,19 +23,46 @@ unittest). These will both pass when you run "manage.py test".
 Replace these with more appropriate tests for your application.
 """
 
+from django.core import urlresolvers
 from django.test import TestCase
+from ebpub.openblockapi.tests import _make_items
+from ebpub.db.models import NewsItem
+from ebpub.db.models import Schema
+import mock
+import json
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.failUnlessEqual(1 + 1, 2)
 
-__test__ = {"doctest": """
-Another way to test that 1 + 1 is equal to 2.
+class TestViews(TestCase):
 
->>> 1 + 1 == 2
-True
-"""}
+    def tearDown(self):
+        NewsItem.objects.all().delete()
+        Schema.objects.all().delete()
+
+
+    @mock.patch('ebpub.richmaps.views.build_item_query')
+    def test_map_items__no_params_no_items(self, mock_build_item_query):
+        url = urlresolvers.reverse('map_items_json')
+        mock_build_item_query.return_value = ([], {})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        decoded = json.loads(response.content)
+        self.assertEqual(decoded,
+                         {u'type': u'FeatureCollection',
+                          u'features': []})
+
+    @mock.patch('ebpub.richmaps.views.build_item_query')
+    def test_map_items__no_params__with_items(self, mock_build_item_query):
+        schema = Schema.objects.create(
+            name='n1', plural_name='n1s',
+            indefinite_article='a', last_updated='2012-01-01',
+            date_name='dn', date_name_plural='dns')
+        items = _make_items(3, schema)
+        mock_build_item_query.return_value = (items, {})
+        for item in items:
+            item.save()
+        url = urlresolvers.reverse('map_items_json')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        decoded = json.loads(response.content)
+        self.assertEqual(len(decoded['features']), 3)
 

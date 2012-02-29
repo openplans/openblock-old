@@ -18,6 +18,7 @@
 
 from django.http import Http404
 from django.test import TestCase
+from django.test.testcases import TransactionTestCase
 from ebpub.constants import BLOCK_RADIUS_CHOICES
 from ebpub.db.models import Location, LocationType
 from ebpub.streets.models import Block
@@ -113,11 +114,27 @@ class PidTests(TestCase):
         self.assertEqual(parse_pid(make_pid(loc)),
                          (loc, None, None))
 
+class TestModelUtils(TransactionTestCase):
+
+    # For things that mess with the db too much and need to be in a
+    # transaction... eg. creating models on the fly and such
+    # shenanigans.
+
+    def test_is_instance_of_model(self):
+        from ebpub.utils.models import is_instance_of_model
+        from django.contrib.gis.db import models
+        class Foo(models.Model):
+            class Meta:
+                app_label = 'openblockapi'
+        f = Foo()
+        self.assertEqual(True, is_instance_of_model(f, Foo))
+        self.assertRaises(TypeError, is_instance_of_model, f, Foo())
+
 
 def suite():
     # Note, not used by django.nose;
     # for that, run eg. django-admin.py test --with-doctest ebpub/ebpub/utils/
-    suite = unittest.TestLoader().loadTestsFromTestCase(PidTests)
+    suite = unittest.TestLoader().loadTestsFromTestCase(PidTests, TestModelUtils)
     import doctest
     import ebpub.utils.text
     suite.addTest(doctest.DocTestSuite(ebpub.utils.text))
@@ -131,4 +148,3 @@ def suite():
 
 if __name__ == '__main__':
     unittest.main()
-
