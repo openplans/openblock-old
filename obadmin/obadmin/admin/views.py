@@ -59,6 +59,35 @@ class BlobSeedForm(forms.Form):
     strip_noise = forms.BooleanField(required=False)
 
 def save_file(f, suffix=''):
+    import mimetypes
+    if not suffix:
+        # Try to come up with a reasonable suffix, since sometimes I
+        # care what this thing is.  First try the declared type...
+        mtype = None
+        if hasattr(f, 'content_type'):
+            mtype = f.content_type
+            # ... although sometimes this returns nothing;
+            # eg. mimetypes doesn't know about 'application/msexcel'
+            suffix = mimetypes.guess_extension(mtype)
+    if not suffix:
+        mtype = None
+        if hasattr(f, 'name'):
+            mtype = mimetypes.guess_type(f.name)[0]
+        if not mtype:
+            # Fall back to guessing on the file's content.
+            import magic
+            guesser = magic.Magic(mime=True)
+            f.file.seek(0)
+            mtype = guesser.from_buffer(f.file.read(2048))
+            f.file.seek(0)
+        if mtype:
+            if mtype == 'text/plain':
+                # Special case since mimetypes.guess_extension()
+                # returns something arbitrarily absurd for this, like .ksh
+                suffix = '.txt'
+            else:
+                suffix = mimetypes.guess_extension(mtype)
+        #print "GUESSED SUFFIX", suffix
     fd, name = mkstemp(suffix)
     fp = os.fdopen(fd, 'wb')
     for chunk in f.chunks():
@@ -496,7 +525,6 @@ class ImportNewsForm(forms.Form):
     def save(self):
         if not self.is_valid():
             return False
-
         added, updated, skipped = import_items_from_spreadsheets(
             save_file(self.cleaned_data['items_file']),
             self.cleaned_data['schema'],

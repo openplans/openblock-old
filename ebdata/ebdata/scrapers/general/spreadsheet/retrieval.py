@@ -118,8 +118,14 @@ def get_dictreader(items_sheet, items_type='text/csv', map_sheet=None, map_type=
 
     """
 
-    reader_factory = unicodecsv.UnicodeDictReader
-    map_reader_factory = unicodecsv.UnicodeDictReader
+    factory_map = {
+        'text/plain': unicodecsv.UnicodeDictReader,
+        'text/csv': unicodecsv.UnicodeDictReader,
+        'application/vnd.ms-excel': excel.ExcelDictReader,
+        }
+    reader_factory = factory_map.get(items_type, unicodecsv.UnicodeDictReader)
+    map_reader_factory = factory_map.get(map_type, unicodecsv.UnicodeDictReader)
+
     if isinstance(items_sheet, basestring):
         items_sheet = StringIO(items_sheet)
     if map_sheet is None:
@@ -310,9 +316,9 @@ def open_url(url):
     Either way, return a file-like object and a mimetype.
     """
     try:
-        return (file(url), mimetypes.guess_type(url))
+        return (file(url), mimetypes.guess_type(url)[0])
     except IOError:
-        return (urllib2.urlopen(url), mimetypes.guess_type(url))
+        return (urllib2.urlopen(url), mimetypes.guess_type(url)[0])
 
 
 def main(argv=None):
