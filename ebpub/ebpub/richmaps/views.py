@@ -23,16 +23,12 @@ from django import template
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template, select_template
 from django.utils.cache import patch_response_headers
-from django.utils.datastructures import SortedDict
 from django.utils import simplejson
 from ebpub.utils.view_utils import eb_render
-from ebpub.db.models import NewsItem, Schema, SchemaField
-from ebpub.openblockapi.views import _copy_nomulti, JSON_CONTENT_TYPE
+from ebpub.db.models import NewsItem
+from ebpub.openblockapi.views import JSON_CONTENT_TYPE
 from ebpub.openblockapi.itemquery import build_item_query
-from ebpub.db.schemafilters import FilterError
 from ebpub.db.schemafilters import FilterChain
-from ebpub.db.schemafilters import BadAddressException
-from ebpub.db.schemafilters import BadDateException
 from ebpub.db.views import _get_filter_schemafields
 from ebpub.streets.models import Place, PlaceType
 from ebpub.utils.view_utils import get_schema_manager
