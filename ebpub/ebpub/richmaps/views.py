@@ -16,21 +16,21 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from django import template
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
-from django import template
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template, select_template
-from django.utils.cache import patch_response_headers
 from django.utils import simplejson
-from ebpub.utils.view_utils import eb_render
+from django.utils.cache import patch_response_headers
 from ebpub.db.models import NewsItem
-from ebpub.openblockapi.views import JSON_CONTENT_TYPE
-from ebpub.openblockapi.itemquery import build_item_query
 from ebpub.db.schemafilters import FilterChain
 from ebpub.db.views import _get_filter_schemafields
+from ebpub.openblockapi.itemquery import build_item_query
+from ebpub.openblockapi.views import JSON_CONTENT_TYPE
 from ebpub.streets.models import Place, PlaceType
+from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
 import datetime
 import logging
