@@ -86,8 +86,8 @@ class NewsitemFilter(object):
         self._got_args = False
 
     def apply(self):
-        """mutate the queryset, and any other state that needs sharing
-        with others.
+        """mutate *and* return the queryset, and modify any other state that
+        needs sharing with others.
         """
         raise NotImplementedError # pragma: no cover
 
@@ -141,6 +141,47 @@ class FilterError(Exception):
 
     def __str__(self):
         return repr(self.msg)
+
+
+class IdFilter(NewsitemFilter):
+    """
+    Filters by NewsItem ids, which may be a list.
+    """
+    _sort_value = 1
+    slug = 'id'
+    label = u'id'
+    argname = 'id'
+    value = None
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.ids = kwargs.pop('ids', None)
+        if self.ids is None:
+            self._got_args = False
+            self.ids = []
+        else:
+            self._got_args = True
+            if not isinstance(self.ids, (list, tuple)):
+                self.ids = [self.ids]
+        self.query_param_value = ','.join([str(i) for i in self.ids])
+        self.value = self.query_param_value
+
+    def apply(self):
+        """Filtering by ID.
+        """
+        self.qs = self.qs.filter(id__in=self.ids)
+        return self.qs
+
+    def validate(self):
+        if self._got_args:
+            return {}
+        return {
+            'filter_key': self.slug,
+            'param_name': self.argname,
+            'param_label': self.argname,
+            'option_list': [],  # Not gonna list all IDs.
+            'select_multiple': True,
+            }
 
 
 class SchemaFilter(NewsitemFilter):
@@ -443,7 +484,7 @@ class BlockFilter(NewsitemFilter):
                                        radius_slug(self.block_radius)])
         self.query_param_value = ','.join(self.query_param_value)
         self.location_name = block.pretty_name
-        self.got_args = True
+        self._got_args = True
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)

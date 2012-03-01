@@ -42,6 +42,41 @@ class TestNewsitemFilter(TestCase):
         self.assertRaises(KeyError, fil.__getitem__, 'bar')
 
 
+class TestIdFilter(TestCase):
+
+    fixtures = ('test-schemafilter-views.json',)
+
+    def test_validate(self):
+        from ebpub.db.schemafilters import IdFilter
+        fil = IdFilter(request=None, context={}, queryset=None)
+        self.assertEqual(fil.validate(),
+                         {'filter_key': 'id',
+                          'option_list': [],
+                          'param_label': 'id',
+                          'param_name': 'id',
+                          'select_multiple': True}
+                         )
+
+    def test_apply__no_ids(self):
+        from ebpub.db.schemafilters import IdFilter
+        fil = IdFilter(request=None, context={}, queryset=None, ids=[])
+        self.assertEqual(list(fil.apply()), [])
+        from ebpub.db.models import NewsItem
+        self.assert_(NewsItem.objects.all().count() >= 1,
+                     "we should have some items")
+
+    def test_apply__some_ids(self):
+        from ebpub.db.schemafilters import IdFilter
+        from ebpub.db.models import NewsItem
+        items = NewsItem.objects.all()[:2]
+        self.assert_(len(items), "we should have some items")
+        expected_ids = [item.id for item in items]
+        fil = IdFilter(request=None, context={}, queryset=None,
+                       ids=expected_ids)
+        got_ids = [item.id for item in fil.apply()]
+        self.assertEqual(sorted(expected_ids), sorted(got_ids))
+
+
 class TestSchemaFilter(TestCase):
 
     fixtures = ('test-schemafilter-views.json',)
