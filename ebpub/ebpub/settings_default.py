@@ -328,12 +328,11 @@ required_settings.extend(['STATIC_ROOT', 'MEDIA_ROOT', 'STATIC_URL', 'MEDIA_URL'
 
 #COMPRESS_ENABLED = not DEBUG
 
-# Putting django-static's output in a separate directory and URL space
+# Putting django-compressor's output in a separate directory and URL space
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
 # Make sure you have write permission here!!
-
-# We use the default django-compressor settings.
+## We use the default django-compressor settings.
 #COMPRESS_OUTPUT_DIR = 'CACHE'  # Relative to COMPRESS_ROOT or STATIC_ROOT
 #COMPRESS_URL = STATIC_URL
 
@@ -352,12 +351,6 @@ STATICFILES_FINDERS = (
     # Default finders.
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-)
-
-# ebpub currently all its static files in one place rather than in
-# each app:
-STATICFILES_DIRS = (
-    os.path.join(EBPUB_DIR, 'static'),
 )
 
 #############################
