@@ -347,6 +347,7 @@ STATICFILES_FINDERS = (
     # This one goes first, contrary to compressor docs,
     # because that way the runserver wsgi app finds collected files
     # first; otherwise, the non-collected ones get used.
+    # Caused by https://code.djangoproject.com/ticket/17737
     'compressor.finders.CompressorFinder',
     # Default finders.
     'django.contrib.staticfiles.finders.FileSystemFinder',
