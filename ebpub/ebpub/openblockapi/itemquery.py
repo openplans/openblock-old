@@ -135,26 +135,38 @@ def _predefined_place_filter(query, params, state):
     handles filtering by predefined place (newsitemlocation)
     parameters: locationid
     """
-    locationid = params.get('locationid')
+    locationid = params.pop('locationid', None)
     if locationid is None: 
         return query, params, state
-        
-    del params['locationid']
-    
     if state.get('has_geo_filter') == True: 
         raise QueryError('Only one geographic filter may be specified')
 
-    try:
-        loctypeslug, locslug = locationid.split('/')
-        query = query.filter(newsitemlocation__location__slug=locslug,
-                             newsitemlocation__location__location_type__slug=loctypeslug) 
-    except ValueError: 
-        raise QueryError('Invalid location identifier "%s"' % locationid)
+    if isinstance(locationid, basestring):
+        ids = [locationid]
+    else:
+        ids = locationid
+    queries = []
+    from django.db.models import Q
+    # Need to build up an OR query, so we use django Q objects.
+    for loc in ids:
+        try:
+            loctypeslug, locslug = loc.split('/')
+            queries.append(Q(newsitemlocation__location__slug=locslug,
+                             newsitemlocation__location__location_type__slug=loctypeslug))
+        except ValueError: 
+            raise QueryError('Invalid location identifier "%s"' % loc)
+    if queries:
+        loc_query = queries[0]
+        for q in queries[1:]:
+            loc_query = loc_query | q
+
+        # Could get overlaps?
+        query = query.filter(loc_query).distinct()
 
     state['has_geo_filter'] = True
-    
     return query, params, state
-    
+
+
 def _bbox_filter(query, params, state):
     """
     handles filtering by a bounding box region

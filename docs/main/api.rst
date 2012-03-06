@@ -644,6 +644,10 @@ Selects items in some predefined area on the server, eg a neighborhood, zipcode 
                    eg: "neighborhoods/roxbury"
 ================== =======================================================
 
+You can give this parameter multiple times to search in multiple
+areas,
+eg. "?locationid=neighborhoods/roxbury&locationid=zipcodes/12345"
+
 
 Bounding Circle
 ~~~~~~~~~~~~~~~

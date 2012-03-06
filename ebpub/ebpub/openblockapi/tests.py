@@ -609,17 +609,17 @@ class TestItemSearchAPI(BaseTestCase):
     def test_items_predefined_location(self):
         zone = 'Europe/Zurich'
         with self.settings(TIME_ZONE=zone):
-            # create a bunch of items
+            # create a bunch of items that are nowhere in particular
             schema1 = Schema.objects.get(slug='type1')
-            items1 = _make_items(5, schema1)
-            for item in items1:
+            items_nowhere = _make_items(5, schema1, 'nowhere ')
+            for item in items_nowhere:
                 item.save()
 
             # make some items that are centered on a location
             loc = Location.objects.get(slug='hood-1')
             pt = loc.location.centroid
-            items2 = _make_items(5, schema1)
-            for item in items1:
+            items_hood1 = _make_items(5, schema1, 'hood1 ')
+            for item in items_hood1:
                 item.location = pt
                 item.save()
 
@@ -628,24 +628,42 @@ class TestItemSearchAPI(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             ritems = simplejson.loads(response.content)
             assert len(ritems['features']) == 5
-            assert self._items_exist_in_result(items2, ritems)
+            assert self._items_exist_in_result(items_hood1, ritems)
+            # TODO what we really want is to assert *none* of these are found
+            self.failIf(self._items_exist_in_result(items_nowhere, ritems))
 
+            # make some items that are centered on another location
+            loc2 = Location.objects.get(slug='hood-2')
+            pt2 = loc2.location.centroid
+            items_hood2 = _make_items(3, schema1, 'hood2 ')
+            for item in items_hood2:
+                item.location = pt2
+                item.save()
+            qs2 = qs + "&locationid=%s" % cgi.escape("neighborhoods/hood-2")
+            response = self.client.get(reverse('items_json') + qs2)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            self.assertEqual(len(ritems['features']), 8)
+            self.assert_(self._items_exist_in_result(items_hood1, ritems))
+            self.assert_(self._items_exist_in_result(items_hood2, ritems))
+            # TODO what we really want is to assert *none* of these are found
+            self.failIf(self._items_exist_in_result(items_nowhere, ritems))
 
 
     def test_items_radius(self):
         zone = 'Asia/Saigon'
         with self.settings(TIME_ZONE=zone):
-            # create a bunch of items
+            # create a bunch of items nowhere in particular
             schema1 = Schema.objects.get(slug='type1')
-            items1 = _make_items(5, schema1)
-            for item in items1:
+            items_nowhere = _make_items(5, schema1, 'nowhere ')
+            for item in items_nowhere:
                 item.save()
 
             # make some items that are centered on a location
             loc = Location.objects.get(slug='hood-1')
             pt = loc.location.centroid
-            items2 = _make_items(5, schema1)
-            for item in items1:
+            items_hood1 = _make_items(5, schema1, 'hood1 ')
+            for item in items_hood1:
                 item.location = pt
                 item.save()
 
@@ -654,17 +672,16 @@ class TestItemSearchAPI(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             ritems = simplejson.loads(response.content)
             assert len(ritems['features']) == 5
-            assert self._items_exist_in_result(items2, ritems)
+            self.assert_(self._items_exist_in_result(items_hood1, ritems))
+            self.failIf(self._items_exist_in_result(items_nowhere, ritems))
 
 
     def _items_exist_in_result(self, items, ritems):
-        # XXX no ids for items :/
-        all_titles = set([i['properties']['title'] for i in ritems['features']])
+        all_ids = set([i['properties']['id'] for i in ritems['features']])
         for item in items:
-            if not item.title in all_titles: 
+            if not item.id in all_ids: 
                 return False
         return True
-
 
     def _items_exist_in_xml_result(self, items, xmlstring):
         from lxml import etree
@@ -679,7 +696,7 @@ class TestItemSearchAPI(BaseTestCase):
                 return False
         return True
 
-def _make_items(number, schema):
+def _make_items(number, schema, title_prefix=''):
     items = []
     from django.conf import settings
     local_tz = pytz.timezone(settings.TIME_ZONE)
@@ -687,7 +704,8 @@ def _make_items(number, schema):
     inc = datetime.timedelta(days=-1)
     for i in range(number):
         desc = '%s item %d' % (schema.slug, i)
-        items.append(NewsItem(schema=schema, title=desc,
+        items.append(NewsItem(schema=schema,
+                              title=title_prefix+desc,
                               description=desc,
                               item_date=curdate.date(),
                               pub_date=curdate,
