@@ -58,6 +58,8 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Rest API: Allow searching by multiple types (schemas).
+
 * Added an admin UI for importing NewsItems from spreadsheets
   (currently only handles CSV and old-style Excel sheets; not .xslx)
   (Ticket #126)

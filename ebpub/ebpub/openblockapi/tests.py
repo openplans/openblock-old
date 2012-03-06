@@ -24,6 +24,7 @@ import feedparser
 import logging
 import mock
 import pytz
+from ebpub.utils.testing import RequestFactory
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from ebpub.utils.django_testcase_backports import TestCase
@@ -133,13 +134,13 @@ class TestAPI(BaseTestCase):
             self.assertEqual(response.get('content-type', '')[:22],
                              'application/javascript')
 
-
     def test_items_redirect(self):
         url = reverse('items_index')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'],
                          'http://testserver' + reverse('items_json'))
+
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestPushAPI(BaseTestCase):
@@ -365,10 +366,18 @@ class TestItemSearchAPI(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             ritems = simplejson.loads(response.content)
 
-            assert len(ritems['features']) == len(items2)
+            self.assertEqual(len(ritems['features']), len(items2))
             for item in ritems['features']:
                 assert item['properties']['type'] == 'type2'
             assert self._items_exist_in_result(items2, ritems)
+
+            # query for both schemas.
+            response = self.client.get(reverse('items_json') + "?type=type2&type=type1")
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            self.assertEqual(len(ritems['features']), len(items2 + items1))
+
+
 
     def test_items_atom_filter_schema(self):
         zone = 'Australia/North'
@@ -620,6 +629,7 @@ class TestItemSearchAPI(BaseTestCase):
             ritems = simplejson.loads(response.content)
             assert len(ritems['features']) == 5
             assert self._items_exist_in_result(items2, ritems)
+
 
 
     def test_items_radius(self):
@@ -934,9 +944,13 @@ class TestUtilFunctions(TestCase):
         from ebpub.openblockapi.views import _copy_nomulti
         self.assertEqual(_copy_nomulti({}), {})
         self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
-        self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
+        self.assertEqual(_copy_nomulti({'a': [1]}), {'a': 1})
         self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
                          {'a': 1, 'b': [1,2,3]})
+        # It should work with a django Request too.
+        request = RequestFactory().get('/foo/?a=1&b=2&b=3')
+        self.assertEqual(_copy_nomulti(request.GET),
+                         {'a': '1', 'b': ['2', '3']})
 
 
     def test_get_location_info(self):

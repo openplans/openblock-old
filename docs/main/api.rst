@@ -669,9 +669,14 @@ Other Filters
 News Item Type 
 ~~~~~~~~~~~~~~
 
-Restricts results to a single type of news item, eg only crime reports.  The full
-set of types available can be retrieved by querying the schema types list api endpoint or by inspection of the values of the 'type' field of news items returned from the api. 
-See 'GET newsitems/types.json' 
+Restricts results to only the specified type(s) of news item, eg only crime reports.  The full
+set of types available can be retrieved by querying the schema types
+list api endpoint or by inspection of the values of the 'type' field
+of news items returned from the api.
+
+You can give this parameter more than once, eg "?type=crime&type=events"
+
+See 'GET newsitems/types.json' for a list of types known on the server.
 
 ================== =============================================================
     Parameter                                Description

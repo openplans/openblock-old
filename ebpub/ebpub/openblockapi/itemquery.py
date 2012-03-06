@@ -82,8 +82,11 @@ def _schema_filter(query, params, state):
 
     slug = params.pop('type', None)
     if slug is not None:
+        if isinstance(slug, basestring):
+            query = query.filter(schema__slug=slug)
+        else:
+            query = query.filter(schema__slug__in=slug)
         state['schema_slug'] = slug
-        query = query.filter(schema__slug=slug)
     return query, params, state
 
 
@@ -293,9 +296,10 @@ def build_place_query(params):
 
 def _copy_nomulti(d):
     """
-    make a copy of django wack-o immutable query mulit-dict
+    make a copy of django wack-o immutable query multi-dict
     making single item values non-lists.
     """
+    d = dict(d) # Work around request.GET.items() not giving all values
     r = {}
     for k,v in d.items():
         try:
