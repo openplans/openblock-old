@@ -91,7 +91,7 @@ if get_metro()['multiple_cities']:
     urlpatterns += patterns(
         '',
         url(r'^streets/$', views.city_list, name='ebpub-city-list'),
-        url(r'^streets/([-a-z]{3,40})/$', views.street_list, name='ebpub-street-list'),
+        url(r'^streets/(\w{0})(?:([-a-z]{3,40})/)?$', views.street_list, name='ebpub-street-list'),
         url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/$', views.block_list,
             name='ebpub-block-list'),
         url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
