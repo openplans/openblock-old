@@ -62,7 +62,6 @@ def bigmap_filter(request, slug):
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)    
 
-    
     # add in the filter layer
     base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
     layer_url = filterchain.make_url(base_url=base_url)
@@ -73,8 +72,6 @@ def bigmap_filter(request, slug):
         'visible': True
     }
     config['layers'].append(custom_layer)
-
-
 
     if config['is_widget']: 
         return eb_render(request, 'richmaps/embed_bigmap.html', {

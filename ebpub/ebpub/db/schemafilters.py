@@ -672,7 +672,7 @@ class FilterChain(SortedDict):
     """
     A set of NewsitemFilters, to be applied in a predictable order.
 
-    The from_request() constructor can be used to create one
+    The update_from_request() method can be used to configure one
     based on the request URL.
 
     Also handles URL generation.
@@ -761,6 +761,11 @@ class FilterChain(SortedDict):
             if single:
                 return result[0] if result else u''
             return result
+
+        # IDs.
+        ids = pop_key('ids', single=False)
+        if ids:
+            self.replace('ids', ids)
 
         # Address.
         address = pop_key('address', single=True)
@@ -954,7 +959,10 @@ class FilterChain(SortedDict):
         if not values:
             raise FilterError("no values passed for arg %s" % key)
 
-        if isinstance(values[0], models.Location):
+        if key == 'ids':
+            val = IdFilter(self.request, self.context, self.qs, ids=values)
+
+        elif isinstance(values[0], models.Location):
             val = LocationFilter(self.request, self.context, self.qs, location=values[0])
             key = val.slug
         elif isinstance(values[0], ebpub.streets.models.Block):

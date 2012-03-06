@@ -624,6 +624,12 @@ class TestFilterChain(TestCase):
         chain.add_by_place_id('b:123.1')
         self.assert_(isinstance(chain['location'], BlockFilter))
 
+    def test_add__ids(self):
+        from ebpub.db.schemafilters import IdFilter
+        chain = FilterChain()
+        chain.add('ids', [1, 2, 3])
+        self.assert_(isinstance(chain['ids'], IdFilter))
+
 
 class TestUrlNormalization(TestCase):
 
