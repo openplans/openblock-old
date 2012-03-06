@@ -888,8 +888,7 @@ def schema_filter(request, slug):
             if filterchain.get('date') is None:
                 # force a date range; not sure why Luke wanted that?
                 if ni_list:
-                    additions=[('date',
-                                [ni_list[0].item_date, ni_list[-1].item_date])]
+                    additions=[('date', sorted([ni_list[0].item_date, ni_list[-1].item_date]))]
                 else:
                     additions=[]
                 large_map_url = filterchain.make_url(
