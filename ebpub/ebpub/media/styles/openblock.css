@@ -18,10 +18,12 @@ body, html {
     height: 100%;
 }
 
-body, input, textarea, button {
+body, input, textarea, button, .button, .button:visited, .button:active, .button:hover, .button:link {
     color: #333333;
     font: 15px/22px Verdana,sans-serif;
 }
+
+
 h1, h2, h3, h4, h5, h6 {
     clear: both;
     font-weight: bold;
@@ -242,8 +244,21 @@ a:focus {
     padding: 5px 8px;
     width: 320px;
 }
-#globalsearch button {
+
+button, input[type="submit"], .button {
     background-color: #A3C1CC;
+    text-shadow: 1px 1px 0 #DDDDDD;
+    border-width: 1px;
+    border-style: outset;
+}
+
+.button {
+    display: inline-block;
+    padding: 4px 6px;
+    text-decoration: none;
+}
+
+#globalsearch button {
     border: 0 none;
     color: #666666;
     font-size: 14px;
@@ -251,9 +266,11 @@ a:focus {
     padding: 6px 10px;
     text-shadow: 1px 1px 0 #DDDDDD;
 }
-#globalsearch button:hover {
+
+button:hover, .button:hover, input[type="submit"]:hover, input[type="file"]:hover {
     cursor: pointer;
 }
+
 #userlinks {
     font-size: 12px;
     padding: 10px 0;
