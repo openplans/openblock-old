@@ -203,6 +203,7 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
         if date_filter:
             startdate = date_filter.start_date
             enddate = date_filter.end_date
+        # XXX TODO: handle filters['id']
 
 
     default_interval = datetime.timedelta(days=7)

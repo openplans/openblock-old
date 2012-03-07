@@ -5,8 +5,39 @@
 {% block title %}{% if not filters.filters_for_display %}Search {{ schema.plural_name }}{% else %}{{ schema.plural_name|capfirst }}{% endif %}{% for filter in filters.filters_for_display %} &rsaquo; {{ filter.value }} {% endfor %}{% endblock %}
 
 {% block content %}
-	<div id="content">
+<script type="text/javascript">
+  var linkIds = [];
+  if (jQuery.browser.msie) {
+      jQuery(window).load(function() {
+	  _setupLinks();
+      });
+  } else {
+      jQuery(document).ready(function() {
+	  _setupLinks();
+      });
+  };
+  var newLink = "";
+  var _setupLinks = function() {
+      $j("li.newsitem span.newsitem").show();
+      $j("#selected-items-map-link").show();
+      $j("input.select-newsitem").click(function() {
+	  var itemId = $j(this).attr('id').split('-')[1];
+          if ($j(this).attr("checked") == "checked") {
+	      linkIds.push(itemId);
+          } else {
+	      var i = linkIds.indexOf(itemId);
+	      if (i > -1) {
+		  linkIds.splice(i, 1);
+	      };
+          };
+	  newLink = $j("a#large-map-link").attr("href") + "&id=" + linkIds.join(",");
+	  $j("a#selected-items-map-link").attr("href", newLink);
+      });
+  };
 
+</script>
+
+	<div id="content">
 		<h1>Search {{ schema.plural_name }}</h1>
 		<!-- block extradescription -->
 		{% block extradescription %}
@@ -64,9 +95,9 @@
 
 		</div><!--/ #mapwrapper -->
 		{% if large_map_url %}
-		<a class="large-map-link" href="{{ large_map_url }}">Explore these items on a larger map</a>
-		<br><a class="large-map-link" id="selected-items-map-link"
-                       href="{{ large_map_url }}&amp;ids=1,2,3,4,5">View selected items on map</a>
+		<a class="large-map-link" id="large-map-link" href="{{ large_map_url }}">Explore these items on a larger map</a>
+		<br><a class="large-map-link hidden" id="selected-items-map-link"
+                       href="{{ large_map_url }}&amp;id=4924,4925,4679">View selected items on map</a>
 
 		{% endif %}
 
