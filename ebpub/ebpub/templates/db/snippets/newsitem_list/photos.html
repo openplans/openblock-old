@@ -1,12 +1,19 @@
 {% if is_grouped %}
+<!-- GROUPED -->
 	<li id="newsitem-{{ newsitem.id }}" class="newsitem photogroup">
 		{% for newsitem in newsitem_list %}<a class="photo" href="{{ newsitem.item_url }}" rel="nofollow"><img width="75" height="75" class="thumbnail" src="{{ newsitem.attributes.photo_href }}" alt="{{ newsitem.title }} posted by {{ newsitem.attributes.username }} to {{ newsitem.attributes.sourcename }}" title="{{ newsitem.title }} posted by {{ newsitem.attributes.username }} to {{ newsitem.attributes.sourcename }}"></a>{% endfor %}
 	</li>
 {% else %}
+<!-- NOT GROUPED -->
 	{% for newsitem in newsitem_list %}
+		{% with location_url=newsitem.location_url %}
 		<li id="newsitem-{{ newsitem.id }}" class="newsitem">
+		  <span class="newsitem hidden" style="float: right;">
+		    <form><input type="checkbox" class="select-newsitem" id="newsitem-{{newsitem.id}}"></form>
+		  </span>
+
 			<a class="photo" href="{{ newsitem.item_url }}" rel="nofollow"><img width="75" height="75" class="thumbnail" src="{{ newsitem.attributes.photo_href }}" alt=""></a>
-			<span class="location">{{ newsitem.location_name }}</span>
+			{% if location_url %}<a href="{{ location_url }}">{% endif %}<span class="location">{{ newsitem.location_name }}</span>{% if location_url %}</a>{% endif %}
 			<strong class="title"><a href="{{ newsitem.item_url }}" class="url" rel="nofollow">{{ newsitem.title }}</a></strong>
 			<p class="info">Posted to {{ newsitem.attributes.sourcename }} by
 				<strong class="username">
@@ -19,5 +26,6 @@
 				{{ newsitem.attributes.username }}</a></strong>
 				on <strong class="dateposted">{{ newsitem.item_date|date:"F j, Y" }}</strong>.</p>
 		</li>
+		{% endwith %}
 	{% endfor %}
 {% endif %}

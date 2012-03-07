@@ -219,7 +219,7 @@
 	</div><!--/ #mapwrapper -->
 	{% endblock map %}
 	<!-- end block map -->
-  <span class="map_note">Click to specify location</span>
+  <span class="map_note">Click map to specify location</span>
   <div id="geocoder-results"></div>
 </div><!--/ #nav-location -->
 
@@ -243,7 +243,7 @@
 
         {{field}}
         {% if field.name == "location_name" %}
-        <a href="#" class="mapit-link">map it</a>
+        <a href="#" class="mapit-link button">map it</a>
         {% endif %}
 
         <div class="form-help">{{ field.help_text }}</div>
@@ -262,8 +262,8 @@
 
     <div>
       <input type="submit" value="Submit" />
+      <br>&nbsp;
     </div>
-
   </form>
 </div> <!--/ #content -->
 

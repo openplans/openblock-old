@@ -28,6 +28,9 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Added a "View selected items on map" link and checkboxes on Schema
+  filter pages, to allow viewing explicitly selected items on the "big map".
+
 * Changed URLs used by the schema_filter view, so some bookmarks may
   break. (Ticket # 266)
 
