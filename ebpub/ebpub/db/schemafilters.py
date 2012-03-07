@@ -763,9 +763,9 @@ class FilterChain(SortedDict):
             return result
 
         # IDs.
-        ids = pop_key('ids', single=False)
+        ids = pop_key('id', single=False)
         if ids:
-            self.replace('ids', ids)
+            self.replace('id', *ids)
 
         # Address.
         address = pop_key('address', single=True)
@@ -959,7 +959,7 @@ class FilterChain(SortedDict):
         if not values:
             raise FilterError("no values passed for arg %s" % key)
 
-        if key == 'ids':
+        if key == 'id':
             val = IdFilter(self.request, self.context, self.qs, ids=values)
 
         elif isinstance(values[0], models.Location):
