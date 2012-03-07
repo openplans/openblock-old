@@ -432,7 +432,6 @@ def featured_lookup_for_item(context, newsitem, attribute_key):
     {% for tag in tags %} This item has tag {{ tag }} {% endfor %}
 
     """
-    from ebpub.db.models import Lookup
     lookups = Lookup.objects.featured_lookups_for(newsitem, attribute_key)
     context[attribute_key] = lookups
     return ""
