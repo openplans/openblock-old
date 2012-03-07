@@ -635,13 +635,11 @@ class TestUrlNormalization(TestCase):
 
     fixtures = ('test-schemafilter-views.json',)
 
-
     def setUp(self):
         super(TestUrlNormalization, self).setUp()
         self._patcher1 = mock.patch('ebpub.streets.models.proper_city')
         self.proper_city = self._patcher1.start()
         self.proper_city.return_value = 'chicago'
-
         self._patcher2 = mock.patch('ebpub.db.schemafilters.SmartGeocoder.geocode')
         self.mock_geocode = self._patcher2.start()
 
@@ -785,4 +783,3 @@ class TestUrlNormalization(TestCase):
         # The extra params should end up sorted alphanumerically.
         expected = expected.replace('?', '?A=no&') + '&zzz=yes'
         self.assertEqual(chain.make_url(), expected)
-
