@@ -36,7 +36,6 @@ import datetime
 import logging
 import re
 
-
 logger = logging.getLogger('ebpub.richmaps.views')
 
 def bigmap_filter(request, slug):
@@ -62,35 +61,42 @@ def bigmap_filter(request, slug):
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)    
 
-    # add in the filter layer
-    base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
-    layer_url = filterchain.make_url(base_url=base_url)
-    custom_layer = {
-        'url': layer_url,
-        'params': {},
-        'title': "Custom Filter",
-        'visible': True
-    }
-    config['layers'].append(custom_layer)
+    # add in the filter layer, if not already there
+    have_custom_layer = False
+    for layer in config['layers']:
+        if layer['title'] == 'Custom Filter':
+            have_custom_layer = True
+            break
+    if not have_custom_layer:
+        base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
+        layer_url = filterchain.make_url(base_url=base_url)
+        custom_layer = {
+            'url': layer_url,
+            'params': {},
+            'title': "Custom Filter",
+            'visible': True
+        }
+        config['layers'].append(custom_layer)
 
-    if config['is_widget']: 
+    if config['is_widget']:
         return eb_render(request, 'richmaps/embed_bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
-    else:         
+    else:
         return eb_render(request, 'richmaps/bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
 
 
 def bigmap(request):
-    config = _decode_map_permalink(request)
+    filterchain = FilterChain(request=request)
+    config = _decode_map_permalink(request, filters=filterchain)
 
     if config['is_widget']: 
         return eb_render(request, 'richmaps/embed_bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
-    else:         
+    else:
         return eb_render(request, 'richmaps/bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
@@ -98,6 +104,8 @@ def bigmap(request):
 def _decode_map_permalink(request, show_default_layers=True, filters=None):
     """
     Permalinks for the big map, with more compact query parameters.
+
+    Returns a map_config dictionary.
 
     Accepted parameters:
 
@@ -255,8 +263,9 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
     api_startdate = startdate.strftime("%Y-%m-%d")  
     api_enddate = (enddate + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # All available place layers.
     layers = []
+
+    # All available place layers.
     for place_type in PlaceType.objects.filter(is_mappable=True).all():
         layers.append({
             'id': 'p%d' % place_type.id,
@@ -268,6 +277,7 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
             'visible': place_type.id in place_types # off by default
         })
 
+    # All available NewsItem layers.
     for schema in get_schema_manager(request).all():
         layers.append({
             'id': 't%d' % schema.id,
@@ -280,10 +290,28 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
             'visible': (no_layers_specified and show_default_layers) or schema.id in schemas # default on if no 't' param given
         })
 
-    # XXX TODO: handle filters['id']
+    # Explicit filtering by ID.
+    ids = params.get('i') or u''
+    ids = [i.strip() for i in re.split(r'[^\d]+', ids)
+           if i.strip()]
+    if ids:
+        if filters is None:
+            filters = FilterChain(request)
+        filters.replace('id', *ids)
+
+    if filters is not None:
+        base_url = reverse('map_items_json')
+        layer_url = filters.make_url(base_url=base_url)
+        custom_layer = {
+            'url': layer_url, #base_url,
+            'params': {}, #layer_params,
+            'title': u"Custom Filter",
+            'visible': True,
+            'id': 'c1',
+            }
+        layers.append(custom_layer)
 
     is_widget = params.get('x', None) is not None
-
     controls = {}
     control_list = params.get("v", None)
     if control_list is not None: 

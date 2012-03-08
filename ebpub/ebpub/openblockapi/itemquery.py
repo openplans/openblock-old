@@ -41,6 +41,7 @@ from ebpub.utils.dates import parse_date
 from ebpub.db.models import NewsItem
 from ebpub.streets.models import Place
 import pyrfc3339
+import re
 
 __all__ = ['build_item_query', 'build_place_query']
 
@@ -61,7 +62,9 @@ def build_item_query(request):
     # some different ordering may be more optimal here /
     # some index could be specifically created.
     # Also this could be rewritten to use ebpub.db.schemafilter
-    filters = [_schema_filter, _daterange_filter, _predefined_place_filter,
+    filters = [_schema_filter,
+               _id_filter,
+               _daterange_filter, _predefined_place_filter,
                _radius_filter, _bbox_filter, _attributes_filter, _order_by,
                _object_limit]
 
@@ -89,14 +92,22 @@ def _schema_filter(query, params, state):
         state['schema_slug'] = slug
     return query, params, state
 
+def _id_filter(query, params, state):
+    """
+    handles filtering items by explicit IDs
+    parameters: 'id'
+    """
+    ids = params.pop('id', None)
+    if ids is not None:
+        if isinstance(ids, basestring):
+            ids = [i for i in re.split(r'[^\d]+', ids) if i.strip()]
+        if ids:
+            query = query.filter(id__in=ids)
+    return query, params, state
+
 
 def _attributes_filter(query, params, state):
     # not implemented yet
-    #
-    # schema_slug = state.get('schema_slug')
-    # if schema_slug is None or len(params) == 0: 
-    #     return query, params, state
-        
     return query, params, state
 
 def _daterange_filter(query, params, state):
