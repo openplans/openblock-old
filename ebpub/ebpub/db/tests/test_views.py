@@ -262,16 +262,6 @@ class TestSchemaFilterView(BaseTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'], 'http://testserver/whee/')
 
-    def test_filter__charting_disallowed_redirect(self):
-        # could make a different fixture, but, meh.
-        crime = models.Schema.objects.get(slug='crime')
-        crime.allow_charting = False
-        crime.save()
-        url = filter_reverse('crime', [('by-foo', 'bar')])
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 301)
-        self.assertEqual(response['location'], 'http://testserver/crime/')
-
     def test_filter__bad_params(self):
         url = filter_reverse('crime', [('by-foo', 'bar')])
         url = url.replace(urllib.quote('='), 'X')
