@@ -750,9 +750,6 @@ def schema_filter(request, slug):
     query params (eg. date, location, or values of SchemaFields).
     """
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    if not s.allow_charting:
-        return HttpResponsePermanentRedirect(s.url())
-
     context = {
         'bodyclass': 'schema-filter',
         'bodyid': s.slug,
