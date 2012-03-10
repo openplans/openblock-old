@@ -57,6 +57,9 @@ def bigmap_filter(request, slug):
 
     config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
 
+    # TODO: This can leave in permalink params eg. 'i', even if there
+    # is also 'ids', because it doesn't recognize those as being the
+    # same.
     new_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)    
@@ -352,11 +355,14 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
       }, 
     }
 
-
+    if 'id' in filters:
+        # Put them in the params so the js code can construct, well,
+        # permalinks with these ids, on the client side.
+        ids = '-'.join(map(str, filters['id'].ids))
+        config['permalink_params']['i'] = ids
     if popup_info:
         config['popup'] = popup_info
 
-    
     if is_widget: 
         config['controls'] = controls
         if width is not None: 
