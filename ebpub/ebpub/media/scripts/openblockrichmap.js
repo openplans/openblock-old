@@ -460,13 +460,13 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
     },
 
     createParams: function(center, zoom, layers) {
-        var layers = '';
+        var layerIds = '';
         for (var i = 0; i < this.map.layers.length; i++) {
             var layer = this.map.layers[i];
             if (layer.getVisibility() == true && typeof(layer.layerConfig) != "undefined") {
                 var layerid = layer.layerConfig.id;
                 if (typeof(layerid) != "undefined") {
-                    layers += layerid;
+                    layerIds += layerid;
                 }
             }
         }
@@ -475,7 +475,7 @@ var OpenblockPermalink = OpenLayers.Class(OpenLayers.Control.Permalink, {
         var params = {
             'c': this._encodeLonLat(this.map.center),
             'z': this.map.getZoom(),
-            'l': layers
+            'l': layerIds
         };
         extra_params = this.obmap.options.permalink_params;
         if (typeof(extra_params) != 'undefined') {
