@@ -126,6 +126,9 @@ def populate_attributes_if_needed(newsitem_list, schema_list,
         for field_name, real_name in fmap[ni.schema_id]['fields']:
             value = att[real_name]
             if real_name in fmap[ni.schema_id]['lookups']:
+                if value is None:
+                    value = u''
+                    continue
                 if real_name.startswith('int'):
                     value = lookup_objs[value]
                 else: # Many-to-many lookups are comma-separated strings.
