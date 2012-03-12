@@ -321,8 +321,14 @@ def _homepage_context(request):
             non_empty_date_charts.append(chart)
         else:
             empty_date_charts.append(chart)
-    non_empty_date_charts.sort(lambda a, b: cmp(b['schema'].importance, a['schema'].importance))
-    empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
+    def _date_chart_sort_func(a, b):
+        return cmp(
+            # Higher importance first, higher count first, lower name first.
+            (b['schema'].importance, b['total_count'], a['schema'].plural_name),
+            (a['schema'].importance, a['total_count'], b['schema'].plural_name))
+
+    non_empty_date_charts.sort(_date_chart_sort_func)
+    empty_date_charts.sort(_date_chart_sort_func)
     return {
         'location_type_list': lt_list,
         'street_count': street_count,
