@@ -321,7 +321,7 @@ def _homepage_context(request):
             non_empty_date_charts.append(chart)
         else:
             empty_date_charts.append(chart)
-    non_empty_date_charts.sort(lambda a, b: cmp(b['total_count'], a['total_count']))
+    non_empty_date_charts.sort(lambda a, b: cmp(b['schema'].importance, a['schema'].importance))
     empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
     return {
         'location_type_list': lt_list,
