@@ -79,7 +79,7 @@ Installing the easy way
 GDAL installation isn't covered in detail by the GeoDjango install
 docs.
 
-The easiest thing to do is check if your operating system already
+By far the easiest thing to do is check if your operating system already
 provides a ready-made python GDAL package. For example, on Ubuntu,
 this will work:
 
