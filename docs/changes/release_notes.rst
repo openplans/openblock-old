@@ -239,6 +239,8 @@ Bugs fixed
 Documentation
 -------------
 
+* Better docs about template overrides, see :ref:`custom-look-feel`.
+
 * Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253
 
 * Basic docs for ``ebpub.neighbornews``, see :ref:`user_content`.
