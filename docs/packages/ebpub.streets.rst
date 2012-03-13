@@ -6,7 +6,6 @@ streets Package
 
 .. automodule:: ebpub.streets
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`admin` Module
@@ -14,7 +13,6 @@ streets Package
 
 .. automodule:: ebpub.streets.admin
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -22,7 +20,6 @@ streets Package
 
 .. automodule:: ebpub.streets.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`name_utils` Module
@@ -30,7 +27,6 @@ streets Package
 
 .. automodule:: ebpub.streets.name_utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`utils` Module
@@ -38,7 +34,6 @@ streets Package
 
 .. automodule:: ebpub.streets.utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

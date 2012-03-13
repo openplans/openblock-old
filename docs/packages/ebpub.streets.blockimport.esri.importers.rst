@@ -6,7 +6,6 @@ importers Package
 
 .. automodule:: ebpub.streets.blockimport.esri.importers
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`blocks` Module
@@ -14,7 +13,6 @@ importers Package
 
 .. automodule:: ebpub.streets.blockimport.esri.importers.blocks
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`zipcodes` Module
@@ -22,6 +20,5 @@ importers Package
 
 .. automodule:: ebpub.streets.blockimport.esri.importers.zipcodes
     :members:
-    :undoc-members:
     :show-inheritance:
 

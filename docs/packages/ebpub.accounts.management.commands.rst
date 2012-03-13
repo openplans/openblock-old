@@ -6,7 +6,6 @@ commands Package
 
 .. automodule:: ebpub.accounts.management.commands
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`createsuperuser` Module
@@ -14,6 +13,5 @@ commands Package
 
 .. automodule:: ebpub.accounts.management.commands.createsuperuser
     :members:
-    :undoc-members:
     :show-inheritance:
 

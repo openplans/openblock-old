@@ -6,7 +6,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`dateutils` Module
@@ -14,7 +13,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.dateutils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`eb` Module
@@ -22,7 +20,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.eb
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`eb_filter` Module
@@ -30,7 +27,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.eb_filter
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`eb_json` Module
@@ -38,7 +34,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.eb_json
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`full_links` Module
@@ -46,7 +41,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.full_links
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`mapping` Module
@@ -54,7 +48,6 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.mapping
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`raw` Module
@@ -62,6 +55,5 @@ templatetags Package
 
 .. automodule:: ebpub.db.templatetags.raw
     :members:
-    :undoc-members:
     :show-inheritance:
 

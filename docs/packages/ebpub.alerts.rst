@@ -6,7 +6,6 @@ alerts Package
 
 .. automodule:: ebpub.alerts
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -14,7 +13,6 @@ alerts Package
 
 .. automodule:: ebpub.alerts.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`sending` Module
@@ -22,7 +20,6 @@ alerts Package
 
 .. automodule:: ebpub.alerts.sending
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -30,6 +27,5 @@ alerts Package
 
 .. automodule:: ebpub.alerts.views
     :members:
-    :undoc-members:
     :show-inheritance:
 

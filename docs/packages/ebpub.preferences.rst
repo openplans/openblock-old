@@ -6,7 +6,6 @@ preferences Package
 
 .. automodule:: ebpub.preferences
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -14,7 +13,6 @@ preferences Package
 
 .. automodule:: ebpub.preferences.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -22,5 +20,4 @@ preferences Package
 
 .. automodule:: ebpub.preferences.views
     :members:
-    :undoc-members:
     :show-inheritance:

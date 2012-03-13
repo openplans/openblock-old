@@ -6,7 +6,6 @@ richmaps Package
 
 .. automodule:: ebpub.richmaps
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -14,7 +13,6 @@ richmaps Package
 
 .. automodule:: ebpub.richmaps.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 
@@ -23,6 +21,5 @@ richmaps Package
 
 .. automodule:: ebpub.richmaps.views
     :members:
-    :undoc-members:
     :show-inheritance:
 

@@ -6,7 +6,6 @@ petitions Package
 
 .. automodule:: ebpub.petitions
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -14,7 +13,6 @@ petitions Package
 
 .. automodule:: ebpub.petitions.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -22,7 +20,6 @@ petitions Package
 
 .. automodule:: ebpub.petitions.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
 

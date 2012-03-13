@@ -6,7 +6,6 @@ geocoder Package
 
 .. automodule:: ebpub.geocoder
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`base` Module
@@ -14,7 +13,6 @@ geocoder Package
 
 .. automodule:: ebpub.geocoder.base
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -22,7 +20,6 @@ geocoder Package
 
 .. automodule:: ebpub.geocoder.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`reverse` Module
@@ -30,7 +27,6 @@ geocoder Package
 
 .. automodule:: ebpub.geocoder.reverse
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

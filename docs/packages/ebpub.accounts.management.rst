@@ -6,7 +6,6 @@ management Package
 
 .. automodule:: ebpub.accounts.management
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

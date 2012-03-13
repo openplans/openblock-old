@@ -6,7 +6,6 @@ utils Package
 
 .. automodule:: ebpub.utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`bunch` Module
@@ -14,7 +13,6 @@ utils Package
 
 .. automodule:: ebpub.utils.bunch
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`dates` Module
@@ -22,7 +20,6 @@ utils Package
 
 .. automodule:: ebpub.utils.dates
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`django_testcase_backports` Module
@@ -30,7 +27,6 @@ utils Package
 
 .. automodule:: ebpub.utils.django_testcase_backports
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`geodjango` Module
@@ -38,7 +34,6 @@ utils Package
 
 .. automodule:: ebpub.utils.geodjango
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`image_utils` Module
@@ -46,7 +41,6 @@ utils Package
 
 .. automodule:: ebpub.utils.image_utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`logutils` Module
@@ -54,7 +48,6 @@ utils Package
 
 .. automodule:: ebpub.utils.logutils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -62,7 +55,6 @@ utils Package
 
 .. automodule:: ebpub.utils.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`multidb` Module
@@ -70,7 +62,6 @@ utils Package
 
 .. automodule:: ebpub.utils.multidb
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`script_utils` Module
@@ -78,7 +69,6 @@ utils Package
 
 .. automodule:: ebpub.utils.script_utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`testing` Module
@@ -86,7 +76,6 @@ utils Package
 
 .. automodule:: ebpub.utils.testing
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`text` Module
@@ -94,7 +83,6 @@ utils Package
 
 .. automodule:: ebpub.utils.text
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`uploadhandler` Module
@@ -102,7 +90,6 @@ utils Package
 
 .. automodule:: ebpub.utils.uploadhandler
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`view_utils` Module
@@ -110,6 +97,5 @@ utils Package
 
 .. automodule:: ebpub.utils.view_utils
     :members:
-    :undoc-members:
     :show-inheritance:
 

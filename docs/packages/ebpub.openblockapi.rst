@@ -6,7 +6,6 @@ openblockapi Package
 
 .. automodule:: ebpub.openblockapi
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`itemquery` Module
@@ -14,7 +13,6 @@ openblockapi Package
 
 .. automodule:: ebpub.openblockapi.itemquery
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -22,7 +20,6 @@ openblockapi Package
 
 .. automodule:: ebpub.openblockapi.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`throttle` Module
@@ -30,7 +27,6 @@ openblockapi Package
 
 .. automodule:: ebpub.openblockapi.throttle
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -38,7 +34,6 @@ openblockapi Package
 
 .. automodule:: ebpub.openblockapi.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

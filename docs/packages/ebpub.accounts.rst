@@ -6,7 +6,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`admin` Module
@@ -14,7 +13,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.admin
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`callbacks` Module
@@ -22,7 +20,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.callbacks
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`constants` Module
@@ -30,7 +27,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.constants
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`context_processors` Module
@@ -38,7 +34,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.context_processors
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`forms` Module
@@ -46,7 +41,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.forms
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`middleware` Module
@@ -54,7 +48,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.middleware
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -62,7 +55,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 
@@ -71,7 +63,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -79,7 +70,6 @@ accounts Package
 
 .. automodule:: ebpub.accounts.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

@@ -6,7 +6,6 @@ esri Package
 
 .. automodule:: ebpub.streets.blockimport.esri
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

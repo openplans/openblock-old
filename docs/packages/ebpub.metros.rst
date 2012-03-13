@@ -6,7 +6,6 @@ metros Package
 
 .. automodule:: ebpub.metros
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`allmetros` Module
@@ -14,7 +13,6 @@ metros Package
 
 .. automodule:: ebpub.metros.allmetros
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`loader` Module
@@ -22,7 +20,6 @@ metros Package
 
 .. automodule:: ebpub.metros.loader
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -30,7 +27,6 @@ metros Package
 
 .. automodule:: ebpub.metros.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -38,7 +34,6 @@ metros Package
 
 .. automodule:: ebpub.metros.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
 

@@ -6,7 +6,6 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`cities` Module
@@ -14,7 +13,6 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser.cities
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -22,7 +20,6 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`numbered_streets` Module
@@ -30,7 +27,6 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser.numbered_streets
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`parsing` Module
@@ -38,7 +34,6 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser.parsing
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`states` Module
@@ -46,7 +41,6 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser.states
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`suffixes` Module
@@ -54,6 +48,5 @@ parser Package
 
 .. automodule:: ebpub.geocoder.parser.suffixes
     :members:
-    :undoc-members:
     :show-inheritance:
 

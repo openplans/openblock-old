@@ -6,7 +6,6 @@ widgets Package
 
 .. automodule:: ebpub.widgets
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`admin` Module
@@ -14,7 +13,6 @@ widgets Package
 
 .. automodule:: ebpub.widgets.admin
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -22,7 +20,6 @@ widgets Package
 
 .. automodule:: ebpub.widgets.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -30,7 +27,6 @@ widgets Package
 
 .. automodule:: ebpub.widgets.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

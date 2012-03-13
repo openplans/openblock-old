@@ -6,7 +6,6 @@ savedplaces Package
 
 .. automodule:: ebpub.savedplaces
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -14,7 +13,6 @@ savedplaces Package
 
 .. automodule:: ebpub.savedplaces.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -22,6 +20,5 @@ savedplaces Package
 
 .. automodule:: ebpub.savedplaces.views
     :members:
-    :undoc-members:
     :show-inheritance:
 

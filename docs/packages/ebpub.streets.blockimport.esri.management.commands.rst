@@ -6,7 +6,6 @@ commands Package
 
 .. automodule:: ebpub.streets.blockimport.esri.management.commands
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`importesri` Module
@@ -14,6 +13,5 @@ commands Package
 
 .. automodule:: ebpub.streets.blockimport.esri.management.commands.importesri
     :members:
-    :undoc-members:
     :show-inheritance:
 

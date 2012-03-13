@@ -619,7 +619,6 @@ ebpub Package
 
 .. automodule:: ebpub
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`constants` Module
@@ -627,7 +626,6 @@ ebpub Package
 
 .. automodule:: ebpub.constants
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`geoadmin` Module
@@ -635,7 +633,6 @@ ebpub Package
 
 .. automodule:: ebpub.geoadmin
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`monkeypatches` Module
@@ -643,7 +640,6 @@ ebpub Package
 
 .. automodule:: ebpub.monkeypatches
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`settings_default` Module
@@ -651,7 +647,6 @@ ebpub Package
 
 .. automodule:: ebpub.settings_default
     :members:
-    :undoc-members:
     :show-inheritance:
 
 

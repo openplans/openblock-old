@@ -6,7 +6,6 @@ neighbornews Package
 
 .. automodule:: ebpub.neighbornews
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`admin` Module
@@ -14,7 +13,6 @@ neighbornews Package
 
 .. automodule:: ebpub.neighbornews.admin
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`forms` Module
@@ -22,7 +20,6 @@ neighbornews Package
 
 .. automodule:: ebpub.neighbornews.forms
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`models` Module
@@ -30,7 +27,6 @@ neighbornews Package
 
 .. automodule:: ebpub.neighbornews.models
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`utils` Module
@@ -38,7 +34,6 @@ neighbornews Package
 
 .. automodule:: ebpub.neighbornews.utils
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`views` Module
@@ -46,7 +41,6 @@ neighbornews Package
 
 .. automodule:: ebpub.neighbornews.views
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages

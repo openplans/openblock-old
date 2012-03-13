@@ -6,7 +6,6 @@ blockimport Package
 
 .. automodule:: ebpub.streets.blockimport
     :members:
-    :undoc-members:
     :show-inheritance:
 
 :mod:`base` Module
@@ -14,7 +13,6 @@ blockimport Package
 
 .. automodule:: ebpub.streets.blockimport.base
     :members:
-    :undoc-members:
     :show-inheritance:
 
 Subpackages
