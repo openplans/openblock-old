@@ -282,18 +282,28 @@ def process_docstring(app, what, name, obj, options, lines):
             # Decode and capitalize the verbose name, for use if there isn't
             # any help text
             verbose_name = force_unicode(field.verbose_name).capitalize()
-            
+
+            # Added by PW:
+            # Remove the "_id" from ForeignKeys and the like,
+            # since you typically use them without the _id.
+            attname = field.attname
+            typename = type(field).__name__
+            if attname.endswith('_id') and typename in ('ForeignKey',
+                                                        'OneToOneField',
+                                                        'ManyToManyField'):
+                attname = attname[:-3]
+
             if help_text:
                 # Add the model field to the end of the docstring as a param
                 # using the help text as the description
-                lines.append(u':param %s: %s' % (field.attname, help_text))
+                lines.append(u':param %s: %s' % (attname, help_text))
             else:
                 # Add the model field to the end of the docstring as a param
                 # using the verbose name as the description
-                lines.append(u':param %s: %s' % (field.attname, verbose_name))
+                lines.append(u':param %s: %s' % (attname, verbose_name))
                 
             # Add the field's type to the docstring
-            lines.append(u':type %s: %s' % (field.attname, type(field).__name__))
+            lines.append(u':type %s: %s' % (attname, typename))
     
     # Return the extended docstring
     return lines  
@@ -304,3 +314,4 @@ def setup(app):
 
 print "NOTE: ignore AttributeErrors on Django model fields."
 print "They're harmless, and I can't figure out how to silence them."
+
