@@ -611,3 +611,68 @@ you are customizing templates, you will want to peruse the docstrings
 of all the modules under ``ebpub.db.templatetags``.
 
 
+ebpub Package
+=============
+
+:mod:`ebpub` Package
+--------------------
+
+.. automodule:: ebpub
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`constants` Module
+-----------------------
+
+.. automodule:: ebpub.constants
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`geoadmin` Module
+----------------------
+
+.. automodule:: ebpub.geoadmin
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`monkeypatches` Module
+---------------------------
+
+.. automodule:: ebpub.monkeypatches
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`settings_default` Module
+------------------------------
+
+.. automodule:: ebpub.settings_default
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Subpackages
+-----------
+
+.. toctree::
+
+    ebpub.accounts
+    ebpub.alerts
+    ebpub.db
+    ebpub.geocoder
+    ebpub.metros
+    ebpub.moderation
+    ebpub.neighbornews
+    ebpub.openblockapi
+    ebpub.petitions
+    ebpub.preferences
+    ebpub.richmaps
+    ebpub.savedplaces
+    ebpub.streets
+    ebpub.utils
+    ebpub.widgets
+
