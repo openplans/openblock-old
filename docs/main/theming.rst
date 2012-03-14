@@ -74,6 +74,8 @@ page on a per-schema basis. Just create a subdirectory named
 If no such template exists, the default is
 ``ebpub/templates/db/newsitem_detail.html``.
 
+.. _custom-map-popups:
+
 Custom Map Popups
 -----------------
 
@@ -109,6 +111,27 @@ create a
 
 If no such template exists, the default is
 ``ebpub/templates/db/schema_detail.html``.
+
+Custom Rich Map headlines
+-------------------------
+
+The "rich maps" view at ``/maps`` has templates specifically for the
+list of news items and places to the left of the map.
+
+For news items: Create a template at
+``templates/richmaps/newsitem_headline_[schema_slug].html``.
+If none exists, the default generic one is
+``templates/richmaps/newsitem_headline.html``.
+
+For places: Create a template at
+``templates/richmaps/place_headline_[schema_slug].html``.
+If none exists, the default generic one is
+``templates/richmaps/place_headline.html``.
+                     ]
+
+This page also uses the same map popup templates
+described in :ref:`custom-map-popups`.
+
 
 Overriding CSS and Images
 =========================
