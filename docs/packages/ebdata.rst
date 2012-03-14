@@ -443,4 +443,30 @@ things that templatemaker doesn't care about like comments, scripts, styles,
 meta information, etc.  It is used by ebdata.templatemaker_ but may
 also be used directly by scraper scripts.
 
+ebdata Package
+==============
+
+:mod:`ebdata` Package
+---------------------
+
+.. automodule:: ebdata
+    :members:
+    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+    ebdata.blobs
+    ebdata.geotagger
+    ebdata.nlp
+    ebdata.parsing
+    ebdata.retrieval
+    ebdata.scrapers
+    ebdata.templatemaker
+    ebdata.textmining
+    ebdata.utils
+
+
 .. _everyblock: https://github.com/openplans/openblock-extras/blob/master/docs/everyblock.rst
