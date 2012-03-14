@@ -5,3 +5,5 @@ Project Modules
    :maxdepth: 4
 
    ebpub
+   obadmin
+   obdemo
