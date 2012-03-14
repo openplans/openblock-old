@@ -16,3 +16,15 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+.. _ebdata-nlp:
+
+nlp
+===
+
+The nlp package contains utilities for detecting locations in
+text. This package is used by :py:mod:`ebdata.blobs`, but if you
+want to use it directly, check out the docstrings for the functions in
+:py:mod:`ebdata.parsing.addresses`.
+
+'''

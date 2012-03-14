@@ -16,3 +16,9 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+The textmining package contains utilities for preprocessing html to strip out
+things that templatemaker doesn't care about like comments, scripts, styles,
+meta information, etc.  It is used by :py:mod:`ebdata.templatemaker` but may
+also be used directly by scraper scripts.
+'''

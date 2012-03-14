@@ -6,63 +6,26 @@ Code to help write scripts that import/crawl/parse data from the web
 into ebpub, as well as extract addresses from (English) text.
 
 Scraper scripts will probably be built on either ebdata.retrieval_ or
-ebdata.blobs_, depending on the type of content being scraped.
-
-ebdata.blobs
-============
-
-The blobs package is a Django app responsible for crawling, scraping,
-extracting, and geocoding news articles from the web.
-
-It is best suited for scraping "unstructured" websites that don't have
-machine-readable feeds, eg. for scraping raw HTML and/or binary file
-formats such as PDF or Excel.  (For sites that provide RSS or Atom
-feeds, and/or an API, the ebdata.retrieval_ package may be more
-suitable.)  (For dealing with binary file formats, you'll also want to
-look into the ebdata.parsing_ package.)
-
-Many examples can be found in the everyblock_ package.
-
-The blobs app contains two models, ``Seed`` and ``Page``. ``Seed`` is a
-news source, like the Chicago Tribune, and a ``Page`` is a particular html
-page that was crawled from a Seed.
-
-TODO: This really needs more explanation.
-
-.. _ebdata-nlp:
+:py:mod:`ebdata.blobs`, depending on the type of content being scraped.
 
 ebdata.nlp
-==========
+===========
 
-The nlp package contains utilities for detecting locations in text. This
-package is used by ebdata.blobs_, but if you want to use it directly, check out the
-docstrings for the functions in ``ebdata.parsing.addresses.``
-
-
-ebdata.parsing
-==============
-
-The parsing package contains helpers for reading different file types.
-
-The ``dbf``, ``excel``, ``mdb``, and ``unicodecsv`` modules are for
-reading stuctured data, and generally follow the python csv reader
-api. See the code for more details on how to use them.
-
-The pdf module is for converting pdf to text, and requires Xpdf.
-http://www.foolabs.com/xpdf/download.html
-
+Address extraction from raw text.  For details see
+:py:mod:`ebdata.nlp.addresses` particularly the 
+:py:func:`parse_addresses <ebdata.nlp.addresses.parse_addresses>` function.
 
 ebdata.retrieval
 ================
 
-The retrieval package contains a framework for writing scrapers for structured
+A framework for writing scrapers for structured
 data. Some examples can be found in
 ebdata.scrapers_.  There are more (unmaintained) examples of how to use this
 framework in different situations in the ``everyblock`` package (see :ref:`other_packages`).
 
 (For scraping data from unstructured sites, eg. sites that lack feeds
 or machine-consumable API, you might consider building on the
-ebdata.blobs_ package.)
+:py:mod:`ebdata.blobs` package.)
 
 The most commonly used scraper base class is the
 ``NewsItemListDetailScraper``. It handles scraping list/detail types
@@ -327,7 +290,7 @@ location according to this procedure:
   "lon" or "long" or "lng", use those.
 * If there is field we can use as "location_name", try geocoding that.
 * Otherwise, combine all text fields and try to extract addresses
-  using ebdata.nlp_ and geocode them.
+  using :py:mod:`ebdata.nlp` and geocode them.
 * If all of the above fails, just save the item with no location.
 
 
@@ -424,24 +387,6 @@ includes only scrapers for Boston, MA:
 Many of these are used for http://demo.openblockproject.org.
 For more information, see the source of each script.
 
-ebdata.templatemaker
-====================
-
-The templatemaker package contains utilities for detecting the actual content
-given a set of html pages that were generated from a template. For instance,
-templatemaker helps detect and extract the actual article from a page that
-could also contain navigation links, ads, etc.
-
-This is used internally by ebdata.blobs_. It is not typically used
-directly by scraper scripts.
-
-ebdata.textmining
-=================
-
-The textmining package contains utilities for preprocessing html to strip out
-things that templatemaker doesn't care about like comments, scripts, styles,
-meta information, etc.  It is used by ebdata.templatemaker_ but may
-also be used directly by scraper scripts.
 
 ebdata Package
 ==============

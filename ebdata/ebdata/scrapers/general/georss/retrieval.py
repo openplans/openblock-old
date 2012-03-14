@@ -20,7 +20,7 @@
 #
 
 
-"""A quick and dirty scraper for RSS feeds with GeoRSS info.
+"""A scraper for RSS feeds with GeoRSS or other location info.
 """
 
 import datetime
