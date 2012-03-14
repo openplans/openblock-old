@@ -10,13 +10,6 @@ is by :doc:`../install/custom`.
 Overriding Templates
 ====================
 
-OpenBlock offers two primary axes by which to browse NewsItems:
-
-* By schema -- starting with the schema_filter and schema_detail view/template
-
-* By place -- starting with the place_detail view/template (where a "place"
-  is defined as either a Block or Location)
-
 Note that default templates are included in ``ebpub/templates``.
 At the very least,
 you'll want to override ``base.html`` to design your ebpub-powered site. (The
@@ -24,9 +17,6 @@ design of EveryBlock.com is copyrighted and not free for you to use;
 but the default templates, css, and images that ship with OpenBlock
 and ebpub are of course free for your use under the same license terms
 as the rest of OpenBlock (GPL)).
-
-Custom Templates: Overview
----------------------------
 
 Many parts of OpenBlock's markup can be customized on a per-schema
 basis.
