@@ -49,12 +49,14 @@ class ExcelDictReader(object):
     header_row_num. If you provide custom_headers, the value of header_row_num
     will be ignored.
 
-    Example usage:
+    Example usage::
+
         reader = ExcelDictReader('/path/to/my.xls', 0, 0, 1)
         for row in reader:
             print row
 
-    This yields dictionaries like:
+    This yields dictionaries like::
+
         {'header1': 'value1', 'header2': 'value2'}
 
     The first argument can be either a path, or an open file-like object.
