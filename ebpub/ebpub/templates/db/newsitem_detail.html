@@ -101,7 +101,11 @@
 							{% if value.url %}
 								<a href="{{ value.url }}">{{ value.value }}</a>
 							{% else %}
+							  {% if attribute.sf.datatype == 'int' and not attribute.sf.is_lookup %}
+								{{ value.value|intcomma }}
+							  {% else %}
 								{{ value.value }}
+							  {% endif %}
 							{% endif %}
 							{% if value.description %}<p>{{ value.description|safe }}</p>{% endif %}
 							{% if not forloop.last %}{% if not value.description %}<br>{% endif %}{% endif %}

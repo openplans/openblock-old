@@ -927,7 +927,7 @@ def schema_filter(request, slug):
     })
     context['map_configuration'] = _preconfigured_map(context);
 
-    templates_to_try = ('db/schema_filter/%s.html' % s.slug, 'db/filter.html')
+    templates_to_try = ('db/schema_filter/%s.html' % s.slug, 'db/schema_filter.html')
     return eb_render(request, templates_to_try, context)
 
 
