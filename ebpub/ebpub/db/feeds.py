@@ -60,7 +60,9 @@ def bunch_by_date_and_schema(newsitem_list, date_cutoff):
         yield current_list
 
 class AbstractLocationFeed(EbpubFeed):
-    "Abstract base class for location-specific RSS feeds."
+    """
+    Abstract base class for :py:class:`ebpub.db.models.Location`-aware RSS feeds.
+    """
 
     title_template = 'feeds/streets_title.html'
     description_template = 'feeds/streets_description.html'

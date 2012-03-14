@@ -156,8 +156,14 @@ instead of `obdemo.settings`.
 
 
 Additional Resources
-====================
+--------------------
 
 For more documentation (in progress), see also:
     * http://developer.openblockproject.org/wiki/Data
     * http://developer.openblockproject.org/wiki/Ideal%20Feed%20Formats
+
+Theming
+========
+
+One of the main reasons to create a custom app is to override the
+OpenBlock look-and-feel.  For more info see :doc:`../main/theming`.

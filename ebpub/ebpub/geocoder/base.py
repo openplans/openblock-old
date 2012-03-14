@@ -403,24 +403,26 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
                  convert_to_block=False, guess=False):
     """
     Tries the full geocoding stack on the given query (a string):
-        * Normalizes whitespace/capitalization
-        * Searches the Misspelling table to corrects location misspellings
-        * Searches the Location table
-        * Failing that, searches the Place table (if search_places is True)
-        * Failing that, uses the SmartGeocoder to parse this as an address, block,
-          or intersection
-        * Failing that, raises whichever error is raised by the geocoder --
-          except AmbiguousResult, in which case all possible results are
-          returned
+
+    * Normalizes whitespace/capitalization
+    * Searches the Misspelling table to corrects location misspellings
+    * Searches the Location table
+    * Failing that, searches the Place table (if search_places is True)
+    * Failing that, uses the SmartGeocoder to parse this as an address, block,
+      or intersection
+    * Failing that, raises whichever error is raised by the geocoder --
+      except AmbiguousResult, in which case all possible results are
+      returned
 
     Returns a dictionary of {type, result, ambiguous}, where ambiguous is True
-    or False, and type can be:
-        * 'location' -- in which case result is a Location object.
-        * 'place' -- in which case result is a Place object. (This is only
-          possible if search_places is True.)
-        * 'address' -- in which case result is an Address object as returned
-          by geocoder.geocode().
-        * 'block' -- in which case result is an Address object based on the block.
+    or False, and type can be on of these strings:
+
+    * 'location' -- in which case result is a Location object.
+    * 'place' -- in which case result is a Place object. (This is only
+      possible if search_places is True.)
+    * 'address' -- in which case result is an Address object as returned
+      by geocoder.geocode().
+    * 'block' -- in which case result is an Address object based on the block.
 
     When ``ambiguous`` is True in the output dict, ``result`` will be
     a list of objects, and vice versa.

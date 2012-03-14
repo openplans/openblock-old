@@ -16,6 +16,310 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+
+.. _newsitems:
+
+.. _newsitem-schemas:
+
+Overview: NewsItems and Schemas
+===============================
+
+The ebpub system is capable of handling
+many disparate types of news -- e.g., crime, photos and restaurant inspections.
+Each type of news is referred to as a :py:class:`Schema`,
+and an individual piece of news is a :py:class:`NewsItem`.
+
+Flexible data: SchemaFields and Attributes
+------------------------------------------
+
+The NewsItem model in itself is generic -- a lowest-common denominator of each
+NewsItem on the site. If you'd like to extend your NewsItems to include
+Schema-specific attributes, you can use :py:class:`SchemaFields <SchemaField>`.
+
+Each piece of news is described by:
+
+* One :py:class:`NewsItem` instance
+
+* One corresponding :py:class:`Attribute` instance, which is a dictionary-like
+  object containing extra data, and is available as ``newsitem.attributes``.
+
+* One :py:class:`Schema` that identifies the "type" of NewsItem; and
+
+* A set of :py:class:`SchemaFields <SchemaField>`, each of which describes
+  a valid key for the Attributes dictionary; the type of allowed values;
+  and some configuration metadata about how to display and use that field.
+
+TODO: write up more about motivation
+
+Examples might make this clearer. To assign the whole dictionary::
+
+    ni = NewsItem.objects.get(...)
+    ni.attributes = {'some_schemafield_name': 'some value'}
+    # There is no need to call ni.save() or ni.attributes.save();
+    # the assignment operation does that behind the scenes.
+
+To assign a single value::
+
+    ni.attributes['some_schemafield_name'] = 'some other value'
+    # Again there is no need to save() anything explicilty.
+
+To get a value::
+
+    print ni.attributes['some_schemafield_name']
+
+Or, from a database perspective: The "db_attribute" table stores
+arbitrary attributes for each NewsItem, and the "db_schemafield" table
+is the key for those attributes.
+
+A SchemaField says, for example, that
+the "int01" column in the db_attribute table for the "real estate
+sales" Schema corresponds to the "sale price".
+
+Detailed Example
+------------------
+
+Imagine you have a "real estate sales"
+Schema, with an id of 5. Say, for each sale, you have the following
+information:
+
+    address
+
+    sale date
+
+    sale price
+
+    property type (single-family home, condo, etc.)
+
+The first two fields should go in NewsItem.location_name and NewsItem.item_date,
+respectively -- there's no reason to put them in the Attribute table, because
+the NewsItem table has a slot for them.
+
+Sale price is a number (we'll assume it's an integer), so create a
+:py:class:`SchemaField` defining it, with these values:
+
+    schema_id = 5
+        The id of our "real estate sales" schema.
+
+    name = 'sale_price'
+
+        The alphanumeric-and-underscores-only name for this field.
+        (Used in URLs, and as the key for ``newsitem.attributes``,
+        and for the
+        :py:meth:`NewsItemQuerySet.by_attribute` method.)
+
+    real_name = 'int01'
+        The column to use in the db_attribute model. Choices are:
+        int01-07, text01, bool01-05, datetime01-04, date01-05, time01-02,
+        varchar01-05. This value must be unique with respect to the schema_id.
+
+    pretty_name = 'sale price'
+        The human-readable name for this attribute.
+
+    pretty_name_plural = 'sale prices'
+        The plural human-readable name for this attribute.
+
+    display = True
+        Whether to display the value on the site.
+
+    is_lookup = False
+        Whether it's a lookup. (Don't worry about this for now; see the
+        :ref:`lookups` section below.)
+
+    is_filter = False
+        Whether it's a filter. (Again, don't worry about this for now.)
+
+    is_charted = False
+        Whether it's charted. (Again, don't worry.)
+
+    display_order = 1
+        An integer representing what order it should be displayed in on
+        newsitem_detail pages.
+
+    is_searchable = False
+        Whether it's searchable. This only applies to textual fields (varchars
+        and texts).  Don't use with Lookups.
+
+Once you've created this SchemaField, the value of "int01" for any db_attribute
+row with schema_id=5 will be the sale price.
+
+Having done all that, using the field is as easy as::
+
+   from ebpub.db.models import NewsItem
+   ni = NewsItem(schema__id=5, title='the title', description='the description', ...)
+   ni.save()
+   ni.attributes = {'sale_price': 59, ...}
+
+Searching by Attributes
+------------------------
+
+There is a simple API for searching NewsItems by attribute values:
+
+   NewsItem.objects.filter(schema__id=5).by_attribute(sale_price=59)
+
+
+Attributes: Under the hood
+---------------------------
+
+The dictionary-like API is provided thanks to the combination of
+:py:class:`AttributeDescriptor`, :py:class:`AttributeDict`,
+and :py:class:`Attribute`.
+
+Images
+------
+
+NewsItems have a ``newsitemimage_set`` reverse relationship
+with the :py:class:`NewsItemImage` model, allowing any number of
+images to be associated with one NewsItem.
+All the images for a NewsItem can be retrieved via
+``item.newsitemimage_set.all()``.
+
+
+Dates
+-----
+
+The distinction between ``NewsItem.pub_date`` and ``NewsItem.item_date``
+is intended for data sets where there's
+a lag in publishing or where the data is updated infrequently or
+irregularly. 
+
+For example, on EveryBlock.com, Chicago crime data is published a week
+after it is reported, so a crime's ``item_date`` is the day of the
+crime report, whereas the ``pub_date`` is the day the data was
+published to EveryBlock.com.
+
+Location, location, location
+-----------------------------
+
+NewsItems have several distinct notions of location:
+
+* ``NewsItem.location_name`` is a human-readable version of the location;
+  it can be anything, but typically it describes an address,
+  block, geographic area, or landmark.
+
+* ``NewsItem.location`` is used frequently; typically a point, and
+  typically set when scraping data, by geocoding if
+  not provided in the source data.  This is used in
+  many views for finding relevant NewsItems (indirectly; actually
+  see below about NewsItemLocations).
+
+* ``NewsItem.location_set`` is a convenient way to get
+  all :py:class:`Locations <Location>` that overlap this item's ``location``.
+  It's a many-to-many relationship (via the
+  NewsItemLocation model).  The NewsItemLocations are created by a sql trigger
+  whenever self.location changes; not set by any python code. Used
+  in various views for filtering.
+
+* ``NewsItem.location_object`` is a single :py:class:`Location` reference;
+  theoretically to be explicitly assigned by a scraper script when
+  there's no known address or geographic point for this NewsItem
+  but we know the name of the general area it's within.
+
+  For example, many stories might mention a town or city name, or a
+  police report might tell you the precinct.  In practice, this field
+  is usually Null; more importantly it's only used currently
+  (2011-12-06) by self.location_url(), for linking back to a location
+  view from a newsitem view.  (Example of where everyblock.com uses
+  this: NYC crime aggregates,
+  eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
+
+  See also this ticket http://developer.openblockproject.org/ticket/93
+  about possibly making more use of self.location_object.
+
+
+Aggregates
+----------
+
+Several parts of ebpub display aggregate totals of NewsItems for a particular
+Schema; for example, charts of how many were added each day.
+
+Because these calculations can be expensive, there's an infrastructure
+for caching the aggregate numbers regularly in separate tables (db_aggregate*).
+
+To do this, just run the ``update_aggregates`` script on the command line.
+
+You'll want to do this on a regular basis, depending on how often you update
+your data. **Some parts of the site (such as charts) will not be visible** until
+you populate the aggregates.
+
+.. _future_events:
+
+Event-like News Types
+----------------------
+
+In order for OpenBlock to treat a news type as being about
+(potentially) future events, rather than news from the (recent) past,
+there is a simple convention that you should follow:
+
+1. Set the schema's ``is_event=True``.
+
+2. Add a SchemaField with ``name='start_time'``. It should be a Time
+   field, i.e. ``real_name`` should be one of ``time01``, ``time02``,
+   etc.  Leave ``is_filter``, ``is_lookoup``, ``is_searchable``, and
+   ``is_charted`` set to False.  The ``pretty_name`` can be whatever
+   you like of course.
+
+3. Optionally add another SchemaField with ``name='end_time'``, if your data
+   source will include this information.
+
+4. When adding NewsItems of this type, the NewsItem's ``item_date``
+   field should be set to the date on which the event will (or already
+   did) take place, and ``attributes['start_time']`` should be set to
+   the (local) time it will start, and ``attributes['end_time']``
+   (if needed) should be set to the (local) end time.
+
+All-day events can be represented by leaving ``start_time`` empty.
+
+There is no special support for repeating events or other advanced
+calendar features.
+
+.. _lookups:
+
+Lookups
+========
+
+Consider the "property type" data we have for each real estate sale
+NewsItem in the example above.
+We could store it as a varchar field (in which case we'd set
+real_name='varchar01') -- but that would cause a lot of duplication and
+redundancy, because there are only a couple of property types -- the set
+['single-family', 'condo', 'land', 'multi-family']. To represent this set,
+we can use a Lookup -- a way to normalize the data.
+
+To do this, set ``SchemaField.is_lookup=True`` and make sure to use an 'int' column
+for SchemaField.real_name. Then, for each record, get or create a Lookup
+object (see the model in ``ebpub/db/models.py``) that represents the data, and use
+the Lookup's id in the appropriate db_attribute column. The helper function
+``Lookup.objects.get_or_create_lookup()`` is a convenient shortcut here (see the
+code/docstring of that function).
+
+**Many-to-many Lookups**
+
+Sometimes a NewsItem has multiple values for a single attribute. For example, a
+restaurant inspection can have multiple violations. In this case, you can use a
+many-to-many Lookup. To do this, just set ``SchemaField.is_lookup=True`` as before,
+but use a varchar field for the ``SchemaField.real_name``. Then, in the
+db_attribute column, set the value to a string of comma-separated integers of
+the Lookup IDs.
+
+Charting and filtering lookups
+------------------------------
+
+Set ``SchemaField.is_filter=True`` on a lookup SchemaField, and the detail page for
+the NewsItem (newsitem_detail) will automatically link that field to a page
+that lists all of the other NewsItems in that Schema with that particular
+Lookup value.
+
+Set ``SchemaField.is_charted=True`` on a lookup SchemaField, and the detail page
+for the Schema (schema_detail) will include a chart of the top 10 lookup values
+in the last 30 days' worth of data. Similar charts are on the
+place detail overview page. (This assumes aggregates are populated; see
+the Aggregates section below.)
+
+
+module contents
+================
+'''
 
 from django.conf import settings
 from django.contrib.gis.db import models
@@ -60,9 +364,10 @@ def field_mapping(schema_id_list):
     """
     Given a list of schema IDs, returns a dictionary of dictionaries, mapping
     schema_ids to dictionaries mapping the fields' name->real_name.
-    Example return value:
+    Example return value::
+
         {1: {u'crime_type': 'varchar01', u'crime_date', 'date01'},
-         2: {u'permit_number': 'varchar01', 'to_date': 'date01'},
+         2: {u'permit_number': 'int01', 'to_date': 'date01'},
         }
     """
     result = {}
@@ -130,16 +435,17 @@ class SchemaPublicManager(SchemaManager):
 
 class Schema(models.Model):
     """
-    Describes a type of NewsItem.  A NewsItem has exactly one Schema,
-    which describes its Attributes, via associated SchemaFields.
+    Describes a type of :py:class:`NewsItem`.  A NewsItem has exactly one Schema,
+    which describes its Attributes, via associated :py:class:`SchemaFields <SchemaField>`.
 
     nb. to get all NewsItem instances for a Schema, you can do the usual as per
     http://docs.djangoproject.com/en/dev/topics/db/queries/#backwards-related-objects:
     schema.newsitem_set.all()
 
-    nb. Some Schemas may not be visible to some users, if eg. is_public=False.
-    To abstract this, use the get_schema_manager(request)
-    rather than directly using Schema.objects or Schema.public_objects.
+    nb. Some Schemas may not be visible to some users, if eg.
+    ``is_public=False``. To abstract this, use the
+    :py:func:`ebpub.utils.view_utils.get_schema_manager` function,
+    rather than directly using ``Schema.objects`` or ``Schema.public_objects``.
 
     (To filter NewsItems appropriately, do NewsItem.objects.by_request(request)
     which will take care of using the right Schema manager.)
@@ -206,10 +512,10 @@ class Schema(models.Model):
     # TODO: maybe this should be either a FileField or a FilePathField instead?
     map_icon_url = models.TextField(
         blank=True, null=True,
-        help_text="Set this to a URL to a small image icon and it will be displayed on maps.")
+        help_text="Set this to a URL to a small image icon and it will be displayed on maps. Should be roughly 40x40 pixels. Optional")
     map_color = models.CharField(
         max_length=255, blank=True, null=True,
-        help_text="CSS Color used on maps to display this type of news. eg #FF0000.  Only used if map_icon_url is not set.")
+        help_text="CSS color code used on maps to display this type of news. eg #FF0000.  Only used if map_icon_url is not set. Optional.")
 
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
@@ -348,6 +654,14 @@ class LocationTypeManager(models.Manager):
 
 
 class LocationType(models.Model):
+    '''
+    Used for classifying and grouping :py:class:`Location`.
+    
+    You'll want to create at least one LocationType with the slug set to
+    the same value as ``settings.DEFAULT_LOCTYPE_SLUG``, because that's
+    used in various default URLs.  By default this is set to
+    "neighborhoods".
+    '''
     name = models.CharField(max_length=255,
                             help_text='for example, "Ward" or "Congressional District"')
     plural_name = models.CharField(max_length=64)
@@ -382,7 +696,33 @@ class LocationManager(models.GeoManager):
 
 
 class Location(models.Model):
-    name = models.CharField(max_length=255) # e.g., "35th Ward"
+    '''
+    A polygon that represents a geographic area, such as a specific
+    neighborhood, ZIP code boundary or political boundary. Each ``Location`` has an
+    associated :py:class:`LocationType` (e.g., "neighborhood"). To add a Location to the
+    system, follow these steps:
+
+        1. Create a :py:class:`LocationType`.
+
+        2. Get the Location's geographic representation (a set of
+           longitude/latitude points that determine the border of the
+           polygon).  You might want to draw this on your own using
+           desktop GIS tools or online tools, or you can try to get
+           the data from a company or government agency.  (You can
+           even draw simple shapes in the OpenBlock admin UI.)
+
+        3. With the geographic representation, create a row in the
+           "db_location" table that describes the Location. See below
+           for what the various fields mean.
+
+           You can create Locations in various ways: use the admin UI;
+           use the script ``add_location`` to create one by
+           specifying its geometry in well-known text (WKT) format;
+           use the script ``import_locations`` to import them from shapefiles;
+           or use the Django model API; or do a manual SQL INSERT statement.
+    '''
+
+    name = models.CharField(max_length=255, help_text='e.g., "35th Ward"')
     normalized_name = models.CharField(max_length=255, db_index=True)
     slug = models.SlugField(max_length=32, db_index=True)
     location_type = models.ForeignKey(LocationType)
@@ -395,7 +735,8 @@ class Location(models.Model):
         help_text="In square meters. This is populated automatically."
         # the db trigger is created by ebpub/db/migrations/0004_st_intersects_patch.py.
         )
-    population = models.IntegerField(blank=True, null=True) # from the 2000 Census
+    population = models.IntegerField(blank=True, null=True,
+                                     help_text='Optional. If used, typicall found in census data.')
     user_id = models.IntegerField(
         blank=True, null=True,
         help_text="Used for 'custom' Locations created by end users.")
@@ -478,7 +819,7 @@ class LocationSynonymManager(models.Manager):
 
 class LocationSynonym(models.Model):
     """
-    represents a synonym for a Location
+    Represents an alternate name for a :py:class:`Location`.
     """
     pretty_name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, db_index=True)
@@ -502,7 +843,7 @@ class LocationSynonym(models.Model):
 class AttributesDescriptor(object):
     """
     This class provides the functionality that makes the attributes available
-    as `attributes` on a model instance.
+    as a dictionary-like `attributes` on a model instance.
     """
     def __get__(self, instance, instance_type=None):
         if instance is None:
@@ -618,14 +959,16 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
     def by_attribute(self, schema_field, att_value, is_lookup=False):
         """
         Returns a QuerySet of NewsItems whose attribute value for the given
-        SchemaField is att_value. If att_value is a list, this will do the
+        SchemaField is att_value.
+
+        If att_value is a list, this will do the
         equivalent of an "OR" search, returning all NewsItems that have an
         attribute value in the att_value list.
 
-        This handles many-to-many lookups correctly behind the scenes.
+        Handles many-to-many lookups correctly behind the scenes.
 
         If is_lookup is True, then each att_value must be either a
-        Lookup instance, or the 'code' of a Lookup instance, or an id
+        :py:class:`Lookup` instance, or the 'code' of a Lookup instance, or an id
         of a Lookup instance.  (If is_lookup is False, then only ids
         will work.)
         """
@@ -780,57 +1123,20 @@ class NewsItemManager(models.GeoManager):
 
 class NewsItem(models.Model):
     """
-    Lowest common denominator metadata for News-like things.
+    A NewsItem is broadly defined as "something with a date and a
+    location." For example, it could be a local news article, a
+    building permit, a crime report, or a photo.
 
-    self.schema and self.attributes are used for extended metadata;
-    If all you want is to examine the attributes, self.attributes
-    can be treated like a dict.
-    (Internally it's a bit complicated. See the Schema, SchemaField, and
-    Attribute models, plus AttributeDescriptor, for how it all works.)
+    For the big picture, see :ref:`newsitems`
 
-    NewsItems have several distinct notions of location:
-
-    * self.location_name is a human-readable version of the location;
-      it can be anything, but typically it describes an address,
-      block, geographic area, or landmark.
-
-    * self.location is typically a point, and is used in views for
-      filtering newsitems. Theoretically (untested!!) could also be a
-      GeometryCollection, for news items that mention multiple
-      places. This is typically set during scraping, by geocoding if
-      not provided in the source data.
-
-    * self.location_set uses a many-to-many relationship (via the
-      NewsItemLocation model) for fast lookups of all Locations that
-      intersect with self.location.  This is set by a sql trigger
-      whenever self.location changes; not set by any python code. Used
-      in various views for filtering.
-
-    * self.location_object is a single Location reference;
-      theoretically to be explicitly assigned by a scraper script when
-      there's no known address or geographic point for this NewsItem
-      but we know the name of an Area it's within.  For example, many
-      stories might mention a town or city name, or a police report
-      might tell you the precinct.  But a) it's usually Null in
-      practice, and b) it's only used currently (2011-12-06) by
-      self.location_url(), for linking back to a location view from a
-      newsitem view.  (Example of where everyblock.com uses this: NYC
-      crime aggregates, eg. http://nyc.everyblock.com/crime/by-date/2010/8/23/3364632/ )
-
-      See also this ticket http://developer.openblockproject.org/ticket/93
-      about possibly making more use of self.location_object.
-
-    NewsItems also can have any number of images associated with them,
-    via the NewsItemImage model.
-    All the images for a NewsItem can be retrieved like: item.newsitemimage_set.all()
 
     """
 
     # We don't have a natural_key() method because we don't know for
     # sure that anything other than ID will be unique.
 
-    schema = models.ForeignKey(Schema)
-    title = models.CharField(max_length=255)
+    schema = models.ForeignKey(Schema, help_text=u'What kind of news is this and what extra fields does it have?')
+    title = models.CharField(max_length=255, help_text=u'the "headline"')
     description = models.TextField()
     url = models.TextField(
         blank=True,
@@ -843,7 +1149,7 @@ class NewsItem(models.Model):
         )
     item_date = models.DateField(
         db_index=True,
-        help_text='Date (no time) this Item occurred, or was published on the original source site.',
+        help_text='Date (without time) this Item occurred, or failing that, the date of publication on the original source site.',
         default=datetime.date.today,
         blank=True,
         )
@@ -1138,6 +1444,12 @@ class Lookup(models.Model):
     """
     Lookups are a normalized way to store Attribute fields that have only a
     few possible values.
+
+    For more context, see :ref:`lookups`.
+
+
+    _lookups:
+
     """
     schema_field = models.ForeignKey(
         SchemaField,
@@ -1179,8 +1491,21 @@ class Lookup(models.Model):
 
 class NewsItemLocation(models.Model):
     """
-    Many-to-many mapping of NewsItems to Locations where the geometries intersect.
-    Populated by triggers.
+
+    Many-to-many mapping of :py:class:`NewsItem` to
+    :py:class:`Location` where the geometries intersect.
+
+    This is both an optimization - so we don't have to do spatial
+    searches very much - and a useful abstraction in that a NewsItem
+    may be relevant in any number of places.
+    You can get all associated Locations from a
+    NewsItem by doing ``newsitem.location_set.all()``, and all associated
+    NewsItems from a Location by doing ``location.newsitem_set.all()``.
+
+    Normally you don't have to worry about creating NewsItemLocations:
+    there are database triggers that update this table whenever a
+    NewsItem's location is set or updated.
+
     """
     news_item = models.ForeignKey(NewsItem)
     location = models.ForeignKey(Location)

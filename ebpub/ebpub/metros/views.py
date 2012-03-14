@@ -24,7 +24,7 @@ from ebpub.metros.models import Metro
 def lookup_metro(request):
     """
     Lookups up a metro that contains the point represented by the two
-    GET parameters, `lng' and `lat'.
+    GET parameters, ``lng`` and ``lat``.
 
     Returns a JSON object representing the Metro, minus the actual
     geometry.

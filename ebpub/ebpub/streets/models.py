@@ -16,6 +16,65 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+Blocks
+======
+.. _blocks:
+
+A :py:class:`Block` is a segment of a single street between one side street and another
+side street. Blocks are a fundamental piece of the ebpub system; they're used
+both in creating a page for each block and in geocoding.
+
+Blocks are stored in a database table called "blocks". To populate this table,
+follow these steps:
+
+    1. Obtain a database of the streets in your city, along with each street's
+       address ranges and individual street segments. If you live in the
+       U.S.A. and your city hasn't had much new development since the year
+       2000, you might want to use the U.S. Census' TIGER/Line file
+       (http://www.census.gov/geo/www/tiger/).
+
+    2. Import the streets data into the "blocks" table. ebpub provides two
+       pre-made import scripts:
+
+           * If you're using TIGER/Line data, you can use the script
+             ``import_blocks_tiger`` which should be on your $PATH.
+
+           * If you're using data from ESRI, you can use the script
+             ``ebpub/streets/blockimport/esri/importers/blocks.py.``
+
+           * If you're using data from another source, take a look at the
+             Block model in ``ebpub/streets/models.py`` for all of the required
+             fields.
+
+
+Streets and Intersections
+=========================
+
+The ebpub system maintains a separate table of each :py:class:`Street`
+in the city. Once you've populated the blocks, you can automatically
+populate the streets table by running the importer
+``ebpub/streets/bin/populate_streets.py``, which should be on your
+``$PATH`` as ``populate_streets``.
+
+The ebpub system also maintains a table of each
+:py:class:`Intersection` in the city, where an intersection is defined
+as the meeting point of two streets. Just like streets, you can
+automatically populate the intersections table by running the code in
+the ``populate_streets`` script.
+
+Streets and intersections are both necessary for various bits of the site to
+work, such as the "browse by street" navigation and the geocoder (which
+supports the geocoding of intersections).
+
+Once you've got all of the above geographic boundary data imported, you can
+verify it on the site by browsing to /streets/ and /locations/.
+
+module contents
+================
+
+'''
+
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
@@ -408,6 +467,7 @@ class Block(models.Model):
 
 
 class Street(models.Model):
+
     street = models.CharField(max_length=255, db_index=True,
                               help_text='Always uppercase.')
     pretty_name = models.CharField(max_length=255)

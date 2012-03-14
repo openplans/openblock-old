@@ -440,19 +440,20 @@ def featured_lookup_for_item(context, newsitem, attribute_key):
 @register.simple_tag(takes_context="true")
 def get_featured_lookups_by_schema(context):
     """
-    Get all featured lookup names and URLs for them; puts in the context as
+    Get all featured :py:class:`ebpub.db.models.Lookup` names and URLs for them; 
+    puts in the context as
     'featured_lookups', a mapping grouped by schema.
 
-    Example:
+    Example::
 
-    {% get_featured_lookups_by_schema %}
-    {% for schema, lookups in featured_lookups.items %}
-       <ul>{{ schema }}
-        {% for info in lookups %}
-          <a href="{{ info.url }}">{{ info.lookup }}</a>
-           ...
+        {% get_featured_lookups_by_schema %}
+        {% for schema, lookups in featured_lookups.items %}
+           <ul>{{ schema }}
+            {% for info in lookups %}
+              <a href="{{ info.url }}">{{ info.lookup }}</a>
+               ...
+            {% endfor %}
         {% endfor %}
-    {% endfor %}
     """
     lookups = {}
     for lookup in Lookup.objects.filter(featured=True).select_related():

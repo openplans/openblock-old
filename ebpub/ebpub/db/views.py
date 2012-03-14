@@ -116,7 +116,10 @@ def get_date_chart(schemas, start_date, end_date, counts):
 
 def block_bbox(block, radius):
     """
-    Assumes `block' has `wkt' attribute
+    Given a :py:class:`ebpub.streets.models.Block`, and an integer ``radius``,
+    returns a geometry representing a bounding box around the block.
+
+    Assumes `block`` has ``wkt`` attribute.
     """
     try:
         from osgeo import ogr

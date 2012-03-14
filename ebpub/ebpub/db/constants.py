@@ -16,6 +16,11 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Various numbers that appear throughout the code but don't
+change often enough to warrant going in settings.py.
+"""
+
 # The number of days to use in sparklines.
 # A sparkline, in this context, is the aggregate view of
 # how many NewsItems were added per page.

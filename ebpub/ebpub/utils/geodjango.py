@@ -32,7 +32,7 @@ logger = logging.getLogger('ebpub.utils.geodjango')
 def reduce_layer_geom(layer, method):
     """
     Iterates over all the geometries in an GDAL layer and successively
-    applies given `method' to the geometries.
+    applies given ``method`` to the geometries.
     """
     def reduction(x, y):
         return getattr(x, method)(y)
