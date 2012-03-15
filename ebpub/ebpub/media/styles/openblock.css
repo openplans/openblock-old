@@ -1264,3 +1264,8 @@ ul.errorlist {
 .comment {
     margin-bottom: 1em;
 }
+
+/* ######## IE: make rescaled images look tolerable ############## */
+img {
+    -ms-interpolation-mode: bicubic;
+}
