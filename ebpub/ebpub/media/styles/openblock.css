@@ -831,6 +831,12 @@ margin : 0;
 padding : auto 0;
 }
 
+li.newsitem span.newsitem {
+    border-top: 0;
+    float: right;
+    display: inline;
+}
+
 .pane .module-footer a {
 margin-right : 1em;
 float : left;

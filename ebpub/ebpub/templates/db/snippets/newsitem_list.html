@@ -3,7 +3,7 @@
 
 {% for newsitem in newsitem_list %}
 	<li id="newsitem-{{ newsitem.id }}" class="newsitem">
-	<span class="newsitem hidden" style="float: right;">
+	<span class="newsitem hidden">
 	  <form><input type="checkbox" class="select-newsitem" id="newsitem-{{newsitem.id}}"></form>
 	</span>
 	{% with location_url=newsitem.location_url %}
