@@ -705,7 +705,7 @@ padding : 1em 0 0 0;
 border-top : 1px solid #e2e2e2;
 }
 
-#place-detail-content h4 {
+#place-detail-content h4, #place-detail-events h4 {
 font-size : 1em;
 color : #000;
 text-transform : none;
