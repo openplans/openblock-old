@@ -94,7 +94,7 @@ if get_metro()['multiple_cities']:
         # optionally accept city slug below. this allows for a no arg
         # ebpub-street-list call to return the street list for single city and
         # city list for multi city setups. this way the templates can call
-        # {% url ebpub-city-list %} without having to worry about single/multi
+        # {% url ebpub-street-list %} without having to worry about single/multi
         # city configurations
         url(r'^streets/(?:([-a-z]{3,40})/)?$', views.street_list,
             name='ebpub-street-list'),
