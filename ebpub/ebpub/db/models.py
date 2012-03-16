@@ -905,6 +905,7 @@ class NewsItem(models.Model):
     def location_url(self):
         if self.location_object_id is not None:
             return self.location_object.url()
+        # TODO: look for a Block?
         return None
 
     def attributes_for_template(self):

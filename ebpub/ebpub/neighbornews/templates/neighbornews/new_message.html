@@ -19,27 +19,23 @@
 		{% autoescape off %}
     // Set up the map config.
     function loadMap() {
-		  var config = {{map_configuration}};
-    	config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
-		  config.center = [{{default_lon}}, {{default_lat}}];
+      var config = {{map_configuration}};
+      config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+      config.center = [{{default_lon}}, {{default_lat}}];
       config.zoom = {{default_zoom}};
-      var map = new OBMap(config); 
+      var map = new OBMap(config);
       _setupMessagePage(map);
-    	return map;
-		}
+      return map;
+    }
 
     // Connect the map to other form widgets, and set up date picker etc.
     function _setupMessagePage(obmap) {
       $j('#id_item_date').calendricalDate({usa: true});
       $j('#id_start_time, #id_end_time').calendricalTimeRange({usa: true});
       var map = obmap.map;
-      var default_map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
-      default_map_center.transform(map.displayProjection, map.projection);
-
-      var default_map_zoom = {{default_zoom}};
       var result_layer = new OpenLayers.Layer.Vector();
-	    map.addLayer(result_layer);
-
+      map.addLayer(result_layer);
+    	    
       function setPoint(feature) {
         result_layer.removeFeatures(result_layer.features);
         result_layer.addFeatures(feature);
@@ -147,14 +143,13 @@
       
       var drawpt = new OpenLayers.Control.DrawFeature(result_layer, 
 	                                                    OpenLayers.Handler.Point);
-	    drawpt.events.on(
-	      {'featureadded': function(evt) {
+      drawpt.events.on({'featureadded': function(evt) {
           selectNone();
           setPoint(evt.feature);
-	      }, 
-	      scope: this
-	    });
-	    map.addControl(drawpt);
+          },
+        scope: this
+      });
+      map.addControl(drawpt);
       drawpt.activate();
 
       var initLocation = $j('#id_location').val().trim();
@@ -162,7 +157,7 @@
         recenterOn(new OpenLayers.Geometry.fromWKT(initLocation));
       }
 
-	    $j('#neighbornews_form').submit(function(evt) {
+        $j('#neighbornews_form').submit(function(evt) {
         var loc = $j('#id_location').val().trim();
         if (loc == '') {
           $j('#general_error').html('Please specify a location on the map.');
@@ -219,7 +214,7 @@
 	</div><!--/ #mapwrapper -->
 	{% endblock map %}
 	<!-- end block map -->
-  <span class="map_note">Click to specify location</span>
+  <span class="map_note">Click map to specify location</span>
   <div id="geocoder-results"></div>
 </div><!--/ #nav-location -->
 
@@ -243,7 +238,7 @@
 
         {{field}}
         {% if field.name == "location_name" %}
-        <a href="#" class="mapit-link">map it</a>
+        <a href="#" class="mapit-link button">map it</a>
         {% endif %}
 
         <div class="form-help">{{ field.help_text }}</div>
@@ -262,8 +257,8 @@
 
     <div>
       <input type="submit" value="Submit" />
+      <br>&nbsp;
     </div>
-
   </form>
 </div> <!--/ #content -->
 

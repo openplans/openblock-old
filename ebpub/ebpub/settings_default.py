@@ -259,10 +259,6 @@ required_settings.append('DEFAULT_MAP_CENTER_LON')
 required_settings.append('DEFAULT_MAP_CENTER_LAT')
 required_settings.append('DEFAULT_MAP_ZOOM')
 
-# XXX UNUSED?
-required_settings.append('MAP_SCALES')
-MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
-
 # Which base layer to use on maps.
 # May be any of the default olwidget base layers,
 # as per http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display

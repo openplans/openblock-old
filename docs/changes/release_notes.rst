@@ -28,8 +28,13 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Added a "View selected items on map" link and checkboxes on Schema
+  filter pages, to allow viewing explicitly selected items on the "big map".
+
 * Changed URLs used by the schema_filter view, so some bookmarks may
   break. (Ticket # 266)
+
+* Removed unused ebpub/utils/mapmath.py module.
 
 * Removed the EB_MEDIA_ROOT and EB_MEDIA_URL settings; now use
   django's normal MEDIA_ROOT and MEDIA_URL instead.
@@ -57,6 +62,8 @@ Backward Incompatibilities
 
 New Features in 1.2
 -------------------
+
+* Rest API: Allow searching by multiple types (schemas).
 
 * Added an admin UI for importing NewsItems from spreadsheets
   (currently only handles CSV and old-style Excel sheets; not .xslx)
@@ -231,6 +238,8 @@ Bugs fixed
 
 Documentation
 -------------
+
+* Better docs about template overrides, see :ref:`custom-look-feel`.
 
 * Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253
 

@@ -36,7 +36,6 @@ import datetime
 import logging
 import re
 
-
 logger = logging.getLogger('ebpub.richmaps.views')
 
 def bigmap_filter(request, slug):
@@ -58,62 +57,94 @@ def bigmap_filter(request, slug):
 
     config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
 
+    # TODO: This can leave in permalink params eg. 'i', even if there
+    # is also 'ids', because it doesn't recognize those as being the
+    # same.
     new_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
     if new_url != request.get_full_path():
         return HttpResponseRedirect(new_url)    
 
-    
-    # add in the filter layer
-    base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
-    layer_url = filterchain.make_url(base_url=base_url)
-    custom_layer = {
-        'url': layer_url,
-        'params': {},
-        'title': "Custom Filter",
-        'visible': True
-    }
-    config['layers'].append(custom_layer)
+    # add in the filter layer, if not already there
+    have_custom_layer = False
+    for layer in config['layers']:
+        if layer['title'] == 'Custom Filter':
+            have_custom_layer = True
+            break
+    if not have_custom_layer:
+        base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
+        layer_url = filterchain.make_url(base_url=base_url)
+        custom_layer = {
+            'url': layer_url,
+            'params': {},
+            'title': "Custom Filter",
+            'visible': True
+        }
+        config['layers'].append(custom_layer)
 
-
-
-    if config['is_widget']: 
+    if config['is_widget']:
         return eb_render(request, 'richmaps/embed_bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
-    else:         
+    else:
         return eb_render(request, 'richmaps/bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
 
 
 def bigmap(request):
-    config = _decode_map_permalink(request)
+    filterchain = FilterChain(request=request)
+    config = _decode_map_permalink(request, filters=filterchain)
 
     if config['is_widget']: 
         return eb_render(request, 'richmaps/embed_bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
-    else:         
+    else:
         return eb_render(request, 'richmaps/bigmap.html', {
             'map_config': simplejson.dumps(config, indent=2)
         })
 
 def _decode_map_permalink(request, show_default_layers=True, filters=None):
     """
-    request parameters: 
-    c - map center 
-    z - map zoom 
-    l - layer info
-    p - popup center
-    f - popup feature
+    Permalinks for the big map, with more compact query parameters.
+
+    Returns a map_config dictionary.
+
+    Accepted parameters:
+
+    c - map center, separated by underscore, eg. c=-92.28283_38.95658
+
+    z - map zoom, eg. z=12
+
+    l - layers to display on load, comma- or dash-separated,
+        eg. l=p13,t32,p1 or eg. l=p12345-t7-t9,
+        where p => place layer
+        and t => schema ("type") layer
+
+    i - items to load specificially by id, comma- or dash-separated,
+        eg. i=t1234-t456
+
+    p - popup center, with underscore, eg. p=-92.3438_38.9658
+    f - popup feature, eg. f=t1234 or f=p1234
+        where p = a place and t = a news item
+
     start_date - start date (inclusive) %m/%d/%Y
     end_date - end date (inclusive) %m/%d/%Y
-    d - duration in days (overridden by end date)
+    d - duration in days (overridden by end date), eg. d=7
 
-    x - show as 'widget' 
-    v- limits what map controls are displayed (widget only)
-    w - width of map (widget only)
-    h - height of map (widget only)
+    x - show as 'widget', just the map and nothign around it.
+        Takes no value, eg. x
+    w - width of map (widget only), in pixels
+    h - height of map (widget only), in pixels
+    v - limits what map controls are displayed (widget only).
+        By default, widget-stype map shows none of these.
+        Possible values, joined with no separator:
+        l - layer switcher
+        h - list of headlines next to map
+        p - permalink
+        eg. to turn them all on: v=lhp
+
+
     """
     
     params = request.GET
@@ -207,7 +238,6 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
             startdate = date_filter.start_date
             enddate = date_filter.end_date
 
-
     default_interval = datetime.timedelta(days=7)
     duration = params.get('d')
     if duration is not None:
@@ -233,7 +263,12 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
     if filters and filters.get('date') is None: 
         filters.add('date', startdate, enddate)
 
+    api_startdate = startdate.strftime("%Y-%m-%d")  
+    api_enddate = (enddate + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+
     layers = []
+
+    # All available place layers.
     for place_type in PlaceType.objects.filter(is_mappable=True).all():
         layers.append({
             'id': 'p%d' % place_type.id,
@@ -245,9 +280,7 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
             'visible': place_type.id in place_types # off by default
         })
 
-    api_startdate = startdate.strftime("%Y-%m-%d")  
-    api_enddate = (enddate + datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-
+    # All available NewsItem layers.
     for schema in get_schema_manager(request).all():
         layers.append({
             'id': 't%d' % schema.id,
@@ -260,8 +293,28 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
             'visible': (no_layers_specified and show_default_layers) or schema.id in schemas # default on if no 't' param given
         })
 
+    # Explicit filtering by ID.
+    ids = params.get('i') or u''
+    ids = [i.strip() for i in re.split(r'[^\d]+', ids)
+           if i.strip()]
+    if ids:
+        if filters is None:
+            filters = FilterChain(request)
+        filters.replace('id', *ids)
+
+    if filters is not None:
+        base_url = reverse('map_items_json')
+        layer_url = filters.make_url(base_url=base_url)
+        custom_layer = {
+            'url': layer_url, #base_url,
+            'params': {}, #layer_params,
+            'title': u"Custom Filter",
+            'visible': True,
+            'id': 'c1',
+            }
+        layers.append(custom_layer)
+
     is_widget = params.get('x', None) is not None
-        
     controls = {}
     control_list = params.get("v", None)
     if control_list is not None: 
@@ -302,11 +355,14 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
       }, 
     }
 
-
+    if 'id' in filters:
+        # Put them in the params so the js code can construct, well,
+        # permalinks with these ids, on the client side.
+        ids = '-'.join(map(str, filters['id'].ids))
+        config['permalink_params']['i'] = ids
     if popup_info:
         config['popup'] = popup_info
 
-    
     if is_widget: 
         config['controls'] = controls
         if width is not None: 
