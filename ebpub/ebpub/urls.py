@@ -123,7 +123,7 @@ else:
     # single-city block patterns.
     urlpatterns += patterns(
         '',
-        url(r'^streets/(\w{0})$', views.street_list,
+        url(r'^streets/$', views.street_list,
             name='ebpub-street-list'),
         url(r'^streets/(\w{0})([-a-z0-9]{1,64})/$', views.block_list,
             name='ebpub-block-list'),

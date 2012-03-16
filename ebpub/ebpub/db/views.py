@@ -992,7 +992,7 @@ def city_list(request):
                       'bodyclass': 'city-list',
                       })
 
-def street_list(request, city_slug):
+def street_list(request, city_slug=None):
     city = city_slug and City.from_slug(city_slug) or None
     kwargs = city_slug and {'city': city.norm_name} or {}
     streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
