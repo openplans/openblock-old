@@ -19,7 +19,7 @@
 from django.conf import settings
 from django.contrib.gis.shortcuts import render_to_kml
 from django.core.cache import cache
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db.models import Q
 from django.http import Http404
 from django.http import HttpResponse
@@ -481,7 +481,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
             try:
                 block, distance = geocoder.reverse.reverse_geocode(ni.location)
                 location_url = block.url()
-            except geocoder.reverse.ReverseGeocodeError:
+            except (geocoder.reverse.ReverseGeocodeError, NoReverseMatch):
                 logger.error(
                     "%r (id %d) has neither a location_url, nor a block,"
                     " nor a reverse-geocodable location" % (ni, ni.id))
