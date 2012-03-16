@@ -91,6 +91,11 @@ if get_metro()['multiple_cities']:
     urlpatterns += patterns(
         '',
         url(r'^streets/$', views.city_list, name='ebpub-city-list'),
+        # optionally accept city slug below. this allows for a no arg
+        # ebpub-street-list call to return the street list for single city and
+        # city list for multi city setups. this way the templates can call
+        # {% url ebpub-city-list %} without having to worry about single/multi
+        # city configurations
         url(r'^streets/(?:([-a-z]{3,40})/)?$', views.street_list,
             name='ebpub-street-list'),
         url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/$', views.block_list,
