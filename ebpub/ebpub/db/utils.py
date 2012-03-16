@@ -16,7 +16,6 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -30,10 +29,8 @@ from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
 from ebpub.utils.view_utils import make_pid
 from ebpub.savedplaces.models import SavedPlace
-import datetime
 
-# For backward compatibility
-from ebpub.utils.dates import today
+from ebpub.utils.dates import today # For backward compatibility
 
 def populate_attributes_if_needed(newsitem_list, schema_list,
                                   get_lookups=True):
@@ -129,6 +126,9 @@ def populate_attributes_if_needed(newsitem_list, schema_list,
         for field_name, real_name in fmap[ni.schema_id]['fields']:
             value = att[real_name]
             if real_name in fmap[ni.schema_id]['lookups']:
+                if value is None:
+                    value = u''
+                    continue
                 if real_name.startswith('int'):
                     value = lookup_objs[value]
                 else: # Many-to-many lookups are comma-separated strings.

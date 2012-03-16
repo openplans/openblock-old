@@ -40,7 +40,7 @@ from ebpub.db.schemafilters import FilterChain
 from ebpub.db.schemafilters import BadAddressException
 from ebpub.db.schemafilters import BadDateException
 
-from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
+from ebpub.db.utils import populate_attributes_if_needed, populate_schema
 from ebpub.db.utils import url_to_place
 from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
@@ -50,7 +50,7 @@ from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
-from ebpub.utils.dates import daterange, parse_date
+from ebpub.utils.dates import daterange, parse_date, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
 
@@ -321,8 +321,14 @@ def _homepage_context(request):
             non_empty_date_charts.append(chart)
         else:
             empty_date_charts.append(chart)
-    non_empty_date_charts.sort(lambda a, b: cmp(b['total_count'], a['total_count']))
-    empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
+    def _date_chart_sort_func(a, b):
+        return cmp(
+            # Higher importance first, higher count first, lower name first.
+            (b['schema'].importance, b['total_count'], a['schema'].plural_name),
+            (a['schema'].importance, a['total_count'], b['schema'].plural_name))
+
+    non_empty_date_charts.sort(_date_chart_sort_func)
+    empty_date_charts.sort(_date_chart_sort_func)
     return {
         'location_type_list': lt_list,
         'street_count': street_count,
@@ -750,9 +756,6 @@ def schema_filter(request, slug):
     query params (eg. date, location, or values of SchemaFields).
     """
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    if not s.allow_charting:
-        return HttpResponsePermanentRedirect(s.url())
-
     context = {
         'bodyclass': 'schema-filter',
         'bodyid': s.slug,
@@ -888,8 +891,7 @@ def schema_filter(request, slug):
             if filterchain.get('date') is None:
                 # force a date range; not sure why Luke wanted that?
                 if ni_list:
-                    additions=[('date',
-                                [ni_list[0].item_date, ni_list[-1].item_date])]
+                    additions=[('date', sorted([ni_list[0].item_date, ni_list[-1].item_date]))]
                 else:
                     additions=[]
                 large_map_url = filterchain.make_url(
@@ -925,7 +927,8 @@ def schema_filter(request, slug):
     })
     context['map_configuration'] = _preconfigured_map(context);
 
-    templates_to_try = ('db/schema_filter/%s.html' % s.slug, 'db/filter.html')
+    templates_to_try = ('db/schema_filter/%s.html' % s.slug,
+                        'db/schema_filter.html')
     return eb_render(request, templates_to_try, context)
 
 

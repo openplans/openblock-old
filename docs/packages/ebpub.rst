@@ -461,11 +461,11 @@ calendar features.
 Site views/templates
 ====================
 
-Once you've gotten some data into your site, you can use the site to browse it
+Once you've gotten some data into your site, users can browse it
 in various ways. The system offers two primary axes by which to browse the
 data:
 
-    * By schema -- starting with the schema_detail view/template
+    * By schema -- starting with the schema_filter and schema_detail view/template
     * By place -- starting with the place_detail view/template (where a "place"
       is defined as either a Block or Location)
 
@@ -476,42 +476,90 @@ but the default templates, css, and images that ship with OpenBlock
 and ebpub are of course free for your use under the same license terms
 as the rest of OpenBlock (GPL)).
 
+Custom Templates: Overview
+---------------------------
+
+Many parts of OpenBlock's markup can be customized on a per-schema
+basis.
+
+This is accomplished by following simple naming conventions.  In each
+case described below, all you need to do is create a template, with a
+filename based on the Schema's slug, in a directory whose name is
+based on the view that uses the template.  Details follow.
+
 Custom NewsItem lists
 ---------------------
 
-When NewsItems are displayed as lists, generally templates should use the
-newsitem_list_by_schema custom tag. This tag takes a list of NewsItems (in
+When NewsItems are displayed as lists, for example by the
+``schema_filter`` or ``location_detail`` views, generally templates
+should use the
+``newsitem_list_by_schema`` custom tag.  Usage looks like::
+
+  {% load eb %}
+  {% newsitem_list_by_schema list_of_newsitems %}
+
+This tag takes a list of NewsItems (in
 which it is assumed that the NewsItems are ordered by schema) and renders them
 through separate templates, depending on the schema. These templates should be
-defined in the ebpub/templates/db/snippets/newsitem_list directory and named
-[schema_slug].html. If a template doesn't exist for a given schema, the tag
-will use the template ebpub/templates/db/snippets/newsitem_list.html.
+defined in the ``templates/db/snippets/newsitem_list`` directory of
+your app, and named
+``[schema_slug].html``.
+
+If no such template exists for a particular schema, the generic default is
+``ebpub/templates/db/snippets/newsitem_list.html``.
 
 We've included two sample schema-specific newsitem_list templates,
-news-articles.html and photos.html.
+``ebpub/templates/db/snippets/newsitem_list/news-articles.html``
+and
+``ebpub/templates/db/snippets/newsitem_list/photos.html``.
 
-It is also possible to customize the html used in map popups for each
-schema, by creating a snippet named newsitem_popup_[schema_slug].html in a
-subdirectory richmaps/ on your template path.
-If no such template exists, the default is
-``ebpub/richmaps/templates/richmaps/newsitem_popup.html``.
 
 Custom NewsItem detail pages
 ----------------------------
 
 Similarly to the newsitem_list snippets, you can customize the newsitem_detail
-page on a per-schema basis. Just create a template named [schema_slug].html in
-ebpub/templates/db/newsitem_detail. See the template
-ebpub/templates/db/newsitem_detail.html for the default implementation.
+page on a per-schema basis. Just create a subdirectory named
+``templates/db/newsitem_detail`` in your app, and add a template named
+``[schema_slug].html`` inside it.
+
+If no such template exists, the default is
+``ebpub/templates/db/newsitem_detail.html``.
+
+Custom Map Popups
+-----------------
+
+To customize the html used in map popups for each
+schema, create a template snippet named ``newsitem_popup_[schema_slug].html`` in a
+subdirectory ``richmaps/`` on your template path.
+
+If no such template exists, the default is
+``ebpub/richmaps/templates/richmaps/newsitem_popup.html``.
+
+
+Custom Schema filter pages
+---------------------------
+
+To customize the schema_filter page for a schema --
+the landing page for each schema -- create a
+``templates/db/schema_filter`` subdirectory in your app,
+and add a template named
+``[schema_slug].html`` in that directory.
+
+If no such template exists, the default is
+``ebpub/templates/db/schema_filter.html``.
 
 Custom Schema detail pages
 --------------------------
 
-To customize the schema_detail page for a given schema, create a
-``templates/db`` subfolder in your app, and add a template named
-``[schema_slug].html`` in that directory. See the template
-``ebpub/templates/db/schema_detail.html`` for the default generic
-implementation.
+To customize the schema_detail page for a schema --
+the page that normally  shows statistics about recent items of that
+schema --
+create a
+``templates/db/schema_detail`` subdirectory in your app, and add a template named
+``[schema_slug].html`` in that directory.
+
+If no such template exists, the default is
+``ebpub/templates/db/schema_detail.html``.
 
 .. _email_alerts:
 

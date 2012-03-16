@@ -25,6 +25,10 @@ sudo apt-get -y install \
     python-virtualenv \
     python2.6 \
     python2.6-dev \
+    libjpeg62-dev \
+    libgif-dev \
+    libpng-dev \
+    zlib1g-dev \
     subversion \
     unzip \
     wget || exit 1
