@@ -259,8 +259,11 @@ class Block(models.Model):
         return ''.join(url)
 
     def url(self):
-        return urlresolvers.reverse('ebpub-block-recent',
-                                    args=self._get_full_url_args())
+        try:
+            return urlresolvers.reverse('ebpub-block-recent',
+                                        args=self._get_full_url_args())
+        except urlresolvers.NoReverseMatch:
+            return None
 
     def _get_full_url_args(self):
         args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
