@@ -179,7 +179,7 @@ def ajax_place_date_chart(request):
     if schema.is_event:
         # Soonest span that includes some.
         try:
-            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'id')
+            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'pub-date', 'id')
             first_item = qs.values('item_date')[0]
             start_date = first_item['item_date']
         except IndexError:  # No matching items.
@@ -188,7 +188,7 @@ def ajax_place_date_chart(request):
     else:
         # Most recent span that includes some.
         try:
-            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-id')
+            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-pub-date', '-id')
             last_item = qs.values('item_date')[0]
             end_date = last_item['item_date']
         except IndexError:  # No matching items.
@@ -251,7 +251,7 @@ def newsitems_geojson(request):
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
-        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-id')
+        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-pub_date', '-id')
         newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # Done preparing the query; cache based on the raw SQL
@@ -1105,14 +1105,16 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
     # last (or next) few days.
     # And only fetch for relevant schemas - either event-ish or not.
     if show_upcoming:
+        # Events, from earliest to latest
         s_list = schema_manager.filter(is_event=True)
         start_date = end_date
         end_date = start_date + datetime.timedelta(days=settings.DEFAULT_DAYS)
-        order_by = 'item_date_date'
+        order_by = ('item_date_date', '-pub_date')
     else:
+        # News, from newest to oldest
         s_list = schema_manager.filter(is_event=False)
         start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-        order_by = '-item_date_date'
+        order_by = ('-item_date_date', '-pub_date')
 
     filterchain.add('schema', list(s_list))
     filterchain.add('date', start_date, end_date)
@@ -1120,18 +1122,29 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
         select={'item_date_date': 'date(db_newsitem.item_date)'},
-        order_by=(order_by, '-schema__importance', 'schema')
-    )[:max_items]
+        order_by=order_by + ('-schema__importance', 'schema'),
+    )[:max_items + 1]
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
     ni_list = list(newsitem_qs)
+    if len(ni_list) > max_items:
+        if ni_list[-1].item_date == ni_list[-2].item_date:
+            # We have not exhausted this date. Whoops.
+            # This API only allows us to skip to the next day,
+            # not skip to the next batch on *this* day.
+            # See http://developer.openblockproject.org/ticket/282
+            pass
+    ni_list = ni_list[:max_items]
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = s_list.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
     if ni_list:
-        next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
+        if show_upcoming:
+            next_day = ni_list[-1].item_date + datetime.timedelta(days=1)
+        else:
+            next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
     else:
         next_day = None
 
