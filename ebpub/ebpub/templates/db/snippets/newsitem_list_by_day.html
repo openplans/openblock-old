@@ -27,8 +27,8 @@ Expects these variables: newsitem_list, hidden_schema_list, show_upcoming, is_la
 	{% if has_next or has_previous %}
 		<p><strong>Items {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
 		<ul>
-			{% if has_previous %}<li><a href="?page={{ previous_page_number }}" rel="nofollow">Previous</a></li>{% endif %}
-			{% if has_next %}<li><a href="?page={{ next_page_number }}" rel="nofollow">Next</a></li>{% endif %}
+			{% if has_previous %}<li><a href="?page={{ previous_page_number }}" rel="nofollow">{% if show_upcoming %}Sooner{% else %}Newer{% endif %}</a></li>{% endif %}
+			{% if has_next %}<li><a href="?page={{ next_page_number }}" rel="nofollow">{% if show_upcoming %}Later{% else %}Older{% endif %}</a></li>{% endif %}
 		</ul>
 	{% endif %}
 {% else %}
