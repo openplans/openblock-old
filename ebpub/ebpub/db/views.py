@@ -1017,28 +1017,28 @@ def block_list(request, city_slug, street_slug):
     return eb_render(request, 'db/block_list.html', context)
 
 
-def _place_detail_normalize_url(request, *args, **kwargs):
+def _get_place_and_normalize_url(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     if context.get('block_radius') and 'radius' not in request.GET:
         # Normalize the URL so we always have the block radius.
         url = request.get_full_path()
-        response = HttpResponse(status=302)
         if '?' in url:
-            response['location'] = '%s&radius=%s' % (url, context['block_radius'])
+            context['normalized_url'] = '%s&radius=%s' % (url, context['block_radius'])
         else:
-            response['location'] = '%s?radius=%s' % (url, context['block_radius'])
-        for key, val in context.get('cookies_to_set').items():
-            response.set_cookie(key, val)
-        return (context, response)
-    return (context, None)
+            context['normalized_url'] = '%s?radius=%s' % (url, context['block_radius'])
+    return context
 
 
 def place_detail_timeline(request, *args, **kwargs):
     """
     Recent news OR upcoming events for the given Location or Block.
     """
-    context, response = _place_detail_normalize_url(request, *args, **kwargs)
-    if response is not None:
+    context = _get_place_and_normalize_url(request, *args, **kwargs)
+    if context.get('normalized_url'):
+        response = HttpResponse(status=302)
+        response['location'] = context['normalized_url']
+        for key, val in context.get('cookies_to_set', {}).items():
+            response.set_cookie(key, val)
         return response
 
     show_upcoming = kwargs.get('show_upcoming')
@@ -1242,9 +1242,14 @@ def place_detail_overview(request, *args, **kwargs):
     """Recent news AND upcoming events for a Location or Block,
     grouped by Schema.
     """
-    context, response = _place_detail_normalize_url(request, *args, **kwargs)
-    if response is not None:
+    context = _get_place_and_normalize_url(request, *args, **kwargs)
+    if context.get('normalized_url'):
+        response = HttpResponse(status=302)
+        response['location'] = context['normalized_url']
+        for key, val in context.get('cookies_to_set', {}).items():
+            response.set_cookie(key, val)
         return response
+
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
 
