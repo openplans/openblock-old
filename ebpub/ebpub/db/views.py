@@ -1,4 +1,4 @@
-#   Copyright 2007,2008,2009,2011 Everyblock LLC, OpenPlans, and contributors
+#   Copyright 2007,2008,2009,2011,2012 Everyblock LLC, OpenPlans, and contributors
 #
 #   This file is part of ebpub
 #
@@ -53,6 +53,7 @@ from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.utils.dates import daterange, parse_date, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
+from ebpub.utils.view_utils import paginate
 
 import datetime
 import hashlib
@@ -750,6 +751,7 @@ def _get_lookup_list_for_sf(sf, top_value_count=100, orphan_buffer=4):
             'total_value_count': total_value_count,
             })
 
+
 def schema_filter(request, slug):
     """
     List NewsItems for one schema, filtered by various criteria in the
@@ -839,26 +841,13 @@ def schema_filter(request, slug):
         location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
     # Pagination.
-    # We don't use Django's Paginator class because it uses
-    # SELECT COUNT(*), which we want to avoid.
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         raise Http404('Invalid page')
-
-    idx_start = (page - 1) * constants.FILTER_PER_PAGE
-    idx_end = page * constants.FILTER_PER_PAGE
-    # Get one extra, so we can tell whether there's a next page.
-    ni_list = list(qs[idx_start:idx_end+1])
+    ni_list, has_previous, has_next, idx_start, idx_end = paginate(qs, page=page)
     if page > 1 and not ni_list:
         raise Http404('No objects on page %s' % page)
-    if len(ni_list) > constants.FILTER_PER_PAGE:
-        has_next = True
-        ni_list = ni_list[:-1]
-    else:
-        has_next = False
-        idx_end = idx_start + len(ni_list)
-    has_previous = page > 1
 
     populate_schema(ni_list, s)
     populate_attributes_if_needed(ni_list, [s])
@@ -1082,7 +1071,7 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
     Puts a list of recent -or- upcoming NewsItems in the context,
     and returns the context.
 
-    **filterargs are passed to FilterChain.add().
+    ``**filterargs`` are passed to FilterChain.add().
 
     """
     schema_manager = get_schema_manager(request)
