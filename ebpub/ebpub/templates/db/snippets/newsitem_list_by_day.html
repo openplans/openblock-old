@@ -1,7 +1,7 @@
 {% comment %}<!-- -*- tab-width: 4 -*- -->
-Expects these variables: newsitem_list, next_day, hidden_schema_list, show_upcoming, is_latest_page
+Expects these variables: newsitem_list, hidden_schema_list, show_upcoming, is_latest_page
 {% endcomment %}
-{% load eb eb_filter mapping %}
+{% load eb eb_filter mapping humanize %}
 {% if newsitem_list %}
 	{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
 	{% for daygroup in newsitem_list_byday %}
@@ -23,22 +23,14 @@ Expects these variables: newsitem_list, next_day, hidden_schema_list, show_upcom
 			{% endwith %}
 		{% endfor %}
 	{% endfor %}
-	<p>
-	{% if not is_latest_page %}
-		<a href="./">&larr;
-		  {% if show_upcoming %}Earlier upcoming events
-		  {% else %}Most recent news
-		  {% endif %}
-		  {% if place %} for {{ place.pretty_name }}{% endif %}</a>
+	<!-- Pagination. -->
+	{% if has_next or has_previous %}
+		<p><strong>Items {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
+		<ul>
+			{% if has_previous %}<li><a href="?page={{ previous_page_number }}" rel="nofollow">Previous</a></li>{% endif %}
+			{% if has_next %}<li><a href="?page={{ next_page_number }}" rel="nofollow">Next</a></li>{% endif %}
+		</ul>
 	{% endif %}
-	{% if next_day %}
-		<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow"
-		>{% if show_upcoming %}More upcoming
-		  {% else %}Older news
-		  {% endif %}
-		  &rarr;</a>
-	{% endif %}
-    </p>
 {% else %}
 	<p>We haven't found any 
 	  {% if show_upcoming %}events

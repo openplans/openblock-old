@@ -699,7 +699,7 @@ def schema_filter_geojson(request, slug):
     try:
         page = int(request.GET.get('page', 1))
     except ValueError:
-            return HttpResponse('Invalid Page %r' % page, status=400)
+        return HttpResponse('Invalid Page %r' % page, status=400)
     paginated_info = paginate(qs, page=page)
     ni_list = paginated_info[0]  # Don't need anything else.
     # Pagination not captured by queryset, so we hack that into the
@@ -901,6 +901,7 @@ def schema_filter(request, slug):
         'next_page_number': page + 1,
         'page_start_index': idx_start + 1,
         'page_end_index': idx_end,
+        # End pagination.
         'lookup_list': lookup_list,
         'boolean_lookup_list': boolean_lookup_list,
         'search_list': search_list,
@@ -1072,68 +1073,44 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
 
     """
     schema_manager = get_schema_manager(request)
-
-    is_latest_page = True
-    # Check the query string for the max date to use. Otherwise, fall
-    # back to today.
-    end_date = today()
-    if 'start' in request.GET:
-        try:
-            end_date = parse_date(request.GET['start'], '%m/%d/%Y')
-            is_latest_page = False
-        except ValueError:
-            raise Http404('Invalid date %s' % request.GET['start'])
     filterchain = FilterChain(request=request, context=context)
 
     for key, val in filterargs.items():
         filterchain.add(key, val)
 
-    # As an optimization, limit the NewsItems to those on the
-    # last (or next) few days.
-    # And only fetch for relevant schemas - either event-ish or not.
+    # Only fetch for relevant schemas - either event-ish or not.
     if show_upcoming:
         # Events, from earliest to latest
         s_list = schema_manager.filter(is_event=True)
-        start_date = end_date
-        end_date = start_date + datetime.timedelta(days=settings.DEFAULT_DAYS)
         order_by = ('item_date_date', '-pub_date')
+        date_limit = Q(item_date__gte=today())
     else:
         # News, from newest to oldest
         s_list = schema_manager.filter(is_event=False)
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
         order_by = ('-item_date_date', '-pub_date')
+        date_limit = Q(item_date__lte=today())
 
     filterchain.add('schema', list(s_list))
-    filterchain.add('date', start_date, end_date)
-    newsitem_qs = filterchain.apply().select_related()
+    newsitem_qs = filterchain.apply().select_related().filter(date_limit)
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
         select={'item_date_date': 'date(db_newsitem.item_date)'},
         order_by=order_by + ('-schema__importance', 'schema'),
-    )[:max_items + 1]
+    )
+
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        return HttpResponse('Invalid Page %r' % page, status=400)
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
-    ni_list = list(newsitem_qs)
-    if len(ni_list) > max_items:
-        if ni_list[-1].item_date == ni_list[-2].item_date:
-            # We have not exhausted this date. Whoops.
-            # This API only allows us to skip to the next day,
-            # not skip to the next batch on *this* day.
-            # See http://developer.openblockproject.org/ticket/282
-            pass
-    ni_list = ni_list[:max_items]
+    ni_list, has_previous, has_next, idx_start, idx_end = paginate(
+        newsitem_qs, page=page, pagesize=max_items)
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = s_list.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
-    if ni_list:
-        if show_upcoming:
-            next_day = ni_list[-1].item_date + datetime.timedelta(days=1)
-        else:
-            next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
-    else:
-        next_day = None
 
     hidden_schema_list = []
     if not request.user.is_anonymous():
@@ -1141,8 +1118,15 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
 
     context.update({
         'newsitem_list': ni_list,
-        'next_day': next_day,
-        'is_latest_page': is_latest_page,
+        # Pagination stuff
+        'has_next': has_next,
+        'has_previous': has_previous,
+        'page_number': page,
+        'previous_page_number': page - 1,
+        'next_page_number': page + 1,
+        'page_start_index': idx_start + 1,
+        'page_end_index': idx_end,
+        # End pagination.
         'hidden_schema_list': hidden_schema_list,
         'filters': filterchain,
         'show_upcoming': show_upcoming,
