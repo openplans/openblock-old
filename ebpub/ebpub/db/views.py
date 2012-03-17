@@ -179,7 +179,7 @@ def ajax_place_date_chart(request):
     if schema.is_event:
         # Soonest span that includes some.
         try:
-            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'pub-date', 'id')
+            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'pub_date', 'id')
             first_item = qs.values('item_date')[0]
             start_date = first_item['item_date']
         except IndexError:  # No matching items.
@@ -188,7 +188,7 @@ def ajax_place_date_chart(request):
     else:
         # Most recent span that includes some.
         try:
-            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-pub-date', '-id')
+            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-pub_date', '-id')
             last_item = qs.values('item_date')[0]
             end_date = last_item['item_date']
         except IndexError:  # No matching items.
