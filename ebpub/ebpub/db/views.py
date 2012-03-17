@@ -696,30 +696,27 @@ def schema_filter_geojson(request, slug):
     else:
         qs = qs.order_by('-item_date', '-id')
 
-    page = request.GET.get('page', None)
-    if page is not None:
-        try:
-            page = int(page)
-            idx_start = (page - 1) * constants.FILTER_PER_PAGE
-            idx_end = page * constants.FILTER_PER_PAGE
-            # Get one extra, so we can tell whether there's a next page.
-            idx_end += 1
-        except ValueError:
-            return HttpResponse('Invalid Page', status=400)
-    else:
-        idx_start, idx_end = 0, 1000
-    qs = qs[idx_start:idx_end]
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+            return HttpResponse('Invalid Page %r' % page, status=400)
+    paginated_info = paginate(qs, page=page)
+    ni_list = paginated_info[0]  # Don't need anything else.
+    # Pagination not captured by queryset, so we hack that into the
+    # cache key.
+    cache_key = 'schema_filter_geojson:page-%d:' % page
+    cache_key += _make_cache_key_from_queryset(qs)
 
-    cache_key = 'schema_filter_geojson:' + _make_cache_key_from_queryset(qs)
     cache_seconds = 60 * 5
     output = cache.get(cache_key, None)
     if output is None:
-        output = api_items_geojson(list(qs))
+        output = api_items_geojson(ni_list)
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
+
 
 def _get_lookup_list_for_sf(sf, top_value_count=100, orphan_buffer=4):
     """
