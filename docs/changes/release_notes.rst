@@ -172,6 +172,8 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Fix #282, missing items on place detail pages
+
 * Fix KeyError when an Attribute references a non-existent Lookup.
 
 * Fix error on FilterChain.add(key, lookup) when key isn't a SchemaField.
