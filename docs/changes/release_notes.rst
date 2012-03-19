@@ -89,10 +89,10 @@ New Features in 1.2
 
 * Added ``featured`` flag on ``ebpub.db.Lookup`` model, allowing admins
   to designate some Lookup values as "special", for use in
-  eg. navigation.
+  eg. navigation. (#268)
 
 * Added a ``get_featured_lookups_by_schema`` template tag, puts into
-  context a list of the "special" Lookup values for that schema.
+  context a list of the "special" Lookup values for that schema. (#268)
 
 * Added ``Lookup.objects.get_featured_lookup_for_item(newsitem, attribute_key)``
   method to find out which "featured" Lookups a newsitem has for a
