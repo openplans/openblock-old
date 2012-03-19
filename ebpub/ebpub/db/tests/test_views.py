@@ -121,6 +121,7 @@ class LocationDetailTestCase(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context['newsitem_list']), 1)
         self.assertEqual(response.context['newsitem_list'][0].title, 'crime title 1')
+        # We don't get 'crime title 2' in this query because it's in the future.
 
     def test_location_overview(self):
         url = urlresolvers.reverse('ebpub-location-overview',

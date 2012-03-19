@@ -50,7 +50,7 @@ def get_text_corpus():
         cache['corpus'] = open(outfile).read()
     return cache['corpus']
 
-def save_random_newsitem(schema, i, block):
+def save_random_newsitem(schema, i, block, future=False):
     title = '%d Random %s %s' % (i, schema.name, uuid.uuid4())
     print "Creating %r" % title
     item = NewsItem()
@@ -58,7 +58,10 @@ def save_random_newsitem(schema, i, block):
     item.schema = schema
     item.description = gibberis.ch.freeform.random_text(get_text_corpus(), 300)
     item.url = 'http://example.com/%s/%d' % (schema.slug, i)
-    date = random_datetime(7.0)
+    if future:
+        date = random_datetime(7.0)
+    else:
+        date = random_datetime(-7.0)
     item.pub_date = date
     item.item_date = date.date()
     item.location_name = block.pretty_name
@@ -72,7 +75,7 @@ def save_random_newsitem(schema, i, block):
     for schemafield in schema.schemafield_set.all():
         attrs[schemafield.name] = random_schemafield_value(schemafield)
 
-    print "Added: %s at %s (%s)" % (item.title, item.location_name, item.location.wkt)
+    print "Added: %s on %s at %s (%s)" % (item.title, item.item_date, item.location_name, item.location.wkt)
 
     # Need to save before we can have foreign keys from the attributes
     # or subclass.
@@ -83,7 +86,7 @@ def save_random_newsitem(schema, i, block):
         item.save()
 
 
-def main(count, slugs):
+def main(count, slugs, opts):
     """
     Generates `count` random newsitems for each schema in `slugs`.
     """
@@ -100,7 +103,7 @@ def main(count, slugs):
             last_newsitem_id = 1
         for i in range(int(count)):
             block = random.choice(blocks)
-            save_random_newsitem(schema, i + 1 + last_newsitem_id, block)
+            save_random_newsitem(schema, i + 1 + last_newsitem_id, block, future=opts.future)
 
 def get_random_blocks():
     try:
@@ -108,12 +111,13 @@ def get_random_blocks():
     except IndexError:
         raise IndexError("It seems you don't have any Blocks loaded.")
     ids = random.sample(xrange(1, last_block_id), 1000)
-    blocks = Block.objects.filter(id__in=ids)
+    blocks = list(Block.objects.filter(id__in=ids))
+    random.shuffle(blocks)
     return blocks
 
-def random_datetime(max_age_days):
-    dt = datetime.datetime.now() - datetime.timedelta(
-        random.uniform(0.0, max_age_days))
+def random_datetime(max_days):
+    dt = datetime.datetime.now() + datetime.timedelta(
+        random.uniform(0.0, max_days))
     return dt
 
 
@@ -158,13 +162,20 @@ def random_schemafield_value(schemafield):
 
 
 if __name__ == '__main__':
+    import optparse
+    usage = "Usage: %s [options] N schema [schema2...]\n" % sys.argv[0]
+    usage += "Generates N randomly-placed articles for each schema.\n"
+    usage += "Try -h for full list of options."
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option('-f', '--future', help='Generate dates in the future.',
+                      action='store_true', default=False)
+    opts, args = parser.parse_args(sys.argv[1:])
     try:
-        count = sys.argv[1]
-        schemas = sys.argv[2:]
+        count = int(args[0])
+        schemas = args[1:]
         if not schemas:
             raise IndexError()
-    except IndexError:
-        sys.stderr.write("Usage: %s N schema [schema2...]\n" % sys.argv[0])
-        sys.stderr.write("Generates N randomly-placed articles for each schema.\n")
+    except (IndexError, TypeError, ValueError):
+        parser.print_usage()
         sys.exit(1)
-    sys.exit(main(count, schemas))
+    sys.exit(main(count, schemas, opts))
