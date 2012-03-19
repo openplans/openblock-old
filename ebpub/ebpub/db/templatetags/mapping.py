@@ -36,8 +36,11 @@ def map_icon_img(obj):
       {% map_icon_img [place_type] %}
 
     """
-    url = getattr(obj, 'map_icon_url', '') or ''
-    url = url.strip()
+    getter = getattr(obj, 'get_map_icon_url', None)
+    if getter is not None:
+        url = obj.get_map_icon_url()
+    else:
+        url = ''
     if url:
         alt = '%s icon' % (obj.name or obj.slug)
         return '<img class="schema-icon" src="%s" alt="%s" />' % (url, alt)

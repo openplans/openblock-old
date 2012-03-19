@@ -530,7 +530,7 @@ div.popupnav {
 .openblockFramedCloudPopupContent {
     font-size: 12px;
     overflow: hidden;
-    margin: 0px 6px 6px 12px;
+    margin: 0px 0px 0px 6px;
     padding: 0;
 }
 
@@ -705,7 +705,7 @@ padding : 1em 0 0 0;
 border-top : 1px solid #e2e2e2;
 }
 
-#place-detail-content h4 {
+#place-detail-content h4, #place-detail-events h4 {
 font-size : 1em;
 color : #000;
 text-transform : none;
@@ -829,6 +829,12 @@ color : #464444;
 list-style-type : none;
 margin : 0;
 padding : auto 0;
+}
+
+li.newsitem span.newsitem {
+    border-top: 0;
+    float: right;
+
 }
 
 .pane .module-footer a {
@@ -1263,4 +1269,9 @@ ul.errorlist {
 
 .comment {
     margin-bottom: 1em;
+}
+
+/* ######## IE: make rescaled images look tolerable ############## */
+img {
+    -ms-interpolation-mode: bicubic;
 }

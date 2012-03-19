@@ -318,8 +318,11 @@ class Block(models.Model):
         return ''.join(url)
 
     def url(self):
-        return urlresolvers.reverse('ebpub-block-recent',
-                                    args=self._get_full_url_args())
+        try:
+            return urlresolvers.reverse('ebpub-block-recent',
+                                        args=self._get_full_url_args())
+        except urlresolvers.NoReverseMatch:
+            return None
 
     def _get_full_url_args(self):
         args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
@@ -576,6 +579,14 @@ class PlaceType(models.Model):
     is_mappable = models.BooleanField(default=True, help_text="Whether this type is available as a map layer to users")
     map_icon_url = models.TextField(blank=True, null=True)
     map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of place. eg #FF0000")
+
+    def get_map_icon_url(self):
+        from django.conf import settings
+        url = self.map_icon_url or u''
+        if url and not (url.startswith('/') or url.startswith('http')):
+            url = '%s/%s' % (settings.STATIC_URL.rstrip('/'), url)
+        return url
+
 
     def natural_key(self):
         return (self.slug, )

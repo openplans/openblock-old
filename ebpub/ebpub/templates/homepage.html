@@ -36,7 +36,7 @@
 				{% for location_type in location_type_list %}
 					<li><a href="{{ location_type.url }}"><strong class="number">{{ location_type.count|intcomma }}</strong> {{ location_type.plural_name|capfirst }}</a></li>
 				{% endfor %}
-				<li><a href="{% url ebpub-street-list '' %}"><strong class="number">{{ street_count|intcomma }}</strong> Streets</a></li>
+				<li><a href="{% url ebpub-street-list %}"><strong class="number">{{ street_count|intcomma }}</strong> Streets</a></li>
 			</ul>
 		</div><!--/ #intro-explore-->
 	</div><!-- end nav-location -->

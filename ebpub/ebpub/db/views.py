@@ -1,4 +1,4 @@
-#   Copyright 2007,2008,2009,2011 Everyblock LLC, OpenPlans, and contributors
+#   Copyright 2007,2008,2009,2011,2012 Everyblock LLC, OpenPlans, and contributors
 #
 #   This file is part of ebpub
 #
@@ -53,6 +53,7 @@ from ebpub.streets.models import Street, City, Block, Intersection
 from ebpub.utils.dates import daterange, parse_date, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
+from ebpub.utils.view_utils import paginate
 
 import datetime
 import hashlib
@@ -182,7 +183,7 @@ def ajax_place_date_chart(request):
     if schema.is_event:
         # Soonest span that includes some.
         try:
-            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'id')
+            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'pub_date', 'id')
             first_item = qs.values('item_date')[0]
             start_date = first_item['item_date']
         except IndexError:  # No matching items.
@@ -191,7 +192,7 @@ def ajax_place_date_chart(request):
     else:
         # Most recent span that includes some.
         try:
-            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-id')
+            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-pub_date', '-id')
             last_item = qs.values('item_date')[0]
             end_date = last_item['item_date']
         except IndexError:  # No matching items.
@@ -254,7 +255,7 @@ def newsitems_geojson(request):
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
-        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-id')
+        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-pub_date', '-id')
         newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # Done preparing the query; cache based on the raw SQL
@@ -698,30 +699,27 @@ def schema_filter_geojson(request, slug):
     else:
         qs = qs.order_by('-item_date', '-id')
 
-    page = request.GET.get('page', None)
-    if page is not None:
-        try:
-            page = int(page)
-            idx_start = (page - 1) * constants.FILTER_PER_PAGE
-            idx_end = page * constants.FILTER_PER_PAGE
-            # Get one extra, so we can tell whether there's a next page.
-            idx_end += 1
-        except ValueError:
-            return HttpResponse('Invalid Page', status=400)
-    else:
-        idx_start, idx_end = 0, 1000
-    qs = qs[idx_start:idx_end]
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        return HttpResponse('Invalid Page %r' % page, status=400)
+    paginated_info = paginate(qs, page=page)
+    ni_list = paginated_info[0]  # Don't need anything else.
+    # Pagination not captured by queryset, so we hack that into the
+    # cache key.
+    cache_key = 'schema_filter_geojson:page-%d:' % page
+    cache_key += _make_cache_key_from_queryset(qs)
 
-    cache_key = 'schema_filter_geojson:' + _make_cache_key_from_queryset(qs)
     cache_seconds = 60 * 5
     output = cache.get(cache_key, None)
     if output is None:
-        output = api_items_geojson(list(qs))
+        output = api_items_geojson(ni_list)
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
+
 
 def _get_lookup_list_for_sf(sf, top_value_count=100, orphan_buffer=4):
     """
@@ -752,6 +750,7 @@ def _get_lookup_list_for_sf(sf, top_value_count=100, orphan_buffer=4):
             'has_more': has_more,
             'total_value_count': total_value_count,
             })
+
 
 def schema_filter(request, slug):
     """
@@ -842,26 +841,13 @@ def schema_filter(request, slug):
         location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
     # Pagination.
-    # We don't use Django's Paginator class because it uses
-    # SELECT COUNT(*), which we want to avoid.
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         raise Http404('Invalid page')
-
-    idx_start = (page - 1) * constants.FILTER_PER_PAGE
-    idx_end = page * constants.FILTER_PER_PAGE
-    # Get one extra, so we can tell whether there's a next page.
-    ni_list = list(qs[idx_start:idx_end+1])
+    ni_list, has_previous, has_next, idx_start, idx_end = paginate(qs, page=page)
     if page > 1 and not ni_list:
         raise Http404('No objects on page %s' % page)
-    if len(ni_list) > constants.FILTER_PER_PAGE:
-        has_next = True
-        ni_list = ni_list[:-1]
-    else:
-        has_next = False
-        idx_end = idx_start + len(ni_list)
-    has_previous = page > 1
 
     populate_schema(ni_list, s)
     populate_attributes_if_needed(ni_list, [s])
@@ -918,6 +904,7 @@ def schema_filter(request, slug):
         'next_page_number': page + 1,
         'page_start_index': idx_start + 1,
         'page_end_index': idx_end,
+        # End pagination.
         'lookup_list': lookup_list,
         'boolean_lookup_list': boolean_lookup_list,
         'search_list': search_list,
@@ -930,7 +917,8 @@ def schema_filter(request, slug):
     })
     context['map_configuration'] = _preconfigured_map(context);
 
-    templates_to_try = ('db/schema_filter/%s.html' % s.slug, 'db/filter.html')
+    templates_to_try = ('db/schema_filter/%s.html' % s.slug,
+                        'db/schema_filter.html')
     return eb_render(request, templates_to_try, context)
 
 
@@ -994,7 +982,7 @@ def city_list(request):
                       'bodyclass': 'city-list',
                       })
 
-def street_list(request, city_slug):
+def street_list(request, city_slug=None):
     city = city_slug and City.from_slug(city_slug) or None
     kwargs = city_slug and {'city': city.norm_name} or {}
     streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
@@ -1033,28 +1021,28 @@ def block_list(request, city_slug, street_slug):
     return eb_render(request, 'db/block_list.html', context)
 
 
-def _place_detail_normalize_url(request, *args, **kwargs):
+def _get_place_and_normalize_url(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     if context.get('block_radius') and 'radius' not in request.GET:
         # Normalize the URL so we always have the block radius.
         url = request.get_full_path()
-        response = HttpResponse(status=302)
         if '?' in url:
-            response['location'] = '%s&radius=%s' % (url, context['block_radius'])
+            context['normalized_url'] = '%s&radius=%s' % (url, context['block_radius'])
         else:
-            response['location'] = '%s?radius=%s' % (url, context['block_radius'])
-        for key, val in context.get('cookies_to_set').items():
-            response.set_cookie(key, val)
-        return (context, response)
-    return (context, None)
+            context['normalized_url'] = '%s?radius=%s' % (url, context['block_radius'])
+    return context
 
 
 def place_detail_timeline(request, *args, **kwargs):
     """
     Recent news OR upcoming events for the given Location or Block.
     """
-    context, response = _place_detail_normalize_url(request, *args, **kwargs)
-    if response is not None:
+    context = _get_place_and_normalize_url(request, *args, **kwargs)
+    if context.get('normalized_url'):
+        response = HttpResponse(status=302)
+        response['location'] = context['normalized_url']
+        for key, val in context.get('cookies_to_set', {}).items():
+            response.set_cookie(key, val)
         return response
 
     show_upcoming = kwargs.get('show_upcoming')
@@ -1084,59 +1072,48 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
     Puts a list of recent -or- upcoming NewsItems in the context,
     and returns the context.
 
-    **filterargs are passed to FilterChain.add().
+    ``**filterargs`` are passed to FilterChain.add().
 
     """
     schema_manager = get_schema_manager(request)
-
-    is_latest_page = True
-    # Check the query string for the max date to use. Otherwise, fall
-    # back to today.
-    end_date = today()
-    if 'start' in request.GET:
-        try:
-            end_date = parse_date(request.GET['start'], '%m/%d/%Y')
-            is_latest_page = False
-        except ValueError:
-            raise Http404('Invalid date %s' % request.GET['start'])
     filterchain = FilterChain(request=request, context=context)
 
     for key, val in filterargs.items():
         filterchain.add(key, val)
 
-    # As an optimization, limit the NewsItems to those on the
-    # last (or next) few days.
-    # And only fetch for relevant schemas - either event-ish or not.
+    # Only fetch for relevant schemas - either event-ish or not.
     if show_upcoming:
+        # Events, from earliest to latest
         s_list = schema_manager.filter(is_event=True)
-        start_date = end_date
-        end_date = start_date + datetime.timedelta(days=settings.DEFAULT_DAYS)
-        order_by = 'item_date_date'
+        order_by = ('item_date_date', '-pub_date')
+        date_limit = Q(item_date__gte=today())
     else:
+        # News, from newest to oldest
         s_list = schema_manager.filter(is_event=False)
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-        order_by = '-item_date_date'
+        order_by = ('-item_date_date', '-pub_date')
+        date_limit = Q(item_date__lte=today())
 
     filterchain.add('schema', list(s_list))
-    filterchain.add('date', start_date, end_date)
-    newsitem_qs = filterchain.apply().select_related()
+    newsitem_qs = filterchain.apply().select_related().filter(date_limit)
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
         select={'item_date_date': 'date(db_newsitem.item_date)'},
-        order_by=(order_by, '-schema__importance', 'schema')
-    )[:max_items]
+        order_by=order_by + ('-schema__importance', 'schema'),
+    )
+
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        return HttpResponse('Invalid Page %r' % page, status=400)
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
-    ni_list = list(newsitem_qs)
+    ni_list, has_previous, has_next, idx_start, idx_end = paginate(
+        newsitem_qs, page=page, pagesize=max_items)
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = s_list.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
-    if ni_list:
-        next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
-    else:
-        next_day = None
 
     hidden_schema_list = []
     if not request.user.is_anonymous():
@@ -1144,8 +1121,15 @@ def _news_context(request, context, max_items, show_upcoming=False, **filterargs
 
     context.update({
         'newsitem_list': ni_list,
-        'next_day': next_day,
-        'is_latest_page': is_latest_page,
+        # Pagination stuff
+        'has_next': has_next,
+        'has_previous': has_previous,
+        'page_number': page,
+        'previous_page_number': page - 1,
+        'next_page_number': page + 1,
+        'page_start_index': idx_start + 1,
+        'page_end_index': idx_end,
+        # End pagination.
         'hidden_schema_list': hidden_schema_list,
         'filters': filterchain,
         'show_upcoming': show_upcoming,
@@ -1245,9 +1229,14 @@ def place_detail_overview(request, *args, **kwargs):
     """Recent news AND upcoming events for a Location or Block,
     grouped by Schema.
     """
-    context, response = _place_detail_normalize_url(request, *args, **kwargs)
-    if response is not None:
+    context = _get_place_and_normalize_url(request, *args, **kwargs)
+    if context.get('normalized_url'):
+        response = HttpResponse(status=302)
+        response['location'] = context['normalized_url']
+        for key, val in context.get('cookies_to_set', {}).items():
+            response.set_cookie(key, val)
         return response
+
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
 
