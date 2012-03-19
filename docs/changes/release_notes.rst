@@ -248,6 +248,9 @@ Bugs fixed
 Documentation
 -------------
 
+* Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo classes.
+  Ticket #159.
+
 * Better docs about template overrides, see :ref:`custom-look-feel`.
 
 * Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253

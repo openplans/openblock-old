@@ -117,7 +117,7 @@ For places: Create a template at
 ``templates/richmaps/place_headline_[schema_slug].html``.
 If none exists, the default generic one is
 ``templates/richmaps/place_headline.html``.
-                     ]
+
 
 This page also uses the same map popup templates
 described in :ref:`custom-map-popups`.
