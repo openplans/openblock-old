@@ -172,6 +172,8 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Fix filtering by location and date on big map page.
+
 * Fix #281, wrong schemas shown on big map page.
 
 * Map icon URLs for db.Location and streets.PlaceType can now be

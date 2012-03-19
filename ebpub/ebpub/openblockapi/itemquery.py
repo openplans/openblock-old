@@ -161,7 +161,9 @@ def _predefined_place_filter(query, params, state):
     # Need to build up an OR query, so we use django Q objects.
     for loc in ids:
         try:
-            loctypeslug, locslug = loc.split('/')
+            # Note, API doc specifies splitting on "/" but
+            # we also support commas for convenience of ebpub.richmaps
+            loctypeslug, locslug = re.split(r'[/,]', loc)
             queries.append(Q(newsitemlocation__location__slug=locslug,
                              newsitemlocation__location__location_type__slug=loctypeslug))
         except ValueError: 
