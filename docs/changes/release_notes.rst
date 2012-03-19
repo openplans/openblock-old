@@ -172,6 +172,8 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Fix #281, wrong schemas shown on big map page.
+
 * Map icon URLs for db.Location and streets.PlaceType can now be
   relative to STATIC_URL
 

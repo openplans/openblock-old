@@ -203,12 +203,16 @@ class SchemaFilter(NewsitemFilter):
     def validate(self):
         return {}
 
-    def apply(self):
-        if isinstance(self.schema, list):
+    @property
+    def schemas(self):
+        if isinstance(self.schema, (list, tuple)):
             schemas = self.schema
         else:
             schemas = [self.schema]
-        schema_ids = [s.id for s in schemas]
+        return schemas
+
+    def apply(self):
+        schema_ids = [s.id for s in self.schemas]
         if self.request:
             allowed_schema_ids = get_schema_manager(self.request).allowed_schema_ids()
             schema_ids = set(schema_ids).intersection(allowed_schema_ids)
