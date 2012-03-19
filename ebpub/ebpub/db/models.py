@@ -207,6 +207,15 @@ class Schema(models.Model):
     map_icon_url = models.TextField(
         blank=True, null=True,
         help_text="Set this to a URL to a small image icon and it will be displayed on maps.")
+
+    def get_map_icon_url(self):
+        # Could be relative.
+        url = self.map_icon_url or u''
+        if url and not (url.startswith('/') or url.startswith('http')):
+            url = '%s/%s' % (settings.STATIC_URL.rstrip('/'), url)
+        return url
+
+
     map_color = models.CharField(
         max_length=255, blank=True, null=True,
         help_text="CSS Color used on maps to display this type of news. eg #FF0000.  Only used if map_icon_url is not set.")

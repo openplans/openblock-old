@@ -172,6 +172,9 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Map icon URLs for db.Location and streets.PlaceType can now be
+  relative to STATIC_URL
+
 * Fix #282, missing items on place detail pages
 
 * Fix KeyError when an Attribute references a non-existent Lookup.
