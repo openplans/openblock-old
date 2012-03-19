@@ -251,6 +251,8 @@ Documentation
 * Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo classes.
   Ticket #159.
 
+* Documentation about comments and flagging of NewsItems. Ticket #252
+
 * Better docs about template overrides, see :ref:`custom-look-feel`.
 
 * Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253

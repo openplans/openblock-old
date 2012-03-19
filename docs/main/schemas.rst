@@ -293,14 +293,15 @@ Other Fields
 A few more fields worth mentioning:
 
 * ``allow_comments`` - whether users can comment on these NewsItems.
-  You should also set has_newsitem_detail=True.
+  You should also set has_newsitem_detail=True, because the detail
+  page is where you would see comments and the comment form.
 
 * ``allow_flagging`` - whether users can flag these NewsItems as
   inappropriate or spam. This leverages the ``ebpub.moderation``
   package.
 
 * ``allow_charting`` - whether to show aggregate statistic charts on
-  the home page of this schema, such as number of recent items found
+  the detail page of this schema, such as number of recent items found
   in each Location, and number of recent items loaded per day.
 
 

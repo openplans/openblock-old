@@ -493,7 +493,7 @@ class Schema(models.Model):
 
     allow_flagging = models.BooleanField(
         default=False,
-        help_text="Whether to allow uses to flag NewsItems of this schema as spam or inappropriate."
+        help_text="Whether to allow users to flag NewsItems of this schema as spam or inappropriate."
         )
 
     allow_charting = models.BooleanField(
