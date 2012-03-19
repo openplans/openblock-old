@@ -42,6 +42,41 @@ class TestNewsitemFilter(TestCase):
         self.assertRaises(KeyError, fil.__getitem__, 'bar')
 
 
+class TestIdFilter(TestCase):
+
+    fixtures = ('test-schemafilter-views.json',)
+
+    def test_validate(self):
+        from ebpub.db.schemafilters import IdFilter
+        fil = IdFilter(request=None, context={}, queryset=None)
+        self.assertEqual(fil.validate(),
+                         {'filter_key': 'id',
+                          'option_list': [],
+                          'param_label': 'id',
+                          'param_name': 'id',
+                          'select_multiple': True}
+                         )
+
+    def test_apply__no_ids(self):
+        from ebpub.db.schemafilters import IdFilter
+        fil = IdFilter(request=None, context={}, queryset=None, ids=[])
+        self.assertEqual(list(fil.apply()), [])
+        from ebpub.db.models import NewsItem
+        self.assert_(NewsItem.objects.all().count() >= 1,
+                     "we should have some items")
+
+    def test_apply__some_ids(self):
+        from ebpub.db.schemafilters import IdFilter
+        from ebpub.db.models import NewsItem
+        items = NewsItem.objects.all()[:2]
+        self.assert_(len(items), "we should have some items")
+        expected_ids = [item.id for item in items]
+        fil = IdFilter(request=None, context={}, queryset=None,
+                       ids=expected_ids)
+        got_ids = [item.id for item in fil.apply()]
+        self.assertEqual(sorted(expected_ids), sorted(got_ids))
+
+
 class TestSchemaFilter(TestCase):
 
     fixtures = ('test-schemafilter-views.json',)
@@ -589,18 +624,22 @@ class TestFilterChain(TestCase):
         chain.add_by_place_id('b:123.1')
         self.assert_(isinstance(chain['location'], BlockFilter))
 
+    def test_add__id(self):
+        from ebpub.db.schemafilters import IdFilter
+        chain = FilterChain()
+        chain.add('id', [1, 2, 3])
+        self.assert_(isinstance(chain['id'], IdFilter))
+
 
 class TestUrlNormalization(TestCase):
 
     fixtures = ('test-schemafilter-views.json',)
-
 
     def setUp(self):
         super(TestUrlNormalization, self).setUp()
         self._patcher1 = mock.patch('ebpub.streets.models.proper_city')
         self.proper_city = self._patcher1.start()
         self.proper_city.return_value = 'chicago'
-
         self._patcher2 = mock.patch('ebpub.db.schemafilters.SmartGeocoder.geocode')
         self.mock_geocode = self._patcher2.start()
 
@@ -744,4 +783,3 @@ class TestUrlNormalization(TestCase):
         # The extra params should end up sorted alphanumerically.
         expected = expected.replace('?', '?A=no&') + '&zzz=yes'
         self.assertEqual(chain.make_url(), expected)
-

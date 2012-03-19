@@ -28,8 +28,13 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Added a "View selected items on map" link and checkboxes on Schema
+  filter pages, to allow viewing explicitly selected items on the "big map".
+
 * Changed URLs used by the schema_filter view, so some bookmarks may
   break. (Ticket # 266)
+
+* Removed unused ebpub/utils/mapmath.py module.
 
 * Removed the EB_MEDIA_ROOT and EB_MEDIA_URL settings; now use
   django's normal MEDIA_ROOT and MEDIA_URL instead.
@@ -58,12 +63,16 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Rest API: Allow searching by multiple types (schemas).
+
 * Added an admin UI for importing NewsItems from spreadsheets
-  (currently CSV only).  (Ticket #126)
+  (currently only handles CSV and old-style Excel sheets; not .xslx)
+  (Ticket #126)
 
 * Added a generic spreadsheet scraper in
   ``ebdata/scrapers/general/spreadsheet/retrieval.py``,
-  currently only handles CSV. (Ticket #274)
+  (currently only handles CSV and old-style Excel sheets; not .xslx)
+  (Ticket #274)
 
 * ``ebdata.scrapers.general.georss`` address-extraction fallback now
   looks in all tags that look like text.
@@ -163,6 +172,15 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Fix filtering by location and date on big map page.
+
+* Fix #281, wrong schemas shown on big map page.
+
+* Map icon URLs for db.Location and streets.PlaceType can now be
+  relative to STATIC_URL
+
+* Fix #282, missing items on place detail pages
+
 * Fix KeyError when an Attribute references a non-existent Lookup.
 
 * Fix error on FilterChain.add(key, lookup) when key isn't a SchemaField.
@@ -229,6 +247,8 @@ Bugs fixed
 
 Documentation
 -------------
+
+* Better docs about template overrides, see :ref:`custom-look-feel`.
 
 * Document ``ebpub.streets.Places``, see :ref:`places`.  Ticket #253
 

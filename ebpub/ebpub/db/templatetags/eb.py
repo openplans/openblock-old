@@ -25,9 +25,9 @@ from ebpub.db.models import NewsItem
 from ebpub.db.models import SchemaField
 from ebpub.db.schemafilters import FilterChain
 from ebpub.db.utils import populate_attributes_if_needed
-from ebpub.db.utils import today
 from ebpub.metros.allmetros import METRO_LIST, get_metro
 from ebpub.utils.bunch import bunch, bunchlong, stride
+from ebpub.utils.dates import today
 import datetime
 import json
 import re
@@ -432,7 +432,6 @@ def featured_lookup_for_item(context, newsitem, attribute_key):
     {% for tag in tags %} This item has tag {{ tag }} {% endfor %}
 
     """
-    from ebpub.db.models import Lookup
     lookups = Lookup.objects.featured_lookups_for(newsitem, attribute_key)
     context[attribute_key] = lookups
     return ""

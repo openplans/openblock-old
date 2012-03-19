@@ -13,6 +13,7 @@
       "importance": 0,
       "indefinite_article": "a",
       "intro": "",
+      "is_event": true,
       "is_public": true,
       "is_special_report": false,
       "last_updated": "2011-08-03",
@@ -26,10 +27,9 @@
       "short_source": "",
       "slug": "neighbor-events",
       "source": "",
-      "summary": "",
+      "summary": "Events posted by your neighbors",
       "update_frequency": "",
-      "uses_attributes_in_list": false,
-      "is_event": true
+      "uses_attributes_in_list": false
     },
     "model": "db.schema"
   },
@@ -47,6 +47,7 @@
       "importance": 0,
       "indefinite_article": "a",
       "intro": "",
+      "is_event": false,
       "is_public": true,
       "is_special_report": false,
       "last_updated": "2011-08-03",
@@ -60,10 +61,9 @@
       "short_source": "",
       "slug": "neighbor-messages",
       "source": "",
-      "summary": "",
+      "summary": "News and messages from your neighbors.",
       "update_frequency": "",
-      "uses_attributes_in_list": false,
-      "is_event": false
+      "uses_attributes_in_list": false
     },
     "model": "db.schema"
   },

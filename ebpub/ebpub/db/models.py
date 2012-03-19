@@ -209,6 +209,7 @@ class Schema(models.Model):
         help_text="Set this to a URL to a small image icon and it will be displayed on maps. If it's a relative URL, it will be assumed relative to settings.STATIC_URL.")
 
     def get_map_icon_url(self):
+        # Could be relative.
         url = self.map_icon_url or u''
         if url and not (url.startswith('/') or url.startswith('http')):
             url = '%s/%s' % (settings.STATIC_URL.rstrip('/'), url)
@@ -912,6 +913,7 @@ class NewsItem(models.Model):
     def location_url(self):
         if self.location_object_id is not None:
             return self.location_object.url()
+        # TODO: look for a Block?
         return None
 
     def attributes_for_template(self):

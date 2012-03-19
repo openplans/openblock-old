@@ -9,10 +9,11 @@ GDAL
 psycopg2>=2.2,<2.3
 slimmer>=0.1.30
 -e git://github.com/openplans/olwidget.git#egg=django-olwidget
-pyRFC3339>=0.1
+pyRFC3339==0.1
 pytz>=2011n
 PyYAML==3.09
-http://www.voidspace.org.uk/downloads/mock-0.8.0beta4.tar.gz#egg=mock-dev
+PIL>=1.1.6,<=1.2a
+mock==0.8.0
 South>=0.7.3
 python-dateutil==1.5
 django-jsonfield==0.7.1

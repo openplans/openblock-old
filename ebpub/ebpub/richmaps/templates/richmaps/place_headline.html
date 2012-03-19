@@ -1,5 +1,5 @@
 <li class="item-headline" id="item_headline_{{place.id}}">
-  {% if place_type.map_icon_url %}
+  {% if place_type.get_map_icon_url %}
   <img src="{{place_type.get_map_icon_url}}" />
   {% endif %}
   <div class="title">

@@ -110,6 +110,14 @@ class override_settings(object):
 
 from django.test import testcases
 class TestCase(testcases.TestCase):
+    def __init__(self, *args, **kwargs):
+        import django
+        if django.VERSION >= (1, 4):
+            import warnings
+            warnings.warn("django_testcase_backports.TestCase is not needed on"
+                          " django 1.4 or later."
+                          " Just use django.test.TestCase instead")
+        return super(TestCase, self).__init__(*args, **kwargs)
 
     def settings(self, **kwargs):
         """

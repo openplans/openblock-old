@@ -86,8 +86,8 @@ class NewsitemFilter(object):
         self._got_args = False
 
     def apply(self):
-        """mutate the queryset, and any other state that needs sharing
-        with others.
+        """mutate *and* return the queryset, and modify any other state that
+        needs sharing with others.
         """
         raise NotImplementedError # pragma: no cover
 
@@ -143,6 +143,47 @@ class FilterError(Exception):
         return repr(self.msg)
 
 
+class IdFilter(NewsitemFilter):
+    """
+    Filters by NewsItem ids, which may be a list.
+    """
+    _sort_value = 1
+    slug = 'id'
+    label = u'id'
+    argname = 'id'
+    value = None
+
+    def __init__(self, request, context, queryset, *args, **kwargs):
+        NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
+        self.ids = kwargs.pop('ids', None)
+        if self.ids is None:
+            self._got_args = False
+            self.ids = []
+        else:
+            self._got_args = True
+            if not isinstance(self.ids, (list, tuple)):
+                self.ids = [self.ids]
+        self.query_param_value = ','.join([str(i) for i in self.ids])
+        self.value = self.query_param_value
+
+    def apply(self):
+        """Filtering by ID.
+        """
+        self.qs = self.qs.filter(id__in=self.ids)
+        return self.qs
+
+    def validate(self):
+        if self._got_args:
+            return {}
+        return {
+            'filter_key': self.slug,
+            'param_name': self.argname,
+            'param_label': self.argname,
+            'option_list': [],  # Not gonna list all IDs.
+            'select_multiple': True,
+            }
+
+
 class SchemaFilter(NewsitemFilter):
     """
     Filters by NewsItem.schema, which may be a list.
@@ -162,12 +203,16 @@ class SchemaFilter(NewsitemFilter):
     def validate(self):
         return {}
 
-    def apply(self):
-        if isinstance(self.schema, list):
+    @property
+    def schemas(self):
+        if isinstance(self.schema, (list, tuple)):
             schemas = self.schema
         else:
             schemas = [self.schema]
-        schema_ids = [s.id for s in schemas]
+        return schemas
+
+    def apply(self):
+        schema_ids = [s.id for s in self.schemas]
         if self.request:
             allowed_schema_ids = get_schema_manager(self.request).allowed_schema_ids()
             schema_ids = set(schema_ids).intersection(allowed_schema_ids)
@@ -443,7 +488,7 @@ class BlockFilter(NewsitemFilter):
                                        radius_slug(self.block_radius)])
         self.query_param_value = ','.join(self.query_param_value)
         self.location_name = block.pretty_name
-        self.got_args = True
+        self._got_args = True
 
     def __init__(self, request, context, queryset, *args, **kwargs):
         NewsitemFilter.__init__(self, request, context, queryset, *args, **kwargs)
@@ -631,7 +676,7 @@ class FilterChain(SortedDict):
     """
     A set of NewsitemFilters, to be applied in a predictable order.
 
-    The from_request() constructor can be used to create one
+    The update_from_request() method can be used to configure one
     based on the request URL.
 
     Also handles URL generation.
@@ -720,6 +765,11 @@ class FilterChain(SortedDict):
             if single:
                 return result[0] if result else u''
             return result
+
+        # IDs.
+        ids = pop_key('id', single=False)
+        if ids:
+            self.replace('id', *ids)
 
         # Address.
         address = pop_key('address', single=True)
@@ -913,7 +963,10 @@ class FilterChain(SortedDict):
         if not values:
             raise FilterError("no values passed for arg %s" % key)
 
-        if isinstance(values[0], models.Location):
+        if key == 'id':
+            val = IdFilter(self.request, self.context, self.qs, ids=values)
+
+        elif isinstance(values[0], models.Location):
             val = LocationFilter(self.request, self.context, self.qs, location=values[0])
             key = val.slug
         elif isinstance(values[0], ebpub.streets.models.Block):

@@ -20,10 +20,10 @@ from django.contrib.syndication.views import Feed
 from django.http import Http404
 from django.utils.feedgenerator import Rss201rev2Feed
 from ebpub.db.models import NewsItem, Location
-from ebpub.db.utils import populate_attributes_if_needed, today
+from ebpub.db.utils import populate_attributes_if_needed
 from ebpub.db.utils import make_search_buffer, url_to_block, BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.streets.models import Block
-from ebpub.utils.view_utils import get_schema_manager
+from ebpub.utils.dates import today
 import datetime
 import re
 

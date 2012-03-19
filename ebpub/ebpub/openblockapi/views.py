@@ -317,6 +317,7 @@ def items_atom(request):
     try:
         items, params = build_item_query(request)
         # could test for extra params aside from jsonp...
+        items = [item for item in items if item.location is not None]
         return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
     except QueryError as err:
         return HttpResponseBadRequest(err.message)

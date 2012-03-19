@@ -471,4 +471,18 @@ class RssListDetailScraper(ListDetailScraper):
         point, location_name = self.geocode_if_needed(point, location_name, address_text)
         return (point, location_name)
 
+    @staticmethod
+    def ns_get(entry, element):
+        """Utility to work around feedparser unpredictability
+        re. namespaced elements.  It has more than one back-end
+        parser, and they treat namespaces differently; <foo:bar> might
+        show up as 'foo_bar' or 'bar'.
 
+        Usage:  ns_get(entry=some_dictionary, element='foo:bar')
+
+        """
+        namespace, element = element.split(':')
+        result = entry.get('%s_%s' % (namespace, element))
+        if result is None:
+            result = entry.get(element)
+        return result
