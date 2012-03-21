@@ -135,19 +135,8 @@ OBMapItemList.prototype._findVisibleItems = function() {
         }
     }
     this.items.sort(function(a,b) {
-        var at = a.attributes.openblock_type; 
-        var bt = b.attributes.openblock_type; 
-        
-        if (at != bt) {
-            /* if types do not match, order by type */
-            ak = at;
-            bk = bt;
-        }
-        else {
-            ak = a.attributes.sort || a.attributes.name || a.attributes.title;
-            bk = b.attributes.sort || a.attributes.name || a.attributes.title;
-        }
-        
+        ak = a.attributes.sort || a.attributes.name || a.attributes.title || a.attributes.openblock_type;
+        bk = b.attributes.sort || b.attributes.name || b.attributes.title || b.attributes.openblock_type;
         return ((ak < bk) ? -1 : ((bk < ak) ? 1 : 0));
     });
 };
