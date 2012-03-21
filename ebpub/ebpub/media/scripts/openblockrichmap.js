@@ -155,7 +155,7 @@ OBMapItemList.prototype._findVisibleItems = function() {
 OBMapItemList.prototype._refreshPage = function() {
     /* gather items on page */
     var items = [];
-    var start = this.page*this.listLength
+    var start = this.page * this.listLength;
     for (var i = 0; i < this.listLength; i++) {
         var cur = start + i; 
         if (cur < this.items.length) {
