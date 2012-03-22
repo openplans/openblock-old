@@ -154,10 +154,12 @@
           setPoint(evt.feature);
           // TODO: reverse-geocode and update the #id_location_name field.
           // But we don't have a reverse-geocode API currently.
-          // To avoid having an out-of-date address here, just wipe it;
-          // it'll get reverse-geocoded on the server side.
-          $j('#id_location_name').val('');
-          },
+          // To avoid having an out-of-date address here, just wipe it
+          // and disable the input; it'll get reverse-geocoded on the server side.
+          $j('#id_location_name').val('').attr('disabled', 'disabled');
+          $j('a.mapit-link').hide();
+          $j('a.mapit-link').next('div.form-help').html('Using point on map.');
+        },
         scope: this
       });
       map.addControl(drawpt);
