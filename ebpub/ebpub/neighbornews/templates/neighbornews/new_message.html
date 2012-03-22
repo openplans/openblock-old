@@ -5,7 +5,7 @@
 {% comment %}
 {% endcomment %}
 
-{% block title %}New {{schema.name}}{% endblock %}
+{% block title %}{{action|title}} {{schema.name}}{% endblock %}
 
 <!-- begin block content -->
 {% block content %}
@@ -58,6 +58,11 @@
 
         var reswkt = r.find('span.wkt').text();
         recenterOn(new OpenLayers.Geometry.fromWKT(reswkt));
+        // Update location_name with the selected geocoder result.
+        $j('#id_location_name').val(
+            $j('.selected-result .result-label').first().html()
+        );
+
       };
 
       var selectNone = function() {
@@ -88,6 +93,7 @@
         
         var results = $j('#geocoder-results');
         results.html('');
+        $j('.map_note').html('');
         for (var i = 0 ; i < data.features.length; i++) {
           var result = data.features[i]; 
           var result_title = "";
@@ -103,7 +109,7 @@
           }
 
           var result_html = '<div class="geocoder-result">';
-          result_html += result_title;
+          result_html += '<span class="result-label">' + result_title + '</span>';
           result_html += '<span class="wkt">';
           result_html += 'POINT(' + result.geometry.coordinates[0] + ' ';
           result_html += result.geometry.coordinates[1] + ')';
@@ -146,6 +152,11 @@
       drawpt.events.on({'featureadded': function(evt) {
           selectNone();
           setPoint(evt.feature);
+          // TODO: reverse-geocode and update the #id_location_name field.
+          // But we don't have a reverse-geocode API currently.
+          // To avoid having an out-of-date address here, just wipe it;
+          // it'll get reverse-geocoded on the server side.
+          $j('#id_location_name').val('');
           },
         scope: this
       });
@@ -214,7 +225,7 @@
 	</div><!--/ #mapwrapper -->
 	{% endblock map %}
 	<!-- end block map -->
-  <span class="map_note">Click map to specify location</span>
+  <span class="map_note">Click the map to specify location, or enter an address in the form.</span>
   <div id="geocoder-results"></div>
 </div><!--/ #nav-location -->
 

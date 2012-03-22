@@ -77,6 +77,13 @@ class Address(dict):
             return self["point"].x
     lng = longitude
 
+    @property
+    def location(self):
+        """Everything else full_geocode() can return has a .location,
+        so this is here for consistency of API."""
+        if self["point"]:
+            return self["point"]
+
     def __unicode__(self):
         return u", ".join([self[k] for k in ["address", "city", "state", "zip"]])
 
