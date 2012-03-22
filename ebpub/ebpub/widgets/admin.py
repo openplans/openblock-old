@@ -24,7 +24,8 @@ from ebpub.geoadmin import OSMModelAdmin
 
 class WidgetAdmin(OSMModelAdmin):
     save_as = True
-    
+    prepopulated_fields = {'slug': ('name',)}
+
 class TemplateAdmin(OSMModelAdmin):
     save_as = True
 
