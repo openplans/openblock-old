@@ -28,13 +28,17 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed safe_id_sort_reversed template tag; use the for loop's
+  reverse option instead, eg.
+  {% for item in itemlist|safe_id_sort reversed %}
+
 * Moved the recaptcha template tag from ebpub.neighbornews.templatetags into
   ebpub.db.templatetags.recaptcha_tags.
-  Templates will now need to do {% load recaptcha_tags %}.
+  Templates using it will now need to do {% load recaptcha_tags %}.
 
 * Moved one obscure template tag, {% get_locations_for_item %},
   from ebpub.widgets.templatetags into ebpub.db.templatetags.recaptcha_tags.
-  Templates will now need to do {% load eb %}.
+  Templates using it will now need to do {% load eb %}.
 
 * Renamed a bunch of template tag functions to match the name of the
   tag, eg. "do_filter_url()" is now "filter_url()".  This makes the

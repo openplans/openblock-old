@@ -17,8 +17,13 @@
 #
 
 """
-Template tags mostly related to the schema_filter view:
+Template tags mostly related to the
+:py:func:`ebpub.db.views.schema_filter` view:
 generating URLs and forms to link/submit to that view.
+
+To use these, your template must include::
+
+   {% load eb_filter %}
 
 """
 

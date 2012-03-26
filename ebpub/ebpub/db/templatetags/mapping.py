@@ -16,6 +16,15 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"""
+Template tags for helping with maps.
+To use these, your template must include::
+
+  {% load mapping %}
+
+"""
+
 from django import template
 
 register = template.Library()

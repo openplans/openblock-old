@@ -16,6 +16,16 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Template tags for working with
+:py:class:`NewsItem <ebpub.db.models.NewsItem>`s,
+:py:class:`Location <ebpub.db.models.Location>`s, etc.
+
+To use these, your template must include::
+
+    {% load eb %}
+
+"""
 from django import template
 from django.core.cache import cache
 from django.template.defaultfilters import stringfilter
@@ -68,6 +78,7 @@ def isdigit(value):
     return value.isdigit()
 register.filter('isdigit', stringfilter(isdigit))
 
+
 def lessthan(value, arg):
     """Obsolete since Django 1.1:  Use the < operator instead.
     """
@@ -111,18 +122,6 @@ def safe_id_sort(value, arg):
     return [item[2] for item in decorated]
 safe_id_sort.is_safe = False
 register.filter('safe_id_sort', safe_id_sort)
-
-def safe_id_sort_reversed(value, arg):
-    """
-    Filter that sorts like :py:func:`safe_id_sort`, but in reverse.
-    """
-    var_resolve = template.Variable(arg).resolve
-    decorated = [(var_resolve(item), item.id, item) for item in value]
-    decorated.sort()
-    decorated.reverse()
-    return [item[2] for item in decorated]
-safe_id_sort_reversed.is_safe = False
-register.filter('safe_id_sort_reversed', safe_id_sort_reversed)
 
 def friendlydate(value):
     """

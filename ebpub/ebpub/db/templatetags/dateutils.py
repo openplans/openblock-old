@@ -16,6 +16,14 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Template tags for working with dates.
+To use these, your template must include::
+
+   {% load dateutils %}
+
+"""
+
 from django import template
 import calendar
 

@@ -16,6 +16,14 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Template tags for helping with URLs.
+To use these, your template must include::
+
+  {% load full_links %}
+
+"""
+
 from django import template
 import re
 

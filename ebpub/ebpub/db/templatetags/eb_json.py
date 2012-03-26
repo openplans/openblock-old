@@ -18,6 +18,11 @@
 
 """
 Custom template tags for dealing with json.
+
+To use these, your template must include::
+
+   {% load eb_json %}
+
 """
 
 from django import template
