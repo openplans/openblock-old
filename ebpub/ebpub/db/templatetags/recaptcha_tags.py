@@ -40,8 +40,6 @@ def recaptcha_html():
       {% recaptcha_html %}
 
     """
-    import pdb; pdb.set_trace()
-
     if not getattr(settings, 'RECAPTCHA_PUBLIC_KEY', None):
         return u''
     html = u'<script type="text/javascript">var RecaptchaOptions = {theme : "white"};</script>'
