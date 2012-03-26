@@ -18,8 +18,9 @@ but the default templates, css, and images that ship with OpenBlock
 and ebpub are of course free for your use under the same license terms
 as the rest of OpenBlock (GPL)).
 
-Familiarize yourself with :ref:`available_tags`, there's a lot of
-useful features and time-savers in there.
+Familiarize yourself with
+:py:mod:`ebpub's custom template tags <ebpub.db.templatetags>`,
+there's a lot of useful features and time-savers in there.
 
 Many parts of OpenBlock's markup can be customized on a per-schema
 basis.
@@ -125,17 +126,6 @@ If none exists, the default generic one is
 This page also uses the same map popup templates
 described in :ref:`custom-map-popups`.
 
-.. _available_tags:
-
-Available Template Tags
-=======================
-
-When writing templates, it's well worth knowing what custom template
-tags ship with OpenBlock. See:
-
-* :py:mod:`ebpub.db.templatetags`
-* :py:mod:`ebpub.neighbornews.templatetags`
-* :py:mod:`ebpub.widgets.templatetags`
 
 
 

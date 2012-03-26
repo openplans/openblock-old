@@ -16,4 +16,23 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-#
+from django import template  
+from django.conf import settings  
+from recaptcha.client import captcha
+
+register = template.Library()
+
+@register.simple_tag
+def recaptcha_html():
+    """Inserts a ReCaptcha widget, using settings.RECAPTCHA_PUBLIC_KEY.
+
+    Usage::
+      {% recaptcha_html %}
+    """
+    import pdb; pdb.set_trace()
+
+    if not getattr(settings, 'RECAPTCHA_PUBLIC_KEY', None):
+        return u''
+    html = u'<script type="text/javascript">var RecaptchaOptions = {theme : "white"};</script>'
+    html += captcha.displayhtml(settings.RECAPTCHA_PUBLIC_KEY)
+    return html

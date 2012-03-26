@@ -29,10 +29,3 @@ widgets Package
     :members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    ebpub.widgets.templatetags
-

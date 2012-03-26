@@ -43,10 +43,3 @@ neighbornews Package
     :members:
     :show-inheritance:
 
-Subpackages
------------
-
-.. toctree::
-
-    ebpub.neighbornews.templatetags
-
