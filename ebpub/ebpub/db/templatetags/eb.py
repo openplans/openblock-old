@@ -269,12 +269,22 @@ def get_newsitem_list_by_attribute(parser, token):
     The ``schema`` and ``newsitem_to_ignore`` arguments can be either
     IDs or instances of Schema and NewsItem, respectively.
 
-    Example::
+    Example 1. Here's a list of the latest 3 items that have the "tag" value of
+    "garage sale" and schema id 5::
+
+      {% get_newsitem_list_by_attribute 5 tag="garage sale" as recent_sales %}
+      {% for sale in recent_sales|slice:":3" %}
+         <li><i>{{ sale.title }}</i>
+      {% endfor %}
+
+    Example 2. Here's a list of items that have the same "business_id" value as
+    ``item`` does.   ``item`` itself is excluded from the list. ::
 
       {% get_newsitem_list_by_attribute item.schema item business_id=item.attributes.business_id as other_licenses %}
       {% for item in other_licenses %}
          <li><i>{{ item.title }}</i>
       {% endfor %}
+
 
     """
     bits = token.split_contents()
