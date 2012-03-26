@@ -24,7 +24,10 @@ register = template.Library()
 
 @register.simple_tag
 def recaptcha_html():
-    """Inserts a ReCaptcha widget.
+    """Inserts a ReCaptcha widget, using settings.RECAPTCHA_PUBLIC_KEY.
+
+    Usage::
+      {% recaptcha_html %}
     """
     if not getattr(settings, 'RECAPTCHA_PUBLIC_KEY', None):
         return u''

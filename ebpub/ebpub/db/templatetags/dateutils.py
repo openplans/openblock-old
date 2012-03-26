@@ -22,10 +22,12 @@ import calendar
 register = template.Library()
 
 def days_in_month(value):
-    """Given a datetime.date, returns the number of days in that month.
+    """A filter.  Given a ``datetime.date`` or ``datetime.datetime`` object,
+    returns the number of days in that month.
 
     Example::
-    {% days_in_month some_date %}  ->  31
+
+     {{ some_date|days_in_month }}  ->  31
 
     """
     return calendar.monthrange(value.year, value.month)[1]

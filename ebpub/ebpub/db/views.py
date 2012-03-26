@@ -443,6 +443,9 @@ def search(request, schema_slug=''):
 
 @csrf_protect
 def newsitem_detail(request, schema_slug, newsitem_id):
+    """
+    Page displaying a single NewsItem.
+    """
     ni = get_object_or_404(NewsItem.objects.by_request(request).select_related(),
                            id=newsitem_id,
                            schema__slug=schema_slug)
