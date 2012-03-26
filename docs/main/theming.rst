@@ -18,6 +18,9 @@ but the default templates, css, and images that ship with OpenBlock
 and ebpub are of course free for your use under the same license terms
 as the rest of OpenBlock (GPL)).
 
+Familiarize yourself with :ref:`available_tags`, there's a lot of
+useful features and time-savers in there.
+
 Many parts of OpenBlock's markup can be customized on a per-schema
 basis.
 
@@ -27,7 +30,7 @@ filename based on the Schema's slug, in a directory whose name is
 based on the view that uses the template.  Details follow.
 
 Custom NewsItem lists
----------------------
+----------------------------
 
 When NewsItems are displayed as lists, for example by the
 ``schema_filter`` or ``location_detail`` views, generally templates
@@ -122,6 +125,19 @@ If none exists, the default generic one is
 This page also uses the same map popup templates
 described in :ref:`custom-map-popups`.
 
+.. _available_tags:
+
+Available Template Tags
+=======================
+
+When writing templates, it's well worth knowing what custom template
+tags ship with OpenBlock. See:
+
+* :py:mod:`ebpub.db.templatetags`
+* :py:mod:`ebpub.neighbornews.templatetags`
+* :py:mod:`ebpub.widgets.templatetags`
+
+
 
 Overriding CSS and Images
 =========================
@@ -131,17 +147,124 @@ TODO
 Overriding Views
 ================
 
-View code can be overridden in the normal Django way:
+If you want to add data to a page that's not there, or otherwise
+change behavior, you will probably not be able to do that by
+overriding a template alone.  You will need to modify the view code,
+and you will need to know at least a little about Python and Django to do this.
 
-1. Be sure your app is in ``settings.INSTALLED_APPS``.
+.. admonition:: Help! I don't know Django or Python!
 
-2. Create a view function in your ``views.py`` file.
+  Sorry, you're going to have to learn :)  If you're starting from square one,
+  `Think Python: How to Think Like a Computer Scientist
+  <http://www.greenteapress.com/thinkpython/html/>`_ is a good
+  Python introduction for novices, and
+  `the Django Tutorial
+  <https://docs.djangoproject.com/en/dev/intro/tutorial01/>`_
+  is a good start for learning about Django.
 
-3. Add a line in your ``urls.py`` which routes the relevant
-   URL to your view function instead of the default ebpub view.
 
-Note that there are several ``urls.py`` files throughout the ``ebpub``
-code; you may have to look through several to find the relevant URL
-pattern registration you want to override.  Be sure to preserve the view name,
-if used in the original ``urls.py``; this is likely used by OpenBlock
-for reverse URL generation.
+View code can be overridden in the normal Django way,
+by writing a function and adding an appopriate line to your
+``urls.py``. Step-by-step:
+
+1. Be sure your app is listed in ``settings.INSTALLED_APPS``.
+
+2. Find the view you need to override. A typical way to do this is to
+   find all of openblock's urls.py files and look for a URL pattern
+   that matches the page in question.  To make this easier, we have
+   included a command (borrowed from ``django-extensions``) to show
+   all URL patterns, in the order they are searched:
+
+   .. code-block:: bash
+
+     django-admin.py show_urls
+
+   This will print a bunch of lines that look like::
+
+     /<var>/detail/<var>/	ebpub.db.views.newsitem_detail ebpub-newsitem-detail
+
+   This shows that URLs which look roughly like "/<var>/detail/<var>/" will be
+   served by the :py:func:`ebpub.db.views.newsitem_detail` view function
+   from the :py:mod:`ebpub.db.views` module.
+   The last part of the line is the name ``ebpub-newsitem-detail``,
+   which Django may need when generating URLs.
+
+   Once you find that out, you'll want to find which ``urls.py`` file
+   sets this up, so you can copy what it does. Unfortunately the
+   ``show_urls`` command doesn't tell you this, so try this unix command:
+
+   .. code-block:: bash
+
+      find . -name urls.py | xargs grep "ebpub-newsitem-detail"
+
+   That will show you the file that contains the relevant code, and
+   show you the code, e.g.::
+
+      ./ebpub/ebpub/urls.py:    url(r'^([-\w]{4,32})/detail/(\d{1,8})/$', views.newsitem_detail, name='ebpub-newsitem-detail'),
+
+3. Copy that URL pattern into your own ``urls.py`` file in your
+   custom app, changing the second argument to point to your own view.
+   An example ``urls.py`` file that overrides the newsitem detail view
+   from the previous example might look like:
+
+   .. code-block:: python
+
+       from django.conf.urls.defaults import *
+       
+       urlpatterns = patterns(
+          '',
+          # My URL overrides come first.
+          url(r'^([-\w]{4,32})/detail/(\d{1,8})/$', 'myapp.views.newsitem_detail',
+              name='ebpub-newsitem-detail'),
+          # ebpub's built-in URLs are hooked up AFTER my overrides.
+          (r'^', include('ebpub.urls')),
+       )
+
+   (Change "myapp" to your custom app's name.)   See
+   https://docs.djangoproject.com/en/1.3/topics/http/urls/ for more
+   about Django URL configuration.
+
+4. Now write your URL function. In your urls.py you specified
+   ``myapp.views.newsitem_detail``, so first make sure your app
+   has a ``views.py`` file.  Then copy the ``newsitem_detail``
+   function definition from ``ebpub/db/views.py`` and paste it into
+   your ``views.py`` and edit as you like.
+
+   Before doing anything fancy, I highly recommend temporarily changing the
+   view to print a simple message, just to be sure you've got all the
+   above working. Something like:
+
+   .. code-block:: python
+
+       def newsitem_detail(request, schema_slug, newsitem_id):
+           return HttpResponse("Hello there!")
+
+   Then restart Django, reload the URL in your browser, and check if
+   you see the message.  If you can't get that much working, you can
+   `ask for help <https://docs.djangoproject.com/en/dev/faq/help/>`_.
+
+.. admonition:: How to Ask for Help
+
+   Always try to be specific: nobody can guess what exactly "it
+   doesn't work" might mean.  Have patience and a thick skin -- people
+   on mailing lists and IRC channels are often busy professions who
+   are there in their spare time, and may at first assume you know
+   more than you do, and don't have time to teach you everything.
+   If you are persistent and polite, you will learn much.
+
+
+OpenBlock features available in views
+-------------------------------------
+
+For database queries, see especially the models in
+:py:mod:`ebpub.db.models`.
+
+Most of it is plain vanilla `Django database queries
+<https://docs.djangoproject.com/en/1.3/topics/db/queries/>`_, but a
+few items are worth noting:
+
+* NewsItems may have attribute values that you may want to search by,
+  using :py:meth:`item.objects.by_attribute(schemafield, 'value')  <ebpub.db.models.NewsItemQuerySet.by_attribute>`.
+
+TODO: what else? NewsItemQuerySet.text_search()?
+
