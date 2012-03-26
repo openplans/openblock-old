@@ -241,7 +241,10 @@ register.tag('get_newsitem', get_newsitem)
 class GetNewsItemListByAttributeNode(template.Node):
     def __init__(self, schema_id_variable, newsitem_id_variable, att_name, att_value_variable, context_var):
         self.schema_id_variable = template.Variable(schema_id_variable)
-        self.newsitem_id_variable = template.Variable(newsitem_id_variable)
+        if newsitem_id_variable is None:
+            self.newsitem_id_variable = None
+        else:
+            self.newsitem_id_variable = template.Variable(newsitem_id_variable)
         self.att_name = att_name
         self.att_value_variable = template.Variable(att_value_variable)
         self.context_var = context_var
@@ -250,22 +253,33 @@ class GetNewsItemListByAttributeNode(template.Node):
         schema_id = self.schema_id_variable.resolve(context)
         if hasattr(schema_id, 'id'):
             # It could be a Schema.
-            schema_id = schema_id.id
-        newsitem_id = self.newsitem_id_variable.resolve(context)
-        if hasattr(newsitem_id, 'id'):
-            # It could be a NewsItem.
-            newsitem_id = newsitem_id.id
+            schema_kwargs = {'schema__id': schema_id.id}
+        elif isinstance(schema_id, basestring):
+            # It could be a slug.
+            schema_kwargs = {'schema__slug': schema_id}
+        else:
+            schema_kwargs = {'schema__id': schema_id}
+
         att_value = self.att_value_variable.resolve(context)
-        sf = SchemaField.objects.select_related().get(schema__id=schema_id, name=self.att_name)
-        ni_list = NewsItem.objects.select_related().filter(schema__id=schema_id).exclude(id=newsitem_id).by_attribute(sf, att_value).order_by('-item_date')
-        populate_attributes_if_needed(ni_list, [sf.schema])
+        sf = SchemaField.objects.select_related().get(name=self.att_name, **schema_kwargs)
+        queryset = NewsItem.objects.select_related().filter(**schema_kwargs)
+
+        if self.newsitem_id_variable is not None:
+            newsitem_id = self.newsitem_id_variable.resolve(context)
+            if hasattr(newsitem_id, 'id'):
+                # It could be a NewsItem.
+                newsitem_id = newsitem_id.id
+            queryset = queryset.exclude(id=newsitem_id)
+
+        queryset = queryset.by_attribute(sf, att_value).order_by('-item_date')
+        populate_attributes_if_needed(queryset, [sf.schema])
 
         # We're assigning directly to context.dicts[-1] so that the variable
         # gets set in the top-most context in the context stack. If we didn't
         # do this, the variable would only be available within the specific
         # {% block %} from which the template tag was called, because the
         # {% block %} implementation does a context.push() and context.pop().
-        context.dicts[-1][self.context_var] = ni_list
+        context.dicts[-1][self.context_var] = queryset
 
         return ''
 
@@ -273,7 +287,7 @@ def get_newsitem_list_by_attribute(parser, token):
     """
     Tag that gets a list of NewsItems with a given attribute value,
     and saves it in a context variable.
-    Optionally exclude a NewsItem by id.  (Useful if have a NewsItem
+    Optionally exclude a NewsItem by id.  (Useful if you have a NewsItem
     and you want to build a list of similar NewsItems without 
     including the one you already have.)
 
@@ -286,15 +300,16 @@ def get_newsitem_list_by_attribute(parser, token):
 
     The ``schema`` and ``newsitem_to_ignore`` arguments can be either
     IDs or instances of Schema and NewsItem, respectively.
+    ``Schema`` can also be specified by slug.
 
     Example 1. Here's a list of the latest 3 items that have the "tag" value of
-    "garage sale" and schema id 5:
+    "garage sale" and schema slug "local-news":
 
     .. code-block:: html+django
 
-      {% get_newsitem_list_by_attribute 5 tag="garage sale" as recent_sales %}
+      {% get_newsitem_list_by_attribute "local-news" tag="garage sale" as recent_sales %}
       {% for sale in recent_sales|slice:":3" %}
-         <li><i>{{ sale.title }}</i>
+         <li><i>{{ sale.title }}</i></li>
       {% endfor %}
 
     Example 2. Here's a list of items that have the same "business_id" value as
@@ -312,15 +327,16 @@ def get_newsitem_list_by_attribute(parser, token):
     bits = token.split_contents()
     if len(bits) == 5:
         att_arg_index = 2
-        pass
+        news_item_var=None
     elif len(bits) == 6:
         att_arg_index = 3
+        news_item_var = bits[2]
     else:
         raise template.TemplateSyntaxError('%r tag requires 4 or 5 arguments' % bits[0])
     if bits[att_arg_index].count('=') != 1:
         raise template.TemplateSyntaxError('%r tag argument must contain 1 equal sign' % bits[0])
     att_name, att_value_variable = bits[att_arg_index].split('=')
-    return GetNewsItemListByAttributeNode(bits[1], bits[2], att_name, att_value_variable, bits[-1])
+    return GetNewsItemListByAttributeNode(bits[1], news_item_var, att_name, att_value_variable, bits[-1])
 
 register.tag('get_newsitem_list_by_attribute', get_newsitem_list_by_attribute)
 
