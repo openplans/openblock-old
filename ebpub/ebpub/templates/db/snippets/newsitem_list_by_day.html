@@ -1,7 +1,7 @@
 {% comment %}<!-- -*- tab-width: 4 -*- -->
 Expects these variables: newsitem_list, hidden_schema_list, show_upcoming, is_latest_page
 {% endcomment %}
-{% load eb eb_filter mapping humanize %}
+{% load eb eb_filter mapping humanize dateutils %}
 {% if newsitem_list %}
 	{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
 	{% for daygroup in newsitem_list_byday %}

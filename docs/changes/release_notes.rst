@@ -32,6 +32,9 @@ Backward Incompatibilities
   reverse option instead, eg.
   {% for item in itemlist|safe_id_sort reversed %}
 
+* Moved the friendlydate template filter from ebpub.db.templatetags.eb
+  into ebpub.db.templatetags.dateutils, where it seems to belong.
+
 * Moved the recaptcha template tag from ebpub.neighbornews.templatetags into
   ebpub.db.templatetags.recaptcha_tags.
   Templates using it will now need to do {% load recaptcha_tags %}.

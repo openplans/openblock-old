@@ -19,7 +19,8 @@
 """
 Template tags for working with
 :py:class:`NewsItem <ebpub.db.models.NewsItem>`,
-:py:class:`Location <ebpub.db.models.Location>`, etc.
+:py:class:`Location <ebpub.db.models.Location>`,
+etc.
 
 To use these, your template must include::
 
@@ -41,7 +42,6 @@ from ebpub.utils.bunch import bunch, bunchlong, stride
 from ebpub.utils.dates import today
 from ebpub.utils.text import smart_title
 
-import datetime
 import json
 import re
 
@@ -123,53 +123,6 @@ def safe_id_sort(value, arg):
 safe_id_sort.is_safe = False
 register.filter('safe_id_sort', safe_id_sort)
 
-def friendlydate(value):
-    """
-    A filter that takes a date and includes 'Today' or 'Yesterday' if
-    relevant, or the day of the week if it's within the past week,
-    otherwise just the date.
-
-    Example (in template)::
-
-      {% start_date|friendlydate %}
-
-    Examples, in python::
-
-      >>> import mock, datetime
-      >>> with mock.patch('ebpub.db.templatetags.eb.today', lambda: datetime.date(2011, 8, 15)):
-      ...     print friendlydate(datetime.date(2011, 8, 15))
-      ...     print friendlydate(datetime.date(2011, 8, 16))
-      ...     print friendlydate(datetime.date(2011, 8, 14))
-      ...     print friendlydate(datetime.date(2011, 8, 13))
-      ...     print friendlydate(datetime.date(2011, 8, 9))
-      ...     print friendlydate(datetime.date(2011, 8, 8))
-      ...
-      Today August 15, 2011
-      Tomorrow August 16, 2011
-      Yesterday August 14, 2011
-      Saturday August 13, 2011
-      Tuesday August 9, 2011
-      August 8, 2011
-    """
-    try: # Convert to a datetime.date, if it's a datetime.datetime.
-        value = value.date()
-    except AttributeError:
-        pass
-    # Using value.day because strftine('%d') is zero-padded and we don't want that.
-    # TODO: parameterize format to allow i18n?
-    formatted_date = value.strftime('%B ') + unicode(value.day) + value.strftime(', %Y')
-    _today = today()
-    if value == _today:
-        return 'Today %s' % formatted_date
-    elif value == _today - datetime.timedelta(1):
-        return 'Yesterday %s' % formatted_date
-    elif value == _today + datetime.timedelta(1):
-        return 'Tomorrow %s' % formatted_date
-    elif _today - value <= datetime.timedelta(6):
-        return '%s %s' % (value.strftime('%A'), formatted_date)
-    return formatted_date
-
-register.filter('friendlydate', friendlydate)
 
 class GetMetroListNode(template.Node):
     def render(self, context):
