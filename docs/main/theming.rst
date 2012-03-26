@@ -258,7 +258,9 @@ Most of it is plain vanilla `Django database queries
 few items are worth noting:
 
 * NewsItems may have attribute values that you may want to search by,
-  using :py:meth:`item.objects.by_attribute(schemafield, 'value')  <ebpub.db.models.NewsItemQuerySet.by_attribute>`.
+  using :py:meth:`NewsItem.objects.by_attribute(schemafield, 'value')  <ebpub.db.models.NewsItemQuerySet.by_attribute>`.
 
-TODO: what else? NewsItemQuerySet.text_search()?
+* NewsItems can be searched by text attributes, using
+  :py:meth:`NewsItem.objects.text_search(schemafield, 'value') <ebpub.db.models.NewsItemQuerySet.text_search>`.
+
 

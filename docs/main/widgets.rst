@@ -95,7 +95,9 @@ A new template can be created by visiting the OpenBlock admin site and selecting
 Item Info
 ---------
 
-The variable `items` contains a list of items that should be displayed by the widget.  This list is generally looped over using the `for` template tag, eg::
+The variable `items` contains a list of items that should be displayed by the widget.  This list is generally looped over using the `for` template tag, eg:
+
+.. code-block:: html+django
 
     {% for item in items %}
        <!-- output something about the item -->
@@ -155,11 +157,15 @@ Depending on the item's type (:doc:`schema <schemas>`), a number of extension fi
 
 Extended attributes can be accessed in two ways: By name via the ``attributes_by_name`` variable, or as an ordered list via the ``attributes`` variable.  The attributes list is ordered according to the Display Order configured in the :doc:`Schema's <schemas>` administrative user interface.
 
-If you are using ``attributes_by_name``, you access each attribute according to its unique identifier as configured in the Schema, eg::
+If you are using ``attributes_by_name``, you access each attribute according to its unique identifier as configured in the Schema, eg:
+
+.. code-block:: html+django
 
     {{ item.attributes_by_name.crime_code.value }}
 
-If you are accessing the attributes as a list, you might say::
+If you are accessing the attributes as a list, you might say:
+
+.. code-block:: html+django
 
     {% for attribute in item.attributes %}
       {{ attribute.value }}
@@ -212,7 +218,9 @@ a single url.
 
 
 
-Example::
+Example:
+
+.. code-block:: html+django
 
     http://mypublicsite.com/xzy/openblock/items/{{item.id}}/
     
@@ -222,13 +230,17 @@ linked to depending on the item.
 **Note** unless you have a specific reason not to, use the urlencode filter on any value that may contain unsafe characters for urls.
 
 
-Example:: 
+Example:
+
+.. code-block:: html+django
 
     http://mypublicsite.com/track_click_and_redirect?realurl={{item.external_url|urlencode}}
     
 Here, we link to a theoretical redirector on mypublicsite to capture a click through to an externally hosted (3rd party) detail page.
 
-You are free to use django's full template syntax as long as the result contains a single url.  Here for example, we perform some logic to determine whether to link internally, or use the redirector based on the item's schema::
+You are free to use django's full template syntax as long as the result contains a single url.  Here for example, we perform some logic to determine whether to link internally, or use the redirector based on the item's schema:
+
+.. code-block:: html+django
 
     {% if item.schema.slug == "restaurant-inspections" %}
         http://mypublicsite.com/xzy/openblock/inspections/{{item.id}}/
@@ -270,9 +282,11 @@ Intersecting Locations
 =======================
 
 There is a custom template tag you can use in your widget templates,
-``get_locations_for_item``, which looks up any Locations that
+:py:func:`get_locations_for_item <ebpub.db.templatetags.eb.get_locations_for_item>`, which looks up any Locations that
 intersect with an item and provides some basic info about each.
-Usage looks like::
+Usage looks like:
+
+.. code-block:: html+django
 
     {% get_locations_for_item newsitem location_type_slug (location_type_slug2 ...) as varname %}
 
@@ -287,7 +301,9 @@ with these keys: 'location_slug', 'location_name', 'location_type_slug',
 'location_type_name'.
 
 Here's an example template in which we build links for each
-intersecting location::
+intersecting location:
+
+.. code-block:: html+django
 
      {% for item in news_items %}
        {% get_locations_for_item item 'village' 'town' 'city' as locations_info %}
@@ -297,7 +313,9 @@ intersecting location::
        {% endfor %}
      {% endfor %}
 
-Example output might look like::
+Example output might look like:
+
+.. code-block:: html+django
 
      <li><a href="http://example.com/villages/setauket/">
           Other News in Setauket</a></li>

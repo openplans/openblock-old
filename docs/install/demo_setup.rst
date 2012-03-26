@@ -163,7 +163,9 @@ Then fetch some news from the web, this will take several minutes:
 
 For testing with random data you might also want to get the
 ``misc`` directory from the OpenBlock source code, and try the
-``random-news`` script like so::
+``random-news`` script like so:
+
+.. code-block:: bash
 
   $ src/openblock/misc/bin/random_news.py 10 local-news
 

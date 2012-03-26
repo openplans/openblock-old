@@ -202,9 +202,8 @@ explanatory. Here's an example for Boston:
 
         # Only needed if multiple_cities = True.
         'city_location_type': 'city',
-
-    },
- ]
+      },
+   ]
 
 
 More information on a few of these follows.
@@ -301,7 +300,9 @@ to get notified when news happens in their neighborhood or other area
 of interest.
 
 OpenBlock is configured like ``any other Django application``.
-In your ``settings.py``, you'll want to set these::
+In your ``settings.py``, you'll want to set these:
+
+.. code-block:: python
 
   EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
   EMAIL_HOST='localhost'

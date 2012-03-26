@@ -20,7 +20,9 @@ First, follow **all** the instructions in the :doc:`setup` document and :doc:`ba
 
 If you followed the :doc:`base_install` instructions properly,
 you've already got a virtualenv ready.  Go into it and activate it,
-if you haven't yet::
+if you haven't yet:
+
+.. code-block:: bash
 
   $ cd path/to/your/virtualenv
   $ source bin/activate
@@ -31,14 +33,19 @@ Create Custom App Package
 
 Now do the following to create a new OpenBlock project.  **Note**:
 Your project name should be suitable for use as a python module name;
-i.e. no spaces etc.  Here we assume the project name is `myblock`::
+i.e. no spaces etc.  Here we assume the project name is `myblock`:
+
+.. code-block:: bash
 
     $ cd $VIRTUAL_ENV/src
     $ paster create -t openblock myblock
 
 After answering a few questions, this will create a bare-bones Django
 project in the folder you specified.  Next, install the project into 
-your environment::
+your environment:
+
+.. code-block:: bash
+
 
     $ cd myblock
     $ python setup.py develop
@@ -70,7 +77,9 @@ Adjust Django Settings
 ----------------------
 
 Your django settings are located in settings.py within your project.  You should review these
-and make adjustments based on your setup::
+and make adjustments based on your setup:
+
+.. code-block:: bash
 
     $ favorite_editor myblock/settings.py
     ...
@@ -88,7 +97,9 @@ Create and Initialize the Database
 Now, as usual with Django projects, you'll need to create and
 initialize your database.  If you haven't changed the default
 database settings, and if you've followed the :ref:`template_setup`
-instructions, then the database creation command would simply be::
+instructions, then the database creation command would simply be:
+
+.. code-block:: bash
 
     $ sudo -u postgres createdb -U openblock --template template_postgis openblock_myblock
 
@@ -96,7 +107,9 @@ If you have a different postgresql setup, for example you're using a
 different user than ``openblock``, just change the -U option
 accordingly.
 
-Now initialize your database tables::
+Now initialize your database tables:
+
+.. code-block:: bash
 
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py syncdb --migrate
@@ -112,7 +125,9 @@ good idea.
 Starting the Test Server
 ------------------------
 
-Run django's test server using your project's settings and visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data)::
+Run django's test server using your project's settings and visit http://127.0.0.1:8000/ in your Web browser to see the site in action (with no data):
+
+.. code-block:: bash
 
     $ export DJANGO_SETTINGS_MODULE=myblock.settings
     $ django-admin.py runserver
