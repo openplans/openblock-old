@@ -18,8 +18,8 @@
 
 """
 Template tags for working with
-:py:class:`NewsItem <ebpub.db.models.NewsItem>`s,
-:py:class:`Location <ebpub.db.models.Location>`s, etc.
+:py:class:`NewsItem <ebpub.db.models.NewsItem>`,
+:py:class:`Location <ebpub.db.models.Location>`, etc.
 
 To use these, your template must include::
 
@@ -138,12 +138,14 @@ def friendlydate(value):
       >>> import mock, datetime
       >>> with mock.patch('ebpub.db.templatetags.eb.today', lambda: datetime.date(2011, 8, 15)):
       ...     print friendlydate(datetime.date(2011, 8, 15))
+      ...     print friendlydate(datetime.date(2011, 8, 16))
       ...     print friendlydate(datetime.date(2011, 8, 14))
       ...     print friendlydate(datetime.date(2011, 8, 13))
       ...     print friendlydate(datetime.date(2011, 8, 9))
       ...     print friendlydate(datetime.date(2011, 8, 8))
       ...
       Today August 15, 2011
+      Tomorrow August 16, 2011
       Yesterday August 14, 2011
       Saturday August 13, 2011
       Tuesday August 9, 2011
@@ -161,6 +163,8 @@ def friendlydate(value):
         return 'Today %s' % formatted_date
     elif value == _today - datetime.timedelta(1):
         return 'Yesterday %s' % formatted_date
+    elif value == _today + datetime.timedelta(1):
+        return 'Tomorrow %s' % formatted_date
     elif _today - value <= datetime.timedelta(6):
         return '%s %s' % (value.strftime('%A'), formatted_date)
     return formatted_date
