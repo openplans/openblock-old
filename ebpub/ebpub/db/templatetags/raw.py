@@ -18,7 +18,10 @@
 
 
 """
-To use these, your template must include::
+To use these, your template must include:
+
+.. code-block:: html+django
+
 
   {% load raw %}
 
@@ -40,7 +43,9 @@ def raw(parser, token):
 
     Probably only useful for development.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% raw %}
          Some django template code, like {{ something }}.

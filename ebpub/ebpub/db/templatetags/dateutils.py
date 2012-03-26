@@ -18,7 +18,9 @@
 
 """
 Template tags for working with dates.
-To use these, your template must include::
+To use these, your template must include:
+
+.. code-block:: html+django
 
    {% load dateutils %}
 
@@ -35,9 +37,15 @@ def days_in_month(value):
     """A filter.  Given a ``datetime.date`` or ``datetime.datetime`` object,
     returns the number of days in that month.
 
-    Example::
+    Example:
 
-     {{ some_date|days_in_month }}  ->  31
+    .. code-block:: html+django
+
+      {{ some_date|days_in_month }}
+
+    Example output::
+
+      31
 
     """
     return calendar.monthrange(value.year, value.month)[1]
@@ -49,11 +57,15 @@ def friendlydate(value):
     relevant, or the day of the week if it's within the past week,
     otherwise just the date.
 
-    Example (in template)::
+    Example (in template):
+
+    .. code-block:: html+django
 
       {% start_date|friendlydate %}
 
-    Examples, in python::
+    Examples, in python:
+
+    .. code-block:: python
 
       >>> import mock, datetime
       >>> with mock.patch('ebpub.db.templatetags.dateutils.today', lambda: datetime.date(2011, 8, 15)):

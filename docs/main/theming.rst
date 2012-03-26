@@ -36,7 +36,11 @@ Custom NewsItem lists
 When NewsItems are displayed as lists, for example by the
 ``schema_filter`` or ``location_detail`` views, generally templates
 should use the
-:py:func:`newsitem_list_by_schema <ebpub.db.templatetags.eb.do_newsitem_list_by_schema>` template tag.  Usage looks like::
+:py:func:`newsitem_list_by_schema
+<ebpub.db.templatetags.eb.do_newsitem_list_by_schema>` template tag.
+Usage looks like:
+
+.. code-block:: html+django
 
   {% load eb %}
   {% newsitem_list_by_schema list_of_newsitems %}

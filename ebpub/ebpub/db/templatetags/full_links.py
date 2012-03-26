@@ -18,7 +18,9 @@
 
 """
 Template tags for helping with URLs.
-To use these, your template must include::
+To use these, your template must include:
+
+.. code-block:: html+django
 
   {% load full_links %}
 
@@ -47,7 +49,9 @@ def full_links(parser, token):
     use fully qualified URLs -- i.e., to start with 'http://'. Doesn't touch
     the ones that already start with 'http://'.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% full_links "example.com" %}
         <a href="/food"></a>
@@ -56,6 +60,7 @@ def full_links(parser, token):
       {% end_full_links %}
 
     Output::
+
        <a href="http://example.com/food"></a>
        <a href="http://example.com/sleep"></a>
 

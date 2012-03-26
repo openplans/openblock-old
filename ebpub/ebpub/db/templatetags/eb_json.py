@@ -19,7 +19,9 @@
 """
 Custom template tags for dealing with json.
 
-To use these, your template must include::
+To use these, your template must include:
+
+.. code-block:: html+django
 
    {% load eb_json %}
 
@@ -36,7 +38,9 @@ def json_value(value, arg=None):
     """
     Filter that turns a JSON string into a data structure.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% for item in "[1,2,3]"|json_value %}
         <li>{{ item }}</li>

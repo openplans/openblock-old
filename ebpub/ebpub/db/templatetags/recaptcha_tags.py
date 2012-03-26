@@ -18,7 +18,9 @@
 
 
 """
-To use these, your template must include::
+To use these, your template must include:
+
+.. code-block:: html+django
 
   {% load recaptcha_tags %}
 
@@ -35,7 +37,9 @@ def recaptcha_html():
     """Inserts a ReCaptcha widget, using settings.RECAPTCHA_PUBLIC_KEY.
     If that's not set, outputs an empty string.
 
-    Usage::
+    Usage:
+
+    .. code-block:: html+django
 
       {% recaptcha_html %}
 

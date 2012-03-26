@@ -22,7 +22,9 @@ Template tags for working with
 :py:class:`Location <ebpub.db.models.Location>`,
 etc.
 
-To use these, your template must include::
+To use these, your template must include:
+
+.. code-block:: html+django
 
     {% load eb %}
 
@@ -55,7 +57,9 @@ register.filter('stride', stride)
 def METRO_NAME():
     """Prints the metro_name from get_metro(), titlecase.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
        <h1>{% METRO_NAME %}</h1>
 
@@ -69,7 +73,9 @@ register.simple_tag(METRO_NAME)
 def isdigit(value):
     """Filter that returns whether the value is a digit.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% if "123"|isdigit %} It's a digit {% endif %}
       {% if not "Fred"|isdigit %} It's not a digit {% endif %}
@@ -94,7 +100,9 @@ register.filter('greaterthan', greaterthan)
 def schema_plural_name(schema, value):
     """
     Tag that shows singular or plural name of a schema, depending on
-    ``value``.  Example::
+    ``value``.  Example:
+
+    .. code-block:: html+django
 
         {% schema_plural_name schema 3 %}  --> Restaurant Inspections
         {% schema_plural_name schema 1 %}  --> Restaurant Inspection
@@ -111,7 +119,9 @@ def safe_id_sort(value, arg):
     second by the ID attribute, to ensure sorts always end up the
     same.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% for item in itemlist|safe_id_sort %} ... {% endfor %}
 
@@ -133,7 +143,9 @@ def get_metro_list(parser, token):
     """
     Tag that puts settings.METRO_LIST into the context as METRO_LIST.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% get_metro_list %}
       {% for metro in METRO_LIST %}
@@ -152,7 +164,9 @@ def do_get_metro(parser, token):
     """
     Tag that puts get_metro() into the context as METRO
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% get_metro %}
       <p>Current metro is {{ METRO.city_name }}</p>
@@ -177,7 +191,9 @@ class GetNewsItemNode(template.Node):
 def get_newsitem(parser, token):
     """
     Tag that puts a newsitem with the given ID in the context with the given
-    variable name. Examples::
+    variable name. Examples:
+
+    .. code-block:: html+django
 
       {% get_newsitem some_id as my_item %}
       {% get_newsitem '23' as my_other_item %}
@@ -261,7 +277,9 @@ def get_newsitem_list_by_attribute(parser, token):
     and you want to build a list of similar NewsItems without 
     including the one you already have.)
 
-    Syntax::
+    Syntax:
+
+    .. code-block:: html+django
 
       {% get_newsitem_list_by_attribute [schema] [newsitem_to_ignore] [att_name]=[value_or_var_containing_value] as [context_var] %}
       {% get_newsitem_list_by_attribute [schema] [att_name]=[value_or_var_containing_value] as [context_var] %}
@@ -270,7 +288,9 @@ def get_newsitem_list_by_attribute(parser, token):
     IDs or instances of Schema and NewsItem, respectively.
 
     Example 1. Here's a list of the latest 3 items that have the "tag" value of
-    "garage sale" and schema id 5::
+    "garage sale" and schema id 5:
+
+    .. code-block:: html+django
 
       {% get_newsitem_list_by_attribute 5 tag="garage sale" as recent_sales %}
       {% for sale in recent_sales|slice:":3" %}
@@ -278,7 +298,9 @@ def get_newsitem_list_by_attribute(parser, token):
       {% endfor %}
 
     Example 2. Here's a list of items that have the same "business_id" value as
-    ``item`` does.   ``item`` itself is excluded from the list. ::
+    ``item`` does.   ``item`` itself is excluded from the list.
+
+    .. code-block:: html+django
 
       {% get_newsitem_list_by_attribute item.schema item business_id=item.attributes.business_id as other_licenses %}
       {% for item in other_licenses %}
@@ -337,12 +359,17 @@ def newsitem_list_by_schema(parser, token):
     Tag that renders a NewsItem, or list of NewsItems, using the
     appropriate newsitem_list template, optionally grouped by schema.
 
-    Syntax::
+    Syntax:
+
+    .. code-block:: html+django
+
 
       {% newsitem_list_by_schema [newsitem_or_newsitem_list] [ungrouped?] %}
 
 
-    Examples::
+    Examples:
+
+    .. code-block:: html+django
 
       {% newsitem_list_by_schema newsitem "ungrouped" %}
       {% newsitem_list_by_schema newsitem_list %}
@@ -365,7 +392,9 @@ def contains(value, arg):
     """Filter to check whether ``arg`` is in ``value``.
     Obsolete since Django 1.2, use the 'in' operator instead.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% if "Bob" in name_list %}
          Hi Bob!
@@ -423,13 +452,17 @@ def search_placeholder(parser, token):
     over and over because javascript will be checking for the
     placeholder text, restoring it, etc.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% set_search_placeholder "Some prefix" as some_var %}
       <p>{{ some_var }}</p>
 
     If you have LocationTypes named 'ZIP' and 'neighborhood,'
-    this would output in the template::
+    this would output in the template:
+
+    .. code-block:: html+django
 
       <p>Some prefix address, ZIP, or neighborhood</p>
     """
@@ -458,7 +491,9 @@ def featured_lookup_for_item(context, newsitem, attribute_key):
     that correspond to its values for the named attribute.
     Saves them in the current context under the same name as the attribute.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% featured_lookup_for_item item 'tags' %}
       {% for tag in tags %}
@@ -478,7 +513,9 @@ def get_featured_lookups_by_schema(context):
     puts in the context as
     'featured_lookups', a mapping grouped by schema.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
         {% get_featured_lookups_by_schema %}
         {% for schema, lookups in featured_lookups.items %}
@@ -509,13 +546,17 @@ def json_lookup_values_for_attribute(schema_slug, sf_name):
 
     Assumes the relevant schemafield has is_lookup=True.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
      <script>
       var lookups = {% json_lookup_values_for_attribute 'police-reports' 'violations' %};
      </script>
 
-    Example output::
+    Example output:
+
+    .. code-block:: html+django
 
      <script>
       var lookups = ['burglary', 'speeding', 'vandalism'];
@@ -534,7 +575,9 @@ def get_locations_for_item(parser, token):
     Tag that puts into the context some data about intersecting locations,
     useful for eg. linking to URLs based on those locations.
 
-    Syntax::
+    Syntax:
+
+    .. code-block:: html+django
 
       {% get_locations_for_item newsitem location_type_slug (location_type_slug2 ...) as varname %}
 
@@ -550,12 +593,16 @@ def get_locations_for_item(parser, token):
 
 
     Here's an example template in which we build links for each
-    intersecting location::
+    intersecting location:
+
+    .. code-block:: html+django
 
      {% for item in news_items %}
        {% get_locations_for_item item 'village' 'town' 'city' as locations_info %}
        {% for loc_info in locations_info %}
-         <li><a href="http://example.com/yourtown/{{ loc_info.location_slug}}"> Other News in {{ loc_info.location_name }}</a></li>
+         <li><a href="http://example.com/yourtown/{{loc_info.location_slug}}">
+            Other News in {{ loc_info.location_name }}
+         </a></li>
        {% endfor %}
      {% endfor %}
 
