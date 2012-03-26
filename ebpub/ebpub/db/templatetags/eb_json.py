@@ -34,8 +34,14 @@ def json_value(value, arg=None):
     Example::
 
       {% for item in "[1,2,3]"|json_value %}
-        {{ item }}
+        <li>{{ item }}</li>
       {% endfor %}
+
+    This would insert into the page::
+
+       <li>1</li>
+       <li>2</li>
+       <li>3</li>
     """
     data = simplejson.loads(value)
     if arg is not None:

@@ -23,12 +23,14 @@ from ebpub.utils.text import smart_title
 register = template.Library()
 
 
-def do_item_locations(parser, token):
+def get_locations_for_item(parser, token):
     """
-    Puts into the context some data about intersecting locations,
+    Tag that puts into the context some data about intersecting locations,
     useful for eg. linking to URLs based on those locations.
 
-    {% get_locations_for_item newsitem location_type_slug (location_type_slug2 ...) as varname %}
+    Syntax::
+
+      {% get_locations_for_item newsitem location_type_slug (location_type_slug2 ...) as varname %}
 
     The ``location_type_slug`` arguments will be used, in the order
     given, to specify which types of locations to find.
@@ -62,7 +64,7 @@ def do_item_locations(parser, token):
         raise template.TemplateSyntaxError('%r tag needs args: newsitem slug (slug...) as variable' % tagname)
     loctypes = [s.strip('\'"') for s in bits[1:-2]]
     return LocationInfoNode(newsitem, varname, *loctypes)
-register.tag('get_locations_for_item', do_item_locations)
+register.tag('get_locations_for_item', get_locations_for_item)
 
 
 class LocationInfoNode(template.Node):

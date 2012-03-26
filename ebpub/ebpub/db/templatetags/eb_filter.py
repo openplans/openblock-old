@@ -76,10 +76,10 @@ class Base(template.Node):
             filterchain.clear()
         return filterchain
 
+
 class FilterUrlNode(Base):
 
-    """Node for the filter_url tag
-    """
+    # Node for the filter_url tag
 
     def render(self, context):
         filterchain = self._get_filterchain(context)
@@ -90,7 +90,7 @@ class FilterUrlNode(Base):
 
 class FilterFormInputsNode(Base):
 
-    """Node for the filter_form_inputs tag"""
+    # Node for the filter_form_inputs tag
 
     def render(self, context):
         filterchain = self._get_filterchain(context)
@@ -115,7 +115,7 @@ class FilterFormInputsNode(Base):
         return mark_safe(output)
 
 
-def do_filter_url(parser, token):
+def filter_url(parser, token):
     """
     Template tag that outputs a URL based on the filter chain, with
     optional additions/removals of filters.  The first argument is
@@ -151,17 +151,27 @@ def do_filter_url(parser, token):
 
 
 
-def do_filter_form_inputs(parser, token):
+def filter_form_inputs(parser, token):
     """
-    Template tag that takes same args as filter_url, but outputs a set
-    of hidden form inputs encapsulating the current filter chain.
+    Template tag that takes same args as :py:func:`filter_url`, but outputs a set
+    of hidden form inputs encapsulating the current filter chain,
+    optionally with added or removed filters.
 
-    Examples::
+    For example, to make a form that preserves current filters except
+    allows choosing a new date range, you would do:
 
-     {% filter_form_inputs filter_chain %}
-     {% filter_form_inputs schema %}
+    .. code-block:: html
 
-    etc.
+      <form action="{% filter_url filters.schema %}">
+         {% filter_form_inputs filters -"date" %}
+         <input type="text" name="start_date">
+         <input type="text" name="end_date">
+         <input type="submit">
+      </form>
+
+    The form action is calculated by :py:func:`filter_url` with just the schema,
+    and all non-date current filters are inserted by the second line.
+    The new dates are given by normal non-hidden form fields.
     """
     args = _parse(parser, token)
     return FilterFormInputsNode(*args)
@@ -207,5 +217,5 @@ def _parse(parser, token):
     return (filterchain_var, additions, removals, clear)
 
 
-register.tag('filter_url', do_filter_url)
-register.tag('filter_form_inputs', do_filter_form_inputs)
+register.tag('filter_url', filter_url)
+register.tag('filter_form_inputs', filter_form_inputs)

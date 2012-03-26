@@ -28,6 +28,12 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Renamed a bunch of template tag functions to match the name of the
+  tag, eg. "do_filter_url()" is now "filter_url()".  This makes the
+  API docs easier to read; it doesn't affect templates, only code that
+  imports those functions directly - and there problably is none of
+  that.
+
 * Added a "View selected items on map" link and checkboxes on Schema
   filter pages, to allow viewing explicitly selected items on the "big map".
 

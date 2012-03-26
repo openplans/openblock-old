@@ -41,6 +41,11 @@ register.filter('stride', stride)
 
 def METRO_NAME():
     """Prints the metro_name from get_metro(), titlecase.
+
+    Example::
+
+       <h1>{% METRO_NAME %}</h1>
+
     """
     name = get_metro()['metro_name']
     if name[0] != name[0].upper:
@@ -51,11 +56,14 @@ register.simple_tag(METRO_NAME)
 def isdigit(value):
     """Filter that returns whether the value is a digit.
 
-    Eg. {% if foo|isdigit %} It's a digit {% endif %}
+    Example::
+
+      {% if "123"|isdigit %} It's a digit {% endif %}
+      {% if not "Fred"|isdigit %} It's not a digit {% endif %}
+
     """
     return value.isdigit()
-isdigit = stringfilter(isdigit)
-register.filter('isdigit', isdigit)
+register.filter('isdigit', stringfilter(isdigit))
 
 def lessthan(value, arg):
     """Obsolete since Django 1.1:  Use the < operator instead.
@@ -71,8 +79,8 @@ register.filter('greaterthan', greaterthan)
 
 def schema_plural_name(schema, value):
     """
-    Get singular or plural name of a schema, depending on 'value'.
-    Example::
+    Tag that shows singular or plural name of a schema, depending on
+    ``value``.  Example::
 
         {% schema_plural_name schema 3 %}  --> Restaurant Inspections
         {% schema_plural_name schema 1 %}  --> Restaurant Inspection
@@ -85,8 +93,9 @@ register.simple_tag(schema_plural_name)
 
 def safe_id_sort(value, arg):
     """
-    Like Django's built-in "dictsort", but sorts second by the ID attribute, to
-    ensure sorts always end up the same.
+    Filter that sorts like Django's built-in "dictsort", but sorts
+    second by the ID attribute, to ensure sorts always end up the
+    same.
 
     Example::
 
@@ -101,7 +110,8 @@ safe_id_sort.is_safe = False
 register.filter('safe_id_sort', safe_id_sort)
 
 def safe_id_sort_reversed(value, arg):
-    """safe_id_sort in reverse.
+    """
+    Filter that sorts like :py:func:`safe_id_sort`, but in reverse.
     """
     var_resolve = template.Variable(arg).resolve
     decorated = [(var_resolve(item), item.id, item) for item in value]
@@ -113,25 +123,29 @@ register.filter('safe_id_sort_reversed', safe_id_sort_reversed)
 
 def friendlydate(value):
     """
-    A date string that includes 'Today' or 'Yesterday' if relevant,
-    or the day of the week if it's within the past week,
+    A filter that takes a date and includes 'Today' or 'Yesterday' if
+    relevant, or the day of the week if it's within the past week,
     otherwise just the date.
 
-    Examples:
+    Example (in template)::
 
-    >>> import mock, datetime
-    >>> with mock.patch('ebpub.db.templatetags.eb.today', lambda: datetime.date(2011, 8, 15)):
-    ...     print friendlydate(datetime.date(2011, 8, 15))
-    ...     print friendlydate(datetime.date(2011, 8, 14))
-    ...     print friendlydate(datetime.date(2011, 8, 13))
-    ...     print friendlydate(datetime.date(2011, 8, 9))
-    ...     print friendlydate(datetime.date(2011, 8, 8))
-    ...
-    Today August 15, 2011
-    Yesterday August 14, 2011
-    Saturday August 13, 2011
-    Tuesday August 9, 2011
-    August 8, 2011
+      {% start_date|friendlydate %}
+
+    Examples, in python::
+
+      >>> import mock, datetime
+      >>> with mock.patch('ebpub.db.templatetags.eb.today', lambda: datetime.date(2011, 8, 15)):
+      ...     print friendlydate(datetime.date(2011, 8, 15))
+      ...     print friendlydate(datetime.date(2011, 8, 14))
+      ...     print friendlydate(datetime.date(2011, 8, 13))
+      ...     print friendlydate(datetime.date(2011, 8, 9))
+      ...     print friendlydate(datetime.date(2011, 8, 8))
+      ...
+      Today August 15, 2011
+      Yesterday August 14, 2011
+      Saturday August 13, 2011
+      Tuesday August 9, 2011
+      August 8, 2011
     """
     try: # Convert to a datetime.date, if it's a datetime.datetime.
         value = value.date()
@@ -156,14 +170,19 @@ class GetMetroListNode(template.Node):
         context['METRO_LIST'] = METRO_LIST
         return ''
 
-def do_get_metro_list(parser, token):
+def get_metro_list(parser, token):
     """
-    Puts settings.METRO_LIST into the context as METRO_LIST.
+    Tag that puts settings.METRO_LIST into the context as METRO_LIST.
 
-    Example: {% get_metro_list %}
+    Example::
+
+      {% get_metro_list %}
+      {% for metro in METRO_LIST %}
+        <p>The metro is {{ metro.city_name }}</p>
+      {% endfor %}
     """
     return GetMetroListNode()
-register.tag('get_metro_list', do_get_metro_list)
+register.tag('get_metro_list', get_metro_list)
 
 class GetMetroNode(template.Node):
     def render(self, context):
@@ -172,11 +191,13 @@ class GetMetroNode(template.Node):
 
 def do_get_metro(parser, token):
     """
-    Puts get_metro() into the context as METRO>
+    Tag that puts get_metro() into the context as METRO
 
-    Examples::
+    Example::
 
       {% get_metro %}
+      <p>Current metro is {{ METRO.city_name }}</p>
+
     """
     return GetMetroNode()
 register.tag('get_metro', do_get_metro)
@@ -194,49 +215,53 @@ class GetNewsItemNode(template.Node):
             pass
         return ''
 
-def do_get_newsitem(parser, token):
+def get_newsitem(parser, token):
     """
-    Puts a newsitem with the given ID in the context with the given
+    Tag that puts a newsitem with the given ID in the context with the given
     variable name. Examples::
 
       {% get_newsitem some_id as my_item %}
       {% get_newsitem '23' as my_other_item %}
+      <p>{{ my_item.title }}</p>
+      <p>{{ my_other_item.title }}</p>
+
     """
     bits = token.split_contents()
     if len(bits) != 4:
         raise template.TemplateSyntaxError('%r tag requires 3 arguments' % bits[0])
     return GetNewsItemNode(bits[1], bits[3])
-register.tag('get_newsitem', do_get_newsitem)
+register.tag('get_newsitem', get_newsitem)
 
-class GetNewerNewsItemNode(template.Node):
-    def __init__(self, newsitem_variable, newsitem_list_variable, context_var):
-        self.newsitem_var = template.Variable(newsitem_variable)
-        self.newsitem_list_var = template.Variable(newsitem_list_variable)
-        self.context_var = context_var
+## This is a very obscure feature that we don't use anywhere...
+# class GetNewerNewsItemNode(template.Node):
+#     def __init__(self, newsitem_variable, newsitem_list_variable, context_var):
+#         self.newsitem_var = template.Variable(newsitem_variable)
+#         self.newsitem_list_var = template.Variable(newsitem_list_variable)
+#         self.context_var = context_var
 
-    def render(self, context):
-        newsitem = self.newsitem_var.resolve(context)
-        newsitem_list = self.newsitem_list_var.resolve(context)
-        if newsitem_list and newsitem_list[0].item_date > newsitem.item_date:
-            context[self.context_var] = newsitem_list[0]
-        else:
-            context[self.context_var] = None
-        return ''
+#     def render(self, context):
+#         newsitem = self.newsitem_var.resolve(context)
+#         newsitem_list = self.newsitem_list_var.resolve(context)
+#         if newsitem_list and newsitem_list[0].item_date > newsitem.item_date:
+#             context[self.context_var] = newsitem_list[0]
+#         else:
+#             context[self.context_var] = None
+#         return ''
+#
+# def get_newer_newsitem(parser, token):
+#     """Tag which, given a newsitem, and a list of other newsitems,
+#     puts only those items more recent than the first item into a new
+#     context variable.
 
-def do_get_newer_newsitem(parser, token):
-    """Given a newsitem, and a list of other newsitems,
-    puts only those items more recent than the first item into a new
-    context variable.
+#     Example::
 
-    Examples::
-
-      {% get_more_recent_newsitem [newsitem] [item_list] as [context_var] %}
-    """
-    bits = token.split_contents()
-    if len(bits) != 5:
-        raise template.TemplateSyntaxError('%r tag requires 4 arguments' % bits[0])
-    return GetNewerNewsItemNode(bits[1], bits[2], bits[4])
-register.tag('get_newer_newsitem', do_get_newer_newsitem)
+#       {% get_more_recent_newsitem [newsitem] [item_list] as [context_var] %}
+#     """
+#     bits = token.split_contents()
+#     if len(bits) != 5:
+#         raise template.TemplateSyntaxError('%r tag requires 4 arguments' % bits[0])
+#     return GetNewerNewsItemNode(bits[1], bits[2], bits[4])
+# register.tag('get_newer_newsitem', get_newer_newsitem)
 
 class GetNewsItemListByAttributeNode(template.Node):
     def __init__(self, schema_id_variable, newsitem_id_variable, att_name, att_value_variable, context_var):
@@ -248,7 +273,13 @@ class GetNewsItemListByAttributeNode(template.Node):
 
     def render(self, context):
         schema_id = self.schema_id_variable.resolve(context)
+        if hasattr(schema_id, 'id'):
+            # It could be a Schema.
+            schema_id = schema_id.id
         newsitem_id = self.newsitem_id_variable.resolve(context)
+        if hasattr(newsitem_id, 'id'):
+            # It could be a NewsItem.
+            newsitem_id = newsitem_id.id
         att_value = self.att_value_variable.resolve(context)
         sf = SchemaField.objects.select_related().get(schema__id=schema_id, name=self.att_name)
         ni_list = NewsItem.objects.select_related().filter(schema__id=schema_id).exclude(id=newsitem_id).by_attribute(sf, att_value).order_by('-item_date')
@@ -263,24 +294,44 @@ class GetNewsItemListByAttributeNode(template.Node):
 
         return ''
 
-def do_get_newsitem_list_by_attribute(parser, token):
+def get_newsitem_list_by_attribute(parser, token):
     """
-    Get a list of NewsItems with a given attribute value.
-    Syntax:
-    {% get_newsitem_list_by_attribute [schema_id] [newsitem_id_to_ignore] [att_name]=[value_or_var_containing_value] as [context_var] %}
+    Tag that gets a list of NewsItems with a given attribute value,
+    and saves it in a context variable.
+    Optionally exclude a NewsItem by id.  (Useful if have a NewsItem
+    and you want to build a list of similar NewsItems without 
+    including the one you already have.)
+
+    Syntax::
+
+      {% get_newsitem_list_by_attribute [schema] [newsitem_to_ignore] [att_name]=[value_or_var_containing_value] as [context_var] %}
+      {% get_newsitem_list_by_attribute [schema] [att_name]=[value_or_var_containing_value] as [context_var] %}
+
+    The ``schema`` and ``newsitem_to_ignore`` arguments can be either
+    IDs or instances of Schema and NewsItem, respectively.
 
     Example::
-    {% get_newsitem_list_by_attribute schema.id newsitem.id business_id=attributes.business_id as other_licenses %}
+
+      {% get_newsitem_list_by_attribute item.schema item business_id=item.attributes.business_id as other_licenses %}
+      {% for item in other_licenses %}
+         <li><i>{{ item.title }}</i>
+      {% endfor %}
 
     """
     bits = token.split_contents()
-    if len(bits) != 6:
-        raise template.TemplateSyntaxError('%r tag requires 5 arguments' % bits[0])
-    if bits[3].count('=') != 1:
-        raise template.TemplateSyntaxError('%r tag third argument must contain 1 equal sign' % bits[0])
-    att_name, att_value_variable = bits[3].split('=')
-    return GetNewsItemListByAttributeNode(bits[1], bits[2], att_name, att_value_variable, bits[5])
-register.tag('get_newsitem_list_by_attribute', do_get_newsitem_list_by_attribute)
+    if len(bits) == 5:
+        att_arg_index = 2
+        pass
+    elif len(bits) == 6:
+        att_arg_index = 3
+    else:
+        raise template.TemplateSyntaxError('%r tag requires 4 or 5 arguments' % bits[0])
+    if bits[att_arg_index].count('=') != 1:
+        raise template.TemplateSyntaxError('%r tag argument must contain 1 equal sign' % bits[0])
+    att_name, att_value_variable = bits[att_arg_index].split('=')
+    return GetNewsItemListByAttributeNode(bits[1], bits[2], att_name, att_value_variable, bits[-1])
+
+register.tag('get_newsitem_list_by_attribute', get_newsitem_list_by_attribute)
 
 
 class NewsItemListBySchemaNode(template.Node):
@@ -312,12 +363,15 @@ class NewsItemListBySchemaNode(template.Node):
         }))
 
 
-def do_newsitem_list_by_schema(parser, token):
+def newsitem_list_by_schema(parser, token):
     """
-    {% newsitem_list_by_schema [newsitem_or_newsitem_list] [ungrouped?] %}
+    Tag that renders a NewsItem, or list of NewsItems, using the
+    appropriate newsitem_list template, optionally grouped by schema.
 
-    Renders the items with the appropriate newsitem_list template,
-    optionally grouped by schema.
+    Syntax::
+
+      {% newsitem_list_by_schema [newsitem_or_newsitem_list] [ungrouped?] %}
+
 
     Examples::
 
@@ -335,21 +389,27 @@ def do_newsitem_list_by_schema(parser, token):
     else:
         is_ungrouped = False
     return NewsItemListBySchemaNode(bits[1], is_ungrouped)
-register.tag('newsitem_list_by_schema', do_newsitem_list_by_schema)
+register.tag('newsitem_list_by_schema', newsitem_list_by_schema)
 
 
 def contains(value, arg):
     """Filter to check whether ``arg`` is in ``value``.
     Obsolete since Django 1.2, use the 'in' operator instead.
+
+    Example::
+
+      {% if "Bob" in name_list %}
+         Hi Bob!
+      {% endif %}
     """
     return arg in value
 register.filter('contains', contains)
 
 
 class SearchPlaceholderNode(template.Node):
-    """
-    See do_search_placeholder()
-    """
+
+    #See search_placeholder()
+
     def __init__(self, prefix, var_name):
         self.prefix = prefix.strip()
         self.var_name = var_name.strip()
@@ -383,13 +443,14 @@ class SearchPlaceholderNode(template.Node):
         context[self.var_name] = result
         return ''
 
-def do_search_placeholder(parser, token):
+def search_placeholder(parser, token):
     """
-    Stores in the context a list of LocationTypes,
+    Tag that stores in a context variable a list of
+    :py:class:`ebpub.db.models.LocationType`,
     plus 'address', with an optional prefix.
 
     Useful for search form widgets where we want to use this as
-    placeholder text on the input, and need to write the same string
+    placeholder text on the input, and need to write exactly the same string
     over and over because javascript will be checking for the
     placeholder text, restoring it, etc.
 
@@ -398,7 +459,8 @@ def do_search_placeholder(parser, token):
       {% set_search_placeholder "Some prefix" as some_var %}
       <p>{{ some_var }}</p>
 
-    This will output in the template::
+    If you have LocationTypes named 'ZIP' and 'neighborhood,'
+    this would output in the template::
 
       <p>Some prefix address, ZIP, or neighborhood</p>
     """
@@ -418,18 +480,21 @@ def do_search_placeholder(parser, token):
         raise template.TemplateSyntaxError("%r tag's argument should be in quotes" % tag_name)
     return SearchPlaceholderNode(prefix[1:-1], var_name)
 
-register.tag('set_search_placeholder', do_search_placeholder)
+register.tag('set_search_placeholder', search_placeholder)
 
 
 @register.simple_tag(takes_context="true")
 def featured_lookup_for_item(context, newsitem, attribute_key):
-    """Given a NewsItem, what FeaturedLookups correspond to its values
-    for the named attribute?  Saves them in the current context under
-    the same name as 'attribute_key'.
+    """Tag that, given a NewsItem, finds any :ref:`featured_lookups`
+    that correspond to its values for the named attribute.
+    Saves them in the current context under the same name as the attribute.
 
-    Example:
-    {% featured_lookup_for_item item 'tags' %}
-    {% for tag in tags %} This item has tag {{ tag }} {% endfor %}
+    Example::
+
+      {% featured_lookup_for_item item 'tags' %}
+      {% for tag in tags %}
+        This item has tag {{ tag }}
+      {% endfor %}
 
     """
     lookups = Lookup.objects.featured_lookups_for(newsitem, attribute_key)
@@ -440,7 +505,7 @@ def featured_lookup_for_item(context, newsitem, attribute_key):
 @register.simple_tag(takes_context="true")
 def get_featured_lookups_by_schema(context):
     """
-    Get all featured :py:class:`ebpub.db.models.Lookup` names and URLs for them; 
+    Get all :ref:`featured_lookups` names and URLs for them; 
     puts in the context as
     'featured_lookups', a mapping grouped by schema.
 
@@ -468,18 +533,27 @@ def get_featured_lookups_by_schema(context):
 
 
 @register.simple_tag()
-def lookup_values_for_attribute(schema_slug, sf_name):
+def json_lookup_values_for_attribute(schema_slug, sf_name):
     """Given a schema slug and attribute name, returns
-    all the current values of the relevant attribute,
+    all the current Lookup values of the relevant attribute,
     as a JSON-formatted list.
 
     Assumes the relevant schemafield has is_lookup=True.
 
-    Example:
+    Example::
 
-    {% lookup_values_for_attribute 'police-reports' 'violations' %}
+     <script>
+      var lookups = {% json_lookup_values_for_attribute 'police-reports' 'violations' %};
+     </script>
 
+    Example output::
+
+     <script>
+      var lookups = ['burglary', 'speeding', 'vandalism'];
+     </script>
     """
+    if hasattr(schema_slug, 'slug'):
+        schema_slug = schema_slug.slug
     values = Lookup.objects.filter(schema_field__schema__slug=schema_slug,
                                    schema_field__name=sf_name).values_list('name')
     values = [d[0] for d in values]

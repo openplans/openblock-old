@@ -182,7 +182,7 @@
 
     // Auto-complete for categories.
     $(document).ready(function () {
-	    var availableTags = {% lookup_values_for_attribute schema.slug 'categories' %};
+	    var availableTags = {% json_lookup_values_for_attribute schema.slug 'categories' %};
 	    function split( val ) {
 		return val.split( /,\s*/ );
 	    };

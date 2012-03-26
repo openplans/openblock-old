@@ -21,7 +21,7 @@ from ebpub.db.templatetags import eb_filter
 import mock
 import unittest
 
-class TestDoFilterUrl(unittest.TestCase):
+class TestFilterUrl(unittest.TestCase):
 
     def setUp(self):
         self.mock_parser = mock.Mock()
@@ -36,30 +36,30 @@ class TestDoFilterUrl(unittest.TestCase):
     def test__invalid_no_filterchain(self):
         self.mock_token.split_contents.return_value = ['filter_url']
         self.assertRaises(template.TemplateSyntaxError,
-                          eb_filter.do_filter_url, self.mock_parser, self.mock_token)
+                          eb_filter.filter_url, self.mock_parser, self.mock_token)
 
     def test__invalid__bad_addition(self):
         self.mock_token.split_contents.return_value = ['filter_url', 'filterchain', 'oops']
         self.assertRaises(template.TemplateSyntaxError,
-                          eb_filter.do_filter_url, self.mock_parser, self.mock_token)
+                          eb_filter.filter_url, self.mock_parser, self.mock_token)
 
     def test__invalid__bad_addition2(self):
         self.mock_token.split_contents.return_value = [
             'filter_url', 'filterchain', '+', 'oops']
         self.assertRaises(template.TemplateSyntaxError,
-                          eb_filter.do_filter_url, self.mock_parser, self.mock_token)
+                          eb_filter.filter_url, self.mock_parser, self.mock_token)
 
     def test__invalid__bad_removal(self):
         self.mock_token.split_contents.return_value = [
             'filter_url', 'filterchain', '-', 'oops']
 
         self.assertRaises(template.TemplateSyntaxError,
-                          eb_filter.do_filter_url, self.mock_parser, self.mock_token)
+                          eb_filter.filter_url, self.mock_parser, self.mock_token)
 
     def test__only_filterchain(self):
         self.mock_token.split_contents.return_value = ['filter_url',
                                                        'filterchain']
-        node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
+        node = eb_filter.filter_url(self.mock_parser, self.mock_token)
         self.assertEqual(node.additions, ())
         self.assertEqual(node.removals, ())
         self.assertEqual(node.filterchain_var.var, 'filterchain')
@@ -67,7 +67,7 @@ class TestDoFilterUrl(unittest.TestCase):
     def test__addition_no_args(self):
         self.mock_token.split_contents.return_value = [
             'filter_url', 'filterchain', '+maybe']
-        node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
+        node = eb_filter.filter_url(self.mock_parser, self.mock_token)
         self.assertEqual(node.additions, ((template.Variable('maybe'), ()),))
 
     def test__additions(self):
@@ -76,7 +76,7 @@ class TestDoFilterUrl(unittest.TestCase):
                                                        '+foo', 'foo2',
                                                        '+bar', 'bar2', 'bar3',
                                                        '+baz', 'baz2']
-        node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
+        node = eb_filter.filter_url(self.mock_parser, self.mock_token)
         self.assertEqual(node.removals, ())
         self.assertEqual(len(node.additions), 3)
         from django.template import Variable
@@ -90,7 +90,7 @@ class TestDoFilterUrl(unittest.TestCase):
         self.mock_token.split_contents.return_value = ['filter_url',
                                                        'filterchain',
                                                        '-foo', '-bar', '-baz']
-        node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
+        node = eb_filter.filter_url(self.mock_parser, self.mock_token)
         self.assertEqual(node.additions, ())
         self.assertEqual(len(node.removals), 3)
         Variable = template.Variable
@@ -103,7 +103,7 @@ class TestDoFilterUrl(unittest.TestCase):
                                                        '-foo',
                                                        '+bar', 'bar2',
                                                        '-baz']
-        node = eb_filter.do_filter_url(self.mock_parser, self.mock_token)
+        node = eb_filter.filter_url(self.mock_parser, self.mock_token)
         self.assertEqual(len(node.removals), 2)
         self.assertEqual(len(node.additions), 1)
 
