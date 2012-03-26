@@ -30,11 +30,13 @@ many disparate types of news -- e.g., crime, photos and restaurant inspections.
 Each type of news is referred to as a :py:class:`Schema`,
 and an individual piece of news is a :py:class:`NewsItem`.
 
+.. _newsitem_attributes:
+
 Flexible data: SchemaFields and Attributes
 ------------------------------------------
 
 The NewsItem model in itself is generic -- a lowest-common denominator of each
-NewsItem on the site. If you'd like to extend your NewsItems to include
+piece of news on the site. If you'd like to extend your NewsItems to include
 Schema-specific attributes, you can use :py:class:`SchemaFields <SchemaField>`.
 
 Each piece of news is described by:
@@ -46,11 +48,25 @@ Each piece of news is described by:
 
 * One :py:class:`Schema` that identifies the "type" of NewsItem; and
 
-* A set of :py:class:`SchemaFields <SchemaField>`, each of which describes
-  a valid key for the Attributes dictionary; the type of allowed values;
+* A set of :py:class:`SchemaFields <SchemaField>`, each of which describes:
+  a valid key for the attributes dictionary; the type of allowed values;
   and some configuration metadata about how to display and use that field.
 
-TODO: write up more about motivation
+This is intended to be flexible enough for real-world news data, while
+still allowing for fast database queries.  For more background,
+you might be interested in the video
+`Behind the scenes of EveryBlock.com <http://blip.tv/file/1957362>`_.
+
+.. admonition:: Why not NoSQL?
+
+   ebpub was originally written around the time of the rise in popularity of
+   schemaless document storage systems commonly lumped together as
+   `nosql <http://en.wikipedia.org/wiki/Nosql>`_,
+   which would have made this one aspect of ebpub rather trivial.
+   However, at the time, none of them had much in the way of
+   geospatial capabilities; even today, none of them are as
+   full-featured as PostGIS.
+
 
 Examples might make this clearer. To assign the whole dictionary::
 
@@ -75,70 +91,62 @@ is the key for those attributes.
 A SchemaField says, for example, that
 the "int01" column in the db_attribute table for the "real estate
 sales" Schema corresponds to the "sale price".
+We'll walk through this example in detail below.
+
 
 Detailed Example
 ------------------
 
 Imagine you have a "real estate sales"
-Schema, with an id of 5. Say, for each sale, you have the following
+Schema, with an id of 5. Say, for each sale, you want to store the following
 information:
 
-    address
+* address
+* sale date
+* sale price
 
-    sale date
-
-    sale price
-
-    property type (single-family home, condo, etc.)
-
-The first two fields should go in NewsItem.location_name and NewsItem.item_date,
+The first two fields should go in ``NewsItem.location_name`` and ``NewsItem.item_date``,
 respectively -- there's no reason to put them in the Attribute table, because
 the NewsItem table has a slot for them.
 
 Sale price is a number (we'll assume it's an integer), so create a
 :py:class:`SchemaField` defining it, with these values:
 
-    schema_id = 5
-        The id of our "real estate sales" schema.
+.. code-block:: python
+    :linenos:
 
-    name = 'sale_price'
+    field = SchemaField(schema_id = 5,
+        name = 'sale_price',
+        real_name = 'int01',
+        pretty_name = 'sale price',
+        pretty_name_plural = 'sale prices',
+        display = True,
+        display_order = 1,
+        is_searchable = False,
+       )
 
-        The alphanumeric-and-underscores-only name for this field.
-        (Used in URLs, and as the key for ``newsitem.attributes``,
-        and for the
-        :py:meth:`NewsItemQuerySet.by_attribute` method.)
+Line 1. ``schema_id`` is the id of our "real estate sales" schema.
 
-    real_name = 'int01'
-        The column to use in the db_attribute model. Choices are:
-        int01-07, text01, bool01-05, datetime01-04, date01-05, time01-02,
-        varchar01-05. This value must be unique with respect to the schema_id.
+Line 2.      ``name`` is the alphanumeric-and-underscores-only name for this field.
+(Used in URLs, and as the key for ``newsitem.attributes``,
+and for the
+:py:meth:`NewsItemQuerySet.by_attribute` method.)
+This value must be unique with respect to the schema_id.
 
-    pretty_name = 'sale price'
-        The human-readable name for this attribute.
+Line 3.  ``real_name`` is the column to use in the db_attribute model. Choices are:
+int01-07, text01, bool01-05, datetime01-04, date01-05, time01-02,
+varchar01-05. This value must be unique with respect to the schema_id.
 
-    pretty_name_plural = 'sale prices'
-        The plural human-readable name for this attribute.
+Lines 4-5. ``pretty_name`` and ``pretty_name_plural`` are the human-readable name
+for this attribute.
 
-    display = True
-        Whether to display the value on the site.
+Line 6.  ``display`` controls whether to display the value on the site.
 
-    is_lookup = False
-        Whether it's a lookup. (Don't worry about this for now; see the
-        :ref:`lookups` section below.)
+Line 7: `sort_order`` - An integer representing what order it should be displayed
+on newsitem_detail pages.
 
-    is_filter = False
-        Whether it's a filter. (Again, don't worry about this for now.)
-
-    is_charted = False
-        Whether it's charted. (Again, don't worry.)
-
-    display_order = 1
-        An integer representing what order it should be displayed in on
-        newsitem_detail pages.
-
-    is_searchable = False
-        Whether it's searchable. This only applies to textual fields (varchars
-        and texts).  Don't use with Lookups.
+Line 8: ``is_searchable`` - Whether you can do text searches on this field.
+Only works with text or varchar fields.
 
 Once you've created this SchemaField, the value of "int01" for any db_attribute
 row with schema_id=5 will be the sale price.
@@ -148,22 +156,26 @@ Having done all that, using the field is as easy as::
    from ebpub.db.models import NewsItem
    ni = NewsItem(schema__id=5, title='the title', description='the description', ...)
    ni.save()
-   ni.attributes = {'sale_price': 59, ...}
+   ni.attributes['sale_price'] = 59
+
 
 Searching by Attributes
 ------------------------
 
 There is a simple API for searching NewsItems by attribute values:
 
-   NewsItem.objects.filter(schema__id=5).by_attribute(sale_price=59)
+   sale_price = SchemaField.objects.get(schema__id=5, name='sale_price')
+   NewsItem.objects.filter(schema__id=5).by_attribute(sale_price, 59)
+
+For details see :py:meth:`NewsItemQuerySet.by_attribute`.
 
 
 Attributes: Under the hood
 ---------------------------
 
 The dictionary-like API is provided thanks to the combination of
-:py:class:`AttributeDescriptor`, :py:class:`AttributeDict`,
-and :py:class:`Attribute`.
+the ``AttributesDescriptor``, ``AttributeDict``, and
+:py:class:`Attribute` classes; see the source code for details.
 
 Images
 ------
@@ -278,8 +290,13 @@ calendar features.
 Lookups
 ========
 
-Consider the "property type" data we have for each real estate sale
-NewsItem in the example above.
+Lookups are a way to reduce duplication and support fast searching
+for similar NewsItems.
+
+Consider the "real estate" schema we talked about in earlier examples.
+We want to add a field representing "property type" for each real estate sale
+NewsItem.
+
 We could store it as a varchar field (in which case we'd set
 real_name='varchar01') -- but that would cause a lot of duplication and
 redundancy, because there are only a couple of property types -- the set
@@ -287,20 +304,77 @@ redundancy, because there are only a couple of property types -- the set
 we can use a Lookup -- a way to normalize the data.
 
 To do this, set ``SchemaField.is_lookup=True`` and make sure to use an 'int' column
-for SchemaField.real_name. Then, for each record, get or create a Lookup
-object (see the model in ``ebpub/db/models.py``) that represents the data, and use
-the Lookup's id in the appropriate db_attribute column. The helper function
-``Lookup.objects.get_or_create_lookup()`` is a convenient shortcut here (see the
-code/docstring of that function).
+for SchemaField.real_name.  For example:
 
-**Many-to-many Lookups**
+.. code-block:: python
 
-Sometimes a NewsItem has multiple values for a single attribute. For example, a
-restaurant inspection can have multiple violations. In this case, you can use a
-many-to-many Lookup. To do this, just set ``SchemaField.is_lookup=True`` as before,
-but use a varchar field for the ``SchemaField.real_name``. Then, in the
-db_attribute column, set the value to a string of comma-separated integers of
-the Lookup IDs.
+    field = SchemaField(schema_id = 5,
+        name = 'property_type',
+        real_name = 'int02',
+        is_lookup=True,
+        pretty_name = 'property type',
+        pretty_name_plural = 'property types',
+        display = True,
+        display_order = 2,
+       )
+
+
+Then, for each record, get or create a :py:class:`Lookup`
+object that represents the data, and use
+the Lookup's id in the appropriate attribute field.
+For example:
+
+.. code-block:: python
+
+    condo = Lookup.objects.get_or_create_lookup(
+        schema_field=field, name='condo')
+    newsitem['property_type'] = condo
+
+Note the convenience function :py:meth:`Lookup.objects.get_or_create_lookup() <LookupManager.get_or_create_lookup>`.
+
+Many-to-many Lookups
+--------------------
+
+Sometimes a :py:class:`NewsItem` has multiple values for a single attribute.
+For example, a restaurant inspection can have multiple violations. In
+this case, you can use a many-to-many Lookup. To do this, just set
+``SchemaField.is_lookup=True`` as before, but use a varchar field for
+the ``SchemaField.real_name``. Then, in the db_attribute column, set
+the value to a string of comma-separated integers of the Lookup IDs:
+
+.. code-block:: python
+
+    field = SchemaField.objects.get(schema_id=5, name='property_type')
+    field.real_name = 'varchar01'
+    field.save()
+
+    newsitem.attributes['property_type'] = '1,2,3'
+
+
+.. _featured_lookups:
+
+"Featured" Lookups
+-----------------------
+
+A :py:class:`Lookup` instance can have ``featured=True``, which you can use to
+mark some Lookup values as "special" for eg. navigation purposes.
+One example use case would be special tags or keywords that mark
+any relevant NewsItems for inclusion in a special part of your homepage.
+
+To work with Lookups that are marked with ``featured=True``, there are
+several useful tools:
+
+* :py:meth:`Lookup.objects.featured_lookups_for(newsitem, name) <LookupManager.featured_lookups_for>`
+  will, given a NewsItem instance and an attribute name, find all
+  featured Lookups for that attribute which are relevant to that NewsItem.
+* The same functionality is available in templates via the 
+  :py:func:`featured_lookups_for_item <ebpub.db.templatetags.eb.featured_lookups_for_item>` template tag.
+* :py:func:`get_featured_lookups_by_schema <ebpub.db.templatetags.eb.get_featured_lookups_by_schema>`
+  is a tag that finds all currently featured Lookups, and URLs to find
+  relevant NewsItems.
+
+
+.. _charting_and_filtering:
 
 Charting and filtering lookups
 ------------------------------
@@ -590,16 +664,16 @@ class SchemaField(models.Model):
         help_text='Whether to display value on the public site.'
         )
     is_lookup = models.BooleanField(
-        default=False,
+        blank=True, default=False,
         help_text='Whether the value is a foreign key to Lookup.'
         )
     is_filter = models.BooleanField(
-        default=False,
+        blank=True, default=False,
         help_text='Whether to link to list of items with the same value in this field. Assumes is_lookup=True.'
         )
     is_charted = models.BooleanField(
-        default=False,
-        help_text='Whether the schema detail view displays a chart for this field; also see "trends" tabs on place overview page.'
+        blank=True, default=False,
+        help_text='Whether the schema detail view displays a chart for this field; also see "trends" tabs on place overview page. Assumes is_lookup=True.'
         )
     display_order = models.SmallIntegerField(default=10)
     is_searchable = models.BooleanField(
@@ -611,7 +685,9 @@ class SchemaField(models.Model):
         return (self.schema.slug, self.real_name)
 
     class Meta(object):
-        unique_together = (('schema', 'real_name'),)
+        unique_together = (('schema', 'real_name'),
+                           ('schema', 'name'),
+                           )
         ordering = ('pretty_name',)
 
     def __unicode__(self):
@@ -850,10 +926,15 @@ class LocationSynonym(models.Model):
 
 
 class AttributesDescriptor(object):
-    """
-    This class provides the functionality that makes the attributes available
-    as a dictionary-like `attributes` on a model instance.
-    """
+
+    # No docstring, not part of API.
+    #
+    # This class provides the functionality that makes the attributes available
+    # as a dictionary-like `attributes` on a model instance.
+    #
+    # You normally don't instantiate this directly.
+    # Just use newsitem.attributes like a normal dictionary.
+
     def __get__(self, instance, instance_type=None):
         if instance is None:
             raise AttributeError("%s must be accessed via instance" % self.__class__.__name__)
@@ -891,10 +972,15 @@ class AttributesDescriptor(object):
 
 
 class AttributeDict(dict):
-    """
-    A dictionary-like object that serves as a wrapper around attributes for a
-    given NewsItem.
-    """
+
+    # No docstring, not part of API.
+    #
+    # A dictionary-like object that serves as a wrapper around attributes for a
+    # given NewsItem.
+    #
+    # You normally don't instantiate this directly.
+    # Just use news_item.attributes like a normal dictionary.
+
     def __init__(self, news_item_id, schema_id, mapping):
         dict.__init__(self)
         self.news_item_id = news_item_id
@@ -934,7 +1020,7 @@ class AttributeDict(dict):
         return dict.__getitem__(self, name)
 
     def __setitem__(self, name, value):
-        # TODO: refactor, code overlaps largely with AttributeDescriptor.__set__
+        # TODO: refactor, code overlaps largely with AttributesDescriptor.__set__
         cursor = connection.cursor()
         real_name = self.mapping[name]
         cursor.execute("""
@@ -955,6 +1041,10 @@ class AttributeDict(dict):
 
 class NewsItemQuerySet(models.query.GeoQuerySet):
 
+    """
+    Adds special methods for searching :py:class:`NewsItem`.
+    """
+
     def prepare_attribute_qs(self):
         clone = self._clone()
         if 'db_attribute' not in clone.query.extra_tables:
@@ -970,6 +1060,12 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Returns a QuerySet of NewsItems whose attribute value for the given
         SchemaField is att_value.
 
+        For example::
+
+           items = NewsItem.objects.filter(schema_id=1)
+           sf = SchemaField.objects.get(name='violation', schema_id=1)
+           items.by_attribute(sf, 'unsanitary work surface')
+
         If att_value is a list, this will do the
         equivalent of an "OR" search, returning all NewsItems that have an
         attribute value in the att_value list.
@@ -977,9 +1073,11 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
         Handles many-to-many lookups correctly behind the scenes.
 
         If is_lookup is True, then each att_value must be either a
-        :py:class:`Lookup` instance, or the 'code' of a Lookup instance, or an id
+        :py:class:`Lookup` instance, or the 'code' field of a Lookup instance, or an id
         of a Lookup instance.  (If is_lookup is False, then only ids
         will work.)
+
+        Does not support comparisons other than simple equality testing.
         """
 
         clone = self.prepare_attribute_qs()
@@ -1028,7 +1126,8 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
 
     def date_counts(self):
         """
-        Returns a dictionary mapping {item_date: count}.
+        Returns a dictionary mapping {item_date: count}, i.e. the number of
+        :py:class:`NewsItem` created each day.
         """
         from django.db.models.query import QuerySet
         qs = QuerySet.values(self, 'item_date').annotate(count=models.Count('id'))
@@ -1101,8 +1200,9 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
 
     def by_request(self, request):
         """
-        Does additional request-specific filtering; currently this
-        just uses get_schema_manager(request) to limit the schemas that are
+        Returns a QuerySet that does additional request-specific
+        filtering; currently this just uses
+        get_schema_manager(request) to limit the schemas that are
         visible during this request.
         """
         clone = self._clone()
@@ -1112,23 +1212,45 @@ class NewsItemQuerySet(models.query.GeoQuerySet):
 
 
 class NewsItemManager(models.GeoManager):
+    """
+    Available as :py:class:`NewsItem`.objects
+    """
     def get_query_set(self):
+        """
+        Returns a :py:class:`NewsItemQuerySet`
+        """
         return NewsItemQuerySet(self.model)
 
     def by_attribute(self, *args, **kwargs):
+        """
+        See :py:meth:`NewsItemQuerySet.by_attribute`
+        """
         return self.get_query_set().by_attribute(*args, **kwargs)
 
     def text_search(self, *args, **kwargs):
+        """
+        See :py:meth:`NewsItemQuerySet.text_search`
+        """
         return self.get_query_set().text_search(*args, **kwargs)
 
     def date_counts(self, *args, **kwargs):
+        """
+        See :py:meth:`NewsItemQuerySet.date_counts`
+        """
         return self.get_query_set().date_counts(*args, **kwargs)
 
     def top_lookups(self, *args, **kwargs):
+        """
+        See :py:meth:`NewsItemQuerySet.top_lookups`
+        """
         return self.get_query_set().top_lookups(*args, **kwargs)
 
     def by_request(self, request):
+        """
+        See :py:meth:`NewsItemQuerySet.by_request`
+        """
         return self.get_query_set().by_request(request)
+
 
 class NewsItem(models.Model):
     """
@@ -1310,13 +1432,18 @@ class AttributeForTemplate(object):
 
 
 class Attribute(models.Model):
+
     """
     Extended metadata for NewsItems.
 
     Each row contains all the extra metadata for one NewsItem
     instance.  The field names are generic, so in order to know what
     they mean, you must look at the SchemaFields for the Schema for
-    that NewsItem.  eg. newsitem.
+    that NewsItem.
+
+    You don't normally access an Attribute instance directly.
+    You usually go through the dictionary-like API provided by
+    :ref:`newsitem_attributes`.
 
     """
     news_item = models.OneToOneField(NewsItem, primary_key=True, unique=True)
@@ -1422,8 +1549,53 @@ class LookupManager(models.Manager):
 
     def featured_lookups_for(self, newsitem, attribute_key):
         """
-        Return a list of the Lookups that are featured and that the
-        newsitem has for the given attribute.
+        Return a list of the :ref:`featured_lookups` that the
+        newsitem has for the named attribute.
+
+        Here's a rather morbid example::
+
+          schema = Schema(name='obituary', ...)
+          profession = SchemaField(schema=schema, is_lookup=True, name="profession")
+
+        Now let's make some lookups representing a few professions::
+
+          nurse = Lookup(schema_field=sf, name='nurse')
+          programmer = Lookup(schema_field=sf, name='programmer')
+          chef = Lookup(schema_field=sf, name='chef')
+
+        And some NewsItems::
+
+          item1 = NewsItem(schema=schema, ...)
+          item1.attributes['profession'] = programmer.id
+
+        And let's imagine that this week, we are very excited about
+        recently deceased programmers::
+
+           programmer.featured = True
+           programmer.save()
+
+        Now we can use ``featured_lookups_for`` to see if this person
+        was a programmer::
+
+          for feat in Lookup.objects.featured_lookups_for(schema, item1):
+              print feat.name
+          # --> prints "programmer"
+
+        If we disable the ``featured`` flag on the Lookup, because
+        people have lost interest in deceased programmers, then
+        getting featured lookups on this programmer returns an empty
+        list::
+
+          programmer.featured = False
+          programmer.save()
+          for feat in Lookup.objects.featured_lookups_for(schema, item1):
+              print feat.name
+          # --> prints nothing.
+
+        See also the
+        :py:func:`featured_lookups_for_item <ebpub.db.templatetags.eb.featured_lookups_for_item>`
+        template tag.
+
         """
         # This uses several queries, not very efficient...
         sf = SchemaField.objects.get(schema__id=newsitem.schema_id, name=attribute_key)
@@ -1455,10 +1627,6 @@ class Lookup(models.Model):
     few possible values.
 
     For more context, see :ref:`lookups`.
-
-
-    _lookups:
-
     """
     schema_field = models.ForeignKey(
         SchemaField,
