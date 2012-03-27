@@ -47,6 +47,19 @@ def days_in_month(value):
 
       31
 
+    Examples, in python:
+
+    .. code-block:: python
+
+      >>> import datetime
+      >>> print days_in_month(datetime.date(2011, 8, 15))
+      31
+      >>> print days_in_month(datetime.datetime(2011, 8, 15, 0, 0))
+      31
+      >>> print days_in_month(datetime.date(2012, 2, 1))
+      29
+      >>> print days_in_month(datetime.date(2011, 2, 1))
+      28
     """
     return calendar.monthrange(value.year, value.month)[1]
 register.filter('days_in_month', days_in_month)

@@ -36,12 +36,13 @@ from django.template.loader import select_template
 from ebpub.db.models import LocationType
 from ebpub.db.models import Lookup
 from ebpub.db.models import NewsItem
-from ebpub.db.models import SchemaField
+from ebpub.db.models import SchemaField, Schema
 from ebpub.db.schemafilters import FilterChain
 from ebpub.db.utils import populate_attributes_if_needed
-from ebpub.metros.allmetros import METRO_LIST, get_metro
+from ebpub.metros import allmetros
 from ebpub.utils.bunch import bunch, bunchlong, stride
 from ebpub.utils.dates import today
+from ebpub.utils.models import is_instance_of_model
 from ebpub.utils.text import smart_title
 
 import json
@@ -64,7 +65,7 @@ def METRO_NAME():
        <h1>{% METRO_NAME %}</h1>
 
     """
-    name = get_metro()['metro_name']
+    name = allmetros.get_metro()['metro_name']
     if name[0] != name[0].upper:
         name = name.title()
     return name
@@ -80,21 +81,37 @@ def isdigit(value):
       {% if "123"|isdigit %} It's a digit {% endif %}
       {% if not "Fred"|isdigit %} It's not a digit {% endif %}
 
+
+    Python examples:
+
+    .. code-block:: python
+
+    >>> isdigit("1")
+    True
+    >>> isdigit("999")
+    True
+    >>> isdigit("42.1")
+    False
+    >>> isdigit("hello")
+    False
+    >>> isdigit("")
+    False
+
     """
     return value.isdigit()
 register.filter('isdigit', stringfilter(isdigit))
 
 
 def lessthan(value, arg):
-    """Obsolete since Django 1.1:  Use the < operator instead.
+    """Filter. Obsolete since Django 1.1:  Use the < operator instead.
     """
-    return int(value) < int(arg)
+    return int(value) < int(arg)   # pragma: no cover
 register.filter('lessthan', lessthan)
 
 def greaterthan(value, arg):
-    """Obsolete since Django 1.1:  Use the > operator instead.
+    """Filter. Obsolete since Django 1.1:  Use the > operator instead.
     """
-    return int(value) > int(arg)
+    return int(value) > int(arg)  # pragma: no cover
 register.filter('greaterthan', greaterthan)
 
 def schema_plural_name(schema, value):
@@ -123,7 +140,7 @@ def safe_id_sort(value, arg):
 
     .. code-block:: html+django
 
-      {% for item in itemlist|safe_id_sort %} ... {% endfor %}
+      {% for item in itemlist|safe_id_sort "item_date" %} ... {% endfor %}
 
     """
     var_resolve = template.Variable(arg).resolve
@@ -134,12 +151,8 @@ safe_id_sort.is_safe = False
 register.filter('safe_id_sort', safe_id_sort)
 
 
-class GetMetroListNode(template.Node):
-    def render(self, context):
-        context['METRO_LIST'] = METRO_LIST
-        return ''
-
-def get_metro_list(parser, token):
+@register.simple_tag(takes_context=True)
+def get_metro_list(context):
     """
     Tag that puts settings.METRO_LIST into the context as METRO_LIST.
 
@@ -152,15 +165,12 @@ def get_metro_list(parser, token):
         <p>The metro is {{ metro.city_name }}</p>
       {% endfor %}
     """
-    return GetMetroListNode()
-register.tag('get_metro_list', get_metro_list)
+    context['METRO_LIST'] = allmetros.METRO_LIST
+    return ''
 
-class GetMetroNode(template.Node):
-    def render(self, context):
-        context['METRO'] = get_metro()
-        return ''
 
-def do_get_metro(parser, token):
+@register.simple_tag(takes_context=True)
+def get_metro(context):
     """
     Tag that puts get_metro() into the context as METRO
 
@@ -172,8 +182,9 @@ def do_get_metro(parser, token):
       <p>Current metro is {{ METRO.city_name }}</p>
 
     """
-    return GetMetroNode()
-register.tag('get_metro', do_get_metro)
+    context['METRO'] = allmetros.get_metro()
+    return u''
+
 
 class GetNewsItemNode(template.Node):
     def __init__(self, newsitem_variable, context_var):
@@ -416,7 +427,7 @@ def contains(value, arg):
          Hi Bob!
       {% endif %}
     """
-    return arg in value
+    return arg in value  # pragma: no cover
 register.filter('contains', contains)
 
 
@@ -578,7 +589,7 @@ def json_lookup_values_for_attribute(schema_slug, sf_name):
       var lookups = ['burglary', 'speeding', 'vandalism'];
      </script>
     """
-    if hasattr(schema_slug, 'slug'):
+    if is_instance_of_model(schema_slug, Schema):
         schema_slug = schema_slug.slug
     values = Lookup.objects.filter(schema_field__schema__slug=schema_slug,
                                    schema_field__name=sf_name).values_list('name')
@@ -646,14 +657,18 @@ class LocationInfoNode(template.Node):
         """Puts some information about overlapping locations into context[varname].
         """
         newsitem_context = self.newsitem_context_var.resolve(context)
-        if not isinstance(newsitem_context, dict):
-            raise template.TemplateSyntaxError("The newsitem argument to 'get_locations_for_item' tag must be a dictionary eg. as created by the template_context_for_item() function")
+        if isinstance(newsitem_context, dict):
+            newsitem = newsitem_context.get('_item', None)
+        else:
+            newsitem = newsitem_context
+        if not is_instance_of_model(newsitem, NewsItem):
+            raise template.TemplateSyntaxError("The newsitem argument to 'get_locations_for_item' tag must be either a NewsItem, or a dictionary eg. as created by the template_context_for_item() function")
+
         # TODO: cache the LocationType lookup?
         location_types = LocationType.objects.filter(slug__in=self.loctype_slugs)
         loctype_dict = dict([(d['slug'], d)
                              for d in location_types.values('name', 'slug')])
         result = []
-        newsitem = newsitem_context['_item']
         nilocations = newsitem.location_set.all()
         for slug in self.loctype_slugs:
             loctype = loctype_dict.get(slug)
