@@ -600,6 +600,12 @@ class Schema(models.Model):
         max_length=255, blank=True, null=True,
         help_text="CSS color code used on maps to display this type of news. eg #FF0000.  Only used if map_icon_url is not set. Optional.")
 
+
+    edit_window = models.FloatField(
+        blank=True, default=0.0,
+        help_text=u"How long, in hours, the creator of an item is allowed to edit it. Set to 0 to disallow edits by non-Admin users. Set to -1 to allow editing forever."
+        )
+
     objects = SchemaManager()
     public_objects = SchemaPublicManager()
 

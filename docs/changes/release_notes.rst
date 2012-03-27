@@ -84,6 +84,10 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Schemas now have an ``edit_window`` field, representing how long (in
+  hours) users are allowed to edit their content after it's created.  Used
+  by the ``neighbornews`` forms.
+
 * Rest API: Allow searching by multiple types (schemas).
 
 * Added an admin UI for importing NewsItems from spreadsheets

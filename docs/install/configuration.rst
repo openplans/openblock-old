@@ -337,27 +337,78 @@ public mail service.  See for example `this blog post
 User-Contributed Content
 ========================
 
-The ``ebpub.neighbornews`` package provides two schemas for
+The :py:mod:`ebpub.neighbornews` package provides two schemas for
 user-contributed content: "Neighbor Messages" and "Neighbor Events".
 
-To disable this feature entirely, just remove ``"ebpub.neighbornews"``
+If this feature is enabled (see below), logged-in users can use a form
+to add a future event or a dated message to your maps.
+
+.. _enabling_neighbornews:
+
+Enabling neighbornews
+-----------------------
+
+First, ensure that ``ebpub.neighbornews`` is in
+``settings.INSTALLED_APPS``; it's there by default.
+
+Next you'll want to load the relevant schemas with this command:
+
+.. code-block:: bash
+
+   django-admin.py loaddata ebpub/neighbornews/fixtures/neighbornews_schemas.json
+
+.. _disabling_neighbornews:
+
+Disabling neighbornews
+-----------------------
+
+To disable this feature, just remove ``"ebpub.neighbornews"``
 from ``settings.INSTALLED_APPS``.  (If you re-enable it later, you may
 need to re-run ``django-admin.py syncdb --migrate`` to prepare your
 database.)
 
-Relevant settings:
+Configuration
+---------------
 
-``NEIGHBORNEWS_USE_CAPTCHA`` -- Whether to put a ReCaptcha form on
+``settings.NEIGHBORNEWS_USE_CAPTCHA`` -- Whether to put a ReCaptcha form on
 the forms for adding user-contributed news.
 This can be True, False, or a function that takes a "request" argument
 and returns True or False.
 
 You'll also need to acquire API keys from recaptcha.org and set them
-as ``RECAPTCHA_PUBLIC_KEY`` and ``RECAPTCHA_PRIVATE_KEY``.
+as ``settings.RECAPTCHA_PUBLIC_KEY`` and ``settings.RECAPTCHA_PRIVATE_KEY``.
+
+Moderation
+------------
 
 You will probably also want ``ebpub.moderation`` in
-``INSTALLED_APPS``, to allow users to flag content as spam or
+``settings.INSTALLED_APPS``, to allow users to flag content as spam or
 objectionable.  This is on by default.
+See :ref:`moderation` for usage instructions.
+
+
+Restricting or disallowing edits
+--------------------------------
+
+You can control how long users are allowed to correct or
+otherwise  edit their own neighbor
+messages or events.  To do this, use the admin UI to set the
+``edit_window`` parameter on the relevant ``Schema``.
+
+* To disallow editing completely, set ``edit_window`` to 0.
+
+* To allow editing forever, set ``edit_window`` to any negative
+  number.
+
+* To allow editing for a limited time, set ``edit_window`` to the
+  number of hours you want to allow.  (You can use a decimal
+  point if you want to allow editing for less than an hour.)
+
+(Note that each time the user edits an item, the clock resets.)
+
+Admin users can always edit by using the admin UI.
+Non-admin users can never edit other users' content.
+
 
 OpenBlock REST API
 ====================
