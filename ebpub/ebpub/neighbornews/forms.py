@@ -16,6 +16,10 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Forms for adding & editing :ref:`user_content`
+
+"""
 from django import forms
 from django.conf import settings
 from ebpub.db.forms import NewsItemForm as NewsItemFormBase

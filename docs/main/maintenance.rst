@@ -48,14 +48,14 @@ Moderating User-Submitted Content
 =================================
 
 If you have any Schemas with ``allow_flagging=True``, eg. if you have
-``ebpub.neighbornews`` in your ``settings.INSTALLED_APPS`` (it is by
-default), then users can flag NewsItems of that type as possible spam
+:ref:`enabled the Neighbornews package <user_content>`
+then logged-in users can flag those NewsItems as possible spam
 or inappropriate content.
 
-To moderate these messages, go to the admin UI and, under the
+To moderate these flagged items, go to the admin UI and, under the
 "Moderation" heading, click on "News Item Flags".
 
-The resulting list is sorted to the most recent new, unmoderated flags
+The list of flags is sorted with the most recent new, unmoderated flags
 at top.
 
 There are two ways you can moderate items: in bulk, or one at a time.
@@ -66,7 +66,7 @@ Moderating One at a Time
 If you click on a News Item Flag in the list, you'll see details about
 the flagged News Item, who flagged it, when, and why.
 
-There is also a link to the public view of the NewsItem if you want to
+There is also a link to the public view of the NewsItem, if you want to
 examine it more fully in context.
 
 You'll see two buttons at top: "Reject and Delete it" and "Approve it".
@@ -91,7 +91,7 @@ take:
   public site, and those Flags will be moved off the top of the list
   of new flags.
 
-* **Reject and delete** - This will **permanently** delete the NewsItem and all
+* **Delete** - This will **permanently** delete the NewsItem and all
   Flags on it.  You cannot undo this action.
 
 * **Delete flag** - The selected Flag(s) is/are deleted. This has no

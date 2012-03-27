@@ -19,4 +19,7 @@
 """
 This package provides views for working with user-contributed NewsItems
 in two flavors: news and events.
+
+See :ref:`user_content` for an overview.
+
 """
