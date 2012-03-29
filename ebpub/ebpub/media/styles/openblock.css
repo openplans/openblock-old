@@ -626,6 +626,10 @@ div.popupnav {
     width: 100%;
 }
 
+#mapwrapper .layersDiv, #layerswitcher div span {
+    opacity: 0.84 !important;
+}
+
 #mapwrapper .olControlLayerSwitcher span {
     background-color: #505040 !important;
 }
