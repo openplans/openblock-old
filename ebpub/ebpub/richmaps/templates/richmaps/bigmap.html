@@ -4,17 +4,22 @@
 {% block fulltitle %}Map of {% METRO_NAME %}{% endblock %}
 
 {% block content %}
-    <div id="map_headlines" class="map-headlines"></div>
-		<div id="mapwrapper" class="fullpage">
-		  <script type="text/javascript">
-	    {% autoescape off %}
+	<div id="map_headlines" class="map-headlines"></div>
+	<div id="mapwrapper" class="fullpage">
+		<div id="layerswitcher-container">
+			<div id="layerswitcher" class="olControlLayerSwitcher"></div>
+		</div>
+		<script type="text/javascript">
+     {% autoescape off %}
       function loadMap() {
           var config = {{map_config}};
           config['baselayer_type']  = "{{ MAP_BASELAYER_TYPE }}";
 
           var map = new OBMap(config);
-          map.map.addControl(new OpenLayers.Control.LayerSwitcher());
-          
+	  map.map.addControl(
+              new OpenLayers.Control.LayerSwitcher(
+                  {'div': OpenLayers.Util.getElement('layerswitcher')}
+          ));
           var permalink = new OpenblockPermalink(map);
           map.map.addControl(permalink);
 
@@ -22,14 +27,31 @@
 
           var headlines = new OBMapItemList(map, {'element': '#map_headlines'});
           $('#mapwrapper').css('margin-left', $('#map_headlines').css('width'));
-          
+
+          // Overriding openlayers' normal layer switcher hide/expand.
+          var switcherLabel = $j('#mapwrapper .layersDiv .dataLbl');
+          var layersDiv = $j('#mapwrapper .layersDiv .dataLayersDiv');
+
+          switcherLabel.html('&nabla; Overlays');
+          switcherLabel.toggle(
+              function() {
+                  layersDiv.show(100);
+                  switcherLabel.html('&Delta; Overlays');
+              },
+              function() {
+                  layersDiv.hide(100);
+                  switcherLabel.html('&nabla; Overlays');
+  });
+
           return map;
       }
       {% endautoescape %}
-		  </script>
-		{% include "richmaps/richmap.html" %}
-		</div><!-- end mapwrapper -->
-    <div id="map_date_range">
+		</script>
+
+{% include "richmaps/richmap.html" %}
+</div><!-- end mapwrapper -->
+
+<div id="map_date_range">
         <form action="#" id="map_date_range_form">
         		<label for="map_begin_date">Start Date</label>
         		<input type="text" class="begin-date" id="map_begin_date" />
