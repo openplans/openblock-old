@@ -42,6 +42,18 @@ located under the various app directories, notably
 ``ebpub/ebpub/db/migrations/`` to see what the existing migration
 scripts look like.
 
+.. admonition::  If a migration gets stuck...
+
+  If you run ``django-admin.py migrate`` and it seems to hang -- just
+  sitting there indefinitely -- this typically means some other code is
+  trying to write to the database, but the migration needs an exlusive
+  lock to alter some tables, so it waits "forever" for those other
+  scripts to go away. (See
+  http://south.aeracode.org/wiki/FAQ#ImusingPostgreSQLandmigrationsjusthangindefinitely
+  ). Typically these will be :doc:`scraper <running_scrapers>` scripts. To fix it, either
+  restart the database, or ``kill`` all the other processes that are
+  writing to the database. The migration should then finish with no trouble.
+
 .. _moderation:
 
 Moderating User-Submitted Content
