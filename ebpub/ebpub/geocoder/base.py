@@ -25,6 +25,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
+from ebpub.utils.text import address_to_block
 import logging
 import re
 
@@ -468,7 +469,6 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
         places = Place.objects.filter(normalized_name=canonical_place)
         if len(places) == 1:
             logger.debug(u'geocoded %r to Place %s' % (query, places[0]))
-
             return {'type': 'place', 'result': places[0], 'ambiguous': False}
         elif len(places) > 1:
             # TODO: Places don't know about city, state, zip...
@@ -496,21 +496,28 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
             return {'type': 'address', 'result': results[0], 'ambiguous': False}
 
     except InvalidBlockButValidStreet, e:
-        # If the exact address couldn't be geocoded, try using the
-        # normalized location name.
+        result = {
+            'type': 'block',
+            'ambiguous': True,
+            'result': e.block_list,
+            'street_name': e.street_name,
+            'block_number': e.block_number,
+            }
         if convert_to_block:
-            block_name = address_to_block(kwargs['location_name'])
-            if block_name != kwargs['location_name']:
+            # If the exact address couldn't be geocoded, try using the
+            # normalized block name.
+            block_name = address_to_block(query)
+            if block_name != query:
                 try:
-                    result = BlockGeocoder._do_geocode(block_name)
+                    result['result'] = BlockGeocoder()._do_geocode(block_name)
                     result['result']['address'] = block_name
-                except InvalidBlockButValidStreet, another_e:
+                    result['ambiguous'] = False
+                    logger.debug('Resolved %r to block %r' % (query, block_name))
+                except (InvalidBlockButValidStreet, AmbiguousResult):
                     pass
-                except AmbiguousResult, another_e:
-                    pass
-        # No joy, return all blocks.
-        logger.debug('Invalid block for %r, returning all possible blocks' % query)
-        return {'type': 'block', 'result': e.block_list, 'ambiguous': True, 'street_name': e.street_name, 'block_number': e.block_number}
+        if result['ambiguous']:
+            logger.debug('Invalid block for %r, returning all possible blocks' % query)
+        return result
 
     except:
         raise

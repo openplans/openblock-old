@@ -84,6 +84,13 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* ebpub.geocoder.base.full_geocode() now has a convert_to_block
+  argument, factored out from ebdata.retrieval.  If True, this
+  tries to disambiguate bad blocks on good streets by rounding down
+  to the nearest block, eg. converting '299 Wabash St' to '200 block
+  of Wabash St.'  May help geocoding when eg. census data doesn't
+  quite match reality.
+
 * Schemas now have an ``edit_window`` field, representing how long (in
   hours) users are allowed to edit their content after it's created.  Used
   by the ``neighbornews`` forms.
