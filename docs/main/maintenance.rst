@@ -24,6 +24,22 @@ good to know what you're getting, and this file will alert you of
 backward incompatibilities that may impact any custom code you may
 have written.
 
+Update the Code
+----------------
+
+To install updated openblock code (from source) and all dependencies:
+
+.. code-block:: bash
+
+   pip install -r ebpub/requirements.txt
+   pip install -e ebpub
+   pip install -r ebdata/requirements.txt
+   pip install -e ebdata
+   pip install -r obadmin/requirements.txt
+   pip install -e obadmin
+   pip install -r obdemo/requirements.txt
+   pip install -e obdemo
+
 Database Migrations
 -------------------
 
