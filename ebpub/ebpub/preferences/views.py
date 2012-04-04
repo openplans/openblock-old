@@ -37,7 +37,7 @@ def ajax_save_hidden_schema(request):
     try:
         manager = get_schema_manager(request)
         schema = manager.get(slug=request.POST['schema'])
-        sp = HiddenSchema.objects.get(user_id=request.user.id, schema=schema)
+        HiddenSchema.objects.get(user_id=request.user.id, schema=schema)
     except Schema.DoesNotExist:
         return http.HttpResponse('0') # Schema doesn't exist.
     except HiddenSchema.DoesNotExist:
