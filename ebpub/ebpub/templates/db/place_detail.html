@@ -21,35 +21,6 @@ window.onload = function() {
 		return false;
 	});
 	{% if USER %}
-	$j('#saveplacebutton').show().click(function() {
-		this.blur();
-		var action, result, url, button;
-		if ($j('#saveplacebutton').html().search('Remove')) {
-			action = 'Saving';
-			result = 'Saved';
-			url = '/accounts/saved-places/add/';
-			button = 'Remove this saved place';
-		}
-		else {
-			action = 'Removing';
-			result = 'Removed';
-			url = '/accounts/saved-places/delete/';
-			button = 'Save this place';
-		}
-		$j('#saveplacestatus').html(action + '...');
-		$j.ajax({
-			type: "POST", url: url, data: {pid: pid},
-			error: setTimeout(function(jqXHR, textStatus, errorThrown) {
-				$j('#saveplacestatus').html("Whoops, we had a technical hiccup on line 46. Please try again in a bit.");
-			},5000),
-			//Timeout set if page not saving because it refreshes too quickly.
-			success: function(data, textStatus) {
-				$j('#saveplacestatus').html(result + '.');
-				$j('#saveplacebutton').html(button);
-				$j('#ul-saved').html('<li class="replaceme">Loading...</li>');
-			}
-		});
-	});
 	{% include "db/snippets/onload_scripts.html" %}
 	$j('h4.unloaded').removeClass('unloaded');
 	{% endif %}
