@@ -80,7 +80,7 @@ setup(
         "recaptcha-client",
         "South",
         "mock>=0.8.0",
-        "django-olwidget",
+        "django-olwidget>=0.49",
         'setuptools-git',  # Only needed if building packages for distribution.
         'python-dateutil<2.0',  # 2.0 requires python >= 3.
         'django-jsonfield>=0.6',  # The one on pypi, NOT the one by bradjasper on github.

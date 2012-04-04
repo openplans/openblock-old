@@ -9,7 +9,7 @@ django-static==1.5.5
 # 2.2 is minimum version that has extensions.ISOLATION_LEVEL_AUTOCOMMIT but 2.4.2 is known not to work with django 1.3.
 psycopg2>=2.2,<2.3
 slimmer>=0.1.30
--e git://github.com/openplans/olwidget.git#egg=django-olwidget
+https://github.com/openplans/olwidget/zipball/20120404#egg=django-olwidget-0.49
 pyRFC3339==0.1
 pytz>=2011n
 PyYAML==3.09
