@@ -2,44 +2,40 @@
 
 {% load eb eb_filter %}
 
-{% block title %}Select {{ lookup_type }}{% endblock %}
+{% block title %}Select {{ param_label }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+
+<script type="text/javascript">
+{% autoescape off %}
+$j(document).ready(function() {
+    $j(".chzn-select").chosen({no_results_text: "No results matched"});
+}
+)
+{% endautoescape %}
+</script>
+{% endblock %}
 
 {% block content %}
 <div id="content">
 	<h2>
-		<a href="{% filter_url filters -all %}">{{ schema.plural_name|capfirst }}</a>
-		{% comment %} we already have breadcrumbs in the base template
- {% for crumb in filters.make_breadcrumbs %} {% if forloop.last %}{{ crumb.0|capfirst }}{% else %}<a href="{{ crumb.1 }}">{{ crumb.0|capfirst }}</a> &rsaquo; {% endif %}{% endfor %} 
-		{% endcomment %}
+		<a href="{% filter_url schema %}">{{ schema.plural_name|capfirst }}</a>
 	</h2>
-	<h2>Select {{ lookup_type }}</h2>
-	{% if lookup_list|length|greaterthan:"100" %}
-		{% regroup lookup_list by name|upper|slice:":1" as alpha_list %}
-		{% for current_letter in alpha_list %}
-			<h2>{{ current_letter.grouper }}</h2>
-				<p id="alpha_{{ current_letter.grouper|lower }}">
-					{% for letter in alpha_list %}
-						{% ifequal letter.grouper current_letter.grouper %}
-							<strong>{{ letter.grouper }}</strong> 
-						{% else %}
-							<a href="#alpha_{{ letter.grouper|lower }}">{{ letter.grouper|upper }}</a> 
-						{% endifequal %}
-					{% endfor %}
-					<a href="#content">&uarr; Top</a>
-				</p>
-				<ul>
-					{% for lookup in current_letter.list %}
-						<li><a href="{% filter_url filters +lookup_type_slug lookup %}">{{ lookup.name }}</a></li>
-
-					{% endfor %}
-				</ul>
+	<h2>Select {{ param_label }} </h2>
+	<form action="{% filter_url schema %}" method="GET">
+	{% filter_form_inputs filters -filter_key %}
+	<select class="chzn-select" name="{{ param_name }}"
+		{% if select_multiple %}multiple{% endif %}
+		data-placeholder="Select {{ param_label }}&hellip;"
+		style="width: 500px;"
+ 		>
+	  	<option value=""></option>
+		{% for option in option_list %}
+		<option value="{{ option.value }}">{{ option.name }}</option>
 		{% endfor %}
-	{% else %}
-		<ul>
-			{% for lookup in lookup_list %}
-				<li><a href="{% filter_url filters +lookup_type_slug lookup %}">{{ lookup.name }}</a></li>
-			{% endfor %}
-		</ul>
-	{% endif %}
+	</select>
+	<br><button type="submit">Go</button>
+	</form>
 </div>
 {% endblock %}

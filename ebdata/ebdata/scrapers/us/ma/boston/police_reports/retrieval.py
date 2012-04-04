@@ -1,4 +1,4 @@
-#   Copyright 2011 OpenPlans and contributors
+#   Copyright 2011,2012 OpenPlans and contributors
 #
 #   This file is part of OpenBlock
 #
@@ -23,17 +23,11 @@ http://www.bpdnews.com/
 
 """
 
-from ebdata.nlp.addresses import parse_addresses
 from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
 from ebdata.retrieval.scrapers.list_detail import SkipRecord
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
 from ebdata.textmining.treeutils import text_from_html
 from ebpub.db.models import NewsItem
-from ebpub.geocoder import SmartGeocoder
-from ebpub.geocoder.base import GeocodingException
-from ebpub.geocoder.parser.parsing import ParsingError
-from ebpub.utils.logutils import log_exception
-import logging
 import datetime
 
 
@@ -49,8 +43,8 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
     def list_pages(self):
         yield self.fetch_data(self.url)
 
-    def existing_record(self, record):
-        url = record['link']
+    def existing_record(self, cleaned_record):
+        url = cleaned_record['url']
         qs = NewsItem.objects.filter(schema__id=self.schema.id, url=url)
         try:
             return qs[0]
@@ -69,17 +63,14 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
             self.logger.info("boston daily crime stats, we don't know how to "
                              "handle these yet")
             raise SkipRecord
-        return record
 
-    def save(self, old_record, list_record, detail_record):
-        # TODO: move some of this to clean_list_record?
-        date = datetime.date(*list_record['updated_parsed'][:3])
+        date = datetime.date(*record['updated_parsed'][:3])
 
         # Get the precinct from the tags.
         precincts = ['A1', 'A7', 'B2', 'B3', 'C11', 'C6', 'D14', 'D4',
                      'E13', 'E18', 'E5']
         precinct = None
-        tags = [t['term'] for t in list_record['tags']]
+        tags = [t['term'] for t in record['tags']]
         if not tags:
             return
 
@@ -93,46 +84,33 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
         if not precinct:
             self.logger.debug("no precinct found in tags %r" % tags)
 
-        description = list_record['summary']
-
-        full_description = list_record['content'][0]['value']
-        full_description = text_from_html(full_description)
-
-        addrs = parse_addresses(full_description)
-        if not addrs:
-            self.logger.info("no addresses found in %r %r" % (list_record['title'], 
-                                                           list_record['link']))
-            return
-
-        location = None
-        location_name = u''
-        block = None
+        description = record['summary']
 
         # This feed doesn't provide geographic data; we'll try to
         # extract addresses from the text, and stop on the first
         # one that successfully geocodes.
-        for addr, unused in addrs:
-            addr = addr.strip()
-            try:
-                location = SmartGeocoder().geocode(addr)
-            except (GeocodingException, ParsingError):
-                log_exception(level=logging.DEBUG)
-                continue
-            location_name = location['address']
-            location = location['point']
-            break
-        else:
-            self.logger.info("no addresses geocoded in %r" % list_record['title'])
-            return
+        full_description = record['content'][0]['value']
+        full_description = text_from_html(full_description)
+        location, location_name = self.get_point_and_location_name(
+            record, address_text=full_description)
 
-        kwargs = dict(item_date=date,
-                      location=location,
-                      location_name=location_name,
-                      title=list_record['title'],
-                      description=description,
-                      url=list_record['link'],
-                      )
+        if not (location or location_name):
+            raise SkipRecord("No location or location_name")
+
+        cleaned = dict(item_date=date,
+                       location=location,
+                       location_name=location_name,
+                       title=record['title'],
+                       description=description,
+                       url=record['link'],
+                       )
+        return cleaned
+
+
+    def save(self, old_record, list_record, detail_record):
         attributes = None
+        # We don't use detail_record
+        kwargs = list_record
         self.create_or_update(old_record, attributes, **kwargs)
 
 

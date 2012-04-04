@@ -26,6 +26,7 @@ from django.core.mail import get_connection, EmailMultiAlternatives
 from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.importlib import import_module
+from functools import wraps
 import constants # relative import
 import urllib
 
@@ -92,6 +93,9 @@ def login_required(view_func):
     Decorator that requires login before a given view function can be
     accessed.
     """
+    # TODO: Is there still any reason we still need to use this
+    # instead of django.contrib.auth.decorators.login_required?
+    @wraps(view_func)
     def inner_view(request, *args, **kwargs):
         if not request.user.is_anonymous():
             return view_func(request, *args, **kwargs)

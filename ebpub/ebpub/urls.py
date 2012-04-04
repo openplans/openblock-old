@@ -37,7 +37,7 @@ if settings.DEBUG:
          'django.views.static.serve',
          {'document_root': olwidget_media_path}),
 
-        (r'^(?P<path>(?:%s).*)/?$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
+        (r'^(?:%s)(?P<path>.*)$' % settings.DJANGO_STATIC_NAME_PREFIX.strip('/'),
          'django.views.static.serve',
          {'document_root': settings.DJANGO_STATIC_SAVE_PREFIX}),
 
@@ -91,7 +91,13 @@ if get_metro()['multiple_cities']:
     urlpatterns += patterns(
         '',
         url(r'^streets/$', views.city_list, name='ebpub-city-list'),
-        url(r'^streets/([-a-z]{3,40})/$', views.street_list, name='ebpub-street-list'),
+        # optionally accept city slug below. this allows for a no arg
+        # ebpub-street-list call to return the street list for single city and
+        # city list for multi city setups. this way the templates can call
+        # {% url ebpub-street-list %} without having to worry about single/multi
+        # city configurations
+        url(r'^streets/(?:([-a-z]{3,40})/)?$', views.street_list,
+            name='ebpub-street-list'),
         url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/$', views.block_list,
             name='ebpub-block-list'),
         url(r'^streets/([-a-z]{3,40})/([-a-z0-9]{1,64})/%s/$' % BLOCK_URL_REGEX,
@@ -117,7 +123,7 @@ else:
     # single-city block patterns.
     urlpatterns += patterns(
         '',
-        url(r'^streets/(\w{0})$', views.street_list,
+        url(r'^streets/$', views.street_list,
             name='ebpub-street-list'),
         url(r'^streets/(\w{0})([-a-z0-9]{1,64})/$', views.block_list,
             name='ebpub-block-list'),
@@ -143,14 +149,18 @@ else:
 
 urlpatterns += patterns(
     '',
-    url(r'^([-\w]{4,32})/$', views.schema_detail, name='ebpub-schema-detail'),
+    url(r'^([-\w]{4,32})/schema/$', views.schema_detail, name='ebpub-schema-detail'),
     (r'^([-\w]{4,32})/search/$', views.search),
     (r'^([-\w]{4,32})/petition/$', petition_views.form_view, {'is_schema': True}),
     (r'^([-\w]{4,32})/petition/thanks/$', petition_views.form_thanks, {'is_schema': True}),
     url(r'^([-\w]{4,32})/detail/(\d{1,8})/$', views.newsitem_detail, name='ebpub-newsitem-detail'),
-    url(r'^([-\w]{4,32})/filter_json/([^/].*)?/?$', views.schema_filter_geojson,
+    url(r'^([-\w]{4,32})/filter_json/$', views.schema_filter_geojson,
         name='ebpub-schema-filter-geojson'),
-    url(r'^([-\w]{4,32})/(?:filter/)?([^/].*)?/$', views.schema_filter,
+
+    # Redirect from the old 'filter' url.
+    # url(r'^([-\w]{4,32})/filter/$', views.schema_filter,  # XXX redirect
+    #     name='ebpub-schema-filter'),
+    url(r'^([-\w]{4,32})/$', views.schema_filter,
         name='ebpub-schema-filter'),
 
 )

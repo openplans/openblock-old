@@ -18,6 +18,11 @@
 
 """
 Utilities for reading Microsoft Excel files.
+
+Only handles old-style excel files.
+
+TODO: use http://packages.python.org/openpyxl/ to handle new-style
+xslx files.
 """
 
 import xlrd
@@ -44,28 +49,45 @@ class ExcelDictReader(object):
     header_row_num. If you provide custom_headers, the value of header_row_num
     will be ignored.
 
-    Example usage:
+    Example usage::
+
         reader = ExcelDictReader('/path/to/my.xls', 0, 0, 1)
         for row in reader:
             print row
 
-    This yields dictionaries like:
+    This yields dictionaries like::
+
         {'header1': 'value1', 'header2': 'value2'}
+
+    The first argument can be either a path, or an open file-like object.
     """
     def __init__(self, filename, sheet_index=0, header_row_num=0, start_row_num=0,
             use_last_header_if_duplicate=True, custom_headers=None):
-        self.workbook = xlrd.open_workbook(filename)
+
+        if hasattr(filename, 'read'):
+            self.workbook = xlrd.open_workbook(file_contents=filename.read())
+        else:
+            self.workbook = xlrd.open_workbook(filename)
         self.sheet_index = sheet_index
+        if not start_row_num and not custom_headers:
+            # Like csv.DictReader, assume first row is headers.
+            start_row_num = header_row_num + 1
         self.header_row, self.start_row = header_row_num, start_row_num
         self.use_last_header_if_duplicate = use_last_header_if_duplicate
         self.custom_headers = custom_headers
+        self._fieldnames = custom_headers
+
+    # For consistency with csv.DictReader
+    @property
+    def fieldnames(self):
+        if self._fieldnames is None:
+            worksheet = self.workbook.sheet_by_index(self.sheet_index)
+            self._fieldnames = [v.value.strip() for v in worksheet.row(self.header_row)]
+        return self._fieldnames
 
     def __iter__(self):
         worksheet = self.workbook.sheet_by_index(self.sheet_index)
-        if self.custom_headers:
-            headers = self.custom_headers
-        else:
-            headers = [v.value.strip() for v in worksheet.row(self.header_row)]
+        headers = self.fieldnames
         for row_num in xrange(self.start_row, worksheet.nrows):
             data_dict = {}
             for i, cell in enumerate(worksheet.row(row_num)):

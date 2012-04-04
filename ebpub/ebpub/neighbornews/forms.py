@@ -16,12 +16,18 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Forms for adding & editing :ref:`user_content`
+
+"""
 from django import forms
 from django.conf import settings
 from ebpub.db.forms import NewsItemForm as NewsItemFormBase
 from ebpub.db.models import NewsItem
 from recaptcha.client import captcha
 from ebpub.db.fields import OpenblockImageFormField
+import logging
+logger = logging.getLogger('neighbornews.forms')
 
 class NewsItemForm(NewsItemFormBase):
 
@@ -47,16 +53,29 @@ class NewsItemForm(NewsItemFormBase):
     def clean(self):
         self._clean_captcha()
         cleaned_data = super(NewsItemForm, self).clean()
-
-        # Reverse-geocode if we need to.
-        if not cleaned_data['location_name']:
-            if cleaned_data['location']:
+        # Reverse-geocode if we need to - eg. user clicked map
+        # but didn't give an address.
+        if not cleaned_data.get('location_name'):
+            if cleaned_data.get('location'):
                 from ebpub.geocoder.reverse import reverse_geocode
+                from ebpub.geocoder.reverse import ReverseGeocodeError
                 try:
                     block, distance = reverse_geocode(cleaned_data['location'])
                     cleaned_data['location_name'] = block.pretty_name
-                except ReverseGeocodeErrror:
+                except ReverseGeocodeError:
                     logger.info("Saving NewsItem with no location_name because reverse-geocoding %(location)s failed" % cleaned_data)
+
+        # Geocode if we can, and need to.
+        # Should not be necessary, but this is groundwork for #284.
+        if not cleaned_data.get('location'):
+            if cleaned_data.get('location_name'):
+                from ebpub.geocoder.base import full_geocode
+                try:
+                    geocoded = full_geocode(cleaned_data['location_name'].strip(),
+                                            guess=True)
+                    cleaned_data['location'] = geocoded['result'].location.wkt
+                except (IndexError, KeyError, AttributeError):
+                    logger.info("Saving NewsItem with no location because geocoding %(location_name)s failed" % cleaned_data)
 
         # Note, any NewsItem fields that aren't listed in self._meta.fields
         # have to be manually saved here, because that's the list that's
@@ -82,6 +101,7 @@ class NeighborMessageForm(NewsItemForm):
                   )
 
     location_name = forms.CharField(max_length=255, label="Address or Location",
+                                    help_text=u"Or click the map.",
                                     required=False)
     image_url = forms.CharField(max_length=2048, label="Link to external image",
                                 required=False)

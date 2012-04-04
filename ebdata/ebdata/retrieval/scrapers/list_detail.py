@@ -16,8 +16,8 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.contrib.gis.geos import Point
 from base import BaseScraper, ScraperBroken
+
 
 class SkipRecord(Exception):
     "Exception that signifies a detail record should be skipped over."
@@ -155,7 +155,7 @@ class ListDetailScraper(BaseScraper):
                 list_record = self.clean_list_record(list_record)
             except SkipRecord, e:
                 self.num_skipped += 1
-                self.logger.debug("Skipping list record for %r: %s " % (list_record, e))
+                self.logger.debug(u"Skipping list record for %r: %s " % (list_record, e))
                 continue
             except ScraperBroken, e:
                 # Re-raise the ScraperBroken with some addtional helpful information.
@@ -183,7 +183,11 @@ class ListDetailScraper(BaseScraper):
                 self.logger.debug("Detail page is not required")
                 detail_record = None
 
-            self.save(old_record, list_record, detail_record)
+            try:
+                self.save(old_record, list_record, detail_record)
+            except SkipRecord, e:
+                self.logger.debug(u"Skipping list record during save: %r " % e)
+                self.num_skipped += 1
 
     def update_from_dir(self, dirname):
         """
@@ -280,7 +284,7 @@ class ListDetailScraper(BaseScraper):
 
     def existing_record(self, record):
         """
-        Given a cleaned list record as returned by clean_list_record(), returns
+        Given a *cleaned* list record as returned by clean_list_record(), returns
         the existing record from the data store, if it exists.
 
         If an existing record doesn't exist, this should return None.
@@ -370,12 +374,14 @@ class ListDetailScraper(BaseScraper):
         """
         raise NotImplementedError()
 
+
 class RssListDetailScraper(ListDetailScraper):
     """
     A ListDetailScraper for sites whose lists are RSS feeds.
 
     Subclasses should not have to implement parse_list() or get_detail().
     """
+
     def parse_list(self, page):
         # The page is an RSS feed, so use feedparser to parse it.
         import feedparser
@@ -396,61 +402,87 @@ class RssListDetailScraper(ListDetailScraper):
         return self.fetch_data(record['link'])
 
     def get_location(self, record):
-        """Try both flavors of georss and geo attributes, as well as
-        some other common non-standard conventions.
+        """Try to get a point from the record, trying both georss,
+        geo, and some non-standard conventions.
 
-        Locations with both lat = 0 and lon = 0 are assumed to be bad; we
-        return None for those.
+        Returns a Point or None.
 
         This is not called automatically; if you want to use it, your
         scraper should do ``newsitem.location = self.get_location(record)``
         sometime prior to ``self.save()``.
         """
-        # This tries to work around feedparser bugs where depending on
-        # whether you get a loose or strict parser, you might or might
-        # not see the namespace prefix on the attribute name.
+        from ebdata.retrieval.utils import get_point
+        return get_point(record)
 
-        # TODO: support other georss geometry types as per
-        # http://www.georss.org/simple ... so far only handles Point.
+    def get_location_name(self, record):
+        """Try to get a location name from the record, via any of
+        georss, xcal, or ev.
 
-        # TODO: support xCal geometries
-        # https://tools.ietf.org/html/rfc6321#section-3.4.1.2
+        This is not called automatically; if you want to use it, your
+        scraper should do something like ``newsitem.location_name =
+        self.get_location_name(record)`` sometime prior to
+        ``self.save()``.
+        """
+        for key in ('xCal_x-calconnect-street',
+                    'x-calconnect-street',
+                    'georss_featurename',
+                    'featurename',
+                    'ev-location',
+                    'location'):
+            val = record.get(key)
+            if val:
+                return val
+        return None
 
-        if 'gml_point' in record:
-            # Looks like georss gml.
-            lat, lon = record['gml_pos'].split()
-        elif 'point' in record:
-            # Unfortunately, with broken namespace handling, this
-            # might be georss_simple or georss gml. Try both.
-            if 'where' in record and 'pos' in record:
-                # It's GML.
-                lat, lon = record['pos'].split()
-            else:
-                lat, lon = record['point'].split()
-        elif 'georss_point' in record:
-            # It's georss simple.
-            lat, lon = record['georss_point'].split()
-        elif 'geo_lat' in record:
-            # It's the rdf geo namespace.
-            lat, lon = record['geo_lat'], record['geo_lon']
-        elif 'lat' in record:
-            if 'lon' in record:
-                # It's geo with broken namespace handling.
-                lat, lon = record['lat'], record['lon']
-            elif 'lng' in record:
-                # This is not a standard AFAIK, but I've seen it eg. in
-                # seeclickfix issues json.
-                lat, lon = record['lat'], record['lng']
-        elif 'latitude' in record:
-            # Another common non-standard convention.
-            lat, lon = record['latitude'], record['longitude']
-        else:
-            self.logger.debug(
-                "no known geometry types found in record %s"
-                % record)
-            return None
-        lat, lon = float(lat), float(lon)
-        if (lat, lon) == (0.0, 0.0):
-            self.logger.warn("Ignoring location with bad coordinates (0, 0)")
-            return None
-        return Point(lon, lat)
+
+    def get_point_and_location_name(self, record, address_text=None):
+        """Try to get and return a (Point, location_name) pair, using
+        any standards supported by get_location() and
+        get_location_name(); if either can't be determined, fall back
+        to using geocoding or reverse geocoding as needed.
+
+        If *neither* can be determined, use address extraction from
+        ebdata.nlp on ``address_text`` if passed, or if it's not passed,
+        on *everything* in ``record`` that looks like text,
+        and try to geocode the resulting addresses.
+
+        Either returned value may be None if it can't be determined.
+
+        This is not called automatically; if you want to use it, your
+        scraper should do something like this prior to ``self.save()``::
+
+           point, location_name = self.get_point_and_location_name(record)
+           newsitem.location = point
+           newsitem.location_name = location_name
+
+        """
+        location_name = self.get_location_name(record)
+        point = self.get_location(record)
+        if not point:
+            # Fall back to geocoding.
+            if not location_name:
+                # Just smush all string values together and try it.
+                if not address_text:
+                    address_text = u'\n'.join(
+                        [v for k, v in record.items()
+                         if (isinstance(v, basestring)
+                             and k not in ('updated', 'link',))
+                         ])
+        point, location_name = self.geocode_if_needed(point, location_name, address_text)
+        return (point, location_name)
+
+    @staticmethod
+    def ns_get(entry, element):
+        """Utility to work around feedparser unpredictability
+        re. namespaced elements.  It has more than one back-end
+        parser, and they treat namespaces differently; <foo:bar> might
+        show up as 'foo_bar' or 'bar'.
+
+        Usage:  ns_get(entry=some_dictionary, element='foo:bar')
+
+        """
+        namespace, element = element.split(':')
+        result = entry.get('%s_%s' % (namespace, element))
+        if result is None:
+            result = entry.get(element)
+        return result

@@ -16,5 +16,17 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+The templatemaker package contains utilities for detecting the actual content
+given a set of html pages that were generated from a template. For instance,
+templatemaker helps detect and extract the actual article from a page that
+could also contain navigation links, ads, etc.
+
+This is used internally by :py:mod:`ebdata.blobs`. It is not typically used
+directly by scraper scripts.
+
+'''
+
 from hole import Hole
 from template import Template, NoMatch
+

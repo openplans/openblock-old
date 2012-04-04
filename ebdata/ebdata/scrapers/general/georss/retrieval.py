@@ -20,154 +20,117 @@
 #
 
 
-"""A quick and dirty scraper for RSS feeds with GeoRSS info.
+"""A scraper for RSS feeds with GeoRSS or other location info.
 """
 
 import datetime
-import feedparser
-from httplib2 import Http
 import ebdata.retrieval.log  # sets up base handlers.
-import logging
 
 from django.contrib.gis.geos import Point
-from ebdata.nlp.addresses import parse_addresses
-from ebpub.db.models import NewsItem, Schema
-from ebpub.geocoder import SmartGeocoder
-from ebpub.geocoder.base import GeocodingException
-from ebpub.utils.logutils import log_exception
+from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
+from ebdata.retrieval.scrapers.list_detail import SkipRecord, StopScraping
+from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
+from ebpub.db.models import NewsItem
 from ebpub.utils.geodjango import intersects_metro_bbox
 
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
 
-logger = logging.getLogger('eb.retrieval.georss')
+class RssScraper(RssListDetailScraper, NewsItemListDetailScraper):
+    """
+    A generic RSS scraper. Suitable for use with any Schema that
+    doesn't have any associated SchemaFields (that is, no extended
+    attributes, just the core NewsItem stuff.)
+    """
 
+    has_detail = False
+    logname = 'georss'
 
-class LocalNewsScraper(object):
+    def __init__(self, *args, **kwargs):
+        self.url = kwargs.pop('url', None)
+        self.schema_slugs = (kwargs.pop('schema_slug', None) or 'local-news',)
+        super(RssScraper, self).__init__(*args, **kwargs)
 
-    def __init__(self, url, schema_slug='local-news', http_cache=None):
-        self.url = url
-        self.schema_slug=schema_slug
-        self.http = Http(http_cache)
+    def list_pages(self):
+        result = self.fetch_data(self.url)
+        if self.retriever.cache_hit:
+            self.logger.info("HTTP cache hit, nothing new to do")
+            raise StopScraping()
+        yield result
 
-    def update(self):
-        logger.info("Starting LocalNewsScraper update %s" % self.url)
+    def existing_record(self, record):
+        url = record.get('id', '') or record.link
+        qs = list(NewsItem.objects.filter(schema__id=self.schema.id, url=url))
+        if not qs:
+            return None
 
-        try:
-            schema = Schema.objects.get(slug=self.schema_slug)
-        except Schema.DoesNotExist:
-            logger.error( "Schema (%s): DoesNotExist" % self.schema_slug)
-            return 1
+        if len(qs) > 1:
+            self.logger.warn("Multiple entries matched url %r and schema %r. Expected unique! Using first one." % (url, qs[0].schema.slug))
+        return qs[0]
 
-        response, content = self.http.request(self.url)
-        if response.fromcache:
-            logger.info("Feed is unchanged since last update (cached)")
-            return
+    def clean_list_record(self, record):
+        record.title = convert_entities(record['title'])
+        record.description = convert_entities(record['description'])
+        # Don't know why, but some feeds have 'id' *instead* of 'link'.
+        if record.get('id', '').startswith('http'):
+            record['link'] = record['id']
 
-        f = feedparser.parse(content)
-        addcount = updatecount = 0
-        for entry in f.entries:
-            title = convert_entities(entry.title)
-            description = convert_entities(entry.description)
+        # This tries GeoRSS, RDF Geo, xCal, ...
+        point, location_name = self.get_point_and_location_name(record)
 
-            if entry.id.startswith('http'):
-                item_url = entry.id
+        _short_title = record['title'][:30] + '...'
+
+        if not point:
+            raise SkipRecord("couldn't geocode any addresses in item '%s...'"
+                             % _short_title)
+
+        if not location_name:
+            raise SkipRecord(
+                "Skip, no location name and failed to reverse geocode %s for %r" % (point.wkt, _short_title))
+
+        if not intersects_metro_bbox(point):
+            # Check if latitude, longitude seem to be reversed; I've
+            # seen that in some bad feeds!
+            reversed_loc = Point(point.y, point.x)
+            if intersects_metro_bbox(reversed_loc):
+                self.logger.info(
+                    "Got points in apparently reverse order, flipping them")
+                point = reversed_loc
             else:
-                item_url = entry.link
-            try:
-                item = NewsItem.objects.get(schema__id=schema.id,
-                                            title=title,
-                                            description=description)
-                #url=item_url)
-                status = 'updated'
-            except NewsItem.DoesNotExist:
-                item = NewsItem()
-                status = 'added'
-            except NewsItem.MultipleObjectsReturned:
-                # Seen some where we get the same story with multiple URLs. Why?
-                logger.warn("Multiple entries matched title %r and description %r. Expected unique!" % (title, description))
-                continue
-            try:
-                item.title = title
-                item.schema = schema
-                item.description = description
-                item.url = item_url
-                # Support both georss and xcal for getting the location name.
-                # TODO: should also support ev:location per http://web.resource.org/rss/1.0/modules/event/
-                item.location_name = entry.get('xCal_x-calconnect-street') or entry.get('x-calconnect-street') or entry.get('georss_featurename') or entry.get('featurename')
-                item.item_date = datetime.datetime(*entry.updated_parsed[:6])
-                item.pub_date = datetime.datetime(*entry.updated_parsed[:6])
-                _short_title = item.title[:30] + '...'
+                raise SkipRecord("Skipping %r as %s,%s is out of bounds" %
+                                 (_short_title, point.y, point.x))
 
-                # feedparser bug: depending on which parser it magically uses,
-                # we either get the xml namespace in the key name, or we don't.
-                point = entry.get('georss_point') or entry.get('point')
-                x, y = None, None
-                if point:
-                    # GeoRSS puts latitude (Y) first.
-                    y, x = point.split(' ')
-                else:
-                    if item.location_name:
-                        text = item.location_name
-                    else:
-                        # Geocode whatever we can find.
-                        text = item.title + ' ' + item.description
-                    logger.debug("...Falling back on geocoding from %r..." % text[:50])
-                    addrs = parse_addresses(text)
-                    for addr, unused in addrs:
-                        try:
-                            result = SmartGeocoder().geocode(addr)
-                            point = result['point']
-                            logger.debug("internally geocoded %r" % addr)
-                            x, y = point.x, point.y
-                            if not item.location_name:
-                                item.location_name = result['address']
-                            break
-                        except GeocodingException:
-                            logger.debug("Geocoding exception on %r:" % text)
-                            log_exception(level=logging.DEBUG)
-                            continue
-                        except:
-                            logger.error('uncaught geocoder exception on %r\n' % addr)
-                            log_exception()
-                    if None in (x, y):
-                        logger.debug("Skip, couldn't geocode any addresses in item '%s...'"
-                                     % _short_title)
-                        continue
-                item.location = Point((float(x), float(y)))
-                if not intersects_metro_bbox(item.location):
-                    reversed_loc = Point((float(y), float(x)))
-                    if intersects_metro_bbox(reversed_loc):
-                        logger.info(
-                            "Got points in apparently reverse order, flipping them")
-                        item.location = reversed_loc
-                    else:
-                        logger.info("Skipping %r as %s,%s is out of bounds" %
-                                    (_short_title, y, x))
-                        continue
-                if not item.location_name:
-                    # Fall back to reverse-geocoding.
-                    from ebpub.geocoder import reverse
-                    try:
-                        block, distance = reverse.reverse_geocode(item.location)
-                        logger.debug(" Reverse-geocoded point to %r" % block.pretty_name)
-                        item.location_name = block.pretty_name
-                    except reverse.ReverseGeocodeError:
-                        logger.info(" Skip, failed to reverse geocode %s for %r" % (item.location.wkt, _short_title))
-                        continue
-                item.save()
-                if status == 'added':
-                    addcount += 1
-                else:
-                    updatecount += 1
-                logger.info("%s: %s" % (status, _short_title))
-            except:
-                logger.error("Warning: couldn't save %r. Traceback:" % _short_title)
-                log_exception()
-        logger.info("Finished LocalNewsScraper update: %d added, %d updated" % (addcount, updatecount))
+        record['location_name'] = location_name
+        record['location'] = point
+        return record
 
-def main(argv=None):
+
+    def update(self, *args, **kwargs):
+        self.logger.info("Retrieving %s" % self.url)
+        result = super(RssScraper, self).update(*args, **kwargs)
+        self.logger.info("Added: %d; Updated: %d; Skipped: %d" %
+                         (self.num_added, self.num_changed, self.num_skipped))
+        return result
+
+
+    def save(self, old_record, list_record, detail_record):
+        item_date = datetime.datetime(*list_record.updated_parsed[:6])
+        pub_date = item_date
+
+        kwargs = dict(location_name=list_record['location_name'],
+                      location=list_record['location'],
+                      item_date=item_date,
+                      pub_date=pub_date,
+                      title=list_record['title'],
+                      description=list_record['description'],
+                      url=list_record['link'],
+                      )
+        attributes = None
+        self.create_or_update(old_record, attributes, **kwargs)
+
+
+def main(argv=None, default_url=None):
     import sys
     if argv is None:
         argv = sys.argv[1:]
@@ -180,23 +143,26 @@ def main(argv=None):
         "--schema", help="which news item type to create when scraping",
         default="local-news"
         )
-    parser.add_option(
-        "--http-cache", help='location to use as an http cache.  If a cached value is seen, no update is performed.', 
-        action='store'
-        )
+    # parser.add_option(
+    #     "--http-cache", help='location to use as an http cache.  If a cached value is seen, no update is performed.', 
+    #     action='store'
+    #     )
 
     from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
     add_verbosity_options(parser)
 
     options, args = parser.parse_args(argv)
-    setup_logging_from_opts(options, logger)
+    if len(args) >= 1:
+        url = args[0]
+    else:
+        if default_url:
+            url = default_url
+        else:
+            parser.print_usage()
+            sys.exit(0)
 
-    if len(args) < 1:
-        parser.print_usage()
-        sys.exit(0)
-
-    scraper = LocalNewsScraper(url=args[0],  schema_slug=options.schema, http_cache=options.http_cache)
-
+    scraper = RssScraper(url=url, schema_slug=options.schema)
+    setup_logging_from_opts(options, scraper.logger)
     scraper.update()
 
 if __name__ == '__main__':

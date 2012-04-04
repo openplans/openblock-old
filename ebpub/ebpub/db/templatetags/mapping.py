@@ -16,6 +16,17 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"""
+Template tags for helping with maps.
+To use these, your template must include:
+
+.. code-block:: html+django
+
+  {% load mapping %}
+
+"""
+
 from django import template
 
 register = template.Library()
@@ -29,9 +40,20 @@ def map_icon_img(obj):
 
     (If there's no image configured but there's a fill color, makes a
     little box of the right color.)
+
+    Example:
+
+    .. code-block:: html+django
+
+      {% map_icon_img [schema] %}
+      {% map_icon_img [place_type] %}
+
     """
-    url = getattr(obj, 'map_icon_url', '') or ''
-    url = url.strip()
+    getter = getattr(obj, 'get_map_icon_url', None)
+    if getter is not None:
+        url = obj.get_map_icon_url()
+    else:
+        url = ''
     if url:
         alt = '%s icon' % (obj.name or obj.slug)
         return '<img class="schema-icon" src="%s" alt="%s" />' % (url, alt)

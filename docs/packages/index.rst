@@ -15,42 +15,33 @@ Main Code Packages
    ebdata
    obadmin
 
-obdemo
-------
+:doc:`obdemo`
+----------------
 
 The code and configuration used by http://demo.openblockproject.org.
 This is useful as an example of how to set up your own site based on
 OpenBlock, and is a great place to start.  It primarily uses the ebpub
 package, and is set up with Boston, MA as the area of interest.
 
-For more information, see :doc:`obdemo`.
-
-ebpub
------
+:doc:`ebpub`
+------------
 
 Publishing system for block-specific news, as used by EveryBlock.com.
 
 This is the core of an OpenBlock site, providing the web interface
 that users see as well as the underlying data models. You need this.
 
-For more information, see :doc:`ebpub`.
-
-ebdata
-------
+:doc:`ebdata`
+--------------
 
 Code to help write scripts that crawl/parse/import data into ebpub.
 
-You will probably  need to write such scripts to get OpenBlock to do anything
-useful; that is the main way you feed local news into the system.
-
-For more information, see :doc:`ebdata`.
-
-obadmin
--------
+:doc:`obadmin`
+--------------
 
 Administrative UI, installation and utilities package for OpenBlock.
 
-For more information, see :doc:`obadmin`.
+.. _other_packages:
 
 Other Packages
 ==============

@@ -264,14 +264,18 @@ Be patient; it typically takes at least several minutes to run.
 
 It can also filter out blocks outside of one or more locations by
 passing the ``--filter-location`` option with a LocationType slug and
-Location slug; for example::
+Location slug; for example:
+
+.. code-block:: bash
 
   $ import_blocks_tiger --filter-location="cities:cambridge" \
     --filter-location="cities:newton" ...
 
 
 If you run it with the ``--help`` option, it will tell you how about
-all options::
+all options:
+
+.. code-block:: bash
 
  $ import_blocks_tiger  --help
  Usage: import_blocks_tiger edges.shp featnames.dbf faces.dbf place.shp
@@ -519,25 +523,81 @@ No, at this time the only files we can directly import are shapefiles.
 Try using tools like `ogr2ogr <http://www.gdal.org/ogr2ogr.html>`_ to
 convert your data into shapefiles.
 
+.. _places:
+
 Places
 ======
 
-TODO: document what Places are, how they differ from Locations, and why
-you'd care.
+The ``Place`` model in ``ebpub.streets.models`` represents a generic
+named landmark, such as "Millennium Park" or "Sears Tower".
+A ``Place`` is just a Point with a name and an address, and optionally
+a URL linking to some external page about this landmark.
 
-Alternate Names / Misspellings
-==============================
+``Places`` differ from the ``db.Location`` model in several ways.
+First, ``Locations`` are relatively large areas described by polygons,
+representing areas such as neighborhoods or postal codes.  OpenBlock
+shows a list of Locations of each type, and it's expected that there
+are relatively few of them - perhaps dozens. By contrast, a ``Place``
+is just a single point and there could be many thousands of them.
+
+``Places`` are entirely optional - you can run Openblock just fine
+without using them.
+
+The ``PlaceType`` model is used to categorize them, so you could have
+a ``PlaceType`` named "Building", another one with named "Monument",
+and so on.  You can also assign a map icon URL, a map color,
+
+``Places``, can be used in several ways.
+
+Places in the OpenBlock UI
+----------------------------
+
+As of OpenBlock 1.1, Places are shown in the "big map" view, which can
+be found by clicking links labeled "Explore these items on a larger map"
+from any view of NewsItems by schema.
+
+.. (TODO: screenshot?)
+
+If you click the blue "+" at top-right of that map, you can select
+which PlaceTypes and Schemas are shown on the map.
+
+As of OpenBlock version 1.1, Places aren't shown anywhere else in the
+theme that comes with OpenBlock; this could of course change in future
+releases.
+
+Searching and Geocoding Places
+-------------------------------
+
+Place names can be used for geocoding, so if there exists a Place
+named "Empire State Building", users can type that in the search bar;
+the result will be a view of the block on which that Place exists.
+
+Places in the REST API
+----------------------
+
+Places also can be accessed via the :doc:`../main/api` REST API, using the
+:ref:`get_places` and :ref:`get_place_types` resources.
+
+
+Alternate Names / Misspellings / Synonyms
+=========================================
 
 Often users will want to search your site for an address or location,
 but they may spell it wrong - or it may have multiple names.
+:doc:`Scraper scripts <../main/running_scrapers>` may encounter the
+same problem.
 
 OpenBlock provides a simple way that you can support these searches.
 
 You can use the admin UI at ``/admin/streets/streetmisspelling/`` to
 enter alternate street names. Click the "Add street misspelling"
-button, then type in the incorrect (alternate) and correct version of
-the street name.
+button, then type in the correct and incorrect (or alternate) versions
+of the street name.
 
 Likewise, you can use the ``/admin/db/locationsynonym/`` page to add
-alternate names for Locations, and the ``/admin/db/placesynonym`` page
-to add alternate names for Places.
+alternate names for ``Locations``, and the ``/admin/db/placesynonym`` page
+to add alternate names for :ref:`Places <places>`.
+
+If you have a lot of misspellings to enter, you might consider putting
+them in an XML, JSON, or YAML file and loading them as
+`django fixtures. <https://docs.djangoproject.com/en/1.3/howto/initial-data/>`_

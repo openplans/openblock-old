@@ -1,4 +1,4 @@
-#   Copyright 2007,2008,2009,2011 Everyblock LLC, OpenPlans, and contributors
+#   Copyright 2007,2008,2009,2011,2012 Everyblock LLC, OpenPlans, and contributors
 #
 #   This file is part of ebpub
 #
@@ -40,7 +40,7 @@ from ebpub.db.schemafilters import FilterChain
 from ebpub.db.schemafilters import BadAddressException
 from ebpub.db.schemafilters import BadDateException
 
-from ebpub.db.utils import populate_attributes_if_needed, populate_schema, today
+from ebpub.db.utils import populate_attributes_if_needed, populate_schema
 from ebpub.db.utils import url_to_place
 from ebpub.db.utils import get_place_info_for_request
 from ebpub import geocoder
@@ -50,10 +50,10 @@ from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
-from ebpub.utils.dates import daterange, parse_date
+from ebpub.utils.dates import daterange, parse_date, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
-from ebpub.utils.logutils import log_exception
+from ebpub.utils.view_utils import paginate
 
 import datetime
 import hashlib
@@ -117,7 +117,10 @@ def get_date_chart(schemas, start_date, end_date, counts):
 
 def block_bbox(block, radius):
     """
-    Assumes `block' has `wkt' attribute
+    Given a :py:class:`ebpub.streets.models.Block`, and an integer ``radius``,
+    returns a geometry representing a bounding box around the block.
+
+    Assumes `block`` has ``wkt`` attribute.
     """
     try:
         from osgeo import ogr
@@ -180,7 +183,7 @@ def ajax_place_date_chart(request):
     if schema.is_event:
         # Soonest span that includes some.
         try:
-            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'id')
+            qs = qs.filter(item_date__gte=today()).order_by('item_date', 'pub_date', 'id')
             first_item = qs.values('item_date')[0]
             start_date = first_item['item_date']
         except IndexError:  # No matching items.
@@ -189,7 +192,7 @@ def ajax_place_date_chart(request):
     else:
         # Most recent span that includes some.
         try:
-            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-id')
+            qs = qs.filter(item_date__lte=today()).order_by('-item_date', '-pub_date', '-id')
             last_item = qs.values('item_date')[0]
             end_date = last_item['item_date']
         except IndexError:  # No matching items.
@@ -241,7 +244,8 @@ def newsitems_geojson(request):
         # More copy/paste from ebpub.db.views...
         # As an optimization, limit the NewsItems to those published in the
         # last few days.
-        filters.update_from_query_params(request)
+        filter_sf_dict = _get_filter_schemafields(schema)
+        filters.update_from_request(filter_sf_dict)
         if not filters.has_key('date'):
             end_date = today()
             start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
@@ -251,7 +255,7 @@ def newsitems_geojson(request):
 
         # Put a hard limit on the number of newsitems, and throw away
         # older items.
-        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-id')
+        newsitem_qs = newsitem_qs.select_related().order_by('-item_date', '-pub_date', '-id')
         newsitem_qs = newsitem_qs[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
 
     # Done preparing the query; cache based on the raw SQL
@@ -283,11 +287,14 @@ def place_kml(request, *args, **kwargs):
 # VIEWS #
 #########
 
-
 def homepage(request):
     """Front page of the default OpenBlock theme.
     """
+    context = _homepage_context(request)
+    return eb_render(request, 'homepage.html', context)
 
+def _homepage_context(request):
+    # Factored out to make easier to override or wrap.
     end_date = today()
     start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
     end_date += datetime.timedelta(days=1)
@@ -300,6 +307,16 @@ def homepage(request):
     street_count = Street.objects.count()
     more_schemas = manager.filter(allow_charting=False).order_by('name')
 
+    # Get schemas that are restricted / allowed for this user.  Note,
+    # in some use cases you might want to override these so that
+    # eg. allowed_schema_ids includes only ids that are always visible
+    # to all users, so the template can display restricted schemas but
+    # mark them specially eg. with CSS classes.  But by default we
+    # don't have anything on which to make such a distinction,
+    # so these mean allowed & restricted *for the current user*.
+    allowed_schema_ids = get_schema_manager(request).allowed_schema_ids()
+    restricted_schemas = Schema.objects.exclude(id__in=allowed_schema_ids)
+
     # Get the public records.
     date_charts = get_date_chart_agg_model(sparkline_schemas, start_date, end_date, AggregateDay)
     empty_date_charts, non_empty_date_charts = [], []
@@ -308,10 +325,15 @@ def homepage(request):
             non_empty_date_charts.append(chart)
         else:
             empty_date_charts.append(chart)
-    non_empty_date_charts.sort(lambda a, b: cmp(b['total_count'], a['total_count']))
-    empty_date_charts.sort(lambda a, b: cmp(a['schema'].plural_name, b['schema'].plural_name))
+    def _date_chart_sort_func(a, b):
+        return cmp(
+            # Higher importance first, higher count first, lower name first.
+            (b['schema'].importance, b['total_count'], a['schema'].plural_name),
+            (a['schema'].importance, a['total_count'], b['schema'].plural_name))
 
-    return eb_render(request, 'homepage.html', {
+    non_empty_date_charts.sort(_date_chart_sort_func)
+    empty_date_charts.sort(_date_chart_sort_func)
+    return {
         'location_type_list': lt_list,
         'street_count': street_count,
         'more_schemas': more_schemas,
@@ -323,8 +345,11 @@ def homepage(request):
         'default_zoom': settings.DEFAULT_MAP_ZOOM,
         'bodyclass': 'homepage',
         'breadcrumbs': breadcrumbs.home({}),
-        'map_configuration': _preconfigured_map({})
-    })
+        'map_configuration': _preconfigured_map({}),
+        'restricted_schemas': restricted_schemas,
+        'allowed_schema_ids': allowed_schema_ids,
+        }
+
 
 def search(request, schema_slug=''):
     "Performs a location search and redirects to the address/xy page."
@@ -353,10 +378,10 @@ def search(request, schema_slug=''):
 
     # Try to geocode it using full_geocode().
     try:
-        result = full_geocode(q, search_places=False)
+        result = full_geocode(q, search_places=True)
     except:
-        logger.debug('Unhandled exception from full_geocode:')
-        log_exception(level=logging.DEBUG, logger=logger)
+        logger.debug('Unhandled exception from full_geocode:',
+                     exc_info=True)
     else:
         if result['ambiguous']:
             if result['type'] == 'block':
@@ -375,9 +400,14 @@ def search(request, schema_slug=''):
                     'choices': choices,
                 })
             else:
+                # TODO: does this work with Places?
                 return eb_render(request, 'db/did_you_mean.html', {'query': q, 'choices': result['result']})
         elif result['type'] == 'location':
             return HttpResponseRedirect(url_prefix + getattr(result['result'], url_method)())
+        elif result['type'] == 'place':
+            block, distance = geocoder.reverse.reverse_geocode(result['result'].location)
+            return HttpResponseRedirect(url_prefix + getattr(block, url_method)())
+
         elif result['type'] == 'address':
             # Block
             if result['result']['block']:
@@ -413,6 +443,9 @@ def search(request, schema_slug=''):
 
 @csrf_protect
 def newsitem_detail(request, schema_slug, newsitem_id):
+    """
+    Page displaying a single NewsItem.
+    """
     ni = get_object_or_404(NewsItem.objects.by_request(request).select_related(),
                            id=newsitem_id,
                            schema__slug=schema_slug)
@@ -532,20 +565,13 @@ def schema_detail(request, slug):
 
         # Populate schemafield_list and lookup_list.
         schemafield_list = list(s.schemafield_set.filter(is_filter=True).order_by('display_order'))
-        # XXX this duplicates part of schema_filter()
-        LOOKUP_MIN_DISPLAYED = 7
+        LOOKUP_MAX_DISPLAYED = 12
         LOOKUP_BUFFER = 4
         lookup_list = []
         for sf in schemafield_list:
             if not (sf.is_charted and sf.is_lookup):
                 continue
-            top_values = list(AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER])
-            if len(top_values) == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
-                top_values = top_values[:LOOKUP_MIN_DISPLAYED]
-                has_more = True
-            else:
-                has_more = False
-            lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
+            lookup_list.append(_get_lookup_list_for_sf(sf, LOOKUP_MAX_DISPLAYED, LOOKUP_BUFFER))
 
         location_chartfield_list = []
 
@@ -630,21 +656,30 @@ def schema_detail_special_report(request, schema):
     })
 
 
-def schema_filter_geojson(request, slug, args_from_url):
+def _get_filter_schemafields(schema):
+    """Given a Schema, get a sorted mapping of schemafield names to
+    SchemaField instances.
+
+    Only SchemaFields that have is_searchable or is_filter enabled
+    will be returned.
+    """
+    filter_sf_list = list(SchemaField.objects.filter(schema=schema, is_filter=True).order_by('display_order'))
+    textsearch_sf_list = list(SchemaField.objects.filter(schema=schema, is_searchable=True).order_by('display_order'))
+    # Use SortedDict to preserve the display_order.
+    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+    return filter_sf_dict
+
+
+def schema_filter_geojson(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponse(status=404)
 
-    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
-    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
-
-    # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
-
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, schema=s)
+    filter_sf_dict = _get_filter_schemafields(s)
     try:
-        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filterchain.update_from_request(filter_sf_dict)
         filters_need_more = filterchain.validate()
     except FilterError:
         return HttpResponse(status=400)
@@ -667,40 +702,65 @@ def schema_filter_geojson(request, slug, args_from_url):
     else:
         qs = qs.order_by('-item_date', '-id')
 
-    page = request.GET.get('page', None)
-    if page is not None:
-        try:
-            page = int(page)
-            idx_start = (page - 1) * constants.FILTER_PER_PAGE
-            idx_end = page * constants.FILTER_PER_PAGE
-            # Get one extra, so we can tell whether there's a next page.
-            idx_end += 1
-        except ValueError:
-            return HttpResponse('Invalid Page', status=400)
-    else:
-        idx_start, idx_end = 0, 1000
-    qs = qs[idx_start:idx_end]
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        return HttpResponse('Invalid Page %r' % page, status=400)
+    paginated_info = paginate(qs, page=page)
+    ni_list = paginated_info[0]  # Don't need anything else.
+    # Pagination not captured by queryset, so we hack that into the
+    # cache key.
+    cache_key = 'schema_filter_geojson:page-%d:' % page
+    cache_key += _make_cache_key_from_queryset(qs)
 
-    cache_key = 'schema_filter_geojson:' + _make_cache_key_from_queryset(qs)
     cache_seconds = 60 * 5
     output = cache.get(cache_key, None)
     if output is None:
-        output = api_items_geojson(list(qs))
+        output = api_items_geojson(ni_list)
         cache.set(cache_key, output, cache_seconds)
 
     response = HttpResponse(output, mimetype="application/javascript")
     patch_response_headers(response, cache_timeout=60 * 5)
     return response
 
-def schema_filter(request, slug, args_from_url):
+
+def _get_lookup_list_for_sf(sf, top_value_count=100, orphan_buffer=4):
+    """
+    Given a schemafield where is_lookup = True, make a dictionary
+    that contains the ``top_values`` list, the ``total_value_count`` int,
+    and (if total count is more than the number of top values) a boolean
+    ``has_more``.  And the schemafield itself.
+
+    Useful for creating UI elements where you want to show only the
+    most common values of a Lookup, eg. tags, and maybe link to a page
+    that has the rist.
+    """
+    all_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup')
+    top_values = all_values.order_by('-total')[:top_value_count+orphan_buffer]
+    top_values = list(top_values)
+    if len(top_values) < top_value_count + orphan_buffer:
+        total_value_count = len(top_values)
+        has_more = False
+    elif len(top_values) == top_value_count + orphan_buffer:
+        top_values = top_values[:top_value_count]
+        total_value_count = all_values.count()
+        has_more = True
+    else:
+        raise Exception("impossible to get here")
+
+    return({'sf': sf,
+            'top_values': top_values,
+            'has_more': has_more,
+            'total_value_count': total_value_count,
+            })
+
+
+def schema_filter(request, slug):
     """
     List NewsItems for one schema, filtered by various criteria in the
-    URL (date, location, or values of SchemaFields).
+    query params (eg. date, location, or values of SchemaFields).
     """
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    if not s.allow_charting:
-        return HttpResponsePermanentRedirect(s.url())
-
     context = {
         'bodyclass': 'schema-filter',
         'bodyid': s.slug,
@@ -710,17 +770,14 @@ def schema_filter(request, slug, args_from_url):
     # so it'll get the full context no matter what.
     context['breadcrumbs'] = breadcrumbs.schema_filter(context)
 
-    filter_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_filter=True).order_by('display_order'))
-    textsearch_sf_list = list(SchemaField.objects.filter(schema__id=s.id, is_searchable=True).order_by('display_order'))
-
-    # Use SortedDict to preserve the display_order.
-    filter_sf_dict = SortedDict([(sf.name, sf) for sf in filter_sf_list] + [(sf.name, sf) for sf in textsearch_sf_list])
+    filter_sf_dict = _get_filter_schemafields(s)
 
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, context=context, schema=s)
+
     context['filters'] = filterchain
     try:
-        filterchain.update_from_request(args_from_url, filter_sf_dict)
+        filterchain.update_from_request(filter_sf_dict)
         filters_need_more = filterchain.validate()
     except FilterError, e:
         if getattr(e, 'url', None) is not None:
@@ -760,29 +817,25 @@ def schema_filter(request, slug, args_from_url):
     #########################################################################
 
     # Get the list of top values for each lookup that isn't being filtered-by.
-    # LOOKUP_MIN_DISPLAYED sets the number of records to display for each lookup
+    # LOOKUP_MAX_DISPLAYED sets the number of records to display for each lookup
     # type. Normally, the UI displays a "See all" link, but the link is removed
-    # if there are fewer than (LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER) records.
-    LOOKUP_MIN_DISPLAYED = 7
+    # if there are fewer than (LOOKUP_MAX_DISPLAYED + LOOKUP_BUFFER) records.
+    LOOKUP_MAX_DISPLAYED = 100
     LOOKUP_BUFFER = 4
     lookup_list, boolean_lookup_list, search_list = [], [], []
+
     for sf in filter_sf_dict.values():
         if sf.is_searchable:
             search_list.append(sf)
         elif sf.is_type('bool'):
             boolean_lookup_list.append(sf)
         elif sf.is_lookup:
-            top_values = AggregateFieldLookup.objects.filter(schema_field__id=sf.id).select_related('lookup').order_by('-total')[:LOOKUP_MIN_DISPLAYED+LOOKUP_BUFFER]
-            top_values = list(top_values)
-            if len(top_values) == LOOKUP_MIN_DISPLAYED + LOOKUP_BUFFER:
-                top_values = top_values[:LOOKUP_MIN_DISPLAYED]
-                has_more = True
-            else:
-                has_more = False
+            top_for_sf = _get_lookup_list_for_sf(sf, LOOKUP_MAX_DISPLAYED, LOOKUP_BUFFER)
             # Note we ordered by -total to get the top values, but since we don't
             # display the count, that ordering is nonsensical to the user.
-            top_values = sorted(top_values, key = lambda x: x.lookup.name)
-            lookup_list.append({'sf': sf, 'top_values': top_values, 'has_more': has_more})
+            top_for_sf['top_values'] = sorted(top_for_sf['top_values'],
+                                              key = lambda x: x.lookup.name)
+            lookup_list.append(top_for_sf)
 
     # Get the list of LocationTypes if a location filter has *not* been applied.
     if 'location' in filterchain:
@@ -791,26 +844,13 @@ def schema_filter(request, slug, args_from_url):
         location_type_list = LocationType.objects.filter(is_significant=True).order_by('slug')
 
     # Pagination.
-    # We don't use Django's Paginator class because it uses
-    # SELECT COUNT(*), which we want to avoid.
     try:
         page = int(request.GET.get('page', '1'))
     except ValueError:
         raise Http404('Invalid page')
-
-    idx_start = (page - 1) * constants.FILTER_PER_PAGE
-    idx_end = page * constants.FILTER_PER_PAGE
-    # Get one extra, so we can tell whether there's a next page.
-    ni_list = list(qs[idx_start:idx_end+1])
+    ni_list, has_previous, has_next, idx_start, idx_end = paginate(qs, page=page)
     if page > 1 and not ni_list:
         raise Http404('No objects on page %s' % page)
-    if len(ni_list) > constants.FILTER_PER_PAGE:
-        has_next = True
-        ni_list = ni_list[:-1]
-    else:
-        has_next = False
-        idx_end = idx_start + len(ni_list)
-    has_previous = page > 1
 
     populate_schema(ni_list, s)
     populate_attributes_if_needed(ni_list, [s])
@@ -833,16 +873,28 @@ def schema_filter(request, slug, args_from_url):
     # Try to provide a link to larger map, but don't worry about it
     # if there is no richmap app hooked in...
     try:
-        large_map_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
-        if filterchain.get('date') is None:
-            # force a date range
-            large_map_url += '?end_date=' + ni_list[0].pub_date.strftime("%m/%d/%Y") 
-
-        context.update({
-            'large_map_url': large_map_url
-        })
+        bigmap_base = reverse('bigmap_filter', args=(slug,))
+        have_richmaps = True
     except:
-        pass
+        have_richmaps = False
+    if have_richmaps:
+        try:
+            large_map_url = filterchain.make_url(base_url=bigmap_base)
+            if filterchain.get('date') is None:
+                # force a date range; not sure why Luke wanted that?
+                if ni_list:
+                    additions=[('date', sorted([ni_list[0].item_date, ni_list[-1].item_date]))]
+                else:
+                    additions=[]
+                large_map_url = filterchain.make_url(
+                    base_url=bigmap_base,
+                    additions=additions)
+            context.update({
+                'large_map_url': large_map_url
+            })
+        except:
+            logger.exception("Unhandled exception making large_map_url")
+            pass
 
     context.update({
         'newsitem_list': ni_list,
@@ -855,6 +907,7 @@ def schema_filter(request, slug, args_from_url):
         'next_page_number': page + 1,
         'page_start_index': idx_start + 1,
         'page_end_index': idx_end,
+        # End pagination.
         'lookup_list': lookup_list,
         'boolean_lookup_list': boolean_lookup_list,
         'search_list': search_list,
@@ -867,14 +920,16 @@ def schema_filter(request, slug, args_from_url):
     })
     context['map_configuration'] = _preconfigured_map(context);
 
-    return eb_render(request, 'db/filter.html', context)
+    templates_to_try = ('db/schema_filter/%s.html' % s.slug,
+                        'db/schema_filter.html')
+    return eb_render(request, templates_to_try, context)
 
 
 def _default_date_filtering(filterchain):
     """
-    Make sure we do some date limiting, but don't force a
-    DateFilter into the filterchain, because that would prevent
-    users from choosing dates.
+    Apply the filterchain, and make sure we do some date limiting, but
+    don't force a DateFilter into the filterchain, because that would
+    prevent users from choosing dates.
     """
     schema = filterchain['schema'].schema
     date_filter = filterchain.get('date') or filterchain.get('pubdate')
@@ -930,7 +985,7 @@ def city_list(request):
                       'bodyclass': 'city-list',
                       })
 
-def street_list(request, city_slug):
+def street_list(request, city_slug=None):
     city = city_slug and City.from_slug(city_slug) or None
     kwargs = city_slug and {'city': city.norm_name} or {}
     streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
@@ -969,84 +1024,99 @@ def block_list(request, city_slug, street_slug):
     return eb_render(request, 'db/block_list.html', context)
 
 
-def _place_detail_normalize_url(request, *args, **kwargs):
+def _get_place_and_normalize_url(request, *args, **kwargs):
     context = get_place_info_for_request(request, *args, **kwargs)
     if context.get('block_radius') and 'radius' not in request.GET:
         # Normalize the URL so we always have the block radius.
         url = request.get_full_path()
-        response = HttpResponse(status=302)
         if '?' in url:
-            response['location'] = '%s&radius=%s' % (url, context['block_radius'])
+            context['normalized_url'] = '%s&radius=%s' % (url, context['block_radius'])
         else:
-            response['location'] = '%s?radius=%s' % (url, context['block_radius'])
-        for key, val in context.get('cookies_to_set').items():
-            response.set_cookie(key, val)
-        return (context, response)
-    return (context, None)
+            context['normalized_url'] = '%s?radius=%s' % (url, context['block_radius'])
+    return context
 
 
 def place_detail_timeline(request, *args, **kwargs):
     """
     Recent news OR upcoming events for the given Location or Block.
     """
-    context, response = _place_detail_normalize_url(request, *args, **kwargs)
-    if response is not None:
+    context = _get_place_and_normalize_url(request, *args, **kwargs)
+    if context.get('normalized_url'):
+        response = HttpResponse(status=302)
+        response['location'] = context['normalized_url']
+        for key, val in context.get('cookies_to_set', {}).items():
+            response.set_cookie(key, val)
         return response
 
     show_upcoming = kwargs.get('show_upcoming')
-    schema_manager = get_schema_manager(request)
-
     if show_upcoming:
         context['breadcrumbs'] = breadcrumbs.place_detail_upcoming(context)
     else:
         context['breadcrumbs'] = breadcrumbs.place_detail_timeline(context)
 
-    is_latest_page = True
-    # Check the query string for the max date to use. Otherwise, fall
-    # back to today.
-    end_date = today()
-    if 'start' in request.GET:
-        try:
-            end_date = parse_date(request.GET['start'], '%m/%d/%Y')
-            is_latest_page = False
-        except ValueError:
-            raise Http404('Invalid date %s' % request.GET['start'])
+    context = _news_context(request, context,
+                            max_items=constants.NUM_NEWS_ITEMS_PLACE_DETAIL,
+                            show_upcoming=show_upcoming,
+                            location=context['place'],
+                            )
 
+    context['map_configuration'] = _preconfigured_map(context)
+    context['bodyclass'] = 'place-detail-timeline'
+    context['bodyid'] = context.get('place_type') or ''
+
+    response = eb_render(request, 'db/place_detail.html', context)
+    for k, v in context['cookies_to_set'].items():
+        response.set_cookie(k, v)
+    return response
+
+
+def _news_context(request, context, max_items, show_upcoming=False, **filterargs):
+    """
+    Puts a list of recent -or- upcoming NewsItems in the context,
+    and returns the context.
+
+    ``**filterargs`` are passed to FilterChain.add().
+
+    """
+    schema_manager = get_schema_manager(request)
     filterchain = FilterChain(request=request, context=context)
-    filterchain.add('location', context['place'])
-    # As an optimization, limit the NewsItems to those on the
-    # last (or next) few days.
-    # And only fetch for relevant schemas - either event-ish or not.
+
+    for key, val in filterargs.items():
+        filterchain.add(key, val)
+
+    # Only fetch for relevant schemas - either event-ish or not.
     if show_upcoming:
+        # Events, from earliest to latest
         s_list = schema_manager.filter(is_event=True)
-        start_date = end_date
-        end_date = start_date + datetime.timedelta(days=settings.DEFAULT_DAYS)
-        order_by = 'item_date_date'
+        order_by = ('item_date_date', '-pub_date')
+        date_limit = Q(item_date__gte=today())
     else:
+        # News, from newest to oldest
         s_list = schema_manager.filter(is_event=False)
-        start_date = end_date - datetime.timedelta(days=settings.DEFAULT_DAYS)
-        order_by = '-item_date_date'
+        order_by = ('-item_date_date', '-pub_date')
+        date_limit = Q(item_date__lte=today())
 
     filterchain.add('schema', list(s_list))
-    filterchain.add('date', start_date, end_date)
-    newsitem_qs = filterchain.apply().select_related()
+    newsitem_qs = filterchain.apply().select_related().filter(date_limit)
     # TODO: can this really only be done via extra()?
     newsitem_qs = newsitem_qs.extra(
         select={'item_date_date': 'date(db_newsitem.item_date)'},
-        order_by=(order_by, '-schema__importance', 'schema')
-    )[:constants.NUM_NEWS_ITEMS_PLACE_DETAIL]
+        order_by=order_by + ('-schema__importance', 'schema'),
+    )
+
+    try:
+        page = int(request.GET.get('page', 1))
+    except ValueError:
+        return HttpResponse('Invalid Page %r' % page, status=400)
 
     # We're done filtering, so go ahead and do the query, to
     # avoid running it multiple times,
     # per http://docs.djangoproject.com/en/dev/topics/db/optimization
-    ni_list = list(newsitem_qs)
+    ni_list, has_previous, has_next, idx_start, idx_end = paginate(
+        newsitem_qs, page=page, pagesize=max_items)
     schemas_used = list(set([ni.schema for ni in ni_list]))
     s_list = s_list.filter(is_special_report=False, allow_charting=True).order_by('plural_name')
     populate_attributes_if_needed(ni_list, schemas_used)
-    if ni_list:
-        next_day = ni_list[-1].item_date - datetime.timedelta(days=1)
-    else:
-        next_day = None
 
     hidden_schema_list = []
     if not request.user.is_anonymous():
@@ -1054,22 +1124,23 @@ def place_detail_timeline(request, *args, **kwargs):
 
     context.update({
         'newsitem_list': ni_list,
-        'next_day': next_day,
-        'is_latest_page': is_latest_page,
+        # Pagination stuff
+        'has_next': has_next,
+        'has_previous': has_previous,
+        'page_number': page,
+        'previous_page_number': page - 1,
+        'next_page_number': page + 1,
+        'page_start_index': idx_start + 1,
+        'page_end_index': idx_end,
+        # End pagination.
         'hidden_schema_list': hidden_schema_list,
-        'bodyclass': 'place-detail-timeline',
-        'bodyid': context.get('place_type') or '',
         'filters': filterchain,
         'show_upcoming': show_upcoming,
     })
 
-
     context['filtered_schema_list'] = s_list
-    context['map_configuration'] = _preconfigured_map(context);
-    response = eb_render(request, 'db/place_detail.html', context)
-    for k, v in context['cookies_to_set'].items():
-        response.set_cookie(k, v)
-    return response
+    return context
+
 
 def _preconfigured_map(context):
     """
@@ -1158,9 +1229,17 @@ def _preconfigured_map(context):
 
 
 def place_detail_overview(request, *args, **kwargs):
-    context, response = _place_detail_normalize_url(request, *args, **kwargs)
-    if response is not None:
+    """Recent news AND upcoming events for a Location or Block,
+    grouped by Schema.
+    """
+    context = _get_place_and_normalize_url(request, *args, **kwargs)
+    if context.get('normalized_url'):
+        response = HttpResponse(status=302)
+        response['location'] = context['normalized_url']
+        for key, val in context.get('cookies_to_set', {}).items():
+            response.set_cookie(key, val)
         return response
+
     schema_manager = get_schema_manager(request)
     context['breadcrumbs'] = breadcrumbs.place_detail_overview(context)
 
@@ -1169,14 +1248,13 @@ def place_detail_overview(request, *args, **kwargs):
 
     # We actually want two lists of schemas, since we care whether
     # they are news-like or future-event-like.
-    import copy
-    eventish_schema_list = copy.deepcopy(schema_list)
-    newsish_schema_list = copy.deepcopy(schema_list)
+    eventish_schema_list = SortedDict()
+    newsish_schema_list = SortedDict()
     for s_id, schema in schema_list.items():
         if schema.is_event:
-            del(newsish_schema_list[s_id])
+            eventish_schema_list[s_id] = schema
         else:
-            del(eventish_schema_list[s_id])
+            newsish_schema_list[s_id] = schema
 
     filterchain = FilterChain(request=request, context=context)
     filterchain.add('location', context['place'])

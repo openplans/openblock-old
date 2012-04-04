@@ -16,6 +16,9 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# TODO: Rewrite using https://github.com/codeforamerica/three ?
+# Looks much simpler, if it works well.
+
 from django.contrib.gis.geos import Point
 from ebpub.utils.geodjango import get_default_bounds
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup

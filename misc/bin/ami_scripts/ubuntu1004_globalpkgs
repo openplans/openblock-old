@@ -23,10 +23,11 @@ sudo apt-get -y install \
     postgresql-server-dev-8.4 \
     python-distribute  \
     python-gdal \
-    python-lxml \
-    python-virtualenv \
     python2.6 \
     python2.6-dev \
+    python-lxml \
+    python-virtualenv \
+    python-imaging \
     subversion \
     unzip \
     wget || exit 1

@@ -19,6 +19,20 @@
 import datetime
 import time
 
+
+def today():
+    from django.conf import settings
+    if settings.EB_TODAY_OVERRIDE:
+        return settings.EB_TODAY_OVERRIDE
+    return datetime.date.today()
+
+def now():
+    from django.conf import settings
+    if getattr(settings, 'EB_NOW_OVERRIDE', None):
+        return settings.EB_NOW_OVERRIDE
+    return datetime.datetime.now()
+
+
 def daterange(d1, d2):
     "Iterator that returns every date between d1 and d2, inclusive."
     current = d1

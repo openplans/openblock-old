@@ -1,0 +1,12 @@
+{% extends "db/snippets/newsitem_list.html" %}
+{% load eb %}
+{% block newsitem_list_content %}
+		<strong class="title"><a href="{{ newsitem.item_url}}" class="url">{{ newsitem.title|truncatewords_html:20 }}</a></strong>
+		{% featured_lookup_for_item newsitem "categories" %}
+		{% if categories %}
+		<strong class="neighbornews-category"> {% for category in categories %}{{ category.name }} {% if not forloop.last %},{% endif %} {% endfor %}</strong>
+                <br>
+		{% endif %}
+		<p class="info"><span class="date">{{ newsitem.item_date|date:"F j, Y" }}</span> {% if newsitem.description %}{{ newsitem.description|truncatewords_html:20}}{% endif %}</p>
+
+{% endblock newsitem_list_content %}

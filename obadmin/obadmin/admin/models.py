@@ -16,6 +16,4 @@
 #   along with OpenBlock.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.db import models
-
-# Create your models here.
+# No models, but we need this file so Django treats this package as an app.

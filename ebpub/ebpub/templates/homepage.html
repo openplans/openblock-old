@@ -7,7 +7,7 @@
 		<div id="homepage-search">
 		  <h2>Discover News on your Block</h2>
 			{% set_search_placeholder "" as placeholder %}
-			<form action="/search/" method="get" onsubmit="if ($j('#homepage-searchinput').val() == '{{ placeholder }}') return false; return true;">
+			<form action="{% url ebpub-search %}" method="get" onsubmit="if ($j('#homepage-searchinput').val() == '{{ placeholder }}') return false; return true;">
 				<p class="form"><input id="homepage-searchinput" type="text" name="q" value="{{ placeholder }}" onfocus="if (this.value == '{{ placeholder }}') { this.value = ''; }" onblur="if (this.value == '') { this.value = '{{ placeholder }}'; }" /> <input type="submit" value="Search" /></p>
 			</form>
 		</div><!--/ #homepage-search -->
@@ -36,7 +36,7 @@
 				{% for location_type in location_type_list %}
 					<li><a href="{{ location_type.url }}"><strong class="number">{{ location_type.count|intcomma }}</strong> {{ location_type.plural_name|capfirst }}</a></li>
 				{% endfor %}
-				<li><a href="/streets/"><strong class="number">{{ street_count|intcomma }}</strong> Streets</a></li>
+				<li><a href="{% url ebpub-street-list %}"><strong class="number">{{ street_count|intcomma }}</strong> Streets</a></li>
 			</ul>
 		</div><!--/ #intro-explore-->
 	</div><!-- end nav-location -->
@@ -50,7 +50,7 @@
 		<p>New in the last {{ num_days }} days</p>
 		<ul>
 			{% for chart in non_empty_date_charts %}
-			<li>
+			<li {% if chart.schema.id not in allowed_schema_ids %}class="restricted-schema"{% endif %}>
 				{% map_icon_img chart.schema %}
 				<strong>{{ chart.total_count|intcomma }}</strong> <a href="{{ chart.schema.url }}">{% filter capfirst %}{% schema_plural_name chart.schema chart.total_count %}{% endfilter %}</a>
 			</li>
@@ -59,21 +59,46 @@
 		{% endif %}
 		{% if empty_date_charts %}
 		<ul>Older: {% for chart in empty_date_charts %}
-            <li><a href="{{ chart.schema.url }}">{% map_icon_img chart.schema %}{{ chart.schema.plural_name|capfirst }}</a>
+            <li {% if chart.schema.id not in allowed_schema_ids %}class="restricted-schema"{% endif %}><a href="{{ chart.schema.url }}">{% map_icon_img chart.schema %}{{ chart.schema.plural_name|capfirst }}</a>
             </li>{% endfor %}
         </ul>
 		{% endif %}
 	</div><!--/ #public-records -->
 	<div id="more">
-    {% if more_schemas %}
+	{% if more_schemas %}
 		<h2>More news</h2>
 		<ul>
 		{% for schema in more_schemas %}
 			<li><a href="{{ schema.url }}">{% map_icon_img schema %}{{ schema.plural_name|capfirst }}</a></li>
 		{% endfor %}
 		</ul>
-    {% endif %}
-    </div><!--/ #more -->
+	{% endif %}
+
+	<!-- begin block restrictedschemas -->
+	{% block restrictedschemas %}
+	<!-- override this block to do something with restricted_schemas -->
+	{% endblock restrictedschemas %}
+	<!-- end block restrictedschemas -->
+
+	</div><!--/ #more -->
+
+	<!--  begin block featuredlookups -->
+	{% block featuredlookups %}
+	{% get_featured_lookups_by_schema %}
+	{% if featured_lookups %}
+	<!-- This only shows up if you have some Lookups with featured=True -->
+	<div id="featured-tags">
+		<h2>Featured Tags</h2>
+		<ul>
+		{% for schema, tags in featured_lookups.items %}
+		  {% for tag in tags %}
+			<li><a href="{{ tag.url }}">{{ tag.lookup }}</a></li>
+		  {% endfor %}
+		{% endfor %}
+		</ul>
+	</div><!--/ #tag_info -->
+	{% endif %}
+	{% endblock featuredlookups %}<!--  end block featuredlookups -->
 
     </div><!-- / #frontpage-text -->
 
@@ -82,8 +107,8 @@
 <div id="sidebar">
   <!-- begin block extracontent -->
   {% block extracontent %}
-  {% endblock %}
+  {% endblock extracontent %}
   <!-- end block extracontent -->
 </div><!--/ #sidebar -->
 
-{% endblock %}
+{% endblock content %}

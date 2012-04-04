@@ -12,6 +12,7 @@ after you've taken care of :doc:`../install/index`.
    scraper_tutorial
    running_scrapers
    alerts
+   theming
    api
    widgets
    deployment

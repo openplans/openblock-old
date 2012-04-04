@@ -20,15 +20,38 @@ import math
 
 # From http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/425044
 def bunch(lst, size):
+    """Regroups a list into bunches of a given size.
+
+    >>> bunch([1, 2, 3, 4], 2)
+    [[1, 2], [3, 4]]
+    """
     size = int(size)
     return [lst[i:i+size] for i in range(0, len(lst), size)]
 
 def bunchlong(lst, size):
+    """Like bunch(), but size is given as a divisor of the total list
+    length.
+
+    >>> bunchlong([1, 2, 3, 4], 1)
+    [[1, 2, 3, 4]]
+    >>> bunchlong([1, 2, 3, 4], 2)
+    [[1, 2], [3, 4]]
+    >>> bunchlong([1, 2, 3, 4], 3)
+    [[1, 2], [3, 4]]
+    >>> bunchlong([1, 2, 3, 4], 4)
+    [[1], [2], [3], [4]]
+    >>> bunchlong([1, 2, 3, 4], 999)
+    [[1], [2], [3], [4]]
+
+    """
     size = float(int(size))
     return bunch(lst, int(math.ceil(len(lst) / size)))
 
 def stride(lst, size):
     """
+    Like bunch(), but alternates lists when placing items, so every
+    Nth item goes into the first list, etc.
+
     >>> stride([1, 2, 3, 4, 5, 6], 2)
     [[1, 3, 5], [2, 4, 6]]
     >>> stride([1, 2, 3, 4, 5], 2)

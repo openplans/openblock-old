@@ -36,6 +36,9 @@ import re
 @login_required
 @csrf_protect
 def new_message(request):
+    """
+    Add form for neighbor-messages
+    """
     schema = Schema.objects.get(slug=NEIGHBOR_MESSAGE_SLUG)
     FormType = NeighborMessageForm
     return _new_item(request, schema, FormType)
@@ -45,6 +48,9 @@ def new_message(request):
 @login_required
 @csrf_protect
 def new_event(request):
+    """
+    Add form for neighbor-events
+    """
     schema = Schema.objects.get(slug=NEIGHBOR_EVENT_SLUG)
     FormType = NeighborEventForm
     return _new_item(request, schema, FormType)
@@ -55,6 +61,9 @@ def new_event(request):
 @csrf_protect
 @can_edit
 def edit_message(request, newsitem):
+    """
+    Edit form for neighbor-messages
+    """
     FormType = NeighborMessageForm
     return _edit_item(request, newsitem, FormType)
 
@@ -63,6 +72,9 @@ def edit_message(request, newsitem):
 @csrf_protect
 @can_edit
 def edit_event(request, newsitem):
+    """
+    Edit form for neighbor-events
+    """
     FormType = NeighborEventForm
     return _edit_item(request, newsitem, FormType)
 
@@ -72,6 +84,9 @@ def edit_event(request, newsitem):
 @csrf_protect
 @can_edit
 def delete_message(request, newsitem):
+    """
+    Delete confirmation for neighbor-messages
+    """
     return _delete(request, newsitem)
 
 @if_disabled404(NEIGHBOR_EVENT_SLUG)
@@ -79,7 +94,35 @@ def delete_message(request, newsitem):
 @csrf_protect
 @can_edit
 def delete_event(request, newsitem):
+    """
+    Delete confirmation for neighbor-events
+    """
     return _delete(request, newsitem)
+
+
+def news_by_user(request, userid):
+    """
+    List of all messages / events posted by the given user.
+    """
+    user = User.objects.get(id=userid)
+    is_viewing_self = False
+    if not request.user.is_anonymous():
+        if user.id == request.user.id:
+            is_viewing_self = True
+    items_by_schema = []
+    for slug in ('neighbor-messages', 'neighbor-events'):
+        try:
+            schema = Schema.objects.get(slug=slug)
+        except Schema.DoesNotExist:
+            continue
+        items = NewsItemCreator.objects.filter(user__id=userid, news_item__schema=schema)
+        items = items.select_related().order_by('-news_item__item_date')
+        items = [item.news_item for item in items]
+        items_by_schema.append({'schema': schema, 'items': items})
+
+    context = {'items_by_schema': items_by_schema, 'user': user,
+               'is_viewing_self': is_viewing_self}
+    return eb_render(request, "neighbornews/news_by_user.html", context)
 
 
 ################################################################
@@ -165,13 +208,25 @@ def _update_item(request, form, schema, action):
                 item.attributes[key] = form.cleaned_data[key]
 
         # 'categories'
-        cats = [cat for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
+        cats = [cat.strip() for cat in form.cleaned_data['categories'].split(',') if cat.strip()]
         if len(cats):
             lookups = set()
             for cat in cats:
                 code = _category_code(cat)
                 nice_name = _category_nice_name(cat)
-                lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code, "", False)
+                try:
+                    # We don't call get_or_create() yet because we
+                    # only want to look up by the normalized code, to
+                    # avoid dupes with slightly different names.
+                    from django.db.models import Q
+                    lu = Lookup.objects.filter(
+                        Q(schema_field=cat_field),
+                        Q(code=code) | Q(name=nice_name)
+                        )[0]
+                except (IndexError, Lookup.DoesNotExist):
+                    # We know it doesn't exist, but use get_or_create_lookup()
+                    # here b/c that takes care of the slug.
+                    lu = Lookup.objects.get_or_create_lookup(cat_field, nice_name, code=code)
                 lookups.add(lu.id)
             item.attributes['categories'] = ','.join(['%d' % luid for luid in lookups])
 
@@ -235,27 +290,6 @@ def _category_code(cat):
     return code
 
 def _category_nice_name(cat):
-    nice = cat.strip().lower()
+    nice = cat.strip().title()
     nice = re.sub('\s+', ' ', nice)
     return nice
-
-def news_by_user(request, userid):
-    user = User.objects.get(id=userid)
-    is_viewing_self = False
-    if not request.user.is_anonymous():
-        if user.id == request.user.id:
-            is_viewing_self = True
-    items_by_schema = []
-    for slug in ('neighbor-messages', 'neighbor-events'):
-        try:
-            schema = Schema.objects.get(slug=slug)
-        except Schema.DoesNotExist:
-            continue
-        items = NewsItemCreator.objects.filter(user__id=userid, news_item__schema=schema)
-        items = items.select_related().order_by('-news_item__item_date')
-        items = [item.news_item for item in items]
-        items_by_schema.append({'schema': schema, 'items': items})
-
-    context = {'items_by_schema': items_by_schema, 'user': user,
-               'is_viewing_self': is_viewing_self}
-    return eb_render(request, "neighbornews/news_by_user.html", context)

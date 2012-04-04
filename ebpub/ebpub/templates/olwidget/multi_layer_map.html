@@ -4,7 +4,7 @@
 <script type="text/javascript">
 var OB_API_ROOT = "{% url check_api_available %}";
 </script>
-<script type="text/javascript" src="/scripts/openblockrichmap.js" charset="utf-8"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}scripts/openblockrichmap.js" charset="utf-8"></script>
 
 {{ layer_html|join:"" }}
 <script type="text/javascript">

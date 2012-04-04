@@ -1,0 +1,22 @@
+- pk: 1001
+  model: streets.placetype
+  fields:
+    name: building
+    plural_name: buildings
+    indefinite_article: a
+    slug: buildings
+    is_geocodable: 1
+    is_mappable: 1
+    map_icon_url:
+    map_color:
+
+- pk: 1000
+  model: streets.place
+  fields:
+    pretty_name: Sears Tower
+    normalized_name: SEARS TOWER
+    # This is not really where it is
+    location: 0101000020E61000001B4CC3F011E855C04819710168F04440
+    place_type: 1001
+    address: somewhere
+    url: http://en.wikipedia.org/wiki/Sears_tower

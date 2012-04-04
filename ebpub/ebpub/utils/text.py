@@ -87,7 +87,11 @@ def address_to_block(addr):
     '4500 block of Main Street'
     >>> address_to_block('  123 Main Street')
     '100 block of Main Street'
+    >>> address_to_block(address_to_block(address_to_block('123 Main St')))
+    '100 block of Main St'
     """
+    if addr.count('block of'):
+        return addr
     return re.sub(r'^\s*(\d+) ', lambda m: '%s block of ' % re.sub('..?$', (len(m.group(1)) > 2 and '00' or '0'), m.group(1)), addr)
 
 def smart_title(s, exceptions=None):

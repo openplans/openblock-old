@@ -36,7 +36,6 @@ import logging
 
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
-from ebpub.utils.logutils import log_exception
 
 logger = logging.getLogger('add_events')
 
@@ -64,7 +63,10 @@ def update():
     feed = feedparser.parse(url)
     addcount = updatecount = 0
     for entry in feed.entries:
-        title = convert_entities(entry.title)
+        title = convert_entities(entry.title).strip()
+        # Putting 'event' in the title is redundant, ticket #227
+        if title.lower().startswith('event: '):
+            title = title[7:]
         try:
             item = NewsItem.objects.get(title=title,
                                         schema__id=schema.id)
@@ -107,8 +109,8 @@ def update():
                 updatecount += 1
             logger.info("%s: %s" % (status, item.title))
         except:
-            logger.error("unexpected error:", sys.exc_info()[1])
-            log_exception()
+            logger.exception("unexpected error:", sys.exc_info()[1])
+
     logger.info("add_events finished: %d added, %d updated" % (addcount, updatecount))
 
 

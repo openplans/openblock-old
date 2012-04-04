@@ -1,0 +1,112 @@
+{% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
+
+{% load eb eb_filter humanize mapping django_static %}
+
+{% block title %}{% if not filters.filters_for_display %}Search {{ schema.plural_name }}{% else %}{{ schema.plural_name|capfirst }}{% endif %}{% for filter in filters.filters_for_display %} &rsaquo; {{ filter.value }} {% endfor %}{% endblock %}
+
+{% block content %}
+<script type="text/javascript">
+  var linkIds = [];
+  if (jQuery.browser.msie) {
+      jQuery(window).load(function() {
+	  _setupLinks();
+      });
+  } else {
+      jQuery(document).ready(function() {
+	  _setupLinks();
+      });
+  };
+  var newLink = "";
+  var _setupLinks = function() {
+      $j("li.newsitem span.newsitem").show();
+      $j("#selected-items-map-link").show();
+      $j("input.select-newsitem").click(function() {
+	  var itemId = $j(this).attr('id').split('-')[1];
+          if ($j(this).attr("checked") == "checked") {
+	      linkIds.push(itemId);
+          } else {
+	      var i = linkIds.indexOf(itemId);
+	      if (i > -1) {
+		  linkIds.splice(i, 1);
+	      };
+          };
+	  newLink = $j("a#large-map-link").attr("href") + "&id=" + linkIds.join(",");
+	  $j("a#selected-items-map-link").attr("href", newLink);
+      });
+  };
+
+</script>
+
+	<div id="content">
+		<h1>Search {{ schema.plural_name }}</h1>
+		<!-- block extradescription -->
+		{% block extradescription %}
+		{%endblock%}
+		<!-- end block extradescription -->
+
+		<div id="schema-detail-link"><a href="{% url ebpub-schema-detail schema.slug %}">Statistics and more ...</a></div>
+
+		{% include "db/snippets/filter_left_nav.html" %}
+
+		<div id="maintext">
+
+		{% if newsitem_list %}
+
+			<p>{% map_icon_img schema %} <strong>{{ schema.plural_name|capfirst }} {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
+			<ul>
+				{% newsitem_list_by_schema newsitem_list ungrouped %}
+			</ul>
+			{% if has_next or has_previous %}
+			<ul>
+				{% if has_previous %}<li><a href="?page={{ previous_page_number }}" rel="nofollow">Previous</a></li>{% endif %}
+				{% if has_next %}<li><a href="?page={{ next_page_number }}" rel="nofollow">Next</a></li>{% endif %}
+			</ul>
+			{% endif %}
+		{% else %}
+			<h2>No {{ schema.plural_name }} were found for the given search criteria.</h2>
+            {% if filters.filters_for_display %}
+			<p>You might want to try&hellip;</p>
+			<ul>
+				{% for filter in filters.filters_for_display %}
+				<li><a href="{% filter_url filters -filter.slug %}" rel="nofollow">Removing the “{{ filter.label }}” filter</a></li>
+				{% endfor %}
+			</ul>
+            {% endif %}
+
+		{% endif %}
+		</div> <!-- maintext -->
+
+		<div id="mapwrapper">
+		  <script type="text/javascript">
+		  {% autoescape off %}
+		  function loadMap() {
+		  var config = {{map_configuration}};
+		  {% if bbox %}
+		  config.bounds = [{{bbox.0}},{{bbox.1}},{{bbox.2}},{{bbox.3}}];
+		  {% else %}
+		  config.center = [{{default_lon}}, {{default_lat}}];
+		  config.zoom = {{default_zoom}};
+		  {% endif %}
+		  return new OBMap(config);
+		  }
+		  {% endautoescape %}
+		  </script>
+		  {% include "richmaps/richmap.html" %}
+
+		</div><!--/ #mapwrapper -->
+		{% if large_map_url %}
+		<a class="large-map-link" id="large-map-link" href="{{ large_map_url }}">Explore these items on a larger map</a>
+		<br><a class="large-map-link hidden" id="selected-items-map-link"
+                       href="#">View selected items on map</a>
+
+		{% endif %}
+
+
+		<!--
+		<div class="subscribe-links"><p>what would subscription links on this page point to?</p>
+		</div> -->
+		<!-- /# subscribe-links -->
+
+	</div><!--/ #content -->
+
+{% endblock %}

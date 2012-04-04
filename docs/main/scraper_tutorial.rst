@@ -153,7 +153,7 @@ from boston.com and creates a NewsItem for each entry:
         main()
 
 
-This script actually runs. A longer version is at ``obdemo/scrapers/add_news.py``.
+This script actually runs.
 
 So, what's left out? Among other things:
 
@@ -161,7 +161,8 @@ So, what's left out? Among other things:
 
 * This scraper doesn't demonstrate address parsing or geocoding, since
   this feed happens to provide location names and geographic points
-  already.
+  already.  If you need those features, you may want to look at how
+  it's done in ``ebdata.retrieval.scrapers.base``.
 
 * We get all our information directly from the feed and don't follow
   any links to other documents. Sometimes you need to do that.
@@ -199,8 +200,6 @@ address extraction and ebpub's geocoder:
     from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
     from ebdata.textmining.treeutils import text_from_html
     from ebpub.db.models import NewsItem
-    from ebpub.geocoder import SmartGeocoder
-    from ebpub.geocoder.base import GeocodingException
     from ebpub.utils.logging import log_exception
     import logging
     import datetime
@@ -217,65 +216,73 @@ address extraction and ebpub's geocoder:
             url = 'http://www.bpdnews.com/feed/'
             yield self.fetch_data(url)
 
-        def existing_record(self, record):
+        def existing_record(self, cleaned_record):
             # This gets called to see if we already have a matching NewsItem.
-            url = record['link']
+            url = cleaned_record['url']
             qs = NewsItem.objects.filter(schema__id=self.schema.id, url=url)
             try:
                 return qs[0]
             except IndexError:
                 return None
 
-        def save(self, old_record, list_record, detail_record):
-            # This gets called once all parsing and cleanup is done.
-            # It looks a lot like our 'expedient hack' code above.
+        def clean_list_record(self, record):
+            if record['title'].startswith(u'Boston 24'):
+                # We don't include the summary posts, those are citywide.
+                self.logger.info("boston daily crime stats, we don't know how to "
+                                 "handle these yet")
+                raise SkipRecord
 
-            # We can ignore detail_record since has_detail is False.
+            date = datetime.date(*record['updated_parsed'][:3])
 
-            date = datetime.date(*list_record['updated_parsed'][:3])
-            description = list_record['summary']
+            # Get the precinct from the tags.
+            precincts = ['A1', 'A7', 'B2', 'B3', 'C11', 'C6', 'D14', 'D4',
+                         'E13', 'E18', 'E5']
+            precinct = None
+            tags = [t['term'] for t in record['tags']]
+            if not tags:
+                return
+
+            for precinct in tags:
+                if precinct in precincts:
+                    # TODO: we need a LocationType for precincts, and shapes; and
+                    # then we could set newsitem.location_object to the Location
+                    # for this precinct.
+                    break
+
+            if not precinct:
+                self.logger.debug("no precinct found in tags %r" % tags)
+
+            description = record['summary']
 
             # This feed doesn't provide geographic data; we'll try to
             # extract addresses from the text, and stop on the first
             # one that successfully geocodes.
             # First we'll need some suitable text; throw away HTML tags.
-            full_description = list_record['content'][0]['value']
+            full_description = record['content'][0]['value']
             full_description = text_from_html(full_description)
-            addrs = parse_addresses(full_description)
-            if not addrs:
-                self.logger.info("no addresses found")
-                return
+            # This method on the RssListDetailScraper does the rest.
+            location, location_name = self.get_point_and_location_name(
+                record, address_text=full_description)
 
-            location = None
-            location_name = u''
-            block = None
-            # Ready to geocode. If we had one location_name to try,
-            # this could be done automatically in create_or_update(), but
-            # we have multiple possible location_names.
-            for addr, unused in addrs:
-                addr = addr.strip()
-                try:
-                    location = SmartGeocoder().geocode(addr)
-                except GeocodingException:
-                    log_exception(level=logging.DEBUG)
-                    continue
-                location_name = location['address']
-                block = location['block']
-                location = location['point']
-                break
-            if location is None:
-                self.logger.info("no addresses geocoded in %r" % list_record['title'])
-                return
+            if not (location or location_name):
+                raise SkipRecord("No location or location_name")
 
-            kwargs = dict(item_date=date,
-                          location=location,
-                          location_name=location_name,
-                          description=description,
-                          title=list_record['title'],
-                          url=list_record['link'],
-                          )
+            cleaned = dict(item_date=date,
+                           location=location,
+                           location_name=location_name,
+                           title=record['title'],
+                           description=description,
+                           url=record['link'],
+                           )
+            return cleaned
+
+
+        def save(self, old_record, list_record, detail_record):
             attributes = None
+            # We don't use detail_record
+            kwargs = list_record
             self.create_or_update(old_record, attributes, **kwargs)
+
 
 
     if __name__ == "__main__":

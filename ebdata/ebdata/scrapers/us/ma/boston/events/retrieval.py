@@ -34,7 +34,6 @@ and updates the database
 from django.conf import settings
 from django.contrib.gis.geos import Point
 from ebpub.db.models import NewsItem, Schema
-from ebpub.utils.logutils import log_exception
 from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
 from optparse import OptionParser
 import dateutil.parser
@@ -136,9 +135,8 @@ class EventsCalendarScraper(object):
                 else:
                     updatecount += 1
                 logger.info("%s: %s" % (status, item.title))
-            except:
-                logger.error("unexpected error:", sys.exc_info()[1])
-                log_exception()
+            except Exception as e:
+                logger.exception("unexpected error: %s" % e)
         logger.info("EventsCalendarScraper finished: %d added, %d updated of %s total" % (addcount, updatecount, seencount))
 
 def main(argv=None):

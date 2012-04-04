@@ -19,14 +19,15 @@
 """
 Quick and Dirty OpenBlock Installer
 
-TODO:
-test basic system expectations (libs etc)
-not even pretending unix isn't required
-verbosity is rather extreme
-network requirement is ugly, cache
-generate unique values for certain configuration params (cookies etc)
-bad existing postgis_template can interfere with install, test
 """
+# TODO:
+# test basic system expectations (libs etc)
+# not even pretending unix isn't required
+# verbosity is rather extreme
+# network requirement is ugly, cache
+# generate unique values for certain configuration params (cookies etc)
+# bad existing postgis_template can interfere with install, test
+
 
 import glob
 import imp

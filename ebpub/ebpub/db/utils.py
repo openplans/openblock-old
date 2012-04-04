@@ -16,7 +16,6 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.conf import settings
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -30,8 +29,8 @@ from ebpub.constants import BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.constants import BLOCK_RADIUS_COOKIE_NAME
 from ebpub.utils.view_utils import make_pid
 from ebpub.savedplaces.models import SavedPlace
-import datetime
 
+from ebpub.utils.dates import today # For backward compatibility
 
 def populate_attributes_if_needed(newsitem_list, schema_list,
                                   get_lookups=True):
@@ -127,6 +126,9 @@ def populate_attributes_if_needed(newsitem_list, schema_list,
         for field_name, real_name in fmap[ni.schema_id]['fields']:
             value = att[real_name]
             if real_name in fmap[ni.schema_id]['lookups']:
+                if value is None:
+                    value = u''
+                    continue
                 if real_name.startswith('int'):
                     value = lookup_objs[value]
                 else: # Many-to-many lookups are comma-separated strings.
@@ -142,10 +144,6 @@ def populate_schema(newsitem_list, schema):
         # TODO: This relies on undocumented Django APIs -- the "_schema_cache" name.
         ni._schema_cache = schema
 
-def today():
-    if settings.EB_TODAY_OVERRIDE:
-        return settings.EB_TODAY_OVERRIDE
-    return datetime.date.today()
 
 def get_locations_near_place(place, block_radius=3):
     nearby = Location.objects.filter(location_type__is_significant=True)
@@ -264,8 +262,9 @@ def block_radius_value(request):
 
 def make_search_buffer(geom, block_radius):
     """
-    Returns a polygon of a buffer around a block's centroid. `geom'
-    should be the centroid of the block. `block_radius' is number of
-    blocks.
+    Returns a polygon of a buffer around a block's centroid.
+
+    ``geom`` is the centroid of the block, and
+    ``block_radius`` is the number of blocks.
     """
     return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope

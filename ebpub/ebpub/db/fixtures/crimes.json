@@ -352,11 +352,11 @@
   "model": "db.schemafield",
   "fields": {
    "schema": 1,
-   "name": "tags many-to-many",
+   "name": "tag",
    "real_name": "varchar04",
-   "pretty_name": "Tag",
-   "pretty_name_plural": "Tags",
-   "display": false,
+   "pretty_name": "Tag Many-to-Many",
+   "pretty_name_plural": "Tags Many-to-Many",
+   "display": true,
    "is_lookup": true,
    "is_filter": true,
    "is_charted": false,
@@ -405,6 +405,17 @@
   },
   "model": "db.lookup",
   "pk": 64
+ },
+ {
+  "fields": {
+   "description": "A police beat, unused.",
+   "code": "999",
+   "schema_field": 7,
+   "name": "Police Beat 999 UNUSED",
+   "slug": "beat-999"
+  },
+  "model": "db.lookup",
+  "pk": 9991
  },
  {
   "fields": {
@@ -504,5 +515,16 @@
   },
   "model": "db.lookup",
   "pk": 73
+ },
+ {
+  "fields": {
+   "description": "Tag 999 UNUSED",
+   "code": "999",
+   "schema_field": 13,
+   "name": "Tag 999 UNUSED",
+   "slug": "tag-999"
+  },
+  "model": "db.lookup",
+  "pk": 9992
  }
 ]

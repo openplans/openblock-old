@@ -10,6 +10,6 @@
 		{% csrf_token %}
 		<p><input type="submit" value="Yes, unsubscribe me"></p>
 	</form>
-	<p><a href="/accounts/dashboard/">No, take me back to my account</a></p>
+	<p><a href="{% url accounts-dashboard %}">No, take me back to my account</a></p>
 </div><!--/ #content-->
 {% endblock %}

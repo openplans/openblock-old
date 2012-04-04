@@ -14,7 +14,8 @@ It is assumed for this section that you have installed either
 :doc:`the demo <../install/demo_setup>` or have created a :doc:`custom
 application <../install/custom>`.
 
-For background and additional detail, see also :ref:`ebpub-schemas` 
+For background and additional detail, see also
+:py:class:`ebpub.db.models.Schema` and :ref:`newsitem-schemas`
 in the ebpub documentation, the code in ebpub.db.models and the 
 video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
 
@@ -25,7 +26,7 @@ video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
   It's often useful to clean these up and start fresh. There is a
   script at ``ebpub/db/bin/delete_newsitems.py`` that can delete all
   NewsItems of a given Schema, plus all their Attributes and Lookups.
-
+  Just specify the schema's slug.
 
 Experimenting with Existing Schemas
 -----------------------------------
@@ -292,14 +293,15 @@ Other Fields
 A few more fields worth mentioning:
 
 * ``allow_comments`` - whether users can comment on these NewsItems.
-  You should also set has_newsitem_detail=True.
+  You should also set has_newsitem_detail=True, because the detail
+  page is where you would see comments and the comment form.
 
 * ``allow_flagging`` - whether users can flag these NewsItems as
   inappropriate or spam. This leverages the ``ebpub.moderation``
   package.
 
 * ``allow_charting`` - whether to show aggregate statistic charts on
-  the home page of this schema, such as number of recent items found
+  the detail page of this schema, such as number of recent items found
   in each Location, and number of recent items loaded per day.
 
 

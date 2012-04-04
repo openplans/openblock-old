@@ -12,12 +12,12 @@
 <div id="content">
 	{% if city %}
 	<p>
-		<a href="/streets/">Streets</a>
+		<a href="{% url ebpub-city-list %}">Streets</a>
 	</p>
 	{% endif %}
 	<h1>Streets{% if city %} in {{ city.name }}{% endif %}</h1>
 	<p>Choose a street to find recent news near an individual
-	block. You can also <a href="/locations/">browse by locations</a>
+	block. You can also <a href="{% url ebpub-loc-type-list %}">browse by locations</a>
 	{% if example_loctype %}such as {{ example_loctype|lower }}{% endif %}.
 	</p>
 	{% regroup street_list by street|upper|slice:":1" as alpha_list %}

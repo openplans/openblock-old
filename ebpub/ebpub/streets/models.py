@@ -16,6 +16,65 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+Blocks
+======
+.. _blocks:
+
+A :py:class:`Block` is a segment of a single street between one side street and another
+side street. Blocks are a fundamental piece of the ebpub system; they're used
+both in creating a page for each block and in geocoding.
+
+Blocks are stored in a database table called "blocks". To populate this table,
+follow these steps:
+
+    1. Obtain a database of the streets in your city, along with each street's
+       address ranges and individual street segments. If you live in the
+       U.S.A. and your city hasn't had much new development since the year
+       2000, you might want to use the U.S. Census' TIGER/Line file
+       (http://www.census.gov/geo/www/tiger/).
+
+    2. Import the streets data into the "blocks" table. ebpub provides two
+       pre-made import scripts:
+
+           * If you're using TIGER/Line data, you can use the script
+             ``import_blocks_tiger`` which should be on your $PATH.
+
+           * If you're using data from ESRI, you can use the script
+             ``ebpub/streets/blockimport/esri/importers/blocks.py.``
+
+           * If you're using data from another source, take a look at the
+             Block model in ``ebpub/streets/models.py`` for all of the required
+             fields.
+
+
+Streets and Intersections
+=========================
+
+The ebpub system maintains a separate table of each :py:class:`Street`
+in the city. Once you've populated the blocks, you can automatically
+populate the streets table by running the importer
+``ebpub/streets/bin/populate_streets.py``, which should be on your
+``$PATH`` as ``populate_streets``.
+
+The ebpub system also maintains a table of each
+:py:class:`Intersection` in the city, where an intersection is defined
+as the meeting point of two streets. Just like streets, you can
+automatically populate the intersections table by running the code in
+the ``populate_streets`` script.
+
+Streets and intersections are both necessary for various bits of the site to
+work, such as the "browse by street" navigation and the geocoder (which
+supports the geocoding of intersections).
+
+Once you've got all of the above geographic boundary data imported, you can
+verify it on the site by browsing to /streets/ and /locations/.
+
+module contents
+================
+
+'''
+
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import fromstr
@@ -259,8 +318,11 @@ class Block(models.Model):
         return ''.join(url)
 
     def url(self):
-        return urlresolvers.reverse('ebpub-block-recent',
-                                    args=self._get_full_url_args())
+        try:
+            return urlresolvers.reverse('ebpub-block-recent',
+                                        args=self._get_full_url_args())
+        except urlresolvers.NoReverseMatch:
+            return None
 
     def _get_full_url_args(self):
         args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
@@ -407,8 +469,8 @@ class Block(models.Model):
                 setattr(self, key, val.strip().upper())
 
 
-
 class Street(models.Model):
+
     street = models.CharField(max_length=255, db_index=True,
                               help_text='Always uppercase.')
     pretty_name = models.CharField(max_length=255)
@@ -502,6 +564,10 @@ class PlaceTypeManager(models.Manager):
         return self.get(slug=slug)
 
 class PlaceType(models.Model):
+    """
+    A kind of Place, this could be anything, eg. 'Building', 'Park',
+    'Monument', 'Theater', 'Restaurant', ...
+    """
     objects = PlaceTypeManager()
 
     name = models.CharField(max_length=255)
@@ -513,6 +579,14 @@ class PlaceType(models.Model):
     is_mappable = models.BooleanField(default=True, help_text="Whether this type is available as a map layer to users")
     map_icon_url = models.TextField(blank=True, null=True)
     map_color = models.CharField(max_length=255, blank=True, null=True, help_text="CSS Color used on maps to display this type of place. eg #FF0000")
+
+    def get_map_icon_url(self):
+        from django.conf import settings
+        url = self.map_icon_url or u''
+        if url and not (url.startswith('/') or url.startswith('http')):
+            url = '%s/%s' % (settings.STATIC_URL.rstrip('/'), url)
+        return url
+
 
     def natural_key(self):
         return (self.slug, )
@@ -527,10 +601,13 @@ class Place(models.Model):
     (and maybe a URL).
     """
     pretty_name = models.CharField(max_length=255)
-    normalized_name = models.CharField(max_length=255, db_index=True) # Always uppercase, single spaces
+    normalized_name = models.CharField(max_length=255, db_index=True,
+                                       blank=True,
+                                       help_text='Always uppercase, single spaces; will be calculated from pretty_name if needed.')
     place_type = models.ForeignKey(PlaceType)
     address = models.CharField(max_length=255, blank=True)
-    url = models.TextField(blank=True, null=True, db_index=True) # link to additional information
+    url = models.TextField(blank=True, null=True, db_index=True,
+                           help_text='link to additional information')
 
     location = models.PointField(blank=True)
     objects = models.GeoManager()
@@ -549,9 +626,11 @@ class Place(models.Model):
 class PlaceSynonymManager(models.Manager):
     def get_canonical(self, name):
         """
-        Returns the 'correct' or canonical spelling of the given place name. 
-        If the given place name is already correctly spelled, then it's returned as-is.
-        """        
+        Returns the 'correct' or canonical spelling of the given place name.
+
+        If the given place name is already correctly spelled, then
+        it's returned as-is.
+        """
         try:
             normalized_name = normalize(name)
             return self.get(normalized_name=normalized_name).place.normalized_name
@@ -564,7 +643,8 @@ class PlaceSynonym(models.Model):
     represents a synonym for a Place (point of interest)
     """
     pretty_name = models.CharField(max_length=255)
-    normalized_name = models.CharField(max_length=255, db_index=True)
+    normalized_name = models.CharField(max_length=255, db_index=True,
+                                       help_text='Always uppercase, single spaces; will be calculated from pretty_name if needed.')
     place = models.ForeignKey(Place)
     objects = PlaceSynonymManager()
 
@@ -575,6 +655,7 @@ class PlaceSynonym(models.Model):
 
     def __unicode__(self):
         return self.pretty_name
+
 
 class City(object):
     def __init__(self, name, slug, norm_name):
@@ -649,6 +730,7 @@ class IntersectionManager(models.GeoManager):
         qs = qs.extra(select={"point": "AsText(location)"})
         return qs
 
+
 class Intersection(models.Model):
     """
     A point representing the meeting of two Streets
@@ -701,6 +783,7 @@ class Intersection(models.Model):
 
     def alert_url(self):
         return '%salerts/' % self.url()
+
 
 class Suburb(models.Model):
     """This model keeps track of nearby cities that we don't care about.
