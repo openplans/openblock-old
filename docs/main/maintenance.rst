@@ -8,14 +8,26 @@ Upgrades
 =========
 
 
+Make Backups!
+-------------
+
+As with any software, it is prudent to make backups of your database
+and your code before attempting any upgrades, so that you can roll
+back in the event of problems.
+
 Check the Release Notes
 -----------------------
 
+See :doc:`../changes/release_notes` for a list of changes since the
+last release.  It's probably more detailed than you need, but it's
+good to know what you're getting, and this file will alert you of
+backward incompatibilities that may impact any custom code you may
+have written.
 
 Database Migrations
 -------------------
 
-When upgrading your copy of the OpenBlock code, there may sometimes
+Whenever upgrading your copy of the OpenBlock code, there may
 be updates to Model code which require corresponding changes to your
 existing database.
 
@@ -26,7 +38,7 @@ backup first):
 
     django-admin.py syncdb --migrate
 
-To see what migrations exist and which ones you've already run,
+To check what migrations exist and which ones you've already run,
 you can do:
 
 .. code-block:: bash
@@ -53,6 +65,15 @@ scripts look like.
   ). Typically these will be :doc:`scraper <running_scrapers>` scripts. To fix it, either
   restart the database, or ``kill`` all the other processes that are
   writing to the database. The migration should then finish with no trouble.
+
+
+.. admonition:: Downtime
+
+  When your code is installed but your database migrations haven't yet
+  finished, the live site may give errors. It may make sense to
+  temporarily replace your site with eg. a static "system is down for
+  maintenance" page.  Doing so is beyond the scope of this
+  documentation.
 
 .. _moderation:
 
