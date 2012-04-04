@@ -43,6 +43,61 @@ Deployment
 
 See :doc:`../main/deployment`
 
+
+obdemo Package
+==============
+
+:mod:`obdemo` Package
+---------------------
+
+.. automodule:: obdemo
+    :members:
+    :show-inheritance:
+
+:mod:`manage` Module
+--------------------
+
+.. automodule:: obdemo.manage
+    :members:
+    :show-inheritance:
+
+:mod:`models` Module
+--------------------
+
+.. automodule:: obdemo.models
+    :members:
+    :show-inheritance:
+
+:mod:`settings_background` Module
+---------------------------------
+
+.. automodule:: obdemo.settings_background
+    :members:
+    :show-inheritance:
+
+:mod:`urls` Module
+------------------
+
+.. automodule:: obdemo.urls
+    :members:
+    :show-inheritance:
+
+:mod:`views` Module
+-------------------
+
+.. automodule:: obdemo.views
+    :members:
+    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+    obdemo.management
+    obdemo.scrapers
+
+
 .. _ebgeo: https://github.com/openplans/openblock-extras/blob/master/docs/ebgeo.rst
 
 .. _openblock-extras: https://github.com/openplans/openblock-extras/

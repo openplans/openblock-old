@@ -594,13 +594,40 @@ div.popupnav {
     font-size: 100%;
 }
 
-#mapwrapper .olControlLayerSwitcher {
-    top: 0px !important;
-    font-size: x-small;
+#mapwrapper #layerswitcher-container {
+    position: relative;
+    top: 0px;
+    left: 0px;
 }
 
-#mapwrapper .olControlLayerSwitcher .layersDiv {
+#mapwrapper #layerswitcher {
+    top: 0px !important;
+    font-size: x-small;
+    width: 20em;
+    position: absolute;
+    z-index: 2000;
+}
+
+/* the "Overlays" title on the layer switcher. */
+#mapwrapper .layersDiv .dataLbl {
+    text-align: right;
+    padding-right: 1em;
+}
+
+#mapwrapper .layersDiv .dataLayersDiv {
+    /* We'll start with this collapsed, and expand it when label is clicked. */
+    display: none;
+}
+
+
+#mapwrapper .layersDiv {
     background-color: #505040;
+    padding: 5px 0;
+    width: 100%;
+}
+
+#mapwrapper .layersDiv, #layerswitcher div span {
+    opacity: 0.84 !important;
 }
 
 #mapwrapper .olControlLayerSwitcher span {

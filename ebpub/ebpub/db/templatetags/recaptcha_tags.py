@@ -16,6 +16,16 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"""
+To use these, your template must include:
+
+.. code-block:: html+django
+
+  {% load recaptcha_tags %}
+
+"""
+
 from django import template  
 from django.conf import settings  
 from recaptcha.client import captcha
@@ -24,7 +34,15 @@ register = template.Library()
 
 @register.simple_tag
 def recaptcha_html():
-    """Inserts a ReCaptcha widget.
+    """Inserts a ReCaptcha widget, using settings.RECAPTCHA_PUBLIC_KEY.
+    If that's not set, outputs an empty string.
+
+    Usage:
+
+    .. code-block:: html+django
+
+      {% recaptcha_html %}
+
     """
     if not getattr(settings, 'RECAPTCHA_PUBLIC_KEY', None):
         return u''

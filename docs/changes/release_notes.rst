@@ -28,6 +28,27 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed safe_id_sort_reversed template tag; use the for loop's
+  reverse option instead, eg.
+  {% for item in itemlist|safe_id_sort reversed %}
+
+* Moved the friendlydate template filter from ebpub.db.templatetags.eb
+  into ebpub.db.templatetags.dateutils, where it seems to belong.
+
+* Moved the recaptcha template tag from ebpub.neighbornews.templatetags into
+  ebpub.db.templatetags.recaptcha_tags.
+  Templates using it will now need to do {% load recaptcha_tags %}.
+
+* Moved one obscure template tag, {% get_locations_for_item %},
+  from ebpub.widgets.templatetags into ebpub.db.templatetags.recaptcha_tags.
+  Templates using it will now need to do {% load eb %}.
+
+* Renamed a bunch of template tag functions to match the name of the
+  tag, eg. "do_filter_url()" is now "filter_url()".  This makes the
+  API docs easier to read; it doesn't affect templates, only code that
+  imports those functions directly - and there problably is none of
+  that.
+
 * Added a "View selected items on map" link and checkboxes on Schema
   filter pages, to allow viewing explicitly selected items on the "big map".
 
@@ -63,6 +84,17 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* ebpub.geocoder.base.full_geocode() now has a convert_to_block
+  argument, factored out from ebdata.retrieval.  If True, this
+  tries to disambiguate bad blocks on good streets by rounding down
+  to the nearest block, eg. converting '299 Wabash St' to '200 block
+  of Wabash St.'  May help geocoding when eg. census data doesn't
+  quite match reality.
+
+* Schemas now have an ``edit_window`` field, representing how long (in
+  hours) users are allowed to edit their content after it's created.  Used
+  by the ``neighbornews`` forms.
+
 * Rest API: Allow searching by multiple types (schemas).
 
 * Added an admin UI for importing NewsItems from spreadsheets
@@ -89,10 +121,10 @@ New Features in 1.2
 
 * Added ``featured`` flag on ``ebpub.db.Lookup`` model, allowing admins
   to designate some Lookup values as "special", for use in
-  eg. navigation.
+  eg. navigation. (#268)
 
 * Added a ``get_featured_lookups_by_schema`` template tag, puts into
-  context a list of the "special" Lookup values for that schema.
+  context a list of the "special" Lookup values for that schema. (#268)
 
 * Added ``Lookup.objects.get_featured_lookup_for_item(newsitem, attribute_key)``
   method to find out which "featured" Lookups a newsitem has for a
@@ -172,6 +204,13 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Fix filtering by location and date on big map page.
+
+* Fix #281, wrong schemas shown on big map page.
+
+* Map icon URLs for db.Location and streets.PlaceType can now be
+  relative to STATIC_URL
+
 * Fix #282, missing items on place detail pages
 
 * Fix KeyError when an Attribute references a non-existent Lookup.
@@ -240,6 +279,11 @@ Bugs fixed
 
 Documentation
 -------------
+
+* Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo classes.
+  Ticket #159.
+
+* Documentation about comments and flagging of NewsItems. Ticket #252
 
 * Better docs about template overrides, see :ref:`custom-look-feel`.
 

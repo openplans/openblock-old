@@ -264,14 +264,18 @@ Be patient; it typically takes at least several minutes to run.
 
 It can also filter out blocks outside of one or more locations by
 passing the ``--filter-location`` option with a LocationType slug and
-Location slug; for example::
+Location slug; for example:
+
+.. code-block:: bash
 
   $ import_blocks_tiger --filter-location="cities:cambridge" \
     --filter-location="cities:newton" ...
 
 
 If you run it with the ``--help`` option, it will tell you how about
-all options::
+all options:
+
+.. code-block:: bash
 
  $ import_blocks_tiger  --help
  Usage: import_blocks_tiger edges.shp featnames.dbf faces.dbf place.shp

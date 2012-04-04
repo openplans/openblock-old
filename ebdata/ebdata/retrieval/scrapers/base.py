@@ -156,21 +156,29 @@ class BaseScraper(object):
         NewsItem.
 
         kwargs MUST have the following keys:
-            title
-            item_date
-            location_name AND/OR location
+        *   title
+        *   item_date
+        *   location_name AND/OR location
+
         For any other kwargs whose values aren't provided, this will use
         sensible defaults.
 
         ``attributes`` is a dictionary to use to populate this
         NewsItem's Attribute objects.
 
-        kwargs MAY have the following keys: 
-            zipcode, city, and/or state - used to disambiguate geocoded locations.
-            convert_to_block - convert the given kwargs['location_name']
+        kwargs MAY have the following keys:
+
+            zipcode, city, and/or state
+
+              used to disambiguate geocoded locations.
+
+            convert_to_block
+
+              convert the given kwargs['location_name']
               to a block level but will try to use the real
               (non-block-level) address for geocoding.
               Default False.
+
         """
 
         convert_to_block = kwargs.pop('convert_to_block', False)

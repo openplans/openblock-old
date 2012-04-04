@@ -1,10 +1,10 @@
 {% extends "admin/change_form.html" %}
 
 {% block after_field_sets %}
-{% if original.map_icon_url %}
+{% if original.get_map_icon_url %}
 <div>
 Current Icon:
-<div><img src="{{ original.map_icon_url }}" alt="current icon preview" /></div>
+<div><img src="{{ original.get_map_icon_url }}" alt="current icon preview" /></div>
 </div>
 {% endif %}
 

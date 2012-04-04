@@ -174,7 +174,7 @@ def widget_admin(request, slug):
 def ajax_widget_raw_items(request, slug):
     """
     gets a list of 'raw' items in a widget (does not include
-    pinned items)
+    pinned items), as a JSON object.
 
     start and count parameters may be added as query parameters
     to retrieve more items.  by default the call returns items
@@ -182,16 +182,18 @@ def ajax_widget_raw_items(request, slug):
 
     Example of the structure returned:
 
-    {
+    .. code-block:: javascript
+
+     {
         "items": [
             {
                 "id': 1234,
                 "title": "Some Item",
-            },
-            ...
+            }
+            // ...
         ],
         "start": 0
-    }
+     }
 
     """
     if not request.user.is_superuser == True:
@@ -226,7 +228,9 @@ def ajax_widget_pins(request, slug):
 
     Example of the structure returned/accepted:
 
-    {
+    .. code-block:: javascript
+
+      {
         "items": [
             {
                 "id': 1234,
@@ -241,9 +245,9 @@ def ajax_widget_pins(request, slug):
                 "title": "Some Other Item",
                 // no expiration
             },
-            ...
-        ]
-    }
+            // ...
+         ]
+      }
     '''
 
     if not request.user.is_superuser == True:
@@ -259,12 +263,9 @@ def ajax_widget_pins(request, slug):
         return HttpResponseNotAllowed(["GET", "PUT"])
 
 def _get_ajax_widget_pins(request, widget):
-    """
-    retrieves a json structure that describes the
-    items currently "pinned" in a widget as described
-    in ajax_widget_pins.
-    """
-
+    # Retrieves a json structure that describes the
+    # items currently "pinned" in a widget as described
+    # in ajax_widget_pins.
     pins = list(PinnedItem.objects.filter(widget=widget).all())
     pins.sort(key=attrgetter('item_number'))
 
@@ -285,13 +286,11 @@ def _get_ajax_widget_pins(request, widget):
     return HttpResponse(json.dumps(info), mimetype="application/json")
 
 def _set_ajax_widget_pins(request, widget):
-    """
-    Sets pinned items in a widget based a json structure
-    as described in ajax_widget_pins.
-
-    Any existing pins are removed and replaced by the pins described in
-    the given structure.
-    """
+    # Sets pinned items in a widget based a json structure
+    # as described in ajax_widget_pins.
+    #
+    # Any existing pins are removed and replaced by the pins described in
+    # the given structure.
     try:
         pin_info = json.loads(request.raw_post_data)
     except ValueError:
@@ -331,7 +330,7 @@ def _set_ajax_widget_pins(request, widget):
     PinnedItem.objects.filter(widget=widget).delete()
     for pin in new_pins: 
         pin.save()
-        
+
     if len(new_pins) > 0: 
         return HttpResponse(status=201)
     else: 

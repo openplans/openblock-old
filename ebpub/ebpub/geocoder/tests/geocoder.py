@@ -70,6 +70,23 @@ class TestFullGeocode(django.test.TestCase):
         from ebpub.geocoder.base import full_geocode, DoesNotExist
         self.assertRaises(DoesNotExist, full_geocode, 'Bogus Place Name')
 
+    def test_full_geocode__bad_block_on_good_street(self):
+        from ebpub.geocoder.base import full_geocode
+        # This block goes up to 298.
+        result = full_geocode('299 S. Wabash Ave.')
+        self.assert_(result['ambiguous'])
+        self.assertEqual(result['type'], 'block')
+        self.assertEqual(result['street_name'], 'Wabash Ave.')
+        self.assertEqual(len(result['result']), 3)
+
+    def test_full_geocode__convert_to_block(self):
+        from ebpub.geocoder.base import full_geocode
+        # This block goes up to 298.
+        result = full_geocode('299 S. Wabash Ave.', convert_to_block=True)
+        self.failIf(result['ambiguous'])
+        self.assertEqual(result['type'], 'block')
+        self.assertEqual(result['result']['address'], '200 block of S. Wabash Ave.')
+
 
 class TestDisambiguation(django.test.TestCase):
 

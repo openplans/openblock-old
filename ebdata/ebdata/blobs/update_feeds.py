@@ -75,19 +75,23 @@ def add_query_string(url, new_values):
 def normalize_url(base_href, url, normalize_www_flag):
     """
     Normalizes the given URL:
-        * Joins it with base_href if it doesn't already have a domain.
-        * Lowercases the scheme (WWW.GOOGLE.COM -> www.google.com).
-        * Removes the port (80 or 443) if it's default.
-        * Collapses '../' and './'.
-        * Alphabetizes the query string by its keys.
-        * If it ends in '/index.html', removes the 'index.html'.
-        * Normalizes the 'www.' subdomain according to normalize_www_flag.
+
+    * Joins it with base_href if it doesn't already have a domain.
+    * Lowercases the scheme (WWW.GOOGLE.COM -> www.google.com).
+    * Removes the port (80 or 443) if it's default.
+    * Collapses '../' and './'.
+    * Alphabetizes the query string by its keys.
+    * If it ends in '/index.html', removes the 'index.html'.
+    * Normalizes the 'www.' subdomain according to normalize_www_flag.
+
     Returns None if the URL is invalid.
 
-    normalize_www_flag should be either 1, 2 or 3:
-        * 1 = Remove the 'www.' subdomain, if it exists.
-        * 2 = Add a 'www.' subdomain, if a subdomain doesn't exist.
-        * 3 = Don't touch the subdomain.
+    ``normalize_www_flag`` should be either 1, 2 or 3:
+
+    * 1 = Remove the 'www.' subdomain, if it exists.
+    * 2 = Add a 'www.' subdomain, if a subdomain doesn't exist.
+    * 3 = Don't touch the subdomain.
+
     """
     # Derived from code at http://www.mnot.net/python/urlnorm.py
     # See copyright at top of this file.

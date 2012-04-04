@@ -142,7 +142,9 @@ dictionary, like ``{}``.
 running our function.  Generally this will need to set
 ``DJANGO_SETTINGS_MODULE``.  For the demo, we set it to
 ``obdemo.settings`` by default, unless there is already an environment
-variable by that name.  This looks like::
+variable by that name.  This looks like:
+
+.. code-block:: python
 
   env = {'DJANGO_SETTINGS_MODULE': os.environ.get('DJANGO_SETTINGS_MODULE', 'obdemo.settings')}
 

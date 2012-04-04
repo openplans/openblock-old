@@ -18,6 +18,13 @@
 
 """
 Custom template tags for dealing with json.
+
+To use these, your template must include:
+
+.. code-block:: html+django
+
+   {% load eb_json %}
+
 """
 
 from django import template
@@ -31,11 +38,19 @@ def json_value(value, arg=None):
     """
     Filter that turns a JSON string into a data structure.
 
-    Example::
+    Example:
+
+    .. code-block:: html+django
 
       {% for item in "[1,2,3]"|json_value %}
-        {{ item }}
+        <li>{{ item }}</li>
       {% endfor %}
+
+    This would insert into the page::
+
+       <li>1</li>
+       <li>2</li>
+       <li>3</li>
     """
     data = simplejson.loads(value)
     if arg is not None:

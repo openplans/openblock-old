@@ -77,14 +77,20 @@ OBMapItemList.prototype._resetPager = function() {
     this.page = 0;
     this.pages = Math.ceil(this.items.length / this.listLength);
     if (this.pages > 1) {
-        var pagerHTML = '<a class="nav-prev" href="#">&larr;prev</a>&nbsp;';
-        pagerHTML +=    '<span class="page-number">' + (this.page + 1) + '</span>&nbsp;of&nbsp;';
-        pagerHTML += this.pages + '&nbsp;<a class="nav-next" href="#">next&rarr;</a></div>';
+        // "Page 50 of 70 first | <prev | next> | last"
+        var pagerHTML = 'Page&nbsp;<span class="page-number">' + (this.page+1);
+        pagerHTML +=  '</span>&nbsp;of&nbsp;<span class="page-count">'+ this.pages + '</span>';
+        pagerHTML += '&nbsp;<a class="nav-first" href="#">first</a>&nbsp;|';
+        pagerHTML += '&nbsp;<a class="nav-prev" href="#">&larr;prev</a>&nbsp;|';
+        pagerHTML += '&nbsp;<a class="nav-next" href="#">next&rarr;</a>&nbsp;|';
+        pagerHTML += '&nbsp;<a class="nav-last" href="#">last</a>';
 
         this.el.find('.map-item-list-pager').html(pagerHTML);
         var prev = this.el.find("a.nav-prev");
         var next = this.el.find("a.nav-next");
-        
+        var first = this.el.find("a.nav-first");
+        var last = this.el.find("a.nav-last");
+
         // Clicking next or previous replaces the nav links html.
         var thisList = this;
         prev.click(function(e) {
@@ -95,6 +101,15 @@ OBMapItemList.prototype._resetPager = function() {
             e.preventDefault();
             thisList.nextPage();
         });
+        first.click(function(e) {
+            e.preventDefault();
+            thisList.jumpToPage(0);
+        });
+        last.click(function(e) {
+            e.preventDefault();
+            thisList.jumpToPage(thisList.pages - 1);
+        });
+
     }
     else {
         this.el.find('.map-item-list-pager').html("");
@@ -102,13 +117,17 @@ OBMapItemList.prototype._resetPager = function() {
 };
 
 OBMapItemList.prototype.nextPage = function() {
-    this.page = (this.page + 1) % this.pages;
-    this.el.find('.page-number').html(this.page + 1); 
-    this._refreshPage();
+    var page = (this.page + 1) % this.pages;
+    this.jumpToPage(page);
 };
 
 OBMapItemList.prototype.prevPage = function() {
-    this.page = (this.page - 1 + this.pages) % this.pages; 
+    var page = (this.page - 1 + this.pages) % this.pages;
+    this.jumpToPage(page);
+};
+
+OBMapItemList.prototype.jumpToPage = function(page) {
+    this.page = page;
     this.el.find('.page-number').html(this.page + 1);
     this._refreshPage();
 };
@@ -135,19 +154,8 @@ OBMapItemList.prototype._findVisibleItems = function() {
         }
     }
     this.items.sort(function(a,b) {
-        var at = a.attributes.openblock_type; 
-        var bt = b.attributes.openblock_type; 
-        
-        if (at != bt) {
-            /* if types do not match, order by type */
-            ak = at;
-            bk = bt;
-        }
-        else {
-            ak = a.attributes.sort || a.attributes.name || a.attributes.title;
-            bk = b.attributes.sort || a.attributes.name || a.attributes.title;
-        }
-        
+        ak = a.attributes.sort || a.attributes.name || a.attributes.title || a.attributes.openblock_type;
+        bk = b.attributes.sort || b.attributes.name || b.attributes.title || b.attributes.openblock_type;
         return ((ak < bk) ? -1 : ((bk < ak) ? 1 : 0));
     });
 };
@@ -155,7 +163,7 @@ OBMapItemList.prototype._findVisibleItems = function() {
 OBMapItemList.prototype._refreshPage = function() {
     /* gather items on page */
     var items = [];
-    var start = this.page*this.listLength
+    var start = this.page * this.listLength;
     for (var i = 0; i < this.listLength; i++) {
         var cur = start + i; 
         if (cur < this.items.length) {

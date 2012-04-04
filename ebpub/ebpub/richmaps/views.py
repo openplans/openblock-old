@@ -39,7 +39,10 @@ import re
 logger = logging.getLogger('ebpub.richmaps.views')
 
 def bigmap_filter(request, slug):
-
+    """
+    Big map with just one Schema (identified by ``slug``) enabled by
+    default.
+    """
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
     if not s.allow_charting:
         return HttpResponse(status=404)
@@ -57,29 +60,13 @@ def bigmap_filter(request, slug):
 
     config = _decode_map_permalink(request, show_default_layers=False, filters=filterchain)
 
+
     # TODO: This can leave in permalink params eg. 'i', even if there
     # is also 'ids', because it doesn't recognize those as being the
     # same.
     new_url = filterchain.make_url(base_url=reverse('bigmap_filter', args=(slug,)))
     if new_url != request.get_full_path():
-        return HttpResponseRedirect(new_url)    
-
-    # add in the filter layer, if not already there
-    have_custom_layer = False
-    for layer in config['layers']:
-        if layer['title'] == 'Custom Filter':
-            have_custom_layer = True
-            break
-    if not have_custom_layer:
-        base_url = reverse('ebpub-schema-filter-geojson', args=(slug,))
-        layer_url = filterchain.make_url(base_url=base_url)
-        custom_layer = {
-            'url': layer_url,
-            'params': {},
-            'title': "Custom Filter",
-            'visible': True
-        }
-        config['layers'].append(custom_layer)
+        return HttpResponseRedirect(new_url)
 
     if config['is_widget']:
         return eb_render(request, 'richmaps/embed_bigmap.html', {
@@ -92,6 +79,9 @@ def bigmap_filter(request, slug):
 
 
 def bigmap(request):
+    '''
+    Big map with all Schemas enabled by default.
+    '''
     filterchain = FilterChain(request=request)
     config = _decode_map_permalink(request, filters=filterchain)
 
@@ -146,21 +136,11 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
 
 
     """
-    
     params = request.GET
-    
-    #
-    # enabled item, place layers "l" parameter
-    #
-    # l=p13,t32,p1 ...
-    #
-    # p => place layer
-    # t => schema layer 
-    # remaining portion is dbid of place or schema
-    #
     schemas = set()
     place_types = set()
     lids = params.get("l", None)
+    show_custom_layer = False
     if lids is not None: 
         no_layers_specified = False
         try:
@@ -172,9 +152,11 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
                     place_types.add(layer_id)
                 elif layer_type == 't': 
                     schemas.add(layer_id)
+                elif layer_type == 'c':
+                    show_custom_layer = True
         except: 
             pass
-    else: 
+    else:
         no_layers_specified = True
 
     # map center
@@ -215,38 +197,48 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
         except: 
             popup_center = None
             popup_feature = None
-    
 
     # start and end date range
-    startdate = params.get('start_date')
-    if startdate is not None:
-        try:
-            startdate = datetime.datetime.strptime(startdate, '%m/%d/%Y').date()
-        except:
-            startdate = None
-
-    enddate = params.get('end_date')
-    if enddate is not None: 
-        try:
-            enddate = datetime.datetime.strptime(enddate, '%m/%d/%Y').date()
-        except:
-            enddate = None
-
-    if startdate is None and enddate is None and filters:
-        date_filter = filters.get('date') or filters.get('pubdate')
-        if date_filter:
-            startdate = date_filter.start_date
-            enddate = date_filter.end_date
-
     default_interval = datetime.timedelta(days=7)
     duration = params.get('d')
     if duration is not None:
         try:
             duration = datetime.timedelta(days=int(duration))
-        except:
+        except (TypeError, ValueError):
             duration = default_interval
-    else: 
+    else:
         duration = default_interval
+    default_enddate = datetime.date.today()
+    default_startdate = default_enddate - duration
+
+    startdate = params.get('start_date')
+    if startdate is not None:
+        for format in ('%m/%d/%Y', '%Y-%m-%d'):
+            try:
+                startdate = datetime.datetime.strptime(startdate, format).date()
+                break
+            except ValueError:
+                pass
+        if isinstance(startdate, basestring):
+            startdate = None
+
+    enddate = params.get('end_date')
+    if enddate is not None:
+        for format in ('%m/%d/%Y', '%Y-%m-%d'):
+            try:
+                enddate = datetime.datetime.strptime(enddate, format).date()
+                break
+            except ValueError:
+                pass
+        if isinstance(enddate, basestring):
+            enddate = None
+
+    # The filters argument can override startdate & enddate.
+    if startdate is None and enddate is None and filters:
+        date_filter = filters.get('date') or filters.get('pubdate')
+        if date_filter:
+            startdate = date_filter.start_date
+            enddate = date_filter.end_date
 
     if startdate is None and enddate is None:
         enddate = datetime.date.today()
@@ -268,6 +260,9 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
 
     layers = []
 
+    if (startdate != default_startdate) or (enddate != default_enddate):
+        show_custom_layer = True
+
     # All available place layers.
     for place_type in PlaceType.objects.filter(is_mappable=True).all():
         layers.append({
@@ -282,6 +277,15 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
 
     # All available NewsItem layers.
     for schema in get_schema_manager(request).all():
+        # if filters and 'schema' in filters and filters['schema'].schema == schema:
+        #     visible = True
+        if no_layers_specified and show_default_layers and not show_custom_layer:
+            # default on if no 't' param given
+            visible = True
+        elif schemas and schema.id in schemas:
+            visible = True
+        else:
+            visible = False
         layers.append({
             'id': 't%d' % schema.id,
             'title':  schema.plural_name,
@@ -290,7 +294,7 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
                        'startdate': api_startdate,
                        'enddate': api_enddate},
             'bbox': False,
-            'visible': (no_layers_specified and show_default_layers) or schema.id in schemas # default on if no 't' param given
+            'visible': visible
         })
 
     # Explicit filtering by ID.
@@ -298,18 +302,44 @@ def _decode_map_permalink(request, show_default_layers=True, filters=None):
     ids = [i.strip() for i in re.split(r'[^\d]+', ids)
            if i.strip()]
     if ids:
+        show_custom_layer = True
         if filters is None:
             filters = FilterChain(request)
         filters.replace('id', *ids)
 
+
+    # 'Custom' layer. This is a catch-all for all filtering
+    # that isn't just enabling a default layer with the default
+    # date range.
+    # Not visible unless there is something like that to show.
+    if filters and sorted(filters.keys()) not in ([],
+                                                  ['date'],
+                                                  ['date', 'schema'],
+                                                  ['schema']):
+        show_custom_layer = True
+
     if filters is not None:
+        # Don't inspect filters['schema']; that's already covered by schemas above.
         base_url = reverse('map_items_json')
         layer_url = filters.make_url(base_url=base_url)
+        # Quick ugly hacks to make the itemquery api happy.
+        # Hooray proliferation of spellings.
+        layer_url = layer_url.replace('locations=', 'locationid=')
+        layer_url = layer_url.replace('start_date=', 'startdate=')
+        layer_url = layer_url.replace('end_date=', 'enddate=')
+
+        if 'schema' in filters:
+            # Normally, filters.make_url() captures the schema in the
+            # path part of the URL. But map_items_json doesn't,
+            # so we add a query parameter.
+            params = {'type': [s.slug for s in filters['schema'].schemas]}
+        else:
+            params = {}
         custom_layer = {
-            'url': layer_url, #base_url,
-            'params': {}, #layer_params,
+            'url': layer_url,
+            'params': params,
             'title': u"Custom Filter",
-            'visible': True,
+            'visible': show_custom_layer,
             'id': 'c1',
             }
         layers.append(custom_layer)
@@ -470,7 +500,6 @@ def map_items_json(request):
     rendition of the REST api's geojson response. includes
     only attributes used by the map.
     """
-
     items, params = build_item_query(request)
 
     def _item_to_feature(item):
@@ -480,6 +509,7 @@ def map_items_json(request):
             'geometry': geom,
             }
 
+        # Uh-oh, this is not y10k compliant :-p
         sort_key = '%d-%d-%d-%s-%d' % (9999 - item.item_date.year,
                                     13 - item.item_date.month,
                                     32 - item.item_date.day,
@@ -487,7 +517,7 @@ def map_items_json(request):
                                     item.id)
         props = {'id': item.id,
                  'openblock_type': 'newsitem',
-                 'icon': item.schema.map_icon_url,
+                 'icon': item.schema.get_map_icon_url(),
                  'color': item.schema.map_color,
                  'sort': sort_key
                 }

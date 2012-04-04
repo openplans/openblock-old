@@ -262,8 +262,9 @@ def block_radius_value(request):
 
 def make_search_buffer(geom, block_radius):
     """
-    Returns a polygon of a buffer around a block's centroid. `geom'
-    should be the centroid of the block. `block_radius' is number of
-    blocks.
+    Returns a polygon of a buffer around a block's centroid.
+
+    ``geom`` is the centroid of the block, and
+    ``block_radius`` is the number of blocks.
     """
     return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope

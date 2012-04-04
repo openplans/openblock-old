@@ -17,7 +17,7 @@
 #
 
 """
-obdemo-specific stuff we might need in templates.
+ebpub-specific data needed by various templates.
 """
 
 from django.conf import settings

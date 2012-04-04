@@ -140,7 +140,7 @@ def _item_geojson_dict(item):
          'item_date': item.item_date,
          'id': item.id,
          'openblock_type': 'newsitem',
-         'icon': item.schema.map_icon_url,
+         'icon': item.schema.get_map_icon_url(),
          'color': item.schema.map_color,
          'location_name': item.location_name,
          })
@@ -494,7 +494,11 @@ def geocode(request):
     return APIGETResponse(request, simplejson.dumps(collection, indent=1),
                           content_type=JSON_CONTENT_TYPE, status=status)
 
+
 def _geocode_geojson(query):
+    """Geocode a string and return the result as a list of
+    GeoJSON Features.
+    """
     if not query: 
         return []
         
@@ -558,6 +562,7 @@ def _geocode_geojson(query):
     #     pass
 
     return features
+
 
 @rest_view(['GET'], cache_timeout = 24 * 3600)
 def list_types_json(request):
@@ -684,7 +689,7 @@ def place_detail_json(request, placetype):
                    'properties': {'type': placetype,
                                   'name': place.pretty_name,
                                   'address': place.address,
-                                  'icon': place.place_type.map_icon_url,
+                                  'icon': place.place_type.get_map_icon_url(),
                                   'color': place.place_type.map_color,
                                   'id': place.id,
                                   'openblock_type': 'place'
