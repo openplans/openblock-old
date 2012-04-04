@@ -14,7 +14,7 @@ Expects these variables: newsitem_list, hidden_schema_list, show_upcoming, is_la
 				{% map_icon_img schemagroup.grouper %}
 
 				{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
-				{% if USER %}<a class="toggle show" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
+				{% if USER %}<a class="toggle show" style="display: none;" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
 				</h4>
 				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
 					{% newsitem_list_by_schema schemagroup.list %}
