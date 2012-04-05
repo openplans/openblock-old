@@ -17,12 +17,17 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"""
+Script to import Locations from a shapefile.
+See :ref:`import_locations_from_shapefile`
+
+"""
 import os
 import sys
 import datetime
 from optparse import OptionParser
 from django.contrib.gis.gdal import DataSource
-from django.contrib.gis.geos import Polygon
 from django.db import connection
 from django.db.utils import IntegrityError
 from ebpub.db.models import Location, LocationType, NewsItem

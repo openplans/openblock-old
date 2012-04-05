@@ -20,10 +20,10 @@ from django.contrib.syndication.views import Feed
 from django.http import Http404
 from django.utils.feedgenerator import Rss201rev2Feed
 from ebpub.db.models import NewsItem, Location
-from ebpub.db.utils import populate_attributes_if_needed, today
+from ebpub.db.utils import populate_attributes_if_needed
 from ebpub.db.utils import make_search_buffer, url_to_block, BLOCK_RADIUS_CHOICES, BLOCK_RADIUS_DEFAULT
 from ebpub.streets.models import Block
-from ebpub.utils.view_utils import get_schema_manager
+from ebpub.utils.dates import today
 import datetime
 import re
 
@@ -60,7 +60,9 @@ def bunch_by_date_and_schema(newsitem_list, date_cutoff):
         yield current_list
 
 class AbstractLocationFeed(EbpubFeed):
-    "Abstract base class for location-specific RSS feeds."
+    """
+    Abstract base class for :py:class:`ebpub.db.models.Location`-aware RSS feeds.
+    """
 
     title_template = 'feeds/streets_title.html'
     description_template = 'feeds/streets_description.html'

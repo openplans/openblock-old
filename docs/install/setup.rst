@@ -20,9 +20,16 @@ or visit the IRC channel ``#openblock`` on freenode with any problems you encoun
 
 System Requirements
 ===================
-**Note:** See `System Specific Prerequisites <http://developer.openblockproject.org/wiki/InstallationRequirements>`_ for specific lists of packages to install based on your distribution or OS.
 
-Linux, OSX, or some other Unix flavor is required.  **Windows is not supported** by the OpenBlock team, and may never be; but patches are welcome :)
+.. admonition:: System-Specific Requirements
+
+  See `System Specific Prerequisites
+  <http://developer.openblockproject.org/wiki/InstallationRequirements>`_
+  on the developer wiki for specific lists of packages to install
+  based on your distribution or OS.
+
+Linux, OSX, or some other Unix flavor is required.  **Windows is notsupported**
+by the OpenBlock team, and may never be; but patches are welcome :)
 
 Generally, you need:
 
@@ -37,10 +44,15 @@ Generally, you need:
 * unzip
 * `virtualenv <http://pypi.python.org/pypi/virtualenv>`_
 
-Optionally, it may be helpful to install prebuilt packages for the following if your distribution provides them: 
+Optionally, it may be helpful to install prebuilt packages for the following if your distribution provides them:
 
 * python lxml bindings
 * python gdal bindings
+* python imaging library (PIL)
+
+(If you don't install these as system packages, the install will
+attempt to build them, which means you need a C compiler, the Python
+development libraries, and various other things installed.)
 
 `GeoDjango's platform-specific instructions
 <http://docs.djangoproject.com/en/1.3/ref/contrib/gis/install/#platform-specific-instructions>`_

@@ -79,13 +79,16 @@ class LoginForm(AuthenticationForm):
         # Check that both email and password were valid. If they're not valid,
         # there's no need to run the following bit of validation.
         if email and password:
+            nonesuch = forms.ValidationError("That e-mail and password combo isn't valid. Note that the password is case-sensitive.") 
             user = User.objects.user_by_password(email.lower(), password)
+            if user is None:
+                raise nonesuch
             # Calling authenticate() queries the db again, but we call
             # it anyway because it has at least one important side
             # effect that we shouldn't have to duplicate.
             self.user_cache = authenticate(username=user.username, password=password)
             if self.user_cache is None:
-                raise forms.ValidationError("That e-mail and password combo isn't valid. Note that the password is case-sensitive.")
+                raise nonesuch
             elif not self.user_cache.is_active:
                 raise forms.ValidationError("This account is inactive.")
             if not self.cleaned_data.get('username'):

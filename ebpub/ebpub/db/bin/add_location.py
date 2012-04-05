@@ -17,6 +17,13 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Script that adds a single :py:class:`ebpub.db.models.Location` by specifying
+its borders in WKT format.
+See :ref:`import_location_from_wkt`
+
+Use ``--help`` to get usage instructions.
+"""
 
 import sys
 from optparse import OptionParser
@@ -29,10 +36,8 @@ from ebpub.utils.text import slugify
 from ebpub.metros.allmetros import get_metro
 
 def swallow_out(f, start_msg=None, end_msg=None):
-    """
-    Swallows the output of the wrapped function normally going to stdout,
-    optionally printing a message before and after the function call.
-    """
+    # Swallows the output of the wrapped function normally going to stdout,
+    # optionally printing a message before and after the function call.
     def wrapped(*args, **kwargs):
         if start_msg:
             sys.stdout.write(start_msg)

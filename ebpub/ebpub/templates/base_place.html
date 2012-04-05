@@ -29,7 +29,7 @@ Required variables: nearby_locations, place, is_block
 	{% endblock map %}
 	<!-- end block map -->
 
-	<!-- block subscribe_links -->
+    <!-- block subscribe_links -->
     {% block subscribe_links %}
 	<div class="subscribe-links">
 		<p>Stay up to date:
@@ -37,9 +37,11 @@ Required variables: nearby_locations, place, is_block
 		  {% if alerts_installed %}<a href="{{ place.alert_url }}">E-mail alerts</a>{% endif %}
 		</p>
 	</div>
-    {% endblock %}
-	<!-- end block subscribe_links -->
+    {% endblock subscribe_links %}
+    <!-- end block subscribe_links -->
 
+    <!-- block nearby_locations -->
+    {% block nearby_locations %}
 	{% if nearby_locations %}
 	<div id="nearby">
 	<h2>Nearby locations</h2>
@@ -50,6 +52,8 @@ Required variables: nearby_locations, place, is_block
 		</ul>
 	</div><!-- end #nearby -->
 	{% endif %}
+    {% endblock nearby_locations %}
+    <!-- endblock nearby_locations -->
 
 </div><!--/ #nav-location -->
 <!-- begin block place_content -->

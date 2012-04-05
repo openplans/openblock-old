@@ -91,10 +91,15 @@ def tree_diff(tree1, tree2, algorithm=1):
     """
     Returns a "diff" of the two etree objects, using these placeholders in case
     of differences:
-        TEXT_HOLE -- used when the 'text' differs
-        TAIL_HOLE -- used when the 'tail' differs
-        ATTRIB_HOLE -- used when an attribute value (or existence) differs
-        MULTITAG_HOLE -- used when an element's children differ
+
+    TEXT_HOLE
+       used when the 'text' differs
+    TAIL_HOLE
+       used when the 'tail' differs
+    ATTRIB_HOLE
+       used when an attribute value (or existence) differs
+    MULTITAG_HOLE
+       used when an element's children differ
 
     This assumes tree1 and tree2 share the same root tag, e.g. "<html>".
     """

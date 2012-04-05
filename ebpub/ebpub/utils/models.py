@@ -17,3 +17,13 @@
 #
 
 #There are no models, but `manage.py test` needs a models.py to find tests.
+
+def is_instance_of_model(obj, model):
+    """
+    isinstance(foo, model) seems to work *sometimes* with django models,
+    but not always; no idea what's going on there.
+    This should always work.
+    """
+    return (isinstance(obj, model)
+            or type(obj) is model
+            or model in obj.__class__.__bases__)

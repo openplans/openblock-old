@@ -36,7 +36,7 @@ def reader(f, strip_values=False):
     If strip_values is True, then all string values will be stripped of leading
     and trailing whitespace.
 
-    Example usage:
+    Example usage::
 
         f = open('/path/to/somefile.dbf', 'rb')
         db = list(reader(f))
@@ -116,15 +116,24 @@ def writer(f, fieldnames, fieldspecs, records):
     File f should be open for writing in a binary mode.
 
     Fieldnames should be no longer than ten characters and not include \x00.
-    Fieldspecs are in the form (type, size, deci) where
-        type is one of:
-            C for ascii character data
-            M for ascii character memo data (real memo fields not supported)
-            D for datetime objects
-            N for ints or decimal objects
-            L for logical values 'T', 'F', or '?'
-        size is the field width
-        deci is the number of decimal places in the provided decimal object
+    Fieldspecs are in the form (type, size, deci) where:
+
+    * type is one of:
+
+     -  C for ascii character data
+
+     -  M for ascii character memo data (real memo fields not supported)
+
+     -  D for datetime objects
+
+     -  N for ints or decimal objects
+
+     -  L for logical values 'T', 'F', or '?'
+
+    * size is the field width
+
+    * deci is the number of decimal places in the provided decimal object
+
     Records can be an iterable over the records (sequences of field values).
     """
     # header info

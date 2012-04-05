@@ -1,0 +1,47 @@
+[
+  {
+    "model": "db.schema",
+    "fields": {
+      "allow_charting": true,
+      "can_collapse": true,
+      "date_name": "Date",
+      "date_name_plural": "Dates",
+      "has_newsitem_detail": true,
+      "importance": 100,
+      "indefinite_article": "a",
+      "is_event": false,
+      "is_public": true,
+      "is_special_report": false,
+      "last_updated": "2000-01-01",
+      "min_date": "2000-01-01",
+      "name": "Scrapertest News",
+      "number_in_overview": 5,
+      "plural_name": "Scrapertest News",
+      "short_description": "Scrapertest News",
+      "short_source": "",
+      "slug": "scrapertest-news",
+      "source": "",
+      "summary": "Scrapertest News",
+      "update_frequency": "",
+      "uses_attributes_in_list": false
+    }
+  },
+  {
+    "model": "db.schemafield",
+    "fields": {
+      "display": false,
+      "display_order": 10,
+      "is_charted": false,
+      "is_filter": false,
+      "is_lookup": false,
+      "is_searchable": false,
+      "name": "attr1",
+      "pretty_name": "Attribute 1",
+      "pretty_name_plural": "Attribute 1",
+      "real_name": "varchar01",
+      "schema": [
+        "scrapertest-news"
+      ]
+    }
+  }
+]

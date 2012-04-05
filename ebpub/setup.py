@@ -74,17 +74,19 @@ setup(
         "django-static",
         "GDAL",
         "pyyaml",
-        "psycopg2>=2.0",
+        "psycopg2>=2.0,<2.4.2",
         "slimmer",  # used by django-static.
         "pyrfc3339",
         "recaptcha-client",
         "South",
-        "mock>=0.8.0alpha1",
-        "django-olwidget",
+        "mock>=0.8.0",
+        "django-olwidget>=0.49",
         'setuptools-git',  # Only needed if building packages for distribution.
         'python-dateutil<2.0',  # 2.0 requires python >= 3.
         'django-jsonfield>=0.6',  # The one on pypi, NOT the one by bradjasper on github.
         'easy-thumbnails',
+        'PIL',  # Needed for our ImageField
+        'pytz',
     ],
     dependency_links=[
     "http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1",

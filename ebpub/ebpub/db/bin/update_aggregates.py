@@ -17,13 +17,17 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.conf import settings
+"""
+Script to populate :ref:`aggregates`.
+Typically run without arguments.  The ``--reset`` option will delete
+all aggregates first.
+"""
+
 from django.db import connection, transaction
 from ebpub.db import constants
 from ebpub.db.models import Schema, SchemaField, NewsItem, AggregateAll, AggregateDay, AggregateLocationDay, AggregateLocation, AggregateFieldLookup
-from ebpub.db.utils import today
+from ebpub.utils.dates import today
 from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
-import datetime
 import logging
 
 logger = logging.getLogger('ebpub.db.bin.update_aggregates')

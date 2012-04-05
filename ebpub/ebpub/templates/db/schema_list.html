@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% load eb %}
+{% load eb eb_filter %}
 
 {% block title %}News types{% endblock %}
 
@@ -9,16 +9,16 @@
 	<h1>Browse news by type</h1>	
   {% for schemabunch in schema_list %}
 		<h2><a href="{{ schemabunch.schema.url }}">{{ schemabunch.schema.plural_name|capfirst }}</a></h2>
-		<p>{{ schemabunch.schema.short_description }} <a href="{{ schemabunch.schema.url }}about/">More info&hellip;</a></p>
 		<h3>Browse:</h3>
 		<ul>
 			{% if schemabunch.schema.allow_charting %}{% for schemafield in schemabunch.schemafield_list %}
-			  <li><a href="{{ schemabunch.schema.url }}by-{{ schemafield.name }}/">By {{ schemafield.browse_by_title }}</a></li>
-			{% endfor %}{% endif %}
-			{% for locationtype in browsable_locationtype_list %}
-			  <li><a href="{{ schemabunch.schema.url }}locations/{{ locationtype.slug }}/">By {{ locationtype.name }}</a></li> 
+			  <li><a href="{% filter_url  schemabunch.schema +schemafield %}">By {{ schemafield.browse_by_title }}</a></li>
 			{% endfor %}
-			{% if schemabunch.schema.allow_charting %}<li><a href="{{ schemabunch.schema.url }}filter/">Custom filter</a></li>{% endif %}
+			{% endif %}
+			{% for locationtype in browsable_locationtype_list %}
+			  <li><a href="{% filter_url schemabunch.schema +'location' locationtype %}">By {{ locationtype.name.title }}</a></li> 
+			{% endfor %}
+			{% if schemabunch.schema.allow_charting %}<li><a href="{% filter_url schemabunch.schema %}">Custom filter</a></li>{% endif %}
 		</ul>
   {% endfor %}
 </div><!--/ #content-->

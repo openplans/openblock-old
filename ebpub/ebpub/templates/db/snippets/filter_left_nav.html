@@ -11,32 +11,40 @@ start_date, end_date, lookup_list, search_list, search_url
 $j(document).ready(function() {
     $j('#start_date').calendricalDate({usa: true});
     $j('#end_date').calendricalDate({usa: true});
+    $j(".chzn-select").chosen({no_results_text: "No results matched"});
 }
 )
+
 {% endautoescape %}
 </script>
 
 <div id="schemanav">
 	<h2>{% if filters %}Refine your search{% else %}Filter this section{% endif %}</h2>
+	<!-- FILTERS W/ EXISTING VALUES -->
 	{% if filters %}
-	<ul>
-		{% for filter in filters.filters_for_display %}
-        {% if filter.label %}
+	  <ul class="schemanav">
+	  {% for filter in filters.filters_for_display %}
+            {% if filter.label %}
 		<li class="filter changed">
 			<span class="filter-label">{{ filter.label|capfirst }}:</span>
 			<strong class="filter-value">{{ filter.short_value }}</strong>
 			<a class="filter-clear" href="{% filter_url filters -filter.slug %}" title="Remove this filter" rel="nofollow">Clear</a>
 		</li>
-		{% endif %}
-		{% endfor %}
+	    {% endif %}
+	  {% endfor %}
 	</ul>
 	{% endif %}
+
+	<!-- FILTERS W/O VALUES -->
+
+	<!-- LOCATION / ADDRESS -->
 	{% if not location_filter_applied %}
 	<div class="filtergroup" id="location-filtergroup">
 		<h3>Location</h3>
 		<h4>Search near an address:</h4>
-		<form action="{{ search_url }}" method="get">
+		<form action="{% filter_url schema %}" method="GET">
 			<p>
+				{% filter_form_inputs filters -"location" %}
 				<input type="text" id="locationsearch-input" name="address">
 				<button type="submit">Search</button>
 				<label class="radius-search">
@@ -50,18 +58,20 @@ $j(document).ready(function() {
 			</p>
 		</form>
 		<h4>Or choose a location:</h4>
-		<ul>
+		<ul class="schemanav">
 			{% for location_type in location_type_list %}
 			<li><a href="{% filter_url filters +'location' location_type %}" rel="nofollow">{{ location_type.plural_name|capfirst }}&hellip;</a></li>
 			{% endfor %}
 		</ul>
 	</div><!--/ .filtergroup#location-filtergroup -->
 	{% endif %}
+	<!-- DATES -->
 	{% if not date_filter_applied %}
 	<div class="filtergroup" id="date-filtergroup">
 		<h3>{{ schema.date_name|capfirst }}</h3>
-		<form action="{% filter_url filters %}" method="get">
+		<form action="{% filter_url schema %}" method="GET">
 			<p>
+			  	{% filter_form_inputs filters -"date" %}
 				<input id="start_date" type="text" name="start_date" value="{{ start_date|date:"m/d/Y" }}">
 					 - 
 					<input id="end_date" type="text" name="end_date" value="{{ end_date|date:"m/d/Y" }}">
@@ -70,23 +80,33 @@ $j(document).ready(function() {
 		</form>
 	</div><!--/ .filtergroup#date-filtergroup -->
 	{% endif %}
-	{% for schemafield in lookup_list %}
+	<!-- LOOKUP FIELDS -->
+	{% for schemafield_dict in lookup_list %}
 		<div class="filtergroup">
-			<h3>{{ schemafield.sf.pretty_name|capfirst }}</h3>
-			<ul>
-				{% for value in schemafield.top_values %}
-					<li><a href="{% filter_url filters +schemafield.sf.name value.lookup %}" rel="nofollow">{{ value.lookup.name }}</a></li>
-
-				{% endfor %}
-				{% if schemafield.has_more %}<li class="more"><a href="{% filter_url filters +schemafield.sf %}" rel="nofollow">See all&hellip;</a></li>{% endif %}
-			</ul>
+		<h3>{{ schemafield_dict.sf.pretty_name_plural|capfirst }}</h3>
+		<form action="{% filter_url schema %}" method="GET">
+		  {% filter_form_inputs filters -schemafield_dict.sf %}
+		  <select name="by-{{schemafield_dict.sf.name}}"
+			  multiple
+			  data-placeholder="Choose {{schemafield_dict.sf.pretty_name_plural}}"
+			  style="width: 400px;"
+			  class="chzn-select">
+			{% for value in schemafield_dict.top_values %}
+			<option value="{{value.lookup.slug}}">{{value.lookup.name}}</option>
+			{% endfor %}
+		  </select>
+		  <button type="submit">go</button>
+		  {% if schemafield_dict.has_more %}<p class="more"><a href="{% filter_url filters +schemafield_dict.sf %}" rel="nofollow">See all {{ schemafield_dict.total_value_count }}&hellip;</a></li>{% endif %}
+		</form>
 		</div>
 	{% endfor %}
+	<!-- SEARCH FIELDS -->
 	{% for schemafield in search_list %}
 		<div class="filtergroup">
 			<h3>{{ schemafield.pretty_name|capfirst }}</h3>
-			<form action="{{ search_url }}" method="get">
+			<form action="{% filter_url schema %}" method="GET">
 				<p class="inlineform">
+					{% filter_form_inputs filters -schemafield %}
 					<input type="hidden" name="textsearch" value="{{ schemafield.name }}">
 					<input type="text" name="q" value="">
 					<button type="submit">Search</button>
@@ -94,14 +114,17 @@ $j(document).ready(function() {
 			</form>
 		</div>
 	{% endfor %}
+	<!-- BOOLEAN FIELDS -->
 	{% for schemafield in boolean_lookup_list %}
 		<div class="filtergroup">
 			<h3>{{ schemafield.pretty_name|capfirst }}</h3>
-			<ul>
-				<li><a href="by-{{ schemafield.name }}=yes/" rel="nofollow">Yes</a></li>
-				<li><a href="by-{{ schemafield.name }}=no/" rel="nofollow">No</a></li>
-				<li><a href="by-{{ schemafield.name }}=na/" rel="nofollow">N/A</a></li>
-			</ul>
+			<form action="{% filter_url schema %}" method="GET">
+				{% filter_form_inputs filters -schemafield %}
+				<input type="radio" name="by-{{ schemafield.name }}" value="yes">Yes</input>
+				<input type="radio" name="by-{{ schemafield.name }}" value="no">No</input>
+				<input type="radio" name="by-{{ schemafield.name }}" value="na">N/A</input>
+				<button type="submit">Go</button>
+			</form>
 		</div>
 	{% endfor %}
 </div><!--/ #schemanav -->

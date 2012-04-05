@@ -16,6 +16,10 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Hooks up ebpub.db.models to the django.contrib.admin UI.
+"""
+
 from django.contrib.gis import admin
 from ebpub.db.forms import NewsItemForm
 from ebpub.db.models import Attribute
@@ -73,6 +77,7 @@ class LocationAdmin(OSMModelAdmin):
     # ... Or not; this gets so slow it's unusable.
     #list_map = ['location']
 
+
 class SchemaAdmin(admin.ModelAdmin):
     list_display = ('name', 'last_updated', 'importance', 'is_public',
                     'has_newsitem_detail',)
@@ -99,9 +104,10 @@ class SchemaFieldAdmin(admin.ModelAdmin):
 class LookupAdmin(admin.ModelAdmin):
     # TODO: this would make more sense to edit inline on NewsItem,
     # but that would require some custom wackiness.
-    list_display = ('name', 'schema_field')
+    list_display = ('name', 'featured', 'slug', 'code', 'schema_field')
     search_fields = ('description', 'name', 'code')
     prepopulated_fields = {'slug': ('name',)}
+    list_filter = ('featured', 'schema_field')
 
 class LocationSynonymAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'location')
@@ -115,6 +121,7 @@ class LocationSynonymAdmin(OSMModelAdmin):
 try:
     import obadmin.admin
     LocationAdmin.change_list_template = 'admin/db/location/change_list.html'
+    NewsItemAdmin.change_list_template = 'admin/db/newsitem/change_list.html'
 except ImportError:
     pass
 

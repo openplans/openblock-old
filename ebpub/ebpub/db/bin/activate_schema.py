@@ -16,6 +16,11 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Script that 'activates' a :py:class:`ebpub.db.models.Schema`.
+This sets ``is_public=True``, and sets ``pub_date`` to today
+for any older NewsItems of this schema.
+"""
+
 from django.db import connection, transaction
 from ebpub.db.models import Schema
 import sys

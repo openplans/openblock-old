@@ -24,6 +24,7 @@ import feedparser
 import logging
 import mock
 import pytz
+from ebpub.utils.testing import RequestFactory
 from django.contrib.gis import geos
 from django.core.urlresolvers import reverse
 from ebpub.utils.django_testcase_backports import TestCase
@@ -31,7 +32,6 @@ from django.utils import simplejson
 from ebpub.db.models import Location, NewsItem, Schema
 from ebpub.openblockapi import views
 from ebpub.openblockapi.apikey import auth
-from django.test.testcases import TransactionTestCase
 
 
 class BaseTestCase(TestCase):
@@ -134,13 +134,13 @@ class TestAPI(BaseTestCase):
             self.assertEqual(response.get('content-type', '')[:22],
                              'application/javascript')
 
-
     def test_items_redirect(self):
         url = reverse('items_index')
         response = self.client.get(url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['location'],
                          'http://testserver' + reverse('items_json'))
+
 
 @mock.patch('ebpub.openblockapi.views.throttle_check', mock.Mock(return_value=0))
 class TestPushAPI(BaseTestCase):
@@ -366,10 +366,18 @@ class TestItemSearchAPI(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             ritems = simplejson.loads(response.content)
 
-            assert len(ritems['features']) == len(items2)
+            self.assertEqual(len(ritems['features']), len(items2))
             for item in ritems['features']:
                 assert item['properties']['type'] == 'type2'
             assert self._items_exist_in_result(items2, ritems)
+
+            # query for both schemas.
+            response = self.client.get(reverse('items_json') + "?type=type2&type=type1")
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            self.assertEqual(len(ritems['features']), len(items2 + items1))
+
+
 
     def test_items_atom_filter_schema(self):
         zone = 'Australia/North'
@@ -601,17 +609,17 @@ class TestItemSearchAPI(BaseTestCase):
     def test_items_predefined_location(self):
         zone = 'Europe/Zurich'
         with self.settings(TIME_ZONE=zone):
-            # create a bunch of items
+            # create a bunch of items that are nowhere in particular
             schema1 = Schema.objects.get(slug='type1')
-            items1 = _make_items(5, schema1)
-            for item in items1:
+            items_nowhere = _make_items(5, schema1, 'nowhere ')
+            for item in items_nowhere:
                 item.save()
 
             # make some items that are centered on a location
             loc = Location.objects.get(slug='hood-1')
             pt = loc.location.centroid
-            items2 = _make_items(5, schema1)
-            for item in items1:
+            items_hood1 = _make_items(5, schema1, 'hood1 ')
+            for item in items_hood1:
                 item.location = pt
                 item.save()
 
@@ -620,23 +628,42 @@ class TestItemSearchAPI(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             ritems = simplejson.loads(response.content)
             assert len(ritems['features']) == 5
-            assert self._items_exist_in_result(items2, ritems)
+            assert self._items_exist_in_result(items_hood1, ritems)
+            # TODO what we really want is to assert *none* of these are found
+            self.failIf(self._items_exist_in_result(items_nowhere, ritems))
+
+            # make some items that are centered on another location
+            loc2 = Location.objects.get(slug='hood-2')
+            pt2 = loc2.location.centroid
+            items_hood2 = _make_items(3, schema1, 'hood2 ')
+            for item in items_hood2:
+                item.location = pt2
+                item.save()
+            qs2 = qs + "&locationid=%s" % cgi.escape("neighborhoods/hood-2")
+            response = self.client.get(reverse('items_json') + qs2)
+            self.assertEqual(response.status_code, 200)
+            ritems = simplejson.loads(response.content)
+            self.assertEqual(len(ritems['features']), 8)
+            self.assert_(self._items_exist_in_result(items_hood1, ritems))
+            self.assert_(self._items_exist_in_result(items_hood2, ritems))
+            # TODO what we really want is to assert *none* of these are found
+            self.failIf(self._items_exist_in_result(items_nowhere, ritems))
 
 
     def test_items_radius(self):
         zone = 'Asia/Saigon'
         with self.settings(TIME_ZONE=zone):
-            # create a bunch of items
+            # create a bunch of items nowhere in particular
             schema1 = Schema.objects.get(slug='type1')
-            items1 = _make_items(5, schema1)
-            for item in items1:
+            items_nowhere = _make_items(5, schema1, 'nowhere ')
+            for item in items_nowhere:
                 item.save()
 
             # make some items that are centered on a location
             loc = Location.objects.get(slug='hood-1')
             pt = loc.location.centroid
-            items2 = _make_items(5, schema1)
-            for item in items1:
+            items_hood1 = _make_items(5, schema1, 'hood1 ')
+            for item in items_hood1:
                 item.location = pt
                 item.save()
 
@@ -645,17 +672,16 @@ class TestItemSearchAPI(BaseTestCase):
             self.assertEqual(response.status_code, 200)
             ritems = simplejson.loads(response.content)
             assert len(ritems['features']) == 5
-            assert self._items_exist_in_result(items2, ritems)
+            self.assert_(self._items_exist_in_result(items_hood1, ritems))
+            self.failIf(self._items_exist_in_result(items_nowhere, ritems))
 
 
     def _items_exist_in_result(self, items, ritems):
-        # XXX no ids for items :/
-        all_titles = set([i['properties']['title'] for i in ritems['features']])
+        all_ids = set([i['properties']['id'] for i in ritems['features']])
         for item in items:
-            if not item.title in all_titles: 
+            if not item.id in all_ids: 
                 return False
         return True
-
 
     def _items_exist_in_xml_result(self, items, xmlstring):
         from lxml import etree
@@ -670,7 +696,7 @@ class TestItemSearchAPI(BaseTestCase):
                 return False
         return True
 
-def _make_items(number, schema):
+def _make_items(number, schema, title_prefix=''):
     items = []
     from django.conf import settings
     local_tz = pytz.timezone(settings.TIME_ZONE)
@@ -678,7 +704,8 @@ def _make_items(number, schema):
     inc = datetime.timedelta(days=-1)
     for i in range(number):
         desc = '%s item %d' % (schema.slug, i)
-        items.append(NewsItem(schema=schema, title=desc,
+        items.append(NewsItem(schema=schema,
+                              title=title_prefix+desc,
                               description=desc,
                               item_date=curdate.date(),
                               pub_date=curdate,
@@ -935,9 +962,13 @@ class TestUtilFunctions(TestCase):
         from ebpub.openblockapi.views import _copy_nomulti
         self.assertEqual(_copy_nomulti({}), {})
         self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
-        self.assertEqual(_copy_nomulti({'a': 1}), {'a': 1})
+        self.assertEqual(_copy_nomulti({'a': [1]}), {'a': 1})
         self.assertEqual(_copy_nomulti({'a': [1], 'b': [1,2,3]}),
                          {'a': 1, 'b': [1,2,3]})
+        # It should work with a django Request too.
+        request = RequestFactory().get('/foo/?a=1&b=2&b=3')
+        self.assertEqual(_copy_nomulti(request.GET),
+                         {'a': '1', 'b': ['2', '3']})
 
 
     def test_get_location_info(self):
@@ -1082,20 +1113,3 @@ class TestUtilFunctions(TestCase):
         mock_throttle.should_be_throttled.return_value = False
         self.assertEqual(0, throttle_check(request))
         self.assertEqual(mock_throttle.accessed.call_count, 1)
-
-
-class TestMoreUtilFunctions(TransactionTestCase):
-
-    # For things that mess with the db too much and need to be in a
-    # transaction... eg. creating models on the fly and such
-    # shenanigans.
-
-    def test_is_instance_of_model(self):
-        from django.contrib.gis.db import models
-        class Foo(models.Model):
-            class Meta:
-                app_label = 'openblockapi'
-        f = Foo()
-        self.assertEqual(True, views.is_instance_of_model(f, Foo))
-        self.assertRaises(TypeError, views.is_instance_of_model, f, Foo())
-

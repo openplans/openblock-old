@@ -2,16 +2,13 @@
   {
     "fields": {
       "last_updated": "2011-09-09",
-      "intro": "",
       "update_frequency": "",
       "has_newsitem_detail": true,
-      "grab_bag_headline": "",
       "short_source": "http://meetup.com",
       "slug": "meetups",
       "source": "http://meetup.com",
       "date_name": "Date",
       "short_description": "Meetups",
-      "grab_bag": "",
       "is_special_report": false,
       "is_event": true,
       "importance": 0,

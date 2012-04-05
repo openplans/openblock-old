@@ -2,16 +2,13 @@
   {
     "fields": {
       "last_updated": "2011-08-25",
-      "intro": "",
       "update_frequency": "",
       "has_newsitem_detail": false,
-      "grab_bag_headline": "",
       "short_source": "http://flickr.com",
       "slug": "photos",
       "source": "http://flickr.com",
       "date_name": "Date",
       "short_description": "Photos from Flickr",
-      "grab_bag": "",
       "is_special_report": false,
       "is_event": false,
       "importance": 0,

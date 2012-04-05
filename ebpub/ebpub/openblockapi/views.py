@@ -38,6 +38,7 @@ from ebpub.openblockapi.itemquery import build_item_query, build_place_query, Qu
 from ebpub.streets.models import PlaceType
 from ebpub.utils.dates import parse_date, parse_time
 from ebpub.utils.geodjango import ensure_valid
+from ebpub.utils.models import is_instance_of_model
 from ebpub.utils.view_utils import get_schema_manager
 from functools import wraps
 import copy
@@ -125,7 +126,10 @@ def _item_geojson_dict(item):
         if attr.sf.is_many_to_many_lookup():
             props[key] = attr.values
         else:
-            props[key] = attr.values[0]
+            try:
+                props[key] = attr.values[0]
+            except IndexError:
+                props[key] = None
 
     props.update(
         {'type': item.schema.slug,
@@ -136,20 +140,12 @@ def _item_geojson_dict(item):
          'item_date': item.item_date,
          'id': item.id,
          'openblock_type': 'newsitem',
-         'icon': item.schema.map_icon_url,
+         'icon': item.schema.get_map_icon_url(),
          'color': item.schema.map_color,
          'location_name': item.location_name,
          })
     result['properties'] = props
     return result
-
-def is_instance_of_model(obj, model):
-    # isinstance(foo, model) seems to work *sometimes* with django models,
-    # but not always; no idea what's going on there.
-    # This should always work.
-    return (isinstance(obj, model)
-            or type(obj) is model
-            or model in obj.__class__.__bases__)
 
 def _serialize_unknown(obj):
     # Handle NewsItems and various other types that default json serializer
@@ -321,6 +317,7 @@ def items_atom(request):
     try:
         items, params = build_item_query(request)
         # could test for extra params aside from jsonp...
+        items = [item for item in items if item.location is not None]
         return APIGETResponse(request, _items_atom(items), content_type=ATOM_CONTENT_TYPE)
     except QueryError as err:
         return HttpResponseBadRequest(err.message)
@@ -497,7 +494,11 @@ def geocode(request):
     return APIGETResponse(request, simplejson.dumps(collection, indent=1),
                           content_type=JSON_CONTENT_TYPE, status=status)
 
+
 def _geocode_geojson(query):
+    """Geocode a string and return the result as a list of
+    GeoJSON Features.
+    """
     if not query: 
         return []
         
@@ -561,6 +562,7 @@ def _geocode_geojson(query):
     #     pass
 
     return features
+
 
 @rest_view(['GET'], cache_timeout = 24 * 3600)
 def list_types_json(request):
@@ -687,7 +689,7 @@ def place_detail_json(request, placetype):
                    'properties': {'type': placetype,
                                   'name': place.pretty_name,
                                   'address': place.address,
-                                  'icon': place.place_type.map_icon_url,
+                                  'icon': place.place_type.get_map_icon_url(),
                                   'color': place.place_type.map_color,
                                   'id': place.id,
                                   'openblock_type': 'place'

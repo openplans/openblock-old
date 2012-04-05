@@ -70,7 +70,7 @@ copyright = u'2011 The OpenBlock Team, packages docs original copyright 2007-200
 # The full version, including alpha/beta/rc tags.
 # OPENBLOCK NOTE:
 # this can be populated by the openblock/misc/bin/make_release.sh script
-release = '1.1.0'
+release = '1.2.0dev'
 
 # The short X.Y version.
 # Automatically derived from release to make it easier to script releases.
@@ -254,3 +254,64 @@ man_pages = [
     ('index', 'openblock', u'OpenBlock Documentation',
      [u'The OpenBlock Team'], 1)
 ]
+
+# Handle Django model fields,
+# from http://djangosnippets.org/snippets/2533/
+THIS_DIR = os.path.dirname(__file__)
+PROJECT_DIR = os.path.join(THIS_DIR, '..')
+sys.path.append(PROJECT_DIR)
+
+import inspect
+#from django.conf import settings
+from django.utils.html import strip_tags
+from django.utils.encoding import force_unicode
+
+def process_docstring(app, what, name, obj, options, lines):
+    # This causes import errors if left outside the function
+    from django.db import models
+
+    # Only look at objects that inherit from Django's base model class
+    if inspect.isclass(obj) and issubclass(obj, models.Model):
+        # Grab the field list from the meta class
+        fields = obj._meta._fields()
+    
+        for field in fields:
+            # Decode and strip any html out of the field's help text
+            help_text = strip_tags(force_unicode(field.help_text))
+            
+            # Decode and capitalize the verbose name, for use if there isn't
+            # any help text
+            verbose_name = force_unicode(field.verbose_name).capitalize()
+
+            # Added by PW:
+            # Remove the "_id" from ForeignKeys and the like,
+            # since you typically use them without the _id.
+            attname = field.attname
+            typename = type(field).__name__
+            if attname.endswith('_id') and typename in ('ForeignKey',
+                                                        'OneToOneField',
+                                                        'ManyToManyField'):
+                attname = attname[:-3]
+
+            if help_text:
+                # Add the model field to the end of the docstring as a param
+                # using the help text as the description
+                lines.append(u':param %s: %s' % (attname, help_text))
+            else:
+                # Add the model field to the end of the docstring as a param
+                # using the verbose name as the description
+                lines.append(u':param %s: %s' % (attname, verbose_name))
+                
+            # Add the field's type to the docstring
+            lines.append(u':type %s: %s' % (attname, typename))
+    
+    # Return the extended docstring
+    return lines  
+  
+def setup(app):
+    # Register the docstring processor with sphinx
+    app.connect('autodoc-process-docstring', process_docstring)  
+
+print "NOTE: ignore AttributeErrors on Django model fields."
+print "They're harmless, and I can't figure out how to silence them."
+

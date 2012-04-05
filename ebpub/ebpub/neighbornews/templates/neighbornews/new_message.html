@@ -1,15 +1,11 @@
 {% extends "base.html" %}{% comment %}<!-- -*- mode: django-html; tab-width: 4 -*- -->{% endcomment %}
 {% load django_static %}
 {% load recaptcha_tags %}
+{% load eb %}
 {% comment %}
 {% endcomment %}
 
-{% block extrahead %}
-{% slimall %}
-<link rel="stylesheet" type="text/css" href="/styles/calendrical.css" />
-<script src="/scripts/jquery.calendrical.js"></script>
-{% endslimall %}
-{% endblock %}
+{% block title %}{{action|title}} {{schema.name}}{% endblock %}
 
 <!-- begin block content -->
 {% block content %}
@@ -21,27 +17,25 @@
 	<div id="mapwrapper" class="neighbornews">
 		<script type="text/javascript">
 		{% autoescape off %}
+    // Set up the map config.
     function loadMap() {
-		  var config = {{map_configuration}};
-    	config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
-		  config.center = [{{default_lon}}, {{default_lat}}];
+      var config = {{map_configuration}};
+      config.baselayer_type = "{{ MAP_BASELAYER_TYPE }}";
+      config.center = [{{default_lon}}, {{default_lat}}];
       config.zoom = {{default_zoom}};
-      var map = new OBMap(config); 
+      var map = new OBMap(config);
       _setupMessagePage(map);
-    	return map;
-		}
-		  
+      return map;
+    }
+
+    // Connect the map to other form widgets, and set up date picker etc.
     function _setupMessagePage(obmap) {
       $j('#id_item_date').calendricalDate({usa: true});
       $j('#id_start_time, #id_end_time').calendricalTimeRange({usa: true});
       var map = obmap.map;
-      var default_map_center = new OpenLayers.LonLat({{default_lon}}, {{default_lat}});
-      default_map_center.transform(map.displayProjection, map.projection);
-
-      var default_map_zoom = {{default_zoom}};
       var result_layer = new OpenLayers.Layer.Vector();
-	    map.addLayer(result_layer);
-
+      map.addLayer(result_layer);
+    	    
       function setPoint(feature) {
         result_layer.removeFeatures(result_layer.features);
         result_layer.addFeatures(feature);
@@ -64,6 +58,11 @@
 
         var reswkt = r.find('span.wkt').text();
         recenterOn(new OpenLayers.Geometry.fromWKT(reswkt));
+        // Update location_name with the selected geocoder result.
+        $j('#id_location_name').val(
+            $j('.selected-result .result-label').first().html()
+        );
+
       };
 
       var selectNone = function() {
@@ -94,6 +93,7 @@
         
         var results = $j('#geocoder-results');
         results.html('');
+        $j('.map_note').html('');
         for (var i = 0 ; i < data.features.length; i++) {
           var result = data.features[i]; 
           var result_title = "";
@@ -109,7 +109,7 @@
           }
 
           var result_html = '<div class="geocoder-result">';
-          result_html += result_title;
+          result_html += '<span class="result-label">' + result_title + '</span>';
           result_html += '<span class="wkt">';
           result_html += 'POINT(' + result.geometry.coordinates[0] + ' ';
           result_html += result.geometry.coordinates[1] + ')';
@@ -149,14 +149,20 @@
       
       var drawpt = new OpenLayers.Control.DrawFeature(result_layer, 
 	                                                    OpenLayers.Handler.Point);
-	    drawpt.events.on(
-	      {'featureadded': function(evt) {
+      drawpt.events.on({'featureadded': function(evt) {
           selectNone();
           setPoint(evt.feature);
-	      }, 
-	      scope: this
-	    });
-	    map.addControl(drawpt);
+          // TODO: reverse-geocode and update the #id_location_name field.
+          // But we don't have a reverse-geocode API currently.
+          // To avoid having an out-of-date address here, just wipe it
+          // and disable the input; it'll get reverse-geocoded on the server side.
+          $j('#id_location_name').val('').attr('disabled', 'disabled');
+          $j('a.mapit-link').hide();
+          $j('a.mapit-link').next('div.form-help').html('Using point on map.');
+        },
+        scope: this
+      });
+      map.addControl(drawpt);
       drawpt.activate();
 
       var initLocation = $j('#id_location').val().trim();
@@ -164,7 +170,7 @@
         recenterOn(new OpenLayers.Geometry.fromWKT(initLocation));
       }
 
-	    $j('#neighbornews_form').submit(function(evt) {
+        $j('#neighbornews_form').submit(function(evt) {
         var loc = $j('#id_location').val().trim();
         if (loc == '') {
           $j('#general_error').html('Please specify a location on the map.');
@@ -172,14 +178,56 @@
         }
       });
       
-    }
+    };
+
+    // Auto-complete for categories.
+    $(document).ready(function () {
+	    var availableTags = {% json_lookup_values_for_attribute schema.slug 'categories' %};
+	    function split( val ) {
+		return val.split( /,\s*/ );
+	    };
+	    function extractLast( term ) {
+		return split( term ).pop();
+	    };
+	    $j( "input#id_categories" )
+	    // don't navigate away from the field on tab when selecting an item
+	    .bind( "keydown", function( event ) {
+		if ( event.keyCode === $j.ui.keyCode.TAB &&
+		     $j( this ).data( "autocomplete" ).menu.active ) {
+		    event.preventDefault();
+		}
+	    }).autocomplete({
+		minLength: 0,
+		source: function( request, response ) {
+		    // delegate back to autocomplete, but extract the last term
+		    response( $j.ui.autocomplete.filter(
+			availableTags, extractLast( request.term ) ) );
+		},
+		focus: function() {
+		    // prevent value inserted on focus
+		    return false;
+		},
+		select: function( event, ui ) {
+		    var terms = split( this.value );
+		    // remove the current input
+		    terms.pop();
+		    // add the selected item
+		    terms.push( ui.item.value );
+		    // add placeholder to get the comma-and-space at the end
+		    terms.push( "" );
+		    this.value = terms.join( ", " );
+		    return false;
+		}
+	    });
+      });
+
 	 	{% endautoescape %}
 		</script>
 		{% include "richmaps/richmap.html" %}
 	</div><!--/ #mapwrapper -->
 	{% endblock map %}
 	<!-- end block map -->
-  <span class="map_note">Click to specify location</span>
+  <span class="map_note">Click the map to specify location, or enter an address in the form.</span>
   <div id="geocoder-results"></div>
 </div><!--/ #nav-location -->
 
@@ -189,7 +237,6 @@
         enctype="multipart/form-data">
 
     {% csrf_token %}
-
 
     {% if form.errors %}
        <div id="error_title" class="form-error">Correct the errors below:</div>
@@ -204,7 +251,7 @@
 
         {{field}}
         {% if field.name == "location_name" %}
-        <a href="#" class="mapit-link">map it</a>
+        <a href="#" class="mapit-link button">map it</a>
         {% endif %}
 
         <div class="form-help">{{ field.help_text }}</div>
@@ -223,8 +270,8 @@
 
     <div>
       <input type="submit" value="Submit" />
+      <br>&nbsp;
     </div>
-
   </form>
 </div> <!--/ #content -->
 

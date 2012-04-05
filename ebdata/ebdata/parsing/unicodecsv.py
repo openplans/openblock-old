@@ -20,7 +20,7 @@
 Support for reading CSV as Unicode objects.
 
 This module is necessary because Python's csv library doesn't support reading
-Unicode strings.
+Unicode strings.  STILL true as of Python 2.7.
 """
 
 # This code is derived from code in the Python documentation:
@@ -35,7 +35,7 @@ Unicode strings.
 import csv
 import codecs
 
-class UTF8Recoder:
+class UTF8Recoder(object):
     """
     Iterator that reads an encoded stream and reencodes the input to UTF-8.
     """
@@ -48,21 +48,46 @@ class UTF8Recoder:
     def next(self):
         return self.reader.next().encode('utf-8')
 
-class UnicodeDictReader:
+
+class UnicodeReader(object):
     """
-    A CSV dict reader which will iterate over lines in the CSV file "f",
+    A CSV reader which will iterate over lines in the CSV file "f",
     which is encoded in the given encoding. Results will always be Unicode
     objects instead of bytestrings.
     """
-    def __init__(self, f, fieldnames, dialect=csv.excel, encoding='utf-8', **kwargs):
+
+    def __init__(self, f, dialect=csv.excel, encoding='utf-8', **kwargs):
         f = UTF8Recoder(f, encoding)
-        self.fieldnames = fieldnames
         self.reader = csv.reader(f, dialect=dialect, **kwargs)
 
     def next(self):
         row = self.reader.next()
         row = [unicode(s, 'utf-8') for s in row]
-        return dict(zip(self.fieldnames, row))
+        return row
 
     def __iter__(self):
         return self
+
+
+class UnicodeDictReader(UnicodeReader):
+    """
+    A CSV dict reader which will iterate over lines in the CSV file "f",
+    which is encoded in the given encoding. Results will always be Unicode
+    objects instead of bytestrings.
+    """
+
+    def __init__(self, f, fieldnames=None, dialect=csv.excel, encoding='utf-8', **kwargs):
+        super(UnicodeDictReader, self).__init__(
+            f, dialect=dialect, encoding=encoding, **kwargs)
+        if fieldnames:
+            self.fieldnames = fieldnames
+        else:
+            throwaway_reader = csv.DictReader(f)
+            self.fieldnames = throwaway_reader.fieldnames
+            del(throwaway_reader)
+            # Note we are relying on a side effect here:
+            # csv.DictReader(f) advanced f to the next line.
+
+    def next(self):
+        row = super(UnicodeDictReader, self).next()
+        return dict(zip(self.fieldnames, row))

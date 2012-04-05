@@ -7,13 +7,8 @@
 {% block content %}
 
 <div id="content">
-	<p>
-		<a href="{{ newsitem.schema.url }}">{% if newsitem.schema.is_special_report %}Special report: {% endif %}{{ newsitem.schema.plural_name|capfirst }}</a>
-	</p>
 	<h1>{{ newsitem.title }}{% block extra_title %}{% endblock %}</h1>
 	{% block newsitem_detail_summary %}{% endblock %}
-
-	{% if not newsitem.schema.is_special_report %}<h2>{{ newsitem.schema.name|capfirst }} details</h2>{% endif %}
 
 	<div id="mapwrapper">
 	  <script type="text/javascript">
@@ -106,7 +101,7 @@
 							{% if value.url %}
 								<a href="{{ value.url }}">{{ value.value }}</a>
 							{% else %}
-								{{ value.value }}
+								{{ value.value|intcomma|default:value.value }}
 							{% endif %}
 							{% if value.description %}<p>{{ value.description|safe }}</p>{% endif %}
 							{% if not forloop.last %}{% if not value.description %}<br>{% endif %}{% endif %}

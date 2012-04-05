@@ -259,10 +259,6 @@ required_settings.append('DEFAULT_MAP_CENTER_LON')
 required_settings.append('DEFAULT_MAP_CENTER_LAT')
 required_settings.append('DEFAULT_MAP_ZOOM')
 
-# XXX UNUSED?
-required_settings.append('MAP_SCALES')
-MAP_SCALES = [614400, 307200, 153600, 76800, 38400, 19200, 9600, 4800, 2400, 1200]
-
 # Which base layer to use on maps.
 # May be any of the default olwidget base layers,
 # as per http://olwidget.org/olwidget/v0.4/doc/olwidget.js.html#general-map-display
@@ -276,6 +272,12 @@ required_settings.append('MAP_BASELAYER_TYPE')
 
 # If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
 GOOGLE_API_KEY=''
+
+# Use a specific version of google maps API to work around
+# copyright alert bug:
+# http://trac.osgeo.org/openlayers/ticket/2984
+GOOGLE_API='http://maps.google.com/maps/api/js?v=3.6&sensor=false'
+
 # If you set MAP_BASELAYER_TYPE='yahoo', you must also set YAHOO_APP_ID.
 YAHOO_APP_ID=''
 # If you want MAP_BASELAYER_TYPE='cloudmade.*', you must also set CLOUDMADE_API_KEY.
@@ -333,7 +335,8 @@ DJANGO_STATIC_MEDIA_ROOTS = [MEDIA_ROOT, STATIC_ROOT,]
 # makes it easier for git to ignore them,
 # and easier to have eg. apache set appropriate expiration dates.
 DJANGO_STATIC_NAME_PREFIX = '/cache-forever'
-DJANGO_STATIC_SAVE_PREFIX = os.path.join(MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX[1:])
+# Make sure you have write permission here!!
+DJANGO_STATIC_SAVE_PREFIX = os.path.join(STATIC_ROOT, DJANGO_STATIC_NAME_PREFIX[1:])
 
 
 #############################
@@ -343,7 +346,7 @@ DJANGO_STATIC_SAVE_PREFIX = os.path.join(MEDIA_ROOT, DJANGO_STATIC_NAME_PREFIX[1
 
 # For local development you might try this:
 #JQUERY_URL = '/media/js/jquery.js'
-JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js'
+JQUERY_URL = 'http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'
 
 # It's important that it be named exactly OpenLayers.js,
 # see http://trac.osgeo.org/openlayers/ticket/2982

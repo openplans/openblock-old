@@ -16,3 +16,29 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+
+.. _blobs:
+
+blobs
+=====
+
+The blobs package is a Django app responsible for crawling, scraping,
+extracting, and geocoding news articles from the web.
+
+It is best suited for scraping "unstructured" websites that don't have
+machine-readable feeds, eg. for scraping raw HTML and/or binary file
+formats such as PDF or Excel.  (For sites that provide RSS or Atom
+feeds, and/or an API, the :py:mod:`ebdata.retrieval` package may be more
+suitable.)  (For dealing with binary file formats, you'll also want to
+look into the :py:mod:`ebdata.parsing` package.)
+
+Many examples can be found in the
+`everyblock package <https://github.com/openplans/openblock-extras/tree/master/everyblock>`_.
+
+The blobs app contains two models, ``Seed`` and ``Page``. ``Seed`` is a
+news source, like the Chicago Tribune, and a ``Page`` is a particular html
+page that was crawled from a Seed.
+
+TODO: This really needs more explanation.
+"""

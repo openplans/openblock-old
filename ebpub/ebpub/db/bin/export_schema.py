@@ -17,6 +17,15 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Prints out a SQL statement that can recreate one :py:class:`Schema <ebpub.db.models.Schema>`
+row. 
+
+Arguments should be the ``slug`` of the Schema(s) you want.
+
+Does not included related SchemaFields.
+"""
+
 from ebpub.db.models import Schema
 
 fixbool = lambda x: bool(x) and 't' or 'f'
@@ -58,7 +67,10 @@ def print_schema_creation(schema_slug):
 
 def main():
     import sys
-    print_schema_creation(sys.argv[1])
+    for arg in sys.argv[1:]:
+        print_schema_creation(arg)
+    if not sys.argv[1:]:
+        sys.stderr.write("No Schema slugs specified.\n")
 
 if __name__ == "__main__":
     main()

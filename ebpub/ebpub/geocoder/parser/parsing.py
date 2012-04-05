@@ -51,15 +51,16 @@ class Standardizer(object):
     """Replaces a suffix, directional, state, etc. with the preferred standard form.
 
     For example, given the text "avenu" for suffixes, returns "AVE".
+    ::
 
-    >>> suff_standardizer = Standardizer(suffixes)
-    >>> suff_standardizer("avenu")
-    'AVE'
-    >>> dir_standardizer = Standardizer(DIRECTIONALS)
-    >>> dir_standardizer("north")
-    'N'
-    >>> dir_standardizer("n")
-    'N'
+        >>> suff_standardizer = Standardizer(suffixes)
+        >>> suff_standardizer("avenu")
+        'AVE'
+        >>> dir_standardizer = Standardizer(DIRECTIONALS)
+        >>> dir_standardizer("north")
+        'N'
+        >>> dir_standardizer("n")
+        'N'
     """
     def __init__(self, d):
         self.replacement = {}
@@ -84,16 +85,16 @@ def number_standardizer(s):
     """
     Removes the second number in hyphenated addresses such as '123-02', as
     used in NYC. Note that this also removes the second number in address
-    ranges.
-
-    >>> number_standardizer('1-2')
-    '1'
-    >>> number_standardizer('100-200')
-    '100'
-    >>> number_standardizer('12A-12B')
-    '12'
-    >>> number_standardizer('x')
-    'x'
+    ranges::
+    
+        >>> number_standardizer('1-2')
+        '1'
+        >>> number_standardizer('100-200')
+        '100'
+        >>> number_standardizer('12A-12B')
+        '12'
+        >>> number_standardizer('x')
+        'x'
     """
     m = _number_standardizer_re.search(s)
     if not m:
@@ -126,13 +127,14 @@ zip_plus_4_re = re.compile(r'(?<=^\d{5})-\d{4}$')
 def normalize(location):
     """
     Normalizes an address string for parsing, comparisons.
+    ::
 
-    >>> normalize(u"1972 n. dawson ave. chicago il")
-    u'1972 N DAWSON AVE CHICAGO IL'
-    >>> normalize(u"1972 n. dawson ave., chicago il")
-    u'1972 N DAWSON AVE CHICAGO IL'
-    >>> normalize(u"n kimball ave & w diversey ave")
-    u'N KIMBALL AVE & W DIVERSEY AVE'
+        >>> normalize(u"1972 n. dawson ave. chicago il")
+        u'1972 N DAWSON AVE CHICAGO IL'
+        >>> normalize(u"1972 n. dawson ave., chicago il")
+        u'1972 N DAWSON AVE CHICAGO IL'
+        >>> normalize(u"n kimball ave & w diversey ave")
+        u'N KIMBALL AVE & W DIVERSEY AVE'
     """
     old_location = location
     location = location.upper()
@@ -147,19 +149,20 @@ def normalize(location):
 def strip_unit(location):
     """
     Given an address string, strips the apartment number, suite number, etc.
+    ::
 
-    >>> strip_unit('200 E 31st st')
-    '200 E 31st st'
-    >>> strip_unit('200 E 31st st unit 123')
-    '200 E 31st st'
-    >>> strip_unit('123 W broadway apt B')
-    '123 W broadway'
-    >>> strip_unit('99 s northshore drive apt. B')
-    '99 s northshore drive'
-    >>> strip_unit('45 carlton ave #12')
-    '45 carlton ave'
-    >>> strip_unit('148 lafayette st suite 13')
-    '148 lafayette st'
+        >>> strip_unit('200 E 31st st')
+        '200 E 31st st'
+        >>> strip_unit('200 E 31st st unit 123')
+        '200 E 31st st'
+        >>> strip_unit('123 W broadway apt B')
+        '123 W broadway'
+        >>> strip_unit('99 s northshore drive apt. B')
+        '99 s northshore drive'
+        >>> strip_unit('45 carlton ave #12')
+        '45 carlton ave'
+        >>> strip_unit('148 lafayette st suite 13')
+        '148 lafayette st'
 
     """
     return re.sub(r'(?i)(\s*,)?\s*(?:space\s+|suite\s+|ste\.?\s+|unit:?\s+|apt\.?\s+|\#\s*)[-\#0-9a-z]*$', '', location)
@@ -169,28 +172,31 @@ def strip_unit(location):
 ###########
 
 def abbrev_regex(d, case_insensitive=True, matches_entirely=True):
-    """
-    Returns a regular expression pattern that matches an abbreviation.
+    '''
+    Returns a regular expression pattern that matches an abbreviation:
 
-    >>> suffixes = {
-    ...     'av': ['ave', 'avenue'],
-    ...     'st': ['str', 'street'],
-    ...     'rd': 'road'
-    ... }
-    >>> regex = abbrev_regex(suffixes)
-    >>> re.search(regex, "Ave")  # doctest: +ELLIPSIS
-    <_sre.SRE_Match object at ...>
-    >>> re.search(regex, " Ave ") == None
-    True
-    >>> regex = abbrev_regex(suffixes, case_insensitive=False)
-    >>> re.search(regex, "str")  # doctest: +ELLIPSIS
-    <_sre.SRE_Match object at ...>
-    >>> re.search(regex, "Str") == None
-    True
-    >>> regex = abbrev_regex(suffixes, matches_entirely=False)
-    >>> re.search(regex, " Road ")  # doctest: +ELLIPSIS
-    <_sre.SRE_Match object at ...>
-    """
+    .. code-block:: python
+    
+        >>> suffixes = {
+        ...     'av': ['ave', 'avenue'],
+        ...     'st': ['str', 'street'],
+        ...     'rd': 'road'
+        ... }
+        >>> regex = abbrev_regex(suffixes)
+        >>> re.search(regex, "Ave")  # doctest: +ELLIPSIS
+        <_sre.SRE_Match object at ...>
+        >>> re.search(regex, " Ave ") == None
+        True
+        >>> regex = abbrev_regex(suffixes, case_insensitive=False)
+        >>> re.search(regex, "str")  # doctest: +ELLIPSIS
+        <_sre.SRE_Match object at ...>
+        >>> re.search(regex, "Str") == None
+        True
+        >>> regex = abbrev_regex(suffixes, matches_entirely=False)
+        >>> re.search(regex, " Road ")  # doctest: +ELLIPSIS
+        <_sre.SRE_Match object at ...>
+
+    '''
     alts = []
     for k, v in d.items():
         if isinstance(v, basestring):
@@ -228,6 +234,11 @@ TOKEN_REGEXES = {
 }
 
 class Location(dict):
+    """
+    A dict-like object with only a few valid keys:
+    ('number', 'pre_dir', 'street', 'suffix', 'post_dir', 'city', 'state', 'zip')
+
+    """
     location_keys = ('number', 'pre_dir', 'street', 'suffix', 'post_dir', 'city', 'state', 'zip')
 
     def __init__(self, *args):
@@ -246,12 +257,13 @@ class Location(dict):
 
 def address_combinations():
     """
-    Generator that yields a list for every possible combination of address
-    tokens. For example:
+    Generator that yields a list of strings for every possible
+    combination of address tokens. For example::
+
         ['number', 'pre_dir', 'street']
         ['number', 'street', 'city', 'state']
 
-    There were about 6000 combinations at last count.
+    There were about 7200 combinations at last count.
     """
     for number_times in (0, 1):
         for pre_dir_times in (0, 1):
@@ -269,6 +281,11 @@ def address_combinations():
 punc_split = re.compile(r"\S+").findall
 
 def parse(location):
+    """
+    Given a ``location`` string, return a list of possible valid
+    results as ``Location`` instances.
+
+    """
     s = strip_unit(normalize(location))
     logger.debug('parse: normalized and stripped %r to %r' % (location, s))
     tokens = punc_split(s)

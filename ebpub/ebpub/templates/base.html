@@ -10,10 +10,13 @@
 
 {% slimall %}
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/style-reset.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}scripts/chosen.css" />
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/openblock.css" />
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}styles/calendrical.css" />
 {% endslimall %}
 
 <script src="{{ JQUERY_URL }}" type="text/javascript" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL}}styles/smoothness/jquery-ui-1.8.17.custom.css" />
 
 <script type="text/javascript">
 // Not using jquery.noConflict() because ironically it causes a conflict
@@ -23,8 +26,12 @@ var $j = $;
 </script>
 {% slimall %}
 <script src="{{ STATIC_URL }}scripts/ob-jquery-csrf.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ STATIC_URL }}scripts/chosen.jquery.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ STATIC_URL}}scripts/jquery.calendrical.js"></script>
+<script src="{{ STATIC_URL}}scripts/json2.js"></script>
 {% endslimall %}
 
+<script src="{{ STATIC_URL }}scripts/jquery-ui-1.8.17.custom.min.js" type="text/javascript" charset="utf-8"></script>
 <!-- begin block extrahead -->
 {% block extrahead %}{% endblock %}
 <!-- end block extrahead -->
@@ -34,12 +41,6 @@ var $j = $;
 	<div id="header">
 		<h1><a href="{% url ebpub-homepage %}">OpenBlock: {% METRO_NAME %}</a></h1>
 		<div id="globalnav">
-		    <!--
-			<ul>
-				<li><a href="/news/">News</a></li>
-				<li><a href="/locations/">Locations</a></li>
-			</ul>
-			-->
 			{% block userlinks %}
 			{% include "db/snippets/userlinks.html" %}
 			{% endblock userlinks %}

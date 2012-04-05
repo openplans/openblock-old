@@ -22,7 +22,7 @@ from ebpub.db.models import NewsItem
 
 class NewsItemCreator(models.Model):
     """
-    represents an add-on created-by relationship between
+    Represents an add-on created-by relationship between
     a User and a NewsItem without interfering with the
     NewsItem model.
     """

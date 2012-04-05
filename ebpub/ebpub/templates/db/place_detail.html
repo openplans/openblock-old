@@ -8,91 +8,24 @@
 {% ifnotequal place.slug "unknown" %}<link rel="alternate" type="application/rss+xml" title="RSS" href="{{ place.rss_url }}" />{% endifnotequal %}
 <meta name="description" content="Recent news {% if is_block %}near{% else %}in{% endif %} {{ place.pretty_name }}{% if is_block %} in {{ place.city_object.name }}{% endif %}.">
 {{ block.super }}
+
 <script type="text/javascript" charset="utf-8">
 var pid = '{{ pid }}';
 
 window.onload = function() {
+	$j(".chzn-select").chosen({no_results_text: "No results matched"});
+
 	$j('#sectionfilterbutton').click(function() {
 		var url = $j('#sectionfilter').val();
 		if (url) { window.location = url; }
 		return false;
 	});
 	{% if USER %}
-	$j('#saveplacebutton').show().click(function() {
-		this.blur();
-		var action, result, url, button;
-		if ($j('#saveplacebutton').html().search('Remove')) {
-			action = 'Saving';
-			result = 'Saved';
-			url = '/accounts/saved-places/add/';
-			button = 'Remove this saved place';
-		}
-		else {
-			action = 'Removing';
-			result = 'Removed';
-			url = '/accounts/saved-places/delete/';
-			button = 'Save this place';
-		}
-		$j('#saveplacestatus').html(action + '...');
-		$j.ajax({
-			type: "POST", url: url, data: {pid: pid},
-			error: function(jqXHR, textStatus, errorThrown) {
-				$j('#saveplacestatus').html("Whoops, we had a technical hiccup. Please try again in a bit.");
-			},
-			success: function(data, textStatus) {
-				$j('#saveplacestatus').html(result + '.');
-				$j('#saveplacebutton').html(button);
-				$j('#ul-saved').html('<li class="replaceme">Loading...</li>');
-			}
-		});
-	});
-    // Show or hide news items by type.
-	$j('.toggle').click(function() {
-		var url, action, on_success, on_error;
-		var container = $j(this).parents('h4');
-		var link = container.find('.toggle');
-		var schema_slug = /(.*?)-\d+/.exec(container.attr('id'))[1];
-		var all_links = $j('.schema_' + schema_slug + ' .toggle');
-		if ($j('div.schema_' + schema_slug).hasClass('hidden')) {
-			action = 'show';
-		} else {
-			action = 'hide';
-		}
-		if (action == 'hide') {
-			url = '/accounts/hidden-schemas/add/';
-			all_links.html('Hiding...');
-			on_success = function(data, textStatus) {
-                all_links.html('Show');
-				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
-			};
-			on_error = function(jqXHR, textStatus, errorThrown) {
-                all_links.html('Hide');
-			};
-		} else {
-			url = '/accounts/hidden-schemas/delete/';
-			all_links.html('Showing...')
-			on_success = function(data, textStatus) {
-				all_links.html('Hide')
-				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
-				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
-			};
-			on_error = function(jqXHR, textStatus, errorThrown) {
-				all_links.html('Show');
-			};
-		}
-		$j.ajax({
-			type: "POST", url: url, data: {schema:schema_slug},
-			error: function(jqXHR, textStatus, errorThrown) {
-				alert("Whoops, we had a technical hiccup. Please try again in a bit.");
-				on_error(jqXHR, textStatus, errorThrown);
-			},
-			success: on_success
-		});
-		return false;
-	});
+	{% include "db/snippets/onload_scripts.html" %}
 	$j('h4.unloaded').removeClass('unloaded');
 	{% endif %}
 }
+
 </script>
 
 {% endblock extrahead %}
@@ -129,9 +62,11 @@ window.onload = function() {
 		<li>{% ifequal block_radius "8" %}8 blocks{% else %}<a href="?radius=8" rel="nofollow">8 blocks</a>{% endifequal %}</li>
 	  </ul>
 	  {% endif %}
-	  <form class="select-filter">
-		<select id="sectionfilter">
-		  <option value="">Choose a type of information&hellip;</option>
+	  <form class="select-filter" method="GET">
+		<select id="sectionfilter" class="chzn-select"
+			style="width: 260px;"
+			data-placeholder="Choose a type of information&hellip;">
+		  <option value=""></option>
 		  {% for schema in filtered_schema_list %}
 			<option value="{% filter_url filters +'schema' schema %}">{{ schema.plural_name|capfirst }}</option>
 		  {% endfor %}
@@ -145,41 +80,7 @@ window.onload = function() {
   {% endifnotequal %}
 
   <div id="place-detail-content">
-	{% if newsitem_list %}
-		{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
-		{% for daygroup in newsitem_list_byday %}
-			<h2>{% if not show_upcoming %}New{% endif %} {{ daygroup.grouper }}</h2>
-			{% regroup daygroup.list by schema as newsitem_list_byschema %}
-			{% for schemagroup in newsitem_list_byschema %}
-				{% with schemagroup.list|length as num_newsitems %}
-					{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
-				<h4 class="schema_{{ schemagroup.grouper.slug }}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
-					{% map_icon_img schemagroup.grouper %}
-
-					{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
-					{% if USER %}<a class="toggle show" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
-				</h4>
-				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
-					{% newsitem_list_by_schema schemagroup.list %}
-					</ul>
-				</div>
-				{% endwith %}
-				{% endwith %}
-			{% endfor %}
-		{% endfor %}
-	  <p>
-		{% if show_upcoming %}
-			{% if not is_latest_page %}<a href="./">&larr; Earlier upcoming events for {{ place.pretty_name }}</a>{% endif %}
-			{% if next_day %}<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow">More upcoming &rarr;</a>{% endif %}
-		{% else %}
-			{% if not is_latest_page %}<a href="./">&larr; Most recent news for {{ place.pretty_name }}</a>{% endif %}
-			{% if next_day %}<a href="?start={{ next_day|date:"n/j/Y" }}" rel="nofollow">Older news &rarr;</a>{% endif %}
-		{% endif %}
-    </p>
-	{% else %}
-		<p>We haven't found any news available for this area recently.</p>
-	{% endif %}
-
+	{% include "db/snippets/newsitem_list_by_day.html" %}
 	{% ifnotequal place.slug "unknown" %}
 	<div id="alerts-signup">	
 		<h2>Sign up for:</h2>

@@ -5,5 +5,5 @@
   </div>
   <div class="location">{{ newsitem.location_name.title|truncatewords_html:12 }}</div>
   <div class="date">{{ newsitem.item_date|date:"M j" }}</div>
-  <div class="category">{{schema.name}}</div>
+  <a href="{{ schema.url }}"><div class="category">{{schema.name}}</div></a>
 </div>

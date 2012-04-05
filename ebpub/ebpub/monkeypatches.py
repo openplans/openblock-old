@@ -21,6 +21,9 @@ This file contains monkey-patches for upstream code that we don't wish
 to fork, eg. core Django features that haven't landed in the version
 of Django we need, etc.
 
+These patches were developed against Django 1.3.
+If/when upgrading DJango to 1.4 or later, this file will need a full audit.
+
 """
 
 
@@ -223,6 +226,34 @@ def endElement(self, name):
 
 
 ####################################################################
+# Patch postgis driver to work with postgres 9.1.
+# Based on https://code.djangoproject.com/changeset/16826
+# this can go away once we're on Django 1.4.
+####################################################################
+
+def _adapter_init(self, geom):
+    "Initializes on the geometry."
+    # Getting the WKB (in string form, to allow easy pickling of
+    # the adaptor) and the SRID from the geometry.
+    self.ewkb = str(geom.ewkb)
+    self.srid = geom.srid
+    from psycopg2 import Binary
+    self._adapter = Binary(self.ewkb)
+
+def _adapter_prepare(self, conn):
+    """
+    This method allows escaping the binary in the style required by the
+    server's `standard_conforming_string` setting.
+    """
+    self._adapter.prepare(conn)
+
+def _adapter_getquoted(self):
+    "Returns a properly quoted string for use in PostgreSQL/PostGIS."
+    # psycopg will figure out whether to use E'\\000' or '\000'
+    return 'ST_GeomFromEWKB(%s)' % self._adapter.getquoted()
+
+
+####################################################################
 # End of patches.
 ####################################################################
 
@@ -234,6 +265,12 @@ def patch_once():
         global _PATCHED
         if _PATCHED:
             return
+
+        import django
+        if django.VERSION >= (1, 4):
+            import warnings
+            warnings.warn("Running Django version %s. The monkeypatches in %s were written for Django 1.3, need auditing!" % (django.VERSION, __file__))
+
 
         ####################################################
         # Natural keys.
@@ -256,4 +293,12 @@ def patch_once():
         from django.utils import xmlutils
         xmlutils.SimplerXMLGenerator.endElement = endElement
 
+        ####################################################
+        # PostGIS 9.1 support.
+        from django.contrib.gis.db.backends.postgis.adapter import PostGISAdapter
+        PostGISAdapter.__init__ = _adapter_init
+        PostGISAdapter.getquoted = _adapter_getquoted
+        PostGISAdapter.prepare = _adapter_prepare
+
         _PATCHED = True
+

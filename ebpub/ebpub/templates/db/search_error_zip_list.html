@@ -15,7 +15,7 @@
 	  {% endfor %}
 	</ul>
 	<h3>Or try another address search in {% METRO_NAME %}&hellip;</h3>
-	<form action="/search/" method="get">
+	<form action="{% url ebpub-search %}" method="GET">
 		<p><input type="text" name="q" value="{{ query }}"> <input type="submit" value="Search again"></p>
 	</form>
 </div><!--/ #content-->

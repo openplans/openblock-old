@@ -1,0 +1,40 @@
+{% comment %}<!-- -*- tab-width: 4 -*- -->
+Expects these variables: newsitem_list, hidden_schema_list, show_upcoming, is_latest_page
+{% endcomment %}
+{% load eb eb_filter mapping humanize dateutils %}
+{% if newsitem_list %}
+	{% regroup newsitem_list by item_date|friendlydate as newsitem_list_byday %}
+	{% for daygroup in newsitem_list_byday %}
+		<h2>{% if not show_upcoming %}New{% endif %} {{ daygroup.grouper }}</h2>
+		{% regroup daygroup.list by schema as newsitem_list_byschema %}
+		{% for schemagroup in newsitem_list_byschema %}
+			{% with schemagroup.list|length as num_newsitems %}
+				{% with hidden_schema_list|contains:schemagroup.grouper as is_hidden %}
+				<h4 class="schema_{{ schemagroup.grouper.slug }}" id="{{ schemagroup.grouper.slug }}-{{ schemagroup.list.0.item_date|date:"Ymd" }}">
+				{% map_icon_img schemagroup.grouper %}
+
+				{% if schemagroup.grouper.is_special_report %}Special report: {{ schemagroup.grouper.name }}{% else %}{{ num_newsitems }} {% schema_plural_name schemagroup.grouper num_newsitems %}{% endif %}
+				{% if USER %}<a class="toggle show" style="display: none;" href="#">{% if is_hidden %}Show{% else %}Hide{% endif %}</a>{% endif %}
+				</h4>
+				<div class="schema_{{ schemagroup.grouper.slug }} {% if is_hidden %}hidden{% else %}visible{% endif %}">
+					{% newsitem_list_by_schema schemagroup.list %}
+				</div>
+				{% endwith %}
+			{% endwith %}
+		{% endfor %}
+	{% endfor %}
+	<!-- Pagination. -->
+	{% if has_next or has_previous %}
+		<p><strong>Items {{ page_start_index|intcomma }}-{{ page_end_index|intcomma }}</strong> (Page {{ page_number|intcomma }})</p>
+		<ul>
+			{% if has_previous %}<li><a href="?page={{ previous_page_number }}" rel="nofollow">{% if show_upcoming %}Sooner{% else %}Newer{% endif %}</a></li>{% endif %}
+			{% if has_next %}<li><a href="?page={{ next_page_number }}" rel="nofollow">{% if show_upcoming %}Later{% else %}Older{% endif %}</a></li>{% endif %}
+		</ul>
+	{% endif %}
+{% else %}
+	<p>We haven't found any 
+	  {% if show_upcoming %}events
+	  {% else %} news
+	  {% endif %}
+	  available for this area recently.</p>
+{% endif %}

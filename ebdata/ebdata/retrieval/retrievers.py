@@ -58,6 +58,7 @@ class Retriever(object):
         from django.conf import settings
         if cache is Default:
             cache = getattr(settings, 'HTTP_CACHE', '/tmp/eb_scraper_cache')
+        self.cache_hit = False
         self.h = httplib2.Http(cache, timeout=timeout)
         self.h.force_exception_to_status_code = False
         self.h.follow_redirects = False
@@ -75,6 +76,7 @@ class Retriever(object):
 
     def fetch_data_and_headers(self, uri, data=None, headers=None, send_cookies=True, follow_redirects=True, raise_on_error=True):
         "Retrieves the resource and returns a tuple of (content, header dictionary)."
+        self.cache_hit = False
         # Sleep, if necessary, but only if a page has already been downloaded
         # with this retriever. (We don't want to sleep before the very first
         # request that a retriever makes, because that would be unnecessary.)
@@ -107,6 +109,8 @@ class Retriever(object):
                 if resp_headers['status'] == '500':
                     self.logger.debug("Request got a 500 error: %s %s", method, uri)
                     continue # Try again.
+                if resp_headers.fromcache:
+                    self.cache_hit = True
                 break
             except socket.timeout:
                 self.logger.debug("Request timed out after %s seconds: %s %s", self.h.timeout, method, uri)

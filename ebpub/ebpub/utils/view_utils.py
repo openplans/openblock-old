@@ -26,6 +26,7 @@ from ebpub.constants import BLOCK_RADIUS_DEFAULT
 from ebpub.db.models import Location
 from ebpub.db.models import Schema
 from ebpub.streets.models import Block
+import ebpub.db.constants
 
 
 def eb_render(request, *args, **kwargs):
@@ -82,7 +83,11 @@ def make_pid(place, block_radius=None):
 
 
 def has_staff_cookie(request):
+    """Returns whether the current request has a cookie set with
+    settings.STAFF_COOKIE_NAME and settings.STAFF_COOKIE_VALUE.
+    """
     return request.COOKIES.get(settings.STAFF_COOKIE_NAME) == settings.STAFF_COOKIE_VALUE
+
 
 def get_schema_manager(request):
     """
@@ -90,8 +95,9 @@ def get_schema_manager(request):
     based on the current request.
 
     This should be used in ALL public view queries that reference
-    NewsItems or Schemas.  There should probably be a more convenient
-    API for doing this.
+    NewsItems or Schemas.
+    Note that it's called internally by NewsItem.objects.by_request(request)
+    (also available on NewsItemQuerySet).
 
     By default, this just uses ``has_staff_cookie`` to decide whether
     to show Schemas that are not public, but you can also name the
@@ -132,3 +138,102 @@ def _manager_filter_hook(manager, user):
         func = getattr(module, func)
         manager = func(user, manager)
     return manager
+
+def paginate(qs, page=1, pagesize=ebpub.db.constants.FILTER_PER_PAGE):
+    """Pagination.
+
+    Given a queryset or iterable ``qs``, a starting page number ``page``,
+    and a ``pagesize``, returns a list (derived from the queryset)
+    of at most ``pagesize`` results, plus booleans indicating
+    whether there are next and previous pages, and start and end indexes.
+
+    (Note the end index is actually the one *beyond* the last item
+    in the result list; it's like a slice end index.
+    This also means that if next==True, the end index is the start
+    index of the next page.)
+
+    We don't use Django's Paginator class because it uses
+    SELECT COUNT(*), which we want to avoid.
+
+    Pages count from 1::
+
+      >>> items = list('abcdefghijklmnopqrstuvwxyz')
+      >>> current, prev, next, start, end = paginate(items, page=1, pagesize=5)
+      >>> current
+      ['a', 'b', 'c', 'd', 'e']
+      >>> prev, next
+      (False, True)
+      >>> start, end
+      (0, 5)
+
+      >>> current, prev, next, start, end = paginate(items, page=2, pagesize=5)
+      >>> current
+      ['f', 'g', 'h', 'i', 'j']
+      >>> prev, next
+      (True, True)
+      >>> start, end
+      (5, 10)
+
+      >>> current, prev, next, start, end = paginate(items, page=5, pagesize=5)
+      >>> current
+      ['u', 'v', 'w', 'x', 'y']
+      >>> prev, next
+      (True, True)
+      >>> start, end
+      (20, 25)
+
+    The last page might be smaller::
+
+      >>> current, prev, next, start, end = paginate(items, page=6, pagesize=5)
+      >>> current
+      ['z']
+      >>> prev, next
+      (True, False)
+      >>> start, end
+      (25, 26)
+
+    If you go beyond the end::
+
+      >>> current, prev, next, start, end = paginate(items, page=7, pagesize=5)
+      >>> current
+      []
+      >>> prev, next
+      (True, False)
+      >>> start, end
+      (30, 30)
+
+    Note that the 'previous' flag doesn't actually guarantee the previous
+    page is non-empty::
+
+      >>> paginate(items, pagesize=10, page=9999)
+      ([], True, False, 99980, 99980)
+
+    If the page size contains the whole set, there are no more pages::
+
+      >>> current, prev, next, start, end = paginate(items, pagesize=30)
+      >>> len(current)
+      26
+      >>> prev, next
+      (False, False)
+
+    You can actually pass anything that can be list-ified::
+
+      >>> paginate('ABCDEFGHIJKLMNOP', pagesize=3, page=2)
+      (['D', 'E', 'F'], True, True, 3, 6)
+
+    """
+
+    idx_start = (page - 1) * pagesize
+    idx_end = page * pagesize
+    # Get one extra, so we can tell whether there's a next page.
+    ni_list = list(qs[idx_start:idx_end+1])
+    if page > 1 and not ni_list:
+        ni_list = []
+    if len(ni_list) > pagesize:
+        has_next = True
+        ni_list = ni_list[:-1]
+    else:
+        has_next = False
+        idx_end = idx_start + len(ni_list)
+    has_previous = page > 1
+    return ni_list, has_previous, has_next, idx_start, idx_end

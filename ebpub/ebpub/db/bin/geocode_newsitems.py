@@ -16,22 +16,31 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Script that finds NewsItems with null ``location`` fields, and
+attempts to geocode them based on their ``location_name``.
+
+Optionally provide a list of ``Schema.slug`` values to only geocode
+items of that schema.
+"""
+
+
 from ebpub.db.models import NewsItem
 from ebpub.geocoder import SmartGeocoder, GeocodingException, AmbiguousResult, InvalidBlockButValidStreet
 from ebpub.geocoder.parser.parsing import ParsingError
 
-def geocode(schema=None):
+def geocode(*schemas):
     """
     Geocode NewsItems with null locations.
 
-    If ``schema`` is provided, only geocode NewsItems with that particular
-    schema slug.
+    If ``schemas`` are provided, only geocode NewsItems with that particular
+    schema slug(s).
     """
     geocoder = SmartGeocoder()
     qs = NewsItem.objects.filter(location__isnull=True).order_by('-id')
-    if schema is not None:
-        print "Geocoding %s..." % schema
-        qs = qs.filter(schema__slug=schema)
+    if schemas is not None:
+        print "Geocoding %s..." % ', '.join(schemas)
+        qs = qs.filter(schema__slug__in=schemas)
     else:
         print "Geocoding all ungeocoded newsitems..."
 

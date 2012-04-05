@@ -16,42 +16,12 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet
-import os.path
-import unittest
+from ebpub.geocoder import SmartGeocoder, AmbiguousResult, InvalidBlockButValidStreet, DoesNotExist
 import django.test
-import yaml
 import mock
 
-class GeocoderTestCase(unittest.TestCase):
-    address_fields = ('address', 'city', 'zip')
 
-    def load_fixtures(self):
-        fixtures_filename = 'locations.yaml'
-        locations = yaml.load(open(os.path.join(os.path.dirname(__file__), fixtures_filename)))
-        for key, value in locations.items():
-            pass
-
-    def assertAddressMatches(self, expected, actual):
-        unmatched_fields = []
-
-        for field in self.address_fields:
-            try:
-                self.assertEqual(expected[field], actual[field])
-            except AssertionError, e:
-                unmatched_fields.append(field)
-
-        if unmatched_fields:
-            raise AssertionError('unmatched address fields: %s' % ', '.join(unmatched_fields))
-
-    def assertNearPoint(self, point, other):
-        try:
-            self.assertAlmostEqual(point.x, other.x, places=3)
-            self.assertAlmostEqual(point.y, other.y, places=3)
-        except AssertionError, e:
-            raise AssertionError('`point\' not near enough to `other\': %s', e)
-
-class BaseGeocoderTestCase(django.test.TestCase):
+class TestSmartGeocoder(django.test.TestCase):
     fixtures = ['wabash.yaml']
 
     def setUp(self):
@@ -63,6 +33,7 @@ class BaseGeocoderTestCase(django.test.TestCase):
                                        'multiple_cities': False}
         address = self.geocoder.geocode('200 S Wabash')
         self.assertEqual(address['city'], 'Chicago')
+
 
     @mock.patch('ebpub.streets.models.get_metro')
     def test_address_geocoder_ambiguous(self, mock_get_metro):
@@ -83,6 +54,112 @@ class BaseGeocoderTestCase(django.test.TestCase):
     def test_intersection_geocoder(self):
         address = self.geocoder.geocode('Wabash and Jackson')
         self.assertEqual(address['city'], 'CHICAGO')
+
+
+class TestFullGeocode(django.test.TestCase):
+
+    fixtures = ['wabash.yaml', 'places.yaml']
+
+    def test_full_geocode_place(self):
+        from ebpub.geocoder.base import full_geocode
+        place = full_geocode('Sears Tower', search_places=True)
+        self.assertEqual(place['type'], 'place')
+        self.assertEqual(place['result'].normalized_name, 'SEARS TOWER')
+
+    def test_full_geocode__no_place(self):
+        from ebpub.geocoder.base import full_geocode, DoesNotExist
+        self.assertRaises(DoesNotExist, full_geocode, 'Bogus Place Name')
+
+    def test_full_geocode__bad_block_on_good_street(self):
+        from ebpub.geocoder.base import full_geocode
+        # This block goes up to 298.
+        result = full_geocode('299 S. Wabash Ave.')
+        self.assert_(result['ambiguous'])
+        self.assertEqual(result['type'], 'block')
+        self.assertEqual(result['street_name'], 'Wabash Ave.')
+        self.assertEqual(len(result['result']), 3)
+
+    def test_full_geocode__convert_to_block(self):
+        from ebpub.geocoder.base import full_geocode
+        # This block goes up to 298.
+        result = full_geocode('299 S. Wabash Ave.', convert_to_block=True)
+        self.failIf(result['ambiguous'])
+        self.assertEqual(result['type'], 'block')
+        self.assertEqual(result['result']['address'], '200 block of S. Wabash Ave.')
+
+
+class TestDisambiguation(django.test.TestCase):
+
+    def test_disambiguate__no_args(self):
+        from ebpub.geocoder.base import disambiguate
+        self.assertEqual(disambiguate([]), [])
+        self.assertEqual(disambiguate([]), [])
+
+    def test_disambiguate__guess(self):
+        from ebpub.geocoder.base import disambiguate
+        # 'guess' doesn't do anything unless we have something to filter on.
+        self.assertEqual(disambiguate([], zipcode="10014", guess=True),
+                         [])
+        self.assertEqual(disambiguate([{1:1}], zipcode="10014", guess=True),
+                         [{1:1}])
+        self.assertEqual(disambiguate([{1:1}, {2:2}, {3:3}], zipcode="10014", guess=True),
+                         [{1:1}])
+
+    def test_disambiguate__city(self):
+        from ebpub.geocoder.base import disambiguate
+        input_results = [{'name': 'bob', 'city': 'Brooklyn'},
+                         {'name': 'bob', 'city': 'Manchester'},
+                         {'name': 'bob', 'city': 'Oslo'},
+                         {'name': 'joe', 'city': 'Oslo'},
+                         ]
+        self.assertEqual(disambiguate(input_results, city='Some Other City'),
+                         input_results)
+        self.assertEqual(disambiguate(input_results, city='Brooklyn'),
+                         [{'name': 'bob', 'city': 'Brooklyn'}])
+        self.assertEqual(disambiguate(input_results, city='Oslo'),
+                         [{'name': 'bob', 'city': 'Oslo'},
+                          {'name': 'joe', 'city': 'Oslo'}])
+        self.assertEqual(disambiguate(input_results, city='Oslo', guess=True),
+                         [{'name': 'bob', 'city': 'Oslo'}])
+
+
+    def test_disambiguate__state(self):
+        from ebpub.geocoder.base import disambiguate
+        input_results = [{'name': 'bob', 'state': 'MA'},
+                         {'name': 'bob', 'state': 'TN'},
+                         {'name': 'bob', 'state': 'WA'},
+                         {'name': 'joe', 'state': 'WA'},
+                         ]
+        self.assertEqual(disambiguate(input_results, state='Some Other State'),
+                         input_results)
+        self.assertEqual(disambiguate(input_results, state='WA'),
+                         [{'name': 'bob', 'state': 'WA'},
+                          {'name': 'joe', 'state': 'WA'},
+                          ])
+
+    def test_disambiguate__zip(self):
+        from ebpub.geocoder.base import disambiguate
+        input_results = [{'name': 'bob', 'zip': '12345'},
+                         {'name': 'bob', 'zip': '67890'},
+                         {'name': 'bob', 'zip': '55555'},
+                         {'name': 'joe', 'zip': '55555'},
+                         ]
+        self.assertEqual(disambiguate(input_results, zipcode='Some Other Zipcode'),
+                         input_results)
+        self.assertEqual(disambiguate(input_results, zipcode='67890'),
+                         [{'name': 'bob', 'zip': '67890'},])
+
+    def test_disambiguate__all(self):
+        from ebpub.geocoder.base import disambiguate
+        input_results = [
+            {'name': 'bob', 'city': 'C1', 'state': 'S2', 'zip': 'Z1'},
+            {'name': 'bob', 'city': 'C1', 'state': 'S1', 'zip': 'Z1'},
+            {'name': 'bob', 'city': 'C1', 'state': 'S1', 'zip': 'Z2'},
+            {'name': 'bob', 'city': 'C2', 'state': 'S1', 'zip': 'Z1'},
+            ]
+        self.assertEqual(disambiguate(input_results, city='C1', state='S1', zipcode='Z1'),
+                         [{'name': 'bob', 'city': 'C1', 'state': 'S1', 'zip': 'Z1'}])
+
 
 if __name__ == '__main__':
     pass

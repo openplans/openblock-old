@@ -42,8 +42,9 @@ urlpatterns += patterns(
 
     (r'^admin/', include(admin.site.urls)),
 
-    (r'^disclaimer', 'django.views.generic.simple.direct_to_template',
-     {'template': 'disclaimer.html'}),
+    url(r'^disclaimer', 'django.views.generic.simple.direct_to_template',
+        {'template': 'disclaimer.html'},
+        name='obdemo-disclaimer'),
 
     (r'^geotagger/$', 'obdemo.views.geotagger_ui'),
 
