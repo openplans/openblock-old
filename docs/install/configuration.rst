@@ -78,8 +78,8 @@ Set ``MAP_BASELAYER_TYPE`` to any of 've.road', 've.shaded',
 Yahoo Maps
 ~~~~~~~~~~~
 
-Set ``MAP_BASELAYER_TYPE = 'yahoo'``
-and be sure to set ``YAHOO_APP_ID`` to your Yahoo app id.
+Set ``MAP_BASELAYER_TYPE`` to any of 'yahoo.map', 'yahoo.satellite',
+or 'yahoo.hybrid', and be sure to set ``YAHOO_APP_ID`` to your Yahoo app id.
 
 
 Other public WMS servers

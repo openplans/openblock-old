@@ -87,6 +87,8 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Support multiple types of Yahoo maps, due to olwidget upgrade.
+
 * ebpub.geocoder.base.full_geocode() now has a convert_to_block
   argument, factored out from ebdata.retrieval.  If True, this
   tries to disambiguate bad blocks on good streets by rounding down
