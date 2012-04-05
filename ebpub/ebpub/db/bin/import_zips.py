@@ -18,6 +18,10 @@
 #
 
 
+"""Script to import ZIP code Locations from a shapefile.
+See :ref:`zipcodes`
+"""
+
 import datetime
 from django.contrib.gis.geos import MultiPolygon
 from ebpub.db.models import Location, LocationType

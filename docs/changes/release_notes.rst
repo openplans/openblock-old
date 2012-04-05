@@ -288,6 +288,8 @@ Documentation
 * Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo classes.
   Ticket #159.
 
+* Document ``ebpub.db.bin`` scripts. Ticket #96.
+
 * Documentation about comments and flagging of NewsItems. Ticket #252
 
 * Better docs about template overrides, see :ref:`custom-look-feel`.

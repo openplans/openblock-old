@@ -447,10 +447,12 @@ isn't usable by OpenBlock.)
 Submit the form and you're done.
 
 
+.. _import_locations_from_shapefile:
+
 Command Line: Importing Locations From Shapefiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is a script ``import_locations`` that can import any kind of location from a
+There is a script :py:mod:`import_locations <ebpub.db.bin.import_locations>` that can import any kind of location from a
 shapefile.  If a LocationType with the given slug doesn't exist, it will be
 created when you run the script.
 
@@ -516,10 +518,39 @@ fine, although ``--filter-bounds`` is usually a good idea, to exclude
 areas that don't overlap with your metro extent.
 
 
+.. _import_location_from_wkt:
+
+Command Line: Add Location From WKT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is a script :py:mod:`add_location <ebpub.db.bin.add_location>`
+that can create a single location given a `WKT <http://en.wikipedia.org/wiki/Well-known_text>`_ string.
+
+If you run it with the ``--help`` option, it will tell you how to use it::
+
+ $ import_locations  --help
+ Usage: add_location.py [options] NAME WKT
+ 
+ WKT is the geometry in "Well-Known Text" format.
+ 
+ NAME is the human-readable name.
+ The slug and normalized_name will be derived from it.
+ 
+ Options:
+  -h, --help            show this help message and exit
+  -l LOC_TYPE_SLUG, --location_type=LOC_TYPE_SLUG
+                        location type slug (default: neighborhoods)
+  -s SOURCE, --source=SOURCE
+                        source of data - name or URL of the place you found
+                        it.
+
+
 Can I load KML, GeoJSON, OpenStreetMap XML, or other kinds of files?
 ---------------------------------------------------------------------
 
-No, at this time the only files we can directly import are shapefiles.
+No, at this time the only formats we can directly import are
+shapefiles, and WKT.
+
 Try using tools like `ogr2ogr <http://www.gdal.org/ogr2ogr.html>`_ to
 convert your data into shapefiles.
 

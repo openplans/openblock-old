@@ -239,6 +239,8 @@ NewsItems have several distinct notions of location:
   about possibly making more use of self.location_object.
 
 
+.. _aggregates:
+
 Aggregates
 ----------
 
@@ -248,7 +250,8 @@ Schema; for example, charts of how many were added each day.
 Because these calculations can be expensive, there's an infrastructure
 for caching the aggregate numbers regularly in separate tables (db_aggregate*).
 
-To do this, just run the ``update_aggregates`` script on the command line.
+To do this, just run the :py:mod:`update_aggregates <ebpub.db.bin.update_aggregates>`
+script on the command line.
 
 You'll want to do this on a regular basis, depending on how often you update
 your data. **Some parts of the site (such as charts) will not be visible** until

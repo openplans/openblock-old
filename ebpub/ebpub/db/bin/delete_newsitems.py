@@ -16,6 +16,13 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Script that deletes all NewsItems of a given Schema (specified by slug).
+
+To do a dry run and not actually delete anything, give the --dry-run
+option.
+
+"""
 from ebpub.db.models import NewsItem, Attribute, Lookup, Schema
 
 

@@ -17,9 +17,13 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
+
+"""
+Import neighborhoods from a shapefile.  Try ``--help`` for usage instructions.
+
+Assumes you have a LocationType with ``slug='neighborhoods'``.
+"""
 import sys
-from django.contrib.gis.gdal import DataSource
 from ebpub.db.models import LocationType
 from ebpub.db.bin import import_locations
 from ebpub.metros.allmetros import get_metro
