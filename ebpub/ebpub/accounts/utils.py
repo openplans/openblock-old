@@ -86,6 +86,8 @@ def login(request, user):
     """
     from django.contrib import auth
     request.session[constants.EMAIL_SESSION_KEY] = user.email
+    if getattr(user, 'backend', None) is None:
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
     return auth.login(request, user)
 
 def login_required(view_func):
