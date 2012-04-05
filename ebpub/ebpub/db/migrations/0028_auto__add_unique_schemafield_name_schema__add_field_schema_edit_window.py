@@ -6,6 +6,11 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (('neighbornews', '0004_chartable_categories'),
+                  ('widgets', '0003_auto__add_pinneditem'),
+                  ('preferences', '0005_auto__add_field_profile_properties'),
+                  )
+
     def forwards(self, orm):
         
         # Adding unique constraint on 'SchemaField', fields ['name', 'schema']

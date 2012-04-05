@@ -30,7 +30,7 @@ from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_protect
-from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
+from ebpub.constants import HIDE_ADS_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
@@ -604,9 +604,6 @@ def schema_detail(request, slug):
 
     templates_to_try = ('db/schema_detail/%s.html' % s.slug, 'db/schema_detail.html')
 
-    # The HIDE_SCHEMA_INTRO_COOKIE_NAME cookie is a comma-separated list of
-    # schema IDs for schemas whose intro text should *not* be displayed.
-    hide_intro = str(s.id) in request.COOKIES.get(HIDE_SCHEMA_INTRO_COOKIE_NAME, '').split(',')
 
     context = {
         'schema': s,
@@ -619,8 +616,6 @@ def schema_detail(request, slug):
         'search_list': textsearch_sf_list,
         'newsitem_list': ni_list,
         'latest_dates': latest_dates[-3:],
-        'hide_intro': hide_intro,
-        'hide_intro_cookie_name': HIDE_SCHEMA_INTRO_COOKIE_NAME,
         'start_date': s.min_date,
         'end_date': today(),
         'bodyclass': 'schema-detail',

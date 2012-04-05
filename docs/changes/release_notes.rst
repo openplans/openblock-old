@@ -28,6 +28,9 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed mystery fields Schema.grab_bag, Schema.grab_bag_headline,
+  Schema.intro. (Ticket #232)
+
 * Removed safe_id_sort_reversed template tag; use the for loop's
   reverse option instead, eg.
   {% for item in itemlist|safe_id_sort reversed %}

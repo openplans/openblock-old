@@ -18,14 +18,11 @@
       "number_in_overview": 5,
       "slug": "police-reports",
       "date_name_plural": "Dates",
-      "grab_bag_headline": "",
       "short_source": "http://www.bpdnews.com",
       "summary": "Boston Police Department reports",
       "source": "http://www.bpdnews.com",
-      "intro": "",
       "update_frequency": "",
-      "short_description": "List of Boston Police Department reports",
-      "grab_bag": ""
+      "short_description": "List of Boston Police Department reports"
     },
     "model": "db.schema"
   }

@@ -480,11 +480,8 @@ class SchemaManager(models.Manager):
             'short_description',
             'summary',
             'source',
-            'grab_bag_headline',
-            'grab_bag',
             'short_source',
             'update_frequency',
-            'intro',
             )
 
     def allowed_schema_ids(self):
@@ -624,12 +621,9 @@ class Schema(models.Model):
     summary = models.TextField(blank=True, default='')
     source = models.TextField(blank=True, default='',
                               help_text='Where this information came from, as one or more URLs, one per line.')
-    grab_bag_headline = models.CharField(max_length=128, blank=True, default='') # Remove? #232
-    grab_bag = models.TextField(blank=True, default='')  # Remove? #232
     short_source = models.CharField(max_length=128, blank=True, default='One-line description of where this information came from.')
     update_frequency = models.CharField(max_length=64, blank=True, default='',
                                         choices=FREQUENCY_CHOICES)
-    intro = models.TextField(blank=True, default='')  # Remove? #232
 
     class Meta:
         ordering = ('name',)

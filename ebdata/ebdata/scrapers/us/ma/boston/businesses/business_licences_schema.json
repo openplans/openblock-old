@@ -2,16 +2,13 @@
   {
     "fields": {
       "last_updated": "2011-04-05",
-      "intro": "",
       "update_frequency": "",
       "has_newsitem_detail": true,
-      "grab_bag_headline": "",
       "short_source": "",
       "slug": "business-licenses",
       "source": "",
       "date_name": "Date",
       "short_description": "",
-      "grab_bag": "",
       "is_special_report": false,
       "is_event": false,
       "importance": 0,
