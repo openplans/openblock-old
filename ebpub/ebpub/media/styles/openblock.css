@@ -1162,6 +1162,8 @@ div.schema-colorsample {
   height: 20px; width: 20px;
   padding: 0px; margin: 3px;
   border: 1px solid #CCCCCC;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
 }
 
 /* messages */
