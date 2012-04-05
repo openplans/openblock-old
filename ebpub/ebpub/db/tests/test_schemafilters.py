@@ -20,7 +20,7 @@
 Unit tests for db.schemafilters.
 """
 
-from client import RequestFactory
+from ebpub.utils.testing import RequestFactory
 from django.core import urlresolvers
 from django.test import TestCase
 from ebpub.db.schemafilters import FilterChain
