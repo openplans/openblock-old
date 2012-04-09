@@ -273,7 +273,8 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
 
         var existingFeatureIds = {};
         var newFeatures = [];
-        for (var i = 0; i < this.layer.features.length; i++) {
+        var i = 0;
+        for (i = 0; i < this.layer.features.length; i++) {
             for (var j = 0; j < this.layer.features[i].cluster.length; j++) {
                 var feature = this.layer.features[i].cluster[j];
                 existingFeatureIds[feature.attributes.id] = true;
@@ -287,9 +288,10 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
         if(features && features.length > 0) {
             var remote = this.layer.projection;
             var local = this.layer.map.getProjectionObject();
+            var len=features.length;
             if(!local.equals(remote)) {
                 var geom;
-                for(var i=0, len=features.length; i<len; ++i) {
+                for(i=0; i<len; ++i) {
                     geom = features[i].geometry;
                     if(geom) {
                         geom.transform(remote, local);
@@ -297,7 +299,7 @@ var OpenblockMergeBBOX = OpenLayers.Class(OpenLayers.Strategy.BBOX, {
                 }
             }
 
-            for (var i = 0; i < features.length; i++) {
+            for (i = 0; i < len; i++) {
                 var feature = features[i];
                 if (existingFeatureIds[feature.attributes.id] != true) {
                     newFeatures.push(feature);
@@ -620,13 +622,14 @@ OBMap.prototype._initBasicMap = function() {
 };
 
 OBMap.prototype._configureLayers = function() {
+    var i = 0;
     if (typeof(this.options.locations) != 'undefined') {
-        for (var i = 0; i < this.options.locations.length; i++) {
+        for (i = 0; i < this.options.locations.length; i++) {
             this.loadLocationBorder(this.options.locations[i]);
         }
     }
     if (typeof(this.options.layers) != 'undefined') {
-        for (var i = 0; i < this.options.layers.length; i++) {
+        for (i = 0; i < this.options.layers.length; i++) {
             this.loadFeatureLayer(this.options.layers[i]);
         }
     }
