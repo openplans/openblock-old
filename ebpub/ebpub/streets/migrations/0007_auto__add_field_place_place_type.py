@@ -7,7 +7,10 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        default_place_type_id = orm['streets.PlaceType'].objects.get(slug='poi').id
+        if db.dry_run:
+            default_place_type_id = 1
+        else:
+            default_place_type_id = orm['streets.PlaceType'].objects.get(slug='poi').id
         # Adding field 'Place.place_type'
         db.add_column('streets_place', 'place_type', self.gf('django.db.models.fields.related.ForeignKey')(default=default_place_type_id, to=orm['streets.PlaceType']), keep_default=False)
 
