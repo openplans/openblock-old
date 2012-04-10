@@ -366,9 +366,9 @@ class PlaceAdmin(OSMModelAdmin):
 
 class BlockAdmin(OSMModelAdmin):
 
-    list_display = ('pretty_name', 'predir', 'street', 'suffix', 'postdir',
+    list_display = ('pretty_name', 'predir', 'prefix', 'street', 'suffix', 'postdir',
                     'left_zip', 'right_zip', 'left_city', 'right_city')
-    list_filter = ('suffix', 'left_city', 'right_city', 'left_zip', 'right_zip',
+    list_filter = ('suffix', 'prefix', 'left_city', 'right_city', 'left_zip', 'right_zip',
                    'predir', 'postdir',
                    )
     search_fields = ('pretty_name',)
@@ -377,7 +377,7 @@ class BlockAdmin(OSMModelAdmin):
     fieldsets = (
         ('Name', {
                 'fields': ('street_slug', 'pretty_name', 'street_pretty_name',
-                           'predir', 'street', 'suffix', 'postdir',
+                           'predir', 'prefix', 'street', 'suffix', 'postdir',
                            )
                 }),
         ('Address Ranges', {
