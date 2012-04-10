@@ -63,8 +63,8 @@ class Command(BaseCommand):
             encoding='utf8',
             filter_bounds=get_default_bounds(),
             filter_city='BOSTON')
-        num_created = importer.save()
-        print "Created %d blocks" % num_created
+        num_created, num_existing = importer.save()
+        print "Created %d blocks (%d existing)" % (num_created, num_existing)
 
         #########################
 
