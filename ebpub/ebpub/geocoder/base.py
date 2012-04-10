@@ -193,6 +193,10 @@ class AddressGeocoder(Geocoder):
             raise
 
         all_results = []
+
+        # For capturing streets with matching name but no matching block.
+        invalid_block_args = []
+
         for loc in locations:
             logger.debug('AddressGeocoder: Trying %r' % loc)
             loc_results = self._db_lookup(loc)
@@ -221,7 +225,7 @@ class AddressGeocoder(Geocoder):
                                  % loc['suffix'])
                     loc_results = self._db_lookup(dict(loc, suffix=None))
                 # Next, try looking for the street, in case the street
-                # exists but the address doesn't.
+                # (without any suffix) exists but the address doesn't.
                 if not loc_results and loc['number']:
                     kwargs = {'street': loc['street']}
                     sided_filters = []
@@ -232,9 +236,14 @@ class AddressGeocoder(Geocoder):
                     from ebpub.streets.models import Block
                     b_list = Block.objects.filter(*sided_filters, **kwargs).order_by('predir', 'from_num', 'to_num')
                     if b_list:
+                        # We got some blocks with the bare street name.
+                        # Might be InvalidBlockButValidStreet, but we don't
+                        # want to raise that till we've tried all locations,
+                        # in case there's a better one coming up.
                         logger.debug("Street %r exists but block %r doesn't"
                                      % (b_list[0].street_pretty_name, loc['number']))
-                        raise InvalidBlockButValidStreet(loc['number'], b_list[0].street_pretty_name, b_list)
+                        invalid_block_args = [loc['number'], b_list[0].street_pretty_name, b_list]
+
             if loc_results:
                 logger.debug(u'Success. Adding to results: %s' % [unicode(r) for r in loc_results])
                 all_results.extend(loc_results)
@@ -242,7 +251,10 @@ class AddressGeocoder(Geocoder):
                 logger.debug('... Got nothing.')
 
         if not all_results:
-            raise DoesNotExist("Geocoder db couldn't find this location: %r" % location_string)
+            if invalid_block_args:
+                raise InvalidBlockButValidStreet(*invalid_block_args)
+            else:
+                raise DoesNotExist("Geocoder db couldn't find this location: %r" % location_string)
         elif len(all_results) == 1:
             return all_results[0]
         else:

@@ -31,18 +31,30 @@ class TestSmartGeocoder(django.test.TestCase):
     def test_address_geocoder(self, mock_get_metro):
         mock_get_metro.return_value = {'city_name': 'CHICAGO',
                                        'multiple_cities': False}
-        address = self.geocoder.geocode('200 S Wabash')
-        self.assertEqual(address['city'], 'Chicago')
+        result = self.geocoder.geocode('200 S Wabash Ave')
+        self.assertEqual(result['city'], 'Chicago')
+        self.assertEqual(result['address'], '200 S Wabash Ave.')
 
+    @mock.patch('ebpub.streets.models.get_metro')
+    def test_address_geocoder__wrong_suffix_works(self, mock_get_metro):
+        mock_get_metro.return_value = {'city_name': 'CHICAGO',
+                                       'multiple_cities': False}
+        result = self.geocoder.geocode('220 S Wabash St')
+        self.assertEqual(result['address'], '220 S Wabash Ave.')
+        # Or none at all.
+        result = self.geocoder.geocode('220 S Wabash')
+        self.assertEqual(result['address'], '220 S Wabash Ave.')
 
     @mock.patch('ebpub.streets.models.get_metro')
     def test_address_geocoder_ambiguous(self, mock_get_metro):
         mock_get_metro.return_value = {'city_name': 'CHICAGO',
                                        'multiple_cities': False}
+        # Ambiguous because of missing pre_dir.
         self.assertRaises(AmbiguousResult, self.geocoder.geocode, '220 Wabash')
 
     def test_address_geocoder_invalid_block(self):
-        self.assertRaises(InvalidBlockButValidStreet, self.geocoder.geocode, '100000 S Wabash')
+        self.assertRaises(InvalidBlockButValidStreet,
+                          self.geocoder.geocode, '100000 S Wabash')
 
     @mock.patch('ebpub.streets.models.get_metro')
     def test_block_geocoder(self, mock_get_metro):
