@@ -85,7 +85,7 @@ class Standardizer(object):
         else:
             return s
 
-_number_standardizer_re = re.compile(r'^(\d+)[A-Z]?(?:-\d+[A-Z]?)?$')
+_number_standardizer_re = re.compile(r'^(\d+)')
 
 def number_standardizer(s):
     """
@@ -101,6 +101,11 @@ def number_standardizer(s):
         '12'
         >>> number_standardizer('x')
         'x'
+        >>> number_standardizer('257b')
+        '257'
+        >>> number_standardizer('9L00')
+        '9'
+
     """
     m = _number_standardizer_re.search(s)
     if not m:
