@@ -64,7 +64,6 @@ class BlockImporter(object):
                         if isinstance(val, str):
                             block_fields[key] = val.decode(self.encoding)
 
-
                     block_fields['geom'] = feature.geom.geos
 
                     block_fields['street_pretty_name'], block_fields['pretty_name'] = make_pretty_name(
@@ -96,6 +95,8 @@ class BlockImporter(object):
                         if isinstance(block_fields[addr_key], basestring):
                             from ebpub.geocoder.parser.parsing import number_standardizer
                             value = number_standardizer(block_fields[addr_key].strip())
+                            if not value:
+                                value = None
                         else:
                             value = None
                         block_fields[addr_key] = value
@@ -109,6 +110,18 @@ class BlockImporter(object):
                     except ValueError, e:
                         logger.warn('Skipping %s: %s' % (block_fields['pretty_name'], e))
                         continue
+
+                    # After doing pretty names etc, standardize the fields
+                    # that get used for geocoding, since the geocoder
+                    # searches for the standardized version.
+                    from ebpub.geocoder.parser.parsing import STANDARDIZERS
+                    for key, standardizer in STANDARDIZERS.items():
+                        if key in block_fields:
+                            if key == 'street' and block_fields['prefix']:
+                                # Special case: "US Highway 101", not "US Highway 101st".
+                                continue
+
+                            block_fields[key] = standardizer(block_fields[key])
 
                     # Separate out the uniquely identifying fields so
                     # we can avoid duplicate blocks.
@@ -127,7 +140,7 @@ class BlockImporter(object):
                     for key in primary_field_keys:
                         if block_fields[key] != u'':
                             # Some empty fields are fixed
-                            # automatically by clean(), so 
+                            # automatically by clean().
                             primary_fields[key] = block_fields[key]
 
                     existing = list(Block.objects.filter(**primary_fields))
@@ -154,7 +167,7 @@ class BlockImporter(object):
                         logger.debug(u"Block %s already exists" % unicode(existing[0]))
                         for key, val in block_fields.items():
                             setattr(block, key, val)
-                    else:
+                    elif len(existing) > 1:
                         num_existing += len(existing)
                         logger.warn("Multiple existing blocks like %s, skipping"
                                     % existing[0])
