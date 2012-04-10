@@ -24,9 +24,29 @@ the Python package dependencies:
 * You should have a recent version of distribute. Try ``easy_install --version``. If it says at least 'distribute 0.6.14', you're OK.
 
 * Don't try to combine the ``pip install -r`` and ``pip install -e``
-  commands.  Doing so can result in the wrong version of a dependency.
+  commands in one line.  Doing so can result in the wrong version of a dependency.
   (This is a `pip bug <https://github.com/pypa/pip/issues/318>`_.)
+  Instead, run them as separate commands; first ``-r``, then ``-e``.
 
+.. _no_site_packages:
+
+Virtualenv: Global packages available or not?
+-----------------------------------------------
+
+Note that if you want to install GDAL or LXML the "easy way" as
+described below, you *must not* run virtualenv with the
+``--no-site-packages`` option, as that will prevent your virtualenv
+from being able to find the globally installed libraries.
+
+As of virtualenv 1.7, the default behavior has changed so you now
+**must** pass the ``--system-site-packages`` option
+in order to use globally installed packages.
+*The --no-site-packages option is now the default!*
+
+If you prefer the ``--no-site-packages`` way of using virtualenv,
+where it only has access to libraries that you explicitly install,
+then you must install GDAL and LXML from source, as described below in
+the "hard way" sections.
 
 
 .. _lxml:
@@ -53,13 +73,15 @@ The slightly harder way
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 If your platform doesn't have a ready-made lxml package, or if you
-prefer to build your own, you'll need the libxml2 and libxslt
+prefer to build your own,
+or if you prefer :ref:`an isolated virtualenv <no_site_packages>`,
+you'll need the libxml2 and libxslt
 development libraries, and then install lxml yourself.  For example, on ubuntu
 you can do:
 
 .. code-block:: bash
 
-    $ sudo apt-get install libxml2 libxml2-dev libxslt libxslt-dev
+    $ sudo apt-get install libxml2 libxml2-dev libxslt libxslt-dev build-essential python-dev
 
 And once you have those, on any platform you can do:
 
@@ -87,13 +109,6 @@ this will work:
 
    $ sudo apt-get install python-gdal
 
-(Note that if you want to take this approach, you *must not* run virtualenv
-with the ``--no-site-packages`` option, as that will prevent your
-virtualenv from being able to use this package.  If you prefer the
-``--no-site-packages`` way of using virtualenv, you will have to
-install GDAL from source, as described below.)
-
-
 GDAL the hard way
 ~~~~~~~~~~~~~~~~~~
 
@@ -108,7 +123,7 @@ this can be installed like:
 
 .. code-block:: bash
 
-   $ sudo apt-get install libgdal libgdal1-dev
+   $ sudo apt-get install libgdal1-1.6.0 libgdal1-dev build-essential python-dev
    $ sudo ldconfig
 
 Next, make sure you are in your openblock environment and it is activated:

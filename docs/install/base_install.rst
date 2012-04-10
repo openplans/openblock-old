@@ -14,12 +14,26 @@ Creating a virtualenv
 
 Create a "`virtualenv <http://pypi.python.org/pypi/virtualenv>`__" that will contain 
 the OpenBlock software and its python dependencies.  (You probably do *not* want to 
-do this as root or with sudo):
+do this as root or with sudo). With virtualenv 1.7 or later:
+
+.. code-block:: bash
+
+    $ virtualenv --system-site-packages openblock
+    $ cd openblock
+
+Or with virtualenv 1.6 or earlier:
 
 .. code-block:: bash
 
     $ virtualenv openblock
     $ cd openblock
+
+.. admonition:: Why not --no-site-packages?
+
+  Experienced virtualenv users may wonder why we don't recommend using
+  the ``--no-site-packages`` option. See :ref:`no_site_packages` for
+  more info.
+
 
 "Activate" your virtualenv - this makes sure that all python commands
 will use your new virtual environment:
@@ -35,7 +49,7 @@ right directory.
 We'll be using ``pip`` to install some software, so make sure it's
 installed. Recent versions of virtualenv do this for you, but virtualenv 
 < 1.4.1 does not, so we need to make sure.  We also recommend that you 
-ensure that the latest versions of ``pip`` and ``distribute`` are installed:
+ensure that the latest version of ``distribute`` is installed:
 
 .. code-block:: bash
 
@@ -90,8 +104,7 @@ Download the openblock software:
    $ mkdir -p src/
    $ git clone git://github.com/openplans/openblock.git src/openblock
 
-It takes a few more ``Pip`` commands to install for development, like so
-commands:
+It takes a few more ``Pip`` commands to install for development, like so:
 
 .. code-block:: bash
 
@@ -102,6 +115,8 @@ commands:
   $ pip install -e ebdata
   $ pip install -r obadmin/requirements.txt
   $ pip install -e obadmin
+  $ pip install -r obdemo/requirements.txt
+  $ pip install -e obdemo
 
 If you encounter errors during package installation, please see :doc:`common_install_problems`.
 
