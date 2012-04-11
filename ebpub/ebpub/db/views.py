@@ -667,9 +667,6 @@ def _get_filter_schemafields(schema):
 
 def schema_filter_geojson(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    if not s.allow_charting:
-        return HttpResponse(status=404)
-
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, schema=s)
     filter_sf_dict = _get_filter_schemafields(s)
