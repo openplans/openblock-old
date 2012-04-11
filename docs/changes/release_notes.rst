@@ -91,6 +91,9 @@ New Features in 1.2
   US census TIGER data; without it, we were getting geocoding failures,
   confusing/ambigous street names in the UI, etc. Closes #264.
 
+* ``NewsItem`` now allows saving with an empty ``description.``;
+  some things might really only have a title available.
+
 * Support multiple types of Yahoo maps, due to olwidget upgrade.
 
 * ebpub.geocoder.base.full_geocode() now has a convert_to_block

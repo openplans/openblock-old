@@ -1271,9 +1271,9 @@ class NewsItem(models.Model):
 
     schema = models.ForeignKey(Schema, help_text=u'What kind of news is this and what extra fields does it have?')
     title = models.CharField(max_length=255, help_text=u'the "headline"')
-    description = models.TextField()
+    description = models.TextField(blank=True, default=u'')
     url = models.TextField(
-        blank=True,
+        blank=True, default=u'',
         help_text="link to original source for this news")
     pub_date = models.DateTimeField(
         db_index=True,

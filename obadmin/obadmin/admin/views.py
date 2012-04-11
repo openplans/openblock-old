@@ -307,10 +307,14 @@ def import_items_from_spreadsheets(items_file, schema, mapping_file=None,
 
 @csrf_protect
 def import_newsitems(request):
-    form = forms.ImportNewsForm(request.POST or None, request.FILES or None)
+    from ebdata.scrapers.general.spreadsheet.retrieval import get_default_unique_field_names
+    form = forms.ImportNewsForm(
+        request.POST or None, request.FILES or None,
+        initial={'unique_fields': get_default_unique_field_names()}
+        )
     if form.save():
         # TODO: Capture logging output and put that in message too?
-        msg = u'Added %d, Updated %d, Skipped %d.' % (form.added, form.updated, form.skipped)
+        msg = u'%d added. %d updated. %d skipped or unchanged.' % (form.added, form.updated, form.skipped)
         msg += u' See the server error log if you need more info.'
         messages.add_message(request, messages.INFO, msg)
         return HttpResponseRedirect('./')
