@@ -73,7 +73,7 @@ class Base(template.Node):
             # Note, context['request'] only works if
             # django.core.context_processors.request is enabled in
             # TEMPLATE_CONTEXT_PROCESSORS.
-            filterchain = FilterChain(context=context, request=context['request'],
+            filterchain = FilterChain(context=context, request=context.get('request'),
                                       schema=filterchain_or_schema)
         else:
             raise template.TemplateSyntaxError(

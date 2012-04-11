@@ -1011,7 +1011,8 @@ class FilterChain(SortedDict):
             if not isinstance(val, NewsitemFilter):
                 logger.warn("SchemaFilter.add called with key %r and unexpected values %r, not adding."
                             % (key, values))
-                logger.warn('path was: %s' % self.request.get_full_path())
+                if self.request:
+                    logger.warn('path was: %s' % self.request.get_full_path())
                 return self
 
         if _replace and key in self:
