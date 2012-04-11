@@ -456,7 +456,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
             return HttpResponsePermanentRedirect(ni.url)
         else:
             # We have nothing to show the user; ticket #110.
-            raise Http404("This news item needs an external URL and doesn't have one")
+            raise Http404("This news item needs an external URL (because schema.has_newsitem_detail is False), and it doesn't have one")
 
     atts = ni.attributes_for_template()
 
