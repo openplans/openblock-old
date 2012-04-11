@@ -320,6 +320,9 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
             return self.create_or_update(old_record, attributes,
                                          **form.cleaned_data)
         else:
+            self.logger.info("Skipping due to validation failures:")
+            for key, val in form.errors.items():
+                self.logger.info("%s: %s" % (key, val.as_text()))
             raise SkipRecord(form.errors)
 
 
