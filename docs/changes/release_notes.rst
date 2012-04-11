@@ -87,6 +87,9 @@ Backward Incompatibilities
 New Features in 1.2
 -------------------
 
+* Admin UI now provides links to view various things (NewsItems,
+  Locations, Blocks, Streets, LocationTypes) on the live site.
+
 * ``NewsItem`` now allows saving with an empty ``description.``;
   some things might really only have a title available.
 
@@ -211,6 +214,10 @@ New Features in 1.2
 
 Bugs fixed
 ----------
+
+* Schemas with allow_charting=False were shown on the schema_filter
+  view, but not on its map. Fixed schema_filter_geojson so now they
+  show up on map too.
 
 * Fix filtering by location and date on big map page.
 
