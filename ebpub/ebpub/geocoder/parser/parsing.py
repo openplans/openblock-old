@@ -85,13 +85,13 @@ class Standardizer(object):
         else:
             return s
 
-_number_standardizer_re = re.compile(r'^(\d+)')
+_number_standardizer_re = re.compile(r'(\d+)')
 
 def number_standardizer(s):
     """
     Removes the second number in hyphenated addresses such as '123-02', as
     used in NYC. Note that this also removes the second number in address
-    ranges::
+    ranges, and non-digit prefixes or suffixes::
     
         >>> number_standardizer('1-2')
         '1'
@@ -104,6 +104,10 @@ def number_standardizer(s):
         >>> number_standardizer('257b')
         '257'
         >>> number_standardizer('9L00')
+        '9'
+        >>> number_standardizer('W01')
+        '01'
+        >>> number_standardizer('9 8 7 6 5')
         '9'
 
     """

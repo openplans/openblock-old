@@ -107,7 +107,7 @@ def intersecting_blocks(block):
     return intersections
 
 def intersection_from_blocks(block_a, block_b, intersection_pt, city, state, zip):
-    obj = Intersection(
+    obj, created = Intersection.objects.get_or_create(
         pretty_name=pretty_name_from_blocks(block_a, block_b),
         slug=slug_from_blocks(block_a, block_b),
         predir_a=block_a.predir,
