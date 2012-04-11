@@ -105,6 +105,10 @@ The `has_newsitem_detail` field controls whether this item has a page hosted on 
 
     >>> crime_report.has_newsitem_detail = True
 
+Note that if your news source doesn't provide any URLs you can link
+to, you will have to set this to True, or else clicking on links to
+these items will result in a 404 Not Found error.
+
 The `is_public` field controls whether or not NewsItems of this type are visible
 to anybody other than administrators on the 
 site.  Normally you should wait until the type is set up and loaded with 
