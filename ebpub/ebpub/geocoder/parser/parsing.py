@@ -132,7 +132,10 @@ def normalize(location):
         u'1972 N DAWSON AVE CHICAGO IL'
         >>> normalize(u"n kimball ave & w diversey ave")
         u'N KIMBALL AVE & W DIVERSEY AVE'
+        >>> normalize(None)
+        u'NONE'
     """
+    location = unicode(location)
     old_location = location
     location = location.upper()
     location = half_addresses_re.sub('', location) # Strip "1/2" addresses.

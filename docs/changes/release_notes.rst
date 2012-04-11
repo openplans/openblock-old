@@ -215,6 +215,9 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* parsing.normalize() and text.slugify() no longer blow up if fed
+  non-string input.
+
 * Schemas with allow_charting=False were shown on the schema_filter
   view, but not on its map. Fixed schema_filter_geojson so now they
   show up on map too.
