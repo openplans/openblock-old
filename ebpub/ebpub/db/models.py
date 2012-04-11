@@ -1273,7 +1273,7 @@ class NewsItem(models.Model):
     title = models.CharField(max_length=255, help_text=u'the "headline"')
     description = models.TextField(blank=True, default=u'')
     url = models.TextField(
-        blank=True,
+        blank=True, default=u'',
         help_text="link to original source for this news")
     pub_date = models.DateTimeField(
         db_index=True,
