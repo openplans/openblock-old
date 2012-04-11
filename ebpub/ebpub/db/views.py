@@ -50,7 +50,7 @@ from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
-from ebpub.utils.dates import daterange, parse_date, today
+from ebpub.utils.dates import daterange, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
 from ebpub.utils.view_utils import paginate
