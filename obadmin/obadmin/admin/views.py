@@ -34,6 +34,10 @@ from ebpub.db.models import LocationType
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from . import forms
 
+import logging
+
+logger = logging.getLogger('obadmin.admin.views')
+
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
 request_username = lambda request: request.META.get('REMOTE_USER', '') or request.META.get('HTTP_X_REMOTE_USER', '')
@@ -262,8 +266,17 @@ def pick_shapefile_layer(request):
         return HttpResponseRedirect('../upload-shapefile/')
     if form.save():
         return HttpResponseRedirect('../')
+    if form.failure_msgs:
+        for msg in form.failure_msgs:
+            messages.error(request, msg)
 
-    ds = DataSource(shapefile)
+    try:
+        ds = DataSource(shapefile)
+    except Exception as e:
+        ds = None
+        messages.error(request, "Error opening shapefile: %s" % e)
+        logger.exception("Unhandled error opening shapefile:")
+
     fieldset = Fieldset(form, fields=('location_type',))
     return render(request, 'obadmin/location/pick_shapefile_layer.html', {
         'shapefile': shapefile,
