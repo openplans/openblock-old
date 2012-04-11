@@ -59,7 +59,7 @@ class BlockImporter(object):
                             block_fields[key] = val.decode(self.encoding)
 
 
-                    block_fields['geom'] = feature.geom.geos
+                    block_fields['geom'] = feature.geom.transform(4326, True).geos
 
                     block_fields['street_pretty_name'], block_fields['pretty_name'] = make_pretty_name(
                         block_fields['left_from_num'],

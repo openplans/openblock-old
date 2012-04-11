@@ -49,14 +49,14 @@ class ZipImporter(import_locations.LocationImporter):
     def collapse_zip_codes(self):
         # The ESRI ZIP Code layer breaks ZIP Codes up along county
         # boundaries, so we need to collapse them first before
-        # proceeding
+        # proceeding.
 
         if len(self.zipcodes) > 0:
             return
 
         for feature in self.layer:
             zipcode = feature.get(self.name_field)
-            geom = feature.geom.geos
+            geom = feature.geom.transform(4326, True).geos
             if zipcode not in self.zipcodes:
                 self.zipcodes[zipcode] = geom
             else:
