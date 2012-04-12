@@ -50,7 +50,7 @@ from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
-from ebpub.utils.dates import daterange, parse_date, today
+from ebpub.utils.dates import daterange, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
 from ebpub.utils.view_utils import paginate
@@ -456,7 +456,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
             return HttpResponsePermanentRedirect(ni.url)
         else:
             # We have nothing to show the user; ticket #110.
-            raise Http404("This news item needs an external URL and doesn't have one")
+            raise Http404("This news item needs an external URL (because schema.has_newsitem_detail is False), and it doesn't have one")
 
     atts = ni.attributes_for_template()
 
@@ -667,9 +667,6 @@ def _get_filter_schemafields(schema):
 
 def schema_filter_geojson(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    if not s.allow_charting:
-        return HttpResponse(status=404)
-
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, schema=s)
     filter_sf_dict = _get_filter_schemafields(s)

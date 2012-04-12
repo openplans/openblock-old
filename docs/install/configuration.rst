@@ -2,9 +2,19 @@
 Configuring OpenBlock
 =====================
 
-You should have a look at ``ebpub/ebpub/settings_default.py``.  It
+Like all Django applications, you will want to do some configuration
+via the ``settings.py`` file.
+
+OpenBlock's default settings are in ``ebpub/ebpub/settings_default.py``.
+You should have a look at it; it
 contains many comments about the purpose and possible values of the
 various settings expected by OpenBlock.
+
+Any settings in settings_default.py can be overridden by editing your
+``settings.py`` file.
+
+Django's own core settings are documented at
+https://docs.djangoproject.com/en/1.3/ref/settings/ .
 
 A few items are worth special mention.
 
@@ -505,6 +515,7 @@ debugging harder, and can add a bit to the size of database.
 
 ``EB_DOMAIN`` -- The domain used for the root of some generated
 URLs, eg. in feeds, widgets, and generated emails.
+Should not end with a slash.
 
 ``MEDIA_ROOT``, ``MEDIA_URL`` -- Directory and base URL for
 user-uploaded images and files.  By default this is calculated from

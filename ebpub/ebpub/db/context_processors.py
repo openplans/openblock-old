@@ -49,3 +49,9 @@ def map_context(request):
             'alerts_installed': 'ebpub.alerts' in settings.INSTALLED_APPS,
             'today': today(),
             }
+
+def settings_context(request):
+    return {
+        'EB_DOMAIN':  settings.EB_DOMAIN,
+        }
+

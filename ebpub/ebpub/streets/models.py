@@ -323,12 +323,14 @@ class Block(models.Model):
             url.extend(['-', self.postdir.lower()])
         return ''.join(url)
 
-    def url(self):
+    def get_absolute_url(self):
         try:
             return urlresolvers.reverse('ebpub-block-recent',
                                         args=self._get_full_url_args())
         except urlresolvers.NoReverseMatch:
             return None
+
+    url = get_absolute_url  # for backward compatibility
 
     def _get_full_url_args(self):
         args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
@@ -495,11 +497,17 @@ class Street(models.Model):
     def __unicode__(self):
         return self.pretty_name
 
-    def url(self):
+    def get_absolute_url(self):
+        return urlresolvers.reverse('ebpub-block-list', args=[self.city_slug, self.street_slug])
+
+    # For backward compatibility.
+    url = get_absolute_url
+
+    @property
+    def city_slug(self):
         if get_metro()['multiple_cities']:
-            return '/streets/%s/%s/' % (self.city_object().slug, self.street_slug)
-        else:
-            return '/streets/%s/' % self.street_slug
+            return self.city_object().slug
+        return ''
 
     def city_object(self):
         return City.from_norm_name(self.city)

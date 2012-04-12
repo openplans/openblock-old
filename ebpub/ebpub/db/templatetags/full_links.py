@@ -39,15 +39,17 @@ class FullLinksNode(template.Node):
     def render(self, context):
         domain = self.domain_var.resolve(context)
         output = self.nodelist.render(context)
-        output = re.sub(r'(?i)(<a.*?\bhref=")/', r'\1http://%s/' % domain, output)
-        output = re.sub(r'(?i)(<img.*?\bsrc=")/', r'\1http://%s/' % domain, output)
+        output = re.sub(r'(?i)(<(a|link)\b.*?\bhref=")/', r'\1http://%s/' % domain, output)
+        output = re.sub(r'(?i)(<(img|script)\b.*?\bsrc=")/', r'\1http://%s/' % domain, output)
         return output
 
 def full_links(parser, token):
     """
-    Converts all <a href>s within {% full_links %} / {% end_full_links %} to
+    Converts all <a href>s and <img src>s within {% full_links %} / {% end_full_links %} to
     use fully qualified URLs -- i.e., to start with 'http://'. Doesn't touch
     the ones that already start with 'http://'.
+
+    TODO: Doesn't handle https://
 
     Example:
 
@@ -55,14 +57,14 @@ def full_links(parser, token):
 
       {% full_links "example.com" %}
         <a href="/food"></a>
-        <a href="/sleep"></a>
+        <img src="/sleep"></img>
 
       {% end_full_links %}
 
     Output::
 
        <a href="http://example.com/food"></a>
-       <a href="http://example.com/sleep"></a>
+       <img src="http://example.com/sleep"></img>
 
     """
 

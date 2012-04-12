@@ -63,6 +63,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.csrf',
     'django.contrib.messages.context_processors.messages',
     'ebpub.db.context_processors.map_context',
+    'ebpub.db.context_processors.settings_context',
     'django.core.context_processors.request',
     #'django.core.context_processors.debug',
 )

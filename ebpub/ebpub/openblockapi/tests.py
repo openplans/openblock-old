@@ -213,8 +213,7 @@ class TestPushAPI(BaseTestCase):
         with self.assertRaises(views.InvalidNewsItem) as e:
             views._item_create(info)
         self.assertEqual(e.exception.errors,
-                         {'description': [u'This field is required.'],
-                          'title': [u'This field is required.'],
+                         {'title': [u'This field is required.'],
                           })
 
     @mock.patch('ebpub.openblockapi.views._get_location_info')

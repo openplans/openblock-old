@@ -21,11 +21,6 @@ Forms for use in the openblock admin UI.
 """
 # -*- coding: utf-8 -*-
 from django import forms
-from django.contrib import messages
-from django.contrib.admin.helpers import Fieldset
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
-from django.views.decorators.csrf import csrf_protect
 from ebdata.scrapers.general.spreadsheet import retrieval
 from ebpub.db.bin import import_locations
 from ebpub.db.models import LocationType
@@ -37,7 +32,9 @@ from tempfile import mkstemp, mkdtemp
 import glob
 import os
 import zipfile
+import logging
 
+logger = logging.getLogger('obadmin.admin.forms')
 
 class SchemaLookupsForm(forms.Form):
     def __init__(self, lookup_ids, *args, **kwargs):
@@ -167,27 +164,40 @@ class PickShapefileLayerForm(forms.Form):
                                            required=True,
                                            )
     layer = forms.IntegerField(required=True)
-    name_field = forms.CharField(required=True)
+    name_field = forms.CharField(
+        required=True,
+        help_text='Which field of each feature to use as the name of the imported location.')
+    filter_bounds = forms.BooleanField(
+        required=False, initial=False,
+        help_text="Whether to exclude locations that don't intersect with our metro bounding box.")
+
+    failure_msgs = ()
 
     def save(self):
+        self.failure_msgs = []
         if not self.is_valid():
               return False
-
         shapefile = os.path.abspath(self.cleaned_data['shapefile'])
-        layer = import_locations.layer_from_shapefile(shapefile, self.cleaned_data['layer'])
         location_type = self.cleaned_data['location_type']
         name_field = self.cleaned_data['name_field']
-
-        # TODO: Run this as a background task
-        importer = import_locations.LocationImporter(layer, location_type,
-                                                     filter_bounds=True)
-        if importer.save(name_field) > 0:
-            # TODO: validate this directory!
-            import shutil
-            shutil.rmtree(os.path.dirname(shapefile))
-            return True
-        else:
-            # TODO: would be nice to pass some errors back to page
+        try:
+            layer = import_locations.layer_from_shapefile(shapefile, self.cleaned_data['layer'])
+            # TODO: Run this as a background task
+            importer = import_locations.LocationImporter(
+                layer, location_type,
+                filter_bounds=self.cleaned_data.get('filter_bounds'))
+            if importer.save(name_field) > 0:
+                # TODO: validate this directory!
+                import shutil
+                shutil.rmtree(os.path.dirname(shapefile))
+                return True
+            else:
+                # TODO: more useful error msg
+                self.failure_msgs.append(u"Saved no locations, maybe a bad shapefile")
+                return False
+        except Exception as e:
+            self.failure_msgs.append(u"Unhandled exception, see server log: %s" % e)
+            logger.exception('Unhandled exception importing shapefile:')
             return False
 
 
