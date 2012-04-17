@@ -33,12 +33,18 @@ def make_street_pretty_name(prefix, street, suffix):
     u'Yes No'
     >>> make_street_pretty_name(' US hWy ', '101', 'C')
     u'US Hwy 101 C'
+    >>> make_street_pretty_name(' I- ', '40', '')
+    u'I-40'
 
     """
     prefix = make_pretty_prefix(prefix or u'')
     suffix = smart_title(suffix or u'').strip()
     street = smart_title(street or u'').strip()
     assert street
+    if prefix == u'I':
+        # Special case to avoid "I- 40", the standard is apparently "I-40"
+        prefix = u''
+        street = u'I-%s' % street
     street_name = u' '.join((prefix, street, suffix)).strip()
     return street_name
 
@@ -209,6 +215,8 @@ def make_pretty_prefix(prefix):
     u'US Highway'
     >>> make_pretty_prefix('State Rt ')
     u'State Route'
+    >>> make_pretty_prefix(' I- ')
+    u'I'
     >>> make_pretty_prefix(' Anything Else ')
     u'Anything Else'
     """
@@ -217,7 +225,8 @@ def make_pretty_prefix(prefix):
         return prefix[:-3] + u'Highway'
     if prefix.upper().endswith(u'RT'):
         return prefix[:-2] + u'Route'
-    prefix = smart_title(prefix, exceptions=['US']).strip()
+    prefix = prefix.strip().strip('-').strip()
+    prefix = smart_title(prefix, exceptions=['US'])
     return prefix
 
 def make_dir_street_name(block):
