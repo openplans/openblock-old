@@ -16,11 +16,11 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import string
 from django.contrib.gis.gdal import DataSource
 from django.core.exceptions import ValidationError
 from ebpub.streets.models import Block
 from ebpub.streets.name_utils import make_pretty_name
+from ebpub.streets.name_utils import make_pretty_prefix
 from ebpub.streets.name_utils import make_block_numbers
 from ebpub.utils.text import slugify
 
@@ -65,6 +65,7 @@ class BlockImporter(object):
                             block_fields[key] = val.decode(self.encoding)
 
                     block_fields['geom'] = feature.geom.transform(4326, True).geos
+                    block_fields['prefix'] = make_pretty_prefix(block_fields['prefix'])
 
                     block_fields['street_pretty_name'], block_fields['pretty_name'] = make_pretty_name(
                         block_fields['left_from_num'],
@@ -77,6 +78,9 @@ class BlockImporter(object):
                         block_fields['suffix'],
                         block_fields['postdir']
                     )
+
+                    if block_fields['prefix'].lower().count('old'):
+                        print "Old %s" % block_fields
 
                     block_fields['street_slug'] = slugify(
                         u' '.join((block_fields['prefix'],
