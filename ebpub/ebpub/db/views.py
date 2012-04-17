@@ -980,8 +980,7 @@ def city_list(request):
 def street_list(request, city_slug=None):
     city = city_slug and City.from_slug(city_slug) or None
     kwargs = city_slug and {'city': city.norm_name} or {}
-    # For display we sort on the name *without* the prefix.
-    streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
+    streets = list(Street.objects.filter(**kwargs).order_by('street_slug'))
     if not streets:
         raise Http404('This city has no streets')
     # URLs are generated from the slugs, which are distinct per city.
