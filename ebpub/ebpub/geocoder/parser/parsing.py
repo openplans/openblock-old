@@ -324,8 +324,8 @@ def address_combinations():
 
 token_split = re.compile(r"\S+").findall
 
-# Special case for detecting eg. 'I40'
-interstate_street_re = re.compile(r"^I(-?)(\d{1,3}[A-Z]?)$")
+# Special case for detecting eg. 'I40', 'I-40'
+interstate_street_re = re.compile(r"^I(-?\s*)(\d{1,3}[A-Z]?)$")
 
 def parse(location):
     """
