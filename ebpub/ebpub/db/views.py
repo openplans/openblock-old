@@ -980,15 +980,31 @@ def city_list(request):
 def street_list(request, city_slug=None):
     city = city_slug and City.from_slug(city_slug) or None
     kwargs = city_slug and {'city': city.norm_name} or {}
+    # For display we sort on the name *without* the prefix.
     streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
     if not streets:
         raise Http404('This city has no streets')
+    # URLs are generated from the slugs, which are distinct per city.
+    # If the ``city_slug`` arg was None, then the streets list can
+    # contain what look like duplicate streets, just in different
+    # cities.  That's not helpful because they all link to the same
+    # page anyway. So, remove the dupes.  Might be a clever way to do
+    # this in one db query; but for a few thousand streets, it's fine
+    # to do here.
+    slugs_seen = set()
+    filtered_streets = []
+    for street in streets:
+        if street.street_slug in slugs_seen:
+            continue
+        filtered_streets.append(street)
+        slugs_seen.add(street.street_slug)
+
     try:
         example_loctype = LocationType.objects.get(slug=settings.DEFAULT_LOCTYPE_SLUG).plural_name
     except LocationType.DoesNotExist:
         example_loctype = None
     context = {
-        'street_list': streets,
+        'street_list': filtered_streets,
         'city': city,
         'bodyclass': 'street-list',
         'example_loctype': example_loctype,
