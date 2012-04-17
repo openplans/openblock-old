@@ -403,7 +403,7 @@ class PlaceTypeAdmin(OSMModelAdmin):
 
 class StreetAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'suffix', 'city', 'state',)
-    list_filter = ('suffix', 'city', 'state',)
+    list_filter = ('prefix', 'suffix', 'city', 'state',)
     search_fields = ('pretty_name',)
     readonly_fields = ('street',)
     prepopulated_fields = {'street_slug': ('pretty_name',)}

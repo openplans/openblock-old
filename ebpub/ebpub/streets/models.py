@@ -204,28 +204,36 @@ class BlockManager(models.GeoManager):
             blocks = list([(b, None) for b in qs])
         return blocks
 
-class Block(models.Model):
 
-    street_slug = models.SlugField()
+class Block(models.Model):
+    """Represents a segment of a single street, typically between two
+    intersections.
+
+    (But note that due to vagaries of the source data, eg. US Census
+    data, a Blocks may sometimes be a segment of a street that doesn't
+    start and/or end at an intersection; it may just be a range of
+    addresses between two apparently arbitrary points.)
+    """
+    street_slug = models.SlugField(help_text="Slug used for looking up a related Street. Includes prefix, street, and suffix, but not directionals. Example: us-highway-63")
 
     pretty_name = models.CharField(
         max_length=255,
-        help_text='human-readable name including everything - address range, directionals, street name, suffix')
+        help_text='human-readable name including everything - address range, directionals, street name, suffix. Example: 8701-8703 US Highway 63 S.')
 
     street_pretty_name = models.CharField(
         max_length=255,
-        help_text='Like pretty_name but without address numbers')
+        help_text='Like pretty_name but without address numbers or directionals. Example: US Highway 63.')
 
     predir = models.CharField(
         max_length=2, blank=True, db_index=True,
         help_text='Direction abbreviation before street name, UPPERCASE, eg. N or SW')
 
     prefix =  models.CharField(max_length=32, blank=True, db_index=True,
-                               help_text='Prefix abbreviation in UPPERCASE, eg. US HWY')
+                               help_text='Prefix in UPPERCASE, eg. US HIGHWAY')
 
     street = models.CharField(
         max_length=255, db_index=True,
-        help_text='Just the street part of the name, UPPERCASE, with no directionals, prefix, or suffix')
+        help_text='Just the street part of the name, UPPERCASE, with no directionals, prefix, or suffix. Example: 63')
     suffix = models.CharField(max_length=32, blank=True, db_index=True,
                               help_text='Suffix abbreviation in UPPERCASE, eg. ST or AVE')
     postdir = models.CharField(
@@ -479,13 +487,26 @@ class Block(models.Model):
 
 
 class Street(models.Model):
+    """
+    Represents a Street with a unique name (in a particular city).
 
+    Does not know about directionals: a block on North Main Street is
+    considered to be on the same street as South Main Street.
+
+    We do not have geometries for these; they are typically just used
+    as a grouping of :py:class:`Blocks <Block>`.
+    """
     street = models.CharField(max_length=255, db_index=True,
-                              help_text='Always uppercase.')
-    pretty_name = models.CharField(max_length=255)
-    street_slug = models.SlugField()
+                              help_text='Always uppercase. eg. 63')
+    prefix =  models.CharField(max_length=32, blank=True, db_index=True,
+                               help_text='Prefix in UPPERCASE, eg. US HIGHWAY')
+    pretty_name = models.CharField(max_length=255,
+                                   help_text='Includes prefix, street, and suffix, but not directionals. Example: US Highway 63')
+    street_slug = models.SlugField(
+        help_text="Slug used for looking up related Blocks. Based on pretty_name; includes prefix, street, and suffix, but not directionals. Example: us-highway-63")
+
     suffix = models.CharField(max_length=32, blank=True, db_index=True,
-                              help_text='Always uppercase.')
+                              help_text='Always uppercase. Example: ST or AVE')
     city = models.CharField(max_length=255, db_index=True,
                             help_text='Always uppercase. City name, not slug.')
     state = USStateField(db_index=True, help_text='Always uppercase.')  # bad for i18n!
@@ -493,6 +514,7 @@ class Street(models.Model):
     class Meta:
         db_table = 'streets'
         ordering = ('pretty_name',)
+        unique_together = ('street_slug', 'city', 'state')
 
     def __unicode__(self):
         return self.pretty_name
