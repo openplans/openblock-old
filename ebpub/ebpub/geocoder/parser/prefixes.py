@@ -28,8 +28,6 @@ prefixes = {
     'FM': ['FARM TO MARKET', 'FM', 'HWY FM'],
     'HIGHWAY': ['HIGHWAY', 'HIWAY', 'HWY'],
     'INTERSTATE': ['I', 'INTERSTATE', 'IH', 'INTERSTATE HWY'],
-    # 'BUSINESS LOOP' is not in docs, but I've seen it in Columbia MO data.
-    'LOOP': ['LOOP', 'BUSINESS LOOP'],
     'ROAD': ['RD', 'ROAD'],
     'ROUTE': ['RT', 'RTE', 'ROUTE'],
     'RANCH ROAD': ['RANCH RD'],
@@ -41,8 +39,8 @@ prefixes = {
     'TOWNSHIP ROAD': ['TOWNSHIP RD', 'TSR', 'TOWNSHIP ROAD'],
     'US HIGHWAY': ['US', 'US HIGHWAY', 'US HWY'],
 
-    # These OLD variants are not documented by the post office, but I've seen 'em
-    # in TIGER census data.
+    # These OLD variants are not documented by the post office, but
+    # I've seen 'em in TIGER census data.
     'OLD US HIGHWAY': ['OLD US', 'OLD US HIGHWAY', 'OLD US HWY'],
     'OLD STATE HIGHWAY': ['OLD STATE', 'OLD STATE HIGHWAY', 'OLD STATE HWY', 'OLD ST HWY'],
     'OLD STATE ROUTE': ['OLD SR', 'OLD ST RT', 'OLD STATE ROUTE', 'OLD STATE RTE'],
@@ -52,6 +50,11 @@ prefixes = {
     'OLD COUNTY ROAD': ['OLD COUNTY RD', 'OLD COUNTY ROAD', 'OLD CR', 'OLD CNTY RD'],
     'OLD HIGHWAY': ['OLD HIGHWAY', 'OLD HIWAY', 'OLD HWY'],
     'OLD': ['OLD'],
+
+    # 'LOOP' and 'BUSINESS LOOP' are not in docs, but I've seen it in
+    # Columbia MO data.
+    'LOOP': ['LOOP'],
+    'BUSINESS LOOP': ['BUSINESS LOOP'],
 
 }
 
