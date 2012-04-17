@@ -505,7 +505,7 @@ class Street(models.Model):
     def city_object(self):
         return City.from_norm_name(self.city)
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         if self.suffix:
             self.suffix = self.suffix.upper().strip()
         if self.state:
@@ -518,7 +518,7 @@ class Street(models.Model):
         self.street = normalize(self.pretty_name)
         if self.suffix:
             self.street = re.sub(r' %s$' % self.suffix.upper(), '', self.street)
-        super(Street, self).save()
+        super(Street, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
 
 class Misspelling(models.Model):
@@ -553,14 +553,16 @@ class StreetMisspelling(models.Model):
     correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
     objects = StreetMisspellingManager()
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         """Ensure everything's normalized (uppercase, normalized whitespace).
         Doing this on the model so it happens regardless of whether
         data comes from admin UI or a script or whatever.
         """
         self.incorrect = normalize(self.incorrect or '')
         self.correct = normalize(self.correct or '')
-        super(StreetMisspelling, self).save()
+        super(StreetMisspelling, self).save(force_insert=force_insert,
+                                            force_update=force_update,
+                                            using=using)
 
     def __unicode__(self):
         return self.incorrect
@@ -625,10 +627,10 @@ class Place(models.Model):
             return u'%s (%s)' % (self.pretty_name, self.address)
         return self.pretty_name
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         if not self.normalized_name:
             self.normalized_name = normalize(self.pretty_name)
-        super(Place, self).save()
+        super(Place, self).save(force_update=force_update, force_insert=force_insert, using=using)
 
 
 class PlaceSynonymManager(models.Manager):
@@ -656,10 +658,10 @@ class PlaceSynonym(models.Model):
     place = models.ForeignKey(Place)
     objects = PlaceSynonymManager()
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         if not self.normalized_name:
             self.normalized_name = normalize(self.pretty_name)
-        super(PlaceSynonym, self).save()
+        super(PlaceSynonym, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
     def __unicode__(self):
         return self.pretty_name
@@ -800,13 +802,13 @@ class Suburb(models.Model):
     name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, unique=True)
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         """Ensure everything's normalized (uppercase, normalized whitespace).
         Doing this on the model so it happens regardless of whether
         data comes from admin UI or a script or whatever.
         """
         self.normalized_name = normalize(self.name)
-        super(Suburb, self).save()
+        super(Suburb, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
     def __unicode__(self):
         return self.name

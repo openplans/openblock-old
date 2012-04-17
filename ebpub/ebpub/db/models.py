@@ -924,14 +924,14 @@ class LocationSynonym(models.Model):
                                  help_text='Location this is a synonym for.')
     objects = LocationSynonymManager()
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         # Not doing this in clean() because we really don't want there to be
         # any way to get this wrong.
         if self.normalized_name:
             self.normalized_name = normalize(self.normalized_name)
         else:
             self.normalized_name = normalize(self.pretty_name)
-        super(LocationSynonym, self).save()
+        super(LocationSynonym, self).save(force_update=force_update, force_insert=force_insert, using=using)
 
     def __unicode__(self):
         return self.pretty_name
