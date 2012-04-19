@@ -52,10 +52,13 @@ def populate_ni_loc(location):
     i = 0
     batch_size = 400
     while i < ni_count:
+        # We don't use intersecting_collection() because we should have cleaned up
+        # all our geometries by now and it's sloooow ... there could be millions
+        # of db_newsitem rows.
         cursor.execute("""
             INSERT INTO db_newsitemlocation (news_item_id, location_id)
             SELECT ni.id, loc.id FROM db_newsitem ni, db_location loc
-            WHERE intersecting_collection(ni.location, loc.location)
+            WHERE st_intersects(ni.location, loc.location)
                 AND ni.id >= %s AND ni.id < %s
                 AND loc.id = %s
         """, (i, i + batch_size, location.id))
