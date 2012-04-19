@@ -63,9 +63,9 @@ def main(argv=None):
         opts.filter_bounds,
         opts.verbose
     )
-    num_created = importer.save(opts.name_field)
+    num_created, num_updated = importer.save(opts.name_field)
     if opts.verbose:
-        print >> sys.stderr, 'Created %s neighborhoods.' % num_created
+        print >> sys.stderr, 'Created %s, updated %s neighborhoods.' % (num_created, num_updated)
 
 if __name__ == '__main__':
     sys.exit(main())

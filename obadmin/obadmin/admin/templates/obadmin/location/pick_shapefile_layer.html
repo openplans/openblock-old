@@ -36,10 +36,12 @@ Pick Shapefile Layer to Import
             <p>
               Filter out locations outside our default bounding box?
               <input type="checkbox" name="filter_bounds" checked="checked" />
+
             </p>
 
             <p>Select which layer you'd like to import.</p>
             <input name="shapefile" type="hidden" value="{{ shapefile }}" />
+
             <ol class="layers">
             {% for layer in layers %}
                 <li>

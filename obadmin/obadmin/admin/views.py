@@ -198,6 +198,8 @@ def jobs_status(request, appname, modelname):
              'task': u'obadmin.admin.tasks.download_state_shapefile' },
             {'label': u'Import ZIP codes',
              'task': u'obadmin.admin.tasks.import_zip_from_shapefile'},
+            {'label': 'Import Locations',
+             'task': u'obadmin.admin.tasks.import_locations_from_shapefile'},
             ]
     elif appname == 'streets':
         # Don't bother discriminating further based on modelname;

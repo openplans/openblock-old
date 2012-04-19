@@ -23,6 +23,7 @@ from ebdata.retrieval.retrievers import Retriever
 from tempfile import mkdtemp
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
+from ebpub.db.bin.import_locations import LocationImporter
 from ebpub.db.bin.import_zips import ZipImporter
 from ebpub.streets.blockimport.tiger.import_blocks import TigerImporter
 from ebpub.streets.bin import populate_streets
@@ -135,25 +136,36 @@ def import_zip_from_shapefile(filename, zipcode):
         return
 
 @background
+def import_locations_from_shapefile(shapefile, layer_number, location_type, name_field, filter_bounds):
+    try:
+        layer = layer_from_shapefile(shapefile, layer_number)
+        importer = LocationImporter(layer, location_type,
+                                    filter_bounds=filter_bounds)
+        created, updated = importer.save(name_field)
+    except:
+        logger.exception("Location import failed")
+        return
+    if created + updated > 0:
+        # TODO: validate this directory!
+        shutil.rmtree(os.path.dirname(shapefile))
+        return True
+
+
+@background
 def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
                                   fix_cities=False, regenerate_intersections=True):
     # File args are paths to zip files.
 
     outdir = mkdtemp(suffix='-block-shapefiles')
     try:
-        for path in (edges, featnames, faces, place):
-            ZipFile(path, 'r').extractall(outdir)
-    except:
-        # TODO: display error in UI
-        logger.exception('Extracting zipfile failed')
-        shutil.rmtree(outdir)
-        raise
-    finally:
-        os.unlink(edges)
-        os.unlink(featnames)
-        os.unlink(faces)
-        os.unlink(place)
-    try:
+        try:
+            for path in (edges, featnames, faces, place):
+                ZipFile(path, 'r').extractall(outdir)
+        except Exception:
+            # TODO: display error in UI
+            logger.exception('Extracting zipfile failed')
+            raise
+
         edges = glob.glob(os.path.join(outdir, '*edges.shp'))[0]
         featnames = glob.glob(os.path.join(outdir, '*featnames.dbf'))[0]
         faces = glob.glob(os.path.join(outdir, '*faces.dbf'))[0]
@@ -167,8 +179,14 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
             fix_cities=fix_cities,
             )
         num_created = tiger.save()
+
     finally:
         shutil.rmtree(outdir)
+        os.unlink(edges)
+        os.unlink(featnames)
+        os.unlink(faces)
+        os.unlink(place)
+
     if regenerate_intersections:
         populate_streets_task()
     return num_created

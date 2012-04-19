@@ -434,18 +434,27 @@ Admin UI: Importing Locations
 Browse  to /admin/db/locations, click "Upload Shapefile",
 and upload the zipped file you downloaded. Submit the form.
 
-On the next screen, you can choose a Location Type,
+On the next screen, you must choose a Location Type,
 then choose from the "layers" available in this shapefile (often there
 is only one).
 
+The form will tell you how many polygons or points each layer
+contains, which gives you an idea how many Locations you will get.
+However, there is currently no way to actually *see*  the shapes
+before importing. For that, you are better off with external GIS tools
+such as `Quantum GIS <http://www.qgis.org/>`_.
+
+
 Then you get to choose which field contains the name of each location.
 The form will show you an example value from each field, so it's
-usually pretty obvious which field is the one to choose.
-(If none of them make any sense, it's possible that this shapefile
-isn't usable by OpenBlock.)
+usually pretty obvious which field is the one to choose.  (If none of
+them make any sense, the shapefile may not have any nice
+human-readable labels at all; your best bet is to pick any field and
+manually rename the locations after import, but that may be
+impractical if there are a lot of features.)
 
-Submit the form and you're done.
-
+Submit the form and you will be redirected to the locations list.
+The import will run in the :ref:`background <background_tasks>`.
 
 .. _import_locations_from_shapefile:
 

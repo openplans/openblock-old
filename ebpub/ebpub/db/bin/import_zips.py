@@ -22,7 +22,6 @@
 See :ref:`zipcodes`
 """
 
-import datetime
 from django.contrib.gis.geos import MultiPolygon
 from ebpub.db.models import Location, LocationType
 from ebpub.utils.geodjango import ensure_valid
@@ -108,12 +107,16 @@ class ZipImporter(import_locations.LocationImporter):
 
     def save(self):
         num_created = 0
+        num_updated = 0
         sorted_zipcodes = sorted(self.zipcodes.iteritems(), key=lambda x: int(x[0]))
         for i, (zipcode, geom) in enumerate(sorted_zipcodes):
             created = self.create_location(zipcode, geom, display_order=i)
             if created:
                 num_created += 1
-        return num_created
+            else:
+                num_updated += 1
+        return (num_created, num_updated)
+
 
 def parse_args(optparser, argv):
     optparser.set_usage('usage: %prog [options] /path/to/shapefile')
@@ -134,9 +137,9 @@ def main(argv=None):
         argv = sys.argv[1:]
     layer, opts = parse_args(import_locations.optparser, argv)
     importer = ZipImporter(layer, opts.name_field, opts.source, opts.filter_bounds, opts.verbose)
-    num_created = importer.save()
+    num_created, num_updated = importer.save()
     if opts.verbose:
-        print >> sys.stderr, 'Created %s zipcodes.' % num_created
+        print >> sys.stderr, 'Created %s, updated %s zipcodes.' % (num_created, num_updated)
 
 if __name__ == '__main__':
     sys.exit(main())
