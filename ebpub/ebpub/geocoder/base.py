@@ -530,7 +530,9 @@ def disambiguate(geocoder_results, guess=False, city=None, state=None, zipcode=N
     """Disambiguate a list of geocoder results based on city, state, zip.
     Result will be a list, which may be the original list or a subset of it.
 
-    If guess==True, returns the first remaining result.
+    If guess==True, returns the first remaining result, which could be
+    wildly off from what you expect (eg. in the case of 'invalid block
+    but valid street')... so use with caution.
     """
     if not (zipcode or city or state):
         logger.debug("Nothing to disambiguate on, guessing first..")
