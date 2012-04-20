@@ -91,6 +91,8 @@ New Features in 1.2
   US census TIGER data; without it, we were getting geocoding failures,
   confusing/ambigous street names in the UI, etc. Closes #264.
 
+* Location import in admin UI now runs in background.
+
 * Admin UI now provides links to view various things (NewsItems,
   Locations, Blocks, Streets, LocationTypes) on the live site.
 
@@ -218,6 +220,9 @@ New Features in 1.2
 
 Bugs fixed
 ----------
+
+* Location import (both command-line and admin UI) no longer blows up
+  when re-importing the same Locations.
 
 * RSS feed URLs fixed to use settings.EB_DOMAIN rather than the sites
   framework for getting the root URL.  For consistency with the rest

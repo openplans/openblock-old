@@ -28,7 +28,7 @@ System Requirements
   on the developer wiki for specific lists of packages to install
   based on your distribution or OS.
 
-Linux, OSX, or some other Unix flavor is required.  **Windows is notsupported**
+Linux, OSX, or some other Unix flavor is required.  **Windows is not supported**
 by the OpenBlock team, and may never be; but patches are welcome :)
 
 Generally, you need:
@@ -50,13 +50,16 @@ Optionally, it may be helpful to install prebuilt packages for the following if 
 * python gdal bindings
 * python imaging library (PIL)
 
-(If you don't install these as system packages, the install will
+See http://developer.openblockproject.org/wiki/InstallationRequirements
+for details on installing these on particular operating systems.
+
+(If you don't install these packages globally, the install process will
 attempt to build them, which means you need a C compiler, the Python
 development libraries, and various other things installed.)
 
 `GeoDjango's platform-specific instructions
 <http://docs.djangoproject.com/en/1.3/ref/contrib/gis/install/#platform-specific-instructions>`_
-may have some useful information as well, as the majority of the requirements are just those of GeoDjango + PostGIS.
+may have some useful information as well, as the majority of OpenBlock's requirements are just those of GeoDjango + PostGIS.
 
 
 Don't forget ldconfig!

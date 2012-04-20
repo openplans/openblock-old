@@ -19,10 +19,12 @@
 
 from background_task import background
 from django.conf import settings
+from django.contrib.gis.geos import GEOSGeometry
 from ebdata.retrieval.retrievers import Retriever
 from tempfile import mkdtemp
 from zipfile import ZipFile
 from ebpub.db.bin.import_locations import layer_from_shapefile
+from ebpub.db.bin.import_locations import LocationImporter
 from ebpub.db.bin.import_zips import ZipImporter
 from ebpub.streets.blockimport.tiger.import_blocks import TigerImporter
 from ebpub.streets.bin import populate_streets
@@ -134,6 +136,38 @@ def import_zip_from_shapefile(filename, zipcode):
         logger.exception('Zipcode import failed')
         return
 
+def import_locations_from_shapefile(shapefile, layer_number, location_type,
+                                    name_field, filter_bounds):
+    # Not in background since this should just quickly create a bunch of
+    # import_location() jobs.
+    try:
+        layer = layer_from_shapefile(shapefile, layer_number)
+        features = sorted(layer, key = lambda f: f.get(name_field))
+        for i, feature in enumerate(features):
+            name = feature.get(name_field)
+            import_location(shapefile, layer_number, location_type, name, feature.geom.wkt, filter_bounds, display_order=i)
+    except:
+        logger.exception("Location import failed")
+    # Unfortunately, since everythign runs asynchronously,
+    # we don't know when the shapefile is safe to delete.
+    # At least it's in $TMPDIR :(
+
+
+@background
+def import_location(shapefile, layer_number, location_type, name, wkt, filter_bounds, display_order):
+    # Passing WKT because background functions need all their args to
+    # be json-serializable.
+    try:
+        layer = layer_from_shapefile(shapefile, layer_number)
+        importer = LocationImporter(layer, location_type,
+                                    filter_bounds=filter_bounds)
+        geom = GEOSGeometry(wkt)
+        importer.create_location(name, location_type, geom,
+                                 display_order=display_order)
+    except:
+        logger.exception("Location import of %s failed" % name)
+
+
 @background
 def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
                                   fix_cities=False, regenerate_intersections=True):
@@ -141,19 +175,14 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
 
     outdir = mkdtemp(suffix='-block-shapefiles')
     try:
-        for path in (edges, featnames, faces, place):
-            ZipFile(path, 'r').extractall(outdir)
-    except:
-        # TODO: display error in UI
-        logger.exception('Extracting zipfile failed')
-        shutil.rmtree(outdir)
-        raise
-    finally:
-        os.unlink(edges)
-        os.unlink(featnames)
-        os.unlink(faces)
-        os.unlink(place)
-    try:
+        try:
+            for path in (edges, featnames, faces, place):
+                ZipFile(path, 'r').extractall(outdir)
+        except Exception:
+            # TODO: display error in UI
+            logger.exception('Extracting zipfile failed')
+            raise
+
         edges = glob.glob(os.path.join(outdir, '*edges.shp'))[0]
         featnames = glob.glob(os.path.join(outdir, '*featnames.dbf'))[0]
         faces = glob.glob(os.path.join(outdir, '*faces.dbf'))[0]
@@ -167,8 +196,14 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
             fix_cities=fix_cities,
             )
         num_created = tiger.save()
+
     finally:
         shutil.rmtree(outdir)
+        os.unlink(edges)
+        os.unlink(featnames)
+        os.unlink(faces)
+        os.unlink(place)
+
     if regenerate_intersections:
         populate_streets_task()
     return num_created

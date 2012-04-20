@@ -196,8 +196,10 @@ def jobs_status(request, appname, modelname):
         counts = [
             {'label': u'Download state shapefile',
              'task': u'obadmin.admin.tasks.download_state_shapefile' },
-            {'label': u'Import ZIP codes',
+            {'label': u'Import ZIP code',
              'task': u'obadmin.admin.tasks.import_zip_from_shapefile'},
+            {'label': 'Import Location',
+             'task': u'obadmin.admin.tasks.import_location'},
             ]
     elif appname == 'streets':
         # Don't bother discriminating further based on modelname;

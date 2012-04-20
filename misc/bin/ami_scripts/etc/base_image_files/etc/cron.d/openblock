@@ -24,7 +24,7 @@ HTTP_CACHE=/tmp/openblockproject_scraper_cache
 # Background tasks.
 # We re-start the task runner every 10 minutes just in case anything
 # goes wrong.  It's fine if one run overlaps with the next.
-*/10 * * * * openblock /usr/bin/env DJANGO_SETTINGS_MODULE=myblock.settings_background $BINDIR/django-admin.py process_tasks --duration=600 --log-std --log-level=ERROR --traceback --log-file=/var/log/openblock/background-tasks.log
+*/10 * * * * openblock /usr/bin/env DJANGO_SETTINGS_MODULE=myblock.settings_background $BINDIR/django-admin.py process_tasks --duration=600 --log-std --log-level=INFO --traceback --log-file=/var/log/openblock/background-tasks.log
 
 ######################################################################
 # Examples of scraper configuration.
