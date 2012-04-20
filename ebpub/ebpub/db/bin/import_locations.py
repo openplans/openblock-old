@@ -49,6 +49,7 @@ def populate_ni_loc(location):
     cursor = connection.cursor()
     # In case the location is not new...
     NewsItemLocation.objects.filter(location=location).delete()
+    old_niloc_count = NewsItemLocation.objects.count()
     i = 0
     batch_size = 400
     while i < ni_count:
@@ -64,6 +65,8 @@ def populate_ni_loc(location):
         """, (i, i + batch_size, location.id))
         connection._commit()
         i += batch_size
+    new_count = NewsItemLocation.objects.count()
+    logger.info("New: %d NewsItemLocations" % (new_count - old_niloc_count))
 
 class LocationImporter(object):
     def __init__(self, layer, location_type, source='UNKNOWN', filter_bounds=False, verbose=False):
@@ -81,61 +84,71 @@ class LocationImporter(object):
             from ebpub.utils.geodjango import get_default_bounds
             self.bounds = get_default_bounds()
 
-    def save(self, name_field):
+    def create_location(self, name, location_type, geom, display_order=0):
         source = self.source
-        locs = []
-        for feature in self.layer:
-            name = feature.get(name_field)
-            geom = feature.geom.transform(4326, True).geos
-            geom = ensure_valid(geom, name)
-            geom = flatten_geomcollection(geom)
-            fields = dict(
-                name = name,
-                slug = slugify(name),
-                location_type = self.get_location_type(feature),
-                location = geom,
-                city = self.metro_name,
-                source = source,
-                is_public = True,
-            )
-            if not self.should_create_location(fields):
-                continue
-            locs.append(fields)
+        if hasattr(geom, 'geos'):
+            geom = geom.geos
+        if geom.srid is None:
+            geom.srid = 4326
+        elif geom.srid != 4326:
+            geom = geom.transform(4326, True)
+        geom = ensure_valid(geom, name)
+        geom = flatten_geomcollection(geom)
+        if not isinstance(location_type, int):
+            location_type = location_type.id
+        kwargs = dict(
+            name=name,
+            slug=slugify(name),
+            location=geom,
+            location_type_id=location_type,
+            city=self.metro_name,
+            source=source,
+            is_public=True,
+        )
+        if not self.should_create_location(kwargs):
+            return
+        kwargs['defaults'] = {
+            'creation_date': self.now,
+            'last_mod_date': self.now,
+            'display_order': display_order,
+            'normalized_name': normalize(name),
+            'area': geom.transform(3395, True).area,
+            }
+        try:
+            loc, created = Location.objects.get_or_create(**kwargs)
+        except IntegrityError:
+            # Usually this means two towns with the same slug.
+            # Try to fix that.
+            slug = kwargs['slug']
+            existing = Location.objects.filter(slug=slug).count()
+            if existing:
+                slug = slugify('%s-%s' % (slug, existing + 1))
+                logger.info("Munged slug %s to %s to make it unique" % (kwargs['slug'], slug))
+                kwargs['slug'] = slug
+                loc, created = Location.objects.get_or_create(**kwargs)
+            else:
+                raise
+
+        logger.info('%s %s %s' % (created and 'Created' or 'Already had', self.location_type.name, loc))
+        logger.info('Populating newsitem locations ... ')
+        populate_ni_loc(loc)
+        logger.info('done.\n')
+
+        return created
+
+    def save(self, name_field):
         num_created = 0
         num_updated = 0
-        for i, loc_fields in enumerate(sorted(locs, key=lambda h: h['name'])):
-            kwargs = dict(
-                loc_fields,
-                defaults={
-                    'creation_date': self.now,
-                    'last_mod_date': self.now,
-                    'display_order': i,
-                    'normalized_name': normalize(loc_fields['name']),
-                    'area': loc_fields['location'].transform(3395, True).area,
-                    })
-            try:
-                loc, created = Location.objects.get_or_create(**kwargs)
-            except IntegrityError:
-                # Usually this means two towns with the same slug.
-                # Try to fix that.
-                slug = kwargs['slug']
-                existing = Location.objects.filter(slug=slug).count()
-                if existing:
-                    slug = slugify('%s-%s' % (slug, existing + 1))
-                    logger.info("Munged slug %s to %s to make it unique" % (kwargs['slug'], slug))
-                    kwargs['slug'] = slug
-                    loc, created = Location.objects.get_or_create(**kwargs)
-                else:
-                    raise
+        features = sorted(self.layer, key = lambda f: f.get(name_field))
+        for i, feature in enumerate(features):
+            name = feature.get(name_field)
+            location_type = self.get_location_type(feature)
+            created = self.create_location(name, location_type, feature.geom, display_order=i)
             if created:
                 num_created += 1
             else:
                 num_updated += 1
 
-            logger.info('%s %s %s' % (created and 'Created' or 'Already had', self.location_type.name, loc))
-            logger.info('Populating newsitem locations ... ')
-            populate_ni_loc(loc)
-            logger.info('done.\n')
         return (num_created, num_updated)
 
     def should_create_location(self, fields):

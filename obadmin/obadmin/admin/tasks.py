@@ -19,6 +19,7 @@
 
 from background_task import background
 from django.conf import settings
+from django.contrib.gis.geos import GEOSGeometry
 from ebdata.retrieval.retrievers import Retriever
 from tempfile import mkdtemp
 from zipfile import ZipFile
@@ -135,20 +136,36 @@ def import_zip_from_shapefile(filename, zipcode):
         logger.exception('Zipcode import failed')
         return
 
+def import_locations_from_shapefile(shapefile, layer_number, location_type,
+                                    name_field, filter_bounds):
+    # Not in background since this should just quickly create a bunch of
+    # import_location() jobs.
+    try:
+        layer = layer_from_shapefile(shapefile, layer_number)
+        features = sorted(layer, key = lambda f: f.get(name_field))
+        for i, feature in enumerate(features):
+            name = feature.get(name_field)
+            import_location(shapefile, layer_number, location_type, name, feature.geom.wkt, filter_bounds, display_order=i)
+    except:
+        logger.exception("Location import failed")
+    # Unfortunately, since everythign runs asynchronously,
+    # we don't know when the shapefile is safe to delete.
+    # At least it's in $TMPDIR :(
+
+
 @background
-def import_locations_from_shapefile(shapefile, layer_number, location_type, name_field, filter_bounds):
+def import_location(shapefile, layer_number, location_type, name, wkt, filter_bounds, display_order):
+    # Passing WKT because background functions need all their args to
+    # be json-serializable.
     try:
         layer = layer_from_shapefile(shapefile, layer_number)
         importer = LocationImporter(layer, location_type,
                                     filter_bounds=filter_bounds)
-        created, updated = importer.save(name_field)
+        geom = GEOSGeometry(wkt)
+        importer.create_location(name, location_type, geom,
+                                 display_order=display_order)
     except:
-        logger.exception("Location import failed")
-        return
-    if created + updated > 0:
-        # TODO: validate this directory!
-        shutil.rmtree(os.path.dirname(shapefile))
-        return True
+        logger.exception("Location import of %s failed" % name)
 
 
 @background
