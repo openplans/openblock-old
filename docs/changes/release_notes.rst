@@ -217,6 +217,10 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* We now use the primary street name for blocks loaded from US census TIGER
+  data, instead of whichever one we see last, which may be an alternate name.
+  Issue #278
+
 * Location import (both command-line and admin UI) no longer blows up
   when re-importing the same Locations.
 
