@@ -26,7 +26,6 @@ from django.contrib.gis.gdal.error import OGRIndexError
 from ebdata.parsing import dbf
 from ebpub.geocoder.parser import parsing as geocoder_parsing
 from ebpub.streets.blockimport.base import BlockImporter, logger
-from ebpub.streets.models import StreetMisspelling
 
 STATE_FIPS = {
     '02': ('AK', 'ALASKA'),
@@ -187,7 +186,8 @@ class TigerImporter(BlockImporter):
                     featnames_db[tlid].append(row)
                 else:
                     alternates.append(row)
-            # create StreetMisspelling for alternates
+            # For now we just log alternates that were found. Ideally we could save these
+            # as aliases somehow, but at the moment we don't have a good way to do that.
             for alternate in alternates:
                 correct = primary['NAME'].upper()
                 incorrect = alternate['NAME'].upper()
@@ -195,14 +195,6 @@ class TigerImporter(BlockImporter):
                 logger.debug(msg.format(correct, primary['TLID'], incorrect,
                                         pprint.pformat(primary),
                                         pprint.pformat(alternate)))
-                # the following code generates a lot of unique constraint
-                # violations on the incorrect column
-                # try:
-                #     StreetMisspelling.objects.get(incorrect=incorrect,
-                #                                   correct=correct)
-                # except StreetMisspelling.DoesNotExist:
-                #     StreetMisspelling(incorrect=incorrect,
-                #                       correct=correct).save()
         return featnames_db
 
     def _get_city(self, feature, side):
