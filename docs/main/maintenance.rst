@@ -2,8 +2,6 @@
 Maintaining an OpenBlock Site
 =============================
 
-.. _migrations:
-
 Upgrades
 =========
 
@@ -42,6 +40,9 @@ To install updated openblock code (from source) and all dependencies:
 
 To upgrade from stable packages, the procedure is the same as
 described at :ref:`stable_base_install`.
+
+.. _migrations:
+
 
 Database Migrations
 -------------------
@@ -94,10 +95,21 @@ scripts look like.
   maintenance" page.  Doing so is beyond the scope of this
   documentation.
 
+
+The OpenBlock Admin UI
+======================
+
+The admin UI is built on the standard
+`Django admin interface <https://docs.djangoproject.com/en/1.3/ref/contrib/admin/>`_.
+Here is an overview of some things you can do with it that are
+specific to OpenBlock.
+
+Start by pointing your browser at /admin/
+
 .. _moderation:
 
 Moderating User-Submitted Content
-=================================
+---------------------------------
 
 If you have any Schemas with ``allow_flagging=True``, eg. if you have
 :ref:`enabled the Neighbornews package <user_content>`
@@ -113,7 +125,7 @@ at top.
 There are two ways you can moderate items: in bulk, or one at a time.
 
 Moderating One at a Time
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you click on a News Item Flag in the list, you'll see details about
 the flagged News Item, who flagged it, when, and why.
@@ -125,14 +137,14 @@ You'll see two buttons at top: "Reject and Delete it" and "Approve it".
 Click one of those and you're done.
 
 Moderating in Bulk
--------------------
+~~~~~~~~~~~~~~~~~~
 
 From the main list of News Item Flags, you can check all items you
 want to approve or reject, and then from the "Action" pull-down menu,
 you can select Approve, Reject, or Delete.
 
 What effect does each action have?
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Whether singly or in bulk, here is the meaning of the actions you can
 take:
@@ -149,3 +161,19 @@ take:
 * **Delete flag** - The selected Flag(s) is/are deleted. This has no
   effect on the associated NewsItem(s) and any Flags not specifically
   selected.
+
+
+.. _newsitem_upload:
+
+
+Upload NewsItems from Spreadsheets
+-----------------------------------
+
+(Currently only CSV files are supported.)
+
+TODO:
+
+* fill this in
+* explain core fields vs. extra
+
+.. include:: ../spreadsheet.rst
