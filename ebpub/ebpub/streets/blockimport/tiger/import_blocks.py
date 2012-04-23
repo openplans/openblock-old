@@ -186,8 +186,13 @@ class TigerImporter(BlockImporter):
                     featnames_db[tlid].append(row)
                 else:
                     alternates.append(row)
+            # A lot of alternates seem to be duplicates of the primary name,
+            # not useful.
+            alternates = [row for row in alternates if row['NAME'].upper() != primary['NAME'].upper()]
             # For now we just log alternates that were found. Ideally we could save these
             # as aliases somehow, but at the moment we don't have a good way to do that.
+
+
             for alternate in alternates:
                 correct = primary['NAME'].upper()
                 incorrect = alternate['NAME'].upper()
