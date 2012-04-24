@@ -1,4 +1,4 @@
-    // Show or hide news items by type.
+	// Show or hide news items by type.
 	$j('.toggle').show().click(function(event) {
 		event.preventDefault();
 		var url, action, on_success, on_error;
@@ -45,6 +45,40 @@
 			type: "POST", url: url, data: {schema:schema_slug},
 			error: errorWithDelay,
 			success: on_success
+		});
+		return false;
+	});
+	// Enabled saved place toggle buttons.
+	$j('#saveplacebutton').show().click(function(event) {
+		event.preventDefault();
+		this.blur();
+		var action, result, url, button, error_text;
+		if ($j('#saveplacebutton').html().search('Remove') == -1) {
+			action = 'Saving';
+			result = 'Saved';
+			url = '{% url saved-place-add %}';
+			button = 'Remove this saved place';
+		}
+		else {
+			action = 'Removing';
+			result = 'Removed';
+			url = '{% url saved-place-delete %}';
+			button = 'Save this place';
+		}
+		$j('#saveplacestatus').html(action + '...');
+		var errorWithDelay = function(jqXHR, textStatus, errorThrown) {
+			//Timeout set if page not saving because it refreshes too quickly.
+			setTimeout("", 3000);
+			$j('#saveplacestatus').html("Whoops, we had a technical hiccup while " + action + ". Please try again in a bit.");
+		};
+		$j.ajax({
+			type: "POST", url: url, data: {pid: pid},
+			error: errorWithDelay,
+			success: function(data, textStatus) {
+				$j('#saveplacestatus').html(result + '.');
+				$j('#saveplacebutton').html(button);
+				$j('#ul-saved').html('<li class="replaceme">Loading...</li>');
+			}
 		});
 		return false;
 	});

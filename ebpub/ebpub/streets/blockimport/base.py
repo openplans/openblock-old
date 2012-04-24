@@ -33,7 +33,9 @@ class BlockImporter(object):
 
     Subclasses will implement the details for one particular data source.
     """
-    def __init__(self, shapefile, layer_id=0, verbose=False, encoding='utf8'):
+    def __init__(self, shapefile, layer_id=0, verbose=False, encoding='utf8',
+                 reset=False,
+                 ):
         self.layer = DataSource(shapefile)[layer_id]
         self.verbose = verbose
         self.encoding = encoding
@@ -43,6 +45,9 @@ class BlockImporter(object):
         logger.debug(arg)
 
     def save(self):
+        if self.reset:
+            logger.warn("Deleting all Block instances and anything that refers to them!")
+            Block.objects.all().delete(cascade=True)
         import time
         start = time.time()
         num_created = 0
@@ -133,7 +138,7 @@ class BlockImporter(object):
                     # recent shapefile and the street has significant
                     # changes - eg. the street name has changed, or the
                     # address range has changed, or the block has split...
-                    # see 
+                    # see #257. http://developer.openblockproject.org/ticket/257
                     primary_fields = {}
                     primary_field_keys = ('street_slug',
                                           'from_num', 'to_num',
