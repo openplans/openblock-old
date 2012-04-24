@@ -62,6 +62,9 @@ class EsriImporter(object):
 
     def __init__(self, shapefile, city=None, layer_id=0, encoding='utf8',
                  verbose=False):
+        import warnings
+        warnings.warn("This code is very out of date - does not handle the Block.prefix field")
+        warnings.warn("It is very likely to fail; we have no esri data to test with anymore.")
         self.verbose = verbose
         self.encoding = encoding
         ds = DataSource(shapefile)

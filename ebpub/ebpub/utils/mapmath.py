@@ -72,6 +72,37 @@ def lng_per_km_at_lat(lat):
 def lat_per_km():
     return 1 / km_per_lat()
 
+def buffer_by_meters(geom, m):
+    """
+    Like geom.buffer(n) except n is in meters, not native units.
+    """
+    # Based on http://www.gistutor.com/postgresqlpostgis/6-advanced-postgresqlpostgis-tutorials/58-postgis-buffer-latlong-and-other-projections-using-meters-units-custom-stbuffermeters-function.html
+
+    geom = geom.clone()
+    # First make sure we're in 4326 (long/lat).
+    if geom.srid is None:
+        geom.srid = 4326
+
+    orig_srid = geom.srid
+    if geom.srid != 4326:
+        geom.transform(4326)
+
+    # Now get a local projection where we can use meters reasonably
+    # accurately.
+    if geom.centroid.y > 0:
+        pref = 32600
+    else:
+        pref = 32700
+    from math import floor
+    zone = int(floor((geom.centroid.x + 180) / 6)  + 1)
+    local_srid = zone + pref
+
+    geom.transform(local_srid)
+    buffered = geom.buffer(m)
+    buffered.transform(orig_srid)
+    return buffered
+
+
 def extent_resolution(extent, size, units='degrees'):
     width = extent[2] - extent[0]
     height = extent[3] - extent[1]

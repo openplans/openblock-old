@@ -52,7 +52,7 @@ def do_callback(callback_name, user, data):
 def create_alert(user, data):
     EmailAlert.objects.create(
         user_id=user.id,
-        block_id=data['block_id'],
+        block_center=data['block_center'],
         location_id=data['location_id'],
         frequency=data['frequency'],
         radius=data['radius'],

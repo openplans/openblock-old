@@ -133,10 +133,10 @@ def finish_signup(request, place, data):
     del data['selected_schemas']
     data['schemas'] = ','.join([str(s.id) for s in data['schemas']])
     if isinstance(place, Block):
-        data['block_id'] = place.id
+        data['block_center'] = place.geom.centroid.wkt
         data['location_id'] = None
     else:
-        data['block_id'] = None
+        data['block_center'] = None
         data['location_id'] = place.id
         data['radius'] = None
 
@@ -148,7 +148,7 @@ def finish_signup(request, place, data):
     if request.user:
         message = callbacks.create_alert(request.user, data)
         request.session['login_message'] = message
-        return http.HttpResponseRedirect('/accounts/dashboard/')
+        return http.HttpRespomonseRedirect('/accounts/dashboard/')
 
     try:
         User.objects.get(email=email)

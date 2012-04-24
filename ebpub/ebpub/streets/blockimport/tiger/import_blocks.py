@@ -119,9 +119,12 @@ class TigerImporter(BlockImporter):
     """
     def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp,
                  filter_city=None, filter_bounds=None, filter_locations=(),
-                 verbose=False, encoding='utf8', fix_cities=False):
+                 verbose=False, encoding='utf8', fix_cities=False,
+                 reset=False,
+                 ):
         BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
-                               verbose=verbose, encoding=encoding)
+                               verbose=verbose, encoding=encoding, reset=reset,
+                               )
         self.fix_cities = fix_cities
         self.featnames_db = self._clean_featnames(featnames_dbf)
         self.faces_db = self._load_rel_db(faces_dbf, 'TFID')
@@ -189,6 +192,7 @@ class TigerImporter(BlockImporter):
             # A lot of alternates seem to be duplicates of the primary name,
             # not useful.
             alternates = [row for row in alternates if row['NAME'].upper() != primary['NAME'].upper()]
+
             # For now we just log alternates that were found. Ideally we could save these
             # as aliases somehow, but at the moment we don't have a good way to do that.
 
@@ -323,6 +327,11 @@ def main(argv=None):
                       'multiple_cities=True in the METRO_LIST of your settings.py, '
                       'and after you have created some appropriate Locations.')
 
+
+    parser.add_option('-r', '--reset', action='store_true', default=False,
+                      help="Whether to delete existing blocks and start from scratch. This will attempt to fix other models that have foreign keys to blocks; use at your own risk though."
+                      )
+
     parser.add_option('-b', '--filter-bounds', action="store", default=1,
                       type='int',
                       help='Whether to skip blocks outside the metro extent from your '
@@ -365,9 +374,10 @@ def main(argv=None):
         filter_bounds = filter_bounds
 
     tiger = TigerImporter(*args, verbose=options.verbose,
-                           filter_city=options.city, 
+                           filter_city=options.city,
                            filter_bounds=filter_bounds,
                            encoding=options.encoding,
+                           reset=options.reset,
                            fix_cities=options.fix_cities)
     if options.verbose:
         import logging
