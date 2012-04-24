@@ -149,7 +149,7 @@ def finish_signup(request, place, data):
     if request.user:
         message = callbacks.create_alert(request.user, data)
         request.session['login_message'] = message
-        return http.HttpRespomonseRedirect(reverse('accounts-dashboard'))
+        return http.HttpResponseRedirect(reverse('accounts-dashboard'))
 
     try:
         User.objects.get(email=email)
