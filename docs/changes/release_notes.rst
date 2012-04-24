@@ -58,8 +58,6 @@ Backward Incompatibilities
 * Changed URLs used by the schema_filter view, so some bookmarks may
   break. (Ticket # 266)
 
-* Removed unused ebpub/utils/mapmath.py module.
-
 * Removed the EB_MEDIA_ROOT and EB_MEDIA_URL settings; now use
   django's normal MEDIA_ROOT and MEDIA_URL instead.
 
