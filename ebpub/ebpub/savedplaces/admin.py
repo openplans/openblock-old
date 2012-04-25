@@ -20,8 +20,8 @@ from .models import SavedPlace
 from ebpub.geoadmin import OSMModelAdmin
 from django.contrib.gis import admin
 
-# class SavedPlaceAdmin(OSMModelAdmin):
+class SavedPlaceAdmin(OSMModelAdmin):
+    pass
 
 
-
-admin.site.register(SavedPlace) #, SavedPlaceAdmin)
+admin.site.register(SavedPlace, SavedPlaceAdmin)

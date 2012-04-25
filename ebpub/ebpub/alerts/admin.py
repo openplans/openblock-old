@@ -20,8 +20,14 @@ from .models import EmailAlert
 from ebpub.geoadmin import OSMModelAdmin
 from django.contrib.gis import admin
 
+
 class AlertAdmin(OSMModelAdmin):
 
     readonly_fields = ('block',)
+
+    # TODO: need to refactor the BlockAlertForm clean() method so we
+    # can use it here too... and the extra form fields that it needs.
+    # Otherwise we can't save with empty schema list.
+
 
 admin.site.register(EmailAlert, AlertAdmin)
