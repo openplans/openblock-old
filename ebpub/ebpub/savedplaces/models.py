@@ -19,6 +19,7 @@
 from django.contrib.gis.db import models
 from ebpub.db.models import Location
 from ebpub.streets.models import Block
+from ebpub.constants import BLOCK_FUZZY_DISTANCE_METERS
 
 class SavedPlace(models.Model):
     """
@@ -29,7 +30,7 @@ class SavedPlace(models.Model):
     objects = models.GeoManager()
 
     user_id = models.IntegerField()
-    block = models.ForeignKey(Block, blank=True, null=True)
+
     block_center = models.PointField(null=True, blank=True,
                                      help_text=u'Point representing the center of a related block.')
     location = models.ForeignKey(Location, blank=True, null=True)
@@ -76,12 +77,14 @@ class SavedPlace(models.Model):
         # We buffer the center a bit because exact intersection
         # doesn't always get a match.
         from ebpub.utils.mapmath import buffer_by_meters
-        geom = buffer_by_meters(self.block_center, 3)
+        geom = buffer_by_meters(self.block_center, BLOCK_FUZZY_DISTANCE_METERS)
         blocks = Block.objects.filter(geom__intersects=geom)
         if not blocks:
             raise Block.DoesNotExist("No block found at lat %s, lon %s" % (self.block_center.y, self.block_center.x))
         # If there's more than one this close, we don't really care.
         return blocks[0]
+
+    block = property(_get_block)
 
     def name(self):
         if self.location:

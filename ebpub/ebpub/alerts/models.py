@@ -18,6 +18,7 @@
 
 from django.contrib.gis.db import models
 from ebpub.db.models import Location
+from ebpub.constants import BLOCK_FUZZY_DISTANCE_METERS
 from ebpub.streets.models import Block
 
 class ActiveAlertsManager(models.GeoManager):
@@ -26,7 +27,7 @@ class ActiveAlertsManager(models.GeoManager):
 
 class EmailAlert(models.Model):
     user_id = models.IntegerField()
-    block = models.ForeignKey(Block, blank=True, null=True)
+
     block_center = models.PointField(null=True, blank=True,
                                      help_text=u'Point representing the center of a related block.')
     location = models.ForeignKey(Location, blank=True, null=True)
@@ -64,12 +65,14 @@ class EmailAlert(models.Model):
         # We buffer the center a bit because exact intersection
         # doesn't always get a match.
         from ebpub.utils.mapmath import buffer_by_meters
-        geom = buffer_by_meters(self.block_center, 3)
+        geom = buffer_by_meters(self.block_center, BLOCK_FUZZY_DISTANCE_METERS)
         blocks = Block.objects.filter(geom__intersects=geom)
         if not blocks:
             raise Block.DoesNotExist("No block found at lat %s, lon %s" % (self.block_center.y, self.block_center.x))
         # If there's more than one this close, we don't really care.
         return blocks[0]
+
+    block = property(_get_block)
 
     def name(self):
         if self.location:
@@ -77,7 +80,6 @@ class EmailAlert(models.Model):
         else:
             block = self._get_block()
             return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
-
 
 
     def pretty_frequency(self):

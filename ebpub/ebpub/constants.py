@@ -23,3 +23,7 @@ BLOCK_RADIUS_CHOICES = {'1': .0015, '3': .0035, '8': .007} # number of blocks ->
 BLOCK_RADIUS_COOKIE_NAME = 'radius'
 BLOCK_RADIUS_DEFAULT = '8'
 HIDE_ADS_COOKIE_NAME = 'h'
+
+# How far from a block center various model geometries can be,
+# and still be considered on that block.
+BLOCK_FUZZY_DISTANCE_METERS = 10
