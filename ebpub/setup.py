@@ -87,6 +87,7 @@ setup(
         'easy-thumbnails',
         'PIL',  # Needed for our ImageField
         'pytz',
+        'shapely',
     ],
     dependency_links=[
     "http://www.voidspace.org.uk/downloads/mock-0.8.0alpha1.tar.gz#egg=mock-0.8.0alpha1",

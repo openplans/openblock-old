@@ -77,7 +77,7 @@ module contents
 
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
-from django.contrib.gis.geos import fromstr
+from django.contrib.gis.geos import Point
 from django.core import urlresolvers
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize
@@ -188,18 +188,14 @@ class BlockManager(models.GeoManager):
                     block_tuples.append((block, from_num, to_num))
             blocks = []
             if block_tuples:
-                from django.db import connection
-                cursor = connection.cursor()
+                from ebpub.utils.geodjango import interpolate
                 for block, from_num, to_num in block_tuples:
                     try:
                         fraction = (float(number) - from_num) / (to_num - from_num)
                     except ZeroDivisionError:
                         fraction = 0.5
-                    # We rely on PostGIS line_interpolate_point() because there
-                    # isn't a matching GeoDjango/Python API.
-                    cursor.execute('SELECT line_interpolate_point(%s, %s)', [block.geom.wkt, fraction])
-                    wkb_hex = cursor.fetchone()[0]
-                    blocks.append((block, fromstr(wkb_hex)))
+                    point = interpolate(block.geom, fraction, True)
+                    blocks.append((block, Point(*list(point.coords))))
         else:
             blocks = list([(b, None) for b in qs])
         return blocks

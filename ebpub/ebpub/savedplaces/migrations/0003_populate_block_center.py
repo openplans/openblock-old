@@ -11,7 +11,8 @@ class Migration(DataMigration):
         savedplaces = orm['savedplaces.savedplace'].objects.all()
         for sp in savedplaces:
             if sp.block is not None:
-                sp.block_center = sp.block.geom.centroid
+                from ebpub.utils.geodjango import interpolate
+                sp.block_center = interpolate(sp.block.geom, 0.5, True)
                 sp.save()
 
     def backwards(self, orm):

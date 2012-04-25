@@ -26,4 +26,4 @@ HIDE_ADS_COOKIE_NAME = 'h'
 
 # How far from a block center various model geometries can be,
 # and still be considered on that block.
-BLOCK_FUZZY_DISTANCE_METERS = 10
+BLOCK_FUZZY_DISTANCE_METERS = 5

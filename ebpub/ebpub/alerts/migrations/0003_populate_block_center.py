@@ -11,7 +11,8 @@ class Migration(DataMigration):
         alerts = orm['alerts.emailalert'].objects.all()
         for alert in alerts:
             if alert.block is not None:
-                alert.block_center = alert.block.geom.centroid
+                from ebpub.utils.geodjango import interpolate
+                alert.block_center = interpolate(alert.block.geom, 0.5, True)
                 alert.save()
 
     def backwards(self, orm):

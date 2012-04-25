@@ -28,6 +28,13 @@ Upgrade Notes
 Backward Incompatibilities
 --------------------------
 
+* Removed foreign keys EmailAlert.block and SavedPlace.block; instead
+  they now have geometries which can be used to find a nearest block.
+  This makes it safer to re-load your blocks data if you need
+  to. Running migrations will take care of existing alerts and saved
+  places, but you can't safely downgrade if you change your mind; make
+  database backups as always!  (Ticket #257)
+
 * Removed mystery fields Schema.grab_bag, Schema.grab_bag_headline,
   Schema.intro. (Ticket #232)
 
@@ -84,6 +91,15 @@ Backward Incompatibilities
 
 New Features in 1.2
 -------------------
+
+* You can now safely re-import blocks data.  In fact, this is highly
+  recommended, you'll get better geocoding results due to fixes for
+  #264 and #278.  Use the "--reset" option to "import_blocks_tiger".
+
+* Added ebpub.utils.geodjango:interpolate() function which
+  finds the point on a linestring that's the given distance (or
+  fraction) from the first point.  (Adds dependency on Shapely,
+  since otherwise this would require a database call.)
 
 * Added 'prefix' to the Streets models, used for things like "State Hwy" in the
   US census TIGER data; without it, we were getting geocoding failures,

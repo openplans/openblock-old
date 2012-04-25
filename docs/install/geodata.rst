@@ -577,7 +577,7 @@ a URL linking to some external page about this landmark.
 First, ``Locations`` are relatively large areas described by polygons,
 representing areas such as neighborhoods or postal codes.  OpenBlock
 shows a list of Locations of each type, and it's expected that there
-are relatively few of them - perhaps dozens. By contrast, a ``Place``
+are relatively few of each type - perhaps dozens. By contrast, a ``Place``
 is just a single point and there could be many thousands of them.
 
 ``Places`` are entirely optional - you can run Openblock just fine
@@ -587,7 +587,7 @@ The ``PlaceType`` model is used to categorize them, so you could have
 a ``PlaceType`` named "Building", another one with named "Monument",
 and so on.  You can also assign a map icon URL, a map color,
 
-``Places``, can be used in several ways.
+``Places`` can be used in several ways:
 
 Places in the OpenBlock UI
 ----------------------------
@@ -598,7 +598,7 @@ from any view of NewsItems by schema.
 
 .. (TODO: screenshot?)
 
-If you click the blue "+" at top-right of that map, you can select
+If you click the "+" button at top-right of that map, you can select
 which PlaceTypes and Schemas are shown on the map.
 
 As of OpenBlock version 1.1, Places aren't shown anywhere else in the

@@ -49,6 +49,7 @@ Optionally, it may be helpful to install prebuilt packages for the following if 
 * python lxml bindings
 * python gdal bindings
 * python imaging library (PIL)
+* python shapely library
 
 See http://developer.openblockproject.org/wiki/InstallationRequirements
 for details on installing these on particular operating systems.

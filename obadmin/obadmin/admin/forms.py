@@ -227,8 +227,12 @@ class ImportBlocksForm(forms.Form):
         help_text="Optional: try to override each block's city by finding an overlapping Location that represents a city. Only useful if you've set up multiple_cities=True and set city_location_type in your settings.METRO_LIST *and* have some appropriate Locations of that type already created.",
         required=False, initial=bool(get_metro().get('multiple_cities', False)))
 
+    reset = forms.BooleanField(
+        help_text="Delete all existing blocks and start over. Implies regenerating intersections too.",
+        required=False, initial=False)
+
     regenerate_intersections = forms.BooleanField(
-        help_text="Regenerate all Intersections and BlockIntersections after loading Blocks.  Say No only if you are sure you have more blocks to load from another set of shapefiles; it will run a lot faster. It's always safe to say Yes.",
+        help_text="Regenerate all Intersections and BlockIntersections after loading Blocks. It's always safe to say Yes. Say No only if you are sure you are going to later load more blocks from another set of shapefiles; then you must say Yes when loading your last batch.  No is a lot faster, Yes is safer.",
         required=False, initial=True)
 
     def save(self):
@@ -243,6 +247,7 @@ class ImportBlocksForm(forms.Form):
             city=self.cleaned_data['city'],
             fix_cities=self.cleaned_data['fix_cities'],
             regenerate_intersections=self.cleaned_data['regenerate_intersections'],
+            reset=self.cleaned_data['reset'],
         )
 
         return True

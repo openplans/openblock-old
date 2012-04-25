@@ -163,3 +163,29 @@ def get_default_bounds():
     (-10.0, 15.0, -5.0, 20.0)
     """
     return Polygon.from_bbox(get_metro()['extent'])
+
+def interpolate(linestring, distance, normalize=True):
+    """
+    Find a point along the linestring that is ``distance`` from the first point.
+
+    If normalize=True, distance is fraction of the linestring's length
+    (range 0.0 - 1.0).
+
+    Example:
+
+    >>> ls = LineString((0.0, 0.0), (1.1, 1.1), (2.2, 2.2))
+    >>> interpolate(ls, 0, True).coords
+    (0.0, 0.0)
+    >>> interpolate(ls, 0.5, True).coords
+    (1.1, 1.1)
+    >>> interpolate(ls, 1.0, True).coords
+    (2.2, 2.2)
+    """
+    # Needs Shapely because geodjango's native GEOS support doesn't
+    # provide the interpolate() function.
+    # See https://code.djangoproject.com/ticket/18209
+    import shapely.geometry
+    center = shapely.geometry.LineString(linestring).interpolate(distance, normalize)
+    center = Point(*list(center.coords))
+    return center
+
