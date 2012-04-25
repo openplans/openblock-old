@@ -37,7 +37,7 @@ class SavedPlace(models.Model):
     nickname = models.CharField(max_length=128, blank=True)
 
     def __unicode__(self):
-        return u'User %s: %u' % (self.user_id, self.place.pretty_name)
+        return u'User %s: %s' % (self.user_id, self.place.pretty_name)
 
     @property
     def place(self):
@@ -91,5 +91,6 @@ class SavedPlace(models.Model):
             return self.location.pretty_name
         else:
             block = self._get_block()
-            return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
-
+            if block:
+                return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
+        return u'(no name)'
