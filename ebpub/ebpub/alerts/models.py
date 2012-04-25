@@ -79,8 +79,9 @@ class EmailAlert(models.Model):
             return self.location.pretty_name
         else:
             block = self._get_block()
-            return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
-
+            if block:
+                return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
+        return u'(no name)'
 
     def pretty_frequency(self):
         return {1: 'daily', 7: 'weekly'}[self.frequency]
