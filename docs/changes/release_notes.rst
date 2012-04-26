@@ -235,6 +235,9 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Handle importing locations in other projections than 4326.
+  Thanks Karen Tracey. Refs #214.
+
 * We now use the primary street name for blocks loaded from US census TIGER
   data, instead of whichever one we see last, which may be an alternate name.
   Issue #278

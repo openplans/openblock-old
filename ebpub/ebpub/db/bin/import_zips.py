@@ -25,6 +25,7 @@ See :ref:`zipcodes`
 from django.contrib.gis.geos import MultiPolygon
 from ebpub.db.models import LocationType
 from ebpub.db.bin import import_locations
+from ebpub.utils.geodjango import geos_with_projection
 import sys
 
 
@@ -53,7 +54,7 @@ class ZipImporter(import_locations.LocationImporter):
 
         for feature in self.layer:
             zipcode = feature.get(self.name_field)
-            geom = feature.geom.transform(4326, True).geos
+            geom = geos_with_projection(feature.geom)
             if zipcode not in self.zipcode_geoms:
                 self.zipcode_geoms[zipcode] = geom
             else:
