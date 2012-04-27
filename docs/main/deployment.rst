@@ -51,8 +51,9 @@ Adjust the paths according to your installation.
  # You'll want the "expires" module enabled.
 
 
- # Django admin static files; these may be under $VIRTUAL_ENV/lib/python2.x
+ # Django admin static files; these may be somewhere under $VIRTUAL_ENV/lib/python2.x
  Alias /media/ /home/openblock/openblock/src/django/django/contrib/admin/media/
+ Alias /static/admin/ /home/openblock/openblock/src/django/django/contrib/admin/media/
 
  # You want aliases for all top-level subdirectories of ebpub/media
  Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
