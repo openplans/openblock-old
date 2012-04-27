@@ -303,6 +303,11 @@ def process_docstring(app, what, name, obj, options, lines):
                 lines.append(u':param %s: %s' % (attname, verbose_name))
                 
             # Add the field's type to the docstring
+            if not field.blank:
+                from django.db.models.fields import NOT_PROVIDED
+                if not isinstance(field.default, NOT_PROVIDED):
+                    # TODO: display the default somehow?
+                    typename += ', required'
             lines.append(u':type %s: %s' % (attname, typename))
     
     # Return the extended docstring

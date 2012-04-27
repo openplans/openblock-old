@@ -103,21 +103,24 @@ and a generic "local news" schema can be loaded by doing
 If you want to use another schema, you can give the ``--schema``
 command-line option.
 
+.. _spreadsheet_scraper:
+
 Spreadsheets: scrapers.general.spreadsheet
 ---------------------------------------------------
 
-.. admonition:: Importing spreadsheets via the admin UI
+This scraper can handle many CSV spreadsheets.
+The spreadsheet can be given as a URL or as a local file.
+
+.. admonition:: Alternative: Importing spreadsheets via the admin UI
 
   If you point your browser at /admin/db/newsitem/ you can manually
   upload spreadsheets using a form. It works much the same way as this
   scraper.  Read more at :ref:`newsitem_upload`.
-  The admin form is convenient when you get spreadsheets
-  rarely, or if you want to manually create a large number of
-  NewsItems at once; the scraper is more useful if there's a regularly-updated
-  spreadsheet on the web that you want.
 
-This scraper can handle many single-sheet spreadsheets.
-The spreadsheet can be given as a URL or as a local file.
+  The admin UI might be easier if you get spreadsheets
+  rarely, or if you just want to manually create a large number of
+  NewsItems at once.
+
 
 The scraper script is ``PATH/TO/ebdata/scrapers/general/spreadsheet/retrieval.py``
 and a generic "local news" schema can be loaded by doing
@@ -129,11 +132,18 @@ The ``--schema`` command-line option defaults to "local-news".
 
 The script takes one or two positional arguments.
 The first is the spreadsheet containing NewsItem data, which may be a
-local file or a URL.  The second is an optional spreadsheet explaining
+local file or a URL.  The second is an optional "mapping" spreadsheet explaining
 how to interpret the data in the first spreadsheet. Details follow.
 
 .. include:: ../spreadsheet.rst
 
+Example:
+
+.. code-block:: bash
+
+  python ebdata/scrapers/general/spreadsheet/retrieval.py \
+    --unique-fields=title,item_date \
+    http://example.com/spreadsheet.csv
 
 
 Flickr: scrapers.general.flickr
