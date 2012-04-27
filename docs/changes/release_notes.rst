@@ -309,7 +309,11 @@ Bugs fixed
 Documentation
 -------------
 
-* Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo classes.
+* Better docs on how to import spreadsheets via scraper or admin.
+
+* Better docs on what the "core" NewsItem fields are.
+
+* Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo packages.
   Ticket #159.
 
 * Document ``ebpub.db.bin`` scripts. Ticket #96.

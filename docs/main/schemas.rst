@@ -7,7 +7,7 @@ idea to read :ref:`concept_overview` if you haven't.)
 
 OpenBlock's :doc:`../packages/ebpub` package provides several models
 for defining Schemas.  This section provides a brief example of
-creating a Schema, defining its custom fields, and creating a NewsItem
+creating a Schema, defining its optional custom fields, and creating a NewsItem
 with the Schema.
 
 It is assumed for this section that you have installed either
@@ -59,7 +59,7 @@ like title, date, location etc, we will want to record some custom information w
 * Type of crime (in english)
 * Police code for crime
 
-Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in **misc/examples/crime_report_schema.py**.  This section assumes your application is `myblock`; substitute your own or `obdemo` for the demo application.  Start in the root of your virtual env:
+Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in ``misc/examples/crime_report_schema.py``.  This section assumes your application is ``myblock``; substitute your own or ``obdemo`` for the demo application.  Start in the root of your virtual env:
 
 .. code-block:: bash
 
@@ -70,6 +70,8 @@ Steps are shown using the django shell, but this could also be performed in a sc
     Type "help", "copyright", "credits" or "license" for more information.
     (InteractiveConsole)
     >>> 
+
+.. _creating_schema:
 
 Creating the Schema
 ===================
@@ -155,6 +157,24 @@ http://mapicons.nicolasmollet.com/ .
 
 Adding Custom Fields
 ====================
+
+.. admonition:: Do I need any custom fields at all?
+
+   You might not.
+
+   Some news sources will be simple enough that you don't need any
+   extra fields.  If all you have is a title, date, URL, and maybe a
+   description, you don't need extra fields.
+
+   The key test for each piece of information is: Do I need this
+   information, and does it fit into a plain vanilla ``NewsItem``?
+   field?
+
+   If the answers are "yes I need it but no it doesn't fit",
+   then you need to create a SchemaField to describe this extra field.
+
+   For a list of "core" NewsItem fields, see
+   :py:class:`the NewsItem class documentation <ebpub.db.models.NewsItem>`.
 
 As mentioned earlier, we will add the following custom fields:
 

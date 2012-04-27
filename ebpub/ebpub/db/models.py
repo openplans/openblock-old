@@ -30,18 +30,34 @@ many disparate types of news -- e.g., crime, photos and restaurant inspections.
 Each type of news is referred to as a :py:class:`Schema`,
 and an individual piece of news is a :py:class:`NewsItem`.
 
+.. _newsitem_core_fields:
+
+Core Fields of NewsItems
+------------------------
+
+The :py:class:`NewsItem <NewsItem>` model in itself is generic -- a
+lowest-common denominator of each piece of news on the site. It has:
+
+* title (required)
+* url (optional)
+* description (optional)
+* location_name (optional but highly desirable; can be reverse-geocoded from location if you have one)
+* location (optional but highly desirable; can be geocoded from location_name if you have one)
+* item_date (default: today)
+* pub_date (default: current date and time)
+
 .. _newsitem_attributes:
 
 Flexible data: SchemaFields and Attributes
 ------------------------------------------
 
-The NewsItem model in itself is generic -- a lowest-common denominator of each
-piece of news on the site. If you'd like to extend your NewsItems to include
-Schema-specific attributes, you can use :py:class:`SchemaFields <SchemaField>`.
+If you'd like to extend your NewsItems to include
+more information, you can use :py:class:`SchemaFields <SchemaField>`.
 
 Each piece of news is described by:
 
-* One :py:class:`NewsItem` instance
+* One :py:class:`NewsItem` instance, with just the core fields like
+  title and description.
 
 * One corresponding :py:class:`Attribute` instance, which is a dictionary-like
   object containing extra data, and is available as ``newsitem.attributes``.
@@ -1286,13 +1302,13 @@ class NewsItem(models.Model):
         help_text="link to original source for this news")
     pub_date = models.DateTimeField(
         db_index=True,
-        help_text='Date/time this Item was added to the OpenBlock site.',
+        help_text='Date/time this Item was added to the OpenBlock site; default now.',
         default=datetime.datetime.now,
         blank=True,
         )
     item_date = models.DateField(
         db_index=True,
-        help_text='Date (without time) this Item occurred, or failing that, the date of publication on the original source site.',
+        help_text='Date (without time) this Item occurred, or failing that, the date of publication on the original source site; default today.',
         default=datetime.date.today,
         blank=True,
         )

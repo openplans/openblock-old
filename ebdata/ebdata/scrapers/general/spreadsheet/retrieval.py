@@ -349,7 +349,9 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     from optparse import OptionParser
-    usage = "usage: %prog [options] <spreadsheet> [<config spreadsheet>]"
+    usage = "usage: %prog [options] <spreadsheet> [<mapping spreadsheet>]"
+    usage += "\n\nSpreadsheet arguments can be local files or URLs."
+    usage += "\n\nSee http://openblockproject.org/docs/packages/ebdata.html#spreadsheets-scrapers-general-spreadsheet for more."
     parser = OptionParser(usage=usage)
 
     parser.add_option(

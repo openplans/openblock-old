@@ -13,11 +13,20 @@ As with any software, it is prudent to make backups of your database
 and your code before attempting any upgrades, so that you can roll
 back in the event of problems.
 
+The most important things to back up are:
+
+* Your database - see http://www.postgresql.org/docs/8.3/static/backup.html and http://blog.cleverelephant.ca/2010/09/postgis-back-up-restore.html
+* Your settings file
+* Any custom templates or code you wrote - use a version control
+  system!
+* Any uploaded content in the directory that settings.MEDIA_ROOT
+  points to
+
 Check the Release Notes
 -----------------------
 
 See :doc:`../changes/release_notes` for a list of changes since the
-last release.  It's probably more detailed than you need, but it's
+last release.  It's probably much more detailed than you need, but it's
 good to know what you're getting, and this file will alert you of
 backward incompatibilities that may impact any custom code you may
 have written.
@@ -169,11 +178,17 @@ take:
 Upload NewsItems from Spreadsheets
 -----------------------------------
 
+This is a good way to get news into your site if you have spreadsheets
+that are updated rarely (or never).
+
+Browse to /admin/db/newsitem/ and click "Import from spreadsheet".
+
 (Currently only CSV files are supported.)
 
-TODO:
+.. admonition:: Alternative: Importing spreadsheets via a scraper
 
-* fill this in
-* explain core fields vs. extra
+  If you have a spreadsheet that updates frequently,
+  it may be worthwhile to use the :ref:`spreadsheet scraper <spreadsheet_scraper>`
+  which provides the same functionality.
 
 .. include:: ../spreadsheet.rst
