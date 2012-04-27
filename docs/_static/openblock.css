@@ -17,6 +17,11 @@ table.docutils caption {
     margin-bottom: 12px;
 }
 
+h3, h4 {
+    border-bottom: 1px solid #80B2E2;
+    display: inline-block;
+}
+
 /* Better styling of multi-level left-nav TOC */
 
 .sidebar li a.reference {
@@ -46,4 +51,21 @@ table.docutils caption {
     font-weight: normal;
     text-decoration: none;
     margin-left: 18px;
+}
+
+
+/* admonitions */
+
+.admonition .admonition-title {
+    color: #807070;
+    font-weight: normal;
+}
+
+div.admonition {
+    background-color: #FFF5D0;
+}
+
+/* better contrast */
+div.header a {
+    color: #EE8C00;
 }
