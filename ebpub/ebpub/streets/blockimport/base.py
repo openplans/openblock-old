@@ -41,6 +41,7 @@ class BlockImporter(object):
         self.layer = DataSource(shapefile)[layer_id]
         self.verbose = verbose
         self.encoding = encoding
+        self.reset = reset
 
     def log(self, arg):
         "Deprecated: user logger instead"
@@ -49,7 +50,7 @@ class BlockImporter(object):
     def save(self):
         if self.reset:
             logger.warn("Deleting all Block instances and anything that refers to them!")
-            Block.objects.all().delete(cascade=True)
+            Block.objects.all().delete()
         import time
         start = time.time()
         num_created = 0
