@@ -67,9 +67,9 @@ def render_widget(widget, items=None):
     }
     # TODO: cache template compilation
     code = widget.template.code
-    if not ' load eb_widgets ' in code:
+    if not ' load eb ' in code:
         # Convenience so template authors don't have to remember this detail.
-        code = '{% load eb_widgets %}\n' + code
+        code = '{% load eb %}\n' + code
     t = Template(code)
     return t.render(Context(info))
 
