@@ -170,9 +170,10 @@ def import_location(shapefile, layer_number, location_type, name, wkt, filter_bo
 
 @background
 def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
-                                  fix_cities=False, regenerate_intersections=True):
+                                  fix_cities=False, regenerate_intersections=True,
+                                  reset=False,
+                                  ):
     # File args are paths to zip files.
-
     outdir = mkdtemp(suffix='-block-shapefiles')
     try:
         try:
@@ -186,7 +187,7 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
         edges = glob.glob(os.path.join(outdir, '*edges.shp'))[0]
         featnames = glob.glob(os.path.join(outdir, '*featnames.dbf'))[0]
         faces = glob.glob(os.path.join(outdir, '*faces.dbf'))[0]
-        place = glob.glob(os.path.join(outdir, '*place.shp'))[0]
+        place = glob.glob(os.path.join(outdir, '*place*.shp'))[0]
         tiger = TigerImporter(
             edges,
             featnames,
@@ -194,15 +195,11 @@ def import_blocks_from_shapefiles(edges, featnames, faces, place, city=None,
             place,
             filter_city=city,
             fix_cities=fix_cities,
+            reset=reset,
             )
         num_created = tiger.save()
-
     finally:
         shutil.rmtree(outdir)
-        os.unlink(edges)
-        os.unlink(featnames)
-        os.unlink(faces)
-        os.unlink(place)
 
     if regenerate_intersections:
         populate_streets_task()
