@@ -296,7 +296,7 @@ def import_blocks(request):
 
     fieldsets = (
         Fieldset(form, fields=('edges', 'featnames', 'faces', 'place')),
-        Fieldset(form, fields=('city', 'fix_cities', 'regenerate_intersections')),
+        Fieldset(form, fields=('reset', 'city', 'fix_cities', 'regenerate_intersections')),
         )
 
     return render(request, 'obadmin/block/import_blocks.html', {
