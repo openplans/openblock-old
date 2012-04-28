@@ -235,6 +235,8 @@ New Features in 1.2
 Bugs fixed
 ----------
 
+* Admin users no longer have a limit on file uploads.
+
 * Handle importing locations in other projections than 4326.
   Thanks Karen Tracey. Refs #214.
 
