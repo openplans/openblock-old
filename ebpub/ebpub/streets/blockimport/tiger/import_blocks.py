@@ -283,6 +283,7 @@ class TigerImporter(BlockImporter):
         if tlid in self.featnames_db:
             suffix_standardizer = geocoder_parsing.STANDARDIZERS['suffix']
             suffix_matcher = geocoder_parsing.TOKEN_REGEXES['suffix']
+
             for featname in self.featnames_db[tlid]:
                 # Prefix eg. 'STATE HWY'.
                 block_fields['prefix'] = featname.get('PRETYPABRV', '').upper().strip()
@@ -296,8 +297,8 @@ class TigerImporter(BlockImporter):
                 block_fields['suffix'] = featname['SUFTYPABRV'].upper().strip()
                 if not block_fields['suffix']:
                     # Bug in the data:
-                    # Many streets named eg. 'Wilson Park' put the whole thing in the name
-                    # and nothing in the suffix.
+                    # Many streets named eg. 'Wilson Park' put the whole thing in the
+                    # name and nothing in the suffix.
                     # This breaks our geocoder, because it parses 'Park' as the suffix
                     # and expects to find it in that field.
                     # So, check if the street name ends with a recognized suffix.
@@ -309,6 +310,18 @@ class TigerImporter(BlockImporter):
                             block_fields['suffix'] = suffix_standardizer(raw_suffix)
                             block_fields['street'] = street
 
+                # More bugs in data: some auxiliary roads have the prefix as
+                # part of the name in nonstandard format.
+                if not block_fields['prefix']:
+                    prefix, street = None, None
+                    if block_fields['street'].startswith('INTERSTATE '):
+                        prefix, street = block_fields['street'].split(' ', 1)
+                    elif block_fields['street'].startswith('I-'):
+                        prefix, street = block_fields['street'].split('-', 1)
+                    if prefix and street:
+                        logger.debug("Splitting prefix %r out of street %r" % (prefix, street))
+                        block_fields['street'] = street.strip()
+                        block_fields['prefix'] = prefix.strip()
                 yield block_fields.copy()
 
                 self.tlids_with_blocks.add(tlid)

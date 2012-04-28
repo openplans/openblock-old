@@ -87,9 +87,6 @@ class BlockImporter(object):
                         block_fields['postdir']
                     )
 
-                    if block_fields['prefix'].lower().count('old'):
-                        print "Old %s" % block_fields
-
                     block_fields['street_slug'] = slugify(
                         u' '.join((block_fields['prefix'],
                                    block_fields['street'],
