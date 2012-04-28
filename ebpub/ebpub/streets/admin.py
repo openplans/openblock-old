@@ -322,7 +322,7 @@ class PlaceAdmin(OSMModelAdmin):
 
     def _show_import_csv_form(self, request, import_form):
         opts = self.model._meta
-        adminform = helpers.AdminForm(import_form, [(None, {'fields': import_form.base_fields.keys()})], {})
+        #adminform = helpers.AdminForm(import_form, [(None, {'fields': import_form.base_fields.keys()})], {})
         context = {
             'title': 'Import %s' % force_unicode(opts.verbose_name_plural),
         }
