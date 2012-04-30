@@ -8,7 +8,11 @@
 # SPATIAL_REF_SQL
 
 echo Fixing postgres auth config...
+# For postgres 8.
 sudo sed -i.BAK -r -e "s/local\s+all\s+all\s+ident(\s+sameuser)?/local all all trust/" `sudo find /etc/postgresql -name pg_hba.conf`
+# For postgres 9.1
+sudo sed -i.BAK -r -e "s/local\s+all\s+all\s+peer/local all all trust/" `sudo find /etc/postgresql -name pg_hba.conf`
+
 sudo $PG_INITSCRIPT restart || exit 1
 echo OK
 echo Sometimes takes a while for postgresql to come back up...

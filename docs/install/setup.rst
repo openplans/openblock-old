@@ -34,7 +34,7 @@ by the OpenBlock team, and may never be; but patches are welcome :)
 Generally, you need:
 
 * python 2.6  or 2.7 (2.5 is too old; 3 is a whole different world.)
-* Postgresql 8.3, 8.4, or 9.0
+* Postgresql 8.3 or later
 * PostGIS 1.4 or 1.5
 * libxml2 and libxslt
 * libgdal
@@ -86,7 +86,7 @@ requires PostGIS.  This documentation generally assumes you are installing OpenB
 and Postgres on the same server.  If you are using a remote server, please 
 read :doc:`remote_postgis_server` and make adjustments accordingly.
 
-OpenBlock is known to work with Postgresql 8.3, 8.4, or 9.0, and PostGIS
+OpenBlock is known to work with Postgresql 8.3, 8.4, 9.0, or 9.1, and PostGIS
 1.4 or 1.5.
 
 .. _template_setup:
