@@ -219,16 +219,12 @@ class DatabaseExtensionsTestCase(TestCase):
 
     def test_allowed_schema_ids(self):
         from ebpub.db.models import Schema
-        self.assertEqual(Schema.objects.allowed_schema_ids(),
-                         [1])
-        self.assertEqual(Schema.public_objects.allowed_schema_ids(),
-                         [1])
+        self.assertIn(1, Schema.objects.allowed_schema_ids())
+        self.assertIn(1, Schema.public_objects.allowed_schema_ids())
         Schema.objects.all().update(is_public=False)
         # Now 'objects' still returns everything, but 'public_objects' doesn't.
-        self.assertEqual(Schema.objects.allowed_schema_ids(),
-                         [1])
-        self.assertEqual(Schema.public_objects.allowed_schema_ids(),
-                         [])
+        self.assertIn(1, Schema.objects.allowed_schema_ids())
+        self.assertEqual(Schema.public_objects.allowed_schema_ids(), [])
 
     @mock.patch('ebpub.utils.view_utils.get_schema_manager')
     def test_by_request(self, mock_get_schema_manager):
