@@ -110,4 +110,17 @@ lib options:
 2. gdal & lxml globally via distro packages (use *_noglobal)
 
 
+XXX TODO: fix dry run:
+south.exceptions.FailedDryRun:  ! Error found during dry run of '0007_auto__add_field_place_place_type'! Aborting.
+Traceback (most recent call last):
+  File "/home/openblock/openblock/lib/python2.6/site-packages/south/migration/migrators.py", line 175, in _run_migration
+    migration_function()
+  File "/home/openblock/openblock/lib/python2.6/site-packages/south/migration/migrators.py", line 57, in <lambda>
+    return (lambda: direction(orm))
+  File "/home/openblock/openblock/src/openblock/ebpub/ebpub/streets/migrations/0007_auto__add_field_place_place_type.py", line 10, in forwards
+    default_place_type_id = orm['streets.PlaceType'].objects.get(slug='poi').id
+  File "/home/openblock/openblock/lib/python2.6/site-packages/south/orm.py", line 395, in __getattr__
+    raise AttributeError("You are in a dry run, and cannot access the ORM.\nWrap ORM sections in 'if not db.dry_run:', or if the whole migration is only a data migration, set no_dry_run = True on the Migration class.")
+AttributeError: You are in a dry run, and cannot access the ORM.
+Wrap ORM sections in 'if not db.dry_run:', or if the whole migration is only a data migration, set no_dry_run = True on the Migration class.
 

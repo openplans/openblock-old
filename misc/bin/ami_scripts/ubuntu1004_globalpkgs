@@ -28,6 +28,7 @@ sudo apt-get -y install \
     python-lxml \
     python-virtualenv \
     python-imaging \
+    python-shapely \
     subversion \
     unzip \
     wget || exit 1
