@@ -13,7 +13,7 @@ If you have problems...
 =======================
 
 Please drop a line to the `ebcode google group <http://groups.google.com/group/ebcode>`_
-or visit the IRC channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.
+or visit the IRC channel ``#openblock`` on freenode with any problems you encounter.
 
 
 .. _requirements:
