@@ -24,7 +24,8 @@ sudo -u postgres dropdb template_postgis
 echo
 echo Creating template...
 sudo -u postgres createdb -E UTF8 template_postgis || exit 1
-sudo -u postgres createlang -d template_postgis plpgsql || exit 1
+# No exit here, postgres 9 apparently does plpgsql by default.
+sudo -u postgres createlang -d template_postgis plpgsql
 sudo -u postgres psql -d postgres -c "UPDATE pg_database SET datistemplate='true' WHERE datname='template_postgis';" || exit 1
 sudo -u postgres psql -d template_postgis -f $POSTGIS_SQL || exit 1
 sudo -u postgres psql -d template_postgis -f $SPATIAL_REF_SQL || exit 1
