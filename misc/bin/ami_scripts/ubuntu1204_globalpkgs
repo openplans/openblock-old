@@ -21,7 +21,7 @@ sudo apt-get -y install python2.7 \
     build-essential \
     git-core \
     subversion \
-    postgresql-8.4-postgis \
+    postgresql-9.1-postgis \
     python-gdal \
     python-lxml \
     python-imaging \
