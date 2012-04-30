@@ -85,7 +85,7 @@ There's now a little wrapper script that can do all that in one go.
 The parameters are: hostname, distro version, global|local, dev|stable, install
 script. Like so::
 
- $ /scenario_runner.sh ubuntu@$EC2HOST  ubuntu1004 local  dev demo_setup_detailed.sh
+ $ ./scenario_runner.sh ubuntu@$EC2HOST  ubuntu1004 local  dev demo_setup_detailed.sh
 
 
 CONFIGURATIONS TO TEST:
