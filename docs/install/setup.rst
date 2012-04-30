@@ -33,7 +33,7 @@ by the OpenBlock team, and may never be; but patches are welcome :)
 
 Generally, you need:
 
-* python 2.6  or 2.7 (2.5 is too old)
+* python 2.6  or 2.7 (2.5 is too old; 3 is a whole different world.)
 * Postgresql 8.3, 8.4, or 9.0
 * PostGIS 1.4 or 1.5
 * libxml2 and libxslt
