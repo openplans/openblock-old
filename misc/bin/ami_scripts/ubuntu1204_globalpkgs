@@ -22,6 +22,7 @@ sudo apt-get -y install python2.7 \
     git-core \
     subversion \
     postgresql-9.1-postgis \
+    libpq-dev \
     python-gdal \
     python-lxml \
     python-imaging \
