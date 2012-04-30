@@ -112,8 +112,11 @@ class FlickrScraper(NewsItemListDetailScraper):
             try:
                 pages = int(adict['photos']['pages'])
             except KeyError:
-                self.logger.error("Page content:\n%s" %page)
-                raise RuntimeError("Parsing error, missing 'photos' or 'pages', see above.")
+                if adict.get('stat') == 'fail':
+                    self.logger.error("Flickr error code %r: %s" % (adict['code'], adict['message']))
+                else:
+                    self.logger.error("Page content:\n%s" %page)
+                raise StopScraping("Parsing error, missing 'photos' or 'pages', see above.")
             yield page
 
     def parse_list(self, page):
