@@ -34,13 +34,15 @@ Virtualenv: Global packages available or not?
 -----------------------------------------------
 
 Note that if you want to install GDAL or LXML the "easy way" as
-described below, you *must not* run virtualenv with the
-``--no-site-packages`` option, as that will prevent your virtualenv
-from being able to find the globally installed libraries.
+described below, you have to ensure that the virtualenv can find
+globally installed python packages.  It's annoying, but the way to
+do this has changed in virtualenv 1.7.
 
-As of virtualenv 1.7, the default behavior has changed so you now
-**must** pass the ``--system-site-packages`` option
-in order to use globally installed packages.
+**If you have virtualenv 1.6 or earlier**:  You *must not* create your
+virtualenv with the ``--no-site-packages`` option.
+
+**If you have virtualenv 1.7 or later**: You *must* create your
+virtualenv with the ``--system-site-packages`` option
 *The --no-site-packages option is now the default!*
 
 If you prefer the ``--no-site-packages`` way of using virtualenv,

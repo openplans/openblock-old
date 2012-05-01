@@ -34,7 +34,7 @@ export SUDO="sudo -H -E -u openblock"
 
 echo setting up virtualenv
 cd /home/openblock
-$SUDO virtualenv openblock || exit 1
+$SUDO virtualenv --system-site-packages openblock || $SUDO virtualenv openblock || exit 1
 export VIRTUAL_ENV=$PWD/openblock
 cd $VIRTUAL_ENV || exit 1
 
