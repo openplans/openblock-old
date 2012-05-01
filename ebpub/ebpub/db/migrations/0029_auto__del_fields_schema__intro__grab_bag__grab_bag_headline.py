@@ -6,10 +6,6 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
-    # We don't really depend on this per se, but we'll break existing obdemo
-    # migrations if they don't run first (if installed).
-    depends_on = (('obdemo', '0010_tweak_restaurants'),
-                  )
 
     def forwards(self, orm):
         
