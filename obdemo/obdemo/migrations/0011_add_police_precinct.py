@@ -6,6 +6,9 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    depends_on = (('db', '0029_auto__del_fields_schema__intro__grab_bag__grab_bag_headline'),
+                  )
+
     def forwards(self, orm):
         "Write your forwards methods here."
         def _create_or_update(model_id, key, attributes):
