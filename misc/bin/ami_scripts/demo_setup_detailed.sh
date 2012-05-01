@@ -65,7 +65,8 @@ echo Importing demo data...
 $DJADMIN import_boston_zips || exit 1
 $DJADMIN import_boston_hoods || exit 1
 $DJADMIN import_boston_blocks || exit 1
-$DJADMIN import_boston_news || exit 1
+# Not exiting here because any random news source site being down can give spurious failures.
+$DJADMIN import_boston_news
 
 echo Testing...
 $DJADMIN test db openblockapi
