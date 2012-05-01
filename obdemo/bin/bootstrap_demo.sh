@@ -89,7 +89,7 @@ django-admin.py import_boston_blocks || exit 1
 echo
 echo =========================================================
 echo Importing Boston news...
-django-admin.py import_boston_news || exit 1
+django-admin.py import_boston_news
 
 echo 'Demo bootstrap succeeded!'
 echo To start up the demo, try: django-admin.py runserver
