@@ -48,12 +48,12 @@ export SRC=$VIRTUAL_ENV/src/openblock
 cd $SRC || exit 1
 echo Installing openblock packages in `pwd`...
 
-$SUDO $PIP install -r $SRC/ebpub/requirements.txt
-$SUDO $PIP install -e $SRC/ebpub
-$SUDO $PIP install -r $SRC/ebdata/requirements.txt
-$SUDO $PIP install -e $SRC/ebdata
-$SUDO $PIP install -r $SRC/obadmin/requirements.txt
-$SUDO $PIP install -e $SRC/obadmin
-$SUDO $PIP install -r $SRC/obdemo/requirements.txt
-$SUDO $PIP install -e $SRC/obdemo
+$SUDO $PIP install -r $SRC/ebpub/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/ebpub || exit 1
+$SUDO $PIP install -r $SRC/ebdata/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/ebdata || exit 1
+$SUDO $PIP install -r $SRC/obadmin/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/obadmin || exit 1
+$SUDO $PIP install -r $SRC/obdemo/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/obdemo || exit 1
 echo all packages installed
