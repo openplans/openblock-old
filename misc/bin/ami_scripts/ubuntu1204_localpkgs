@@ -36,9 +36,10 @@ sudo apt-get -y install python2.7 \
 
 
 # Ubuntu 11.04 weirdly moved some libraries and stopped symlinking them
-sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib/ || exit 1
-sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/ || exit 1
-sudo ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib/ || exit 1
+# ... but do'nt die if they're already there.
+sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib/
+sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
+sudo ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib/
 
 sudo ldconfig || exit 1
 #echo Rebooting
