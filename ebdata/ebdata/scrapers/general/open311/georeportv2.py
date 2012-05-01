@@ -288,7 +288,7 @@ def main(argv=None):
         default=90
         )
     parser.add_option(
-        "--schema", help="which news item type to create when scraping",
+        "--schema", help="slug of news item type to use",
         default="open311-service-requests"
         )
     parser.add_option(

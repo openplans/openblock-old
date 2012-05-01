@@ -33,6 +33,7 @@ from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScr
 from ebpub.db.models import NewsItem
 from ebpub.utils.geodjango import intersects_metro_bbox
 
+
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
 from ebdata.retrieval.utils import convert_entities
@@ -140,7 +141,7 @@ def main(argv=None, default_url=None):
     parser = OptionParser(usage=usage)
 
     parser.add_option(
-        "--schema", help="which news item type to create when scraping",
+        "--schema", help="Slug of the news item type to create when scraping",
         default="local-news"
         )
     # parser.add_option(
