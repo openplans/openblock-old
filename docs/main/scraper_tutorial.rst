@@ -167,7 +167,7 @@ from boston.com and creates a NewsItem for each entry:
         main()
 
 
-This script actually runs.
+This script isn't just a contrived example, it actually runs.
 
 So, what's left out? Among other things:
 
@@ -329,16 +329,15 @@ Saving Extra Data in Attributes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 RSS feeds can contain categories, AKA tags; in this feed, they are
-used among other things to designate which police precinct a crime
-occurred in. Lines 53-61 show us checking the tags for something that
-looks like a precinct.  
+used to designate which police precinct a crime
+occurred in. Lines 53-61 show us looking in the tags for a precinct.
 
 But what can we do with these precincts? The ``NewsItem`` class
 doesn't have a ``precinct`` field.
 We can save it in a :ref:`custom attribute <newsitem_attributes>`.
 
 Lines 63-68 show how we prepare an "attributes" dictionary to save
-the precinct we parsed.
+the precinct we got.
 In this case, 'precincts' are described by a SchemaField with
 ``is_lookup=True``, so we call ``get_or_create_lookup`` and
 then we save its integer id in the attributes dictionary.
@@ -365,9 +364,9 @@ attributes, see the source code of
 Advantages
 ~~~~~~~~~~
 
-What does this framework buy you? The advantage of using
-ebdata.retrieval.scrapers.newsitem_list_detail for such sites is that
-you get code for dealing with a lot of common cases:
+What does this framework buy you, compared to the "expedient hack" and
+other approaches to scraping?  You get code for dealing with a lot of
+common cases:
 
 * There's an ``RssListDetailScraper`` mix-in base class that handles both
   RSS and Atom feeds for the list page, with some support for
@@ -393,18 +392,19 @@ you get code for dealing with a lot of common cases:
 * There are hooks for cleaning up the data, see the various ``clean*``
   methods.
 
-Disadvantage:
+Disadvantages
+~~~~~~~~~~~~~
 
 * You probably still have to do a fair amount of the error-handling,
   parsing (for things other than RSS or Atom feeds), and so forth.
 
 * It's a bit complex. It requires you to understand the base classes
   (``NewsItemListDetailScraper`` and ``ListDetailScraper``, etc.), because it has a
-  lot of "inversion of control" -- meaning, you use it by subclassing
+  lot of "inversion of control": you use it by subclassing
   one or more of the base classes, and overriding various methods and
-  attributes that get called by the base class as
-  needed. Until you fully understand those base classes, this can be
-  confusing.
+  attributes that get called by the base class when it wants to.
+  Until you fully understand those base classes, this can be more
+  harder to understand than a more procedural approach.
 
 
 For a more complete example that uses detail pages and some of those other
