@@ -24,8 +24,11 @@ echo OK
 
 echo Putting files in place...
 $SSH $REMOTE <<EOF
+    # some versions of ubuntu don't have APACHE_LOG_DIR set?
+    grep -q APACHE_LOG_DIR /etc/apache2/envvars || echo "export APACHE_LOG_DIR=/var/log/apache2/" | sudo tee -a /etc/apache2/envvars
     sudo rsync -av /tmp/stuff/ /
     # fix ownership we just clobbered
+    sudo mkdir -p /var/log/openblock
     sudo chown -R openblock /home/openblock /var/log/openblock
     sudo chown root.root /etc/cron.d/openblock
 
