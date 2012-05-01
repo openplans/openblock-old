@@ -49,6 +49,12 @@ if [ $? != 0 ]; then
     gdal-config --version || exit 1
     GDAL_MAJOR_VERSION=`gdal-config --version | cut -d '.' -f 1,2`
     $SUDO $PIP install --no-install "GDAL>=$GDAL_MAJOR_VERSION,<=$GDAL_MAJOR_VERSION.9999" || exit 1
+    # Workaround for building gdal with missing header; needed at least on ubuntu 12.04
+    if [ ! -f /usr/include/gdal/swq.h ]; then
+        cd /usr/include/gdal
+        sudo wget http://svn.osgeo.org/gdal/branches/$GDAL_MAJOR_VERSION/gdal/ogr/swq.h
+        cd -
+    fi
     cd build/GDAL || exit 1
     $SUDO rm -f setup.cfg
     GDAL_LIBDIRS=`gdal-config --libs | sed -r -e 's/-[^L]\S*//g' -e 's/\s*-L//g'`
