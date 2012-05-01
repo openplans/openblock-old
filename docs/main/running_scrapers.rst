@@ -3,6 +3,7 @@ Running Scrapers
 ================
 
 Once you've written your :doc:`scraper scripts <scraper_tutorial>`,
+or chosen some :ref:`existing ones <ebdata-scrapers>`,
 you'll need to re-run them frequently to keep the news on your site up
 to date.
 
@@ -44,6 +45,7 @@ Here's an example config file for running scrapers via
   BINDIR=/path/to/virtualenv/bin
   PYTHON=/path/to/virtualenv/bin/python
   USER=openblock
+
   # Where do errors get emailed?
   MAILTO=somebody@example.com
 

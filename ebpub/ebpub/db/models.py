@@ -16,7 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 
 .. _newsitems:
 
@@ -65,8 +65,8 @@ Each piece of news is described by:
 * One :py:class:`Schema` that identifies the "type" of NewsItem; and
 
 * A set of :py:class:`SchemaFields <SchemaField>`, each of which describes:
-  a valid key for the attributes dictionary; the type of allowed values;
-  and some configuration metadata about how to display and use that field.
+  a valid key for the attributes dictionary; the type of its allowed values;
+  and some configuration metadata about how to display and use that attribute.
 
 This is intended to be flexible enough for real-world news data, while
 still allowing for fast database queries.  For more background,
@@ -84,29 +84,29 @@ you might be interested in the video
    full-featured as PostGIS.
 
 
-Examples might make this clearer. To assign the whole dictionary::
+Examples might make this clearer. To assign the whole ``attributes`` dictionary::
 
     ni = NewsItem.objects.get(...)
-    ni.attributes = {'some_schemafield_name': 'some value'}
+    ni.attributes = {'sale_price': 19}
     # There is no need to call ni.save() or ni.attributes.save();
     # the assignment operation does that behind the scenes.
 
 To assign a single value::
 
-    ni.attributes['some_schemafield_name'] = 'some other value'
+    ni.attributes['sale_price'] = 19
     # Again there is no need to save() anything explicilty.
 
 To get a value::
 
-    print ni.attributes['some_schemafield_name']
+    print ni.attributes['sale_price']
 
 Or, from a database perspective: The "db_attribute" table stores
 arbitrary attributes for each NewsItem, and the "db_schemafield" table
 is the key for those attributes.
-
 A SchemaField says, for example, that
 the "int01" column in the db_attribute table for the "real estate
 sales" Schema corresponds to the "sale price".
+
 We'll walk through this example in detail below.
 
 
@@ -412,7 +412,7 @@ the Aggregates section below.)
 
 module contents
 ================
-'''
+"""
 
 from django.conf import settings
 from django.contrib.gis.db import models

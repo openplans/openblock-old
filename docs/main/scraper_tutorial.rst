@@ -2,29 +2,43 @@
 Data Scraper Tutorial
 =====================
 
-Currently, anybody using OpenBlock will have to write their own
-scraper scripts to import news data.
+News data is fed into OpenBlock by scraper scripts.
 
 You have several options for how to write scraper scripts.
 We'll look at each in turn:
 
 1. :ref:`Use an Existing Scraper <ebdata-scrapers>` (separate page)
-   if there is one that meets your needs.
+   if there is one that meets your needs. These are also good examples
+   you can copy from when writing your own custom scrapers.
+   We *highly* recommend you look through the list of scrapers to get
+   a sense of what's already available.
 
 2. :ref:`Use the OpenBlock REST API <scraping_rest_api>` to push data
    in from any script in any language that can make HTTP connections.
+   This would be easier if you are more comfortable with some other
+   language than Python.
 
-3. :ref:`Expediently hack a Python script <scraping_hack>` that creates instances of
+3. Write or find a scraper on `ScraperWiki.com <http://scraperwiki.com>`_ (external site) and then
+   either use our :ref:`spreadsheet scraper <spreadsheet_scraper>`
+   to pull data from ScraperWiki's
+   CSV export format, or have your scraperwiki script push data in via
+   our REST API.
+
+   This is promising, especially because scraperwiki potentially might
+   help you find other people to help you write scrapers, but we
+   haven't actually tried either of these approaches yet.
+
+4. :ref:`Expediently hack a Python script <scraping_hack>` that creates instances of
    ebpub.db.NewsItem, in any way you like.
 
-4. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
+5. For ":ref:`list/detail <scraping_listdetail>`" sites, -- sites that display a list of records
    (eg. an RSS feed, or an HTML index page), with optional separate
    linked pages providing more detail about each record -- you can
    write a Python script that builds on the infrastructure in
    ``ebdata.retrieval.scrapers.newsitem_list_detail``.
 
 
-5. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
+6. For ":ref:`unstructured <scraping_blobs>`" sites - websites not intended for machine
    consumption, eg. big piles of HTML and/or binary files such as PDF
    or Excel - you can write a Python script that builds on ``ebdata.blobs``.
 
@@ -153,7 +167,7 @@ from boston.com and creates a NewsItem for each entry:
         main()
 
 
-This script actually runs.
+This script isn't just a contrived example, it actually runs.
 
 So, what's left out? Among other things:
 
@@ -185,15 +199,17 @@ RSS feed, or an HTML index page), which might be paginated. Each
 record might have its own page -- a "detail" page -- or the list/feed
 might include all the information you need.
 
-Here's an example that doesn't use detail pages. This is a slightly
+Here's an example that parses Boston, MA police reports from an RSS
+feed. It doesn't use detail pages. This is a slightly
 simplified version of the ``ebdata/scrapers/us/ma/boston/police_reports/retrieval.py``
 script.  It uses a Schema that's loaded when bootstrapping the
 ``obdemo`` package.
 
 Since this feed doesn't provide locations, we'll use ebdata's code for
-address extraction and ebpub's geocoder:
+address extraction and ebpub's geocoder.
 
 .. code-block:: python
+   :linenos:
 
     from ebdata.nlp.addresses import parse_addresses
     from ebdata.retrieval.scrapers.list_detail import RssListDetailScraper
@@ -203,18 +219,16 @@ address extraction and ebpub's geocoder:
     from ebpub.utils.logging import log_exception
     import logging
     import datetime
-
-
+    
     class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
-
+    
         schema_slugs = ('police-reports',)
         has_detail = False
 
         def list_pages(self):
             # This gets called to iterate over pages containing lists of items.
             # We just have the one page.
-            url = 'http://www.bpdnews.com/feed/'
-            yield self.fetch_data(url)
+            yield self.fetch_data('http://www.bpdnews.com/feed/')
 
         def existing_record(self, cleaned_record):
             # This gets called to see if we already have a matching NewsItem.
@@ -226,6 +240,7 @@ address extraction and ebpub's geocoder:
                 return None
 
         def clean_list_record(self, record):
+            # Takes one item from the feed and prepares it for saving.
             if record['title'].startswith(u'Boston 24'):
                 # We don't include the summary posts, those are citywide.
                 self.logger.info("boston daily crime stats, we don't know how to "
@@ -233,25 +248,6 @@ address extraction and ebpub's geocoder:
                 raise SkipRecord
 
             date = datetime.date(*record['updated_parsed'][:3])
-
-            # Get the precinct from the tags.
-            precincts = ['A1', 'A7', 'B2', 'B3', 'C11', 'C6', 'D14', 'D4',
-                         'E13', 'E18', 'E5']
-            precinct = None
-            tags = [t['term'] for t in record['tags']]
-            if not tags:
-                return
-
-            for precinct in tags:
-                if precinct in precincts:
-                    # TODO: we need a LocationType for precincts, and shapes; and
-                    # then we could set newsitem.location_object to the Location
-                    # for this precinct.
-                    break
-
-            if not precinct:
-                self.logger.debug("no precinct found in tags %r" % tags)
-
             description = record['summary']
 
             # This feed doesn't provide geographic data; we'll try to
@@ -267,63 +263,117 @@ address extraction and ebpub's geocoder:
             if not (location or location_name):
                 raise SkipRecord("No location or location_name")
 
+            # Get the precinct from the tags.
+            precincts = ['A1', 'A15', 'A7', 'B2', 'B3', 'C11', 'C6', 'D14', 'D4',
+                         'E13', 'E18', 'E5']
+            tags = [t['term'] for t in record['tags']]
+            precinct = None
+            for tag in tags:
+                if tag in precincts:
+                    precinct = tag
+                    break
+
+            attributes = {}
+            if precinct:
+                precinct = self.get_or_create_lookup('precinct', precinct, precinct)
+                attributes['precinct'] = precinct.id
+            else:
+                raise SkipRecord("No precinct found in tags %r" % tags)
+
             cleaned = dict(item_date=date,
                            location=location,
                            location_name=location_name,
                            title=record['title'],
                            description=description,
                            url=record['link'],
+                           attributes=attributes,
                            )
+
             return cleaned
-
-
+    
+    
         def save(self, old_record, list_record, detail_record):
+	    # Saves a single record, as returned by clean_list_record().
             attributes = None
-            # We don't use detail_record
+            # We don't use the detail_record argument because we don't
+	    # parse any detail pages, just the feed.
             kwargs = list_record
             self.create_or_update(old_record, attributes, **kwargs)
-
-
-
+    
     if __name__ == "__main__":
-    import sys
-    from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
-    from optparse import OptionParser
-    if argv is None:
-        argv = sys.argv[1:]
-    optparser = OptionParser()
-    add_verbosity_options(optparser)
-    scraper = BPDNewsFeedScraper()
-    opts, args = optparser.parse_args(argv)
-    setup_logging_from_opts(opts, scraper.logger)
-    # During testing, do this instead:
-    # scraper.display_data()
-    scraper.update()
+        import sys
+        from ebpub.utils.script_utils import add_verbosity_options, setup_logging_from_opts
+        from optparse import OptionParser
+        if argv is None:
+            argv = sys.argv[1:]
+        optparser = OptionParser()
+        add_verbosity_options(optparser)
+        scraper = BPDNewsFeedScraper()
+        opts, args = optparser.parse_args(argv)
+        setup_logging_from_opts(opts, scraper.logger)
+        # During testing, do this instead:
+        # scraper.display_data()
+        scraper.update()
 
 
-That's not too complex; three methods plus some command-line option
+The bulk of the work is in ``clean_list_record`` on line 30, which
+takes care of massaging the RSS data into a form that our police
+report NewsItems can use.
+
+In several places (lines 35, 51, and 68), you can see we raise
+SkipRecord exception, which does just what it says - skip over the
+current record and go on to the next one.
+
+
+Saving Extra Data in Attributes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RSS feeds can contain categories, AKA tags; in this feed, they are
+used to designate which police precinct a crime
+occurred in. Lines 53-61 show us looking in the tags for a precinct.
+
+But what can we do with these precincts? The ``NewsItem`` class
+doesn't have a ``precinct`` field.
+We can save it in a :ref:`custom attribute <newsitem_attributes>`.
+
+Lines 63-68 show how we prepare an "attributes" dictionary to save
+the precinct we got.
+In this case, 'precincts' are described by a SchemaField with
+``is_lookup=True``, so we call ``get_or_create_lookup`` and
+then we save its integer id in the attributes dictionary.
+(Read :ref:`more about lookups here <lookups>`).
+
+Finally, this method returns a dictionary that the ``save()`` method
+can use to create or update a ``NewsItem``.
+
+Summary
+~~~~~~~~
+
+It's not a lot of code; four methods plus some command-line option
 handling and you're done. Most of the
-work was in save(), doing address parsing and geocoding. 
+work was in clean_list_record(), doing address parsing and geocoding.
 
-But you do have to understand how (and when) to implement those three
-methods. It's highly recommended that you read the source code for
+But you do have to understand how (and when) to implement those four
+methods and how they interact. It's highly recommended that you read the source code for
 ``ebdata.retrieval.scrapers.list_detail`` and ``ebdata.retrieval.scrapers.newsitem_list_detail``.
 
-For a more complex example that does use detail pages and custom
-attributes, see
+For a more complex example that does use detail pages and more custom
+attributes, see the source code of
 ``ebdata/scrapers/general/seeclickfix/seeclickfix_retrieval.py``.
 
-What does this framework buy you? The advantage of using
-ebdata.retrieval.scrapers.newsitem_list_detail for such sites is that
-you get code and a framework for dealing with a lot of common cases:
+Advantages
+~~~~~~~~~~
+
+What does this framework buy you, compared to the "expedient hack" and
+other approaches to scraping?  You get code for dealing with a lot of
+common cases:
 
 * There's an ``RssListDetailScraper`` mix-in base class that handles both
   RSS and Atom feeds for the list page, with some support for
   pagination. (That saves us having to implement parse_list()).
 
 * It supports all the advanced features of ebpub's NewsItems and
-  Schemas, eg. arbitrary Attributes, Lookups, and the like (although
-  this example doesn't use them).
+  Schemas, eg. arbitrary Attributes, Lookups, and the like.
 
 * The ``create_newsitem()`` method can automatically geocode addresses if
   you have a single good address but no geographic location provided.
@@ -342,20 +392,19 @@ you get code and a framework for dealing with a lot of common cases:
 * There are hooks for cleaning up the data, see the various ``clean*``
   methods.
 
-Disadvantage:
-
-* It's fairly complex.
+Disadvantages
+~~~~~~~~~~~~~
 
 * You probably still have to do a fair amount of the error-handling,
   parsing (for things other than RSS or Atom feeds), and so forth.
 
-* It requires you to understand the base classes
-  (``NewsItemListDetailScraper`` and ``ListDetailScraper``), because it has a
-  lot of "inversion of control" -- meaning, you use it by subclassing
+* It's a bit complex. It requires you to understand the base classes
+  (``NewsItemListDetailScraper`` and ``ListDetailScraper``, etc.), because it has a
+  lot of "inversion of control": you use it by subclassing
   one or more of the base classes, and overriding various methods and
-  attributes that get called by the base class as
-  needed. Until you fully understand those base classes, this can be
-  confusing.
+  attributes that get called by the base class when it wants to.
+  Until you fully understand those base classes, this can be more
+  harder to understand than a more procedural approach.
 
 
 For a more complete example that uses detail pages and some of those other
@@ -372,7 +421,7 @@ ebdata.blobs.
 
 We haven't done one of these yet.
 
-Some examples you can peruse from the ``everyblock`` part of the
+Some examples you can peruse from the old ``everyblock`` part of the
 `the openblock-extras code <https://github.com/openplans/openblock-extras/tree/master/everyblock>`_
 (note that we lack Schemas for any of these):
 

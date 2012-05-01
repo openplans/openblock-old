@@ -65,25 +65,6 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
             raise SkipRecord
 
         date = datetime.date(*record['updated_parsed'][:3])
-
-        # Get the precinct from the tags.
-        precincts = ['A1', 'A7', 'B2', 'B3', 'C11', 'C6', 'D14', 'D4',
-                     'E13', 'E18', 'E5']
-        precinct = None
-        tags = [t['term'] for t in record['tags']]
-        if not tags:
-            return
-
-        for precinct in tags:
-            if precinct in precincts:
-                # TODO: we need a LocationType for precincts, and shapes; and
-                # then we could set newsitem.location_object to the Location
-                # for this precinct.
-                break
-
-        if not precinct:
-            self.logger.debug("no precinct found in tags %r" % tags)
-
         description = record['summary']
 
         # This feed doesn't provide geographic data; we'll try to
@@ -97,18 +78,40 @@ class BPDNewsFeedScraper(RssListDetailScraper, NewsItemListDetailScraper):
         if not (location or location_name):
             raise SkipRecord("No location or location_name")
 
+        # Get the precinct from the tags.
+        precincts = ['A1', 'A15', 'A7', 'B2', 'B3', 'C11', 'C6', 'D14', 'D4',
+                     'E13', 'E18', 'E5']
+        tags = [t['term'] for t in record['tags']]
+        precinct = None
+        for tag in tags:
+            if tag in precincts:
+                # TODO: we need a LocationType for precincts, and shapes; and
+                # then we could set newsitem.location_object to the Location
+                # for this precinct. For now we just save it as an attribute.
+                precinct = tag
+                break
+
+        attributes = {}
+        if precinct:
+            precinct = self.get_or_create_lookup('precinct', precinct, precinct)
+            attributes['precinct'] = precinct.id
+        else:
+            raise SkipRecord("no precinct found in tags %r" % tags)
+
         cleaned = dict(item_date=date,
                        location=location,
                        location_name=location_name,
                        title=record['title'],
                        description=description,
                        url=record['link'],
+                       attributes=attributes,
                        )
+
         return cleaned
 
 
     def save(self, old_record, list_record, detail_record):
-        attributes = None
+        attributes = list_record.pop('attributes', None)
         # We don't use detail_record
         kwargs = list_record
         self.create_or_update(old_record, attributes, **kwargs)
