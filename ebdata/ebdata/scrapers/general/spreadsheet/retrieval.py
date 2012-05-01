@@ -355,7 +355,7 @@ def main(argv=None):
     parser = OptionParser(usage=usage)
 
     parser.add_option(
-        "--schema", help="which news item type to create when scraping",
+        "--schema", help="slug of news item type to create when scraping",
         default="local-news"
         )
 
