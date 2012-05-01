@@ -22,7 +22,9 @@ from django.core.exceptions import ValidationError
 from ebpub.streets.models import Block
 from ebpub.streets.name_utils import make_pretty_name
 from ebpub.streets.name_utils import make_block_numbers
+from ebpub.utils.geodjango import geos_with_projection
 from ebpub.utils.text import slugify
+
 
 import logging
 logger = logging.getLogger('ebpub.streets.blockimport')
@@ -58,8 +60,7 @@ class BlockImporter(object):
                         if isinstance(val, str):
                             block_fields[key] = val.decode(self.encoding)
 
-
-                    block_fields['geom'] = feature.geom.transform(4326, True).geos
+                    block_fields['geom'] = geos_with_projection(feature.geom, 4326)
 
                     block_fields['street_pretty_name'], block_fields['pretty_name'] = make_pretty_name(
                         block_fields['left_from_num'],

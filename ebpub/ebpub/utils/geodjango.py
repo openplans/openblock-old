@@ -163,3 +163,106 @@ def get_default_bounds():
     (-10.0, 15.0, -5.0, 20.0)
     """
     return Polygon.from_bbox(get_metro()['extent'])
+
+
+def geos_with_projection(geom, projection=4326):
+    """
+    Returns a GEOSGeometry with the projection set.
+
+    ``geom`` can be a GEOSGeometry or OGRGeometry or subclass.
+
+    ``projection`` can be an integer SRID or a SpatialReference object.
+    Default projection is 4326 (aka WGS 84).
+
+
+    You can use a GEOSGeometry with no projection::
+
+      >>> from django.contrib.gis.geos import Point, GEOSGeometry
+      >>> from django.contrib.gis.gdal import OGRGeometry, SpatialReference
+      >>>
+      >>> geos_no_srid = Point((1.0, 2.0))
+      >>> print geos_no_srid.srid
+      None
+      >>> geom = geos_with_projection(geos_no_srid)
+      >>> geom.srid
+      4326
+      >>> geom.x, geom.y
+      (1.0, 2.0)
+
+    You can use a GEOSGeometry with a projection::
+
+      >>> geos_with_srid = Point((1.0, 2.0), srid=4326)
+      >>> geos_with_srid.srid
+      4326
+      >>> geom = geos_with_projection(geos_with_srid)
+      >>> geom.srid
+      4326
+      >>> geom.x, geom.y
+      (1.0, 2.0)
+
+
+   YOu can use an OGRGeometry with no projection::
+
+      >>> ogr_no_srs = OGRGeometry('POINT (1 2)')
+      >>> print ogr_no_srs.srs
+      None
+      >>> geom = geos_with_projection(ogr_no_srs)
+      >>> print geom.srid
+      4326
+      >>> geom.x, geom.y
+      (1.0, 2.0)
+
+   You can use an OGR geometry with a projection that has no srid,
+   there are some like that::
+
+      >>> test_srs = SpatialReference(
+      ...     '''PROJCS["NAD_1983_StatePlane_North_Carolina_FIPS_3200_Feet",
+      ...     GEOGCS["GCS_North_American_1983",
+      ...         DATUM["North_American_Datum_1983",
+      ...             SPHEROID["GRS_1980",6378137.0,298.257222101]],
+      ...         PRIMEM["Greenwich",0.0],
+      ...         UNIT["Degree",0.0174532925199433]],
+      ...     PROJECTION["Lambert_Conformal_Conic_2SP"],
+      ...     PARAMETER["False_Easting",2000000.002616666],
+      ...     PARAMETER["False_Northing",0.0],
+      ...     PARAMETER["Central_Meridian",-79.0],
+      ...     PARAMETER["Standard_Parallel_1",34.33333333333334],
+      ...     PARAMETER["Standard_Parallel_2",36.16666666666666],
+      ...     PARAMETER["Latitude_Of_Origin",33.75],
+      ...     UNIT["Foot_US",0.3048006096012192]]
+      ... '''
+      ...     )
+      >>> ogr_with_srs_but_no_srid = OGRGeometry('POINT (1 2)', srs=4326)
+      >>> ogr_with_srs_but_no_srid.transform(test_srs)
+      >>> print ogr_with_srs_but_no_srid.srs.name
+      NAD_1983_StatePlane_North_Carolina_FIPS_3200_Feet
+      >>> print ogr_with_srs_but_no_srid.srid
+      None
+      >>> geom = geos_with_projection(ogr_with_srs_but_no_srid)
+      >>> geom.srid
+      4326
+      >>> round(geom.x), round(geom.y)  # transform is a bit lossy
+      (1.0, 2.0)
+
+    You can use an OGRGeometry with a projection::
+
+      >>> ogr_with_srid = OGRGeometry('POINT (1 2)', srs=4326)
+      >>> ogr_with_srid.srid
+      4326
+      >>> geom = geos_with_projection(ogr_with_srid)
+      >>> geom.x, geom.y
+      (1.0, 2.0)
+      >>> geom.srid
+      4326
+
+    """
+    geom = geom.clone()
+    if geom.srs is None:
+        if isinstance(projection, int):
+            geom.srid = projection
+        else:
+            geom.srs = projection
+    geom = geom.transform(projection, True)
+    if hasattr(geom, 'geos'):
+        geom = geom.geos
+    return geom

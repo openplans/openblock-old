@@ -35,6 +35,7 @@ from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.text import slugify
 from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.geodjango import flatten_geomcollection
+from ebpub.utils.geodjango import geos_with_projection
 from ebpub.metros.allmetros import get_metro
 
 import logging
@@ -68,6 +69,7 @@ def populate_ni_loc(location):
     new_count = NewsItemLocation.objects.count()
     logger.info("New: %d NewsItemLocations" % (new_count - old_niloc_count))
 
+
 class LocationImporter(object):
     def __init__(self, layer, location_type, source='UNKNOWN', filter_bounds=False, verbose=False):
         self.layer = layer
@@ -86,12 +88,7 @@ class LocationImporter(object):
 
     def create_location(self, name, location_type, geom, display_order=0):
         source = self.source
-        if hasattr(geom, 'geos'):
-            geom = geom.geos
-        if geom.srid is None:
-            geom.srid = 4326
-        elif geom.srid != 4326:
-            geom = geom.transform(4326, True)
+        geom = geos_with_projection(geom, 4326)
         geom = ensure_valid(geom, name)
         geom = flatten_geomcollection(geom)
         if not isinstance(location_type, int):
