@@ -48,7 +48,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     # and doesn't belong on a pypi page anyway.
     long_description = long_description.split('Older Changes')[0]
 
-VERSION="1.2.0dev"
+VERSION="1.2rc1"
 
 setup(
     name='obdemo',
