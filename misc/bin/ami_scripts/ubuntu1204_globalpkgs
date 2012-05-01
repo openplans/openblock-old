@@ -3,8 +3,11 @@
 sudo apt-get update || exit 1
 
 # cleanup dev dependencies in case we've run the other scenario before...
+# NOTE global python-psycopg2 version DOES NOT work with django 1.3.
+
 echo Cleanup...
 sudo apt-get -y remove libgdal1-1.7.0 \
+    python-psycopg2 \
     libgdal1-dev \
     libxml2 libxml2-dev \
     libxslt1.1 libxslt1-dev
@@ -30,8 +33,7 @@ sudo apt-get -y install python2.7 \
     libproj0 \
     libproj-dev \
     unzip \
-    wget \
-    python-psycopg2 || exit 1
+    wget || exit 1
 
 sudo ldconfig || exit 1
 #echo Rebooting
