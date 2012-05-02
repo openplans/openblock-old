@@ -29,8 +29,7 @@ mkdir -p openblock/src || exit 1
 cd openblock || exit 1
 git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 
-BRANCH=release-test-20120430
-echo XXX TEMPORARY: BRANCH TEST of $BRANCH
+BRANCH=openblock-1.2-branch
 cd src/openblock
 git checkout $BRANCH
 cd -

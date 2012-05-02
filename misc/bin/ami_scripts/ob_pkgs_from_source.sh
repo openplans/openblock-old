@@ -38,8 +38,8 @@ echo Getting openblock source...
 $SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 echo OK
 
-BRANCH=release-test-20120430
-echo XXX TEMPORARY: getting $BRANCH
+BRANCH=openblock-1.2-branch
+echo getting branch $BRANCH
 cd src/openblock
 $SUDO git checkout -b $BRANCH origin/$BRANCH || exit 1
 
