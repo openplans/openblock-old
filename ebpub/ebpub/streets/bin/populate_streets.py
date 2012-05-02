@@ -104,9 +104,11 @@ def intersecting_blocks(block):
     return intersections
 
 def intersection_from_blocks(block_a, block_b, intersection_pt, city, state, zip):
+    pretty_name = pretty_name_from_blocks(block_a, block_b),
+    slug = slug_from_blocks(block_a, block_b)
     obj, created = Intersection.objects.get_or_create(
-        pretty_name=pretty_name_from_blocks(block_a, block_b),
-        slug=slug_from_blocks(block_a, block_b),
+        pretty_name=pretty_name,
+        slug=slug,
         predir_a=block_a.predir,
         prefix_a=block_a.prefix,
         street_a=block_a.street,
@@ -138,7 +140,7 @@ def populate_streets(*args, **kwargs):
     """
     Populates the streets table from the blocks table
     """
-    print 'Populating the streets table'
+    print 'Populating the streets table; deleting all first'
     Street.objects.all().delete()
     # This is considerably slower than the old INSERT INTO ... UPDATE
     # single SQL statement, but it's a one-time cost, and it avoids
@@ -202,6 +204,9 @@ def populate_intersections(*args, **kwargs):
     # and then we have nothing to work with.
     # So the two functions should really always be called together.
     logger.info("Starting to populate intersections, this can take some minutes...")
+    logger.warn("Deleting all %d existing intersections first" % Intersection.objects.all().count())
+    Intersection.objects.all().delete()
+
     logger.info("We have %d blockintersections" % BlockIntersection.objects.all().count())
     metro = get_metro()
     zipcodes = Location.objects.filter(location_type__name__istartswith="zip").exclude(name__startswith='Unknown')
@@ -252,7 +257,7 @@ def populate_intersections(*args, **kwargs):
                 zipcode = bi.block.left_zip
             intersection = intersection_from_blocks(bi.block, bi.intersecting_block, bi.location, city, state, zipcode)
             intersection.save()
-            logger.debug("Created intersection %s" % intersection)
+            logger.debug("Created intersection %s" % intersection.pretty_name)
             bi.intersection = intersection
             bi.save()
             intersections_seen[seen_intersection[0]] = intersection.id
