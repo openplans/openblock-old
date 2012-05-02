@@ -168,6 +168,7 @@ class BlockImporter(object):
                         existing = list(Block.objects.filter(**_old_primary_fields))
                         if not existing:
                             block = Block(**block_fields)
+                            num_created += 1
                             logger.debug("CREATING %s" % unicode(block))
 
                     if len(existing) == 1:
