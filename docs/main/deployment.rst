@@ -51,16 +51,20 @@ Adjust the paths according to your installation.
  # You'll want the "expires" module enabled.
 
 
- # Django admin static files; these may be somewhere under $VIRTUAL_ENV/lib/python2.x
- Alias /media/ /home/openblock/openblock/src/django/django/contrib/admin/media/
- Alias /static/admin/ /home/openblock/openblock/src/django/django/contrib/admin/media/
+ # Django admin static files. This example is for python 2.7; adjust
+ # if you're using 2.6.
+ Alias /media/ /home/openblock/openblock/lib/python2.7/site-packages/django/contrib/admin/media/
+ Alias /static/admin/ /home/openblock/openblock/lib/python2.7/site-packages/django/contrib/admin/media/
+ # Likewise olwidget may be under lib/python
+ Alias /olwidget/  /home/openblock/openblock/lib/python2.7/site-packages/olwidget/static/olwidget/
 
- # You want aliases for all top-level subdirectories of ebpub/media
+ # You want aliases for all top-level subdirectories of ebpub/media.
+ # This example is for a source checkout; if you install from stable
+ # packages then ebpub will be under lib/python2.x/site-packages/
  Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
  Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
  Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
  Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
- Alias /olwidget/  /home/openblock/openblock/src/django-olwidget/
 
  # Only needed if you're running obdemo.
  Alias /map_icons/ /home/openblock/openblock/src/openblock/obdemo/obdemo/media/map_icons/

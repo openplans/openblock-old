@@ -9,7 +9,7 @@ Alias /styles/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/styles/
 Alias /scripts/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/scripts/
 Alias /images/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/images/
 Alias /cache-forever/ /home/openblock/openblock/src/openblock/ebpub/ebpub/media/cache-forever/
-Alias /olwidget/  /home/openblock/openblock/src/django-olwidget/
+Alias /olwidget/  /home/openblock/openblock/lib/python2.7/site-packages/olwidget/static/olwidget/
 #Alias /uploads/ /home/openblock/demo.openblockproject.org/var/uploads/
 
 WSGIScriptAlias / /home/openblock/openblock/wsgi/myblock.wsgi
