@@ -24,6 +24,26 @@ Upgrade Notes
    django-admin.py syncdb
    django-admin.py migrate
 
+* In this release, there are some changes to the Block model and the
+  import script, which combine to give you better search results and
+  geocoding if you reload your blocks data.  To do so:
+
+  * Run migrations, as described above
+  * Shut down your scrapers
+  * Back up your database
+  * Re-import blocks **with the --reset option** (that's important!), via either
+    the admin UI or the command line ... see http://openblockproject.org/docs/install/geodata.html#streets-blocks
+  * Be sure to also regenerate the Streets, BlockIntersections, and
+    Intersections as per the docs.
+  * Browse your site... everything should work except that streets
+    with previously cryptic names like "99" or "87" will now have a
+    more recognizable full name, eg. "State Route 99" or "Interstate
+    87".
+  * Start your scrapers again.
+
+  The website should remain operational during this process, though
+  some pages may briefly give errors during the process, and URLs for
+  highways will change to include the prefix.
 
 Backward Incompatibilities
 --------------------------

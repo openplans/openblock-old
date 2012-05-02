@@ -282,7 +282,7 @@ all options:
  
  Options:
   -h, --help            show this help message and exit
-  -v, --verbose
+  -v, --verbose         
   -c CITY, --city=CITY  A city name to filter against
   -f, --fix-cities      Whether to override "city" attribute of blocks and
                         streets by finding an intersecting Location of a city-
@@ -290,12 +290,19 @@ all options:
                         multiple_cities=True in the METRO_LIST of your
                         settings.py, and after you have created some
                         appropriate Locations.
-  -b, --filter-bounds   Whether to skip blocks outside the metro extent from
-                        your settings.py. Default True.
+  -r, --reset           Whether to delete existing blocks and start from
+                        scratch. This will attempt to fix other models that
+                        have foreign keys to blocks; use at your own risk
+                        though.
+  -b FILTER_BOUNDS, --filter-bounds=FILTER_BOUNDS
+                        Whether to skip blocks outside the metro extent from
+                        your settings.py. Default 1 (true); use 0 to disable.
+  -l FILTER_LOCATION, --filter-location=FILTER_LOCATION
+                        A location (spelled as location-type-slug:location-
+                        slug) that will be used to filter out blocks outside
+                        its boundaries. May be passed more than once.
   -e ENCODING, --encoding=ENCODING
                         Encoding to use when reading the shapefile
-
-
 
 
 
