@@ -6,6 +6,8 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    depends_on = (('streets', '0013_auto__add_field_street_prefix'),
+                  )
     def forwards(self, orm):
         "Write your forwards methods here."
         alerts = orm['alerts.emailalert'].objects.all()
