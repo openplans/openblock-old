@@ -21,14 +21,14 @@
 # TODO: why not just run as the default user? why bother creating an
 # openblock user? that's not in our docs.
 
-# XXX RESET user
+# RESET user
 echo Cleanup...
 sudo rm -rf /home/openblock/openblock
 sudo deluser openblock
 echo setting up user
 yes '' | sudo adduser --quiet --disabled-password openblock
 echo
-# XXX END RESET
+# END RESET
 
 export SUDO="sudo -H -E -u openblock"
 
