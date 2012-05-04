@@ -352,16 +352,22 @@ Bugs fixed
 * Store suffixes on streets with names like 'Wilson Park'; fixes some
   geocoding failures.
 
+* Fix 500 error on newsitem.geojson, ticket #38
+
 
 Documentation
 -------------
 
+Too many to mention, but here are some:
+
+* Python API documentation for all(?) of ebpub, ebdata, obadmin, obdemo packages.
+  Ticket #159.
+
 * Better docs on how to import spreadsheets via scraper or admin.
 
-* Better docs on what the "core" NewsItem fields are.
+* Clarify behavior of email alerts.
 
-* Auto-doc from all(?) ebpub, ebdata, obadmin, obdemo packages.
-  Ticket #159.
+* Better docs on what the "core" NewsItem fields are.
 
 * Document ``ebpub.db.bin`` scripts. Ticket #96.
 
@@ -381,8 +387,6 @@ Documentation
 * Better documentation about Schemas, SchemaFields, Attributes, and how they relate.
 
 * Fixes to example crontab, thanks Tim Shedor
-
-* Fix 500 error on newsitem.geojson, ticket #38
 
 
 Other
