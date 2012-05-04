@@ -255,7 +255,7 @@ New Features in 1.2
 Bugs fixed
 ----------
 
-* Admin users no longer have a limit on file uploads.
+* Admin users no longer have a limit on file upload size.
 
 * Handle importing locations in other projections than 4326.
   Thanks Karen Tracey. Refs #214.
@@ -270,6 +270,8 @@ Bugs fixed
 * RSS feed URLs fixed to use settings.EB_DOMAIN rather than the sites
   framework for getting the root URL.  For consistency with the rest
   of OpenBlock.
+
+* Street names properly normalized on input (ticket #166)
 
 * parsing.normalize() and text.slugify() no longer blow up if fed
   non-string input.
