@@ -157,7 +157,7 @@ class BlockImporter(object):
                     else:
                         block.parent_id = parent_id
                         block.save()
-                    logger.debug('%d\tCreated block %s for feature %d' % (num_created, block, feature.get('TLID')))
+                    logger.debug('%d\tCreated block %s for feature %d' % (num_created, block, feature.fid))
         logger.info("Created %d new blocks in %.2f seconds" % (num_created,
                                                                time.time() - start))
         return num_created
