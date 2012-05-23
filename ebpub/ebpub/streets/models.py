@@ -16,7 +16,7 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''
+"""
 Blocks
 ======
 .. _blocks:
@@ -73,7 +73,7 @@ verify it on the site by browsing to /streets/ and /locations/.
 module contents
 ================
 
-'''
+"""
 
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
