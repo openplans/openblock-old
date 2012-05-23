@@ -1,5 +1,5 @@
-OpenBlock 1.2.0 (UNRELEASED)
-================================
+OpenBlock 1.2.0 (Released 5/23/2012)
+====================================
 
 .. _release-upgrade:
 

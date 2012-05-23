@@ -57,7 +57,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     long_description = long_description.split('Older Changes')[0]
 
 
-VERSION="1.2rc1"
+VERSION="1.2"
 
 setup(
     name='ebpub',
