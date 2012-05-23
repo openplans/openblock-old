@@ -1,6 +1,6 @@
-===============
-Packages
-===============
+====================================
+Python API Documentation
+====================================
 
 OpenBlock consists of a number of packages, summarized below:
 

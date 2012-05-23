@@ -1,6 +1,8 @@
 OpenBlock 1.2.0 (UNRELEASED)
 ================================
 
+.. _release-upgrade:
+
 Upgrade Notes
 -------------
 
@@ -44,6 +46,8 @@ Upgrade Notes
   The website should remain operational during this process, though
   some pages may briefly give errors during the process, and URLs for
   highways will change to include the prefix.
+
+.. _backward-incompatibilities:
 
 Backward Incompatibilities
 --------------------------
@@ -184,7 +188,7 @@ New Features in 1.2
 * Added a ``lookup_values_for_attribute`` template tag, dumps all
   values of a given db.attribute field as a JSON list.
 
-* Made schema_filter the default view of Schemas, ticket # 272
+* Made schema_filter the default view of Schemas, ticket #272
 
 * Added ``ebpub.moderation`` app that allows users to flag NewsItems
   as spam or inappropriate, and an admin UI for it;
