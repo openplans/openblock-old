@@ -1,0 +1,37 @@
+# AUTO-GENERATED
+# Pip requirements for installing all OpenBlock 1.2 packages
+
+
+beautifulsoup==3.2.1
+chardet==1.0.1
+django==1.3.1
+django-background-task>=0.1.3
+django-jsonfield==0.7.1
+django-static==1.5.5
+easy-thumbnails>=1.0-alpha-21,<1.1a
+feedparser==5.1
+flickrapi==1.4.2
+GDAL
+httplib2==0.7.2
+http://pypi.python.org/packages/source/P/PasteScript/PasteScript-1.7.3.tar.gz
+https://github.com/openplans/olwidget/zipball/20120404#egg=django-olwidget-0.49
+lxml
+mock==0.8.0
+Paste==1.7.5.1
+PasteDeploy==1.5.0
+Paver==1.0.5
+PIL>=1.1.6,<=1.2a
+psycopg2>=2.2,<2.4.2
+pyRFC3339==0.1
+python-dateutil==1.5
+pytz>=2011n
+PyYAML==3.09
+recaptcha-client==1.0.6
+Shapely>=1.2
+slimmer>=0.1.30
+South>=0.7.3
+xlrd==0.7.3
+ebpub==1.2
+ebdata==1.2
+obadmin==1.2
+obdemo==1.2
