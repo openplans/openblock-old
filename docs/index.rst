@@ -110,6 +110,8 @@ scenes of EveryBlock.com" here: http://blip.tv/file/1957362
 What's New in OpenBlock 1.2
 ============================
 
+Highlights:
+
 * Many tweaks to the public site, including: a more useful default
   view of a news type ("Schema"), nicer-looking map, add/edit/delete
   forms with autocomplete for user-contributed "neighbornews" content,
