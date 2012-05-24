@@ -59,7 +59,7 @@ with open(os.path.join(here, 'README.txt')) as file:
     long_description = long_description.replace(':doc:', '')
 
 
-VERSION="1.2"
+VERSION="1.3dev"
 
 setup(
     name='ebpub',
