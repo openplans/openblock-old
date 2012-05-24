@@ -1,4 +1,4 @@
-OpenBlock 1.2.0 (Released 5/23/2012)
+OpenBlock 1.2 (Released 5/23/2012)
 ====================================
 
 .. _release-upgrade:
@@ -6,9 +6,7 @@ OpenBlock 1.2.0 (Released 5/23/2012)
 Upgrade Notes
 -------------
 
-* As usual, install all dependencies, eg if you are upgrading a source checkout:
-
-.. code-block:: bash
+* As usual, install all dependencies, eg if you are upgrading a source checkout::
 
    pip install -r ebpub/requirements.txt
    pip install -e ebpub
@@ -19,9 +17,7 @@ Upgrade Notes
    pip install -r obdemo/requirements.txt
    pip install -e obdemo
 
-* As usual, sync and migrate the database:
-
-.. code-block:: bash
+* As usual, sync and migrate the database::
 
    django-admin.py syncdb
    django-admin.py migrate

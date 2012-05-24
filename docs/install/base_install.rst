@@ -80,12 +80,12 @@ will publish a consolidated pip requirements file that will install
 listed for each release at http://openplans.github.com/openblock/ .
 
 For example, the 1.2 release is at:
-http://openplans.github.com/openblock/requirements/openblock-requirements-1.2.0.txt
+http://openplans.github.com/openblock/requirements/openblock-requirements-1.2.txt
 and can be installed with this command:
 
 .. code-block:: bash
 
-  $ $VIRTUAL_ENV/bin/pip install -r http://openplans.github.com/openblock/requirements/openblock-requirements-1.2.0.txt
+  $ $VIRTUAL_ENV/bin/pip install -r http://openplans.github.com/openblock/requirements/openblock-requirements-1.2.txt
 
 If you encounter errors during package installation, please see
 :doc:`common_install_problems`.

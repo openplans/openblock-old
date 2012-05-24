@@ -51,6 +51,9 @@ with open(os.path.join(here, 'README.txt')) as file:
     # Remove stuff that breaks vanilla rst (no sphinx)
     # and doesn't belong on a pypi page anyway.
     long_description = long_description.split('Older Changes')[0]
+    long_description = long_description.replace(':ref:', '')
+    long_description = long_description.replace(':doc:', '')
+
 
 VERSION="1.2"
 
