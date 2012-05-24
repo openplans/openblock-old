@@ -93,6 +93,7 @@ class Address(dict):
         """
         Builds an Address object from a GeocoderCache result object.
         """
+        #  This should probably use the normal Django cache, see ticket #163
         fields = {
             'address': cached.address,
             'city': cached.city,
@@ -190,7 +191,7 @@ class AddressGeocoder(Geocoder):
         try:
             locations = parse(location_string)
         except ParsingError, e:
-            raise
+            raise e
 
         all_results = []
 
@@ -210,7 +211,7 @@ class AddressGeocoder(Geocoder):
                 try:
                     misspelling = StreetMisspelling.objects.get(incorrect=loc['street'])
                     # TODO: stash away the original 'street' value for
-                    # possible disambiguation later?
+                    # possible disambiguation later? ticket #295
                     loc['street'] = misspelling.correct
                     logger.debug(' ... corrected to %r' % loc['street'])
                 except StreetMisspelling.DoesNotExist:
@@ -419,9 +420,8 @@ class SmartGeocoder(Geocoder):
         return geocoder._do_geocode(location_string)
 
 
-
-def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
-                 convert_to_block=False, guess=False):
+def full_geocode(query, search_places=True, convert_to_block=True, guess=False,
+                 **disambiguation_kwargs):
     """
     Tries the full geocoding stack on the given query (a string):
 
@@ -452,14 +452,16 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
 
     * By passing guess=True, only the first result will be returned.
 
-    * By passing any of the optional ``zipcode``, ``city``, or
-      ``state`` params they will be used to attempt to disambiguate
-      address or block results as needed.
+    * By passing additional kwargs such as ``zipcode``, ``city``, or
+      ``state``, they will be used to attempt to disambiguate address
+      or block results as needed.  Keys should be keys in each Address result;
+      invalid keys have no effect.
 
-    * By passing ``convert_to_block=True``, *if* the exact address is
-      not matched, it will be rounded down to the nearest 100, eg.
-      '123 Main St' will be converted to '100 block of Main St',
-      and tried again with BlockGeocoder.
+    * By default, *if* the exact address is not matched, it will be
+      rounded down to the nearest 100, eg.  '123 Main St' will be
+      converted to '100 block of Main St', and tried again with
+      BlockGeocoder.  This is enabled by default; you can pass
+      ``convert_to_block=False`` to turn it off.
 
     """
     # Local import to avoid circular imports.
@@ -495,13 +497,14 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
         result = geocoder.geocode(query)
     except AmbiguousResult, e:
         logger.debug('Multiple addresses for %r' % query)
-        # The zipcode, city, state are not included in the initial pass because it
-        # is often too picky yeilding no results when there is a
+        # The disambiguation args (zipcode, city, state,...)
+        # are not included in the initial pass because it
+        # is often too picky, yielding no results when there is a
         # legitimate nearby zipcode or city identified in either the address
-        # or street number data..
-        results = disambiguate(e.choices, city=city, state=state, zipcode=zipcode, guess=guess)
+        # or street number data.
+        results = disambiguate(e.choices, guess=guess, **disambiguation_kwargs)
         if not results:
-            # This should not happen
+            logger.debug("Disambiguate returned nothing, should not happen")
             results = e.choices
         if len(results) > 1:
             return {'type': 'address', 'result': results, 'ambiguous': True}
@@ -539,7 +542,7 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
     return {'type': 'address', 'result': result, 'ambiguous': False}
 
 
-def disambiguate(geocoder_results, guess=False, city=None, state=None, zipcode=None):
+def disambiguate(geocoder_results, guess=False, **kwargs):
     """Disambiguate a list of geocoder results based on city, state, zip.
     Result will be a list, which may be the original list or a subset of it.
 
@@ -547,18 +550,20 @@ def disambiguate(geocoder_results, guess=False, city=None, state=None, zipcode=N
     wildly off from what you expect (eg. in the case of 'invalid block
     but valid street')... so use with caution.
     """
-    if not (zipcode or city or state):
-        logger.debug("Nothing to disambiguate on, guessing first..")
+    if not kwargs:
         if guess and geocoder_results:
+            logger.debug("Nothing to disambiguate on, returning first result.")
             return [geocoder_results[0]]
         else:
+            logger.debug("Nothing to disambiguate or guess, returning all.")
             return geocoder_results
 
     filtered_results = geocoder_results[:]
 
-    for key, target_val in (('state', state),
-                            ('city', city),
-                            ('zip', zipcode)):
+    for key, target_val in kwargs.items():
+        # special case: allow passing either form
+        if key == 'zipcode':
+            key = 'zip'
 
         if not target_val:
             continue
