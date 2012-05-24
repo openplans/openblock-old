@@ -23,7 +23,12 @@ Launch an Instance ...
 
 In the `AWS EC2 management console <https://console.aws.amazon.com/ec2/>`_,
 click "Launch Instance". Click "Community AMIs", and in the search box, type in
-"ami-69d91600".  (You can also try searching for "openblock".)
+"ami-f8ba1c91".  (You can also try searching for "openblock".)
+
+If you can't find it, check your region; we publish AMIs in the
+"us-east-1" region.  There is a dropdown to select region in the upper
+left corner of the EC2 console.
+
 
 Select the OpenBlock AMI, then continue
 through the wizard until your instance is launched. You can leave all
@@ -147,10 +152,13 @@ Edit that file as per :doc:`configuration`.
 (Text editors `nano` and `vim` are installed; you can of course
 install `emacs` or whatever else you like.)
 
-**Security warning**: it is especially important that you change the
+**Security warning**: it is *crucial* that you change the
 ``PASSWORD_CREATE_SALT`` and ``PASSWORD_RESET_SALT`` settings.
+Otherwise, other people that create clones of the same AMI could
+find the old salt values and try to crack your passwords.
+You should also change ``STAFF_COOKIE_VALUE``.
 
-Note that anytime you change settings, or updater your openblock code,
+Note that anytime you change settings, or update your openblock code,
 you'll want to run this command
 before you can see your changes take effect on your site:
 
