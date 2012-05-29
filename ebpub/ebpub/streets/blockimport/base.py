@@ -107,7 +107,10 @@ class BlockImporter(object):
                             if not value:
                                 value = None
                         else:
-                            value = None
+                            try:
+                                value = str(int(value))
+                            except (ValueError, TypeError):
+                                value = None
                         block_fields[addr_key] = value
 
                     try:
