@@ -509,6 +509,7 @@ def map_items_json(request):
             'geometry': geom,
             }
 
+        # Uh-oh, this is not y10k compliant :-p
         sort_key = '%d-%d-%d-%s-%d' % (9999 - item.item_date.year,
                                     13 - item.item_date.month,
                                     32 - item.item_date.day,

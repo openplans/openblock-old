@@ -25,6 +25,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize, parse, ParsingError
+from ebpub.utils.text import address_to_block
 import logging
 import re
 
@@ -77,6 +78,13 @@ class Address(dict):
             return self["point"].x
     lng = longitude
 
+    @property
+    def location(self):
+        """Everything else full_geocode() can return has a .location,
+        so this is here for consistency of API."""
+        if self["point"]:
+            return self["point"]
+
     def __unicode__(self):
         return u", ".join([self[k] for k in ["address", "city", "state", "zip"]])
 
@@ -85,6 +93,7 @@ class Address(dict):
         """
         Builds an Address object from a GeocoderCache result object.
         """
+        #  This should probably use the normal Django cache, see ticket #163
         fields = {
             'address': cached.address,
             'city': cached.city,
@@ -182,9 +191,13 @@ class AddressGeocoder(Geocoder):
         try:
             locations = parse(location_string)
         except ParsingError, e:
-            raise
+            raise e
 
         all_results = []
+
+        # For capturing streets with matching name but no matching block.
+        invalid_block_args = []
+
         for loc in locations:
             logger.debug('AddressGeocoder: Trying %r' % loc)
             loc_results = self._db_lookup(loc)
@@ -198,7 +211,7 @@ class AddressGeocoder(Geocoder):
                 try:
                     misspelling = StreetMisspelling.objects.get(incorrect=loc['street'])
                     # TODO: stash away the original 'street' value for
-                    # possible disambiguation later?
+                    # possible disambiguation later? ticket #295
                     loc['street'] = misspelling.correct
                     logger.debug(' ... corrected to %r' % loc['street'])
                 except StreetMisspelling.DoesNotExist:
@@ -213,7 +226,7 @@ class AddressGeocoder(Geocoder):
                                  % loc['suffix'])
                     loc_results = self._db_lookup(dict(loc, suffix=None))
                 # Next, try looking for the street, in case the street
-                # exists but the address doesn't.
+                # (without any suffix) exists but the address doesn't.
                 if not loc_results and loc['number']:
                     kwargs = {'street': loc['street']}
                     sided_filters = []
@@ -224,9 +237,14 @@ class AddressGeocoder(Geocoder):
                     from ebpub.streets.models import Block
                     b_list = Block.objects.filter(*sided_filters, **kwargs).order_by('predir', 'from_num', 'to_num')
                     if b_list:
+                        # We got some blocks with the bare street name.
+                        # Might be InvalidBlockButValidStreet, but we don't
+                        # want to raise that till we've tried all locations,
+                        # in case there's a better one coming up.
                         logger.debug("Street %r exists but block %r doesn't"
                                      % (b_list[0].street_pretty_name, loc['number']))
-                        raise InvalidBlockButValidStreet(loc['number'], b_list[0].street_pretty_name, b_list)
+                        invalid_block_args = [loc['number'], b_list[0].street_pretty_name, b_list]
+
             if loc_results:
                 logger.debug(u'Success. Adding to results: %s' % [unicode(r) for r in loc_results])
                 all_results.extend(loc_results)
@@ -234,7 +252,10 @@ class AddressGeocoder(Geocoder):
                 logger.debug('... Got nothing.')
 
         if not all_results:
-            raise DoesNotExist("Geocoder db couldn't find this location: %r" % location_string)
+            if invalid_block_args:
+                raise InvalidBlockButValidStreet(*invalid_block_args)
+            else:
+                raise DoesNotExist("Geocoder db couldn't find this location: %r" % location_string)
         elif len(all_results) == 1:
             return all_results[0]
         else:
@@ -258,6 +279,7 @@ class AddressGeocoder(Geocoder):
                 street=location['street'],
                 number=location['number'],
                 predir=location['pre_dir'],
+                prefix=location['prefix'],
                 suffix=location['suffix'],
                 postdir=location['post_dir'],
                 city=location['city'],
@@ -398,29 +420,30 @@ class SmartGeocoder(Geocoder):
         return geocoder._do_geocode(location_string)
 
 
-
-def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
-                 convert_to_block=False, guess=False):
+def full_geocode(query, search_places=True, convert_to_block=True, guess=False,
+                 **disambiguation_kwargs):
     """
     Tries the full geocoding stack on the given query (a string):
-        * Normalizes whitespace/capitalization
-        * Searches the Misspelling table to corrects location misspellings
-        * Searches the Location table
-        * Failing that, searches the Place table (if search_places is True)
-        * Failing that, uses the SmartGeocoder to parse this as an address, block,
-          or intersection
-        * Failing that, raises whichever error is raised by the geocoder --
-          except AmbiguousResult, in which case all possible results are
-          returned
+
+    * Normalizes whitespace/capitalization
+    * Searches the Misspelling table to corrects location misspellings
+    * Searches the Location table
+    * Failing that, searches the Place table (if search_places is True)
+    * Failing that, uses the SmartGeocoder to parse this as an address, block,
+      or intersection
+    * Failing that, raises whichever error is raised by the geocoder --
+      except AmbiguousResult, in which case all possible results are
+      returned
 
     Returns a dictionary of {type, result, ambiguous}, where ambiguous is True
-    or False, and type can be:
-        * 'location' -- in which case result is a Location object.
-        * 'place' -- in which case result is a Place object. (This is only
-          possible if search_places is True.)
-        * 'address' -- in which case result is an Address object as returned
-          by geocoder.geocode().
-        * 'block' -- in which case result is an Address object based on the block.
+    or False, and type can be on of these strings:
+
+    * 'location' -- in which case result is a Location object.
+    * 'place' -- in which case result is a Place object. (This is only
+      possible if search_places is True.)
+    * 'address' -- in which case result is an Address object as returned
+      by geocoder.geocode().
+    * 'block' -- in which case result is an Address object based on the block.
 
     When ``ambiguous`` is True in the output dict, ``result`` will be
     a list of objects, and vice versa.
@@ -429,14 +452,16 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
 
     * By passing guess=True, only the first result will be returned.
 
-    * By passing any of the optional ``zipcode``, ``city``, or
-      ``state`` params they will be used to attempt to disambiguate
-      address or block results as needed.
+    * By passing additional kwargs such as ``zipcode``, ``city``, or
+      ``state``, they will be used to attempt to disambiguate address
+      or block results as needed.  Keys should be keys in each Address result;
+      invalid keys have no effect.
 
-    * By passing ``convert_to_block=True``, *if* the exact address is
-      not matched, it will be rounded down to the nearest 100, eg.
-      '123 Main St' will be converted to '100 block of Main St',
-      and tried again with BlockGeocoder.
+    * By default, *if* the exact address is not matched, it will be
+      rounded down to the nearest 100, eg.  '123 Main St' will be
+      converted to '100 block of Main St', and tried again with
+      BlockGeocoder.  This is enabled by default; you can pass
+      ``convert_to_block=False`` to turn it off.
 
     """
     # Local import to avoid circular imports.
@@ -459,7 +484,6 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
         places = Place.objects.filter(normalized_name=canonical_place)
         if len(places) == 1:
             logger.debug(u'geocoded %r to Place %s' % (query, places[0]))
-
             return {'type': 'place', 'result': places[0], 'ambiguous': False}
         elif len(places) > 1:
             # TODO: Places don't know about city, state, zip...
@@ -473,13 +497,14 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
         result = geocoder.geocode(query)
     except AmbiguousResult, e:
         logger.debug('Multiple addresses for %r' % query)
-        # The zipcode, city, state are not included in the initial pass because it
-        # is often too picky yeilding no results when there is a
+        # The disambiguation args (zipcode, city, state,...)
+        # are not included in the initial pass because it
+        # is often too picky, yielding no results when there is a
         # legitimate nearby zipcode or city identified in either the address
-        # or street number data..
-        results = disambiguate(e.choices, city=city, state=state, zipcode=zipcode, guess=guess)
+        # or street number data.
+        results = disambiguate(e.choices, guess=guess, **disambiguation_kwargs)
         if not results:
-            # This should not happen
+            logger.debug("Disambiguate returned nothing, should not happen")
             results = e.choices
         if len(results) > 1:
             return {'type': 'address', 'result': results, 'ambiguous': True}
@@ -487,21 +512,28 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
             return {'type': 'address', 'result': results[0], 'ambiguous': False}
 
     except InvalidBlockButValidStreet, e:
-        # If the exact address couldn't be geocoded, try using the
-        # normalized location name.
+        result = {
+            'type': 'block',
+            'ambiguous': True,
+            'result': e.block_list,
+            'street_name': e.street_name,
+            'block_number': e.block_number,
+            }
         if convert_to_block:
-            block_name = address_to_block(kwargs['location_name'])
-            if block_name != kwargs['location_name']:
+            # If the exact address couldn't be geocoded, try using the
+            # normalized block name.
+            block_name = address_to_block(query)
+            if block_name != query:
                 try:
-                    result = BlockGeocoder._do_geocode(block_name)
+                    result['result'] = BlockGeocoder()._do_geocode(block_name)
                     result['result']['address'] = block_name
-                except InvalidBlockButValidStreet, another_e:
+                    result['ambiguous'] = False
+                    logger.debug('Resolved %r to block %r' % (query, block_name))
+                except (InvalidBlockButValidStreet, AmbiguousResult):
                     pass
-                except AmbiguousResult, another_e:
-                    pass
-        # No joy, return all blocks.
-        logger.debug('Invalid block for %r, returning all possible blocks' % query)
-        return {'type': 'block', 'result': e.block_list, 'ambiguous': True, 'street_name': e.street_name, 'block_number': e.block_number}
+        if result['ambiguous']:
+            logger.debug('Invalid block for %r, returning all possible blocks' % query)
+        return result
 
     except:
         raise
@@ -510,24 +542,28 @@ def full_geocode(query, search_places=True, zipcode=None, city=None, state=None,
     return {'type': 'address', 'result': result, 'ambiguous': False}
 
 
-def disambiguate(geocoder_results, guess=False, city=None, state=None, zipcode=None):
+def disambiguate(geocoder_results, guess=False, **kwargs):
     """Disambiguate a list of geocoder results based on city, state, zip.
     Result will be a list, which may be the original list or a subset of it.
 
-    If guess==True, returns the first remaining result.
+    If guess==True, returns the first remaining result, which could be
+    wildly off from what you expect (eg. in the case of 'invalid block
+    but valid street')... so use with caution.
     """
-    if not (zipcode or city or state):
-        logger.debug("Nothing to disambiguate on, guessing first..")
+    if not kwargs:
         if guess and geocoder_results:
+            logger.debug("Nothing to disambiguate on, returning first result.")
             return [geocoder_results[0]]
         else:
+            logger.debug("Nothing to disambiguate or guess, returning all.")
             return geocoder_results
 
     filtered_results = geocoder_results[:]
 
-    for key, target_val in (('state', state),
-                            ('city', city),
-                            ('zip', zipcode)):
+    for key, target_val in kwargs.items():
+        # special case: allow passing either form
+        if key == 'zipcode':
+            key = 'zip'
 
         if not target_val:
             continue

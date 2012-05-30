@@ -38,8 +38,8 @@ echo Getting openblock source...
 $SUDO git clone git://github.com/openplans/openblock.git src/openblock || exit 1
 echo OK
 
-BRANCH=openblock-1.1-branch
-echo XXX TEMPORARY: getting $BRANCH
+BRANCH=openblock-1.2-branch
+echo getting branch $BRANCH
 cd src/openblock
 $SUDO git checkout -b $BRANCH origin/$BRANCH || exit 1
 
@@ -48,12 +48,12 @@ export SRC=$VIRTUAL_ENV/src/openblock
 cd $SRC || exit 1
 echo Installing openblock packages in `pwd`...
 
-$SUDO $PIP install -r $SRC/ebpub/requirements.txt
-$SUDO $PIP install -e $SRC/ebpub
-$SUDO $PIP install -r $SRC/ebdata/requirements.txt
-$SUDO $PIP install -e $SRC/ebdata
-$SUDO $PIP install -r $SRC/obadmin/requirements.txt
-$SUDO $PIP install -e $SRC/obadmin
-$SUDO $PIP install -r $SRC/obdemo/requirements.txt
-$SUDO $PIP install -e $SRC/obdemo
+$SUDO $PIP install -r $SRC/ebpub/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/ebpub || exit 1
+$SUDO $PIP install -r $SRC/ebdata/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/ebdata || exit 1
+$SUDO $PIP install -r $SRC/obadmin/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/obadmin || exit 1
+$SUDO $PIP install -r $SRC/obdemo/requirements.txt || exit 1
+$SUDO $PIP install -e $SRC/obdemo || exit 1
 echo all packages installed

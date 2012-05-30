@@ -35,10 +35,10 @@ def ajax_save_place(request):
     place, block_radius, xy_radius = parse_pid(request.POST['pid'])
     kwargs = {'user_id': request.user.id}
     if isinstance(place, Block):
-        block, location = place, None
-        kwargs['block__id'] = place.id
+        block_center, location = place.geom.centroid, None
+        kwargs['block_center'] = block_center
     else:
-        block, location = None, place
+        block_center, location = None, place
         kwargs['location__id'] = place.id
 
     # Validate that the SavedPlace hasn't already been created for this user,
@@ -52,7 +52,7 @@ def ajax_save_place(request):
 
     savedplace = SavedPlace(
         user_id=request.user.id,
-        block=block,
+        block_center=block_center,
         location=location,
         nickname=request.POST.get('nickname', '').strip(),
     )
@@ -74,10 +74,10 @@ def ajax_remove_place(request):
     place, block_radius, xy_radius = parse_pid(request.POST['pid'])
     kwargs = {'user_id': request.user.id}
     if isinstance(place, Block):
-        block, location = place, None
-        kwargs['block__id'] = place.id
+        block_center, location = place.geom.centroid, None
+        kwargs['block_center'] = block_center
     else:
-        block, location = None, place
+        block_center, location = None, place
         kwargs['location__id'] = place.id
 
     SavedPlace.objects.filter(**kwargs).delete()

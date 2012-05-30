@@ -49,7 +49,7 @@ Creating a Cloneable Image (AMI)
 First, set up an EC2 instance via eg.
 ``scenario_runner.sh $EC2HOST ubuntu1104 global dev custom.sh``
 
-Then try the ``make_cloneable_image.sh <HOST>`` script.
+Then try the ``make_cloneable_image.sh ubuntu@$EC2HOST`` script.
 This sets up apache, logrotate, cron jobs, openblock-related services.
 
 Then you can use the EC2 management console (or scripts, if you like)
@@ -85,7 +85,7 @@ There's now a little wrapper script that can do all that in one go.
 The parameters are: hostname, distro version, global|local, dev|stable, install
 script. Like so::
 
- $ /scenario_runner.sh ubuntu@$EC2HOST  ubuntu1004 local  dev demo_setup_detailed.sh
+ $ ./scenario_runner.sh ubuntu@$EC2HOST  ubuntu1004 local  dev demo_setup_detailed.sh
 
 
 CONFIGURATIONS TO TEST:
@@ -108,6 +108,4 @@ lib options:
 
 1. gdal & lxml installed locally by pip (use *_globalpkgs)
 2. gdal & lxml globally via distro packages (use *_noglobal)
-
-
 

@@ -18,15 +18,31 @@
       "number_in_overview": 5,
       "slug": "police-reports",
       "date_name_plural": "Dates",
-      "grab_bag_headline": "",
       "short_source": "http://www.bpdnews.com",
       "summary": "Boston Police Department reports",
       "source": "http://www.bpdnews.com",
-      "intro": "",
       "update_frequency": "",
-      "short_description": "List of Boston Police Department reports",
-      "grab_bag": ""
+      "short_description": "List of Boston Police Department reports"
     },
     "model": "db.schema"
+  },
+  {
+    "fields": {
+      "display": false,
+      "display_order": 0,
+      "is_charted": true,
+      "is_filter": true,
+      "is_lookup": true,
+      "is_searchable": false,
+      "name": "precinct",
+      "pretty_name": "Precinct",
+      "pretty_name_plural": "Precincts",
+      "real_name": "int01",
+      "schema": [
+        "police-reports"
+      ]
+    },
+    "model": "db.schemafield"
   }
+
 ]

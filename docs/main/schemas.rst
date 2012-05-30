@@ -7,14 +7,15 @@ idea to read :ref:`concept_overview` if you haven't.)
 
 OpenBlock's :doc:`../packages/ebpub` package provides several models
 for defining Schemas.  This section provides a brief example of
-creating a Schema, defining its custom fields, and creating a NewsItem
+creating a Schema, defining its optional custom fields, and creating a NewsItem
 with the Schema.
 
 It is assumed for this section that you have installed either
 :doc:`the demo <../install/demo_setup>` or have created a :doc:`custom
 application <../install/custom>`.
 
-For background and additional detail, see also :ref:`ebpub-schemas` 
+For background and additional detail, see also
+:py:class:`ebpub.db.models.Schema` and :ref:`newsitem-schemas`
 in the ebpub documentation, the code in ebpub.db.models and the 
 video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
 
@@ -25,7 +26,7 @@ video `"Behind the scenes of EveryBlock.com" <http://blip.tv/file/1957362>`_
   It's often useful to clean these up and start fresh. There is a
   script at ``ebpub/db/bin/delete_newsitems.py`` that can delete all
   NewsItems of a given Schema, plus all their Attributes and Lookups.
-
+  Just specify the schema's slug.
 
 Experimenting with Existing Schemas
 -----------------------------------
@@ -58,7 +59,7 @@ like title, date, location etc, we will want to record some custom information w
 * Type of crime (in english)
 * Police code for crime
 
-Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in **misc/examples/crime_report_schema.py**.  This section assumes your application is `myblock`; substitute your own or `obdemo` for the demo application.  Start in the root of your virtual env:
+Steps are shown using the django shell, but this could also be performed in a script, or similar steps in the administrative interface.  This code can also be found in ``misc/examples/crime_report_schema.py``.  This section assumes your application is ``myblock``; substitute your own or ``obdemo`` for the demo application.  Start in the root of your virtual env:
 
 .. code-block:: bash
 
@@ -69,6 +70,8 @@ Steps are shown using the django shell, but this could also be performed in a sc
     Type "help", "copyright", "credits" or "license" for more information.
     (InteractiveConsole)
     >>> 
+
+.. _creating_schema:
 
 Creating the Schema
 ===================
@@ -103,6 +106,10 @@ We'll also just stub this out to the current time for now::
 The `has_newsitem_detail` field controls whether this item has a page hosted on this site, or whether it has its own external url.  We'll host these ourselves::
 
     >>> crime_report.has_newsitem_detail = True
+
+Note that if your news source doesn't provide any URLs you can link
+to, you will have to set this to True, or else clicking on links to
+these items will result in a 404 Not Found error.
 
 The `is_public` field controls whether or not NewsItems of this type are visible
 to anybody other than administrators on the 
@@ -150,6 +157,24 @@ http://mapicons.nicolasmollet.com/ .
 
 Adding Custom Fields
 ====================
+
+.. admonition:: Do I need any custom fields at all?
+
+   You might not.
+
+   Some news sources will be simple enough that you don't need any
+   extra fields.  If all you have is a title, date, URL, and maybe a
+   description, you don't need extra fields.
+
+   The key test for each piece of information is: Do I need this
+   information, and does it fit into a plain vanilla ``NewsItem``?
+   field?
+
+   If the answers are "yes I need it but no it doesn't fit",
+   then you need to create a SchemaField to describe this extra field.
+
+   For a list of "core" NewsItem fields, see
+   :py:class:`the NewsItem class documentation <ebpub.db.models.NewsItem>`.
 
 As mentioned earlier, we will add the following custom fields:
 
@@ -292,14 +317,15 @@ Other Fields
 A few more fields worth mentioning:
 
 * ``allow_comments`` - whether users can comment on these NewsItems.
-  You should also set has_newsitem_detail=True.
+  You should also set has_newsitem_detail=True, because the detail
+  page is where you would see comments and the comment form.
 
 * ``allow_flagging`` - whether users can flag these NewsItems as
   inappropriate or spam. This leverages the ``ebpub.moderation``
   package.
 
 * ``allow_charting`` - whether to show aggregate statistic charts on
-  the home page of this schema, such as number of recent items found
+  the detail page of this schema, such as number of recent items found
   in each Location, and number of recent items loaded per day.
 
 

@@ -28,7 +28,7 @@ if [ $# -ne 5 ]; then
     echo and openblock installed from stable packages, then running
     echo the \"demo_setup_detailed.sh\" scenario script:
     echo
-    echo "  `basename $0` ubuntu@foo.amazonaws.com ubuntu1010 global stable demo_setup_detailed.sh"
+    echo "  `basename $0` ubuntu@foo.amazonaws.com ubuntu1204 global stable demo_setup_detailed.sh"
     exit 1
 fi
 

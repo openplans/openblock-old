@@ -16,6 +16,10 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Hooks up ebpub.db.models to the django.contrib.admin UI.
+"""
+
 from django.contrib.gis import admin
 from ebpub.db.forms import NewsItemForm
 from ebpub.db.models import Attribute

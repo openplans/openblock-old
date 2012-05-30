@@ -18,14 +18,11 @@
       "number_in_overview": 5,
       "slug": "events",
       "date_name_plural": "Dates",
-      "grab_bag_headline": "",
       "short_source": "http://calendar.boston.com/",
       "summary": "Boston Events",
       "source": "http://calendar.boston.com/",
-      "intro": "",
       "update_frequency": "",
-      "short_description": "List of events in Boston",
-      "grab_bag": ""
+      "short_description": "List of events in Boston"
     },
     "model": "db.schema"
   },

@@ -21,10 +21,20 @@
 
 from django.core.management.base import BaseCommand
 from ebpub.utils.script_utils import die, makedirs, wget, unzip
+from optparse import make_option
 import os
 
 class Command(BaseCommand):
     help = 'Import Boston demo streets & blocks data to ebpub.'
+
+    option_list = BaseCommand.option_list + (
+        make_option('--reset', '-r',
+                    action='store_true',
+                    dest='reset',
+                    default=False,
+                    help='Whether to delete existing blocks and start from scratch. This will attempt to fix other records that refer to blocks; use at your own risk though.'
+                    ),
+        )
 
     def handle(self, *args, **options):
         # First we download a bunch of zipfiles of TIGER data.
@@ -62,9 +72,10 @@ class Command(BaseCommand):
             '%s/tl_2010_25_place10.shp' % OUTDIR,
             encoding='utf8',
             filter_bounds=get_default_bounds(),
-            filter_city='BOSTON')
-        num_created = importer.save()
-        print "Created %d blocks" % num_created
+            filter_city='BOSTON',
+            reset=options['reset'])
+        num_created, num_existing = importer.save()
+        print "Created %d blocks (%d existing)" % (num_created, num_existing)
 
         #########################
 

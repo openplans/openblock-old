@@ -16,3 +16,14 @@
 #   along with ebdata.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+'''
+The parsing package contains helpers for reading different file types.
+
+The :py:mod:`dbf`, :py:mod:`excel`, :py:mod:`mdb`, and
+:py:mod:`unicodecsv` modules are for reading stuctured data, and
+generally follow the python csv reader api. See the code for more
+details on how to use them.
+
+The pdf module is for converting pdf to text, and requires Xpdf.
+http://www.foolabs.com/xpdf/download.html
+'''

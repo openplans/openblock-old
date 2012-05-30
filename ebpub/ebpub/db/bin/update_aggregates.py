@@ -17,6 +17,12 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Script to populate :ref:`aggregates`.
+Typically run without arguments.  The ``--reset`` option will delete
+all aggregates first.
+"""
+
 from django.db import connection, transaction
 from ebpub.db import constants
 from ebpub.db.models import Schema, SchemaField, NewsItem, AggregateAll, AggregateDay, AggregateLocationDay, AggregateLocation, AggregateFieldLookup

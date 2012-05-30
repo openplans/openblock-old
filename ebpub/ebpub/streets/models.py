@@ -16,9 +16,68 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Blocks
+======
+.. _blocks:
+
+A :py:class:`Block` is a segment of a single street between one side street and another
+side street. Blocks are a fundamental piece of the ebpub system; they're used
+both in creating a page for each block and in geocoding.
+
+Blocks are stored in a database table called "blocks". To populate this table,
+follow these steps:
+
+    1. Obtain a database of the streets in your city, along with each street's
+       address ranges and individual street segments. If you live in the
+       U.S.A. and your city hasn't had much new development since the year
+       2000, you might want to use the U.S. Census' TIGER/Line file
+       (http://www.census.gov/geo/www/tiger/).
+
+    2. Import the streets data into the "blocks" table. ebpub provides two
+       pre-made import scripts:
+
+           * If you're using TIGER/Line data, you can use the script
+             ``import_blocks_tiger`` which should be on your $PATH.
+
+           * If you're using data from ESRI, you can use the script
+             ``ebpub/streets/blockimport/esri/importers/blocks.py.``
+
+           * If you're using data from another source, take a look at the
+             Block model in ``ebpub/streets/models.py`` for all of the required
+             fields.
+
+
+Streets and Intersections
+=========================
+
+The ebpub system maintains a separate table of each :py:class:`Street`
+in the city. Once you've populated the blocks, you can automatically
+populate the streets table by running the importer
+``ebpub/streets/bin/populate_streets.py``, which should be on your
+``$PATH`` as ``populate_streets``.
+
+The ebpub system also maintains a table of each
+:py:class:`Intersection` in the city, where an intersection is defined
+as the meeting point of two streets. Just like streets, you can
+automatically populate the intersections table by running the code in
+the ``populate_streets`` script.
+
+Streets and intersections are both necessary for various bits of the site to
+work, such as the "browse by street" navigation and the geocoder (which
+supports the geocoding of intersections).
+
+Once you've got all of the above geographic boundary data imported, you can
+verify it on the site by browsing to /streets/ and /locations/.
+
+module contents
+================
+
+"""
+
 from django.contrib.localflavor.us.models import USStateField
 from django.contrib.gis.db import models
-from django.contrib.gis.geos import fromstr
+from django.contrib.gis.geos import Point
 from django.core import urlresolvers
 from django.db.models import Q
 from ebpub.geocoder.parser.parsing import normalize
@@ -80,7 +139,8 @@ def proper_city(block):
     return block_city
 
 class BlockManager(models.GeoManager):
-    def search(self, street, number=None, predir=None, suffix=None, postdir=None, city=None, state=None, zipcode=None):
+    def search(self, street, number=None, prefix=None, predir=None,
+               suffix=None, postdir=None, city=None, state=None, zipcode=None):
         """
         Searches the blocks for the given address bits. Returns a list
         of 2-tuples, (block, geocoded_pt).
@@ -99,6 +159,8 @@ class BlockManager(models.GeoManager):
         sided_filters = []
         if predir:
             filters['predir'] = predir.upper()
+        if prefix:
+            filters['prefix'] = prefix.upper()
         if suffix:
             filters['suffix'] = suffix.upper()
         if postdir:
@@ -126,41 +188,48 @@ class BlockManager(models.GeoManager):
                     block_tuples.append((block, from_num, to_num))
             blocks = []
             if block_tuples:
-                from django.db import connection
-                cursor = connection.cursor()
+                from ebpub.utils.geodjango import interpolate
                 for block, from_num, to_num in block_tuples:
                     try:
                         fraction = (float(number) - from_num) / (to_num - from_num)
                     except ZeroDivisionError:
                         fraction = 0.5
-                    # We rely on PostGIS line_interpolate_point() because there
-                    # isn't a matching GeoDjango/Python API.
-                    cursor.execute('SELECT line_interpolate_point(%s, %s)', [block.geom.wkt, fraction])
-                    wkb_hex = cursor.fetchone()[0]
-                    blocks.append((block, fromstr(wkb_hex)))
+                    point = interpolate(block.geom, fraction, True)
+                    blocks.append((block, Point(*list(point.coords))))
         else:
             blocks = list([(b, None) for b in qs])
         return blocks
 
-class Block(models.Model):
 
-    street_slug = models.SlugField()
+class Block(models.Model):
+    """Represents a segment of a single street, typically between two
+    intersections.
+
+    (But note that due to vagaries of the source data, eg. US Census
+    data, a Blocks may sometimes be a segment of a street that doesn't
+    start and/or end at an intersection; it may just be a range of
+    addresses between two apparently arbitrary points.)
+    """
+    street_slug = models.SlugField(help_text="Slug used for looking up a related Street. Includes prefix, street, and suffix, but not directionals. Example: us-highway-63")
 
     pretty_name = models.CharField(
         max_length=255,
-        help_text='human-readable name including everything - address range, directionals, street name, suffix')
+        help_text='human-readable name including everything - address range, directionals, street name, suffix. Example: 8701-8703 US Highway 63 S.')
 
     street_pretty_name = models.CharField(
         max_length=255,
-        help_text='Like pretty_name but without address numbers')
+        help_text='Like pretty_name but without address numbers or directionals. Example: US Highway 63.')
 
     predir = models.CharField(
         max_length=2, blank=True, db_index=True,
         help_text='Direction abbreviation before street name, UPPERCASE, eg. N or SW')
 
+    prefix =  models.CharField(max_length=32, blank=True, db_index=True,
+                               help_text='Prefix in UPPERCASE, eg. US HIGHWAY')
+
     street = models.CharField(
         max_length=255, db_index=True,
-        help_text='Just the street part of the name, UPPERCASE, with no directionals or suffix')
+        help_text='Just the street part of the name, UPPERCASE, with no directionals, prefix, or suffix. Example: 63')
     suffix = models.CharField(max_length=32, blank=True, db_index=True,
                               help_text='Suffix abbreviation in UPPERCASE, eg. ST or AVE')
     postdir = models.CharField(
@@ -258,12 +327,14 @@ class Block(models.Model):
             url.extend(['-', self.postdir.lower()])
         return ''.join(url)
 
-    def url(self):
+    def get_absolute_url(self):
         try:
             return urlresolvers.reverse('ebpub-block-recent',
                                         args=self._get_full_url_args())
         except urlresolvers.NoReverseMatch:
             return None
+
+    url = get_absolute_url  # for backward compatibility
 
     def _get_full_url_args(self):
         args = [self.city_slug, self.street_slug, self.from_num, self.to_num,
@@ -404,6 +475,7 @@ class Block(models.Model):
         for key in ('left_city', 'right_city',
                     'predir', 'postdir',
                     'street', 'suffix',
+                    'prefix',
                     'left_state', 'right_state'):
             val = getattr(self, key)
             if val is not None:
@@ -411,12 +483,26 @@ class Block(models.Model):
 
 
 class Street(models.Model):
+    """
+    Represents a Street with a unique name (in a particular city).
+
+    Does not know about directionals: a block on North Main Street is
+    considered to be on the same street as South Main Street.
+
+    We do not have geometries for these; they are typically just used
+    as a grouping of :py:class:`Blocks <Block>`.
+    """
     street = models.CharField(max_length=255, db_index=True,
-                              help_text='Always uppercase.')
-    pretty_name = models.CharField(max_length=255)
-    street_slug = models.SlugField()
+                              help_text='Always uppercase. eg. 63')
+    prefix =  models.CharField(max_length=32, blank=True, db_index=True,
+                               help_text='Prefix in UPPERCASE, eg. US HIGHWAY')
+    pretty_name = models.CharField(max_length=255,
+                                   help_text='Includes prefix, street, and suffix, but not directionals. Example: US Highway 63')
+    street_slug = models.SlugField(
+        help_text="Slug used for looking up related Blocks. Based on pretty_name; includes prefix, street, and suffix, but not directionals. Example: us-highway-63")
+
     suffix = models.CharField(max_length=32, blank=True, db_index=True,
-                              help_text='Always uppercase.')
+                              help_text='Always uppercase. Example: ST or AVE')
     city = models.CharField(max_length=255, db_index=True,
                             help_text='Always uppercase. City name, not slug.')
     state = USStateField(db_index=True, help_text='Always uppercase.')  # bad for i18n!
@@ -424,20 +510,27 @@ class Street(models.Model):
     class Meta:
         db_table = 'streets'
         ordering = ('pretty_name',)
+        unique_together = ('street_slug', 'city', 'state')
 
     def __unicode__(self):
         return self.pretty_name
 
-    def url(self):
+    def get_absolute_url(self):
+        return urlresolvers.reverse('ebpub-block-list', args=[self.city_slug, self.street_slug])
+
+    # For backward compatibility.
+    url = get_absolute_url
+
+    @property
+    def city_slug(self):
         if get_metro()['multiple_cities']:
-            return '/streets/%s/%s/' % (self.city_object().slug, self.street_slug)
-        else:
-            return '/streets/%s/' % self.street_slug
+            return self.city_object().slug
+        return ''
 
     def city_object(self):
         return City.from_norm_name(self.city)
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         if self.suffix:
             self.suffix = self.suffix.upper().strip()
         if self.state:
@@ -450,7 +543,7 @@ class Street(models.Model):
         self.street = normalize(self.pretty_name)
         if self.suffix:
             self.street = re.sub(r' %s$' % self.suffix.upper(), '', self.street)
-        super(Street, self).save()
+        super(Street, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
 
 class Misspelling(models.Model):
@@ -481,18 +574,20 @@ class StreetMisspellingManager(models.Manager):
             return street_name
 
 class StreetMisspelling(models.Model):
-    incorrect = models.CharField(max_length=255, unique=True, help_text="Incorrect street name in UPPERCASE, do not include a suffix, eg: MASS") # Always uppercase, single spaces
-    correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: MASSACHUSETTS")
+    incorrect = models.CharField(max_length=255, unique=True, help_text="Incorrect street name in UPPERCASE, do not include a suffix, eg: BWAY") # Always uppercase, single spaces
+    correct = models.CharField(max_length=255, help_text="Correct street name in UPPERCASE, do not include suffix, eg: BROADWAY")
     objects = StreetMisspellingManager()
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         """Ensure everything's normalized (uppercase, normalized whitespace).
         Doing this on the model so it happens regardless of whether
         data comes from admin UI or a script or whatever.
         """
         self.incorrect = normalize(self.incorrect or '')
         self.correct = normalize(self.correct or '')
-        super(StreetMisspelling, self).save()
+        super(StreetMisspelling, self).save(force_insert=force_insert,
+                                            force_update=force_update,
+                                            using=using)
 
     def __unicode__(self):
         return self.incorrect
@@ -560,10 +655,10 @@ class Place(models.Model):
             return u'%s (%s)' % (self.pretty_name, self.address)
         return self.pretty_name
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         if not self.normalized_name:
             self.normalized_name = normalize(self.pretty_name)
-        super(Place, self).save()
+        super(Place, self).save(force_update=force_update, force_insert=force_insert, using=using)
 
 
 class PlaceSynonymManager(models.Manager):
@@ -591,10 +686,10 @@ class PlaceSynonym(models.Model):
     place = models.ForeignKey(Place)
     objects = PlaceSynonymManager()
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         if not self.normalized_name:
             self.normalized_name = normalize(self.pretty_name)
-        super(PlaceSynonym, self).save()
+        super(PlaceSynonym, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
     def __unicode__(self):
         return self.pretty_name
@@ -639,8 +734,8 @@ class BlockIntersection(models.Model):
 
 
 class IntersectionManager(models.GeoManager):
-    def search(self, predir_a=None, street_a=None, suffix_a=None, postdir_a=None,
-                     predir_b=None, street_b=None, suffix_b=None, postdir_b=None):
+    def search(self, predir_a=None, prefix_a=None, street_a=None, suffix_a=None, postdir_a=None,
+                     predir_b=None, prefix_b=None, street_b=None, suffix_b=None, postdir_b=None):
         """
         Returns a queryset of intersections.
         """
@@ -651,6 +746,8 @@ class IntersectionManager(models.GeoManager):
         filters = [{}, {}]
         if predir_a:
             filters[0]["predir"] = predir_a.upper()
+        if prefix_a:
+            filters[0]["prefix"] = prefix_a.upper()
         if street_a:
             filters[0]["street"] = street_a.upper()
         if suffix_a:
@@ -659,6 +756,8 @@ class IntersectionManager(models.GeoManager):
             filters[0]["postdir"] = postdir_a.upper()
         if predir_b:
             filters[1]["predir"] = predir_b.upper()
+        if prefix_b:
+            filters[0]["prefix"] = prefix_b.upper()
         if street_b:
             filters[1]["street"] = street_b.upper()
         if suffix_b:
@@ -683,11 +782,13 @@ class Intersection(models.Model):
     slug = models.SlugField(max_length=64) # eg., "n-kimball-ave-and-w-diversey-ave"
     # Street A
     predir_a = models.CharField(max_length=2, blank=True, db_index=True) # eg., "N"
+    prefix_a = models.CharField(max_length=32, blank=True, db_index=True) # eg., "US HWY"
     street_a = models.CharField(max_length=255, db_index=True) # eg., "KIMBALL"
     suffix_a = models.CharField(max_length=32, blank=True, db_index=True) # eg., "AVE"
     postdir_a = models.CharField(max_length=2, blank=True, db_index=True) # eg., "NW"
     # Street B
     predir_b = models.CharField(max_length=2, blank=True, db_index=True) # eg., "W"
+    prefix_b = models.CharField(max_length=32, blank=True, db_index=True) # eg., "US HWY"
     street_b = models.CharField(max_length=255, db_index=True) # eg., "DIVERSEY"
     suffix_b = models.CharField(max_length=32, blank=True, db_index=True) # eg., "AVE"
     postdir_b = models.CharField(max_length=2, blank=True, db_index=True) # eg., "SE"
@@ -706,7 +807,8 @@ class Intersection(models.Model):
         # http://g.co/maps/pcxsm
         # - route 28 and old route 28 intersect what, 4 times in the space of
         # a mile or two?
-        unique_together = ("predir_a", "street_a", "suffix_a", "postdir_a", "predir_b", "street_b", "suffix_b", "postdir_b")
+        unique_together = ("predir_a", "prefix_a", "street_a", "suffix_a", "postdir_a",
+                           "predir_b", "prefix_b", "street_b", "suffix_b", "postdir_b")
         ordering = ('slug',)
 
     def __unicode__(self):
@@ -735,13 +837,13 @@ class Suburb(models.Model):
     name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255, unique=True)
 
-    def save(self):
+    def save(self, force_insert=False, force_update=False, using=None):
         """Ensure everything's normalized (uppercase, normalized whitespace).
         Doing this on the model so it happens regardless of whether
         data comes from admin UI or a script or whatever.
         """
         self.normalized_name = normalize(self.name)
-        super(Suburb, self).save()
+        super(Suburb, self).save(force_insert=force_insert, force_update=force_update, using=using)
 
     def __unicode__(self):
         return self.name

@@ -6,6 +6,11 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    # Not really 'needed by' per se, but we'll break existing obdemo
+    # migrations if they don't run before this ebpub db migration.
+    needed_by = (('db', '0029_auto__del_fields_schema__intro__grab_bag__grab_bag_headline'),
+                 )
+
     def forwards(self, orm):
         "Write your forwards methods here."
 

@@ -17,20 +17,29 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"""
+Script to import Locations from a shapefile.
+See :ref:`import_locations_from_shapefile`
+
+"""
 import os
 import sys
 import datetime
 from optparse import OptionParser
 from django.contrib.gis.gdal import DataSource
-from django.contrib.gis.geos import Polygon
 from django.db import connection
 from django.db.utils import IntegrityError
-from ebpub.db.models import Location, LocationType, NewsItem
+from ebpub.db.models import Location, LocationType, NewsItem, NewsItemLocation
 from ebpub.geocoder.parser.parsing import normalize
 from ebpub.utils.text import slugify
 from ebpub.utils.geodjango import ensure_valid
 from ebpub.utils.geodjango import flatten_geomcollection
+from ebpub.utils.geodjango import geos_with_projection
 from ebpub.metros.allmetros import get_metro
+
+import logging
+logger = logging.getLogger('ebpub.db.bin.import_locations')
 
 def populate_ni_loc(location):
     """
@@ -39,17 +48,27 @@ def populate_ni_loc(location):
     """
     ni_count = NewsItem.objects.count()
     cursor = connection.cursor()
+    # In case the location is not new...
+    NewsItemLocation.objects.filter(location=location).delete()
+    old_niloc_count = NewsItemLocation.objects.count()
     i = 0
+    batch_size = 400
     while i < ni_count:
+        # We don't use intersecting_collection() because we should have cleaned up
+        # all our geometries by now and it's sloooow ... there could be millions
+        # of db_newsitem rows.
         cursor.execute("""
             INSERT INTO db_newsitemlocation (news_item_id, location_id)
             SELECT ni.id, loc.id FROM db_newsitem ni, db_location loc
-            WHERE intersecting_collection(ni.location, loc.location)
+            WHERE st_intersects(ni.location, loc.location)
                 AND ni.id >= %s AND ni.id < %s
                 AND loc.id = %s
-        """, (i, i+200, location.id))
+        """, (i, i + batch_size, location.id))
         connection._commit()
-        i += 200
+        i += batch_size
+    new_count = NewsItemLocation.objects.count()
+    logger.info("New: %d NewsItemLocations" % (new_count - old_niloc_count))
+
 
 class LocationImporter(object):
     def __init__(self, layer, location_type, source='UNKNOWN', filter_bounds=False, verbose=False):
@@ -57,6 +76,8 @@ class LocationImporter(object):
         metro = get_metro()
         self.metro_name = metro['metro_name'].upper()
         self.now = datetime.datetime.now()
+        if isinstance(location_type, int):
+            location_type = LocationType.objects.get(id=location_type)
         self.location_type = location_type
         self.source = source
         self.filter_bounds = filter_bounds
@@ -64,71 +85,73 @@ class LocationImporter(object):
         if self.filter_bounds:
             from ebpub.utils.geodjango import get_default_bounds
             self.bounds = get_default_bounds()
-            
-    def save(self, name_field):
-        verbose = self.verbose
+
+    def create_location(self, name, location_type, geom, display_order=0):
         source = self.source
-        locs = []
-        for feature in self.layer:
-            name = feature.get(name_field)
-            geom = feature.geom.transform(4326, True).geos
-            geom = ensure_valid(geom, name)
-            geom = flatten_geomcollection(geom)
-            fields = dict(
-                name = name,
-                slug = slugify(name),
-                location_type = self.get_location_type(feature),
-                location = geom,
-                city = self.metro_name,
-                source = source,
-                is_public = True,
-            )
-            if not self.should_create_location(fields):
-                continue
-            locs.append(fields)
-        num_created = 0
-        for i, loc_fields in enumerate(sorted(locs, key=lambda h: h['name'])):
-            kwargs = dict(
-                loc_fields,
-                defaults={
-                    'creation_date': self.now,
-                    'last_mod_date': self.now,
-                    'display_order': i,
-                    'normalized_name': normalize(loc_fields['name']),
-                    'area': loc_fields['location'].transform(3395, True).area,
-                    })
-            try:
+        geom = geos_with_projection(geom, 4326)
+        geom = ensure_valid(geom, name)
+        geom = flatten_geomcollection(geom)
+        if not isinstance(location_type, int):
+            location_type = location_type.id
+        kwargs = dict(
+            name=name,
+            slug=slugify(name),
+            location=geom,
+            location_type_id=location_type,
+            city=self.metro_name,
+            source=source,
+            is_public=True,
+        )
+        if not self.should_create_location(kwargs):
+            return
+        kwargs['defaults'] = {
+            'creation_date': self.now,
+            'last_mod_date': self.now,
+            'display_order': display_order,
+            'normalized_name': normalize(name),
+            'area': geom.transform(3395, True).area,
+            }
+        try:
+            loc, created = Location.objects.get_or_create(**kwargs)
+        except IntegrityError:
+            # Usually this means two towns with the same slug.
+            # Try to fix that.
+            slug = kwargs['slug']
+            existing = Location.objects.filter(slug=slug).count()
+            if existing:
+                slug = slugify('%s-%s' % (slug, existing + 1))
+                logger.info("Munged slug %s to %s to make it unique" % (kwargs['slug'], slug))
+                kwargs['slug'] = slug
                 loc, created = Location.objects.get_or_create(**kwargs)
-            except IntegrityError:
-                # Usually this means two towns with the same slug.
-                # Try to fix that.
-                slug = kwargs['slug']
-                existing = Location.objects.filter(slug=slug).count()
-                if existing:
-                    slug = slugify('%s-%s' % (slug, existing + 1))
-                    if verbose:
-                        print >> sys.stderr, "Munged slug %s to %s to make it unique" % (kwargs['slug'], slug)
-                    kwargs['slug'] = slug
-                    loc, created = Location.objects.get_or_create(**kwargs)
-                else:
-                    raise
+            else:
+                raise
+
+        logger.info('%s %s %s' % (created and 'Created' or 'Already had', self.location_type.name, loc))
+        logger.info('Populating newsitem locations ... ')
+        populate_ni_loc(loc)
+        logger.info('done.\n')
+
+        return created
+
+    def save(self, name_field):
+        num_created = 0
+        num_updated = 0
+        features = sorted(self.layer, key = lambda f: f.get(name_field))
+        for i, feature in enumerate(features):
+            name = feature.get(name_field)
+            location_type = self.get_location_type(feature)
+            created = self.create_location(name, location_type, feature.geom, display_order=i)
             if created:
                 num_created += 1
+            else:
+                num_updated += 1
 
-            if verbose:
-                print >> sys.stderr, '%s %s %s' % (created and 'Created' or 'Already had', self.location_type.name, loc)
-            if verbose:
-                sys.stderr.write('Populating newsitem locations ... ')
-            populate_ni_loc(loc)
-            if verbose:
-                sys.stderr.write('done.\n')
-        return num_created
+        return (num_created, num_updated)
 
     def should_create_location(self, fields):
         if self.filter_bounds:
             if not fields['location'].intersects(self.bounds):
-                if self.verbose:
-                    print >> sys.stderr, "Skipping %s, out of bounds" % fields['name']
+                logger.info("Skipping %s, out of bounds" % fields['name'])
                 return False
         return True
 
@@ -149,8 +172,7 @@ def get_or_create_location_type(slug, name, name_plural, verbose):
     metro_name = metro['metro_name'].upper()
     try:
         location_type = LocationType.objects.get(slug = slug)
-        if verbose:
-            print >> sys.stderr, "Location type %s already exists, ignoring type-name and type-name-plural" % slug
+        logger.info("Location type %s already exists, ignoring type-name and type-name-plural" % slug)
     except LocationType.DoesNotExist:
         location_type, _ = LocationType.objects.get_or_create(
             name = name,
@@ -164,7 +186,7 @@ def get_or_create_location_type(slug, name, name_plural, verbose):
 
 def layer_from_shapefile(path, layer_id):
     if not os.path.exists(path):
-        optparser.error('file does not exist: ' + path)
+        raise ValueError('file does not exist: ' + path)
     ds = DataSource(path)
     return ds[layer_id]
 
@@ -178,12 +200,19 @@ def parse_args(optparser, argv):
         optparser.error('must supply type slug and path to shapefile')
     type_slug = args[0]
 
-    layer = layer_from_shapefile(args[1], opts.layer_id)
+    try:
+        layer = layer_from_shapefile(args[1], opts.layer_id)
+    except ValueError as e:
+        optparser.error(str(e))
 
     return type_slug, layer, opts
 
 def main():
     type_slug, layer, opts = parse_args(optparser, sys.argv[1:])
+    if not opts.verbose:
+        logging.basicConfig()
+        logger.setLevel(logging.WARN)
+
     location_type = get_or_create_location_type(type_slug, opts.type_name, opts.type_name_plural, opts.verbose)
 
     importer = LocationImporter(
@@ -193,10 +222,9 @@ def main():
         opts.filter_bounds,
         opts.verbose
     )
-    num_created = importer.save(opts.name_field)
+    num_created, num_updated = importer.save(opts.name_field)
 
-    if opts.verbose:
-        print >> sys.stderr, 'Created %s %s.' % (num_created, location_type.plural_name)
+    logger.info('Created %s, updated %s %s.' % (num_created, num_updated, location_type.plural_name))
 
 if __name__ == '__main__':
     sys.exit(main())

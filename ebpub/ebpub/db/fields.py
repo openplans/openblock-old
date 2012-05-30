@@ -28,7 +28,7 @@ class OpenblockImageField(ThumbnailerImageField):
     A model Field based on ThumbnailerImageField that makes sure we
     save a correct *relative* filename.
 
-    Uses OpenblockImageFormField as its formfield.
+    Uses :py:class:`OpenblockImageFormField` as its formfield.
     """
     def generate_filename(self, instance, name):
         # Save it as relative, not absolute, because absolute paths in

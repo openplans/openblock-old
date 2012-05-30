@@ -1,7 +1,7 @@
 Paste==1.7.5.1
 PasteDeploy==1.5.0
 
-Paver==1.0.3
+Paver==1.0.5
 
 # Hack: forcing installation via a URL instead of a package name
 # because this ensures it's installed locally even if the same version

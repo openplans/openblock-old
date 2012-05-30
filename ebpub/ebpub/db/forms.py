@@ -16,6 +16,10 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Custom Forms for ebpub.db.models.
+"""
+
 from ebpub.db import models
 from django import forms
 
@@ -30,8 +34,9 @@ class NewsItemForm(forms.ModelForm):
     url = forms.URLField(widget=forms.TextInput(attrs={'size': 80}), required=False)
 
     def clean(self):
-        # Remove this from cleaned_data, otherwise form.save() will try to assign it,
-        # even if it's in self.exclude ... and that's an error since it has a 'through'
-        # model.  Seems odd, maybe django should check the exclude list? shrug.
+        # Remove this from cleaned_data, otherwise form.save() will
+        # try to assign it, even if it's in self.exclude ... and
+        # that's an error since it has a 'through' model.  Seems odd,
+        # maybe django should check the exclude list? shrug.
         self.cleaned_data.pop('location_set', None)
         return self.cleaned_data

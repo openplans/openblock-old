@@ -320,6 +320,9 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
             return self.create_or_update(old_record, attributes,
                                          **form.cleaned_data)
         else:
+            self.logger.info("Skipping due to validation failures:")
+            for key, val in form.errors.items():
+                self.logger.info("%s: %s" % (key, val.as_text()))
             raise SkipRecord(form.errors)
 
 
@@ -346,11 +349,13 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     from optparse import OptionParser
-    usage = "usage: %prog [options] <spreadsheet> [<config spreadsheet>]"
+    usage = "usage: %prog [options] <spreadsheet> [<mapping spreadsheet>]"
+    usage += "\n\nSpreadsheet arguments can be local files or URLs."
+    usage += "\n\nSee http://openblockproject.org/docs/packages/ebdata.html#spreadsheets-scrapers-general-spreadsheet for more."
     parser = OptionParser(usage=usage)
 
     parser.add_option(
-        "--schema", help="which news item type to create when scraping",
+        "--schema", help="slug of news item type to create when scraping",
         default="local-news"
         )
 

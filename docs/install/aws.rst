@@ -23,7 +23,12 @@ Launch an Instance ...
 
 In the `AWS EC2 management console <https://console.aws.amazon.com/ec2/>`_,
 click "Launch Instance". Click "Community AMIs", and in the search box, type in
-"ami-69d91600".  (You can also try searching for "openblock".)
+"ami-f8ba1c91".  (You can also try searching for "openblock".)
+
+If you can't find it, check your region; we publish AMIs in the
+"us-east-1" region.  There is a dropdown to select region in the upper
+left corner of the EC2 console.
+
 
 Select the OpenBlock AMI, then continue
 through the wizard until your instance is launched. You can leave all
@@ -73,13 +78,13 @@ will be no locations and no news.
 What You Have
 =============
 
-* Openblock 1.1.  A checkout of the stable branch is installed in a virtualenv at
+* Openblock 1.2.  A checkout of the stable branch is installed in a virtualenv at
   `/home/openblock/openblock`.
 
 * A "custom" app named "myblock" as per the :doc:`docs <custom>`,
   installed at ``/home/openblock/openblock/src/myblock/myblock``
 
-* Ubuntu 11.04 ("Natty"), Python 2.7, Postgresql 8.4 and PostGIS 1.5, Apache2, mod_wsgi.
+* Ubuntu 12.04 ("Precise"), Python 2.7, Postgresql 9.1 and PostGIS 1.5, Apache2, mod_wsgi.
 
 The code and its database are set up as if you had already followed
 the :doc:`setup`, :doc:`base_install`, and :doc:`custom` instructions.
@@ -90,7 +95,7 @@ A few other nice details are taken care of for you:
   Notably, this cron config has some commented-out examples of
   :doc:`running scraper scripts <../main/running_scrapers>`.
   It also periodically runs any :ref:`background_tasks`.
-  It also sends the :doc:`alerts <../main/alerts>` email messages.
+  It also sends the :doc:`alert <../main/alerts>` email messages.
 
 * ``logrotate`` is already configured to rotate the apache and openblock
   logs, so they won't fill up your storage.
@@ -147,10 +152,13 @@ Edit that file as per :doc:`configuration`.
 (Text editors `nano` and `vim` are installed; you can of course
 install `emacs` or whatever else you like.)
 
-**Security warning**: it is especially important that you change the
+**Security warning**: it is *crucial* that you change the
 ``PASSWORD_CREATE_SALT`` and ``PASSWORD_RESET_SALT`` settings.
+Otherwise, other people that create clones of the same AMI could
+find the old salt values and try to crack your passwords.
+You should also change ``STAFF_COOKIE_VALUE``.
 
-Note that anytime you change settings, or updater your openblock code,
+Note that anytime you change settings, or update your openblock code,
 you'll want to run this command
 before you can see your changes take effect on your site:
 

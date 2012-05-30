@@ -13,7 +13,7 @@ If you have problems...
 =======================
 
 Please drop a line to the `ebcode google group <http://groups.google.com/group/ebcode>`_
-or visit the IRC channel ``#openblock`` on freenode with any problems you encounter.  We're glad to help.
+or visit the IRC channel ``#openblock`` on freenode with any problems you encounter.
 
 
 .. _requirements:
@@ -28,13 +28,13 @@ System Requirements
   on the developer wiki for specific lists of packages to install
   based on your distribution or OS.
 
-Linux, OSX, or some other Unix flavor is required.  **Windows is notsupported**
+Linux, OSX, or some other Unix flavor is required.  **Windows is not supported**
 by the OpenBlock team, and may never be; but patches are welcome :)
 
 Generally, you need:
 
-* python 2.6  (2.7 might work; 2.5 is too old)
-* Postgresql 8.3, 8.4, or 9.0
+* python 2.6  or 2.7 (2.5 is too old; 3 is a whole different world.)
+* Postgresql 8.3 or later
 * PostGIS 1.4 or 1.5
 * libxml2 and libxslt
 * libgdal
@@ -49,14 +49,18 @@ Optionally, it may be helpful to install prebuilt packages for the following if 
 * python lxml bindings
 * python gdal bindings
 * python imaging library (PIL)
+* python shapely library
 
-(If you don't install these as system packages, the install will
+See http://developer.openblockproject.org/wiki/InstallationRequirements
+for details on installing these on particular operating systems.
+
+(If you don't install these packages globally, the install process will
 attempt to build them, which means you need a C compiler, the Python
 development libraries, and various other things installed.)
 
 `GeoDjango's platform-specific instructions
 <http://docs.djangoproject.com/en/1.3/ref/contrib/gis/install/#platform-specific-instructions>`_
-may have some useful information as well, as the majority of the requirements are just those of GeoDjango + PostGIS.
+may have some useful information as well, as the majority of OpenBlock's requirements are just those of GeoDjango + PostGIS.
 
 
 Don't forget ldconfig!
@@ -82,7 +86,7 @@ requires PostGIS.  This documentation generally assumes you are installing OpenB
 and Postgres on the same server.  If you are using a remote server, please 
 read :doc:`remote_postgis_server` and make adjustments accordingly.
 
-OpenBlock is known to work with Postgresql 8.3, 8.4, or 9.0, and PostGIS
+OpenBlock is known to work with Postgresql 8.3, 8.4, 9.0, or 9.1, and PostGIS
 1.4 or 1.5.
 
 .. _template_setup:

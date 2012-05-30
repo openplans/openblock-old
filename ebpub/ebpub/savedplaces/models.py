@@ -16,26 +16,32 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.db import models
+from django.contrib.gis.db import models
 from ebpub.db.models import Location
 from ebpub.streets.models import Block
+from ebpub.constants import BLOCK_FUZZY_DISTANCE_METERS
 
 class SavedPlace(models.Model):
     """
     Either a db.Location or streets.Block that a user saves a reference to
     so they can easily find it later.
     """
+
+    objects = models.GeoManager()
+
     user_id = models.IntegerField()
-    block = models.ForeignKey(Block, blank=True, null=True)
+
+    block_center = models.PointField(null=True, blank=True,
+                                     help_text=u'Point representing the center of a related block.')
     location = models.ForeignKey(Location, blank=True, null=True)
     nickname = models.CharField(max_length=128, blank=True)
 
     def __unicode__(self):
-        return u'User %s: %u' % (self.user_id, self.place.pretty_name)
+        return u'User %s: %s' % (self.user_id, self.place.pretty_name)
 
     @property
     def place(self):
-        return self.block_id and self.block or self.location
+        return self._get_block() or self.location
 
     @property
     def user(self):
@@ -51,15 +57,40 @@ class SavedPlace(models.Model):
         """Place ID as used by ebpub.db.views
         """
         from ebpub.utils.view_utils import make_pid
-        if self.block_id:
-            return make_pid(self.block, 8)
+        if self.block_center:
+            block = self._get_block()
+            return make_pid(block, 8)
         else:
             return make_pid(self.location)
 
     def clean(self):
         from django.core.exceptions import ValidationError
-        error = ValidationError("SavedPlace must have either a Location or a Block, but not both")
-        if self.block_id and self.location_id:
+        error = ValidationError("SavedPlace must have either a Location or a block_center, but not both")
+        if self.block_center and self.location_id:
             raise error
-        if not (self.block_id or self.location_id):
+        if not (self.block_center or self.location_id):
             raise error
+
+    def _get_block(self):
+        if self.block_center is None:
+            return None
+        # We buffer the center a bit because exact intersection
+        # doesn't always get a match.
+        from ebpub.utils.mapmath import buffer_by_meters
+        geom = buffer_by_meters(self.block_center, BLOCK_FUZZY_DISTANCE_METERS)
+        blocks = Block.objects.filter(geom__intersects=geom)
+        if not blocks:
+            raise Block.DoesNotExist("No block found at lat %s, lon %s" % (self.block_center.y, self.block_center.x))
+        # If there's more than one this close, we don't really care.
+        return blocks[0]
+
+    block = property(_get_block)
+
+    def name(self):
+        if self.location:
+            return self.location.pretty_name
+        else:
+            block = self._get_block()
+            if block:
+                return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
+        return u'(no name)'

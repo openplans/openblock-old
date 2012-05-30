@@ -17,7 +17,7 @@
 #
 
 """
-A very thin wrapper around ebdata.scrapers.general.georss.retrieval
+A very thin wrapper around :doc:`../packages/ebdata.scrapers.general.georss`
 """
 
 if __name__ == '__main__':

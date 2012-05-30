@@ -16,17 +16,20 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from django.db import models
+from django.contrib.gis.db import models
 from ebpub.db.models import Location
+from ebpub.constants import BLOCK_FUZZY_DISTANCE_METERS
 from ebpub.streets.models import Block
 
-class ActiveAlertsManager(models.Manager):
+class ActiveAlertsManager(models.GeoManager):
     def get_query_set(self):
         return super(ActiveAlertsManager, self).get_query_set().filter(is_active=True)
 
 class EmailAlert(models.Model):
     user_id = models.IntegerField()
-    block = models.ForeignKey(Block, blank=True, null=True)
+
+    block_center = models.PointField(null=True, blank=True,
+                                     help_text=u'Point representing the center of a related block.')
     location = models.ForeignKey(Location, blank=True, null=True)
     frequency = models.PositiveIntegerField(help_text="How often to send.",
                                             choices=((1, 'Daily'),
@@ -56,11 +59,29 @@ class EmailAlert(models.Model):
     def unsubscribe_url(self):
         return '/alerts/unsubscribe/%s/' % self.id
 
+    def _get_block(self):
+        if self.block_center is None:
+            return None
+        # We buffer the center a bit because exact intersection
+        # doesn't always get a match.
+        from ebpub.utils.mapmath import buffer_by_meters
+        geom = buffer_by_meters(self.block_center, BLOCK_FUZZY_DISTANCE_METERS)
+        blocks = Block.objects.filter(geom__intersects=geom)
+        if not blocks:
+            raise Block.DoesNotExist("No block found at lat %s, lon %s" % (self.block_center.y, self.block_center.x))
+        # If there's more than one this close, we don't really care.
+        return blocks[0]
+
+    block = property(_get_block)
+
     def name(self):
-        if self.block:
-            return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), self.block.pretty_name)
-        else:
+        if self.location:
             return self.location.pretty_name
+        else:
+            block = self._get_block()
+            if block:
+                return u'%s block%s around %s' % (self.radius, (self.radius != 1 and 's' or ''), block.pretty_name)
+        return u'(no name)'
 
     def pretty_frequency(self):
         return {1: 'daily', 7: 'weekly'}[self.frequency]

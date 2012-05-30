@@ -18,14 +18,11 @@
       "number_in_overview": 5,
       "slug": "restaurant-inspections",
       "date_name_plural": "Dates",
-      "grab_bag_headline": "",
       "short_source": "http://www.cityofboston.gov/isd/health/mfc/search.asp",
       "summary": "Restaurant Inspections",
       "source": "http://www.cityofboston.gov/isd/health/mfc/search.asp",
-      "intro": "",
       "update_frequency": "",
-      "short_description": "List of Restaurant Inspections",
-      "grab_bag": ""
+      "short_description": "List of Restaurant Inspections"
     },
     "model": "db.schema"
   },

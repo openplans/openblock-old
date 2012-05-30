@@ -30,7 +30,7 @@ from django.utils.cache import patch_response_headers
 from django.utils.datastructures import SortedDict
 from django.views.decorators.cache import cache_page
 from django.views.decorators.csrf import csrf_protect
-from ebpub.constants import HIDE_ADS_COOKIE_NAME, HIDE_SCHEMA_INTRO_COOKIE_NAME
+from ebpub.constants import HIDE_ADS_COOKIE_NAME
 from ebpub.db import breadcrumbs
 from ebpub.db import constants
 from ebpub.db.models import AggregateDay, AggregateLocation, AggregateFieldLookup
@@ -50,7 +50,7 @@ from ebpub.metros.allmetros import get_metro
 from ebpub.openblockapi.views import api_items_geojson
 from ebpub.preferences.models import HiddenSchema
 from ebpub.streets.models import Street, City, Block, Intersection
-from ebpub.utils.dates import daterange, parse_date, today
+from ebpub.utils.dates import daterange, today
 from ebpub.utils.view_utils import eb_render
 from ebpub.utils.view_utils import get_schema_manager
 from ebpub.utils.view_utils import paginate
@@ -117,7 +117,10 @@ def get_date_chart(schemas, start_date, end_date, counts):
 
 def block_bbox(block, radius):
     """
-    Assumes `block' has `wkt' attribute
+    Given a :py:class:`ebpub.streets.models.Block`, and an integer ``radius``,
+    returns a geometry representing a bounding box around the block.
+
+    Assumes `block`` has ``wkt`` attribute.
     """
     try:
         from osgeo import ogr
@@ -440,6 +443,9 @@ def search(request, schema_slug=''):
 
 @csrf_protect
 def newsitem_detail(request, schema_slug, newsitem_id):
+    """
+    Page displaying a single NewsItem.
+    """
     ni = get_object_or_404(NewsItem.objects.by_request(request).select_related(),
                            id=newsitem_id,
                            schema__slug=schema_slug)
@@ -450,7 +456,7 @@ def newsitem_detail(request, schema_slug, newsitem_id):
             return HttpResponsePermanentRedirect(ni.url)
         else:
             # We have nothing to show the user; ticket #110.
-            raise Http404("This news item needs an external URL and doesn't have one")
+            raise Http404("This news item needs an external URL (because schema.has_newsitem_detail is False), and it doesn't have one")
 
     atts = ni.attributes_for_template()
 
@@ -598,9 +604,6 @@ def schema_detail(request, slug):
 
     templates_to_try = ('db/schema_detail/%s.html' % s.slug, 'db/schema_detail.html')
 
-    # The HIDE_SCHEMA_INTRO_COOKIE_NAME cookie is a comma-separated list of
-    # schema IDs for schemas whose intro text should *not* be displayed.
-    hide_intro = str(s.id) in request.COOKIES.get(HIDE_SCHEMA_INTRO_COOKIE_NAME, '').split(',')
 
     context = {
         'schema': s,
@@ -613,8 +616,6 @@ def schema_detail(request, slug):
         'search_list': textsearch_sf_list,
         'newsitem_list': ni_list,
         'latest_dates': latest_dates[-3:],
-        'hide_intro': hide_intro,
-        'hide_intro_cookie_name': HIDE_SCHEMA_INTRO_COOKIE_NAME,
         'start_date': s.min_date,
         'end_date': today(),
         'bodyclass': 'schema-detail',
@@ -666,9 +667,6 @@ def _get_filter_schemafields(schema):
 
 def schema_filter_geojson(request, slug):
     s = get_object_or_404(get_schema_manager(request), slug=slug, is_special_report=False)
-    if not s.allow_charting:
-        return HttpResponse(status=404)
-
     # Determine what filters to apply, based on path and/or query string.
     filterchain = FilterChain(request=request, schema=s)
     filter_sf_dict = _get_filter_schemafields(s)
@@ -982,15 +980,30 @@ def city_list(request):
 def street_list(request, city_slug=None):
     city = city_slug and City.from_slug(city_slug) or None
     kwargs = city_slug and {'city': city.norm_name} or {}
-    streets = list(Street.objects.filter(**kwargs).order_by('street', 'suffix'))
+    streets = list(Street.objects.filter(**kwargs).order_by('street_slug'))
     if not streets:
         raise Http404('This city has no streets')
+    # URLs are generated from the slugs, which are distinct per city.
+    # If the ``city_slug`` arg was None, then the streets list can
+    # contain what look like duplicate streets, just in different
+    # cities.  That's not helpful because they all link to the same
+    # page anyway. So, remove the dupes.  Might be a clever way to do
+    # this in one db query; but for a few thousand streets, it's fine
+    # to do here.
+    slugs_seen = set()
+    filtered_streets = []
+    for street in streets:
+        if street.street_slug in slugs_seen:
+            continue
+        filtered_streets.append(street)
+        slugs_seen.add(street.street_slug)
+
     try:
         example_loctype = LocationType.objects.get(slug=settings.DEFAULT_LOCTYPE_SLUG).plural_name
     except LocationType.DoesNotExist:
         example_loctype = None
     context = {
-        'street_list': streets,
+        'street_list': filtered_streets,
         'city': city,
         'bodyclass': 'street-list',
         'example_loctype': example_loctype,

@@ -322,7 +322,7 @@ class PlaceAdmin(OSMModelAdmin):
 
     def _show_import_csv_form(self, request, import_form):
         opts = self.model._meta
-        adminform = helpers.AdminForm(import_form, [(None, {'fields': import_form.base_fields.keys()})], {})
+        #adminform = helpers.AdminForm(import_form, [(None, {'fields': import_form.base_fields.keys()})], {})
         context = {
             'title': 'Import %s' % force_unicode(opts.verbose_name_plural),
         }
@@ -366,9 +366,9 @@ class PlaceAdmin(OSMModelAdmin):
 
 class BlockAdmin(OSMModelAdmin):
 
-    list_display = ('pretty_name', 'predir', 'street', 'suffix', 'postdir',
+    list_display = ('pretty_name', 'predir', 'prefix', 'street', 'suffix', 'postdir',
                     'left_zip', 'right_zip', 'left_city', 'right_city')
-    list_filter = ('suffix', 'left_city', 'right_city', 'left_zip', 'right_zip',
+    list_filter = ('suffix', 'prefix', 'left_city', 'right_city', 'left_zip', 'right_zip',
                    'predir', 'postdir',
                    )
     search_fields = ('pretty_name',)
@@ -377,7 +377,7 @@ class BlockAdmin(OSMModelAdmin):
     fieldsets = (
         ('Name', {
                 'fields': ('street_slug', 'pretty_name', 'street_pretty_name',
-                           'predir', 'street', 'suffix', 'postdir',
+                           'predir', 'prefix', 'street', 'suffix', 'postdir',
                            )
                 }),
         ('Address Ranges', {
@@ -403,7 +403,7 @@ class PlaceTypeAdmin(OSMModelAdmin):
 
 class StreetAdmin(OSMModelAdmin):
     list_display = ('pretty_name', 'suffix', 'city', 'state',)
-    list_filter = ('suffix', 'city', 'state',)
+    list_filter = ('prefix', 'suffix', 'city', 'state',)
     search_fields = ('pretty_name',)
     readonly_fields = ('street',)
     prepopulated_fields = {'street_slug': ('pretty_name',)}

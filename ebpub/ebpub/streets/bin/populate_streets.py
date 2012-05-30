@@ -35,16 +35,13 @@ suitable for your city.
 Next, populate the streets from the blocks table, by calling populate_streets().
 
 This is the part that takes the longest: populate the
-db_blockintersection table. This goes through each block (and
-remember, there are on the order of tens of thousands of blocks in
-each city) and calculates all the other blocks which intersect with
-it. This is inherently slow, even with the heavy-lifting offloaded
-to pgsql/postgis. (If we were particularly clever, we'd probably
-write our own custom ultra-optimized C module to burn through this
-operation. But we're clever enough to recognize that this is a
-one-time cost so it's better not to be too cleverer.)
-
+db_blockintersection table.
 In this module, execute the populate_block_intersections() function.
+
+This goes through each block (and remember, there are on the order of
+tens of thousands of blocks in each city) and calculates all the other
+blocks which intersect with it. This is inherently slow, even with the
+heavy-lifting offloaded to pgsql/postgis; but this is a one-time cost.
 
 When that completes, execute the populate_intersections()
 function. This is a comparatively fast operation which just looks
@@ -107,22 +104,34 @@ def intersecting_blocks(block):
     return intersections
 
 def intersection_from_blocks(block_a, block_b, intersection_pt, city, state, zip):
-    obj = Intersection(
-        pretty_name=pretty_name_from_blocks(block_a, block_b),
-        slug=slug_from_blocks(block_a, block_b),
+    pretty_name = pretty_name_from_blocks(block_a, block_b),
+    slug = slug_from_blocks(block_a, block_b)
+    obj, created = Intersection.objects.get_or_create(
+        pretty_name=pretty_name,
+        slug=slug,
         predir_a=block_a.predir,
+        prefix_a=block_a.prefix,
         street_a=block_a.street,
         suffix_a=block_a.suffix,
         postdir_a=block_a.postdir,
         predir_b=block_b.predir,
+        prefix_b=block_b.prefix,
         street_b=block_b.street,
         suffix_b=block_b.suffix,
         postdir_b=block_b.postdir,
         city=city,
         state=state,
         zip=zip,
-        location=intersection_pt
-    )
+        # Putting location in "defaults" in case the assumption that
+        # the above args are unique is false. This can happen if 2 streets
+        # intersect more than once, see comment in streets.models.Intersection.Meta
+        # When this happens, the first loaded matching intersection will "win".
+        # ... don't know full implications of changing that assumption
+        # to support multiple such intersections.
+        defaults={'location': intersection_pt},
+        )
+    if not created:
+        logger.debug("Already have intersection %s" % obj.pretty_name)
     return obj
 
 @timer
@@ -131,17 +140,37 @@ def populate_streets(*args, **kwargs):
     """
     Populates the streets table from the blocks table
     """
-    print 'Populating the streets table'
+    print 'Populating the streets table; deleting all first'
     Street.objects.all().delete()
-    cursor = connection.cursor()
-    cursor.execute("""
-        INSERT INTO streets (street, pretty_name, street_slug, suffix, city, state)
-        SELECT DISTINCT street, street_pretty_name, street_slug, suffix, left_city, left_state
-        FROM blocks
-        UNION SELECT DISTINCT street, street_pretty_name, street_slug, suffix, right_city, right_state
-        FROM blocks
-    """)
-    connection._commit()
+    # This is considerably slower than the old INSERT INTO ... UPDATE
+    # single SQL statement, but it's a one-time cost, and it avoids
+    # duplicate keys that we were getting.
+    for block in Block.objects.all():
+
+        cities_and_states = set([(block.left_city, block.left_state),
+                                 (block.right_city, block.right_state)
+                                 ])
+        for city, state in cities_and_states:
+            obj, created =  Street.objects.get_or_create(
+                street_slug=block.street_slug,
+                city=city,
+                state=state,
+                )
+            if (obj.pretty_name != block.street_pretty_name
+                   or obj.street != block.street
+                   or obj.suffix != block.suffix
+                   or obj.prefix != block.prefix):
+                obj.pretty_name = block.street_pretty_name
+                obj.street=block.street
+                obj.prefix=block.prefix
+                obj.suffix=block.suffix
+                obj.save()
+                logger.debug("saved %s" % obj.pretty_name)
+            elif created:
+                logger.debug("created %s" % obj.pretty_name)
+
+    #connection._commit()
+
     #logger.info("Deleting extraneous cities...")
     #metro = get_metro()
     #cities = [l.name.upper() for l in Location.objects.filter(location_type__slug=metro['city_location_type']).exclude(location_type__name__startswith='Unknown')]
@@ -152,7 +181,8 @@ def populate_streets(*args, **kwargs):
 @transaction.commit_on_success
 def populate_block_intersections(*args, **kwargs):
     logger.info("Starting to populate block_intersections")
-    BlockIntersection.objects.all().delete()
+    logger.info("Warning, deleting all block_intersections AND intersections first")
+    BlockIntersection.objects.all().delete()  # This cascades.
     for block in Block.objects.all():
         logger.debug('Calculating the blocks that intersect %s' % block)
         for iblock, intersection_pt in intersecting_blocks(block):
@@ -169,8 +199,15 @@ def populate_intersections(*args, **kwargs):
     # On average, there are 2.3 blocks per intersection. So for
     # example in the case of Chicago, where there are 788,496 blocks,
     # we'd expect to see approximately 340,000 intersections
+
+    # NOTE, we can't do a delete here because that cascades to BlockIntersection,
+    # and then we have nothing to work with.
+    # So the two functions should really always be called together.
+    logger.info("Starting to populate intersections, this can take some minutes...")
+    logger.warn("Deleting all %d existing intersections first" % Intersection.objects.all().count())
     Intersection.objects.all().delete()
-    logger.info("Starting to populate intersections")
+
+    logger.info("We have %d blockintersections" % BlockIntersection.objects.all().count())
     metro = get_metro()
     zipcodes = Location.objects.filter(location_type__name__istartswith="zip").exclude(name__startswith='Unknown')
     def lookup_zipcode(pt):
@@ -220,7 +257,7 @@ def populate_intersections(*args, **kwargs):
                 zipcode = bi.block.left_zip
             intersection = intersection_from_blocks(bi.block, bi.intersecting_block, bi.location, city, state, zipcode)
             intersection.save()
-            logging.debug("Created intersection %s" % intersection)
+            logger.debug("Created intersection %s" % intersection.pretty_name)
             bi.intersection = intersection
             bi.save()
             intersections_seen[seen_intersection[0]] = intersection.id
@@ -234,6 +271,7 @@ def populate_intersections(*args, **kwargs):
     total = Intersection.objects.all().count()
     if not total:
         logger.warn("No intersections created, maybe you forgot to do populate_block_intersections first?")
+    return total
 
 LOG_VERBOSITY = (logging.CRITICAL,
                  logging.ERROR,
@@ -260,9 +298,9 @@ def main(argv=None):
         parser.error('must supply an valid action, one of: %r' % \
                      valid_actions.keys())
 
+    verbosity = min(opts.verbosity, len(LOG_VERBOSITY) -1)
+    level = LOG_VERBOSITY[verbosity]
     if not logger.handlers:
-        verbosity = min(opts.verbosity, len(LOG_VERBOSITY) -1)
-        level = LOG_VERBOSITY[verbosity]
         format = "%(asctime)-15s %(levelname)-8s %(message)s"
         basicConfig = logging.basicConfig
         try:
@@ -273,6 +311,7 @@ def main(argv=None):
             pass
         basicConfig(level=level, format=format)
 
+    logger.setLevel(level)
 
     # Call the action
     count = valid_actions[args[0]](**opts.__dict__)

@@ -494,7 +494,11 @@ def geocode(request):
     return APIGETResponse(request, simplejson.dumps(collection, indent=1),
                           content_type=JSON_CONTENT_TYPE, status=status)
 
+
 def _geocode_geojson(query):
+    """Geocode a string and return the result as a list of
+    GeoJSON Features.
+    """
     if not query: 
         return []
         
@@ -558,6 +562,7 @@ def _geocode_geojson(query):
     #     pass
 
     return features
+
 
 @rest_view(['GET'], cache_timeout = 24 * 3600)
 def list_types_json(request):

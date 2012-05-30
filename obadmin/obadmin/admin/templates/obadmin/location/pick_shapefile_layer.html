@@ -32,9 +32,16 @@ Pick Shapefile Layer to Import
             {% if not layers %}
             <li><div class="errors">No layers?</div></li>
             {% else %}
-            <p>Select which layer you'd like to import.</p>
 
+            <p>
+              Filter out locations outside our default bounding box?
+              <input type="checkbox" name="filter_bounds" checked="checked" />
+
+            </p>
+
+            <p>Select which layer you'd like to import.</p>
             <input name="shapefile" type="hidden" value="{{ shapefile }}" />
+
             <ol class="layers">
             {% for layer in layers %}
                 <li>
@@ -47,7 +54,11 @@ Pick Shapefile Layer to Import
                     {% if layer.num_feat %}
                         {% if layer.num_fields %}
                         <div class="fields">
-                            <p>Use which field for Location name?</p>
+                            <p>Use which field for Location name?
+                            (If none of these look suitable,
+                            you may have to hand-edit the Location names after
+                            import; just pick one.)
+                            </p>
 
                             <ol>
                                 {% for field in layer.0 %}

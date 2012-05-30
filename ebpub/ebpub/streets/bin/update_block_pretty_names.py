@@ -22,9 +22,9 @@ from ebpub.streets.models import Block
 
 def update_block_pretty_names():
     for b in Block.objects.all():
-        name = make_pretty_name(b.left_from_num, b.left_to_num, 
+        name = make_pretty_name(b.left_from_num, b.left_to_num,
                                 b.right_from_num, b.right_to_num,
-                                b.predir, b.street, b.suffix, b.postdir)[1]
+                                b.predir, b.prefix, b.street, b.suffix, b.postdir)[1]
         if name != b.pretty_name:
             print 'Pretty name: %s -- from: %s' % (b.pretty_name, name)
             b.pretty_name = name

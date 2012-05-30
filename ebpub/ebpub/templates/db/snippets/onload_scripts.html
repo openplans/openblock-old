@@ -1,5 +1,6 @@
-    // Show or hide news items by type.
-	$j('.toggle').click(function() {
+	// Show or hide news items by type.
+	$j('.toggle').show().click(function(event) {
+		event.preventDefault();
 		var url, action, on_success, on_error;
 		var container = $j(this).parents('h4');
 		var link = container.find('.toggle');
@@ -11,35 +12,73 @@
 			action = 'hide';
 		}
 		if (action == 'hide') {
-			url = '/accounts/hidden-schemas/add/';
+			url = '{% url preferences-save-hidden-schema %}';
 			all_links.html('Hiding...');
 			on_success = function(data, textStatus) {
-                all_links.html('Show');
+				all_links.html('Show');
 				$j('div.schema_' + schema_slug).addClass('hidden').removeClass('visible');
 			};
 			on_error = function(jqXHR, textStatus, errorThrown) {
-                all_links.html('Hide');
+				all_links.html('Hide');
+				$j('div.schema_' + schema_slug).addClass('visible').removeClass('hidden');
+				alert("Whoops, we had a technical hiccup while hiding items. Please try again in a bit.");
 			};
 		} else {
-			url = '/accounts/hidden-schemas/delete/';
-			all_links.html('Showing...')
+			url = '{% url preferences-remove-hidden-schema %}';
+			all_links.html('Showing...');
 			on_success = function(data, textStatus) {
-				all_links.html('Hide')
+				all_links.html('Hide');
 				$j('h4.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 				$j('div.schema_' + schema_slug).removeClass('hidden').addClass('visible');
 			};
 			on_error = function(jqXHR, textStatus, errorThrown) {
 				all_links.html('Show');
+				$j('div.schema_' + schema_slug).hide();
+				alert("Whoops, we had a technical hiccup while showing items. Please try again in a bit.");
 			};
-		}
+		};
+		var errorWithDelay = function(jqXHR, textStatus, errorThrown) {
+			setTimeout("", 3000);
+			on_error(jqXHR, textStatus, errorThrown);
+		};
 		$j.ajax({
 			type: "POST", url: url, data: {schema:schema_slug},
-			error: setTimeout(function(jqXHR, textStatus, errorThrown) {
-				alert("Whoops, we had a technical hiccup. Please try again in a bit.");
-				on_error(jqXHR, textStatus, errorThrown);
-			},5000),
-			//See note above
+			error: errorWithDelay,
 			success: on_success
+		});
+		return false;
+	});
+	// Enabled saved place toggle buttons.
+	$j('#saveplacebutton').show().click(function(event) {
+		event.preventDefault();
+		this.blur();
+		var action, result, url, button, error_text;
+		if ($j('#saveplacebutton').html().search('Remove') == -1) {
+			action = 'Saving';
+			result = 'Saved';
+			url = '{% url saved-place-add %}';
+			button = 'Remove this saved place';
+		}
+		else {
+			action = 'Removing';
+			result = 'Removed';
+			url = '{% url saved-place-delete %}';
+			button = 'Save this place';
+		}
+		$j('#saveplacestatus').html(action + '...');
+		var errorWithDelay = function(jqXHR, textStatus, errorThrown) {
+			//Timeout set if page not saving because it refreshes too quickly.
+			setTimeout("", 3000);
+			$j('#saveplacestatus').html("Whoops, we had a technical hiccup while " + action + ". Please try again in a bit.");
+		};
+		$j.ajax({
+			type: "POST", url: url, data: {pid: pid},
+			error: errorWithDelay,
+			success: function(data, textStatus) {
+				$j('#saveplacestatus').html(result + '.');
+				$j('#saveplacebutton').html(button);
+				$j('#ul-saved').html('<li class="replaceme">Loading...</li>');
+			}
 		});
 		return false;
 	});

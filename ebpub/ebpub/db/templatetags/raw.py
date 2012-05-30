@@ -16,6 +16,17 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+"""
+To use these, your template must include:
+
+.. code-block:: html+django
+
+
+  {% load raw %}
+
+"""
+
 from django import template
 
 register = template.Library()
@@ -31,6 +42,19 @@ def raw(parser, token):
     to Django template escaping injection.
 
     Probably only useful for development.
+
+    Example:
+
+    .. code-block:: html+django
+
+      {% raw %}
+         Some django template code, like {{ something }}.
+      {% endraw %}
+
+    Example output::
+
+         Some django template code, like {{ something }}.
+
     """
 
     silent = 'silent' in token.contents

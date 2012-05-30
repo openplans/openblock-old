@@ -34,10 +34,11 @@ sudo apt-get -y install python2.7 \
     libproj-dev || exit 1
 
 
-# Ubuntu 11.04 weirdly moved some libraries and stopped symlinking them
-sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib/ || exit 1
-sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/ || exit 1
-sudo ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib/ || exit 1
+# Ubuntu 11.04 weirdly moved some libraries and stopped symlinking them.
+# But don't fail if already there.
+sudo ln -s /usr/lib/x86_64-linux-gnu/libfreetype.so /usr/lib/
+sudo ln -s /usr/lib/x86_64-linux-gnu/libz.so /usr/lib/
+sudo ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so /usr/lib/
 
 sudo ldconfig || exit 1
 #echo Rebooting

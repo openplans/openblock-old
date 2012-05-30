@@ -1,6 +1,26 @@
-Current background jobs:
-<ol style="list-style-type: none">
+<style type="text/css">
+.background-jobs .running {
+   color: #00BB00;
+}
+.background-jobs .pending {
+   color: #92B720;
+}
+.background-jobs {
+  list-style-type: none;
+}
+</style>
+
+<h3>Current background jobs:</h3>
+<ol class="background-jobs">
   {% for job_info in counts %}
-      <li><b>{{ job_info.running_count }} running, {{ job_info.pending_count }} queued</b> {{ job_info.label }}</li>
+      <li>
+        <b>{{ job_info.label }}</b>:
+        <span {% if job_info.running_count > 0 %} class="running"{% endif %}>
+           {{ job_info.running_count }} running
+        </span>,
+        <span {% if job_info.pending_count > 0 %} class="pending"{% endif %}>
+           {{ job_info.pending_count }} pending
+        </span>
+      </li>
   {% endfor %}
 </ol>

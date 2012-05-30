@@ -63,6 +63,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.csrf',
     'django.contrib.messages.context_processors.messages',
     'ebpub.db.context_processors.map_context',
+    'ebpub.db.context_processors.settings_context',
     'django.core.context_processors.request',
     #'django.core.context_processors.debug',
 )
@@ -272,6 +273,12 @@ required_settings.append('MAP_BASELAYER_TYPE')
 
 # If you set MAP_BASELAYER_TYPE='google.*', you must also set GOOGLE_API_KEY.
 GOOGLE_API_KEY=''
+
+# Use a specific version of google maps API to work around
+# copyright alert bug:
+# http://trac.osgeo.org/openlayers/ticket/2984
+GOOGLE_API='http://maps.google.com/maps/api/js?v=3.6&sensor=false'
+
 # If you set MAP_BASELAYER_TYPE='yahoo', you must also set YAHOO_APP_ID.
 YAHOO_APP_ID=''
 # If you want MAP_BASELAYER_TYPE='cloudmade.*', you must also set CLOUDMADE_API_KEY.

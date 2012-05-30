@@ -16,6 +16,8 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+from django.conf import settings
 from django.contrib.syndication.views import Feed
 from django.http import Http404
 from django.utils.feedgenerator import Rss201rev2Feed
@@ -60,7 +62,9 @@ def bunch_by_date_and_schema(newsitem_list, date_cutoff):
         yield current_list
 
 class AbstractLocationFeed(EbpubFeed):
-    "Abstract base class for location-specific RSS feeds."
+    """
+    Abstract base class for :py:class:`ebpub.db.models.Location`-aware RSS feeds.
+    """
 
     title_template = 'feeds/streets_title.html'
     description_template = 'feeds/streets_description.html'
@@ -142,7 +146,18 @@ class AbstractLocationFeed(EbpubFeed):
             raise NotImplementedError()
 
     def newsitems_for_obj(self, obj, qs, block_radius):
+        """Get the relevant NewsItems as a queryset.
+        """
         raise NotImplementedError('Subclasses must implement this.')
+
+    def link(self, obj):
+        return 'http://%s%s' % (settings.EB_DOMAIN, obj.url())
+
+    def feed_url(self, obj):
+        # I only see this in django docs as a keyword arg, but it's apparently
+        # used by <atom:link rel="self">; without this, that link
+        # is generited by the current Site, which openblock doesn't use.
+        return self.link(obj)
 
 
 class BlockFeed(AbstractLocationFeed):
@@ -154,9 +169,6 @@ class BlockFeed(AbstractLocationFeed):
 
     def title(self, obj):
         return u"OpenBlock: %s" % obj.pretty_name
-
-    def link(self, obj):
-        return obj.url()
 
     def description(self, obj):
         return u"OpenBlock: %s" % obj.pretty_name
@@ -175,9 +187,6 @@ class LocationFeed(AbstractLocationFeed):
 
     def title(self, obj):
         return u"OpenBlock: %s" % obj.name
-
-    def link(self, obj):
-        return obj.url()
 
     def description(self, obj):
         return u"OpenBlock %s" % obj.name

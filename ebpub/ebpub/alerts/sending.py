@@ -73,11 +73,12 @@ def email_for_subscription(alert, start_date, frequency):
         if alert.schemas:
             qs = qs.filter(schema__id__in=alert.schemas.split(','))
 
-    if alert.block:
-        place_name, place_url = alert.block.pretty_name, alert.block.url()
-        place = alert.block
-        search_buffer = make_search_buffer(alert.block.location.centroid, alert.radius)
+    if alert.block_center:
+        place = alert._get_block()
+        place_name, place_url = place.pretty_name, place.url()
+        search_buffer = make_search_buffer(place.geom.centroid, alert.radius)
         qs = qs.filter(location__bboverlaps=search_buffer)
+
     elif alert.location:
         place_name, place_url = alert.location.name, alert.location.url()
         place = alert.location

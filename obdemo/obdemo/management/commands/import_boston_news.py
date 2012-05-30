@@ -36,7 +36,8 @@ class Command(BaseCommand):
         from ebdata.scrapers.general.georss.retrieval import main as news_main
         news_main(["http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&subject=massachusetts&scope=bonzai"])
         # more feeds from Joel. Local blog news:
-        news_main(["http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"])
+        # ... this one times out
+        #news_main(["http://search.boston.com/search/api?q=*&sort=-articleprintpublicationdate&scope=blogs&count=250&subject=massachusetts&format=atom"])
 
 
         print "Adding police reports..."
@@ -61,7 +62,7 @@ class Command(BaseCommand):
 
         print "Adding flickr photos..."
         from ebdata.scrapers.general.flickr import flickr_retrieval
-        flickr_retrieval.main()
+        flickr_retrieval.main(['--days=3'])
 
         print "Updating aggregates, see ebpub/README.txt..."
         from ebpub.db.bin.update_aggregates import update_all_aggregates

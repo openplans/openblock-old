@@ -20,7 +20,7 @@
 #
 
 
-"""A quick and dirty scraper for RSS feeds with GeoRSS info.
+"""A scraper for RSS feeds with GeoRSS or other location info.
 """
 
 import datetime
@@ -32,6 +32,7 @@ from ebdata.retrieval.scrapers.list_detail import SkipRecord, StopScraping
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
 from ebpub.db.models import NewsItem
 from ebpub.utils.geodjango import intersects_metro_bbox
+
 
 # Note there's an undocumented assumption in ebdata that we want to
 # unescape html before putting it in the db.
@@ -140,7 +141,7 @@ def main(argv=None, default_url=None):
     parser = OptionParser(usage=usage)
 
     parser.add_option(
-        "--schema", help="which news item type to create when scraping",
+        "--schema", help="Slug of the news item type to create when scraping",
         default="local-news"
         )
     # parser.add_option(

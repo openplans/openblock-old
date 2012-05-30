@@ -3,6 +3,7 @@ import datetime
 from south.db import db
 from south.v2 import DataMigration
 from django.db import models
+import re
 
 class Migration(DataMigration):
 
@@ -18,10 +19,36 @@ class Migration(DataMigration):
             from ebpub.geocoder.parser import parsing
             suffix_standardizer = parsing.STANDARDIZERS['suffix']
             suffix_matcher = parsing.TOKEN_REGEXES['suffix']
-            from ebpub.streets.name_utils import make_street_pretty_name
-        except (ImportError, KeyError):
+        except (ImportError, NameError, KeyError):
             print "Can't fix data, we depend on ebpub.geocoder.parser.parsing code that's apparently not there anymore!"
             return
+
+        def smart_title(s, exceptions=None):
+            # Copied from ebpub.utils.text
+            result = re.sub(r"(?<=[\s\"\(-])(\w)", lambda m: m.group(1).upper(), s.lower())
+            if result:
+                result = result[0].upper() + result[1:]
+
+            # Handle the exceptions.
+            if exceptions is not None:
+                for e in exceptions:
+                    pat = re.escape(e)
+                    if re.search("^\w", pat):
+                        pat = r"\b%s" % pat
+                    if re.search("\w$", pat):
+                        pat = r"%s\b" % pat
+                    pat = r"(?i)%s" % pat
+                    result = re.sub(pat, e, result)
+
+            return result
+
+
+        def make_street_pretty_name(street, suffix):
+            # Copied from ebpub.streets.name_utils.
+            street_name = smart_title(street)
+            if suffix:
+                street_name += u' %s.' % smart_title(suffix)
+            return street_name
 
         lacking_suffixes = orm['streets.street'].objects.filter(suffix='')
         for street in lacking_suffixes:

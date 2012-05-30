@@ -17,6 +17,13 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Script that updates ``display_order`` for all :py:class:`ebpub.db.models.Location`
+so that they are sorted alphabetically by ``name``.
+
+Optionally pass a LocationType.slug to only sort locations of that type.
+
+"""
 import sys
 from ebpub.db.models import Location
 

@@ -18,12 +18,14 @@
 #
 
 
-import datetime
+"""Script to import ZIP code Locations from a shapefile.
+See :ref:`zipcodes`
+"""
+
 from django.contrib.gis.geos import MultiPolygon
-from ebpub.db.models import Location, LocationType
-from ebpub.utils.geodjango import ensure_valid
-from ebpub.utils.geodjango import flatten_geomcollection
+from ebpub.db.models import LocationType
 from ebpub.db.bin import import_locations
+from ebpub.utils.geodjango import geos_with_projection
 import sys
 
 
@@ -39,22 +41,22 @@ class ZipImporter(import_locations.LocationImporter):
         )
         self.name_field = name_field
         super(ZipImporter, self).__init__(layer, location_type, source, filter_bounds, verbose)
-        self.zipcodes = {}
+        self.zipcode_geoms = {}
         self.collapse_zip_codes()
 
     def collapse_zip_codes(self):
         # The ESRI ZIP Code layer breaks ZIP Codes up along county
         # boundaries, so we need to collapse them first before
-        # proceeding
+        # proceeding.
 
-        if len(self.zipcodes) > 0:
+        if len(self.zipcode_geoms) > 0:
             return
 
         for feature in self.layer:
             zipcode = feature.get(self.name_field)
-            geom = feature.geom.geos
-            if zipcode not in self.zipcodes:
-                self.zipcodes[zipcode] = geom
+            geom = geos_with_projection(feature.geom)
+            if zipcode not in self.zipcode_geoms:
+                self.zipcode_geoms[zipcode] = geom
             else:
                 # If it's a MultiPolygon geom we're adding to our
                 # existing geom, we need to "unroll" it into its
@@ -63,53 +65,36 @@ class ZipImporter(import_locations.LocationImporter):
                     subgeoms = list(geom)
                 else:
                     subgeoms = [geom]
-                existing_geom = self.zipcodes[zipcode]
+                existing_geom = self.zipcode_geoms[zipcode]
                 if not isinstance(existing_geom, MultiPolygon):
                     new_geom = MultiPolygon([existing_geom])
                     new_geom.extend(subgeoms)
-                    self.zipcodes[zipcode] = new_geom
+                    self.zipcode_geoms[zipcode] = new_geom
                 else:
                     existing_geom.extend(subgeoms)
 
-    def create_location(self, zipcode, geom, display_order=0):
-        verbose = self.verbose
-        source = self.source
-        geom = ensure_valid(geom, self.location_type.slug)
-        geom = flatten_geomcollection(geom)
-        geom.srid = 4326
-        kwargs = dict(
-            name = zipcode,
-            normalized_name = zipcode,
-            slug = zipcode,
-            location_type = self.location_type,
-            location = geom,
-            city = self.metro_name,
-            source = source,
-            is_public = True,
-        )
-        if not self.should_create_location(kwargs):
-            return
-        kwargs['defaults'] = {'display_order': display_order,
-                              'last_mod_date': self.now,
-                              'creation_date': self.now,
-                              'area': kwargs['location'].transform(3395, True).area,
-                              }
-        zipcode_obj, created = Location.objects.get_or_create(**kwargs)
-        if verbose:
-            print >> sys.stderr, '%s ZIP Code %s ' % (created and 'Created' or 'Already had', zipcode_obj.name)
-        return created
 
-    def import_zip(self, zipcode):
-        self.create_location(zipcode, self.zipcodes[zipcode])
+    def import_zip(self, zipcode, display_order=0):
+        if zipcode not in self.zipcode_geoms:
+            import_locations.logger.info("Zipcode %s not found in shapefile" % zipcode)
+            return False
+        return self.create_location(zipcode, self.location_type,
+                                    geom=self.zipcode_geoms[zipcode],
+                                    display_order=display_order)
 
     def save(self):
         num_created = 0
-        sorted_zipcodes = sorted(self.zipcodes.iteritems(), key=lambda x: int(x[0]))
+        num_updated = 0
+        sorted_zipcodes = sorted(self.zipcode_geoms.iteritems(), key=lambda x: int(x[0]))
         for i, (zipcode, geom) in enumerate(sorted_zipcodes):
-            created = self.create_location(zipcode, geom, display_order=i)
+            created = self.create_location(zipcode, self.location_type, geom=geom,
+                                           display_order=i)
             if created:
                 num_created += 1
-        return num_created
+            else:
+                num_updated += 1
+        return (num_created, num_updated)
+
 
 def parse_args(optparser, argv):
     optparser.set_usage('usage: %prog [options] /path/to/shapefile')
@@ -117,6 +102,10 @@ def parse_args(optparser, argv):
     optparser.add_option('-n', '--name-field', dest='name_field', default='ZCTA5CE',
                          help='field that contains the zipcode\'s name')
     opts, args = optparser.parse_args(argv)
+    if not opts.verbose:
+        import logging
+        logging.basicConfig()
+        import_locations.logger.setLevel(logging.WARN)
 
     if len(args) != 1:
         optparser.error('must give path to shapefile')
@@ -130,9 +119,9 @@ def main(argv=None):
         argv = sys.argv[1:]
     layer, opts = parse_args(import_locations.optparser, argv)
     importer = ZipImporter(layer, opts.name_field, opts.source, opts.filter_bounds, opts.verbose)
-    num_created = importer.save()
+    num_created, num_updated = importer.save()
     if opts.verbose:
-        print >> sys.stderr, 'Created %s zipcodes.' % num_created
+        print >> sys.stderr, 'Created %s, updated %s zipcodes.' % (num_created, num_updated)
 
 if __name__ == '__main__':
     sys.exit(main())

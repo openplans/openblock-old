@@ -50,9 +50,6 @@ representing restaurant inspections, and it would allow each
 inspection report to say whether the restaurant failed or passed, what
 violations were observed, and so on.
 
-All this can be configured by the site administrator without writing
-code.
-
 A user is then able to browse *NewsItems* that are only police
 reports, or only restaurant inspections, or both; or browse only
 failed restaurant inspections; or browse crimes of a certain type, in
@@ -108,6 +105,36 @@ versa; the visual design is quite different as well.)
 Also, for a light conceptual background on some of this, particularly
 the data storage aspect of :doc:`packages/ebpub`, watch the video "Behind the
 scenes of EveryBlock.com" here: http://blip.tv/file/1957362
+
+
+What's New in OpenBlock 1.2
+============================
+
+Highlights:
+
+* Many tweaks to the public site, including: a more useful default
+  view of a news type ("Schema"), nicer-looking map, add/edit/delete
+  forms with autocomplete for user-contributed "neighbornews" content,
+
+* Improved geocoding and better handling of some street names
+  (eg. highways)
+
+* Many administrative UI improvements
+
+* Added a generic CSV scraper, and admin UI for loading CSV files by hand
+
+* Administrative moderation of comments
+
+* Lots of new hooks and template tags for people developing custom code
+
+* :doc:`Python package API documentation <packages/index>`
+
+* Over 30 bug fixes.
+
+Full details are in the :doc:`Release Notes <changes/release_notes>`.
+
+If upgrading be sure to read :ref:`release-upgrade`.
+And if you've developed custom code, also read :ref:`backward-incompatibilities`.
 
 
 .. include:: contents.rst

@@ -16,31 +16,45 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import string
 from django.contrib.gis.gdal import DataSource
 from django.core.exceptions import ValidationError
 from ebpub.streets.models import Block
 from ebpub.streets.name_utils import make_pretty_name
+from ebpub.streets.name_utils import make_pretty_prefix
 from ebpub.streets.name_utils import make_block_numbers
+from ebpub.utils.geodjango import geos_with_projection
 from ebpub.utils.text import slugify
+
 
 import logging
 logger = logging.getLogger('ebpub.streets.blockimport')
 
 class BlockImporter(object):
-    def __init__(self, shapefile, layer_id=0, verbose=False, encoding='utf8'):
+    """
+    Base class for importing blocks from shapefiles.
+
+    Subclasses will implement the details for one particular data source.
+    """
+    def __init__(self, shapefile, layer_id=0, verbose=False, encoding='utf8',
+                 reset=False,
+                 ):
         self.layer = DataSource(shapefile)[layer_id]
         self.verbose = verbose
         self.encoding = encoding
+        self.reset = reset
 
     def log(self, arg):
         "Deprecated: user logger instead"
         logger.debug(arg)
 
     def save(self):
+        if self.reset:
+            logger.warn("Deleting all Block instances and anything that refers to them!")
+            Block.objects.all().delete()
         import time
         start = time.time()
         num_created = 0
+        num_existing = 0
         for feature in self.layer:
             parent_id = None
             if not self.skip_feature(feature):
@@ -58,8 +72,8 @@ class BlockImporter(object):
                         if isinstance(val, str):
                             block_fields[key] = val.decode(self.encoding)
 
-
-                    block_fields['geom'] = feature.geom.geos
+                    block_fields['geom'] = geos_with_projection(feature.geom, 4326)
+                    block_fields['prefix'] = make_pretty_prefix(block_fields['prefix'])
 
                     block_fields['street_pretty_name'], block_fields['pretty_name'] = make_pretty_name(
                         block_fields['left_from_num'],
@@ -67,34 +81,37 @@ class BlockImporter(object):
                         block_fields['right_from_num'],
                         block_fields['right_to_num'],
                         block_fields['predir'],
+                        block_fields['prefix'],
                         block_fields['street'],
                         block_fields['suffix'],
                         block_fields['postdir']
                     )
 
-                    block_fields['street_slug'] = slugify(u' '.join((block_fields['street'], block_fields['suffix'])))
+                    block_fields['street_slug'] = slugify(
+                        u' '.join((block_fields['prefix'],
+                                   block_fields['street'],
+                                   block_fields['suffix'])))
 
                     # Watch out for addresses like '247B' which can't be
                     # saved as an IntegerField.
                     # But do this *after* making pretty names.
+                    # Also attempt to fix up addresses like '19-47',
+                    # by just using the lower number.  This will give
+                    # misleading output, but it's probably better than
+                    # discarding blocks.
                     for addr_key in ('left_from_num', 'left_to_num',
                                      'right_from_num', 'right_to_num'):
                         if isinstance(block_fields[addr_key], basestring):
-                            value = block_fields[addr_key].rstrip(string.letters)
-                            # Also attempt to fix up addresses like
-                            # '19-47', by just using the lower number.
-                            # This will give misleading output, but
-                            # it's probably better than discarding blocks.
-                            value = value.split('-')[0]
-                            if value:
-                                try:
-                                    value = int(value)
-                                except ValueError:
-                                    logger.warn("Omitting weird value %r for %r" % (value, addr_key))
-                                    value = None
-                            else:
+                            from ebpub.geocoder.parser.parsing import number_standardizer
+                            value = number_standardizer(block_fields[addr_key].strip())
+                            if not value:
                                 value = None
-                            block_fields[addr_key] = value
+                        else:
+                            try:
+                                value = str(int(value))
+                            except (ValueError, TypeError):
+                                value = None
+                        block_fields[addr_key] = value
 
                     try:
                         block_fields['from_num'], block_fields['to_num'] = \
@@ -106,12 +123,25 @@ class BlockImporter(object):
                         logger.warn('Skipping %s: %s' % (block_fields['pretty_name'], e))
                         continue
 
+                    # After doing pretty names etc, standardize the fields
+                    # that get used for geocoding, since the geocoder
+                    # searches for the standardized version.
+                    from ebpub.geocoder.parser.parsing import STANDARDIZERS
+                    for key, standardizer in STANDARDIZERS.items():
+                        if key in block_fields:
+                            if key == 'street' and block_fields['prefix']:
+                                # Special case: "US Highway 101", not "US Highway 101st".
+                                continue
+
+                            block_fields[key] = standardizer(block_fields[key])
+
                     # Separate out the uniquely identifying fields so
                     # we can avoid duplicate blocks.
                     # NOTE this doesn't work if you're updating from a more
                     # recent shapefile and the street has significant
                     # changes - eg. the street name has changed, or the
                     # address range has changed, or the block has split...
+                    # see #257. http://developer.openblockproject.org/ticket/257
                     primary_fields = {}
                     primary_field_keys = ('street_slug',
                                           'from_num', 'to_num',
@@ -122,19 +152,36 @@ class BlockImporter(object):
                     for key in primary_field_keys:
                         if block_fields[key] != u'':
                             # Some empty fields are fixed
-                            # automatically by clean(), so 
+                            # automatically by clean().
                             primary_fields[key] = block_fields[key]
 
                     existing = list(Block.objects.filter(**primary_fields))
                     if not existing:
-                        block = Block(**block_fields)
-                        num_created += 1
-                    elif len(existing) == 1:
+                        # Check the old-style way we used to make street slugs
+                        # prior to fixing issue #264... we need to keep this
+                        # code around indefinitely in case we are reloading the
+                        # blocks data and need to overwrite blocks that have
+                        # the old bad slug.  Sadly this probably can't just be
+                        # fixed by a migration.
+                        _old_street_slug = slugify(
+                            u' '.join((block_fields['street'],
+                                       block_fields['suffix'])))
+                        _old_primary_fields = primary_fields.copy()
+                        _old_primary_fields['street_slug'] = _old_street_slug
+                        existing = list(Block.objects.filter(**_old_primary_fields))
+                        if not existing:
+                            block = Block(**block_fields)
+                            num_created += 1
+                            logger.debug("CREATING %s" % unicode(block))
+
+                    if len(existing) == 1:
+                        num_existing += 1
                         block = existing[0]
                         logger.debug(u"Block %s already exists" % unicode(existing[0]))
                         for key, val in block_fields.items():
                             setattr(block, key, val)
-                    else:
+                    elif len(existing) > 1:
+                        num_existing += len(existing)
                         logger.warn("Multiple existing blocks like %s, skipping"
                                     % existing[0])
                         continue
@@ -149,17 +196,16 @@ class BlockImporter(object):
                             logger.warn("validation error on %s, skipping" % str(block))
                             logger.warn(e)
                             continue
-                    logger.debug("CREATING %s" % unicode(block))
                     block.save()
                     if parent_id is None:
                         parent_id = block.id
                     else:
                         block.parent_id = parent_id
                         block.save()
-                    logger.debug('%d\tCreated block %s for feature %d' % (num_created, block, feature.get('TLID')))
+                    logger.debug('%d\tCreated block %s for feature %d' % (num_created, block, feature.fid))
         logger.info("Created %d new blocks in %.2f seconds" % (num_created,
                                                                time.time() - start))
-        return num_created
+        return num_created, num_existing
 
     def skip_feature(self, feature):
         """

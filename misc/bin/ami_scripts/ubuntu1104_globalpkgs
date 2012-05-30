@@ -25,6 +25,7 @@ sudo apt-get -y install python2.7 \
     python-gdal \
     python-lxml \
     python-imaging \
+    python-shapely \
     libproj0 \
     libproj-dev \
     unzip \

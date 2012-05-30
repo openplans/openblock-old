@@ -23,10 +23,29 @@ Utility functions for munging address/block/street names.
 import re
 from ebpub.utils.text import smart_title, slugify
 
-def make_street_pretty_name(street, suffix):
-    street_name = smart_title(street)
-    if suffix:
-        street_name += u' %s.' % smart_title(suffix)
+def make_street_pretty_name(prefix, street, suffix):
+    """
+    >>> make_street_pretty_name(None, 'whee', None)
+    u'Whee'
+    >>> make_street_pretty_name('oh', 'boy', None)
+    u'Oh Boy'
+    >>> make_street_pretty_name('', 'YES', 'nO')
+    u'Yes No'
+    >>> make_street_pretty_name(' US hWy ', '101', 'C')
+    u'US Hwy 101 C'
+    >>> make_street_pretty_name(' I- ', '40', '')
+    u'I-40'
+
+    """
+    prefix = make_pretty_prefix(prefix or u'')
+    suffix = smart_title(suffix or u'').strip()
+    street = smart_title(street or u'').strip()
+    assert street
+    if prefix == u'I':
+        # Special case to avoid "I- 40", the standard is apparently "I-40"
+        prefix = u''
+        street = u'I-%s' % street
+    street_name = u' '.join((prefix, street, suffix)).strip()
     return street_name
 
 def make_block_number(left_from_num, left_to_num, right_from_num, right_to_num):
@@ -172,18 +191,43 @@ def make_pretty_directional(directional):
     """
     return "".join(u"%s." % c for c in directional)
 
-def make_pretty_name(left_from_num, left_to_num, right_from_num, right_to_num, predir, street, suffix, postdir=None):
+def make_pretty_name(left_from_num, left_to_num, right_from_num, right_to_num,
+                     predir, prefix, street, suffix, postdir=None):
     """
     Returns a tuple of (street_pretty_name, block_pretty_name) for the
     given address bits.
+
+    >>> make_pretty_name(1, 29, 2, 30, 'NW', 'STATE RT', '101', 'DRIVE', 'SE')
+    (u'State Route 101 Drive', u'1-30 N.W. State Route 101 Drive S.E.')
     """
-    street_name = make_street_pretty_name(street, suffix)
+    prefix_part = make_pretty_prefix(prefix or u'')
+    street_name = make_street_pretty_name(prefix_part, street, suffix)
     num_part = make_block_number(left_from_num, left_to_num, right_from_num, right_to_num)
     predir_part = predir and make_pretty_directional(predir) or u''
     postdir_part = postdir and make_pretty_directional(postdir) or u''
     block_name = u'%s %s %s %s' % (num_part, predir_part, street_name, postdir_part)
     block_name = re.sub(u'\s+', u' ', block_name).strip()
     return street_name, block_name
+
+def make_pretty_prefix(prefix):
+    """
+    >>> make_pretty_prefix('US Hwy')
+    u'US Highway'
+    >>> make_pretty_prefix('State Rt ')
+    u'State Route'
+    >>> make_pretty_prefix(' I- ')
+    u'I'
+    >>> make_pretty_prefix(' Anything Else ')
+    u'Anything Else'
+    """
+    prefix = unicode(prefix).strip()
+    if prefix.upper().endswith(u'HWY'):
+        return prefix[:-3] + u'Highway'
+    if prefix.upper().endswith(u'RT'):
+        return prefix[:-2] + u'Route'
+    prefix = prefix.strip().strip('-').strip()
+    prefix = smart_title(prefix, exceptions=['US'])
+    return prefix
 
 def make_dir_street_name(block):
     """
@@ -197,7 +241,7 @@ def make_dir_street_name(block):
 
         "18th St. N.W."
     """
-    name = make_street_pretty_name(block.street, block.suffix)
+    name = make_street_pretty_name(block.prefix, block.street, block.suffix)
     if block.predir:
         name = u"%s %s" % (make_pretty_directional(block.predir), name)
     if block.postdir:
@@ -212,11 +256,20 @@ def slug_from_blocks(block_a, block_b):
                            slugify(make_dir_street_name(block_b)))
     # If it's too long for the slug field, drop the directionals
     if len(slug) > 64:
-        slug = u"%s-and-%s" % (slugify(make_street_pretty_name(block_a.street, block_a.suffix)),
-                               slugify(make_street_pretty_name(block_b.street, block_b.suffix)))
+        slug = u"%s-and-%s" % (
+            slugify(make_street_pretty_name(block_a.prefix, block_a.street, block_a.suffix)),
+            slugify(make_street_pretty_name(block_b.prefix, block_b.street, block_b.suffix)))
     # If it's still too long, drop the suffixes
     if len(slug) > 64:
-        slug = u"%s-and-%s" % (slugify(block_a.street),
-                               slugify(block_b.street))
+        slug = u"%s-and-%s" % (
+            slugify(make_street_pretty_name(block_a.prefix, block_a.street, u'')),
+            slugify(make_street_pretty_name(block_b.prefix, block_b.street, u'')))
 
+    # If it's *still* too long, drop the prefixes too
+    if len(slug) > 64:
+        slug = u"%s-and-%s" % (
+            slugify(block_a.street),
+            slugify(block_b.street),
+            )
+    slug = slug[:64]
     return slug

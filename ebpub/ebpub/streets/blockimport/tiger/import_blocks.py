@@ -18,7 +18,9 @@
 #
 
 import sys
+import pprint
 import optparse
+from collections import defaultdict
 from django.contrib.gis.gdal import DataSource
 from django.contrib.gis.gdal.error import OGRIndexError
 from ebdata.parsing import dbf
@@ -94,7 +96,7 @@ VALID_MTFCC.add('S1740') # private roads, often unnamed.
 
 class TigerImporter(BlockImporter):
     """
-    Imports blocks using TIGER/Line data from the US Census.
+    Imports blocks using TIGER/Line shapefile data from the US Census.
 
     If `filter_city` is passed, we will skip features which don't have
     at least one of left_city or right_city matching the string.
@@ -117,28 +119,14 @@ class TigerImporter(BlockImporter):
     """
     def __init__(self, edges_shp, featnames_dbf, faces_dbf, place_shp,
                  filter_city=None, filter_bounds=None, filter_locations=(),
-                 verbose=False, encoding='utf8', fix_cities=False):
+                 verbose=False, encoding='utf8', fix_cities=False,
+                 reset=False,
+                 ):
         BlockImporter.__init__(self, shapefile=edges_shp, layer_id=0,
-                               verbose=verbose, encoding=encoding)
+                               verbose=verbose, encoding=encoding, reset=reset,
+                               )
         self.fix_cities = fix_cities
-        self.featnames_db = featnames_db = {}
-        for tlid, row in self._load_rel_db(featnames_dbf, 'TLID').iteritems():
-            # TLID is Tiger/Line ID, unique per edge.
-            # We use TLID instead of LINEARID as the key because
-            # LINEARID is only unique per 'linear feature', which is
-            # an implicit union of some edges. So if we used LINEARID,
-            # we'd clobber a lot of keys in the call to
-            # _load_rel_db().
-            # Fixes #14 ("missing blocks").
-            if row['MTFCC'] not in VALID_MTFCC:
-                continue
-            if not row.get('FULLNAME'):
-                self.log("skipping tlid %r, no fullname" % tlid)
-                continue
-
-            featnames_db.setdefault(tlid, [])
-            featnames_db[tlid].append(row)
-
+        self.featnames_db = self._clean_featnames(featnames_dbf)
         self.faces_db = self._load_rel_db(faces_dbf, 'TFID')
         # Load places keyed by FIPS code
         places_layer = DataSource(place_shp)[0]
@@ -157,18 +145,17 @@ class TigerImporter(BlockImporter):
         self.filter_bounds = filter_bounds
         self.tlids_with_blocks = set()
 
-
     def _load_rel_db(self, dbf_file, rel_key):
         """
         Reads rows as dicts from a .dbf file.
         Returns a mapping of rel_key -> row dict.
         """
         f = open(dbf_file, 'rb')
-        db = {}
+        db = defaultdict(list)
         rowcount = 0
         try:
             for row in dbf.dict_reader(f, strip_values=True):
-                db[row[rel_key]] = row
+                db[row[rel_key]].append(row)
                 rowcount += 1
                 self.log(
                     " GOT DBF ROW %s for %s" % (row[rel_key], row.get('FULLNAME', 'unknown')))
@@ -177,6 +164,47 @@ class TigerImporter(BlockImporter):
         self.log("Rows in %s: %d" % (dbf_file, rowcount))
         self.log("Unique keys for %r: %d" % (rel_key, len(db)))
         return db
+
+    def _clean_featnames(self, featnames_dbf):
+        rel_db = self._load_rel_db(featnames_dbf, 'TLID')
+        featnames_db = defaultdict(list)
+        for tlid, rows in rel_db.iteritems():
+            primary = None
+            alternates = []
+            for row in rows:
+                # TLID is Tiger/Line ID, unique per edge.
+                # We use TLID instead of LINEARID as the key because
+                # LINEARID is only unique per 'linear feature', which is
+                # an implicit union of some edges. So if we used LINEARID,
+                # we'd clobber a lot of keys in the call to
+                # _load_rel_db().
+                # Fixes #14 ("missing blocks").
+                if row['MTFCC'] not in VALID_MTFCC:
+                    continue
+                if not row.get('FULLNAME'):
+                    self.log("skipping tlid %r, no fullname" % tlid)
+                    continue
+                if row['PAFLAG'] == 'P':
+                    primary = row
+                    featnames_db[tlid].append(row)
+                else:
+                    alternates.append(row)
+            # A lot of alternates seem to be duplicates of the primary name,
+            # not useful.
+            alternates = [row for row in alternates if row['NAME'].upper() != primary['NAME'].upper()]
+
+            # For now we just log alternates that were found. Ideally we could save these
+            # as aliases somehow, but at the moment we don't have a good way to do that.
+
+
+            for alternate in alternates:
+                correct = primary['NAME'].upper()
+                incorrect = alternate['NAME'].upper()
+                msg = 'Found alternate name for {0} ({1}): {2}\n{3}\n{4}'
+                logger.debug(msg.format(correct, primary['TLID'], incorrect,
+                                        pprint.pformat(primary),
+                                        pprint.pformat(alternate)))
+        return featnames_db
 
     def _get_city(self, feature, side):
         city = ''
@@ -189,7 +217,7 @@ class TigerImporter(BlockImporter):
         else:
             fid = feature.get('TFID' + side)
             if fid in self.faces_db:
-                face = self.faces_db[fid]
+                face = self.faces_db[fid][0]
                 # Handle both 2010 and older census files.
                 # If none of these work, we simply get no city.
                 pid = face.get('PLACEFP10') or face.get('PLACEFP00') or face.get('PLACEFP')
@@ -203,7 +231,7 @@ class TigerImporter(BlockImporter):
     def _get_state(self, feature, side):
         fid = feature.get('TFID' + side)
         if fid in self.faces_db:
-            face = self.faces_db[fid]
+            face = self.faces_db[fid][0]
             # Handle both 2010 and older census files.
             state_fip = STATE_FIPS[face.get('STATEFP10') or face['STATEFP']]
             return state_fip[0]
@@ -255,15 +283,22 @@ class TigerImporter(BlockImporter):
         if tlid in self.featnames_db:
             suffix_standardizer = geocoder_parsing.STANDARDIZERS['suffix']
             suffix_matcher = geocoder_parsing.TOKEN_REGEXES['suffix']
+
             for featname in self.featnames_db[tlid]:
+                # Prefix eg. 'STATE HWY'.
+                block_fields['prefix'] = featname.get('PRETYPABRV', '').upper().strip()
+                # Main part of the name, eg. 'MAIN'
                 block_fields['street'] = featname['NAME'].upper().strip()
+                # Prefix direction eg. 'N'.
                 block_fields['predir'] = featname['PREDIRABRV'].upper().strip()
-                block_fields['suffix'] = featname['SUFTYPABRV'].upper().strip()
+                # Suffix direction eg. 'SW'.
                 block_fields['postdir'] = featname['SUFDIRABRV'].upper().strip()
+                # Road type, eg. 'ST', 'AVE', 'PKWY'.
+                block_fields['suffix'] = featname['SUFTYPABRV'].upper().strip()
                 if not block_fields['suffix']:
                     # Bug in the data:
-                    # Many streets named eg. 'Wilson Park' put the whole thing in the name
-                    # and nothing in the suffix.
+                    # Many streets named eg. 'Wilson Park' put the whole thing in the
+                    # name and nothing in the suffix.
                     # This breaks our geocoder, because it parses 'Park' as the suffix
                     # and expects to find it in that field.
                     # So, check if the street name ends with a recognized suffix.
@@ -275,6 +310,18 @@ class TigerImporter(BlockImporter):
                             block_fields['suffix'] = suffix_standardizer(raw_suffix)
                             block_fields['street'] = street
 
+                # More bugs in data: some auxiliary roads have the prefix as
+                # part of the name in nonstandard format.
+                if not block_fields['prefix']:
+                    prefix, street = None, None
+                    if block_fields['street'].startswith('INTERSTATE '):
+                        prefix, street = block_fields['street'].split(' ', 1)
+                    elif block_fields['street'].startswith('I-'):
+                        prefix, street = block_fields['street'].split('-', 1)
+                    if prefix and street:
+                        logger.debug("Splitting prefix %r out of street %r" % (prefix, street))
+                        block_fields['street'] = street.strip()
+                        block_fields['prefix'] = prefix.strip()
                 yield block_fields.copy()
 
                 self.tlids_with_blocks.add(tlid)
@@ -292,6 +339,11 @@ def main(argv=None):
                       'type. Only makes sense if you have configured '
                       'multiple_cities=True in the METRO_LIST of your settings.py, '
                       'and after you have created some appropriate Locations.')
+
+
+    parser.add_option('-r', '--reset', action='store_true', default=False,
+                      help="Whether to delete existing blocks and start from scratch. This will attempt to fix other models that have foreign keys to blocks; use at your own risk though."
+                      )
 
     parser.add_option('-b', '--filter-bounds', action="store", default=1,
                       type='int',
@@ -335,15 +387,16 @@ def main(argv=None):
         filter_bounds = filter_bounds
 
     tiger = TigerImporter(*args, verbose=options.verbose,
-                           filter_city=options.city, 
+                           filter_city=options.city,
                            filter_bounds=filter_bounds,
                            encoding=options.encoding,
+                           reset=options.reset,
                            fix_cities=options.fix_cities)
     if options.verbose:
         import logging
         logger.setLevel(logging.DEBUG)
-    num_created = tiger.save()
-    logger.info( "Created %d new blocks" % num_created)
+    num_created, num_existing = tiger.save()
+    logger.info( "Created %d new blocks; kept %d old ones" % (num_created, num_existing))
     logger.debug("... from %d feature names" % len(tiger.featnames_db))
     logger.debug("feature tlids with blocks: %d" % len(tiger.tlids_with_blocks))
 

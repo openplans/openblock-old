@@ -36,22 +36,23 @@ class PerModelDBRouter:
     <app_label>.<ModelClass> or regular expressions that match
     values of the form.
     
-    eg:
+    eg::
 
-    DATABASE_ROUTES = {
-        'users': ['accounts.User'],
-        'barn': ['animals.Goat', 
-                 'animals.Pig'],
-        'junkyard': ['garbage.*', 'scrap.*']
-    }
+        DATABASE_ROUTES = {
+            'users': ['accounts.User'],
+            'barn': ['animals.Goat', 
+                     'animals.Pig'],
+            'junkyard': ['garbage.*', 'scrap.*']
+        }
     
-    This configuration would put accounts.models.User objects into the 
+    This configuration would put
+    :py:class:`ebpub.accounts.models.User` objects into the 
     database 'users', animals.models.Goat and animals.models.Pig into
-    the database 'barn' and any model in the garbage or scrap app into 
-    the datatbase 'junkyard'
+    the database 'barn' and any model in the 'garbage' or 'scrap' app into 
+    the database 'junkyard'.
     
     A subclass may optionally provide its own configuration instead of
-    using settings.DATABASE_ROUTES, by setting the attribute _routes
+    using settings.DATABASE_ROUTES, by setting the attribute ``_routes``
     to a dictionary of the same form.
     """
     

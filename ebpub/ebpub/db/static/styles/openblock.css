@@ -250,10 +250,14 @@ a:focus {
 }
 
 button, input[type="submit"], .button {
-    background-color: #A3C1CC;
+    background-color: #E1DBD6;  /* #A3C1CC; */
     text-shadow: 1px 1px 0 #DDDDDD;
-    border-width: 1px;
-    border-style: outset;
+    border: 1px solid #BBB;
+    /* border-style: outset; */
+    /* border-color: red green blue pink; */
+    border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-width : 1px;
 }
 
 .button {
@@ -263,7 +267,7 @@ button, input[type="submit"], .button {
 }
 
 #globalsearch button {
-    border: 0 none;
+    border-width: 1px;
     color: #666666;
     font-size: 14px;
     font-weight: bold;
@@ -273,6 +277,8 @@ button, input[type="submit"], .button {
 
 button:hover, .button:hover, input[type="submit"]:hover, input[type="file"]:hover {
     cursor: pointer;
+    background-color: #EEE;
+    border-color: #999;
 }
 
 #userlinks {
@@ -594,13 +600,40 @@ div.popupnav {
     font-size: 100%;
 }
 
-#mapwrapper .olControlLayerSwitcher {
-    top: 0px !important;
-    font-size: x-small;
+#mapwrapper #layerswitcher-container {
+    position: relative;
+    top: 0px;
+    left: 0px;
 }
 
-#mapwrapper .olControlLayerSwitcher .layersDiv {
+#mapwrapper #layerswitcher {
+    top: 0px !important;
+    font-size: x-small;
+    width: 20em;
+    position: absolute;
+    z-index: 2000;
+}
+
+/* the "Overlays" title on the layer switcher. */
+#mapwrapper .layersDiv .dataLbl {
+    text-align: right;
+    padding-right: 1em;
+}
+
+#mapwrapper .layersDiv .dataLayersDiv {
+    /* We'll start with this collapsed, and expand it when label is clicked. */
+    display: none;
+}
+
+
+#mapwrapper .layersDiv {
     background-color: #505040;
+    padding: 5px 0;
+    width: 100%;
+}
+
+#mapwrapper .layersDiv, #layerswitcher div span {
+    opacity: 0.84 !important;
 }
 
 #mapwrapper .olControlLayerSwitcher span {
@@ -639,14 +672,14 @@ margin : .25em 0 .5em 0;
 font-size : 1.5em;
 }
 
-ul.nav-view {
+ul.nav-view, #content ul.tabs {
 margin : 0;
 padding : 0;
 list-style-type : none;
 display : inline-block;
 }
 
-ul.nav-view li {
+ul.nav-view li, #content ul.tabs li {
 float : left;
 border : 1px solid #c8c7c5;
 border-width : 1px 1px 1px 0; 
@@ -654,21 +687,25 @@ padding : 4px 8px 3px 8px;
 font-size : 14px;
 }
 
-ul.nav-view li a, ul.nav-view li a:visited {
+ul.nav-view li a, ul.nav-view li a:visited, #content ul.tabs li a {
 text-decoration : none;
 color : #aaaaaa;
 }
 
-ul.nav-view li a:hover {
+ul.nav-view li a:hover , #content ul.tabs li a:hover {
 color : #2c7cae;
 }
 
 
-ul.nav-view li.selected {
+ul.nav-view li.selected, #content ul.tabs li.current {
 background-color : #e1dbd6;
 }
 
-ul.nav-view li:first-child {
+ul.nav-view li.selected a, #content ul.tabs li.current a {
+color: #555;
+}
+
+ul.nav-view li:first-child, #content ul.tabs li:first-child {
 color : #2c7cae;
 border-top-left-radius: 5px;
 -moz-border-radius-topleft: 5px;
@@ -678,15 +715,11 @@ border-width : 1px;
 }
 
 
-ul.nav-view li:last-child {
+ul.nav-view li:last-child, #content ul.tabs li:last-child {
 border-top-right-radius: 5px;
 -moz-border-radius-topright: 5px;
 border-bottom-right-radius: 5px;
 -moz-border-radius-bottomright: 5px;
-}
-
-ul.nav-view li.selected {
-background-color : #e1dbd6;
 }
 
 form.select-filter {
@@ -769,61 +802,6 @@ float : left;
 margin-right : 30px;
 }
 
-
-#content ul.tabs, #content ul.tabs li {
-list-style-type : none;
-padding : 0;
-margin : 0;
-}
-
-#content ul.tabs {
-margin-bottom : 1.5em;
-clear : both;
-display : inline-block;
-}
-
-#content ul.tabs li {
-float : left;
-border : 1px solid #c8c7c5;
-border-width : 1px 1px 1px 0; 
-background-color : #f7f5f1;
-}
-
-#content ul.tabs li.current {
-background-color : #fff;
-}
-
-#content ul.tabs li:first-child {
-color : #2c7cae;
-border-top-left-radius: 5px;
--moz-border-radius-topleft: 5px;
-border-bottom-left-radius: 5px;
--moz-border-radius-bottomleft: 5px;
-border-width : 1px;
-}
-
-#content ul.tabs li:last-child {
-border-top-right-radius: 5px;
--moz-border-radius-topright: 5px;
-border-bottom-right-radius: 5px;
--moz-border-radius-bottomright: 5px;
-
-}
-
-#content ul.tabs li a {
-text-decoration : none;
-padding : .15em .5em;
-color : #aaa;
-}
-
-#content ul.tabs li.current a {
-color : #464444;
-}
-
-
-#content ul.tabs li a:hover {
-color : #464444;
-}
 
 .newsitemlist, .newsitem {
 list-style-type : none;
@@ -1184,6 +1162,8 @@ div.schema-colorsample {
   height: 20px; width: 20px;
   padding: 0px; margin: 3px;
   border: 1px solid #CCCCCC;
+  border-radius: 10px;
+  -moz-border-radius: 10px;
 }
 
 /* messages */

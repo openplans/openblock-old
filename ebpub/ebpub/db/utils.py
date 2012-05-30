@@ -189,7 +189,7 @@ def get_place_info_for_request(request, *args, **kwargs):
         nearby, search_buf = get_locations_near_place(place, block_radius)
         info['nearby_locations'] = nearby
         info['bbox'] = search_buf.extent
-        saved_place_lookup = {'block__id': place.id}
+        saved_place_lookup = {'block_center': place.geom.centroid}
         info['block_radius'] = block_radius
         info['cookies_to_set'] = cookies_to_set
         info['pid'] = make_pid(place, block_radius)
@@ -262,8 +262,9 @@ def block_radius_value(request):
 
 def make_search_buffer(geom, block_radius):
     """
-    Returns a polygon of a buffer around a block's centroid. `geom'
-    should be the centroid of the block. `block_radius' is number of
-    blocks.
+    Returns a polygon of a buffer around a block's centroid.
+
+    ``geom`` is the centroid of the block, and
+    ``block_radius`` is the number of blocks.
     """
     return geom.buffer(BLOCK_RADIUS_CHOICES[str(block_radius)]).envelope

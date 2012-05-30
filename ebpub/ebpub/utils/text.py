@@ -18,7 +18,27 @@
 
 import re
 
-slugify = lambda x: re.sub('[-\s]+', '-', re.sub('[^\w\s-]', '', x.strip())).lower()
+def slugify(x):
+    """
+    Make a slug from a string.
+    Examples:
+
+    .. code-block:: python
+
+      >>> slugify('')
+      u''
+      >>> slugify('Hello from\tsomewhere else')
+      u'hello-from-somewhere-else'
+      >>> slugify('This: has _ a ... ?!#$ lot of extra stuff@()[]')
+      u'this-has-_-a-lot-of-extra-stuff'
+      >>> slugify(1)
+      u'1'
+      >>> slugify(None)
+      u'none'
+
+    """
+    x = unicode(x)
+    return re.sub('[-\s]+', '-', re.sub('[^\w\s-]', '', x.strip())).lower()
 
 def intcomma(orig):
     """

@@ -24,6 +24,9 @@ Code originally copied from FixCity.
 
 from django.core.files.uploadhandler import FileUploadHandler, StopUpload
 
+import logging
+logger = logging.getLogger('uploadhandler')
+
 class QuotaExceededError(StopUpload):
     # Unfortunately this does stop the upload but does seem to let the
     # request complete with a 200 response, weirdly.
@@ -46,12 +49,16 @@ class QuotaUploadHandler(FileUploadHandler):
 
     def _abort(self):
         self._aborted = True
+        logger.warn("Exceeded max upload size of %.2f MB, aborting request" % self.quota_mb)
         raise QuotaExceededError('Maximum upload size is %.2f MB'
                                  % self.quota_mb)
 
     def receive_data_chunk(self, raw_data, start):
-        # First check the content-length header, if provided.
         if self.request:
+            # Admin user is allowed to upload anything.
+            if self.request.user.is_staff:
+                return raw_data
+            # For everybody else, first check the content-length header, if provided.
             content_length = self.request.META.get('CONTENT_LENGTH', None)
             if content_length is not None:
                 content_length = int(content_length)

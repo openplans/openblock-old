@@ -17,6 +17,7 @@
 #
 
 from django import forms, http
+from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import capfirst
 from ebpub.accounts import callbacks
@@ -133,10 +134,10 @@ def finish_signup(request, place, data):
     del data['selected_schemas']
     data['schemas'] = ','.join([str(s.id) for s in data['schemas']])
     if isinstance(place, Block):
-        data['block_id'] = place.id
+        data['block_center'] = place.geom.centroid.wkt
         data['location_id'] = None
     else:
-        data['block_id'] = None
+        data['block_center'] = None
         data['location_id'] = place.id
         data['radius'] = None
 
@@ -148,7 +149,7 @@ def finish_signup(request, place, data):
     if request.user:
         message = callbacks.create_alert(request.user, data)
         request.session['login_message'] = message
-        return http.HttpResponseRedirect('/accounts/dashboard/')
+        return http.HttpResponseRedirect(reverse('accounts-dashboard'))
 
     try:
         User.objects.get(email=email)
@@ -179,5 +180,5 @@ def unsubscribe(request, alert_id):
     if request.method == 'POST':
         EmailAlert.objects.filter(id=alert_id).update(cancel_date=datetime.datetime.now(), is_active=False)
         request.session['login_message'] = "We've unsubscribed you from the alert for %s" % a.name()
-        return http.HttpResponseRedirect('/accounts/dashboard/')
+        return http.HttpResponseRedirect(reverse('accounts-dashboard'))
     return eb_render(request, 'alerts/confirm_unsubscription.html', {'alert': a})

@@ -25,12 +25,13 @@ See http://docs.djangoproject.com/en/1.3/ref/contrib/gis/deployment/
 for more info.
 
 
-Note on Virtual Hosting and Paths
-=================================
+Paths and Permissions
+======================
 
 Ensure that the user that openblock runs as has write permission to
 the directories at settings.COMPRESS_OUTPUT_DIR and
 settings.MEDIA_ROOT.
+(For mod_wsgi, this is the user and/or group specified in the WSGIDaemonProcess line.
 
 .. _example_apache_config:
 
@@ -55,7 +56,7 @@ Adjust the paths according to your installation.
 
  <Directory /home/openblock/openblock/src/openblock/ebpub/ebpub/static_root/ >
    # I'm assuming everything here safely has a version-specific URL
-   # whether via django-static or eg. the OpenLayers directory.
+   # whether via django-compressor or eg. the OpenLayers directory.
    ExpiresActive on
    ExpiresDefault "now plus 10 years"
  </Directory>
@@ -65,7 +66,7 @@ Adjust the paths according to your installation.
  </Directory>
 
  WSGIScriptAlias / /home/openblock/openblock/src/openblock/obdemo/obdemo/wsgi/obdemo.wsgi
- WSGIDaemonProcess obdemo_org user=openblock group=www-data processes=10 threads=1
+ WSGIDaemonProcess obdemo_org display-name=obdemo_org user=openblock group=www-data processes=10 threads=1
  WSGIProcessGroup obdemo_org
 
  CustomLog /var/log/apache2/openblock-access.log combined

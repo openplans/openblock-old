@@ -17,9 +17,13 @@
 #   along with ebpub.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import os
+
+"""
+Import neighborhoods from a shapefile.  Try ``--help`` for usage instructions.
+
+Assumes you have a LocationType with ``slug='neighborhoods'``.
+"""
 import sys
-from django.contrib.gis.gdal import DataSource
 from ebpub.db.models import LocationType
 from ebpub.db.bin import import_locations
 from ebpub.metros.allmetros import get_metro
@@ -59,9 +63,9 @@ def main(argv=None):
         opts.filter_bounds,
         opts.verbose
     )
-    num_created = importer.save(opts.name_field)
+    num_created, num_updated = importer.save(opts.name_field)
     if opts.verbose:
-        print >> sys.stderr, 'Created %s neighborhoods.' % num_created
+        print >> sys.stderr, 'Created %s, updated %s neighborhoods.' % (num_created, num_updated)
 
 if __name__ == '__main__':
     sys.exit(main())

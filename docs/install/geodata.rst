@@ -264,21 +264,25 @@ Be patient; it typically takes at least several minutes to run.
 
 It can also filter out blocks outside of one or more locations by
 passing the ``--filter-location`` option with a LocationType slug and
-Location slug; for example::
+Location slug; for example:
+
+.. code-block:: bash
 
   $ import_blocks_tiger --filter-location="cities:cambridge" \
     --filter-location="cities:newton" ...
 
 
 If you run it with the ``--help`` option, it will tell you how about
-all options::
+all options:
+
+.. code-block:: bash
 
  $ import_blocks_tiger  --help
  Usage: import_blocks_tiger edges.shp featnames.dbf faces.dbf place.shp
  
  Options:
   -h, --help            show this help message and exit
-  -v, --verbose
+  -v, --verbose         
   -c CITY, --city=CITY  A city name to filter against
   -f, --fix-cities      Whether to override "city" attribute of blocks and
                         streets by finding an intersecting Location of a city-
@@ -286,12 +290,19 @@ all options::
                         multiple_cities=True in the METRO_LIST of your
                         settings.py, and after you have created some
                         appropriate Locations.
-  -b, --filter-bounds   Whether to skip blocks outside the metro extent from
-                        your settings.py. Default True.
+  -r, --reset           Whether to delete existing blocks and start from
+                        scratch. This will attempt to fix other models that
+                        have foreign keys to blocks; use at your own risk
+                        though.
+  -b FILTER_BOUNDS, --filter-bounds=FILTER_BOUNDS
+                        Whether to skip blocks outside the metro extent from
+                        your settings.py. Default 1 (true); use 0 to disable.
+  -l FILTER_LOCATION, --filter-location=FILTER_LOCATION
+                        A location (spelled as location-type-slug:location-
+                        slug) that will be used to filter out blocks outside
+                        its boundaries. May be passed more than once.
   -e ENCODING, --encoding=ENCODING
                         Encoding to use when reading the shapefile
-
-
 
 
 
@@ -430,23 +441,34 @@ Admin UI: Importing Locations
 Browse  to /admin/db/locations, click "Upload Shapefile",
 and upload the zipped file you downloaded. Submit the form.
 
-On the next screen, you can choose a Location Type,
+On the next screen, you must choose a Location Type,
 then choose from the "layers" available in this shapefile (often there
 is only one).
 
+The form will tell you how many polygons or points each layer
+contains, which gives you an idea how many Locations you will get.
+However, there is currently no way to actually *see*  the shapes
+before importing. For that, you are better off with external GIS tools
+such as `Quantum GIS <http://www.qgis.org/>`_.
+
+
 Then you get to choose which field contains the name of each location.
 The form will show you an example value from each field, so it's
-usually pretty obvious which field is the one to choose.
-(If none of them make any sense, it's possible that this shapefile
-isn't usable by OpenBlock.)
+usually pretty obvious which field is the one to choose.  (If none of
+them make any sense, the shapefile may not have any nice
+human-readable labels at all; your best bet is to pick any field and
+manually rename the locations after import, but that may be
+impractical if there are a lot of features.)
 
-Submit the form and you're done.
+Submit the form and you will be redirected to the locations list.
+The import will run in the :ref:`background <background_tasks>`.
 
+.. _import_locations_from_shapefile:
 
 Command Line: Importing Locations From Shapefiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There is a script ``import_locations`` that can import any kind of location from a
+There is a script :py:mod:`import_locations <ebpub.db.bin.import_locations>` that can import any kind of location from a
 shapefile.  If a LocationType with the given slug doesn't exist, it will be
 created when you run the script.
 
@@ -512,10 +534,39 @@ fine, although ``--filter-bounds`` is usually a good idea, to exclude
 areas that don't overlap with your metro extent.
 
 
+.. _import_location_from_wkt:
+
+Command Line: Add Location From WKT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There is a script :py:mod:`add_location <ebpub.db.bin.add_location>`
+that can create a single location given a `WKT <http://en.wikipedia.org/wiki/Well-known_text>`_ string.
+
+If you run it with the ``--help`` option, it will tell you how to use it::
+
+ $ import_locations  --help
+ Usage: add_location.py [options] NAME WKT
+ 
+ WKT is the geometry in "Well-Known Text" format.
+ 
+ NAME is the human-readable name.
+ The slug and normalized_name will be derived from it.
+ 
+ Options:
+  -h, --help            show this help message and exit
+  -l LOC_TYPE_SLUG, --location_type=LOC_TYPE_SLUG
+                        location type slug (default: neighborhoods)
+  -s SOURCE, --source=SOURCE
+                        source of data - name or URL of the place you found
+                        it.
+
+
 Can I load KML, GeoJSON, OpenStreetMap XML, or other kinds of files?
 ---------------------------------------------------------------------
 
-No, at this time the only files we can directly import are shapefiles.
+No, at this time the only formats we can directly import are
+shapefiles, and WKT.
+
 Try using tools like `ogr2ogr <http://www.gdal.org/ogr2ogr.html>`_ to
 convert your data into shapefiles.
 
@@ -533,7 +584,7 @@ a URL linking to some external page about this landmark.
 First, ``Locations`` are relatively large areas described by polygons,
 representing areas such as neighborhoods or postal codes.  OpenBlock
 shows a list of Locations of each type, and it's expected that there
-are relatively few of them - perhaps dozens. By contrast, a ``Place``
+are relatively few of each type - perhaps dozens. By contrast, a ``Place``
 is just a single point and there could be many thousands of them.
 
 ``Places`` are entirely optional - you can run Openblock just fine
@@ -543,7 +594,7 @@ The ``PlaceType`` model is used to categorize them, so you could have
 a ``PlaceType`` named "Building", another one with named "Monument",
 and so on.  You can also assign a map icon URL, a map color,
 
-``Places``, can be used in several ways.
+``Places`` can be used in several ways:
 
 Places in the OpenBlock UI
 ----------------------------
@@ -554,7 +605,7 @@ from any view of NewsItems by schema.
 
 .. (TODO: screenshot?)
 
-If you click the blue "+" at top-right of that map, you can select
+If you click the "+" button at top-right of that map, you can select
 which PlaceTypes and Schemas are shown on the map.
 
 As of OpenBlock version 1.1, Places aren't shown anywhere else in the

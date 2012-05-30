@@ -20,7 +20,7 @@
 Unit tests for db.schemafilters.
 """
 
-from client import RequestFactory
+from ebpub.utils.testing import RequestFactory
 from django.core import urlresolvers
 from django.test import TestCase
 from ebpub.db.schemafilters import FilterChain
@@ -169,10 +169,13 @@ class TestLocationFilter(TestCase):
         filt.apply()
         expected_loc = models.Location.objects.get(slug='hood-1')
         self.assertEqual(filt.location_object, expected_loc)
-        # TODO: have some NewsItems overlapping this location?
-
         self.assertEqual(filt.get_query_params(),
                          {'locations': 'neighborhoods,hood-1'})
+        # Items 1 & 2 should match this query because there's a corresponding
+        # NewsItemLocation.
+        self.assertEqual(sorted([item.id for item in filt.qs]),
+                         [1, 2])
+
 
 class TestBlockFilter(TestCase):
 

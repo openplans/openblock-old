@@ -34,6 +34,10 @@ from ebpub.db.models import LocationType
 from ebpub.db.models import Schema, SchemaField, NewsItem, Lookup, DataUpdate
 from . import forms
 
+import logging
+
+logger = logging.getLogger('obadmin.admin.views')
+
 # Returns the username for a given request, taking into account our proxy
 # (which sets HTTP_X_REMOTE_USER).
 request_username = lambda request: request.META.get('REMOTE_USER', '') or request.META.get('HTTP_X_REMOTE_USER', '')
@@ -192,8 +196,10 @@ def jobs_status(request, appname, modelname):
         counts = [
             {'label': u'Download state shapefile',
              'task': u'obadmin.admin.tasks.download_state_shapefile' },
-            {'label': u'Import ZIP codes',
+            {'label': u'Import ZIP code',
              'task': u'obadmin.admin.tasks.import_zip_from_shapefile'},
+            {'label': 'Import Location',
+             'task': u'obadmin.admin.tasks.import_location'},
             ]
     elif appname == 'streets':
         # Don't bother discriminating further based on modelname;
@@ -262,8 +268,17 @@ def pick_shapefile_layer(request):
         return HttpResponseRedirect('../upload-shapefile/')
     if form.save():
         return HttpResponseRedirect('../')
+    if form.failure_msgs:
+        for msg in form.failure_msgs:
+            messages.error(request, msg)
 
-    ds = DataSource(shapefile)
+    try:
+        ds = DataSource(shapefile)
+    except Exception as e:
+        ds = None
+        messages.error(request, "Error opening shapefile: %s" % e)
+        logger.exception("Unhandled error opening shapefile:")
+
     fieldset = Fieldset(form, fields=('location_type',))
     return render(request, 'obadmin/location/pick_shapefile_layer.html', {
         'shapefile': shapefile,
@@ -281,7 +296,7 @@ def import_blocks(request):
 
     fieldsets = (
         Fieldset(form, fields=('edges', 'featnames', 'faces', 'place')),
-        Fieldset(form, fields=('city', 'fix_cities', 'regenerate_intersections')),
+        Fieldset(form, fields=('reset', 'city', 'fix_cities', 'regenerate_intersections')),
         )
 
     return render(request, 'obadmin/block/import_blocks.html', {
@@ -307,10 +322,14 @@ def import_items_from_spreadsheets(items_file, schema, mapping_file=None,
 
 @csrf_protect
 def import_newsitems(request):
-    form = forms.ImportNewsForm(request.POST or None, request.FILES or None)
+    from ebdata.scrapers.general.spreadsheet.retrieval import get_default_unique_field_names
+    form = forms.ImportNewsForm(
+        request.POST or None, request.FILES or None,
+        initial={'unique_fields': get_default_unique_field_names()}
+        )
     if form.save():
         # TODO: Capture logging output and put that in message too?
-        msg = u'Added %d, Updated %d, Skipped %d.' % (form.added, form.updated, form.skipped)
+        msg = u'%d added. %d updated. %d skipped or unchanged.' % (form.added, form.updated, form.skipped)
         msg += u' See the server error log if you need more info.'
         messages.add_message(request, messages.INFO, msg)
         return HttpResponseRedirect('./')

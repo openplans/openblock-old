@@ -20,14 +20,15 @@
 	block. You can also <a href="{% url ebpub-loc-type-list %}">browse by locations</a>
 	{% if example_loctype %}such as {{ example_loctype|lower }}{% endif %}.
 	</p>
-	{% regroup street_list by street|upper|slice:":1" as alpha_list %}
+	{% regroup street_list by street_slug|upper|slice:":1" as alpha_list %}
 	{% for current_letter in alpha_list %}
 		<h2>{{ current_letter.grouper }}</h2>
 		<p id="alpha_{{ current_letter.grouper|lower }}">
 			{% for letter in alpha_list %}{% ifequal letter.grouper current_letter.grouper %}<strong>{{ letter.grouper }}</strong>{% else %}<a href="#alpha_{{ letter.grouper|lower }}">{{ letter.grouper|upper }}</a>{% endifequal %}{% endfor %}
 			<a href="#content">&uarr; Top</a>
 		</p>
-		{% for street_bunch in current_letter.list|bunchlong:"4" %}
+		{% comment %}<!-- break the lists up a bit to be easier on the eye. -->{% endcomment %}
+		{% for street_bunch in current_letter.list|bunch:"20" %}
 			<ul>
 				{% for street in street_bunch %}
 				<li><a href="{{ street.url }}">{{ street.pretty_name }}</a></li>
