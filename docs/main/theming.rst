@@ -241,7 +241,7 @@ by writing a function and adding an appopriate line to your
 
    Always try to be specific: nobody can guess what exactly "it
    doesn't work" might mean.  Have patience and a thick skin -- people
-   on mailing lists and IRC channels are often busy professions who
+   on mailing lists and IRC channels are often busy professionals who
    are there in their spare time, and may at first assume you know
    more than you do, and don't have time to teach you everything.
    If you are persistent and polite, you will learn much.
