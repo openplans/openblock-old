@@ -146,7 +146,7 @@ def finish_signup(request, place, data):
     else:
         email = data['email']
 
-    if request.user:
+    if request.user.is_authenticated():
         message = callbacks.create_alert(request.user, data)
         request.session['login_message'] = message
         return http.HttpResponseRedirect(reverse('accounts-dashboard'))
