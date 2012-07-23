@@ -106,7 +106,7 @@ class AdminLoginForm(LoginForm):
 
     def clean(self):
         super(AdminLoginForm, self).clean()
-        if not self.user_cache.is_active or not self.user_cache.is_staff:
+        if not self.user_cache or not self.user_cache.is_active or not self.user_cache.is_staff:
             raise forms.ValidationError("Please enter a correct email address and password.")
         return self.cleaned_data
 
