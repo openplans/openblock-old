@@ -22,6 +22,7 @@ from ebdata.parsing import excel
 from ebdata.retrieval.scrapers.newsitem_list_detail import NewsItemListDetailScraper
 from ebdata.retrieval.scrapers.list_detail import SkipRecord
 from ebpub.utils.dates import now, today
+from ebpub.db.models import Lookup
 import mimetypes
 import re
 import urllib2
@@ -140,7 +141,7 @@ def get_dictreader(items_sheet, items_type='text/csv', map_sheet=None, map_type=
         'text/csv': unicodecsv.UnicodeDictReader,
         'application/vnd.ms-excel': excel.ExcelDictReader,
         'application/msexcel': excel.ExcelDictReader,
-        }
+    }
     # TODO: use http://packages.python.org/openpyxl/ to handle new-style
     # xslx files. Would require a DictReader-like facade to be written.
     reader_factory = factory_map.get(items_type, unicodecsv.UnicodeDictReader)
@@ -200,6 +201,7 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
     def __init__(self, items_sheet_file, map_sheet_file, *args, **kwargs):
         self.schema_slugs = [kwargs.pop('schema_slug', None)]
         self.unique_fields = kwargs.pop('unique_fields', self.unique_fields)
+
         super(SpreadsheetScraper, self).__init__(*args, **kwargs)
         self.items_sheet_file = items_sheet_file
         if items_sheet_file:
@@ -301,12 +303,18 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
         for sf in schemafields:
             if sf.name in list_record:
                 # TODO: coerce types? Or maybe Django's implicit conversion is OK.
-                attributes[sf.name] = list_record.pop(sf.name)
+                value = unicode(list_record.pop(sf.name))
+                if sf.is_many_to_many_lookup():
+                    self.logger.error("We can't currently handle many-to-many lookups in this scraper")
+                if sf.is_lookup:
+                    value = Lookup.objects.get_or_create_lookup(
+                        sf, name=value, code=value, make_text_slug=False)
+                    value = value.id
+                attributes[sf.name] = value
         core_fields['attributes'] = attributes
         if len(list_record):
             self.logger.debug("Unused stuff from list_record: %s" % list_record)
         return core_fields
-
 
     def save(self, old_record, list_record, detail_record):
         attributes = list_record.pop('attributes', {})
