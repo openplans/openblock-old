@@ -22,6 +22,7 @@ Custom Forms for ebpub.db.models.
 
 from ebpub.db import models
 from django import forms
+import dateutil.parser
 
 class NewsItemForm(forms.ModelForm):
     class Meta:
@@ -32,6 +33,24 @@ class NewsItemForm(forms.ModelForm):
     exclude = ('location_set',)
 
     url = forms.URLField(widget=forms.TextInput(attrs={'size': 80}), required=False)
+
+    def _clean_fields(self):
+        # Pre-parse things that should be dates, this allows
+        # us to handle more formats.
+        # This must be done in clean_fields because
+        # weirdly self.clean_item_date() happens too late.
+        # Could also fix by overriding the widget, but, meh.
+        if 'item_date' in self.data:
+            try:
+                self.data['item_date'] = dateutil.parser.parse(self.data['item_date']).date()
+            except (ValueError, AttributeError):
+                pass
+        if 'pub_date' in self.data:
+            try:
+                self.data['pub_date'] = dateutil.parser.parse(self.data['pub_date'])
+            except (ValueError, AttributeError):
+                pass
+        return super(NewsItemForm, self)._clean_fields()
 
     def clean(self):
         # Remove this from cleaned_data, otherwise form.save() will
