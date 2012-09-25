@@ -150,10 +150,13 @@ from boston.com and creates a NewsItem for each entry:
             x,y = point.split(' ')
             item.location = Point((float(y), float(x)))
 
-            # If our Schema had some SchemaFields, we'd save them now like so:
-            # item.attributes = {'foo': 'bar', ...}
-
             item.save()
+
+            ## If our Schema had some SchemaFields, we'd save them now like so:
+            # item.attributes = {'foo': 'bar', ...}
+            ## Note that this must be done AFTER calling model.save(),
+            ## because the attributes are actually stored in a
+            ## separate table.
 
         logger.info("Finished add_news")
 
@@ -182,7 +185,8 @@ So, what's left out? Among other things:
   any links to other documents. Sometimes you need to do that.
 
 * This schema doesn't require any custom attributes, so we don't show
-  that. It's trivial though, just assign a dictionary to item.attributes.
+  that. It's trivial though, just assign a dictionary to
+  item.attributes sometime after calling item.save().
 
 Also notice the ``-q`` or ``--quiet`` command-line option that silences all non-error
 output. This is an OpenBlock scraper convention intended to allow
