@@ -197,6 +197,7 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
     has_detail = False
     schema_slugs = None
     unique_fields = ()
+    get_location_name_from_all_fields = True
 
     def __init__(self, items_sheet_file, map_sheet_file, *args, **kwargs):
         self.schema_slugs = [kwargs.pop('schema_slug', None)]
@@ -292,7 +293,9 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
 
         # Try to ensure we have both point and location_name;
         # fall back to address extraction from *all* fields.
-        address_text = core_fields.get('location_name') or '\n'.join([unicode(s) for s in list_record.values()])
+        address_text = core_fields.get('location_name')
+        if self.get_location_name_from_all_fields and not address_text:
+            address_text = '\n'.join([unicode(s) for s in list_record.values()])
         point, location_name = self.geocode_if_needed(point, address_text)
         core_fields['location'] = point
         core_fields['location_name'] = location_name
@@ -305,7 +308,7 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
                 # TODO: coerce types? Or maybe Django's implicit conversion is OK.
                 value = unicode(list_record.pop(sf.name))
                 if sf.is_many_to_many_lookup():
-                    self.logger.error("We can't currently handle many-to-many lookups in this scraper")
+                    self.logger.error("We can't currently handle many-to-many lookups in this scraper, dunno what to do with field %s" % sf.name)
                 if sf.is_lookup:
                     value = Lookup.objects.get_or_create_lookup(
                         sf, name=value, code=value, make_text_slug=False)
