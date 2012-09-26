@@ -66,8 +66,6 @@ and :py:class:`ebpub.db.models.Location`,
 and also :doc:`../install/geodata`.
 
 
-.. _custom-look-feel:
-
 .. _email_alerts:
 
 E-mail alerts

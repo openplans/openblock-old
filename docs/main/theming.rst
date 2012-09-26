@@ -5,7 +5,7 @@ Theming OpenBlock
 The recommended way to create a custom theme for OpenBlock
 is by :doc:`../install/custom`.
 
-.. _custom_look_feel:
+.. _custom-look-feel:
 
 Overriding Templates
 ====================
@@ -243,7 +243,7 @@ by writing a function and adding an appopriate line to your
    doesn't work" might mean.  Have patience and a thick skin -- people
    on mailing lists and IRC channels are often busy professionals who
    are there in their spare time, and may at first assume you know
-   more than you do, and don't have time to teach you everything.
+   more than you do.
    If you are persistent and polite, you will learn much.
 
 
