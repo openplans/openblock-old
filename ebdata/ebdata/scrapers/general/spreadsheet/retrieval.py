@@ -257,8 +257,9 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
         Given a dict, prepare it for saving as a newsitem.
         Result will be a dictionary of anything from list_record
         that looks like a known field of the NewsItem model.
+
         Anything that looks like a known SchemaField of the item's Schema
-        will be set as an 'attributes' sub-dictionary.
+        will be set as an item in an 'attributes' sub-dictionary.
 
         Unrecognized keys will be ignored (and logged).
 
@@ -266,7 +267,7 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
          - If there's a 'location' key, try to split the value into (lat, lon) points
          - If there's keys like 'latitude'/'lat' and 'longitude'/'lon'/'long'/'lng', use those
          - If there's a 'location_name', geocode if needed
-         - If there's no 'location_name', reverse-geocode if needed
+         - If there's no 'location_name', reverse-geocode if possible
 
         """
         from ebpub.db.models import NewsItem
@@ -278,7 +279,7 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
             # orginal, this gives us a way to use it by mapping it to
             # "location"
             try:
-                lat, lon = re.split(r'[\s,]+', list_record.pop('location'))
+                lat, lon = re.split(r'[\s,]+', str(list_record.pop('location')))
                 list_record.setdefault('lat', lat)
                 list_record.setdefault('lon', lon)
             except ValueError:
@@ -301,18 +302,32 @@ class SpreadsheetScraper(NewsItemListDetailScraper):
         core_fields['location_name'] = location_name
 
         # Attributes.
-        attributes = {}
+        attributes = list_record.get('attributes', {})
         schemafields = self.schema.schemafield_set.all()
         for sf in schemafields:
             if sf.name in list_record:
                 # TODO: coerce types? Or maybe Django's implicit conversion is OK.
-                value = unicode(list_record.pop(sf.name))
+                value = list_record.pop(sf.name)
                 if sf.is_many_to_many_lookup():
-                    self.logger.error("We can't currently handle many-to-many lookups in this scraper, dunno what to do with field %s" % sf.name)
-                if sf.is_lookup:
+                    # Passed value needs to be a list of strings.
+                    if isinstance(value, basestring):
+                        value = [value]
+                    lookups = [
+                        Lookup.objects.get_or_create_lookup(
+                            sf, name=v, code=v, make_text_slug=False
+                        )
+                        for v in value]
+                    value = ','.join([str(lookup.id) for lookup in lookups])
+
+                elif sf.is_lookup:
+                    # Need an int id.
+                    value = unicode(value)
                     value = Lookup.objects.get_or_create_lookup(
                         sf, name=value, code=value, make_text_slug=False)
                     value = value.id
+                else:
+                    # TODO: handle other types?
+                    value = unicode(value)
                 attributes[sf.name] = value
         core_fields['attributes'] = attributes
         if len(list_record):
